@@ -1,7 +1,10 @@
-import React from "react";
+import AppRouter from "./Router";
+import './locales/config';
+import "./index.css";
+
 
 function App() {
-    return <main>init</main>;
+    return <AppRouter />
 }
 
 export default App;
