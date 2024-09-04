@@ -1,7 +1,7 @@
 [
     {
-        "match": "**/*",
-        "headers": {
+        match: "**/*",
+        headers: {
             // Security: The Content Security Policy (CSP) given below aims at working with many apps rather than providing maximal security.
             // We recommend tightening the CSP for your specific application. Some recommendations are as follows:
             // - Use the CSP Evaluator (https://csp-evaluator.withgoogle.com/) to validate the CSP you define.
@@ -45,7 +45,7 @@
 
             // Security: Enables browser features to mitigate some of the XSS attacks. Note that it has to be in mode=block.
             // See: https://owasp.org/www-community/attacks/xss/
-            "X-XSS-Protection": "1; mode=block"
+            "X-XSS-Protection": "1; mode=block",
         },
         // Uncomment to redirect all requests from .raw.icp0.io to .icp0.io
         // "allow_raw_access": false

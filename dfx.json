@@ -1,27 +1,23 @@
 {
-  "canisters": {
-    "cashier_backend": {
-      "candid": "src/cashier_backend/cashier_backend.did",
-      "package": "cashier_backend",
-      "type": "rust"
+    "canisters": {
+        "cashier_backend": {
+            "candid": "src/cashier_backend/cashier_backend.did",
+            "package": "cashier_backend",
+            "type": "rust"
+        },
+        "cashier_frontend": {
+            "dependencies": ["cashier_backend"],
+            "source": ["src/cashier_frontend/dist"],
+            "type": "assets",
+            "workspace": "cashier_frontend"
+        }
     },
-    "cashier_frontend": {
-      "dependencies": [
-        "cashier_backend"
-      ],
-      "source": [
-        "src/cashier_frontend/dist"
-      ],
-      "type": "assets",
-      "workspace": "cashier_frontend"
-    }
-  },
-  "defaults": {
-    "build": {
-      "args": "",
-      "packtool": ""
-    }
-  },
-  "output_env_file": ".env",
-  "version": 1
+    "defaults": {
+        "build": {
+            "args": "",
+            "packtool": ""
+        }
+    },
+    "output_env_file": ".env",
+    "version": 1
 }
