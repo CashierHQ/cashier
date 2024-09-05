@@ -1,21 +1,29 @@
 import { Button } from "@/components/ui/button";
-import { Children, FunctionComponent, ReactElement, ReactNode, useState } from "react";
+import { Children, FunctionComponent, ReactElement, useState } from "react";
 
-interface ItemProp {
-    handleSubmit: (values: any) => any;
-    name: string;
-    render: (defaultValues: any, handleSubmit: (values: any) => any) => ReactNode;
+export interface ParitalFormProps<T> {
+    handleSubmit: (values: T) => any,
+    handleChange: (e: any) => any,
+    defaultValues: Partial<T>
 }
 
-interface MultiStepFormProp<T extends Object> {
+interface MultiStepFormProps<T extends Object> {
     initialStep: number;
     formData: T;
     children: ReactElement<ItemProp> | ReactElement<ItemProp>[];
     handleSubmit: (values: T) => any;
     handleBack?: () => any;
+    handleChange: (e: any) => any;
 }
 
-export default function MultiStepForm<T extends Object>({ initialStep = 0, formData, handleSubmit: handleFinish, children, handleBack }: MultiStepFormProp<T>) {
+interface ItemProp {
+    handleSubmit: (values: any) => any;
+    name: string;
+    render: (props: ParitalFormProps<any>) => ReactElement<ParitalFormProps<any>>;
+}
+
+
+export default function MultiStepForm<T extends Object>({ initialStep = 0, formData, handleSubmit: handleFinish, children, handleBack, handleChange }: MultiStepFormProps<T>) {
     const partialForms = Children.toArray(children) as ReactElement<ItemProp>[];
     const [currentStep, setCurrentStep] = useState(initialStep);
 
@@ -40,10 +48,14 @@ export default function MultiStepForm<T extends Object>({ initialStep = 0, formD
             {
                 Children.map(partialForms, (partialForm, index) => {
                     if ((currentStep == index)) {
-                        return partialForm.props.render(formData, (values: any) => {
-                            partialForm.props.handleSubmit(values);
-                            if (index == partialForms.length - 1) handleFinish({ ...formData, ...values });
-                            else setCurrentStep(index + 1);
+                        return partialForm.props.render({
+                            defaultValues: formData,
+                            handleChange: handleChange,
+                            handleSubmit: (values: any) => {
+                                partialForm.props.handleSubmit(values);
+                                if (index == partialForms.length - 1) handleFinish({ ...formData, ...values });
+                                else setCurrentStep(index + 1);
+                            }
                         })
                     }
                     return null;

@@ -24,6 +24,10 @@ export default function CreatePage({ initialStep = 0 }: { initialStep: number })
         console.log(values);
     }
 
+    const handleChange = (values: any) => {
+        setFormData({ ...formData, ...values });
+    }
+
     return (
         <div className="w-screen flex flex-col items-center py-5">
             <div className="w-11/12 max-w-[400px]">
@@ -32,16 +36,17 @@ export default function CreatePage({ initialStep = 0 }: { initialStep: number })
                     formData={formData}
                     handleSubmit={handleSubmit}
                     handleBack={() => navigate('/')}
+                    handleChange={handleChange}
                 >
                     <MultiStepForm.Item
                         name={t('create.linkTemplate')}
                         handleSubmit={handleSubmitLinkTemplate}
-                        render={(defaultValues, handleSubmit) => <LinkTemplate defaultValues={defaultValues} handleSubmit={handleSubmit} />}
+                        render={(props) => <LinkTemplate {...props} />}
                     />
                     <MultiStepForm.Item
                         name={t('create.linkDetails')}
                         handleSubmit={handleSubmitLinkDetails}
-                        render={(defaultValues, handleSubmit) => <LinkDetails defaultValues={defaultValues} handleSubmit={handleSubmit} />}
+                        render={(props) => <LinkDetails {...props} />}
                     />
                 </MultiStepForm>
             </div>

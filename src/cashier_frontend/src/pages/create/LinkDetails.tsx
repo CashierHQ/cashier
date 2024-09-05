@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
 import { Textarea } from "@/components/ui/textarea";
+import { ParitalFormProps } from "@/components/composite/MultiStepForm";
 
 const linkDetailsSchema = z.object({
     photo: z.string(),
@@ -23,12 +24,7 @@ const linkDetailsSchema = z.object({
     amount: z.number(),
 });
 
-interface LinkDetailsProps {
-    handleSubmit: (values: z.infer<typeof linkDetailsSchema>) => any,
-    defaultValues: Partial<z.infer<typeof linkDetailsSchema>>
-}
-
-export default function LinkDetails({ defaultValues = {}, handleSubmit }: LinkDetailsProps) {
+export default function LinkDetails({ defaultValues = {}, handleSubmit, handleChange }: ParitalFormProps<z.infer<typeof linkDetailsSchema>>) {
     const { t } = useTranslation();
 
     const form = useForm<z.infer<typeof linkDetailsSchema>>({
@@ -46,7 +42,11 @@ export default function LinkDetails({ defaultValues = {}, handleSubmit }: LinkDe
 
     return <div className="w-full">
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+            <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
+                className="space-y-8"
+            >
                 <FormField
                     control={form.control}
                     name="photo"

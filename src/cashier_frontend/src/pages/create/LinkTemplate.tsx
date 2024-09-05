@@ -12,18 +12,14 @@ import {
 } from "@/components/ui/form"
 import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
+import { ParitalFormProps } from "@/components/composite/MultiStepForm";
 
 const linkTemplateSchema = z.object({
     linkName: z.string().min(5),
     template: z.string(),
 });
 
-interface LinkTemplateProps {
-    defaultValues?: Partial<z.infer<typeof linkTemplateSchema>>;
-    handleSubmit: (values: z.infer<typeof linkTemplateSchema>) => any;
-}
-
-export default function LinkTemplate({ defaultValues = {}, handleSubmit }: LinkTemplateProps) {
+export default function LinkTemplate({ defaultValues = {}, handleSubmit, handleChange }: ParitalFormProps<z.infer<typeof linkTemplateSchema>>) {
     const { t } = useTranslation();
 
     const form = useForm<z.infer<typeof linkTemplateSchema>>({
@@ -37,7 +33,11 @@ export default function LinkTemplate({ defaultValues = {}, handleSubmit }: LinkT
 
     return <div className="w-full">
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+            <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                onChange={(e: any) => handleChange({ [e.target?.name]: e.target.value })}
+                className="space-y-8"
+            >
                 <FormField
                     control={form.control}
                     name="linkName"
