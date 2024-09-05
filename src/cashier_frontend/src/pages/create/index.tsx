@@ -1,56 +1,50 @@
-import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
+import { useNavigate } from "react-router-dom";
+import MultiStepForm from "@/components/composite/MultiStepForm";
+import { useTranslation } from "react-i18next";
 
-export default function CreatePage() {
-    const { state } = useLocation();
+export default function CreatePage({ initialStep = 0 }: { initialStep: number }) {
     const [formData, setFormData] = useState<any>({});
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
-    const steps = [
-        {
-            Form: LinkTemplate,
-            props: {
-                handleSubmit: (values: any) => {
-                    if (!formData.name) setFormData({ ...formData, ...values, name: values.linkName });
-                    else setFormData({ ...formData, ...values });
-                    navigate("/create", { state: { step: 1 } });
-                },
-                handleBack: () => {
-                    navigate("/");
-                },
-                defaultValues: formData
-            }
-        },
-        {
-            Form: LinkDetails,
-            props: {
-                handleSubmit: (values: any) => {
-                    console.log({ ...formData, ...values });
-                    setFormData({ ...formData, ...values });
-                    navigate("/");
-                },
-                handleBack: () => {
-                    navigate("/create", { state: { step: 0, } });
-                },
-                defaultValues: formData
-            }
+    const handleSubmitLinkTemplate = (values: any) => {
+        if (!formData.name) {
+            setFormData({ ...formData, ...values, name: values.linkName });
         }
-    ];
+    }
+
+    const handleSubmitLinkDetails = (values: any) => {
+        setFormData({ ...formData, ...values });
+    }
+
+    const handleSubmit = (values: any) => {
+        console.log(values);
+    }
 
     return (
         <div className="w-screen flex flex-col items-center py-5">
-            {steps.map(({ Form, props }, index) => {
-                if ((!state && index == 0) || (state && state.step == index)) {
-                    return <Form
-                        key={index}
-                        progress={`${index + 1}/${steps.length}`}
-                        isEnd={index == steps.length - 1}
-                        {...props} />
-                }
-                return null;
-            })}
+            <div className="w-11/12 max-w-[400px]">
+                <MultiStepForm
+                    initialStep={initialStep}
+                    formData={formData}
+                    handleSubmit={handleSubmit}
+                    handleBack={() => navigate('/')}
+                >
+                    <MultiStepForm.Item
+                        name={t('create.linkTemplate')}
+                        handleSubmit={handleSubmitLinkTemplate}
+                        render={(defaultValues, handleSubmit) => <LinkTemplate defaultValues={defaultValues} handleSubmit={handleSubmit} />}
+                    />
+                    <MultiStepForm.Item
+                        name={t('create.linkDetails')}
+                        handleSubmit={handleSubmitLinkDetails}
+                        render={(defaultValues, handleSubmit) => <LinkDetails defaultValues={defaultValues} handleSubmit={handleSubmit} />}
+                    />
+                </MultiStepForm>
+            </div>
         </div>
     );
 }

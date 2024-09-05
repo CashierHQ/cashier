@@ -1,9 +1,16 @@
 {
-    "linkTemplate": "Link Temlate",
-    "linkDetails": "Link Details",
-    "linkName": "Link Name",
-    "confirm": "Confirm",
-    "cancel": "Cancel",
+    "create": {
+        "link": "Link",
+        "linkName": "Link Name",
+        "linkTemplate": "Link Template",
+        "linkDetails": "Link Details",
+        "create": "Create",
+        "photo": "Photo",
+        "name": "Name",
+        "message": "Message",
+        "chain": "Chain",
+        "amount": "Amount"
+    },
     "continue": "Continue",
     "submit": "Submit"
 }

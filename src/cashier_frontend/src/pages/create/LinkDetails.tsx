@@ -24,14 +24,11 @@ const linkDetailsSchema = z.object({
 });
 
 interface LinkDetailsProps {
-    progress: string;
-    defaultValues?: Partial<z.infer<typeof linkDetailsSchema>>;
-    handleSubmit: (values: z.infer<typeof linkDetailsSchema>) => any;
-    handleBack: () => any;
-    isEnd?: boolean;
+    handleSubmit: (values: z.infer<typeof linkDetailsSchema>) => any,
+    defaultValues: Partial<z.infer<typeof linkDetailsSchema>>
 }
 
-export default function LinkDetails({ progress, defaultValues = {}, handleSubmit, handleBack, isEnd }: LinkDetailsProps) {
+export default function LinkDetails({ defaultValues = {}, handleSubmit }: LinkDetailsProps) {
     const { t } = useTranslation();
 
     const form = useForm<z.infer<typeof linkDetailsSchema>>({
@@ -47,18 +44,7 @@ export default function LinkDetails({ progress, defaultValues = {}, handleSubmit
         },
     })
 
-    return <div className="w-11/12 max-w-[400px]">
-        <div className="w-full flex justify-between mb-5">
-            <Button variant="outline" size="icon" onClick={handleBack}>
-                ←
-            </Button>
-            <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                Link Details
-            </h4>
-            <span className="scroll-m-20 tracking-tight">
-                {progress}
-            </span>
-        </div>
+    return <div className="w-full">
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
                 <FormField
@@ -66,7 +52,7 @@ export default function LinkDetails({ progress, defaultValues = {}, handleSubmit
                     name="photo"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Photo</FormLabel>
+                            <FormLabel>{t('create.photo')}</FormLabel>
                             <FormControl>
                                 <Input type="file" {...field} />
                             </FormControl>
@@ -79,9 +65,9 @@ export default function LinkDetails({ progress, defaultValues = {}, handleSubmit
                     name="message"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Message</FormLabel>
+                            <FormLabel>{t('create.message')}</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Message" {...field} />
+                                <Textarea placeholder={t('create.message')} {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -92,9 +78,9 @@ export default function LinkDetails({ progress, defaultValues = {}, handleSubmit
                     name="chain"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Chain</FormLabel>
+                            <FormLabel>{t('create.chain')}</FormLabel>
                             <FormControl>
-                                <Input placeholder="Chain" {...field} />
+                                <Input placeholder={t('create.chain')} {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -105,9 +91,9 @@ export default function LinkDetails({ progress, defaultValues = {}, handleSubmit
                     name="name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Name</FormLabel>
+                            <FormLabel>{t('create.name')}</FormLabel>
                             <FormControl>
-                                <Input placeholder="Name" {...field} />
+                                <Input placeholder={t('create.name')} {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -118,15 +104,15 @@ export default function LinkDetails({ progress, defaultValues = {}, handleSubmit
                     name="amount"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Amount</FormLabel>
+                            <FormLabel>{t('create.amount')}</FormLabel>
                             <FormControl>
-                                <Input placeholder="Amount" {...field} />
+                                <Input placeholder={t('create.amount')} {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                <Button type="submit">{isEnd ? "Submit" : "Continue"}</Button>
+                <Button type="submit">{t('submit')}</Button>
             </form>
         </Form>
     </div>
