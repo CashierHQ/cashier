@@ -21,7 +21,7 @@ const linkDetailsSchema = z.object({
     buttonLabel: z.string(),
     chain: z.string(),
     name: z.string(),
-    amount: z.number(),
+    amount: z.coerce.number(),
 });
 
 export default function LinkDetails({ defaultValues = {}, handleSubmit, handleChange }: ParitalFormProps<z.infer<typeof linkDetailsSchema>>) {
