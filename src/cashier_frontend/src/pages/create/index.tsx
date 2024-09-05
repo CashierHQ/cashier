@@ -5,26 +5,32 @@ import { useNavigate } from "react-router-dom";
 import MultiStepForm from "@/components/composite/MultiStepForm";
 import { useTranslation } from "react-i18next";
 
-export default function CreatePage({ initialStep = 0 }: { initialStep: number }) {
+export default function CreatePage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
+    const [isNameSetByUser, setIsNameSetByUser] = useState(false);
     const { t } = useTranslation();
     const navigate = useNavigate();
 
     const handleSubmitLinkTemplate = (values: any) => {
-        if (!formData.name) {
+        if (!formData.name || !isNameSetByUser) {
             setFormData({ ...formData, ...values, name: values.linkName });
         }
+        console.log("Link Template:", values);
     }
 
     const handleSubmitLinkDetails = (values: any) => {
         setFormData({ ...formData, ...values });
+        console.log("Link Details:", values);
     }
 
     const handleSubmit = (values: any) => {
-        console.log(values);
+        console.log("All:", values);
     }
 
     const handleChange = (values: any) => {
+        if (values.name) {
+            setIsNameSetByUser(true);
+        }
         setFormData({ ...formData, ...values });
     }
 
