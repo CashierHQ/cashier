@@ -106,7 +106,7 @@ export default function LinkDetails({ defaultValues = {}, handleSubmit, handleCh
                         <FormItem>
                             <FormLabel>{t('create.amount')}</FormLabel>
                             <FormControl>
-                                <Input placeholder={t('create.amount')} {...field} />
+                                <Input type="number" placeholder={t('create.amount')} {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
