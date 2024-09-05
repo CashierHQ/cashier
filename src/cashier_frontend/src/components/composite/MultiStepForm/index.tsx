@@ -65,6 +65,16 @@ export default function MultiStepForm<T extends Object>({ initialStep = 0, formD
     );
 }
 
-const Item: FunctionComponent<ItemProp> = () => { return null; }
+const Item: FunctionComponent<ItemProp> = ({ handleSubmit, render }) => {
+    return <>
+        {
+            render({
+                defaultValues: {},
+                handleChange: () => { },
+                handleSubmit: handleSubmit
+            })
+        }
+    </>
+}
 
 MultiStepForm.Item = Item;
