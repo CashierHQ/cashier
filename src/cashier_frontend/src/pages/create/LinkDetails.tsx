@@ -63,19 +63,13 @@ export default function LinkDetails({ defaultValues = {}, handleSubmit, handleCh
                 onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
                 className="space-y-8"
             >
-                <FormField
-                    control={form.control}
-                    name="photo"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{t('create.photo')}</FormLabel>
-                            <FormControl>
-                                <Input type="file" onChange={handleUploadImage} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <FormItem>
+                    <FormLabel>{t('create.photo')}</FormLabel>
+                    <FormControl>
+                        <Input type="file" onChange={handleUploadImage} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
                 <FormField
                     control={form.control}
                     name="message"
@@ -131,5 +125,5 @@ export default function LinkDetails({ defaultValues = {}, handleSubmit, handleCh
                 <Button type="submit">{t('continue')}</Button>
             </form>
         </Form>
-    </div>
+    </div >
 }
