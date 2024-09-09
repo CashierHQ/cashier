@@ -12,7 +12,8 @@
         "test": "jest",
         "prepare": "npx husky",
         "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "deploy-staging": "npm run deploy-staging --workspaces --if-present"
     },
     "lint-staged": {
         "*.{js,ts}": "eslint .",
