@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form"
 import { Button } from "@/components/ui/button";
 import { useTranslation } from 'react-i18next';
-import { ParitalFormProps } from "@/components/composite/MultiStepForm";
+import { ParitalFormProps } from "@/components/multi-step-form";
 
 const linkTemplateSchema = z.object({
     linkName: z.string().min(5),

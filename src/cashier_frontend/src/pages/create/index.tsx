@@ -2,7 +2,7 @@ import { useState } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
 import { useNavigate } from "react-router-dom";
-import MultiStepForm from "@/components/composite/MultiStepForm";
+import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 
 export default function CreatePage({ initialStep = 0 }: { initialStep?: number }) {

@@ -8,8 +8,7 @@
         "start": "vite --port 3000",
         "build": "tsc && vite build",
         "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
-        "test": "jest",
-        "deploy-staging": "firebase deploy"
+        "test": "jest"
     },
     "dependencies": {
         "@dfinity/agent": "^1.4.0",
