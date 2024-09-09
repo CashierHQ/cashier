@@ -28,7 +28,7 @@ export default function MultiStepForm<T extends Object>({ initialStep = 0, formD
     const [currentStep, setCurrentStep] = useState(initialStep);
 
     return (
-        <div className="w-full flex flex-col items-center py-5">
+        <div className="w-full flex flex-col items-center">
             <div className="w-full flex justify-between mb-5">
                 {
                     (currentStep || (!currentStep && handleBack)) ? <Button variant="outline" size="icon" onClick={() => {

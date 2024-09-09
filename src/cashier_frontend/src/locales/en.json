@@ -12,5 +12,7 @@
         "amount": "Amount"
     },
     "continue": "Continue",
-    "submit": "Submit"
+    "submit": "Submit",
+    "cashier": "Cashier",
+    "login": "Login"
 }
