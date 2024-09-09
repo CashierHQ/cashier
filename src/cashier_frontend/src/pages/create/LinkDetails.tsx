@@ -17,8 +17,7 @@ import { ParitalFormProps } from "@/components/multi-step-form";
 
 const linkDetailsSchema = z.object({
     photo: z.string(),
-    message: z.string(),
-    buttonLabel: z.string(),
+    message: z.string().min(10),
     chain: z.string(),
     name: z.string(),
     amount: z.coerce.number(),
@@ -30,15 +29,32 @@ export default function LinkDetails({ defaultValues = {}, handleSubmit, handleCh
     const form = useForm<z.infer<typeof linkDetailsSchema>>({
         resolver: zodResolver(linkDetailsSchema),
         defaultValues: {
-            photo: "",
             message: "",
-            buttonLabel: "",
             chain: "ICP",
             name: "",
             amount: 1,
             ...defaultValues,
         },
     })
+
+    const convertBase64 = (file: any) => {
+        return new Promise<string>((resolve, reject) => {
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(file);
+            fileReader.onload = () => {
+                resolve(fileReader?.result as string);
+            };
+            fileReader.onerror = (error) => {
+                reject(error);
+            };
+        });
+    }
+
+    const handleUploadImage = async (event: any) => {
+        const file = event.target.files[0];
+        const base64 = await convertBase64(file);
+        form.setValue("photo", base64);
+    }
 
     return <div className="w-full">
         <Form {...form}>
@@ -54,7 +70,7 @@ export default function LinkDetails({ defaultValues = {}, handleSubmit, handleCh
                         <FormItem>
                             <FormLabel>{t('create.photo')}</FormLabel>
                             <FormControl>
-                                <Input type="file" {...field} />
+                                <Input type="file" onChange={handleUploadImage} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -112,7 +128,7 @@ export default function LinkDetails({ defaultValues = {}, handleSubmit, handleCh
                         </FormItem>
                     )}
                 />
-                <Button type="submit">{t('submit')}</Button>
+                <Button type="submit">{t('continue')}</Button>
             </form>
         </Form>
     </div>

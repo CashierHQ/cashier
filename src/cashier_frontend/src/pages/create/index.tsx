@@ -4,6 +4,7 @@ import LinkDetails from "./LinkDetails";
 import { useNavigate } from "react-router-dom";
 import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
+import LinkPreview from "./LinkPreview";
 
 export default function CreatePage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
@@ -53,6 +54,11 @@ export default function CreatePage({ initialStep = 0 }: { initialStep?: number }
                         name={t('create.linkDetails')}
                         handleSubmit={handleSubmitLinkDetails}
                         render={(props) => <LinkDetails {...props} />}
+                    />
+                    <MultiStepForm.Item
+                        name={t('create.linkPreview')}
+                        handleSubmit={handleSubmit}
+                        render={(props) => <LinkPreview {...props} />}
                     />
                 </MultiStepForm>
             </div>
