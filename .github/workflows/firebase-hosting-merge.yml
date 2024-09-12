@@ -21,4 +21,5 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_STAGING_SERVICE_ACCOUNT }}
           channelId: live
           projectId: cashier-frontend-staging
+          entryPoint: "./src/cashier_frontend"
 
