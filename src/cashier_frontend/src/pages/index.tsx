@@ -1,6 +1,7 @@
 import LinkItem from "@/components/link-item";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { ConnectWallet } from "@nfid/identitykit/react"
 import { Link } from "react-router-dom";
 
 const mocks = [
@@ -30,7 +31,7 @@ export default function HomePage() {
             <div className="w-11/12 max-w-[400px]">
                 <div className="w-full flex justify-between items-center">
                     <h1 className="text-2xl font-bold">Cashier</h1>
-                    <Link to="/"><Button>Login</Button></Link>
+                    <ConnectWallet />
                 </div>
                 <div className="my-5">
                     <h1 className="text-base font-bold">Cashier links</h1>
