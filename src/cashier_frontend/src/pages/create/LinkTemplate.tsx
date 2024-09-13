@@ -9,9 +9,9 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import { ParitalFormProps } from "@/components/multi-step-form";
 
 const linkTemplateSchema = z.object({
@@ -19,7 +19,11 @@ const linkTemplateSchema = z.object({
     template: z.string(),
 });
 
-export default function LinkTemplate({ defaultValues = {}, handleSubmit, handleChange }: ParitalFormProps<z.infer<typeof linkTemplateSchema>>) {
+export default function LinkTemplate({
+    defaultValues = {},
+    handleSubmit,
+    handleChange,
+}: ParitalFormProps<z.infer<typeof linkTemplateSchema>>) {
     const { t } = useTranslation();
 
     const form = useForm<z.infer<typeof linkTemplateSchema>>({
@@ -29,30 +33,32 @@ export default function LinkTemplate({ defaultValues = {}, handleSubmit, handleC
             template: "",
             ...defaultValues,
         },
-    })
+    });
 
-    return <div className="w-full">
-        <Form {...form}>
-            <form
-                onSubmit={form.handleSubmit(handleSubmit)}
-                onChange={(e: any) => handleChange({ [e.target?.name]: e.target.value })}
-                className="space-y-8"
-            >
-                <FormField
-                    control={form.control}
-                    name="linkName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{t('create.linkName')}</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Link name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <Button type="submit">{t('continue')}</Button>
-            </form>
-        </Form>
-    </div>
+    return (
+        <div className="w-full">
+            <Form {...form}>
+                <form
+                    onSubmit={form.handleSubmit(handleSubmit)}
+                    onChange={(e: any) => handleChange({ [e.target?.name]: e.target.value })}
+                    className="space-y-8"
+                >
+                    <FormField
+                        control={form.control}
+                        name="linkName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t("create.linkName")}</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Link name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="submit">{t("continue")}</Button>
+                </form>
+            </Form>
+        </div>
+    );
 }

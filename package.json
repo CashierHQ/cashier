@@ -17,7 +17,6 @@
         "lint": "eslint ."
     },
     "lint-staged": {
-        "*.{js,ts}": "eslint .",
         "**/*": "prettier --write ."
     },
     "type": "module",

@@ -17,23 +17,23 @@ export default function CreatePage({ initialStep = 0 }: { initialStep?: number }
             setFormData({ ...formData, ...values, name: values.linkName });
         }
         console.log("Link Template:", values);
-    }
+    };
 
     const handleSubmitLinkDetails = (values: any) => {
         setFormData({ ...formData, ...values });
         console.log("Link Details:", values);
-    }
+    };
 
     const handleSubmit = (values: any) => {
         console.log("All:", values);
-    }
+    };
 
     const handleChange = (values: any) => {
         if (values.name) {
             setIsNameSetByUser(true);
         }
         setFormData({ ...formData, ...values });
-    }
+    };
 
     return (
         <div className="w-screen flex flex-col items-center py-5">
@@ -42,21 +42,21 @@ export default function CreatePage({ initialStep = 0 }: { initialStep?: number }
                     initialStep={initialStep}
                     formData={formData}
                     handleSubmit={handleSubmit}
-                    handleBack={() => navigate('/')}
+                    handleBack={() => navigate("/")}
                     handleChange={handleChange}
                 >
                     <MultiStepForm.Item
-                        name={t('create.linkTemplate')}
+                        name={t("create.linkTemplate")}
                         handleSubmit={handleSubmitLinkTemplate}
                         render={(props) => <LinkTemplate {...props} />}
                     />
                     <MultiStepForm.Item
-                        name={t('create.linkDetails')}
+                        name={t("create.linkDetails")}
                         handleSubmit={handleSubmitLinkDetails}
                         render={(props) => <LinkDetails {...props} />}
                     />
                     <MultiStepForm.Item
-                        name={t('create.linkPreview')}
+                        name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
                         render={(props) => <LinkPreview {...props} />}
                     />
