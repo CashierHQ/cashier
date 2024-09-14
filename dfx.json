@@ -3,7 +3,8 @@
         "cashier_backend": {
             "candid": "src/cashier_backend/cashier_backend.did",
             "package": "cashier_backend",
-            "type": "rust"
+            "type": "rust",
+            "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai"
         },
         "cashier_frontend": {
             "dependencies": ["cashier_backend"],

@@ -9,28 +9,48 @@ type AssetAirdropInfo = record {
   address : text;
   amount : nat32;
 };
+type CanisterError = variant {
+  HandleLogicError : text;
+  AnonymousCall;
+  HandleApiError : text;
+};
 type Chain = variant { IC };
+type CreateLinkInput = record { link_type : LinkType };
 type LinkDetail = record {
   id : text;
-  title : text;
-  creator : text;
-  asset_info : AssetAirdropInfo;
-  link_type : LinkType;
-  description : text;
-  actions : vec Action;
-  state : State;
-  template : Template;
-  image : text;
+  title : opt text;
+  creator : opt text;
+  asset_info : opt AssetAirdropInfo;
+  link_type : opt LinkType;
+  description : opt text;
+  actions : opt vec Action;
+  state : opt State;
+  template : opt Template;
+  image : opt text;
 };
 type LinkType = variant { NftCreateAndAirdrop };
-type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : vec LinkDetail; Err : text };
-type Result_2 = variant { Ok : User; Err : text };
+type PaginateInput = record { offset : nat64; limit : nat64 };
+type PaginateResult = record {
+  metadata : PaginateResultMetadata;
+  data : vec LinkDetail;
+};
+type PaginateResultMetadata = record {
+  is_next : bool;
+  is_prev : bool;
+  total : nat64;
+  offset : nat64;
+  limit : nat64;
+};
+type Result = variant { Ok : text; Err : CanisterError };
+type Result_1 = variant { Ok : text; Err : text };
+type Result_2 = variant { Ok : PaginateResult; Err : text };
+type Result_3 = variant { Ok : User; Err : text };
 type State = variant { New; Inactive; Active; PendingPreview; PendingDetail };
 type Template = variant { Left; Right; Central };
 type User = record { id : text; email : opt text; wallet : text };
-service : {
-  create_user : () -> (Result);
-  get_links : () -> (Result_1) query;
-  get_user : () -> (Result_2) query;
+service : () -> {
+  create_links : (CreateLinkInput) -> (Result);
+  create_user : () -> (Result_1);
+  get_links : (opt PaginateInput) -> (Result_2) query;
+  get_user : () -> (Result_3) query;
 }
