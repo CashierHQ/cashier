@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
+#[repr(u8)]
 pub enum LinkType {
-    NftCreateAndAirdrop,
+    NftCreateAndAirdrop = 1,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
@@ -47,15 +48,15 @@ pub enum Template {
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct LinkDetail {
     pub id: String,
-    pub title: String,
-    pub description: String,
-    pub image: String,
-    pub link_type: LinkType,
-    pub asset_info: AssetAirdropInfo,
-    pub actions: Vec<Action>,
-    pub template: Template,
-    pub state: State,
-    pub creator: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub image: Option<String>,
+    pub link_type: Option<LinkType>,
+    pub asset_info: Option<AssetAirdropInfo>,
+    pub actions: Option<Vec<Action>>,
+    pub template: Option<Template>,
+    pub state: Option<State>,
+    pub creator: Option<String>,
 }
 
 impl Storable for LinkDetail {
@@ -68,4 +69,21 @@ impl Storable for LinkDetail {
     }
 
     const BOUND: Bound = Bound::Unbounded;
+}
+
+impl LinkDetail {
+    pub fn create_new(id: String, creator: String, link_type: LinkType) -> Self {
+        Self {
+            id,
+            title: None,
+            description: None,
+            image: None,
+            link_type: Some(link_type),
+            asset_info: None,
+            actions: None,
+            template: None,
+            state: Some(State::New),
+            creator: Some(creator),
+        }
+    }
 }
