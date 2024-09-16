@@ -25,7 +25,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDe
 }
 
 #[update]
-async fn create_links(input: CreateLinkInput) -> Result<String, CanisterError> {
+async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
     let creator = ic_cdk::api::caller();
     let id = create_new(creator.to_text(), input);
     match id {
