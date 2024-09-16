@@ -42,9 +42,8 @@ type PaginateResultMetadata = record {
   limit : nat64;
 };
 type Result = variant { Ok : text; Err : CanisterError };
-type Result_1 = variant { Ok : text; Err : text };
+type Result_1 = variant { Ok : User; Err : text };
 type Result_2 = variant { Ok : PaginateResult; Err : text };
-type Result_3 = variant { Ok : User; Err : text };
 type State = variant { New; Inactive; Active; PendingPreview; PendingDetail };
 type Template = variant { Left; Right; Central };
 type User = record { id : text; email : opt text; wallet : text };
@@ -52,5 +51,5 @@ service : () -> {
   create_link : (CreateLinkInput) -> (Result);
   create_user : () -> (Result_1);
   get_links : (opt PaginateInput) -> (Result_2) query;
-  get_user : () -> (Result_3) query;
+  get_user : () -> (Result_1) query;
 }

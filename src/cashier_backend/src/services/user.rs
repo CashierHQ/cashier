@@ -5,7 +5,7 @@ use crate::{
     types::user::User,
 };
 
-pub fn create_new() -> Result<String, String> {
+pub fn create_new() -> Result<User, String> {
     if is_existed() {
         return Err("User already existed".to_string());
     }
@@ -23,7 +23,11 @@ pub fn create_new() -> Result<String, String> {
     user_store::create(id.to_string(), new_user);
     user_wallet_store::create(caller.to_string(), id.to_string());
 
-    Ok(id.to_string())
+    Ok(User {
+        id: id.to_string(),
+        email: None,
+        wallet: caller.to_string(),
+    })
 }
 
 pub fn get() -> Option<User> {
