@@ -4,7 +4,6 @@ use crate::types::error::*;
 use crate::types::link_detail::*;
 use crate::types::user::*;
 
-pub mod guard;
 pub mod init_and_upgrade;
 pub mod link;
 pub mod user;
