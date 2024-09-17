@@ -11,10 +11,10 @@
         "test": "jest"
     },
     "dependencies": {
-        "@dfinity/agent": "^1.4.0",
-        "@dfinity/auth-client": "^2.0.0",
+        "@dfinity/agent": "^2.1.1",
+        "@dfinity/auth-client": "^2.1.1",
         "@dfinity/candid": "^1.4.0",
-        "@dfinity/identity": "^2.0.0",
+        "@dfinity/identity": "^2.1.1",
         "@dfinity/ledger-icp": "^2.5.0",
         "@dfinity/principal": "^1.4.0",
         "@dfinity/utils": "^2.5.0",

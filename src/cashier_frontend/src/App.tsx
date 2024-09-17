@@ -6,7 +6,14 @@ import "./index.css";
 
 function App() {
     return (
-        <IdentityKitProvider>
+        <IdentityKitProvider
+            featuredSigner={false}
+            onConnectFailure={(e: Error) => {
+                console.log(e);
+            }}
+            onConnectSuccess={() => {}}
+            onDisconnect={() => {}}
+        >
             <AppRouter />
         </IdentityKitProvider>
     );

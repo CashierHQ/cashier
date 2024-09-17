@@ -1,31 +1,47 @@
-import LinkItem from "@/components/link-item";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
+import { createActor } from "../../../declarations/cashier_backend";
+import { useIdentityKit } from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link } from "react-router-dom";
-
-const mocks = [
-    {
-        linkName: "Pedro giveaway",
-        status: "Active",
-        url: "https://avatars.githubusercontent.com/u/29966005?v=4",
-        createdAt: "2 days ago",
-    },
-    {
-        linkName: "Donation",
-        status: "Active",
-        url: "https://avatars.githubusercontent.com/u/2996211?v=4",
-        createdAt: "1 week ago",
-    },
-    {
-        linkName: "NFT airdrop",
-        status: "Active",
-        url: "https://avatars.githubusercontent.com/u/29966005?v=4",
-        createdAt: "1 month",
-    },
-];
+import { useEffect, useState } from "react";
+import { HttpAgent } from "@dfinity/agent";
 
 export default function HomePage() {
+    const { agent, identity } = useIdentityKit();
+    const [links, setLinks] = useState<any>([]);
+    const [user, setUser] = useState<any>(null);
+
+    const actor = createActor("txyno-ch777-77776-aaaaq-cai", {
+        agent: HttpAgent.createSync({ identity }),
+    });
+
+    useEffect(() => {
+        const createUser = async () => {
+            const user = await actor.get_user();
+            if ("Ok" in user) setUser(user);
+            else {
+                const create = await actor.create_user();
+                if ("Ok" in create) setUser(create.Ok);
+            }
+        };
+        createUser();
+    }, [agent]);
+
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         const links = await actor.get_links([{
+    //             offset: BigInt(0),
+    //             limit: BigInt(10)
+    //         }]);
+    //         console.log("links", links);
+    //         if ('Ok' in links) setLinks(links!.Ok.data);
+    //     }
+    //     fetchData();
+    // }, [user]);
+
+    // console.log(agent);
+    console.log("user", user);
+
     return (
         <div className="w-screen flex justify-center py-5">
             <div className="w-11/12 max-w-[400px]">
@@ -46,9 +62,6 @@ export default function HomePage() {
                         <Button>+</Button>
                     </Link>
                 </div>
-                {mocks.map((link, index) => (
-                    <LinkItem key={index} link={link} />
-                ))}
             </div>
         </div>
     );
