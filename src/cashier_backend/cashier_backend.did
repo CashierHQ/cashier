@@ -44,12 +44,24 @@ type PaginateResultMetadata = record {
 type Result = variant { Ok : text; Err : CanisterError };
 type Result_1 = variant { Ok : User; Err : text };
 type Result_2 = variant { Ok : PaginateResult; Err : text };
+type Result_3 = variant { Ok : LinkDetail; Err : CanisterError };
 type State = variant { New; Inactive; Active; PendingPreview; PendingDetail };
 type Template = variant { Left; Right; Central };
+type UpdateLinkInput = record {
+  title : opt text;
+  asset_info : opt AssetAirdropInfo;
+  link_type : opt LinkType;
+  description : opt text;
+  actions : opt vec Action;
+  state : opt State;
+  template : opt Template;
+  image : opt text;
+};
 type User = record { id : text; email : opt text; wallet : text };
 service : () -> {
   create_link : (CreateLinkInput) -> (Result);
   create_user : () -> (Result_1);
   get_links : (opt PaginateInput) -> (Result_2) query;
   get_user : () -> (Result_1) query;
+  update_link : (text, UpdateLinkInput) -> (Result_3);
 }
