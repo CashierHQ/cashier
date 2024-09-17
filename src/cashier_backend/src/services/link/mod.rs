@@ -85,3 +85,7 @@ pub fn get_links_by_user_id(
 
     Ok(res)
 }
+
+pub fn get_link_by_id(id: String) -> Option<LinkDetail> {
+    link_store::get(&id)
+}

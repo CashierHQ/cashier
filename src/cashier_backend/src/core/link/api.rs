@@ -28,6 +28,14 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDe
     }
 }
 
+#[query(guard = "is_not_anonymous")]
+async fn get_link(id: String) -> Result<LinkDetail, String> {
+    match services::link::get_link_by_id(id) {
+        Some(link) => Ok(link),
+        None => Err("Link not found".to_string()),
+    }
+}
+
 #[update(guard = "is_not_anonymous")]
 async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
     let creator = ic_cdk::api::caller();
