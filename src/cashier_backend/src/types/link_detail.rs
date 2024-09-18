@@ -3,8 +3,6 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use crate::core::link::types::UpdateLinkInput;
-
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 #[repr(u8)]
 pub enum LinkType {

@@ -7,7 +7,7 @@ use crate::{
     store::{link_store, link_user_store, user_wallet_store},
     types::{
         api::{PaginateInput, PaginateResult},
-        link_detail::{LinkDetail, LinkDetailUpdate},
+        link_detail::{LinkDetail, LinkDetailUpdate, State},
     },
 };
 
@@ -34,6 +34,7 @@ pub fn update(caller: String, id: String, input: LinkDetailUpdate) -> Result<Lin
         Some(user_id) => user_id,
         None => return Err("User not found".to_string()),
     };
+
     let link_detail = match link_store::get(&id) {
         Some(link_detail) => {
             let creator = link_detail.creator.clone().unwrap();
@@ -45,7 +46,10 @@ pub fn update(caller: String, id: String, input: LinkDetailUpdate) -> Result<Lin
         None => return Err("Link not found".to_string()),
     };
 
-    handle_update_create_and_airdrop_detail(id, input, link_detail)
+    match link_detail.state {
+        Some(State::New) => handle_update_create_and_airdrop_detail(id, input, link_detail),
+        _ => return Err("State is not implement or not found".to_string()),
+    }
 }
 
 pub fn get_links_by_principal(
