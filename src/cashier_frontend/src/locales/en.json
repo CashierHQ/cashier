@@ -15,5 +15,12 @@
     "continue": "Continue",
     "submit": "Submit",
     "cashier": "Cashier",
-    "login": "Login"
+    "login": "Login",
+    "home": {
+        "guide": {
+            "header": "Cashier links",
+            "body": "Start creating transaction links with Cashier: create & airdrop NFTs, and more features coming!",
+            "confirm": "Got it"
+        }
+    }
 }

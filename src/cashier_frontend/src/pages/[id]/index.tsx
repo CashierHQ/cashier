@@ -1,27 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
+import { useIdentityKit } from "@nfid/identitykit/react";
 
-export default function CreatePage({ initialStep = 0 }: { initialStep?: number }) {
+export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
     const [isNameSetByUser, setIsNameSetByUser] = useState(false);
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { linkId } = useParams();
+    const { agent, identity } = useIdentityKit();
+
+    useEffect(() => {
+        if (linkId) {
+            if (linkId === "new") {
+            }
+        }
+    }, [linkId]);
 
     const handleSubmitLinkTemplate = (values: any) => {
         if (!formData.name || !isNameSetByUser) {
             setFormData({ ...formData, ...values, name: values.linkName });
         }
-        console.log("Link Template:", values);
     };
 
     const handleSubmitLinkDetails = (values: any) => {
         setFormData({ ...formData, ...values });
-        console.log("Link Details:", values);
     };
 
     const handleSubmit = (values: any) => {

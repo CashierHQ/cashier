@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import CreatePage from "./pages/create";
+import LinkPage from "./pages/[id]";
 import HomePage from "@/pages";
 
 const router = createBrowserRouter([
@@ -8,8 +8,8 @@ const router = createBrowserRouter([
         element: <HomePage />,
     },
     {
-        path: "/create",
-        element: <CreatePage />,
+        path: "/:linkId",
+        element: <LinkPage />,
     },
 ]);
 export default function AppRouter() {
