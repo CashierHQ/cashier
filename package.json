@@ -8,14 +8,15 @@
         "build": "npm run build --workspaces --if-present",
         "prebuild": "npm run prebuild --workspaces --if-present",
         "pretest": "npm run prebuild --workspaces --if-present",
+        "prestart": "dfx generate cashier_backend",
         "start": "npm start --workspaces --if-present",
+        "build:backend": "make build-wasm && make build-did && dfx generate cashier_backend",
         "test": "jest",
         "prepare": "npx husky",
         "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
         "lint": "eslint ."
     },
     "lint-staged": {
-        "*.{js,ts}": "eslint .",
         "**/*": "prettier --write ."
     },
     "type": "module",
@@ -23,11 +24,16 @@
         "src/cashier_frontend"
     ],
     "devDependencies": {
+        "dotenv": "^16.4.5",
         "eslint": "^9.9.1",
         "eslint-plugin-react": "^7.35.2",
         "globals": "^15.9.0",
         "lint-staged": "^15.2.10",
         "prettier": "3.3.3",
         "typescript-eslint": "^8.4.0"
+    },
+    "dependencies": {
+        "@nfid/identitykit": "^0.0.0-alpha.11",
+        "tsx": "^4.19.1"
     }
 }

@@ -1,7 +1,24 @@
-import React from "react";
+import AppRouter from "./Router";
+import { IdentityKitProvider } from "@nfid/identitykit/react";
+import "@nfid/identitykit/react/styles.css";
+import "./locales/config";
+import "./index.css";
+import { IdentityKitAuthType } from "@nfid/identitykit";
 
 function App() {
-    return <main>init</main>;
+    return (
+        <IdentityKitProvider
+            featuredSigner={false}
+            onConnectFailure={(e: Error) => {
+                console.log(e);
+            }}
+            onConnectSuccess={() => {}}
+            onDisconnect={() => {}}
+            authType={IdentityKitAuthType.DELEGATION}
+        >
+            <AppRouter />
+        </IdentityKitProvider>
+    );
 }
 
 export default App;

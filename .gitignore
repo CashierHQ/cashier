@@ -20,6 +20,8 @@ target/
 node_modules/
 dist/
 .svelte-kit/
+.firebaserc
+.firebase/
 
 # environment variables
 .env

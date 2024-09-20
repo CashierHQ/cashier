@@ -11,4 +11,14 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = "0.10"
 ic-cdk = "0.13"
-ic-cdk-timers = "0.7" # Feel free to remove this dependency if you don't need timers
+ic-stable-structures = "0.6.5"
+serde = "1.0.210"
+serde_json = "1.0.128"
+getrandom = { version = "0.2", features = ["custom"] }
+rand = { version = "0.8.5", features = ["getrandom"]}
+ic-cdk-timers = "0.10.0"
+uuid = {version = "1.10.0", features = [ "v4" ]}
+proc-macro2 = "1.0.86"
+quote = "1.0.37"
+syn = "2.0.77"
+
