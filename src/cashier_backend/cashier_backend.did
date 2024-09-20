@@ -1,3 +1,69 @@
-service : {
-    "greet": (text) -> (text) query;
+type Action = record {
+  arg : text;
+  method : text;
+  canister_id : text;
+  label : text;
+};
+type AssetAirdropInfo = record {
+  chain : Chain;
+  address : text;
+  amount : nat32;
+};
+type CanisterError = variant {
+  HandleLogicError : text;
+  AnonymousCall;
+  HandleApiError : text;
+};
+type Chain = variant { IC };
+type CreateLinkInput = record { link_type : LinkType };
+type LinkDetail = record {
+  id : text;
+  title : opt text;
+  creator : opt text;
+  asset_info : opt AssetAirdropInfo;
+  link_type : opt LinkType;
+  description : opt text;
+  actions : opt vec Action;
+  state : opt State;
+  template : opt Template;
+  image : opt text;
+};
+type LinkType = variant { NftCreateAndAirdrop };
+type PaginateInput = record { offset : nat64; limit : nat64 };
+type PaginateResult = record {
+  metadata : PaginateResultMetadata;
+  data : vec LinkDetail;
+};
+type PaginateResultMetadata = record {
+  is_next : bool;
+  is_prev : bool;
+  total : nat64;
+  offset : nat64;
+  limit : nat64;
+};
+type Result = variant { Ok : text; Err : CanisterError };
+type Result_1 = variant { Ok : User; Err : text };
+type Result_2 = variant { Ok : LinkDetail; Err : text };
+type Result_3 = variant { Ok : PaginateResult; Err : text };
+type Result_4 = variant { Ok : LinkDetail; Err : CanisterError };
+type State = variant { New; Inactive; Active; PendingPreview; PendingDetail };
+type Template = variant { Left; Right; Central };
+type UpdateLinkInput = record {
+  title : opt text;
+  asset_info : opt AssetAirdropInfo;
+  link_type : opt LinkType;
+  description : opt text;
+  actions : opt vec Action;
+  state : opt State;
+  template : opt Template;
+  image : opt text;
+};
+type User = record { id : text; email : opt text; wallet : text };
+service : () -> {
+  create_link : (CreateLinkInput) -> (Result);
+  create_user : () -> (Result_1);
+  get_link : (text) -> (Result_2) query;
+  get_links : (opt PaginateInput) -> (Result_3) query;
+  get_user : () -> (Result_1) query;
+  update_link : (text, UpdateLinkInput) -> (Result_4);
 }

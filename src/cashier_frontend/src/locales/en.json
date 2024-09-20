@@ -1,0 +1,19 @@
+{
+    "create": {
+        "link": "Link",
+        "linkName": "Link Name",
+        "linkTemplate": "Link Template",
+        "linkDetails": "Link Details",
+        "linkPreview": "Preview",
+        "create": "Create",
+        "photo": "Photo",
+        "name": "Name",
+        "message": "Message",
+        "chain": "Chain",
+        "amount": "Amount"
+    },
+    "continue": "Continue",
+    "submit": "Submit",
+    "cashier": "Cashier",
+    "login": "Login"
+}

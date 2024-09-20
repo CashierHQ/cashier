@@ -1,13 +1,5 @@
-#[ic_cdk::query]
-fn greet(name: String) -> String {
-
-
-
-    
-    format!("Hello, {}!", name)
-}
-
-#[ic_cdk::query]
-fn test() -> String {
-    "Hello, World!".to_string()
-}
+pub mod core;
+pub mod services;
+pub mod store;
+pub mod types;
+pub mod utils;
