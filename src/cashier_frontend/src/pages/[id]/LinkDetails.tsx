@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import {
     Form,
@@ -14,13 +14,17 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "@/components/ui/textarea";
 import { ParitalFormProps } from "@/components/multi-step-form";
+import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from "@/components/ui/select";
+import { FileInput } from "@/components/file-input";
+import { fileToBase64, resizeImage } from "@/utils";
+import { NumberInput } from "@/components/number-input";
 
 const linkDetailsSchema = z.object({
-    photo: z.string(),
+    photo: z.string().min(1, { message: "Photo is required" }),
     message: z.string().min(10),
     chain: z.string(),
-    name: z.string(),
-    amount: z.coerce.number(),
+    name: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
+    amount: z.coerce.number().min(1),
 });
 
 export default function LinkDetails({
@@ -37,27 +41,21 @@ export default function LinkDetails({
             chain: "ICP",
             name: "",
             amount: 1,
+            photo: "",
             ...defaultValues,
         },
     });
 
-    const convertBase64 = (file: any) => {
-        return new Promise<string>((resolve, reject) => {
-            const fileReader = new FileReader();
-            fileReader.readAsDataURL(file);
-            fileReader.onload = () => {
-                resolve(fileReader?.result as string);
-            };
-            fileReader.onerror = (error) => {
-                reject(error);
-            };
-        });
-    };
-
-    const handleUploadImage = async (event: any) => {
-        const file = event.target.files[0];
-        const base64 = await convertBase64(file);
-        form.setValue("photo", base64);
+    const handleUploadImage = async (file: File | null) => {
+        if (!file) {
+            form.setValue("photo", "");
+            handleChange({ "photo": "" })
+            return;
+        }
+        const resizedImage = await resizeImage(file);
+        const base64 = await fileToBase64(resizedImage);
+        form.setValue("photo", base64, { shouldValidate: true });
+        handleChange({ "photo": base64 })
     };
 
     return (
@@ -66,40 +64,22 @@ export default function LinkDetails({
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
                     onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
-                    className="space-y-8"
+                    className="space-y-8 mb-[100px]"
                 >
-                    <FormItem>
-                        <FormLabel>{t("create.photo")}</FormLabel>
-                        <FormControl>
-                            <Input type="file" onChange={handleUploadImage} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    <FormField
+                    <Controller
+                        name="photo"
                         control={form.control}
-                        name="message"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t("create.message")}</FormLabel>
-                                <FormControl>
-                                    <Textarea placeholder={t("create.message")} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="chain"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t("create.chain")}</FormLabel>
-                                <FormControl>
-                                    <Input placeholder={t("create.chain")} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        rules={{ required: true }}
+                        render={() => {
+                            return (
+                                <div>
+                                    <FormLabel>{t("create.photo")}</FormLabel>
+                                    <FileInput defaultValue={form.getValues("photo") as any} onFileChange={handleUploadImage} />
+                                    {form.formState.errors.photo && <FormMessage>{form.formState.errors.photo.message}</FormMessage>}
+                                </div>
+
+                            )
+                        }}
                     />
                     <FormField
                         control={form.control}
@@ -116,14 +96,29 @@ export default function LinkDetails({
                     />
                     <FormField
                         control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t("create.message")}</FormLabel>
+                                <FormControl>
+                                    <Textarea className="resize-none" placeholder={t("create.message")} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
                         name="amount"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t("create.amount")}</FormLabel>
                                 <FormControl>
-                                    <Input
-                                        type="number"
+                                    <NumberInput
                                         placeholder={t("create.amount")}
+                                        handleIncrease={() => form.setValue("amount", Number(field.value) + 1)}
+                                        handleDecrease={() => form.setValue("amount", Number(field.value) - 1)}
+                                        min={0}
                                         {...field}
                                     />
                                 </FormControl>
@@ -131,7 +126,28 @@ export default function LinkDetails({
                             </FormItem>
                         )}
                     />
-                    <Button type="submit">{t("continue")}</Button>
+                    <FormField
+                        control={form.control}
+                        name="chain"
+                        render={({ field }) => (
+                            <FormItem>
+
+                                <FormLabel>{t("create.chain")}</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a Chain" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="ICP">ICP</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2">{t("continue")}</Button>
                 </form>
             </Form>
         </div>

@@ -1,54 +1,52 @@
-import { Button } from "@/components/ui/button";
-import { createActor } from "../../../declarations/cashier_backend";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { HttpAgent } from "@dfinity/agent";
-import { BACKEND_CANISTER_ID } from "@/const";
-import { parseResultResponse } from "@/utils";
 import { useTranslation } from "react-i18next";
+import LinkItem from "@/components/link-item";
+import { Skeleton } from "@/components/ui/skeleton";
+import { IoSearch } from "react-icons/io5";
+import { LinkService } from "@/services/link.service";
+import { UserService } from "@/services/user.service";
 
 export default function HomePage() {
     const { t } = useTranslation();
-    const { agent, identity } = useIdentityKit();
+    const { agent } = useIdentityKit();
     const [links, setLinks] = useState<any>([]);
     const [user, setUser] = useState<any>(null);
     const [showGuide, setShowGuide] = useState(true);
-
-    const actor = createActor(BACKEND_CANISTER_ID, {
-        agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-    });
+    const [isLoading, setIsLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (!agent) return;
+        if (!identity) return;
         const createUser = async () => {
-            const user = await actor.get_user();
-            if ("Ok" in user) setUser(user);
-            else {
-                const user = parseResultResponse(await actor.create_user());
+            try {
+                const user = await UserService.getUser(identity);
+                setUser(user);
+            } catch (error) {
+                const user = await UserService.createUser(identity);
                 setUser(user);
             }
         };
         createUser();
-    }, [agent]);
+    }, [identity]);
 
     useEffect(() => {
         if (!user) return;
         const fetchData = async () => {
-            const links = parseResultResponse(
-                await actor.get_links([
-                    {
-                        offset: BigInt(0),
-                        limit: BigInt(10),
-                    },
-                ]),
-            );
-            console.log(links.data);
-            setLinks(links.data);
+            const links = await LinkService.getLinks(identity);
+            setIsLoading(false);
+            setLinks(links.data ?? []);
         };
         fetchData();
     }, [user]);
+
+    const handleCreateLink = async () => {
+        if (!user) return;
+        const response = await LinkService.createLink(identity);
+        navigate(`/link/${response}`);
+    }
 
     return (
         <div className="w-screen flex justify-center py-5">
@@ -69,22 +67,32 @@ export default function HomePage() {
                         </button>
                     </div>
                 )}
-                <h2 className="text-base font-semibold mt-5">Links created by me</h2>
-                {links.map((link: any) => (
-                    <div
-                        key={link.id}
-                        className="w-full my-3 p-3 border border-gray-200 rounded-md"
-                    >
-                        <h3 className="text-base font-semibold">Link id: {link.id}</h3>
-                        <p className="text-sm text-gray-500">{"No title"}</p>
-                    </div>
-                ))}
+                <h2 className="text-base font-semibold mb-5 mt-8">Links created by me</h2>
+                {isLoading
+                    ? Array.from({ length: 5 }).map((_, index) => (
+                        <div className="flex items-center space-x-4 my-3" key={index}>
+                            <Skeleton className="h-10 w-10 rounded-sm" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                                <Skeleton className="h-3 w-[200px]" />
+                            </div>
+                        </div>
+                    ))
+                    : (links.length === 0
+                        ? <div className="w-full flex flex-col items-center mt-[100px]">
+                            <IoSearch style={{ borderRadius: "5px", border: "solid gray 1px", padding: "8px" }} size="40px" />
+                            <span className="font-semibold mt-5">{t('home.noLinksFound')}</span>
+                            <p className="text-gray-500">{t('home.noLinksFoundDescription')}</p>
+                        </div>
+                        : links.map((link: any) => (
+                            <Link to={`/link/${link.id}`} key={link.id}>
+                                <LinkItem key={link.id} link={link} />
+                            </Link>
+                        )))}
             </div>
-            <Link to="/new" state={{ isValidEntry: true }}>
-                <button className="fixed bottom-[30px] right-[30px] rounded-full w-[50px] h-[50px] bg-green text-white">
-                    +
-                </button>
-            </Link>
+            <button className="fixed bottom-[30px] right-[30px] rounded-full w-[50px] h-[50px] bg-green text-white hover:bg-green/90" onClick={handleCreateLink}>
+                +
+            </button>
         </div>
     );
 }

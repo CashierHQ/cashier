@@ -13,10 +13,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { ParitalFormProps } from "@/components/multi-step-form";
+import LinkCard from "@/components/link-card";
 
 const linkTemplateSchema = z.object({
-    linkName: z.string().min(5),
-    template: z.string(),
+    title: z.string().min(5),
 });
 
 export default function LinkTemplate({
@@ -29,34 +29,37 @@ export default function LinkTemplate({
     const form = useForm<z.infer<typeof linkTemplateSchema>>({
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
-            linkName: "",
-            template: "",
+            title: "",
             ...defaultValues,
         },
     });
 
     return (
-        <div className="w-full">
+        <div className="w-full flex flex-col">
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
                     onChange={(e: any) => handleChange({ [e.target?.name]: e.target.value })}
-                    className="space-y-8"
                 >
                     <FormField
                         control={form.control}
-                        name="linkName"
+                        name="title"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t("create.linkName")}</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Link name" {...field} />
+                                    <Input placeholder={t("create.linkNamePlaceholder")} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-                    <Button type="submit">{t("continue")}</Button>
+                    <div className="w-full h-[1px] bg-gray-200 my-5" />
+                    <div className="flex flex-col items-center mb-[100px] w-full">
+                        <h2>{t("create.defaultTemplate")}</h2>
+                        <LinkCard src="/default-template.jpg" title="Title" message="Message" label="Claim" />
+                    </div>
+                    <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2">{t("continue")}</Button>
                 </form>
             </Form>
         </div>

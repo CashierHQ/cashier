@@ -6,6 +6,7 @@ import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
+import { LinkService } from "@/services/link.service";
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
@@ -13,27 +14,51 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { linkId } = useParams();
-    const { agent, identity } = useIdentityKit();
+    const { identity } = useIdentityKit();
 
     useEffect(() => {
-        if (linkId) {
-            if (linkId === "new") {
-            }
-        }
-    }, [linkId]);
+        console.log("idenitty", identity);
+        if (!linkId) return;
+        if (!identity) return;
+        const fetchData = async () => {
+            const link = await LinkService.getLink(identity, linkId);
+            console.log("link detail", link);
+            setFormData(link);
+            setIsNameSetByUser(true);
+        };
+        fetchData();
+    }, [linkId, identity]);
 
-    const handleSubmitLinkTemplate = (values: any) => {
+    const handleSubmitLinkTemplate = async (values: any) => {
+        if (!linkId) return;
         if (!formData.name || !isNameSetByUser) {
-            setFormData({ ...formData, ...values, name: values.linkName });
+            values.name = values.title;
         }
-    };
-
-    const handleSubmitLinkDetails = (values: any) => {
         setFormData({ ...formData, ...values });
+        await LinkService.updateLink(identity, linkId, {
+            ...formData,
+            ...values,
+            state: { 'PendingDetail': null }
+        });
     };
 
-    const handleSubmit = (values: any) => {
-        console.log("All:", values);
+    const handleSubmitLinkDetails = async (values: any) => {
+        if (!linkId) return;
+        setFormData({ ...formData, ...values });
+        await LinkService.updateLink(identity, linkId, {
+            ...formData,
+            ...values,
+            state: { 'PendingPreview': null }
+        });
+    };
+
+    const handleSubmit = async (values: any) => {
+        if (!linkId) return;
+        await LinkService.updateLink(identity, linkId, {
+            ...formData,
+            ...values,
+            state: { 'Active': null }
+        });
     };
 
     const handleChange = (values: any) => {

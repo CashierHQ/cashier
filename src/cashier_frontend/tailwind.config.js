@@ -37,7 +37,7 @@ export default {
                     foreground: "hsl(var(--accent-foreground))",
                 },
                 destructive: {
-                    DEFAULT: "hsl(var(--destructive))",
+                    DEFAULT: "#36a18b",
                     foreground: "hsl(var(--destructive-foreground))",
                 },
                 border: "hsl(var(--border))",
@@ -51,6 +51,7 @@ export default {
                     5: "hsl(var(--chart-5))",
                 },
                 green: "#36a18b",
+                lightgreen: "#e8f2ee",
             },
         },
     },
