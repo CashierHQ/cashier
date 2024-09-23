@@ -31,9 +31,11 @@ pub struct AssetAirdropInfo {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub enum State {
+    // allow edit
     New,
     PendingDetail,
     PendingPreview,
+    // not allow edit
     Active,
     Inactive,
 }
@@ -75,7 +77,6 @@ pub struct LinkDetailUpdate {
     pub title: Option<String>,
     pub description: Option<String>,
     pub image: Option<String>,
-    pub link_type: Option<LinkType>,
     pub asset_info: Option<AssetAirdropInfo>,
     pub actions: Option<Vec<Action>>,
     pub template: Option<Template>,
@@ -107,9 +108,6 @@ impl LinkDetail {
         }
         if let Some(image) = input.image {
             self.image = Some(image);
-        }
-        if let Some(link_type) = input.link_type {
-            self.link_type = Some(link_type);
         }
         if let Some(asset_info) = input.asset_info {
             self.asset_info = Some(asset_info);
