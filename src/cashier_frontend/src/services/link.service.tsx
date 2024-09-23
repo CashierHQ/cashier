@@ -65,10 +65,9 @@ export const LinkService = {
         const completeData: UpdateLinkInput = {
             title: data.title ? [data.title] : [],
             asset_info: data.asset_info ? [data.asset_info] : [],
-            link_type: [],
             description: data.description ? [data.description] : [],
             actions: data.actions ? [data.actions] : [],
-            state: [],
+            state: data.state ? [data.state] : [],
             template: data.template ? [data.template] : [],
             image: data.image ? [data.image] : [],
         };

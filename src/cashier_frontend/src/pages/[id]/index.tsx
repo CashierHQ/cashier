@@ -38,6 +38,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         await LinkService.updateLink(identity, linkId, {
             ...formData,
             ...values,
+            state: {
+                "PendingDetail": null
+            }
         });
     };
 
@@ -48,6 +51,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             await LinkService.updateLink(identity, linkId, {
                 ...formData,
                 ...values,
+                state: {
+                    "PendingPreview": null
+                }
             });
         } finally {
             navigate("/");
@@ -59,6 +65,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         await LinkService.updateLink(identity, linkId, {
             ...formData,
             ...values,
+            state: {
+                "Active": null
+            }
         });
         navigate("/");
     };
