@@ -51,7 +51,6 @@ type Template = variant { Left; Right; Central };
 type UpdateLinkInput = record {
   title : opt text;
   asset_info : opt AssetAirdropInfo;
-  link_type : opt LinkType;
   description : opt text;
   actions : opt vec Action;
   state : opt State;
