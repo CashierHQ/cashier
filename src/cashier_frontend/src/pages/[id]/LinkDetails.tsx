@@ -20,8 +20,8 @@ import { fileToBase64, resizeImage } from "@/utils";
 import { NumberInput } from "@/components/number-input";
 
 const linkDetailsSchema = z.object({
-    photo: z.string().min(1, { message: "Photo is required" }),
-    message: z.string().min(10),
+    image: z.string().min(1, { message: "Image is required" }),
+    description: z.string().min(10),
     chain: z.string(),
     name: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
     amount: z.coerce.number().min(1),
@@ -37,25 +37,25 @@ export default function LinkDetails({
     const form = useForm<z.infer<typeof linkDetailsSchema>>({
         resolver: zodResolver(linkDetailsSchema),
         defaultValues: {
-            message: "",
+            description: "",
             chain: "ICP",
             name: "",
             amount: 1,
-            photo: "",
+            image: "",
             ...defaultValues,
         },
     });
 
     const handleUploadImage = async (file: File | null) => {
         if (!file) {
-            form.setValue("photo", "");
-            handleChange({ "photo": "" })
+            form.setValue("image", "");
+            handleChange({ "image": "" })
             return;
         }
         const resizedImage = await resizeImage(file);
         const base64 = await fileToBase64(resizedImage);
-        form.setValue("photo", base64, { shouldValidate: true });
-        handleChange({ "photo": base64 })
+        form.setValue("image", base64, { shouldValidate: true });
+        handleChange({ "image": base64 })
     };
 
     return (
@@ -67,15 +67,15 @@ export default function LinkDetails({
                     className="space-y-8 mb-[100px]"
                 >
                     <Controller
-                        name="photo"
+                        name="image"
                         control={form.control}
                         rules={{ required: true }}
                         render={() => {
                             return (
                                 <div>
                                     <FormLabel>{t("create.photo")}</FormLabel>
-                                    <FileInput defaultValue={form.getValues("photo") as any} onFileChange={handleUploadImage} />
-                                    {form.formState.errors.photo && <FormMessage>{form.formState.errors.photo.message}</FormMessage>}
+                                    <FileInput defaultValue={form.getValues("image") as any} onFileChange={handleUploadImage} />
+                                    {form.formState.errors.image && <FormMessage>{form.formState.errors.image.message}</FormMessage>}
                                 </div>
 
                             )
@@ -96,7 +96,7 @@ export default function LinkDetails({
                     />
                     <FormField
                         control={form.control}
-                        name="message"
+                        name="description"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t("create.message")}</FormLabel>

@@ -15,16 +15,16 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const navigate = useNavigate();
     const { linkId } = useParams();
     const { identity } = useIdentityKit();
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        console.log("idenitty", identity);
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
             const link = await LinkService.getLink(identity, linkId);
-            console.log("link detail", link);
             setFormData(link);
             setIsNameSetByUser(true);
+            setIsLoading(false);
         };
         fetchData();
     }, [linkId, identity]);
@@ -38,18 +38,20 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         await LinkService.updateLink(identity, linkId, {
             ...formData,
             ...values,
-            state: { 'PendingDetail': null }
         });
     };
 
     const handleSubmitLinkDetails = async (values: any) => {
         if (!linkId) return;
-        setFormData({ ...formData, ...values });
-        await LinkService.updateLink(identity, linkId, {
-            ...formData,
-            ...values,
-            state: { 'PendingPreview': null }
-        });
+        try {
+            setFormData({ ...formData, ...values });
+            await LinkService.updateLink(identity, linkId, {
+                ...formData,
+                ...values,
+            });
+        } finally {
+            navigate("/");
+        }
     };
 
     const handleSubmit = async (values: any) => {
@@ -57,8 +59,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         await LinkService.updateLink(identity, linkId, {
             ...formData,
             ...values,
-            state: { 'Active': null }
         });
+        navigate("/");
     };
 
     const handleChange = (values: any) => {
@@ -67,6 +69,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
         setFormData({ ...formData, ...values });
     };
+
+    if (isLoading) return null;
 
     return (
         <div className="w-screen flex flex-col items-center py-5">

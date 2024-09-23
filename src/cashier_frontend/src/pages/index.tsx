@@ -11,7 +11,7 @@ import { UserService } from "@/services/user.service";
 
 export default function HomePage() {
     const { t } = useTranslation();
-    const { agent } = useIdentityKit();
+    const { identity } = useIdentityKit();
     const [links, setLinks] = useState<any>([]);
     const [user, setUser] = useState<any>(null);
     const [showGuide, setShowGuide] = useState(true);
@@ -47,6 +47,8 @@ export default function HomePage() {
         const response = await LinkService.createLink(identity);
         navigate(`/link/${response}`);
     }
+
+    console.log(identity);
 
     return (
         <div className="w-screen flex justify-center py-5">

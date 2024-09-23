@@ -5,6 +5,21 @@ import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 
+const parseLink = (link: any) => {
+    return {
+        id: link.id,
+        title: link.title ? link.title[0] : undefined,
+        description: link.description ? link.description[0] : undefined,
+        image: link.image ? link.image[0] : undefined,
+        link_type: link.link_type ? Object.keys(link.link_type[0])[0] : undefined,
+        asset_info: link.asset_info ? link.asset_info[0] : undefined,
+        actions: link.actions ? link.actions[0] : undefined,
+        state: link.state ? Object.keys(link.state[0])[0] : undefined,
+        template: link.template ? Object.keys(link.template[0])[0] : undefined,
+        creator: link.creator ? link.creator[0] : undefined,
+    };
+};
+
 export const LinkService = {
     getLinks: async (identity: Identity | PartialIdentity | undefined) => {
         const actor = createActor(BACKEND_CANISTER_ID, {
@@ -14,6 +29,17 @@ export const LinkService = {
             offset: BigInt(0),
             limit: BigInt(10),
         }]));
+
+
+        response.data = response.data.map((link: any) => {
+            for (const key in link) {
+                if (Array.isArray(link[key]) && link[key].length === 0) {
+                    delete link[key];
+                }
+            }
+            return parseLink(link);
+        }) as any;
+
         return response;
     },
     getLink: async (identity: Identity | PartialIdentity | undefined, linkId: string) => {
@@ -21,7 +47,7 @@ export const LinkService = {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
         const response = parseResultResponse(await actor.get_link(linkId));
-        return response;
+        return parseLink(response);
     },
     createLink: async (identity: Identity | PartialIdentity | undefined) => {
         const actor = createActor(BACKEND_CANISTER_ID, {
@@ -33,23 +59,21 @@ export const LinkService = {
         return response;
     },
     updateLink: async (identity: Identity | PartialIdentity | undefined, linkId: string, data: any) => {
-        console.log("form data", data);
-
         const actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
         const completeData: UpdateLinkInput = {
             title: data.title ? [data.title] : [],
             asset_info: data.asset_info ? [data.asset_info] : [],
-            link_type: data.link_type ? data.link_type : [],
+            link_type: [],
             description: data.description ? [data.description] : [],
             actions: data.actions ? [data.actions] : [],
-            state: data.state ? [data.state] : [],
+            state: [],
             template: data.template ? [data.template] : [],
             image: data.image ? [data.image] : [],
         };
 
-        console.log("submit data", completeData);
+        console.log("called update_link with linkId =", linkId, "and data =", completeData);
         const response = parseResultResponse(await actor.update_link(linkId, completeData));
         return response;
     }
