@@ -6,6 +6,7 @@ export default function ProtectedRoute({ children, ...rest }: { children: React.
     const { identity } = useIdentityKit();
     const { t } = useTranslation();
     return (
+        <></>
         // <Route
         //     {...rest}
         //     render={({ location }) =>
