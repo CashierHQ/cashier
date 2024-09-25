@@ -76,10 +76,6 @@ async fn update_link(id: String, input: UpdateLinkInput) -> Result<LinkDetail, C
                 }
             }
         }
-        Some(_) => {
-            // Handle other link types if necessary
-            ic_cdk::api::trap("Link type is not implemented");
-        }
         None => {
             return Err(CanisterError::HandleApiError(
                 "Link type is not found".to_string(),

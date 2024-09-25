@@ -8,6 +8,23 @@ pub struct PaginateInput {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct FilterInput {
+    pub order_by: String,
+    pub start_time: Option<u64>,
+    pub end_time: Option<u64>,
+}
+
+impl Default for FilterInput {
+    fn default() -> Self {
+        Self {
+            order_by: "desc".to_string(),
+            start_time: None,
+            end_time: None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct PaginateResultMetadata {
     pub total: usize,
     pub offset: usize,

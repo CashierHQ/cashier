@@ -61,6 +61,7 @@ pub struct LinkDetail {
     pub template: Option<Template>,
     pub state: Option<State>,
     pub creator: Option<String>,
+    pub create_at: Option<u64>,
 }
 
 impl Storable for LinkDetail {
@@ -98,6 +99,7 @@ impl LinkDetail {
             template: None,
             state: Some(State::New),
             creator: Some(creator),
+            create_at: Some(ic_cdk::api::time()),
         }
     }
 
