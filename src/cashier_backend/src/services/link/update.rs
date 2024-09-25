@@ -1,38 +1,27 @@
-use crate::{
-    store::link_store,
-    types::link_detail::{LinkDetail, LinkDetailUpdate, State},
-};
+use crate::types::link_detail::{LinkDetail, LinkDetailUpdate, State};
 
-pub fn handle_update_create_and_airdrop_detail(
-    id: String,
+pub fn handle_update_create_and_airdrop_nft(
     input: LinkDetailUpdate,
     mut link_detail: LinkDetail,
 ) -> Result<LinkDetail, String> {
-    match link_detail.state {
-        Some(State::New) | Some(State::PendingDetail) | Some(State::PendingPreview) => {
-            // Update to PendingDetail
-            link_detail.update(input);
-            link_store::update(id.clone(), link_detail.clone());
-            Ok(link_detail)
-        }
-        Some(State::Active) => {
-            // validate input
-            match is_valid_fields_before_active(&link_detail) {
-                Ok(_) => {}
-                Err(e) => return Err(e),
+    let state_machine_result = match input.state {
+        Some(State::New) => link_detail.back_to_new(),
+        Some(State::PendingDetail) => {
+            if link_detail.state == Some(State::New) {
+                link_detail.to_pending_detail(input)
+            } else {
+                link_detail.back_to_pending_detail()
             }
+        }
+        Some(State::PendingPreview) => link_detail.to_pending_preview(input),
+        Some(State::Active) => link_detail.activate(),
+        Some(State::Inactive) => link_detail.deactivate(),
+        None => Err("State is not implemented".to_string()),
+    };
 
-            // update only state
-            link_detail.state = Some(State::Active);
-            link_store::update(id.clone(), link_detail.clone());
-            Ok(link_detail)
-        }
-        Some(State::Inactive) => {
-            link_detail.state = Some(State::Inactive);
-            link_store::update(id.clone(), link_detail.clone());
-            Ok(link_detail)
-        }
-        None => Err("State is not found".to_string()),
+    match state_machine_result {
+        Ok(_) => return Ok(link_detail.save()),
+        Err(e) => return Err(e),
     }
 }
 
