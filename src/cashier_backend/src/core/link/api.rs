@@ -4,10 +4,7 @@ use crate::{
     core::{guard::is_not_anonymous, LinkType, PaginateResult, UpdateLinkInput},
     services::{
         self,
-        link::{
-            create_new, is_link_creator,
-            update::{self, handle_update_create_and_airdrop_detail},
-        },
+        link::{create_new, is_link_creator, update::handle_update_create_and_airdrop_nft},
     },
     types::{api::PaginateInput, error::CanisterError, link_detail::LinkDetail},
     utils::logger,
@@ -30,7 +27,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDe
     }
 }
 
-#[query(guard = "is_not_anonymous")]
+#[query]
 async fn get_link(id: String) -> Result<LinkDetail, String> {
     match services::link::get_link_by_id(id) {
         Some(link) => Ok(link),
@@ -57,10 +54,8 @@ async fn update_link(id: String, input: UpdateLinkInput) -> Result<LinkDetail, C
     let creator = ic_cdk::api::caller();
 
     // get link type
-    let link = match services::link::get_link_by_id(id.clone()) {
-        Some(link) => link,
-        None => return Err(CanisterError::HandleApiError("Link not found".to_string())),
-    };
+    let link = services::link::get_link_by_id(id.clone())
+        .ok_or_else(|| CanisterError::HandleApiError("Link not found".to_string()))?;
 
     match is_link_creator(creator.to_text(), &id) {
         true => (),
@@ -73,11 +68,7 @@ async fn update_link(id: String, input: UpdateLinkInput) -> Result<LinkDetail, C
 
     match link.link_type {
         Some(LinkType::NftCreateAndAirdrop) => {
-            match handle_update_create_and_airdrop_detail(
-                id,
-                input.to_link_detail_update(),
-                link.clone(),
-            ) {
+            match handle_update_create_and_airdrop_nft(input.to_link_detail_update(), link) {
                 Ok(link) => Ok(link),
                 Err(e) => {
                     logger::error(&format!("Failed to update link: {}", e));
