@@ -27,6 +27,9 @@ const linkDetailsSchema = z.object({
     amount: z.coerce.number().min(1),
 });
 
+const INCREASE = 'increase';
+const DECREASE = 'decrease';
+
 export default function LinkDetails({
     defaultValues = {},
     handleSubmit,
@@ -58,6 +61,16 @@ export default function LinkDetails({
         form.setValue("image", base64, { shouldValidate: true });
         handleChange({ "image": base64 })
     };
+
+    const handleAdjustAmount = (request: string, value: number) => {
+        if (request === DECREASE) {
+            if(value > 1) {
+                form.setValue("amount", Number(value) - 1);
+            }
+        } else {
+            form.setValue("amount", Number(value) + 1)
+        }
+    }
 
     return (
         <div className="w-full">
@@ -117,9 +130,10 @@ export default function LinkDetails({
                                 <FormControl>
                                     <NumberInput
                                         placeholder={t("create.amount")}
-                                        handleIncrease={() => form.setValue("amount", Number(field.value) + 1)}
-                                        handleDecrease={() => form.setValue("amount", Number(field.value) - 1)}
+                                        handleIncrease={() => handleAdjustAmount(INCREASE, Number(field.value))}
+                                        handleDecrease={() => handleAdjustAmount(DECREASE, Number(field.value))}
                                         min={0}
+                                        disableDecrease={Number(field.value) <= 1}
                                         {...field}
                                     />
                                 </FormControl>
