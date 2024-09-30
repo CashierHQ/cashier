@@ -14,6 +14,13 @@
         "amount": "Amount",
         "defaultTemplate": "Default template"
     },
+    "claim": {
+        "claim": "Claim",
+        "claimToken": "Claim token",
+        "amount": "Amount",
+        "address": "Address",
+        "addressPlaceholder": "ex. 0xecd93dyaf....asfewg934d"
+    },
     "continue": "Continue",
     "submit": "Submit",
     "cashier": "Cashier",

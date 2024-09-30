@@ -1,21 +1,33 @@
 import { useEffect, useState } from "react";
-import LinkTemplate from "./LinkTemplate";
-import LinkDetails from "./LinkDetails";
-import { useNavigate, useParams } from "react-router-dom";
-import MultiStepForm from "@/components/multi-step-form";
-import { useTranslation } from "react-i18next";
-import LinkPreview from "./LinkPreview";
+import { useParams } from "react-router-dom";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import { LinkService } from "@/services/link.service";
+import LinkCard from "@/components/link-card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@/components/ui/input";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { IoIosArrowBack } from "react-icons/io";
 
-export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
+const ClaimSchema = z.object({
+    token: z.string().min(5),
+    address: z.string().min(5),
+    amount: z.coerce.number().min(0),
+});
+
+export default function ClaimPage() {
     const [formData, setFormData] = useState<any>({});
-    const [isNameSetByUser, setIsNameSetByUser] = useState(false);
-    const { t } = useTranslation();
-    const navigate = useNavigate();
     const { linkId } = useParams();
     const { identity } = useIdentityKit();
     const [isLoading, setIsLoading] = useState(true);
+    const [isClaiming, setIsClaiming] = useState(false);
+    const { t } = useTranslation();
+    const form = useForm<z.infer<typeof ClaimSchema>>({
+        resolver: zodResolver(ClaimSchema),
+    })
 
     useEffect(() => {
         if (!linkId) return;
@@ -23,91 +35,84 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         const fetchData = async () => {
             const link = await LinkService.getLink(identity, linkId);
             setFormData(link);
-            setIsNameSetByUser(true);
+            form.setValue("token", link.title);
+            form.setValue("amount", link.amount);
             setIsLoading(false);
         };
         fetchData();
     }, [linkId, identity]);
 
-    const handleSubmitLinkTemplate = async (values: any) => {
-        if (!linkId) return;
-        if (!formData.name || !isNameSetByUser) {
-            values.name = values.title;
-        }
-        setFormData({ ...formData, ...values });
-        await LinkService.updateLink(identity, linkId, {
-            ...formData,
-            ...values,
-            state: {
-                "PendingDetail": null
-            }
-        });
-    };
-
-    const handleSubmitLinkDetails = async (values: any) => {
-        if (!linkId) return;
-        try {
-            setFormData({ ...formData, ...values });
-            await LinkService.updateLink(identity, linkId, {
-                ...formData,
-                ...values,
-                state: {
-                    "PendingPreview": null
-                }
-            });
-        } finally {
-            navigate("/");
-        }
-    };
-
-    const handleSubmit = async (values: any) => {
-        if (!linkId) return;
-        await LinkService.updateLink(identity, linkId, {
-            ...formData,
-            ...values,
-            state: {
-                "Active": null
-            }
-        });
-        navigate("/");
-    };
-
-    const handleChange = (values: any) => {
-        if (values.name) {
-            setIsNameSetByUser(true);
-        }
-        setFormData({ ...formData, ...values });
-    };
-
     if (isLoading) return null;
 
-    return (
-        <div className="w-screen flex flex-col items-center py-5">
-            <div className="w-11/12 max-w-[400px]">
-                <MultiStepForm
-                    initialStep={initialStep}
-                    formData={formData}
-                    handleSubmit={handleSubmit}
-                    handleBack={() => navigate("/")}
-                    handleChange={handleChange}
-                >
-                    <MultiStepForm.Item
-                        name={t("create.linkTemplate")}
-                        handleSubmit={handleSubmitLinkTemplate}
-                        render={(props) => <LinkTemplate {...props} />}
-                    />
-                    <MultiStepForm.Item
-                        name={t("create.linkDetails")}
-                        handleSubmit={handleSubmitLinkDetails}
-                        render={(props) => <LinkDetails {...props} />}
-                    />
-                    <MultiStepForm.Item
-                        name={t("create.linkPreview")}
-                        handleSubmit={handleSubmit}
-                        render={(props) => <LinkPreview {...props} />}
-                    />
-                </MultiStepForm>
+    const handleClaim = async () => {
+
+    }
+
+    if (isClaiming) return <div className="w-screen flex flex-col items-center py-5">
+        <div className="w-11/12 max-w-[400px]">
+            <div className="w-full flex justify-center items-center">
+                <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
             </div>
+            <div className="w-full flex justify-center items-center mt-5 relative">
+                <h3 className="font-semibold">{t("claim.claim")}</h3>
+                <div className="absolute left-[10px]" onClick={() => setIsClaiming(false)}>
+                    <IoIosArrowBack />
+                </div>
+            </div>
+            <Form {...form}>
+                <form className="flex flex-col gap-y-[10px] mt-3" onSubmit={form.handleSubmit(handleClaim)}>
+                    <FormField
+                        control={form.control}
+                        name="token"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t("claim.claimToken")}</FormLabel>
+                                <FormControl>
+                                    <Input disabled defaultValue={formData.title} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t("claim.amount")}</FormLabel>
+                                <FormControl>
+                                    <Input disabled defaultValue={formData.amount ?? 1} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t("claim.address")}</FormLabel>
+                                <FormControl>
+                                    <Input placeholder={t("claim.addressPlaceholder")} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2">{t("continue")}</Button>
+                </form>
+            </Form >
+        </div >
+    </div>
+
+    return <div className="w-screen flex flex-col items-center py-5">
+        <div className="w-11/12 max-w-[400px]">
+            <div className="w-full flex justify-center items-center">
+                <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+            </div>
+            <LinkCard label="Claim" src={formData.image} message={formData.description} title={formData.title} onClaim={() => setIsClaiming(true)} />
         </div>
-    );
+    </div>
+
 }

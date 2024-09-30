@@ -12,8 +12,6 @@ interface LinkData {
 export default function LinkPreview({ defaultValues, handleSubmit }: ParitalFormProps<LinkData>) {
     const { t } = useTranslation();
 
-    console.log(defaultValues);
-
     return (
         <div className="w-full flex flex-col items-center gap-y-3">
             <LinkCard label="Claim" src={defaultValues.image as any} message={defaultValues.description as any} title={defaultValues.name as any} />
