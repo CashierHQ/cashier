@@ -52,6 +52,10 @@ export default {
                 },
                 green: "#36a18b",
                 lightgreen: "#e8f2ee",
+                yellow: "#a17f37",
+                lightyellow: "#fffaf2",
+                lightpurple: "#e8e8f2",
+
             },
         },
     },

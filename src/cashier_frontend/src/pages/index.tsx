@@ -54,7 +54,7 @@ export default function HomePage() {
     const handleCreateLink = async () => {
         if (!user) return;
         const response = await LinkService.createLink(identity);
-        navigate(`/link/${response}`);
+        navigate(`/edit/${response}`);
     }
 
     const handleHideGuide = () => {
@@ -79,6 +79,8 @@ export default function HomePage() {
             <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2">Get started</Button>
         </div>
     }
+
+    console.log(identity);
 
     return (
         <div className="w-screen flex justify-center py-5">
@@ -117,7 +119,7 @@ export default function HomePage() {
                             <p className="text-gray-500">{t('home.noLinksFoundDescription')}</p>
                         </div>
                         : links.map((link: any) => (
-                            <Link to={`/link/${link.id}`} key={link.id}>
+                            <Link to={`/edit/${link.id}`} key={link.id}>
                                 <LinkItem key={link.id} link={link} />
                             </Link>
                         )))}

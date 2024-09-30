@@ -55,10 +55,7 @@ export default function LinkTemplate({
                         )}
                     />
                     <div className="w-full h-[1px] bg-gray-200 my-5" />
-                    <div className="flex flex-col items-center mb-[100px] w-full">
-                        <h2>{t("create.defaultTemplate")}</h2>
-                        <LinkCard src="/default-template.jpg" title="Title" message="Message" label="Claim" />
-                    </div>
+                    <img src="/default-template.svg" alt="Default template" className="w-full" />
                     <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2">{t("continue")}</Button>
                 </form>
             </Form>

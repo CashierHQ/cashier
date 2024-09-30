@@ -38,11 +38,12 @@ export default function LinkDetails({
         resolver: zodResolver(linkDetailsSchema),
         defaultValues: {
             description: "",
-            chain: "ICP",
+            chain: "IC",
             name: "",
             amount: 1,
             image: "",
             ...defaultValues,
+
         },
     });
 
@@ -133,14 +134,14 @@ export default function LinkDetails({
                             <FormItem>
 
                                 <FormLabel>{t("create.chain")}</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a Chain" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="ICP">ICP</SelectItem>
+                                        <SelectItem value="IC">ICP</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
