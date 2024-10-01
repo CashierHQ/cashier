@@ -39,8 +39,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             ...formData,
             ...values,
             state: {
-                PendingDetail: null,
-            },
+                "PendingDetail": null
+            }
         });
     };
 
@@ -52,8 +52,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 ...formData,
                 ...values,
                 state: {
-                    PendingPreview: null,
-                },
+                    "PendingPreview": null
+                }
             });
         } finally {
             navigate("/");
@@ -66,8 +66,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             ...formData,
             ...values,
             state: {
-                Active: null,
-            },
+                "Active": null
+            }
         });
         navigate("/");
     };

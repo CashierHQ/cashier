@@ -25,14 +25,11 @@ export const LinkService = {
         const actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
-        const response = parseResultResponse(
-            await actor.get_links([
-                {
-                    offset: BigInt(0),
-                    limit: BigInt(10),
-                },
-            ]),
-        );
+        const response = parseResultResponse(await actor.get_links([{
+            offset: BigInt(0),
+            limit: BigInt(10),
+        }]));
+
 
         response.data = response.data.map((link: any) => {
             for (const key in link) {
@@ -56,18 +53,12 @@ export const LinkService = {
         const actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
-        const response = parseResultResponse(
-            await actor.create_link({
-                link_type: { NftCreateAndAirdrop: null },
-            }),
-        );
+        const response = parseResultResponse(await actor.create_link({
+            link_type: { 'NftCreateAndAirdrop': null }
+        }));
         return response;
     },
-    updateLink: async (
-        identity: Identity | PartialIdentity | undefined,
-        linkId: string,
-        data: any,
-    ) => {
+    updateLink: async (identity: Identity | PartialIdentity | undefined, linkId: string, data: any) => {
         const actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
@@ -84,5 +75,5 @@ export const LinkService = {
         console.log("called update_link with linkId =", linkId, "and data =", completeData);
         const response = parseResultResponse(await actor.update_link(linkId, completeData));
         return response;
-    },
+    }
 };
