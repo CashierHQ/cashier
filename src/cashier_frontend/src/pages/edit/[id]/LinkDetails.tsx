@@ -124,6 +124,7 @@ export default function LinkDetails({
                     <FormField
                         control={form.control}
                         name="amount"
+                        defaultValue={1}
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t("create.amount")}</FormLabel>
@@ -132,7 +133,7 @@ export default function LinkDetails({
                                         placeholder={t("create.amount")}
                                         handleIncrease={() => handleAdjustAmount(INCREASE, Number(field.value))}
                                         handleDecrease={() => handleAdjustAmount(DECREASE, Number(field.value))}
-                                        min={0}
+                                        min={1}
                                         disableDecrease={Number(field.value) <= 1}
                                         {...field}
                                     />
@@ -146,7 +147,6 @@ export default function LinkDetails({
                         name="chain"
                         render={({ field }) => (
                             <FormItem>
-
                                 <FormLabel>{t("create.chain")}</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
