@@ -55,29 +55,46 @@ export default function HomePage() {
         if (!user) return;
         const response = await LinkService.createLink(identity);
         navigate(`/edit/${response}`);
-    }
+    };
 
     const handleHideGuide = () => {
         setShowGuide(false);
         localStorage.setItem("showGuide", "false");
-    }
+    };
 
     if (!agent) {
-        return <div className="w-screen flex justify-center py-5">
-            <div className="w-11/12 max-w-[400px] flex flex-col items-center">
-                <div className="w-full flex justify-between items-center">
-                    <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                    <ConnectWallet />
-                </div>
+        return (
+            <div className="w-screen flex justify-center py-5">
+                <div className="w-11/12 max-w-[400px] flex flex-col items-center">
+                    <div className="w-full flex justify-between items-center">
+                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                        <ConnectWallet />
+                    </div>
 
-                <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-[100px]">
-                    <span className="font-semibold mt-5 text-3xl text-center">Cashier Links - <br />fast, easy, and safe </span>
-                    <p className="text-gray-500 text-center mt-3">Start creating transaction links with Cashier: create & airdrop NFTs, and more features coming!</p>
-                    <img src="./landing.svg" alt="Cashier illustration" className="max-w-[300px] mt-5" />
+                    <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-[100px]">
+                        <span className="font-semibold mt-5 text-3xl text-center">
+                            Cashier Links - <br />
+                            fast, easy, and safe{" "}
+                        </span>
+                        <p className="text-gray-500 text-center mt-3">
+                            Start creating transaction links with Cashier: create & airdrop NFTs,
+                            and more features coming!
+                        </p>
+                        <img
+                            src="./landing.svg"
+                            alt="Cashier illustration"
+                            className="max-w-[300px] mt-5"
+                        />
+                    </div>
                 </div>
+                <Button
+                    type="submit"
+                    className="fixed bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
+                >
+                    Get started
+                </Button>
             </div>
-            <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2">Get started</Button>
-        </div>
+        );
     }
 
     console.log(identity);
@@ -102,8 +119,8 @@ export default function HomePage() {
                     </div>
                 )}
                 <h2 className="text-base font-semibold mb-5 mt-8">Links created by me</h2>
-                {isLoading
-                    ? Array.from({ length: 5 }).map((_, index) => (
+                {isLoading ? (
+                    Array.from({ length: 5 }).map((_, index) => (
                         <div className="flex items-center space-x-4 my-3" key={index}>
                             <Skeleton className="h-10 w-10 rounded-sm" />
                             <div className="space-y-2">
@@ -112,19 +129,31 @@ export default function HomePage() {
                             </div>
                         </div>
                     ))
-                    : (links.length === 0
-                        ? <div className="w-full flex flex-col items-center mt-[100px]">
-                            <IoSearch style={{ borderRadius: "5px", border: "solid gray 1px", padding: "8px" }} size="40px" />
-                            <span className="font-semibold mt-5">{t('home.noLinksFound')}</span>
-                            <p className="text-gray-500">{t('home.noLinksFoundDescription')}</p>
-                        </div>
-                        : links.map((link: any) => (
-                            <Link to={`/edit/${link.id}`} key={link.id}>
-                                <LinkItem key={link.id} link={link} />
-                            </Link>
-                        )))}
+                ) : links.length === 0 ? (
+                    <div className="w-full flex flex-col items-center mt-[100px]">
+                        <IoSearch
+                            style={{
+                                borderRadius: "5px",
+                                border: "solid gray 1px",
+                                padding: "8px",
+                            }}
+                            size="40px"
+                        />
+                        <span className="font-semibold mt-5">{t("home.noLinksFound")}</span>
+                        <p className="text-gray-500">{t("home.noLinksFoundDescription")}</p>
+                    </div>
+                ) : (
+                    links.map((link: any) => (
+                        <Link to={`/edit/${link.id}`} key={link.id}>
+                            <LinkItem key={link.id} link={link} />
+                        </Link>
+                    ))
+                )}
             </div>
-            <button className="fixed bottom-[30px] right-[30px] rounded-full w-[50px] h-[50px] bg-green text-white hover:bg-green/90" onClick={handleCreateLink}>
+            <button
+                className="fixed bottom-[30px] right-[30px] rounded-full w-[50px] h-[50px] bg-green text-white hover:bg-green/90"
+                onClick={handleCreateLink}
+            >
                 +
             </button>
         </div>
