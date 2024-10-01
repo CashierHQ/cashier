@@ -16,18 +16,8 @@ export default function LinkPreview({ defaultValues, handleSubmit }: ParitalForm
 
     return (
         <div className="w-full flex flex-col items-center gap-y-3">
-            <LinkCard
-                label="Claim"
-                src={defaultValues.image as any}
-                message={defaultValues.description as any}
-                title={defaultValues.name as any}
-            />
-            <Button
-                onClick={handleSubmit as any}
-                className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
-            >
-                {t("submit")}
-            </Button>
+            <LinkCard label="Claim" src={defaultValues.image as any} message={defaultValues.description as any} title={defaultValues.name as any} />
+            <Button onClick={handleSubmit as any} className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2">{t("submit")}</Button>
         </div>
     );
 }
