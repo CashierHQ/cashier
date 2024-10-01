@@ -14,6 +14,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, InputProps>(
         return (
             <div className="flex gap-x-3  focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-green">
                 <Button
+                    type="button"
                     variant="outline"
                     size="icon"
                     onClick={handleDecrease}
@@ -31,6 +32,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, InputProps>(
                     {...props}
                 />
                 <Button
+                    type="button"
                     variant="outline"
                     size="icon"
                     onClick={handleIncrease}

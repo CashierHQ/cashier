@@ -12,11 +12,12 @@ const parseLink = (link: any) => {
         description: link.description ? link.description[0] : undefined,
         image: link.image ? link.image[0] : undefined,
         link_type: link.link_type ? Object.keys(link.link_type[0])[0] : undefined,
-        asset_info: link.asset_info ? link.asset_info[0] : undefined,
         actions: link.actions ? link.actions[0] : undefined,
         state: link.state ? Object.keys(link.state[0])[0] : undefined,
         template: link.template ? Object.keys(link.template[0])[0] : undefined,
         creator: link.creator ? link.creator[0] : undefined,
+        amount: link.asset_info ? link.asset_info[0].amount : undefined,
+        chain: link.asset_info ? Object.keys(link.asset_info[0].chain)[0] : undefined,
     };
 };
 
@@ -34,14 +35,16 @@ export const LinkService = {
             ]),
         );
 
-        response.data = response.data.map((link: any) => {
-            for (const key in link) {
-                if (Array.isArray(link[key]) && link[key].length === 0) {
-                    delete link[key];
-                }
-            }
-            return parseLink(link);
-        }) as any;
+        response.data = response.data
+            ? (response.data.map((link: any) => {
+                  for (const key in link) {
+                      if (Array.isArray(link[key]) && link[key].length === 0) {
+                          delete link[key];
+                      }
+                  }
+                  return parseLink(link);
+              }) as any)
+            : [];
 
         return response;
     },
@@ -73,7 +76,17 @@ export const LinkService = {
         });
         const completeData: UpdateLinkInput = {
             title: data.title ? [data.title] : [],
-            asset_info: data.asset_info ? [data.asset_info] : [],
+            asset_info: data.amount
+                ? [
+                      {
+                          chain: {
+                              IC: null,
+                          },
+                          amount: data.amount,
+                          address: "",
+                      },
+                  ]
+                : [],
             description: data.description ? [data.description] : [],
             actions: data.actions ? [data.actions] : [],
             state: data.state ? [data.state] : [],

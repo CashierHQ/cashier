@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useIdentityKit } from "@nfid/identitykit/react";
 import { useTranslation } from "react-i18next";
 
@@ -6,5 +5,22 @@ export default function ProtectedRoute({ children, ...rest }: { children: React.
     const { agent } = useIdentityKit();
     const { identity } = useIdentityKit();
     const { t } = useTranslation();
-    return <div></div>;
+    return (
+        <></>
+        // <Route
+        //     {...rest}
+        //     render={({ location }) =>
+        //         agent && identity ? (
+        //             children
+        //         ) : (
+        //             <Redirect
+        //                 to={{
+        //                     pathname: "/",
+        //                     state: { from: location },
+        //                 }}
+        //             />
+        //         )
+        //     }
+        // />
+    );
 }

@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import LinkPage from "./pages/[id]";
+import LinkPage from "./pages/edit/[id]";
 import HomePage from "@/pages";
+import ClaimPage from "./pages/[id]";
 
 const router = createBrowserRouter([
     {
@@ -8,8 +9,12 @@ const router = createBrowserRouter([
         element: <HomePage />,
     },
     {
-        path: "/link/:linkId",
+        path: "/edit/:linkId",
         element: <LinkPage />,
+    },
+    {
+        path: "/:linkId",
+        element: <ClaimPage />,
     },
 ]);
 export default function AppRouter() {

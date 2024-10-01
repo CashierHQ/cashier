@@ -86,43 +86,18 @@ const main = async () => {
                 amount: 100,
             },
         ],
-        description: ["t23456e7r8t9y"],
-        actions: [
-            [
-                {
-                    arg: "tesst",
-                    method: "tesst",
-                    canister_id: "Tesst",
-                    label: "tesst",
-                },
-            ],
-        ],
-        state: [
-            {
-                PendingPreview: null,
-            },
-        ],
-        template: [{ Central: null }],
-        image: ["1234567"],
-    });
-
-    console.log("updateRes", updateRes);
-
-    const update1Res = await backend.update_link(id, {
-        title: [],
-        asset_info: [],
         description: [],
         actions: [],
         state: [
             {
-                Active: null,
+                PendingDetail: null,
             },
         ],
         template: [],
         image: [],
     });
 
-    console.log("update1Res", update1Res);
+    console.log("updateRes", updateRes);
 
     const link = await backend.get_link(id);
     console.log("link", safeParseJSON(link));

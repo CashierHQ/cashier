@@ -8,23 +8,23 @@ interface LinkData {
 function StateBadge({ state }: { state: any }) {
     if (state === "PendingDetail") {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-gray-200">
-                Pending Details
+            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightyellow text-yellow">
+                Pending details
             </div>
         );
     }
 
-    if (state === "PendingTemplate") {
+    if (state === "PendingReview") {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-gray-200">
-                Pending Template
+            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightpurple text-purple">
+                Pending review
             </div>
         );
     }
 
     if (state === "Active") {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightgreen">
+            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-green text-white">
                 Active
             </div>
         );
@@ -32,7 +32,7 @@ function StateBadge({ state }: { state: any }) {
 
     if (state === "Inactive") {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-gray-200">
+            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-gray-200 text-gray-700">
                 Inactive
             </div>
         );

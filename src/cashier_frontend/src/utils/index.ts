@@ -23,7 +23,10 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
         return response.ok;
     } else if ("Ok" in response) {
         for (const key in response.Ok) {
-            if (Array.isArray(response.Ok[key]) && response.Ok[key].length === 0) {
+            if (
+                (Array.isArray(response.Ok[key]) && response.Ok[key].length === 0) ||
+                !response.Ok[key]
+            ) {
                 delete response.Ok[key];
             }
         }
