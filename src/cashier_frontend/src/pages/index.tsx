@@ -8,15 +8,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { IoSearch } from "react-icons/io5";
 import { LinkService } from "@/services/link.service";
 import { UserService } from "@/services/user.service";
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
     const { t } = useTranslation();
-    const { identity } = useIdentityKit();
+    const { agent, identity } = useIdentityKit();
     const [links, setLinks] = useState<any>([]);
     const [user, setUser] = useState<any>(null);
-    const [showGuide, setShowGuide] = useState(true);
+    const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (localStorage.getItem("showGuide") === "false") {
+            setShowGuide(false);
+        } else {
+            setShowGuide(true);
+        }
+    }, []);
 
     useEffect(() => {
         if (!identity) return;
@@ -45,7 +54,30 @@ export default function HomePage() {
     const handleCreateLink = async () => {
         if (!user) return;
         const response = await LinkService.createLink(identity);
-        navigate(`/link/${response}`);
+        navigate(`/edit/${response}`);
+    }
+
+    const handleHideGuide = () => {
+        setShowGuide(false);
+        localStorage.setItem("showGuide", "false");
+    }
+
+    if (!agent) {
+        return <div className="w-screen flex justify-center py-5">
+            <div className="w-11/12 max-w-[400px] flex flex-col items-center">
+                <div className="w-full flex justify-between items-center">
+                    <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                    <ConnectWallet />
+                </div>
+
+                <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-[100px]">
+                    <span className="font-semibold mt-5 text-3xl text-center">Cashier Links - <br />fast, easy, and safe </span>
+                    <p className="text-gray-500 text-center mt-3">Start creating transaction links with Cashier: create & airdrop NFTs, and more features coming!</p>
+                    <img src="./landing.svg" alt="Cashier illustration" className="max-w-[300px] mt-5" />
+                </div>
+            </div>
+            <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2">Get started</Button>
+        </div>
     }
 
     console.log(identity);
@@ -63,7 +95,7 @@ export default function HomePage() {
                         <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
                         <button
                             className="text-green text-sm font-bold mt-3"
-                            onClick={() => setShowGuide(false)}
+                            onClick={handleHideGuide}
                         >
                             {t("home.guide.confirm")}
                         </button>
@@ -87,7 +119,7 @@ export default function HomePage() {
                             <p className="text-gray-500">{t('home.noLinksFoundDescription')}</p>
                         </div>
                         : links.map((link: any) => (
-                            <Link to={`/link/${link.id}`} key={link.id}>
+                            <Link to={`/edit/${link.id}`} key={link.id}>
                                 <LinkItem key={link.id} link={link} />
                             </Link>
                         )))}
