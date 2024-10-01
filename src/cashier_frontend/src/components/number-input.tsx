@@ -7,14 +7,19 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
     handleIncrease: () => void;
     handleDecrease: () => void;
     min?: number;
-    disableDecrease: boolean;
 }
 
 const NumberInput = React.forwardRef<HTMLInputElement, InputProps>(
-    ({ className, handleIncrease, handleDecrease, disableDecrease, ...props }, ref) => {
+    ({ className, handleIncrease, handleDecrease, ...props }, ref) => {
         return (
             <div className="flex gap-x-3  focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-green">
-                <Button type="button" variant="outline" size="icon" onClick={handleDecrease} className="text-green" disabled={disableDecrease}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleDecrease}
+                    className="text-green"
+                >
                     -
                 </Button>
                 <input
