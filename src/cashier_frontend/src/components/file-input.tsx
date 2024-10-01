@@ -70,12 +70,6 @@ const FileInput = forwardRef<HTMLInputElement, InputProps>(
                             >
                                 <FiTrash size="20px" />
                             </div>
-                            <div
-                                className="p-2 w-[38px] rounded-md border-[1px] shadow-sm border-gray-200 text-green"
-                                onClick={handleSelect}
-                            >
-                                <LuRefreshCw size="20px" />
-                            </div>
                         </div>
                     </div>
                 )}
