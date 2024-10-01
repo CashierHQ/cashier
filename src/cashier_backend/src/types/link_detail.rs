@@ -3,7 +3,7 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use crate::store::link_store;
+use crate::{store::link_store, utils::logger};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 #[repr(u8)]
@@ -162,7 +162,7 @@ impl LinkDetail {
                 self.state = Some(State::New);
                 Ok(())
             }
-            _ => Err("Invalid state transition".to_string()),
+            _ => Err("Invalid state transition back_to_new".to_string()),
         }
     }
 
@@ -172,7 +172,7 @@ impl LinkDetail {
                 self.state = Some(State::PendingDetail);
                 Ok(())
             }
-            _ => Err("Invalid state transition".to_string()),
+            _ => Err("Invalid state transition back_to_pending_detail".to_string()),
         }
     }
 
@@ -183,7 +183,7 @@ impl LinkDetail {
                 self.update(input);
                 Ok(())
             }
-            _ => Err("Invalid state transition".to_string()),
+            _ => Err("Invalid state transition to_pending_detail".to_string()),
         }
     }
 
@@ -194,7 +194,7 @@ impl LinkDetail {
                 self.update(input);
                 Ok(())
             }
-            _ => Err("Invalid state transition".to_string()),
+            _ => Err("Invalid state transition to_pending_preview".to_string()),
         }
     }
 
@@ -205,7 +205,7 @@ impl LinkDetail {
                 self.state = Some(State::Active);
                 Ok(())
             }
-            _ => Err("Invalid state transition".to_string()),
+            _ => Err("Invalid state transition activate".to_string()),
         }
     }
 
@@ -215,7 +215,7 @@ impl LinkDetail {
                 self.state = Some(State::Inactive);
                 Ok(())
             }
-            _ => Err("Invalid state transition".to_string()),
+            _ => Err("Invalid state transition deactivate".to_string()),
         }
     }
 

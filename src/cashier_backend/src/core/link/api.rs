@@ -69,7 +69,11 @@ async fn update_link(id: String, input: UpdateLinkInput) -> Result<LinkDetail, C
     match link.link_type {
         Some(LinkType::NftCreateAndAirdrop) => {
             match handle_update_create_and_airdrop_nft(input.to_link_detail_update(), link) {
-                Ok(link) => Ok(link),
+                Ok(link) => {
+                    logger::info(&format!("input : {:?}", input));
+                    logger::info(&format!("Link updated: {:?}", link));
+                    Ok(link)
+                }
                 Err(e) => {
                     logger::error(&format!("Failed to update link: {}", e));
                     Err(CanisterError::HandleApiError(e))
