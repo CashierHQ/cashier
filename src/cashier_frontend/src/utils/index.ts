@@ -1,23 +1,22 @@
 export const safeParseJSON = (arg: Record<string, unknown>): any => {
-    return JSON.stringify(
-        arg,
-        (key, value) => (typeof value === "bigint" ? value.toString() : value),
+    return JSON.stringify(arg, (key, value) =>
+        typeof value === "bigint" ? value.toString() : value,
     );
 };
 
 export type Response<T, E> =
     | {
-        ok: T;
-    }
+          ok: T;
+      }
     | {
-        err: E;
-    }
+          err: E;
+      }
     | {
-        Ok: T;
-    }
+          Ok: T;
+      }
     | {
-        Err: E;
-    };
+          Err: E;
+      };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
     if ("ok" in response) {
@@ -46,8 +45,7 @@ export const resizeImage = (file: Blob): Promise<Blob> => {
             const img = new Image();
             img.src = event.target?.result as string;
             img.onload = () => {
-                if (img.width <= 500 && img.height <= 500)
-                    return resolve(file);
+                if (img.width <= 500 && img.height <= 500) return resolve(file);
                 const elem = document.createElement("canvas");
                 if (img.width > img.height) {
                     elem.width = 500;
@@ -66,7 +64,7 @@ export const resizeImage = (file: Blob): Promise<Blob> => {
             };
         };
     });
-}
+};
 
 export const fileToBase64 = (file: Blob) => {
     return new Promise<string>((resolve, reject) => {

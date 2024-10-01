@@ -14,7 +14,13 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "@/components/ui/textarea";
 import { ParitalFormProps } from "@/components/multi-step-form";
-import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from "@/components/ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectTrigger,
+    SelectValue,
+    SelectItem,
+} from "@/components/ui/select";
 import { FileInput } from "@/components/file-input";
 import { fileToBase64, resizeImage } from "@/utils";
 import { NumberInput } from "@/components/number-input";
@@ -49,13 +55,13 @@ export default function LinkDetails({
     const handleUploadImage = async (file: File | null) => {
         if (!file) {
             form.setValue("image", "");
-            handleChange({ "image": "" })
+            handleChange({ image: "" });
             return;
         }
         const resizedImage = await resizeImage(file);
         const base64 = await fileToBase64(resizedImage);
         form.setValue("image", base64, { shouldValidate: true });
-        handleChange({ "image": base64 })
+        handleChange({ image: base64 });
     };
 
     return (
@@ -74,11 +80,17 @@ export default function LinkDetails({
                             return (
                                 <div>
                                     <FormLabel>{t("create.photo")}</FormLabel>
-                                    <FileInput defaultValue={form.getValues("image") as any} onFileChange={handleUploadImage} />
-                                    {form.formState.errors.image && <FormMessage>{form.formState.errors.image.message}</FormMessage>}
+                                    <FileInput
+                                        defaultValue={form.getValues("image") as any}
+                                        onFileChange={handleUploadImage}
+                                    />
+                                    {form.formState.errors.image && (
+                                        <FormMessage>
+                                            {form.formState.errors.image.message}
+                                        </FormMessage>
+                                    )}
                                 </div>
-
-                            )
+                            );
                         }}
                     />
                     <FormField
@@ -101,7 +113,11 @@ export default function LinkDetails({
                             <FormItem>
                                 <FormLabel>{t("create.message")}</FormLabel>
                                 <FormControl>
-                                    <Textarea className="resize-none" placeholder={t("create.message")} {...field} />
+                                    <Textarea
+                                        className="resize-none"
+                                        placeholder={t("create.message")}
+                                        {...field}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -116,8 +132,12 @@ export default function LinkDetails({
                                 <FormControl>
                                     <NumberInput
                                         placeholder={t("create.amount")}
-                                        handleIncrease={() => form.setValue("amount", Number(field.value) + 1)}
-                                        handleDecrease={() => form.setValue("amount", Number(field.value) - 1)}
+                                        handleIncrease={() =>
+                                            form.setValue("amount", Number(field.value) + 1)
+                                        }
+                                        handleDecrease={() =>
+                                            form.setValue("amount", Number(field.value) - 1)
+                                        }
                                         min={0}
                                         {...field}
                                     />
@@ -131,9 +151,12 @@ export default function LinkDetails({
                         name="chain"
                         render={({ field }) => (
                             <FormItem>
-
                                 <FormLabel>{t("create.chain")}</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    disabled
+                                >
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a Chain" />
@@ -147,7 +170,12 @@ export default function LinkDetails({
                             </FormItem>
                         )}
                     />
-                    <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2">{t("continue")}</Button>
+                    <Button
+                        type="submit"
+                        className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
+                    >
+                        {t("continue")}
+                    </Button>
                 </form>
             </Form>
         </div>

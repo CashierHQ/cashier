@@ -46,7 +46,7 @@ export default function HomePage() {
         if (!user) return;
         const response = await LinkService.createLink(identity);
         navigate(`/link/${response}`);
-    }
+    };
 
     console.log(identity);
 
@@ -70,8 +70,8 @@ export default function HomePage() {
                     </div>
                 )}
                 <h2 className="text-base font-semibold mb-5 mt-8">Links created by me</h2>
-                {isLoading
-                    ? Array.from({ length: 5 }).map((_, index) => (
+                {isLoading ? (
+                    Array.from({ length: 5 }).map((_, index) => (
                         <div className="flex items-center space-x-4 my-3" key={index}>
                             <Skeleton className="h-10 w-10 rounded-sm" />
                             <div className="space-y-2">
@@ -80,19 +80,31 @@ export default function HomePage() {
                             </div>
                         </div>
                     ))
-                    : (links.length === 0
-                        ? <div className="w-full flex flex-col items-center mt-[100px]">
-                            <IoSearch style={{ borderRadius: "5px", border: "solid gray 1px", padding: "8px" }} size="40px" />
-                            <span className="font-semibold mt-5">{t('home.noLinksFound')}</span>
-                            <p className="text-gray-500">{t('home.noLinksFoundDescription')}</p>
-                        </div>
-                        : links.map((link: any) => (
-                            <Link to={`/link/${link.id}`} key={link.id}>
-                                <LinkItem key={link.id} link={link} />
-                            </Link>
-                        )))}
+                ) : links.length === 0 ? (
+                    <div className="w-full flex flex-col items-center mt-[100px]">
+                        <IoSearch
+                            style={{
+                                borderRadius: "5px",
+                                border: "solid gray 1px",
+                                padding: "8px",
+                            }}
+                            size="40px"
+                        />
+                        <span className="font-semibold mt-5">{t("home.noLinksFound")}</span>
+                        <p className="text-gray-500">{t("home.noLinksFoundDescription")}</p>
+                    </div>
+                ) : (
+                    links.map((link: any) => (
+                        <Link to={`/link/${link.id}`} key={link.id}>
+                            <LinkItem key={link.id} link={link} />
+                        </Link>
+                    ))
+                )}
             </div>
-            <button className="fixed bottom-[30px] right-[30px] rounded-full w-[50px] h-[50px] bg-green text-white hover:bg-green/90" onClick={handleCreateLink}>
+            <button
+                className="fixed bottom-[30px] right-[30px] rounded-full w-[50px] h-[50px] bg-green text-white hover:bg-green/90"
+                onClick={handleCreateLink}
+            >
                 +
             </button>
         </div>
