@@ -1,19 +1,36 @@
-use crate::types::link_detail::{LinkDetail, LinkDetailUpdate, State};
+use crate::{
+    types::link_detail::{LinkDetail, LinkDetailUpdate, State},
+    utils::logger,
+};
 
 pub fn handle_update_create_and_airdrop_nft(
     input: LinkDetailUpdate,
     mut link_detail: LinkDetail,
 ) -> Result<LinkDetail, String> {
     let state_machine_result = match input.state {
-        Some(State::New) => link_detail.back_to_new(),
-        Some(State::PendingDetail) => {
-            if link_detail.state == Some(State::New) {
-                link_detail.to_pending_detail(input)
-            } else {
-                link_detail.back_to_pending_detail()
-            }
+        // current allow free transition for 3 states
+        Some(State::New) => {
+            link_detail.update(input);
+            Ok(())
         }
-        Some(State::PendingPreview) => link_detail.to_pending_preview(input),
+        Some(State::PendingDetail) => {
+            link_detail.update(input);
+            Ok(())
+        }
+        Some(State::PendingPreview) => {
+            link_detail.update(input);
+            Ok(())
+        }
+        //FUTURE change
+        // Some(State::New) => link_detail.back_to_new(),
+        // Some(State::PendingDetail) => {
+        //     if link_detail.state == Some(State::New) {
+        //         link_detail.to_pending_detail(input)
+        //     } else {
+        //         link_detail.back_to_pending_detail()
+        //     }
+        // }
+        // Some(State::PendingPreview) => link_detail.to_pending_preview(input),
         Some(State::Active) => link_detail.activate(),
         Some(State::Inactive) => link_detail.deactivate(),
         None => Err("State is not implemented".to_string()),
@@ -21,7 +38,12 @@ pub fn handle_update_create_and_airdrop_nft(
 
     match state_machine_result {
         Ok(_) => return Ok(link_detail.save()),
-        Err(e) => return Err(e),
+        Err(e) => {
+            return {
+                logger::error(&format!("Error to update {:?}", link_detail));
+                Err(e)
+            }
+        }
     }
 }
 

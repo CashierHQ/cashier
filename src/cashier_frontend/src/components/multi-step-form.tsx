@@ -86,7 +86,7 @@ const Item: FunctionComponent<ItemProp> = ({ handleSubmit, render }) => {
         <>
             {render({
                 defaultValues: {},
-                handleChange: () => { },
+                handleChange: () => {},
                 handleSubmit: handleSubmit,
             })}
         </>
