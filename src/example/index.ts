@@ -61,6 +61,7 @@ const main = async () => {
             NftCreateAndAirdrop: null,
         },
     });
+
     console.log("createUserRes", createUserRes);
     console.log("createLinkRes", createLinkRes);
     const links = await backend.get_links([
@@ -78,11 +79,20 @@ const main = async () => {
 
     const updateRes = await backend.update_link(id, {
         title: ["test"],
-        asset_info: [],
-        link_type: [],
+        asset_info: [
+            {
+                chain: { IC: null },
+                address: "test",
+                amount: 100,
+            },
+        ],
         description: [],
         actions: [],
-        state: [],
+        state: [
+            {
+                PendingDetail: null,
+            },
+        ],
         template: [],
         image: [],
     });

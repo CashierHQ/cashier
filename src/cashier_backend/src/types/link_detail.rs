@@ -3,6 +3,8 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+use crate::{store::link_store, utils::logger};
+
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 #[repr(u8)]
 pub enum LinkType {
@@ -29,7 +31,7 @@ pub struct AssetAirdropInfo {
     pub amount: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
 pub enum State {
     // allow edit
     New,
@@ -121,5 +123,104 @@ impl LinkDetail {
         if let Some(state) = input.state {
             self.state = Some(state);
         }
+    }
+
+    pub fn validate_fields_before_active(&self) -> Result<(), String> {
+        if self.id.is_empty() {
+            return Err("id is empty".to_string());
+        }
+        if self.title.as_ref().map_or(true, |s| s.is_empty()) {
+            return Err("title is missing or empty".to_string());
+        }
+        if self.description.as_ref().map_or(true, |s| s.is_empty()) {
+            return Err("description is missing or empty".to_string());
+        }
+        if self.image.as_ref().map_or(true, |s| s.is_empty()) {
+            return Err("image is missing or empty".to_string());
+        }
+        if self.link_type.is_none() {
+            return Err("link_type is missing".to_string());
+        }
+        if self.asset_info.is_none() {
+            return Err("asset_info is missing".to_string());
+        }
+        if self.actions.as_ref().map_or(true, |v| v.is_empty()) {
+            return Err("actions are missing or empty".to_string());
+        }
+        if self.template.is_none() {
+            return Err("template is missing".to_string());
+        }
+        if self.creator.as_ref().map_or(true, |s| s.is_empty()) {
+            return Err("creator is missing or empty".to_string());
+        }
+        Ok(())
+    }
+
+    pub fn back_to_new(&mut self) -> Result<(), String> {
+        match self.state {
+            Some(State::PendingDetail) => {
+                self.state = Some(State::New);
+                Ok(())
+            }
+            _ => Err("Invalid state transition back_to_new".to_string()),
+        }
+    }
+
+    pub fn back_to_pending_detail(&mut self) -> Result<(), String> {
+        match self.state {
+            Some(State::PendingPreview) => {
+                self.state = Some(State::PendingDetail);
+                Ok(())
+            }
+            _ => Err("Invalid state transition back_to_pending_detail".to_string()),
+        }
+    }
+
+    pub fn to_pending_detail(&mut self, input: LinkDetailUpdate) -> Result<(), String> {
+        match self.state {
+            Some(State::New) => {
+                self.state = Some(State::PendingDetail);
+                self.update(input);
+                Ok(())
+            }
+            _ => Err("Invalid state transition to_pending_detail".to_string()),
+        }
+    }
+
+    pub fn to_pending_preview(&mut self, input: LinkDetailUpdate) -> Result<(), String> {
+        match self.state {
+            Some(State::PendingDetail) => {
+                self.state = Some(State::PendingPreview);
+                self.update(input);
+                Ok(())
+            }
+            _ => Err("Invalid state transition to_pending_preview".to_string()),
+        }
+    }
+
+    pub fn activate(&mut self) -> Result<(), String> {
+        self.validate_fields_before_active()?;
+        match self.state {
+            Some(State::PendingPreview) => {
+                self.state = Some(State::Active);
+                Ok(())
+            }
+            _ => Err("Invalid state transition activate".to_string()),
+        }
+    }
+
+    pub fn deactivate(&mut self) -> Result<(), String> {
+        match self.state {
+            Some(State::Active) => {
+                self.state = Some(State::Inactive);
+                Ok(())
+            }
+            _ => Err("Invalid state transition deactivate".to_string()),
+        }
+    }
+
+    pub fn save(&self) -> LinkDetail {
+        link_store::update(self.id.clone(), self.clone());
+        self.clone()
     }
 }

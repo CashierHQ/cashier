@@ -26,7 +26,13 @@ const NumberInput = React.forwardRef<HTMLInputElement, InputProps>(
                     ref={ref}
                     {...props}
                 />
-                <Button type="button" variant="outline" size="icon" onClick={handleIncrease} className="text-green">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleIncrease}
+                    className="text-green"
+                >
                     +
                 </Button>
             </div>
