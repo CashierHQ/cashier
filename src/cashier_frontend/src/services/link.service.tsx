@@ -26,19 +26,25 @@ export const LinkService = {
         const actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
-        const response = parseResultResponse(await actor.get_links([{
-            offset: BigInt(0),
-            limit: BigInt(10),
-        }]));
+        const response = parseResultResponse(
+            await actor.get_links([
+                {
+                    offset: BigInt(0),
+                    limit: BigInt(10),
+                },
+            ]),
+        );
 
-        response.data = response.data ? response.data.map((link: any) => {
-            for (const key in link) {
-                if (Array.isArray(link[key]) && link[key].length === 0) {
-                    delete link[key];
-                }
-            }
-            return parseLink(link);
-        }) as any : [];
+        response.data = response.data
+            ? (response.data.map((link: any) => {
+                  for (const key in link) {
+                      if (Array.isArray(link[key]) && link[key].length === 0) {
+                          delete link[key];
+                      }
+                  }
+                  return parseLink(link);
+              }) as any)
+            : [];
 
         return response;
     },
@@ -53,24 +59,34 @@ export const LinkService = {
         const actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
-        const response = parseResultResponse(await actor.create_link({
-            link_type: { 'NftCreateAndAirdrop': null }
-        }));
+        const response = parseResultResponse(
+            await actor.create_link({
+                link_type: { NftCreateAndAirdrop: null },
+            }),
+        );
         return response;
     },
-    updateLink: async (identity: Identity | PartialIdentity | undefined, linkId: string, data: any) => {
+    updateLink: async (
+        identity: Identity | PartialIdentity | undefined,
+        linkId: string,
+        data: any,
+    ) => {
         const actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
         const completeData: UpdateLinkInput = {
             title: data.title ? [data.title] : [],
-            asset_info: data.amount ? [{
-                "chain": {
-                    "IC": null
-                },
-                "amount": data.amount,
-                "address": ""
-            }] : [],
+            asset_info: data.amount
+                ? [
+                      {
+                          chain: {
+                              IC: null,
+                          },
+                          amount: data.amount,
+                          address: "",
+                      },
+                  ]
+                : [],
             description: data.description ? [data.description] : [],
             actions: data.actions ? [data.actions] : [],
             state: data.state ? [data.state] : [],
@@ -81,5 +97,5 @@ export const LinkService = {
         console.log("called update_link with linkId =", linkId, "and data =", completeData);
         const response = parseResultResponse(await actor.update_link(linkId, completeData));
         return response;
-    }
+    },
 };

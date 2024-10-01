@@ -14,8 +14,8 @@ const router = createBrowserRouter([
     },
     {
         path: "/:linkId",
-        element: <ClaimPage />
-    }
+        element: <ClaimPage />,
+    },
 ]);
 export default function AppRouter() {
     return <RouterProvider router={router} />;

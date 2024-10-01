@@ -48,7 +48,10 @@ export default function LinkTemplate({
                             <FormItem>
                                 <FormLabel>{t("create.linkName")}</FormLabel>
                                 <FormControl>
-                                    <Input placeholder={t("create.linkNamePlaceholder")} {...field} />
+                                    <Input
+                                        placeholder={t("create.linkNamePlaceholder")}
+                                        {...field}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -56,7 +59,12 @@ export default function LinkTemplate({
                     />
                     <div className="w-full h-[1px] bg-gray-200 my-5" />
                     <img src="/default-template.svg" alt="Default template" className="w-full" />
-                    <Button type="submit" className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2">{t("continue")}</Button>
+                    <Button
+                        type="submit"
+                        className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
+                    >
+                        {t("continue")}
+                    </Button>
                 </form>
             </Form>
         </div>
