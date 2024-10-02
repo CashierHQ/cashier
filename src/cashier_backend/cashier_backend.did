@@ -41,11 +41,12 @@ type PaginateResultMetadata = record {
   offset : nat64;
   limit : nat64;
 };
-type Result = variant { Ok : text; Err : CanisterError };
-type Result_1 = variant { Ok : User; Err : text };
-type Result_2 = variant { Ok : LinkDetail; Err : text };
-type Result_3 = variant { Ok : PaginateResult; Err : text };
-type Result_4 = variant { Ok : LinkDetail; Err : CanisterError };
+type Result = variant { Ok; Err : text };
+type Result_1 = variant { Ok : text; Err : CanisterError };
+type Result_2 = variant { Ok : User; Err : text };
+type Result_3 = variant { Ok : LinkDetail; Err : text };
+type Result_4 = variant { Ok : PaginateResult; Err : text };
+type Result_5 = variant { Ok : LinkDetail; Err : CanisterError };
 type State = variant { New; Inactive; Active; PendingPreview; PendingDetail };
 type Template = variant { Left; Right; Central };
 type UpdateLinkInput = record {
@@ -59,10 +60,11 @@ type UpdateLinkInput = record {
 };
 type User = record { id : text; email : opt text; wallet : text };
 service : () -> {
-  create_link : (CreateLinkInput) -> (Result);
-  create_user : () -> (Result_1);
-  get_link : (text) -> (Result_2) query;
-  get_links : (opt PaginateInput) -> (Result_3) query;
-  get_user : () -> (Result_1) query;
-  update_link : (text, UpdateLinkInput) -> (Result_4);
+  claim_nft : (text) -> (Result);
+  create_link : (CreateLinkInput) -> (Result_1);
+  create_user : () -> (Result_2);
+  get_link : (text) -> (Result_3) query;
+  get_links : (opt PaginateInput) -> (Result_4) query;
+  get_user : () -> (Result_2) query;
+  update_link : (text, UpdateLinkInput) -> (Result_5);
 }
