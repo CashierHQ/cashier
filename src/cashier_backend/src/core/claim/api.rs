@@ -1,3 +1,4 @@
+use candid::Principal;
 use ic_cdk::update;
 
 use crate::{
@@ -7,10 +8,14 @@ use crate::{
 };
 
 #[update(guard = "is_not_anonymous")]
-async fn claim_nft(id: String) -> Result<(), String> {
-    let caller = ic_cdk::api::caller();
+async fn claim_nft(link_id: String, recipient_input: Option<String>) -> Result<(), String> {
+    let recipient = recipient_input
+        .ok_or_else(|| "Recipient is required".to_string())
+        .and_then(|recipient| {
+            Principal::from_text(&recipient).map_err(|e| format!("Invalid recipient: {}", e))
+        })?;
 
-    match services::claim::claim_nft(id, caller).await {
+    match services::claim::claim_nft(link_id, recipient).await {
         Ok(_) => Ok(()),
         Err(e) => {
             logger::error(&format!("Error claiming NFT: {}", e));

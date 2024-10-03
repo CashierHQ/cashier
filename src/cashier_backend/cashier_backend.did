@@ -60,7 +60,7 @@ type UpdateLinkInput = record {
 };
 type User = record { id : text; email : opt text; wallet : text };
 service : () -> {
-  claim_nft : (text) -> (Result);
+  claim_nft : (text, opt text) -> (Result);
   create_link : (CreateLinkInput) -> (Result_1);
   create_user : () -> (Result_2);
   get_link : (text) -> (Result_3) query;
