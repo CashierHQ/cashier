@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import LinkCard from "@/components/link-card";
+import { descriptionTemplate } from "@/constants/message";
 
 const linkTemplateSchema = z.object({
     title: z.string().min(5),
@@ -58,7 +59,14 @@ export default function LinkTemplate({
                         )}
                     />
                     <div className="w-full h-[1px] bg-gray-200 my-5" />
-                    <img src="/default-template.svg" alt="Default template" className="w-full" />
+                    <LinkCard
+                        label="Claim"
+                        header="Default Template"
+                        src="/defaultLinkImage.png"
+                        message={descriptionTemplate}
+                        title="PEDRO giveaway"
+                    />
+                    {/* <img src="/default-template.svg" alt="Default template" className="w-full" /> */}
                     <Button
                         type="submit"
                         className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
