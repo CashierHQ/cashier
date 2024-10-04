@@ -58,7 +58,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 },
             });
         } finally {
-            navigate("/");
+            //navigate("/");
         }
     };
 
