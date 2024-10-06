@@ -10,6 +10,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface LinkDetailOverviewData {
     name: string;
@@ -24,7 +25,12 @@ export const LinkDetailOverview = ({
     defaultValues,
     handleSubmit,
 }: ParitalFormProps<LinkDetailOverviewData>) => {
+    const { toast } = useToast();
     const handleCopyLink = () => {
+        toast({
+            description: "Copied",
+        });
+
         navigator.clipboard.writeText(window.location.href.replace("edit/", ""));
     };
 
@@ -69,6 +75,47 @@ export const LinkDetailOverview = ({
                             <TableCell className="text-right px-5">
                                 {defaultValues.amount}
                             </TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </div>
+            <div id="additional-info-section" className="flex flex-col my-5 border-2 rounded-xl">
+                <Table className="text-base">
+                    <TableHeader></TableHeader>
+                    <TableBody className="flex flex-col">
+                        <TableRow className="flex justify-around">
+                            <TableCell>
+                                <div className="flex">
+                                    <img src="/trophyIcon.png" alt="trophy-icon" className="mr-2" />{" "}
+                                    <span>23</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex">
+                                    <img
+                                        src="/mouseClickIcon.png"
+                                        alt="mouseClickIcon"
+                                        className="mr-2"
+                                    />{" "}
+                                    <span>40</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex">
+                                    <img src="/eyeIcon.png" alt="eye-icon" className="mr-2" />{" "}
+                                    <span>55</span>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow className="flex justify-between">
+                            <TableCell className="font-medium px-5">Claims per day</TableCell>
+                            <TableCell className="text-right px-5">5</TableCell>
+                        </TableRow>
+                        <TableRow className="flex justify-between">
+                            <TableCell className="font-medium px-5">
+                                Days since last claim
+                            </TableCell>
+                            <TableCell className="text-right px-5">2</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
