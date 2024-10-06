@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import { LinkService } from "@/services/link.service";
+import { LinkDetailOverview } from "./LinkDetailOverview";
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
@@ -64,6 +65,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
+        console.log("🚀 ~ handleSubmit ~ formData:", formData);
+
         await LinkService.updateLink(identity, linkId, {
             ...formData,
             ...values,
@@ -71,7 +74,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 Active: null,
             },
         });
-        navigate("/");
+        console.log("🚀 ~ handleSubmit ~ values:", values);
+        console.log(values);
+        //navigate("/");
     };
 
     const handleChange = (values: any) => {
@@ -107,6 +112,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
                         render={(props) => <LinkPreview {...props} />}
+                    />
+                    <MultiStepForm.Item
+                        name={formData.name}
+                        handleSubmit={handleSubmitLinkTemplate}
+                        render={(props) => <LinkDetailOverview {...props} />}
                     />
                 </MultiStepForm>
             </div>
