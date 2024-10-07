@@ -90,13 +90,25 @@ export const LinkService = {
                   ]
                 : [],
             description: data.description ? [data.description] : [],
-            actions: data.actions ? [data.actions] : [],
+            actions: [
+                [
+                    {
+                        arg: "",
+                        method: "",
+                        canister_id: "",
+                        label: "",
+                    },
+                ],
+            ],
             state: data.state ? [data.state] : [],
-            template: data.template ? [data.template] : [],
+            template: [{ Left: null }],
             image: data.image ? [data.image] : [],
-            link_type: [{ NftCreateAndAirdrop: null }],
         };
         console.log("🚀 ~ completeData:", completeData);
+
+        const link = await actor.get_link(linkId);
+
+        console.log("🚀 ~ link:", link);
 
         const response = parseResultResponse(await actor.update_link(linkId, completeData));
         console.log("🚀 ~ response:", response);
