@@ -92,7 +92,7 @@ export const LinkService = {
             state: data.state ? [data.state] : [],
             template: data.template ? [data.template] : [],
             image: data.image ? [data.image] : [],
-            link_type: [{"NftCreateAndAirdrop":null}]
+            link_type: [{ NftCreateAndAirdrop: null }],
         };
 
         console.log("called update_link with linkId =", linkId, "and data =", completeData);
