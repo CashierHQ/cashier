@@ -55,6 +55,7 @@ export default {
                 yellow: "#a17f37",
                 lightyellow: "#fffaf2",
                 lightpurple: "#e8e8f2",
+                lightblack: "#475467",
             },
         },
     },

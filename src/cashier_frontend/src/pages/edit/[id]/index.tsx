@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import { LinkService } from "@/services/link.service";
-import { LinkDetailOverview } from "./LinkDetailOverview";
+import { Action } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
@@ -24,8 +24,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         const fetchData = async () => {
             const link = await LinkService.getLink(identity, linkId);
             setFormData(link);
-            console.log("fetched link data", link);
-
             setIsNameSetByUser(true);
             setIsLoading(false);
         };
@@ -65,18 +63,18 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
-        console.log("🚀 ~ handleSubmit ~ formData:", formData);
-
-        await LinkService.updateLink(identity, linkId, {
+        const link = await LinkService.getLink(identity, linkId);
+        console.log("🚀 ~ handleSubmit ~ link:", link);
+        const result = await LinkService.updateLink(identity, linkId, {
             ...formData,
             ...values,
+            actions: [{ arg: "string", method: "string", canister_id: "string", label: "string" }],
             state: {
                 Active: null,
             },
         });
-        console.log("🚀 ~ handleSubmit ~ values:", values);
-        console.log(values);
-        //navigate("/");
+        console.log(result);
+        navigate(`/edit/${linkId}`);
     };
 
     const handleChange = (values: any) => {
@@ -112,11 +110,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
                         render={(props) => <LinkPreview {...props} />}
-                    />
-                    <MultiStepForm.Item
-                        name={formData.name}
-                        handleSubmit={handleSubmitLinkTemplate}
-                        render={(props) => <LinkDetailOverview {...props} />}
                     />
                 </MultiStepForm>
             </div>

@@ -46,6 +46,7 @@ export default function HomePage() {
         const fetchData = async () => {
             const links = await LinkService.getLinks(identity);
             setIsLoading(false);
+            console.log(link);
             setLinks(links.data ?? []);
         };
         fetchData();
