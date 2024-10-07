@@ -6,7 +6,7 @@
     "scripts": {
         "setup": "npm i && dfx canister create cashier_backend && dfx generate cashier_backend && dfx deploy",
         "start": "vite --port 3000",
-        "build": "tsc && vite build",
+        "build": "tsc && vite build && echo",
         "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
         "test": "jest"
     },
