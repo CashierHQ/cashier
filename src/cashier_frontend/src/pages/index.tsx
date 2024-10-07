@@ -142,7 +142,12 @@ export default function HomePage() {
                     </div>
                 ) : (
                     links.map((link: any) => (
-                        <Link to={`/edit/${link.id}`} key={link.id}>
+                        <Link
+                            to={
+                                link.state === "Active" ? `/details/${link.id}` : `/edit/${link.id}`
+                            }
+                            key={link.id}
+                        >
                             <LinkItem key={link.id} link={link} />
                         </Link>
                     ))

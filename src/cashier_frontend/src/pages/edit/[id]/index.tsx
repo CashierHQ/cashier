@@ -73,8 +73,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 Active: null,
             },
         });
-        console.log(result);
-        navigate(`/edit/${linkId}`);
+        navigate(`/details/${linkId}`);
     };
 
     const handleChange = (values: any) => {

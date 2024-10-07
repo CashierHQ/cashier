@@ -104,14 +104,8 @@ export const LinkService = {
             template: [{ Left: null }],
             image: data.image ? [data.image] : [],
         };
-        console.log("🚀 ~ completeData:", completeData);
-
-        const link = await actor.get_link(linkId);
-
-        console.log("🚀 ~ link:", link);
 
         const response = parseResultResponse(await actor.update_link(linkId, completeData));
-        console.log("🚀 ~ response:", response);
         return response;
     },
 };
