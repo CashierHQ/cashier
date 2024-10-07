@@ -126,7 +126,7 @@ const main = async () => {
     const link = await backend.get_link(id);
     console.log("link", safeParseJSON(link));
 
-    const claim = await backend.claim_nft(id);
+    const claim = await backend.claim_nft(id, []);
 
     console.log("claim", claim);
 };

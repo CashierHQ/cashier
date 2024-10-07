@@ -2,18 +2,21 @@ use candid::Principal;
 use ic_cdk::update;
 
 use crate::{
-    core::guard::is_not_anonymous,
     services::{self},
     utils::logger,
 };
 
-#[update(guard = "is_not_anonymous")]
+#[update]
 async fn claim_nft(link_id: String, recipient_input: Option<String>) -> Result<(), String> {
-    let recipient = recipient_input
-        .ok_or_else(|| "Recipient is required".to_string())
-        .and_then(|recipient| {
-            Principal::from_text(&recipient).map_err(|e| format!("Invalid recipient: {}", e))
-        })?;
+    let recipient = match recipient_input {
+        Some(recipient) => match Principal::from_text(&recipient) {
+            Ok(recipient) => recipient,
+            Err(e) => {
+                return Err(format!("Invalid recipient: {}", e));
+            }
+        },
+        None => ic_cdk::api::caller(),
+    };
 
     match services::claim::claim_nft(link_id, recipient).await {
         Ok(_) => Ok(()),
