@@ -162,6 +162,7 @@ export default function LinkDetails({
                     />
                     <FormField
                         control={form.control}
+                        defaultValue={CHAIN_DEFAULT_VALUE}
                         name="chain"
                         render={({ field }) => (
                             <FormItem>
