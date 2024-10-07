@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useIdentityKit } from "@nfid/identitykit/react";
-import { LinkService } from "@/services/link.service";
+import LinkService from "@/services/link.service";
 import LinkCard from "@/components/link-card";
 import {
     Form,
@@ -40,7 +40,7 @@ export default function ClaimPage() {
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = await LinkService.getLink(identity, linkId);
+            const link = await new LinkService(identity).getLink(linkId);
             setFormData(link);
             form.setValue("token", link.title);
             form.setValue("amount", link.amount);

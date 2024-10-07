@@ -6,7 +6,7 @@ import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
-import { LinkService } from "@/services/link.service";
+import LinkService from "@/services/link.service";
 import { LinkDetailOverview } from "./LinkDetailOverview";
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
@@ -22,7 +22,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = await LinkService.getLink(identity, linkId);
+            const link = await new LinkService(identity).getLink(linkId);
             setFormData(link);
             console.log("fetched link data", link);
 
@@ -38,7 +38,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             values.name = values.title;
         }
         setFormData({ ...formData, ...values });
-        await LinkService.updateLink(identity, linkId, {
+        await new LinkService(identity).updateLink(linkId, {
             ...formData,
             ...values,
             state: {
@@ -51,7 +51,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         try {
             setFormData({ ...formData, ...values });
-            await LinkService.updateLink(identity, linkId, {
+            await new LinkService(identity).updateLink(linkId, {
                 ...formData,
                 ...values,
                 state: {
@@ -67,7 +67,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         console.log("🚀 ~ handleSubmit ~ formData:", formData);
 
-        await LinkService.updateLink(identity, linkId, {
+        await new LinkService(identity).updateLink(linkId, {
             ...formData,
             ...values,
             state: {
