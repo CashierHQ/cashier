@@ -67,10 +67,7 @@ export default function LinkTemplate({
                         title="PEDRO giveaway"
                     />
                     {/* <img src="/default-template.svg" alt="Default template" className="w-full" /> */}
-                    <Button
-                        type="submit"
-                        className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
-                    >
+                    <Button type="submit" className="flex w-full max-w-[350px] mt-5 mx-auto">
                         {t("continue")}
                     </Button>
                 </form>

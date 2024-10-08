@@ -86,21 +86,49 @@ const main = async () => {
                 amount: 100,
             },
         ],
+        description: ["tesst"],
+        actions: [
+            [
+                {
+                    arg: "test",
+                    method: "tesst",
+                    canister_id: "tst",
+                    label: "tesst",
+                },
+            ],
+        ],
+        state: [
+            {
+                PendingPreview: null,
+            },
+        ],
+        template: [{ Central: null }],
+        image: ["testes"],
+    });
+    console.log("updateRes", updateRes);
+
+    const activeRes = await backend.update_link(id, {
+        title: [],
+        asset_info: [],
         description: [],
         actions: [],
         state: [
             {
-                PendingDetail: null,
+                Active: null,
             },
         ],
         template: [],
         image: [],
     });
 
-    console.log("updateRes", updateRes);
+    console.log("activeRes", activeRes);
 
     const link = await backend.get_link(id);
     console.log("link", safeParseJSON(link));
+
+    const claim = await backend.claim_nft(id, []);
+
+    console.log("claim", claim);
 };
 
 main();
