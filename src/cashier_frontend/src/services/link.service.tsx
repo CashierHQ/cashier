@@ -1,6 +1,10 @@
 import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
-import { UpdateLinkInput } from "../../../declarations/cashier_backend/cashier_backend.did";
+import {
+    _SERVICE,
+    CreateLinkInput,
+    UpdateLinkInput,
+} from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
@@ -21,13 +25,18 @@ const parseLink = (link: any) => {
     };
 };
 
-export const LinkService = {
-    getLinks: async (identity: Identity | PartialIdentity | undefined) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
+class LinkService {
+    private actor: _SERVICE;
+
+    constructor(identity: Identity | PartialIdentity | undefined) {
+        this.actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
+    }
+
+    async getLinks() {
         const response = parseResultResponse(
-            await actor.get_links([
+            await this.actor.get_links([
                 {
                     offset: BigInt(0),
                     limit: BigInt(10),
@@ -47,35 +56,20 @@ export const LinkService = {
             : [];
 
         return response;
-    },
-    getLink: async (identity: Identity | PartialIdentity | undefined, linkId: string) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-        });
-        const response = parseResultResponse(await actor.get_link(linkId));
-        console.log("🚀 ~ getLink: ~ response:", response);
+    }
 
+    async getLink(linkId: string) {
+        const response = parseResultResponse(await this.actor.get_link(linkId));
         return parseLink(response);
-    },
-    createLink: async (identity: Identity | PartialIdentity | undefined) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-        });
-        const response = parseResultResponse(
-            await actor.create_link({
-                link_type: { NftCreateAndAirdrop: null },
-            }),
-        );
-        return response;
-    },
-    updateLink: async (
-        identity: Identity | PartialIdentity | undefined,
-        linkId: string,
-        data: any,
-    ) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-        });
+    }
+
+    async createLink(input: CreateLinkInput) {
+        return parseResultResponse(await this.actor.create_link(input));
+    }
+
+    //TODO: refactor type for this
+    // TODO: apply state machine for this method or create multiple methods for each state
+    async updateLink(linkId: string, data: any) {
         const completeData: UpdateLinkInput = {
             title: data.title ? [data.title] : [],
             asset_info: data.amount
@@ -105,7 +99,10 @@ export const LinkService = {
             image: data.image ? [data.image] : [],
         };
 
-        const response = parseResultResponse(await actor.update_link(linkId, completeData));
+        console.log("called update_link with linkId =", linkId, "and data =", completeData);
+        const response = parseResultResponse(await this.actor.update_link(linkId, completeData));
         return response;
-    },
-};
+    }
+}
+
+export default LinkService;

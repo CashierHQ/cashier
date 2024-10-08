@@ -6,8 +6,8 @@ import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
-import { LinkService } from "@/services/link.service";
-import { Action } from "../../../../../declarations/cashier_backend/cashier_backend.did";
+import LinkService from "@/services/link.service";
+import { LinkDetailOverview } from "./LinkDetailOverview";
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
@@ -22,7 +22,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = await LinkService.getLink(identity, linkId);
+            const link = await new LinkService(identity).getLink(linkId);
             setFormData(link);
             setIsNameSetByUser(true);
             setIsLoading(false);
@@ -36,7 +36,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             values.name = values.title;
         }
         setFormData({ ...formData, ...values });
-        await LinkService.updateLink(identity, linkId, {
+        await new LinkService(identity).updateLink(linkId, {
             ...formData,
             ...values,
             state: {
@@ -49,7 +49,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         try {
             setFormData({ ...formData, ...values });
-            await LinkService.updateLink(identity, linkId, {
+            await new LinkService(identity).updateLink(linkId, {
                 ...formData,
                 ...values,
                 state: {
@@ -63,9 +63,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
-        const link = await LinkService.getLink(identity, linkId);
-        console.log("🚀 ~ handleSubmit ~ link:", link);
-        const result = await LinkService.updateLink(identity, linkId, {
+        console.log("🚀 ~ handleSubmit ~ formData:", formData);
+
+        await new LinkService(identity).updateLink(linkId, {
             ...formData,
             ...values,
             actions: [{ arg: "string", method: "string", canister_id: "string", label: "string" }],
@@ -73,7 +73,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 Active: null,
             },
         });
-        navigate(`/details/${linkId}`);
+        console.log("🚀 ~ handleSubmit ~ values:", values);
+        console.log(values);
+        //navigate("/");
     };
 
     const handleChange = (values: any) => {
@@ -109,6 +111,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
                         render={(props) => <LinkPreview {...props} />}
+                    />
+                    <MultiStepForm.Item
+                        name={formData.name}
+                        handleSubmit={handleSubmitLinkTemplate}
+                        render={(props) => <LinkDetailOverview {...props} />}
                     />
                 </MultiStepForm>
             </div>

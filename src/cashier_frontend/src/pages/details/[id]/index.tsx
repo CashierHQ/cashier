@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentityKit } from "@nfid/identitykit/react";
-import { LinkService } from "@/services/link.service";
+import LinkService from "@/services/link.service";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<any>({});
@@ -32,7 +32,7 @@ export default function DetailPage() {
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = await LinkService.getLink(identity, linkId);
+            const link = await new LinkService(identity).getLink(linkId);
             setLinkData(link);
         };
         fetchData();

@@ -6,8 +6,8 @@ import { useTranslation } from "react-i18next";
 import LinkItem from "@/components/link-item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IoSearch } from "react-icons/io5";
-import { LinkService } from "@/services/link.service";
-import { UserService } from "@/services/user.service";
+import LinkService from "@/services/link.service";
+import UserService from "@/services/user.service";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
@@ -30,11 +30,12 @@ export default function HomePage() {
     useEffect(() => {
         if (!identity) return;
         const createUser = async () => {
+            const userService = new UserService(identity);
             try {
-                const user = await UserService.getUser(identity);
+                const user = await userService.getUser();
                 setUser(user);
             } catch (error) {
-                const user = await UserService.createUser(identity);
+                const user = await userService.createUser();
                 setUser(user);
             }
         };
@@ -44,7 +45,7 @@ export default function HomePage() {
     useEffect(() => {
         if (!user) return;
         const fetchData = async () => {
-            const links = await LinkService.getLinks(identity);
+            const links = await new LinkService(identity).getLinks();
             setIsLoading(false);
             setLinks(links.data ?? []);
         };
@@ -53,7 +54,9 @@ export default function HomePage() {
 
     const handleCreateLink = async () => {
         if (!user) return;
-        const response = await LinkService.createLink(identity);
+        const response = await new LinkService(identity).createLink({
+            link_type: { NftCreateAndAirdrop: null },
+        });
         navigate(`/edit/${response}`);
     };
 
