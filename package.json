@@ -17,7 +17,10 @@
         "lint": "eslint ."
     },
     "lint-staged": {
-        "**/*": "prettier --write ."
+        "**/*": [
+            "prettier --write .",
+            "git add . "
+        ]
     },
     "type": "module",
     "workspaces": [
@@ -33,7 +36,6 @@
         "typescript-eslint": "^8.4.0"
     },
     "dependencies": {
-        "@nfid/identitykit": "^0.0.0-alpha.11",
         "tsx": "^4.19.1"
     }
 }

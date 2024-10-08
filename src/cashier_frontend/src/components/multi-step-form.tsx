@@ -35,27 +35,32 @@ export default function MultiStepForm<T extends Object>({
 
     return (
         <div className="w-full flex flex-col items-center">
-            <div className="w-full flex justify-between mb-5">
+            <div className="w-full flex justify-center mb-5 relative">
+                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
+                    {partialForms[currentStep].props.name}
+                </h4>
                 {currentStep || (!currentStep && handleBack) ? (
-                    <Button
-                        variant="outline"
-                        size="icon"
+                    <div
+                        className="absolute left-1 cursor-pointer"
                         onClick={() => {
                             if (!currentStep && handleBack) handleBack();
                             else setCurrentStep(currentStep - 1);
                         }}
                     >
                         ←
-                    </Button>
+                    </div>
                 ) : (
                     <div></div>
                 )}
-                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
-                    {partialForms[currentStep].props.name}
-                </h4>
-                <span className="scroll-m-20 tracking-tight">
-                    {currentStep + 1}/{partialForms.length}
-                </span>
+            </div>
+            <div className="flex w-full mb-5">
+                {partialForms.map((_, index) => (
+                    <div
+                        key={index}
+                        className={`h-[4px] rounded-full mx-[2px] ${index <= currentStep ? "bg-green" : "bg-lightgreen"}`}
+                        style={{ width: `${100 / partialForms.length}%` }}
+                    ></div>
+                ))}
             </div>
             {Children.map(partialForms, (partialForm, index) => {
                 if (currentStep == index) {

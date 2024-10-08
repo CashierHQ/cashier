@@ -106,6 +106,7 @@ dependencies = [
  "quote",
  "rand",
  "serde",
+ "serde_bytes",
  "serde_json",
  "syn 2.0.77",
  "uuid",
