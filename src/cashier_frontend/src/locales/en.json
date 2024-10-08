@@ -1,19 +1,37 @@
 {
     "create": {
         "link": "Link",
-        "linkName": "Link Name",
-        "linkTemplate": "Link Template",
-        "linkDetails": "Link Details",
+        "linkName": "Link name",
+        "linkNamePlaceholder": "Enter link name",
+        "linkTemplate": "Link template",
+        "linkDetails": "Link details",
         "linkPreview": "Preview",
         "create": "Create",
         "photo": "Photo",
         "name": "Name",
         "message": "Message",
         "chain": "Chain",
-        "amount": "Amount"
+        "amount": "Amount",
+        "defaultTemplate": "Default template"
+    },
+    "claim": {
+        "claim": "Claim",
+        "claimToken": "Claim token",
+        "amount": "Amount",
+        "address": "Address",
+        "addressPlaceholder": "ex. 0xecd93dyaf....asfewg934d"
     },
     "continue": "Continue",
     "submit": "Submit",
     "cashier": "Cashier",
-    "login": "Login"
+    "login": "Login",
+    "home": {
+        "guide": {
+            "header": "Cashier links",
+            "body": "Start creating transaction links with Cashier: create & airdrop NFTs, and more features coming!",
+            "confirm": "Got it"
+        },
+        "noLinksFound": "No links found",
+        "noLinksFoundDescription": "You haven't created any links yet."
+    }
 }

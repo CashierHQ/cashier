@@ -1,11 +1,10 @@
 use ic_cdk::{query, update};
 
 use crate::{
-    core::guard::is_not_anonymous,
-    core::{PaginateResult, UpdateLinkInput},
+    core::{guard::is_not_anonymous, LinkType, PaginateResult, UpdateLinkInput},
     services::{
         self,
-        link::{create_new, update},
+        link::{create_new, is_link_creator, update::handle_update_create_and_airdrop_nft},
     },
     types::{api::PaginateInput, error::CanisterError, link_detail::LinkDetail},
     utils::logger,
@@ -28,7 +27,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDe
     }
 }
 
-#[query(guard = "is_not_anonymous")]
+#[query]
 async fn get_link(id: String) -> Result<LinkDetail, String> {
     match services::link::get_link_by_id(id) {
         Some(link) => Ok(link),
@@ -54,11 +53,43 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
 async fn update_link(id: String, input: UpdateLinkInput) -> Result<LinkDetail, CanisterError> {
     let creator = ic_cdk::api::caller();
 
-    match update(creator.to_text(), id, input.to_link_detail_update()) {
-        Ok(res) => Ok(res),
-        Err(e) => {
-            logger::error(&format!("Failed to update link: {}", e));
-            Err(CanisterError::HandleApiError(e))
+    // get link type
+    let link = services::link::get_link_by_id(id.clone())
+        .ok_or_else(|| CanisterError::HandleApiError("Link not found".to_string()))?;
+
+    match is_link_creator(creator.to_text(), &id) {
+        true => (),
+        false => {
+            return Err(CanisterError::HandleApiError(
+                "Caller are not the creator of this link".to_string(),
+            ))
+        }
+    }
+
+    match link.link_type {
+        Some(LinkType::NftCreateAndAirdrop) => {
+            match handle_update_create_and_airdrop_nft(input.to_link_detail_update(), link) {
+                Ok(link) => {
+                    logger::info(&format!("input : {:?}", input));
+                    logger::info(&format!("Link updated: {:?}", link));
+                    Ok(link)
+                }
+                Err(e) => {
+                    logger::error(&format!("Failed to update link: {}", e));
+                    Err(CanisterError::HandleApiError(e))
+                }
+            }
+        }
+        Some(_) => {
+            // Handle other link types if necessary
+            return Err(CanisterError::HandleApiError(
+                "Link type is not supported for update".to_string(),
+            ));
+        }
+        None => {
+            return Err(CanisterError::HandleApiError(
+                "Link type is not found".to_string(),
+            ));
         }
     }
 }

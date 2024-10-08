@@ -1,5 +1,8 @@
 {
     "cashier_backend": {
         "ic": "jjio5-5aaaa-aaaam-adhaq-cai"
+    },
+    "cashier_frontend": {
+        "ic": "jg57n-xyaaa-aaaam-admqq-cai"
     }
 }
