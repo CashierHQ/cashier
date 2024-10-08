@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useIdentityKit } from "@nfid/identitykit/react";
 import LinkService from "@/services/link.service";
 import LinkCard from "@/components/link-card";
 import {
@@ -29,7 +28,6 @@ const ClaimSchema = z.object({
 export default function ClaimPage() {
     const [formData, setFormData] = useState<any>({});
     const { linkId } = useParams();
-    const { identity } = useIdentityKit();
     const [isLoading, setIsLoading] = useState(true);
     const [isClaiming, setIsClaiming] = useState(false);
     const { t } = useTranslation();
@@ -39,16 +37,15 @@ export default function ClaimPage() {
 
     useEffect(() => {
         if (!linkId) return;
-        if (!identity) return;
         const fetchData = async () => {
-            const link = await new LinkService(identity).getLink(linkId);
+            const link = await new LinkService(undefined).getLink(linkId);
             setFormData(link);
             form.setValue("token", link.title);
             form.setValue("amount", link.amount);
             setIsLoading(false);
         };
         fetchData();
-    }, [linkId, identity]);
+    }, [linkId]);
 
     if (isLoading) return null;
 
