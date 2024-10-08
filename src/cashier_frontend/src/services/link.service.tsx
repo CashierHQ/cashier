@@ -84,9 +84,18 @@ class LinkService {
                   ]
                 : [],
             description: data.description ? [data.description] : [],
-            actions: data.actions ? [data.actions] : [],
+            actions: [
+                [
+                    {
+                        arg: "",
+                        method: "",
+                        canister_id: "",
+                        label: "",
+                    },
+                ],
+            ],
             state: data.state ? [data.state] : [],
-            template: data.template ? [data.template] : [],
+            template: [{ Left: null }],
             image: data.image ? [data.image] : [],
         };
 

@@ -24,8 +24,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         const fetchData = async () => {
             const link = await new LinkService(identity).getLink(linkId);
             setFormData(link);
-            console.log("fetched link data", link);
-
             setIsNameSetByUser(true);
             setIsLoading(false);
         };
@@ -70,6 +68,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         await new LinkService(identity).updateLink(linkId, {
             ...formData,
             ...values,
+            actions: [{ arg: "string", method: "string", canister_id: "string", label: "string" }],
             state: {
                 Active: null,
             },
