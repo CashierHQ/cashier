@@ -97,8 +97,6 @@ export default function HomePage() {
         );
     }
 
-    console.log(identity);
-
     return (
         <div className="w-screen flex justify-center py-5">
             <div className="w-11/12 max-w-[400px]">
@@ -144,7 +142,12 @@ export default function HomePage() {
                     </div>
                 ) : (
                     links.map((link: any) => (
-                        <Link to={`/edit/${link.id}`} key={link.id}>
+                        <Link
+                            to={
+                                link.state === "Active" ? `/details/${link.id}` : `/edit/${link.id}`
+                            }
+                            key={link.id}
+                        >
                             <LinkItem key={link.id} link={link} />
                         </Link>
                     ))

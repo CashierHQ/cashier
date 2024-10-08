@@ -53,6 +53,8 @@ export const LinkService = {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
         const response = parseResultResponse(await actor.get_link(linkId));
+        console.log("🚀 ~ getLink: ~ response:", response);
+
         return parseLink(response);
     },
     createLink: async (identity: Identity | PartialIdentity | undefined) => {
@@ -88,14 +90,21 @@ export const LinkService = {
                   ]
                 : [],
             description: data.description ? [data.description] : [],
-            actions: data.actions ? [data.actions] : [],
+            actions: [
+                [
+                    {
+                        arg: "",
+                        method: "",
+                        canister_id: "",
+                        label: "",
+                    },
+                ],
+            ],
             state: data.state ? [data.state] : [],
-            template: data.template ? [data.template] : [],
+            template: [{ Left: null }],
             image: data.image ? [data.image] : [],
-            link_type: [{"NftCreateAndAirdrop":null}]
         };
 
-        console.log("called update_link with linkId =", linkId, "and data =", completeData);
         const response = parseResultResponse(await actor.update_link(linkId, completeData));
         return response;
     },

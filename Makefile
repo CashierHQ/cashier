@@ -5,3 +5,12 @@ build-wasm:
 
 build-did:
 	@candid-extractor target/wasm32-unknown-unknown/release/cashier_backend.wasm > src/cashier_backend/cashier_backend.did
+
+deploy:
+	make build-wasm
+	make build-did
+	dfx generate cashier_backend
+	@dfx deploy cashier_backend --ic
+
+test:
+	@npx tsx src/example/index.ts

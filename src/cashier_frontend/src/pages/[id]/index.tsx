@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import { LinkService } from "@/services/link.service";
-import LinkCard from "@/components/link-card";
 import {
     Form,
     FormControl,
@@ -18,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { IoIosArrowBack } from "react-icons/io";
+import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 
 const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -134,18 +134,24 @@ export default function ClaimPage() {
         );
 
     return (
-        <div className="w-screen flex flex-col items-center py-5">
+        <div className="w-screen h-screen flex flex-col items-center py-5">
             <div className="w-11/12 max-w-[400px]">
                 <div className="w-full flex justify-center items-center">
                     <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
                 </div>
-                <LinkCard
+                <LinkCardWithoutPhoneFrame
                     label="Claim"
                     src={formData.image}
                     message={formData.description}
                     title={formData.title}
                     onClaim={() => setIsClaiming(true)}
                 />
+                <div id="about-user-section" className="mt-5 px-3">
+                    <div className="text-lg font-medium">About user</div>
+                    <div className="text-base">
+                        User has confirmed he owns the handles of the following social accounts
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import { LinkService } from "@/services/link.service";
+import { Action } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
@@ -23,8 +24,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         const fetchData = async () => {
             const link = await LinkService.getLink(identity, linkId);
             setFormData(link);
-            console.log("fetched link data", link);
-
             setIsNameSetByUser(true);
             setIsLoading(false);
         };
@@ -64,14 +63,17 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
-        await LinkService.updateLink(identity, linkId, {
+        const link = await LinkService.getLink(identity, linkId);
+        console.log("🚀 ~ handleSubmit ~ link:", link);
+        const result = await LinkService.updateLink(identity, linkId, {
             ...formData,
             ...values,
+            actions: [{ arg: "string", method: "string", canister_id: "string", label: "string" }],
             state: {
                 Active: null,
             },
         });
-        navigate("/");
+        navigate(`/details/${linkId}`);
     };
 
     const handleChange = (values: any) => {
