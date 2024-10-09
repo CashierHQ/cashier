@@ -25,9 +25,6 @@ jobs:
             - name: Install project dependencies
               run: npm install
 
-            - name: Build project
-              run: npm run build
-
             - name: Install dfx
               uses: dfinity/setup-dfx@main
 
@@ -45,6 +42,9 @@ jobs:
               run: |
                   dfx identity use cashier-dev
                   dfx identity get-principal
+
+            - name: Build project
+              run: npm run build
 
             - name: deplot to staging env
               run: dfx deploy cashier_frontend_staging --ic
