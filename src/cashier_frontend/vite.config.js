@@ -8,48 +8,50 @@ import path from "path";
 
 dotenv.config({ path: "../../.env" });
 
-export default defineConfig({
-    build: {
-        emptyOutDir: true,
-    },
-    optimizeDeps: {
-        esbuildOptions: {
-            define: {
-                global: "globalThis",
+export default defineConfig((mode) => {
+    return {
+        build: {
+            emptyOutDir: true,
+        },
+        optimizeDeps: {
+            esbuildOptions: {
+                define: {
+                    global: "globalThis",
+                },
             },
         },
-    },
-    esbuild: {
-        pure: mode === "production" ? ["console.log"] : [],
-    },
-    server: {
-        proxy: {
-            "/api": {
-                target: "http://127.0.0.1:4943",
-                changeOrigin: true,
+        esbuild: {
+            pure: mode === "production" ? ["console.log"] : [],
+        },
+        server: {
+            proxy: {
+                "/api": {
+                    target: "http://127.0.0.1:4943",
+                    changeOrigin: true,
+                },
             },
         },
-    },
-    plugins: [
-        react(),
-        environment("all", { prefix: "CANISTER_" }),
-        environment("all", { prefix: "DFX_" }),
-    ],
-    resolve: {
-        alias: [
-            {
-                find: "declarations",
-                replacement: fileURLToPath(new URL("../declarations", import.meta.url)),
-            },
-            {
-                find: "@",
-                replacement: path.resolve(__dirname, "./src"),
-            },
+        plugins: [
+            react(),
+            environment("all", { prefix: "CANISTER_" }),
+            environment("all", { prefix: "DFX_" }),
         ],
-    },
-    css: {
-        postcss: {
-            plugins: [tailwindcss()],
+        resolve: {
+            alias: [
+                {
+                    find: "declarations",
+                    replacement: fileURLToPath(new URL("../declarations", import.meta.url)),
+                },
+                {
+                    find: "@",
+                    replacement: path.resolve(__dirname, "./src"),
+                },
+            ],
         },
-    },
+        css: {
+            postcss: {
+                plugins: [tailwindcss()],
+            },
+        },
+    };
 });
