@@ -11,7 +11,7 @@ on:
 jobs:
     build_and_deploy:
         runs-on: ubuntu-latest
-        environment: production
+        environment: staging
 
         steps:
             - name: Checkout repository
