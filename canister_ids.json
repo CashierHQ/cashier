@@ -4,5 +4,8 @@
     },
     "cashier_frontend": {
         "ic": "jg57n-xyaaa-aaaam-admqq-cai"
+    },
+    "cashier_frontend_staging": {
+        "ic": "iqwhg-ciaaa-aaaam-admvq-cai"
     }
 }
