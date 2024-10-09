@@ -84,7 +84,7 @@ export default function HomePage() {
                             and more features coming!
                         </p>
                         <img
-                            src="./landing.svg"
+                            src="./landingPage.png"
                             alt="Cashier illustration"
                             className="max-w-[300px] mt-5"
                         />
