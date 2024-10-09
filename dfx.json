@@ -11,6 +11,12 @@
             "source": ["src/cashier_frontend/dist"],
             "type": "assets",
             "workspace": "cashier_frontend"
+        },
+        "cashier_frontend_staging": {
+            "dependencies": ["cashier_backend"],
+            "source": ["src/cashier_frontend/dist"],
+            "type": "assets",
+            "workspace": "cashier_frontend"
         }
     },
     "defaults": {
