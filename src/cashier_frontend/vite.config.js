@@ -19,6 +19,9 @@ export default defineConfig({
             },
         },
     },
+    esbuild: {
+        pure: mode === "production" ? ["console.log"] : [],
+    },
     server: {
         proxy: {
             "/api": {
