@@ -23,8 +23,10 @@ jobs:
 
             - name: Install DFX CLI
               run: |
-                  sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-                  echo "/home/runner/.local/share/dfx/bin" >> $GITHUB_PATH
+                  curl -LO https://github.com/dfinity/sdk/releases/latest/download/dfx-x86_64-linux.tar.gz
+                  tar xzf dfx-x86_64-linux.tar.gz
+                  sudo mv dfx /usr/local/bin/
+                  echo "/usr/local/bin" >> $GITHUB_PATH
 
             - name: Check dfx version
               run: dfx --version
