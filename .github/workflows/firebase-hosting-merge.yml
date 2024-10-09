@@ -26,3 +26,15 @@ jobs:
 
             - name: Confirm successful installation
               run: dfx --version
+
+            - name: Create private key file
+              run: |
+                  echo "${{ secrets.CASHIER_DEV }}" > private_key.pem
+
+            - name: Import identity
+              run: dfx identity import cashier-dev private_key.pem
+
+            - name: Get cashier dev address
+              run: |
+                  dfx identity use cashier-dev
+                  dfx identity get-principal
