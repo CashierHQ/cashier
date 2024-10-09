@@ -3,9 +3,10 @@
 
 name: Deploy to Internet Computer on merge
 on:
-    push:
-        branches:
-            - test
+    # for future testing
+    # push:
+    #     branches:
+    #         - test
     pull_request:
         branches:
             - staging
@@ -50,5 +51,5 @@ jobs:
                   rustup target add wasm32-unknown-unknown
                   npm run build
 
-            - name: deplot to staging env
+            - name: deploy to staging env
               run: dfx deploy cashier_frontend_staging --ic
