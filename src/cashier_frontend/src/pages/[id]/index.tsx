@@ -38,7 +38,7 @@ export default function ClaimPage() {
     useEffect(() => {
         if (!linkId) return;
         const fetchData = async () => {
-            const link = await new LinkService(undefined).getLink(linkId);
+            const link = await new LinkService().getLink(linkId);
             setFormData(link);
             form.setValue("token", link.title);
             form.setValue("amount", link.amount);
