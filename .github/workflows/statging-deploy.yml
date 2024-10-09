@@ -6,6 +6,7 @@ on:
     push:
         branches:
             - test
+            - staging
 
 jobs:
     build_and_deploy:
@@ -20,6 +21,12 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: "20"
+
+            - name: Install project dependencies
+              run: npm install
+
+            - name: Build project
+              run: npm run build
 
             - name: Install dfx
               uses: dfinity/setup-dfx@main
@@ -38,3 +45,6 @@ jobs:
               run: |
                   dfx identity use cashier-dev
                   dfx identity get-principal
+
+            - name: deplot to staging env
+              run: dfx deploy cashier_frontend_staging --ic
