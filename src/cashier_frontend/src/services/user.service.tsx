@@ -8,7 +8,7 @@ import { _SERVICE } from "../../../declarations/cashier_backend/cashier_backend.
 class UserService {
     private actor: _SERVICE;
 
-    constructor(identity: Identity | PartialIdentity | undefined) {
+    constructor(identity?: Identity | PartialIdentity | undefined) {
         this.actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
