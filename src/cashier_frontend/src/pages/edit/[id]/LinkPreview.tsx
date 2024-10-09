@@ -22,7 +22,7 @@ export default function LinkPreview({ defaultValues, handleSubmit }: ParitalForm
             />
             <Button
                 onClick={handleSubmit as any}
-                className="flex w-full max-w-[350px] mt-5 mx-auto"
+                className="fixed bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
             >
                 Create
             </Button>
