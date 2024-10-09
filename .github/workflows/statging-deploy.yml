@@ -22,9 +22,6 @@ jobs:
               with:
                   node-version: "20"
 
-            - name: Install project dependencies
-              run: npm install
-
             - name: Install dfx
               uses: dfinity/setup-dfx@main
 
@@ -43,8 +40,13 @@ jobs:
                   dfx identity use cashier-dev
                   dfx identity get-principal
 
+            - name: Install project dependencies
+              run: npm install
+
             - name: Build project
-              run: npm run build
+              run: |
+                  rustup target add wasm32-unknown-unknown
+                  npm run build
 
             - name: deplot to staging env
               run: dfx deploy cashier_frontend_staging --ic
