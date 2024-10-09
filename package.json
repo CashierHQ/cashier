@@ -5,7 +5,7 @@
     },
     "name": "cashier",
     "scripts": {
-        "prebuild": "npm run build:backend ",
+        "prebuild": "dfx generate cashier_backend",
         "build": "npm run build --workspaces --if-present",
         "pretest": "npm run prebuild --workspaces --if-present",
         "prestart": "dfx generate cashier_backend",
