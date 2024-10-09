@@ -6,6 +6,8 @@ on:
     push:
         branches:
             - test
+    pull_request:
+        branches:
             - staging
 
 jobs:
