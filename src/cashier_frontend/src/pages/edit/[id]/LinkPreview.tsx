@@ -13,7 +13,7 @@ export default function LinkPreview({ defaultValues, handleSubmit }: ParitalForm
     const { t } = useTranslation();
 
     return (
-        <div className="w-full flex flex-col items-center gap-y-3">
+        <div className="w-full flex flex-col">
             <LinkCard
                 label="Claim"
                 src={defaultValues.image as any}
