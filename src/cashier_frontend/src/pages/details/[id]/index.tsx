@@ -157,12 +157,24 @@ export default function DetailPage() {
                             </TableBody>
                         </Table>
                     </div>
-                    <Button onClick={handleCopyLink as any} className="my-3">
-                        Copy
-                    </Button>
-                    <Button onClick={handleCopyLink as any} className="my-3" variant={"outline"}>
-                        End the Link
-                    </Button>
+                    <div
+                        id="button-group-section"
+                        className="fixed bottom-[30px] left-1/2 -translate-x-1/2"
+                    >
+                        <Button
+                            onClick={handleCopyLink as any}
+                            className="w-[80vw] max-w-[350px] rounded-full my-3"
+                        >
+                            Copy
+                        </Button>
+                        <Button
+                            onClick={handleCopyLink as any}
+                            className="w-[80vw] max-w-[350px] rounded-full"
+                            variant={"outline"}
+                        >
+                            End the Link
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
