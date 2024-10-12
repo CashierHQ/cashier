@@ -21,13 +21,16 @@ export default function DetailPage() {
     const { toast } = useToast();
     const navigate = useNavigate();
 
-    const handleCopyLink = (e: React.SyntheticEvent) => {
-        console.log(e);
-        e.stopPropagation();
-        navigator.clipboard.writeText(window.location.href.replace("details/", ""));
-        toast({
-            description: "Copied",
-        });
+    const handleCopyLink = async (e: React.SyntheticEvent) => {
+        try {
+            e.stopPropagation();
+            await navigator.clipboard.writeText(window.location.href.replace("details/", ""));
+            toast({
+                description: "Copied",
+            });
+        } catch (err) {
+            console.log("🚀 ~ handleCopyLink ~ err:", err);
+        }
     };
     React.useEffect(() => {
         if (!linkId) return;
