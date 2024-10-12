@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentityKit } from "@nfid/identitykit/react";
+import copy from "copy-to-clipboard";
 import LinkService from "@/services/link.service";
 
 export default function DetailPage() {
@@ -21,10 +22,10 @@ export default function DetailPage() {
     const { toast } = useToast();
     const navigate = useNavigate();
 
-    const handleCopyLink = async (e: React.SyntheticEvent) => {
+    const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
-            await navigator.clipboard.writeText(window.location.href.replace("details/", ""));
+            copy(window.location.href.replace("details/", ""));
             toast({
                 description: "Copied",
             });
@@ -171,6 +172,7 @@ export default function DetailPage() {
                         >
                             Copy
                         </Button>
+
                         <Button
                             onClick={handleCopyLink as any}
                             className="w-[80vw] max-w-[350px] rounded-full"
