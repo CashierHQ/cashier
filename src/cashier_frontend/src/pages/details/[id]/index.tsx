@@ -21,12 +21,13 @@ export default function DetailPage() {
     const { toast } = useToast();
     const navigate = useNavigate();
 
-    const handleCopyLink = () => {
+    const handleCopyLink = (e: React.SyntheticEvent) => {
+        console.log(e);
+        e.stopPropagation();
+        navigator.clipboard.writeText(window.location.href.replace("details/", ""));
         toast({
             description: "Copied",
         });
-
-        navigator.clipboard.writeText(window.location.href.replace("details/", ""));
     };
     React.useEffect(() => {
         if (!linkId) return;
@@ -162,7 +163,7 @@ export default function DetailPage() {
                         className="fixed bottom-[30px] left-1/2 -translate-x-1/2"
                     >
                         <Button
-                            onClick={handleCopyLink as any}
+                            onClick={(e) => handleCopyLink(e)}
                             className="w-[80vw] max-w-[350px] rounded-full my-3"
                         >
                             Copy
