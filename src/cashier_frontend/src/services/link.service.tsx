@@ -3,7 +3,7 @@ import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
     CreateLinkInput,
-    UpdateLinkInput,
+    UpdateLinkInput as UpdateLinkInputModel,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
@@ -70,7 +70,7 @@ class LinkService {
     //TODO: refactor type for this
     // TODO: apply state machine for this method or create multiple methods for each state
     async updateLink(linkId: string, data: any) {
-        const completeData: UpdateLinkInput = {
+        const completeData: UpdateLinkInputModel = {
             title: data.title ? [data.title] : [],
             asset_info: data.amount
                 ? [
@@ -78,7 +78,7 @@ class LinkService {
                           chain: {
                               IC: null,
                           },
-                          amount: data.amount,
+                          amount: data.amount ?? 10,
                           address: "",
                       },
                   ]

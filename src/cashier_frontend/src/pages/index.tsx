@@ -9,6 +9,9 @@ import { IoSearch } from "react-icons/io5";
 import LinkService from "@/services/link.service";
 import UserService from "@/services/user.service";
 import { Button } from "@/components/ui/button";
+import { sampleLink1, sampleLink2 } from "@/constants/sampleLinks";
+import { LinkDetail } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { State, UpdateLinkInput } from "@/services/types/link.service.types";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -18,6 +21,32 @@ export default function HomePage() {
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+
+    const createSingleLink = async (linkInput: any, linkService: LinkService) => {
+        // First create link ID
+        let initLink: string = await linkService.createLink({
+            link_type: { NftCreateAndAirdrop: null },
+        });
+        if (initLink) {
+            await linkService.updateLink(initLink, linkInput);
+            linkInput = {
+                ...linkInput,
+                state: {
+                    Active: null,
+                },
+            };
+            await linkService.updateLink(initLink, linkInput);
+        }
+    };
+
+    const createSampleLink = async (linkService: LinkService) => {
+        try {
+            await createSingleLink(sampleLink1, linkService);
+            await createSingleLink(sampleLink2, linkService);
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
     useEffect(() => {
         if (localStorage.getItem("showGuide") === "false") {
@@ -43,11 +72,24 @@ export default function HomePage() {
     }, [identity]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user) {
+            return;
+        }
         const fetchData = async () => {
-            const links = await new LinkService(identity).getLinks();
-            setIsLoading(false);
-            setLinks(links.data ?? []);
+            const linkService = new LinkService(identity);
+            const links = await linkService.getLinks();
+            if (links?.data.length == 0) {
+                // User login first time, then create 2 sample links
+                await createSampleLink(linkService);
+                const newLinkList = await linkService.getLinks();
+                console.log("🚀 ~ fetchData ~ newLinkList:", newLinkList);
+                setLinks(newLinkList.data ?? []);
+                setIsLoading(false);
+            } else {
+                console.log("🚀 ~ fetchData ~ newLinkList:", links);
+                setIsLoading(false);
+                setLinks(links.data ?? []);
+            }
         };
         fetchData();
     }, [user]);
