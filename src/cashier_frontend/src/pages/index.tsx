@@ -22,7 +22,7 @@ export default function HomePage() {
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
-    const createSingleLink = async (linkInput: UpdateLinkInput, linkService: LinkService) => {
+    const createSingleLink = async (linkInput: any, linkService: LinkService) => {
         // First create link ID
         let initLink: string = await linkService.createLink({
             link_type: { NftCreateAndAirdrop: null },
