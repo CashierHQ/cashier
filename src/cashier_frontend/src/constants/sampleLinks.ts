@@ -9,7 +9,7 @@ export const sampleLink1 = {
         "I wanted to capture this special moment forever. And I’d like to share it with my closest of friends.",
     amount: 10,
     chain: Chain.IC,
-    state: State.PendingPreview,
+    state: { PendingPreview: null },
     template: Template.Left,
 };
 

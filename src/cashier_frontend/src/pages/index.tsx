@@ -31,7 +31,9 @@ export default function HomePage() {
             await linkService.updateLink(initLink, linkInput);
             linkInput = {
                 ...linkInput,
-                state: State.Active,
+                state: {
+                    Active: null,
+                },
             };
             await linkService.updateLink(initLink, linkInput);
         }

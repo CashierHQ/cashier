@@ -94,7 +94,7 @@ class LinkService {
                     },
                 ],
             ],
-            state: data.state ? [{ [data.state]: null }] : [],
+            state: data.state ? [data.state] : [],
             template: [{ Left: null }],
             image: data.image ? [data.image] : [],
         };
