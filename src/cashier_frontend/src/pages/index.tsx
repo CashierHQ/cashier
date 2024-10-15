@@ -116,7 +116,7 @@ export default function HomePage() {
                         <ConnectWallet />
                     </div>
 
-                    <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-[100px]">
+                    <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
                         <span className="font-semibold mt-5 text-3xl text-center">
                             Cashier Links - <br />
                             fast, easy, and safe{" "}
@@ -134,7 +134,7 @@ export default function HomePage() {
                 </div>
                 <Button
                     type="submit"
-                    className="fixed bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
+                    className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
                 >
                     Get started
                 </Button>
@@ -143,14 +143,14 @@ export default function HomePage() {
     }
 
     return (
-        <div className="w-screen flex justify-center py-5">
+        <div className="w-screen flex justify-center py-3">
             <div className="w-11/12 max-w-[400px]">
                 <div className="w-full flex justify-between items-center">
                     <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
                     <ConnectWallet />
                 </div>
                 {showGuide && (
-                    <div className="my-8">
+                    <div className="my-3">
                         <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
                         <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
                         <button
@@ -161,7 +161,7 @@ export default function HomePage() {
                         </button>
                     </div>
                 )}
-                <h2 className="text-base font-semibold mb-5 mt-8">Links created by me</h2>
+                <h2 className="text-base font-semibold mb-3 mt-3">Links created by me</h2>
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, index) => (
                         <div className="flex items-center space-x-4 my-3" key={index}>
@@ -199,7 +199,7 @@ export default function HomePage() {
                 )}
             </div>
             <button
-                className="fixed bottom-[30px] right-[30px] rounded-full w-[50px] h-[50px] bg-green text-white hover:bg-green/90"
+                className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
                 onClick={handleCreateLink}
             >
                 +

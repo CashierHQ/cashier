@@ -83,7 +83,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     if (isLoading) return null;
 
     return (
-        <div className="w-screen flex flex-col items-center py-5">
+        <div className="w-screen flex flex-col items-center py-3">
             <div className="w-11/12 max-w-[400px]">
                 <MultiStepForm
                     initialStep={initialStep}
