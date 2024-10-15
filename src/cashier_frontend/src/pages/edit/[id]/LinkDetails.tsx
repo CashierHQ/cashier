@@ -160,33 +160,9 @@ export default function LinkDetails({
                             </FormItem>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        defaultValue={CHAIN_DEFAULT_VALUE}
-                        name="chain"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t("create.chain")}</FormLabel>
-                                <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={CHAIN_DEFAULT_VALUE}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a Chain" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="IC">ICP</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                     <Button
                         type="submit"
-                        className="fixed bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
+                        className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
                     >
                         {t("continue")}
                     </Button>

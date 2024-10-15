@@ -5,6 +5,7 @@ import "./locales/config";
 import "./index.css";
 import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
+import { NFIDW, Plug, InternetIdentity, Stoic } from "@nfid/identitykit";
 
 function App() {
     return (
@@ -16,6 +17,7 @@ function App() {
             onConnectSuccess={() => {}}
             onDisconnect={() => {}}
             authType={IdentityKitAuthType.DELEGATION}
+            signers={[NFIDW, InternetIdentity, Stoic]}
         >
             <AppRouter />
             <Toaster />

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Children, FunctionComponent, ReactElement, useState } from "react";
-
+import { ChevronLeftIcon } from "@radix-ui/react-icons";
 export interface ParitalFormProps<T> {
     handleSubmit: (values: T) => any;
     handleChange: (e: any) => any;
@@ -35,25 +35,25 @@ export default function MultiStepForm<T extends Object>({
 
     return (
         <div className="w-full flex flex-col items-center">
-            <div className="w-full flex justify-center mb-5 relative">
+            <div className="w-full flex items-center justify-center mb-3 relative">
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {partialForms[currentStep].props.name}
                 </h4>
                 {currentStep || (!currentStep && handleBack) ? (
                     <div
-                        className="absolute left-1 cursor-pointer"
+                        className="absolute left-1 cursor-pointer text-[1.5rem]"
                         onClick={() => {
                             if (!currentStep && handleBack) handleBack();
                             else setCurrentStep(currentStep - 1);
                         }}
                     >
-                        ←
+                        <ChevronLeftIcon width={25} height={25} />
                     </div>
                 ) : (
                     <div></div>
                 )}
             </div>
-            <div className="flex w-full mb-5">
+            <div className="flex w-full mb-3">
                 {partialForms.map((_, index) => (
                     <div
                         key={index}
