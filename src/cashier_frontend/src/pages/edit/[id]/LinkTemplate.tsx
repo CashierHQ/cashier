@@ -68,7 +68,7 @@ export default function LinkTemplate({
                     />
                     <Button
                         type="submit"
-                        className="fixed bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
+                        className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
                     >
                         {t("continue")}
                     </Button>

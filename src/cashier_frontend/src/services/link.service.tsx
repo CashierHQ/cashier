@@ -3,6 +3,7 @@ import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
     CreateLinkInput,
+    State,
     UpdateLinkInput as UpdateLinkInputModel,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
@@ -98,7 +99,6 @@ class LinkService {
             template: [{ Left: null }],
             image: data.image ? [data.image] : [],
         };
-
         console.log("called update_link with linkId =", linkId, "and data =", completeData);
         const response = parseResultResponse(await this.actor.update_link(linkId, completeData));
         return response;
