@@ -27,6 +27,7 @@
         "src/cashier_frontend"
     ],
     "devDependencies": {
+        "@types/node": "^22.7.5",
         "dotenv": "^16.4.5",
         "eslint": "^9.9.1",
         "eslint-plugin-react": "^7.35.2",
@@ -36,6 +37,7 @@
         "typescript-eslint": "^8.4.0"
     },
     "dependencies": {
+        "@dfinity/identity-secp256k1": "^2.1.2",
         "tsx": "^4.19.1"
     }
 }
