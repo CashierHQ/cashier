@@ -34,7 +34,7 @@ export default function LinkCard({
                     <h3 className="font-semibold py-2 text-[0.7rem]">{title}</h3>
                     <h3 className="text-[0.5rem]">{message}</h3>
                     <div
-                        className="text-white bg-green rounded-full py-1 mt-3 text-[0.6rem] w-[100%] text-center"
+                        className="text-white bg-green rounded-full py-1 mt-3 text-[0.6rem] w-[90%] text-center"
                         onClick={onClaim}
                     >
                         {label}
