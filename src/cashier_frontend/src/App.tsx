@@ -7,7 +7,6 @@ import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { NFIDW, InternetIdentity, Stoic } from "@nfid/identitykit";
 
-
 function App() {
     const { connect } = useIdentityKit();
 
