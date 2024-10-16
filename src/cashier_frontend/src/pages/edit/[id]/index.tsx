@@ -45,7 +45,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleSubmitLinkDetails = async (values: any) => {
+        console.log("HI");
         if (!linkId) return;
+        console.log(linkId);
         try {
             setFormData({ ...formData, ...values });
             await new LinkService(identity).updateLink(linkId, {

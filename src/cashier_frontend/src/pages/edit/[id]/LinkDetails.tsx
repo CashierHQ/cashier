@@ -14,23 +14,14 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "@/components/ui/textarea";
 import { ParitalFormProps } from "@/components/multi-step-form";
-import {
-    Select,
-    SelectContent,
-    SelectTrigger,
-    SelectValue,
-    SelectItem,
-} from "@/components/ui/select";
 import { FileInput } from "@/components/file-input";
 import { fileToBase64, resizeImage } from "@/utils";
 import { NumberInput } from "@/components/number-input";
-import { CHAIN_DEFAULT_VALUE } from "@/constants/defaultValues";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
 
 const linkDetailsSchema = z.object({
     image: z.string().min(1, { message: "Image is required" }),
     description: z.string().min(10),
-    chain: z.string(),
     name: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
     amount: z.coerce.number().min(1),
 });
@@ -46,7 +37,6 @@ export default function LinkDetails({
         resolver: zodResolver(linkDetailsSchema),
         defaultValues: {
             description: "",
-            chain: "IC",
             name: "",
             amount: 1,
             image: "",
