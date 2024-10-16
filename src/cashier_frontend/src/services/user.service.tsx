@@ -3,20 +3,26 @@ import { createActor } from "../../../declarations/cashier_backend";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { BACKEND_CANISTER_ID } from "@/const";
+import { _SERVICE } from "../../../declarations/cashier_backend/cashier_backend.did";
 
-export const UserService = {
-    createUser: async (identity: Identity | PartialIdentity | undefined) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
+class UserService {
+    private actor: _SERVICE;
+
+    constructor(identity?: Identity | PartialIdentity | undefined) {
+        this.actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
-        const response = parseResultResponse(await actor.create_user());
+    }
+
+    async createUser() {
+        const response = parseResultResponse(await this.actor.create_user());
         return response;
-    },
-    getUser: async (identity: Identity | PartialIdentity | undefined) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-        });
-        const response = parseResultResponse(await actor.get_user());
+    }
+
+    async getUser() {
+        const response = parseResultResponse(await this.actor.get_user());
         return response;
-    },
-};
+    }
+}
+
+export default UserService;

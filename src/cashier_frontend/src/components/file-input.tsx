@@ -54,27 +54,13 @@ const FileInput = forwardRef<HTMLInputElement, InputProps>(
                 )}
                 {image && (
                     <div>
-                        <div
-                            style={{
-                                width: "200px",
-                                height: "200px",
-                                backgroundImage: `url(${image})`,
-                                backgroundSize: "contain",
-                                borderRadius: "10px",
-                            }}
-                        />
+                        <img src={image} alt="image" className="rounded-[10px]" />
                         <div className="flex gap-x-[10px] mt-3">
                             <div
                                 className="p-2 w-[38px] rounded-md border-[1px] shadow-sm border-gray-200 text-green"
                                 onClick={handleDelete}
                             >
                                 <FiTrash size="20px" />
-                            </div>
-                            <div
-                                className="p-2 w-[38px] rounded-md border-[1px] shadow-sm border-gray-200 text-green"
-                                onClick={handleSelect}
-                            >
-                                <LuRefreshCw size="20px" />
                             </div>
                         </div>
                     </div>

@@ -24,6 +24,8 @@ import {
 import { FileInput } from "@/components/file-input";
 import { fileToBase64, resizeImage } from "@/utils";
 import { NumberInput } from "@/components/number-input";
+import { CHAIN_DEFAULT_VALUE } from "@/constants/defaultValues";
+import { DECREASE, INCREASE } from "@/constants/otherConst";
 
 const linkDetailsSchema = z.object({
     image: z.string().min(1, { message: "Image is required" }),
@@ -62,6 +64,16 @@ export default function LinkDetails({
         const base64 = await fileToBase64(resizedImage);
         form.setValue("image", base64, { shouldValidate: true });
         handleChange({ image: base64 });
+    };
+
+    const handleAdjustAmount = (request: string, value: number) => {
+        if (request === DECREASE) {
+            if (value > 1) {
+                form.setValue("amount", Number(value) - 1);
+            }
+        } else {
+            form.setValue("amount", Number(value) + 1);
+        }
     };
 
     return (
@@ -126,6 +138,7 @@ export default function LinkDetails({
                     <FormField
                         control={form.control}
                         name="amount"
+                        defaultValue={1}
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t("create.amount")}</FormLabel>
@@ -133,12 +146,13 @@ export default function LinkDetails({
                                     <NumberInput
                                         placeholder={t("create.amount")}
                                         handleIncrease={() =>
-                                            form.setValue("amount", Number(field.value) + 1)
+                                            handleAdjustAmount(INCREASE, Number(field.value))
                                         }
                                         handleDecrease={() =>
-                                            form.setValue("amount", Number(field.value) - 1)
+                                            handleAdjustAmount(DECREASE, Number(field.value))
                                         }
-                                        min={0}
+                                        min={1}
+                                        disableDecrease={Number(field.value) <= 1}
                                         {...field}
                                     />
                                 </FormControl>
@@ -146,29 +160,9 @@ export default function LinkDetails({
                             </FormItem>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="chain"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t("create.chain")}</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a Chain" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="IC">ICP</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                     <Button
                         type="submit"
-                        className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
+                        className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
                     >
                         {t("continue")}
                     </Button>

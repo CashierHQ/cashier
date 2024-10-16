@@ -3,7 +3,7 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use crate::{store::link_store, utils::logger};
+use crate::store::link_store;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 #[repr(u8)]

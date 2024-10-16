@@ -5,7 +5,7 @@ interface LinkData {
     state: any;
 }
 
-function StateBadge({ state }: { state: any }) {
+export function StateBadge({ state }: { state: any }) {
     if (state === "PendingDetail") {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightyellow text-yellow">
@@ -14,10 +14,10 @@ function StateBadge({ state }: { state: any }) {
         );
     }
 
-    if (state === "PendingReview") {
+    if (state === "PendingPreview") {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightpurple text-purple">
-                Pending review
+            <div className="text-sm font-normal rounded-full px-2 bg-lightpurple text-[#3648A1]">
+                Pending preview
             </div>
         );
     }

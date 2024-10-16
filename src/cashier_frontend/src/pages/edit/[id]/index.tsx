@@ -6,7 +6,7 @@ import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
-import { LinkService } from "@/services/link.service";
+import LinkService from "@/services/link.service";
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
@@ -21,10 +21,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = await LinkService.getLink(identity, linkId);
+            const link = await new LinkService(identity).getLink(linkId);
             setFormData(link);
-            console.log("fetched link data", link);
-
             setIsNameSetByUser(true);
             setIsLoading(false);
         };
@@ -37,7 +35,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             values.name = values.title;
         }
         setFormData({ ...formData, ...values });
-        await LinkService.updateLink(identity, linkId, {
+        await new LinkService(identity).updateLink(linkId, {
             ...formData,
             ...values,
             state: {
@@ -50,7 +48,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         try {
             setFormData({ ...formData, ...values });
-            await LinkService.updateLink(identity, linkId, {
+            await new LinkService(identity).updateLink(linkId, {
                 ...formData,
                 ...values,
                 state: {
@@ -58,20 +56,21 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 },
             });
         } finally {
-            navigate("/");
+            //navigate("/");
         }
     };
 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
-        await LinkService.updateLink(identity, linkId, {
+        await new LinkService(identity).updateLink(linkId, {
             ...formData,
             ...values,
+            actions: [{ arg: "string", method: "string", canister_id: "string", label: "string" }],
             state: {
                 Active: null,
             },
         });
-        navigate("/");
+        navigate(`/details/${linkId}`);
     };
 
     const handleChange = (values: any) => {
@@ -84,7 +83,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     if (isLoading) return null;
 
     return (
-        <div className="w-screen flex flex-col items-center py-5">
+        <div className="w-screen flex flex-col items-center py-3">
             <div className="w-11/12 max-w-[400px]">
                 <MultiStepForm
                     initialStep={initialStep}

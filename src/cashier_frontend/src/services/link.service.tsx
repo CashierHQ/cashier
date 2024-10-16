@@ -1,6 +1,11 @@
 import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
-import { UpdateLinkInput } from "../../../declarations/cashier_backend/cashier_backend.did";
+import {
+    _SERVICE,
+    CreateLinkInput,
+    State,
+    UpdateLinkInput as UpdateLinkInputModel,
+} from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
@@ -21,13 +26,18 @@ const parseLink = (link: any) => {
     };
 };
 
-export const LinkService = {
-    getLinks: async (identity: Identity | PartialIdentity | undefined) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
+class LinkService {
+    private actor: _SERVICE;
+
+    constructor(identity?: Identity | PartialIdentity | undefined) {
+        this.actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
+    }
+
+    async getLinks() {
         const response = parseResultResponse(
-            await actor.get_links([
+            await this.actor.get_links([
                 {
                     offset: BigInt(0),
                     limit: BigInt(10),
@@ -47,34 +57,21 @@ export const LinkService = {
             : [];
 
         return response;
-    },
-    getLink: async (identity: Identity | PartialIdentity | undefined, linkId: string) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-        });
-        const response = parseResultResponse(await actor.get_link(linkId));
+    }
+
+    async getLink(linkId: string) {
+        const response = parseResultResponse(await this.actor.get_link(linkId));
         return parseLink(response);
-    },
-    createLink: async (identity: Identity | PartialIdentity | undefined) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-        });
-        const response = parseResultResponse(
-            await actor.create_link({
-                link_type: { NftCreateAndAirdrop: null },
-            }),
-        );
-        return response;
-    },
-    updateLink: async (
-        identity: Identity | PartialIdentity | undefined,
-        linkId: string,
-        data: any,
-    ) => {
-        const actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-        });
-        const completeData: UpdateLinkInput = {
+    }
+
+    async createLink(input: CreateLinkInput) {
+        return parseResultResponse(await this.actor.create_link(input));
+    }
+
+    //TODO: refactor type for this
+    // TODO: apply state machine for this method or create multiple methods for each state
+    async updateLink(linkId: string, data: any) {
+        const completeData: UpdateLinkInputModel = {
             title: data.title ? [data.title] : [],
             asset_info: data.amount
                 ? [
@@ -82,20 +79,30 @@ export const LinkService = {
                           chain: {
                               IC: null,
                           },
-                          amount: data.amount,
+                          amount: data.amount ?? 10,
                           address: "",
                       },
                   ]
                 : [],
             description: data.description ? [data.description] : [],
-            actions: data.actions ? [data.actions] : [],
+            actions: [
+                [
+                    {
+                        arg: "",
+                        method: "",
+                        canister_id: "",
+                        label: "",
+                    },
+                ],
+            ],
             state: data.state ? [data.state] : [],
-            template: data.template ? [data.template] : [],
+            template: [{ Left: null }],
             image: data.image ? [data.image] : [],
         };
-
         console.log("called update_link with linkId =", linkId, "and data =", completeData);
-        const response = parseResultResponse(await actor.update_link(linkId, completeData));
+        const response = parseResultResponse(await this.actor.update_link(linkId, completeData));
         return response;
-    },
-};
+    }
+}
+
+export default LinkService;
