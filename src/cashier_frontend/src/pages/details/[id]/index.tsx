@@ -12,7 +12,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentityKit } from "@nfid/identitykit/react";
+import copy from "copy-to-clipboard";
 import LinkService from "@/services/link.service";
+import { ChevronLeftIcon } from "@radix-ui/react-icons";
+import QRCode from "react-qr-code";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<any>({});
@@ -21,12 +24,16 @@ export default function DetailPage() {
     const { toast } = useToast();
     const navigate = useNavigate();
 
-    const handleCopyLink = () => {
-        toast({
-            description: "Copied",
-        });
-
-        navigator.clipboard.writeText(window.location.href.replace("details/", ""));
+    const handleCopyLink = (e: React.SyntheticEvent) => {
+        try {
+            e.stopPropagation();
+            copy(window.location.href.replace("details/", ""));
+            toast({
+                description: "Copied",
+            });
+        } catch (err) {
+            console.log("🚀 ~ handleCopyLink ~ err:", err);
+        }
     };
     React.useEffect(() => {
         if (!linkId) return;
@@ -39,17 +46,17 @@ export default function DetailPage() {
     }, [linkId, identity]);
 
     return (
-        <div className="w-screen flex flex-col items-center py-5">
+        <div className="w-screen flex flex-col items-center py-3">
             <div className="w-11/12 max-w-[400px]">
                 <div className="w-full flex flex-col">
-                    <div id="heading-section" className="flex my-5">
+                    <div id="heading-section" className="flex mb-5">
                         <div
                             className="cursor-pointer"
                             onClick={() => {
                                 navigate("/");
                             }}
                         >
-                            ←
+                            <ChevronLeftIcon width={25} height={25} />
                         </div>
                         <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center mx-auto">
                             {linkData?.title}
@@ -59,8 +66,11 @@ export default function DetailPage() {
                         <div className="flex items-center justify-center grow">
                             <StateBadge state={linkData?.state} />
                         </div>
-                        <div className="flex items-center justify-center grow">
-                            <img src="/qr.png" alt="qrcode" />
+                        <div className="flex items-center justify-center grow mt-3">
+                            <QRCode
+                                size={100}
+                                value={window.location.href.replace("details/", "")}
+                            />
                         </div>
                     </div>
                     <div
@@ -157,11 +167,11 @@ export default function DetailPage() {
                             </TableBody>
                         </Table>
                     </div>
-                    <Button onClick={handleCopyLink as any} className="my-3">
+                    <Button
+                        onClick={handleCopyLink}
+                        className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
+                    >
                         Copy
-                    </Button>
-                    <Button onClick={handleCopyLink as any} className="my-3" variant={"outline"}>
-                        End the Link
                     </Button>
                 </div>
             </div>
