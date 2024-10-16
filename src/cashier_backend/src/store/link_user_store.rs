@@ -1,5 +1,5 @@
 use crate::types::{
-    api::{PaginateInput, PaginateResult, PaginateResultMetadata},
+    api::{FilterInput, PaginateInput, PaginateResult, PaginateResultMetadata},
     link_user::LinkUser,
 };
 
@@ -18,6 +18,7 @@ pub fn get(id: &str) -> Option<u64> {
 pub fn get_links_by_user_id(
     user_id: String,
     pagination: PaginateInput,
+    _filter: Option<FilterInput>,
 ) -> Result<PaginateResult<LinkUser>, String> {
     LINK_USER_STORE.with(|store| {
         let store = store.borrow();
@@ -31,6 +32,9 @@ pub fn get_links_by_user_id(
             let link_user = LinkUser::from_persistent(key, ts);
             result.push(link_user);
         }
+
+        // Sort the result by timestamp (ts)
+        result.sort_by(|a, b| a.create_at.cmp(&b.create_at));
 
         if pagination.offset as usize >= result.len() {
             return Ok(PaginateResult::default());
