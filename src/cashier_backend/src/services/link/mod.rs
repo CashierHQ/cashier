@@ -50,7 +50,7 @@ pub fn get_links_by_user_id(
     user_id: String,
     pagination: PaginateInput,
 ) -> Result<PaginateResult<LinkDetail>, String> {
-    let link_users = match link_user_store::get_links_by_user_id(user_id, pagination) {
+    let link_users = match link_user_store::get_links_by_user_id(user_id, pagination, None) {
         Ok(link_users) => link_users,
         Err(e) => return Err(e),
     };
@@ -60,8 +60,8 @@ pub fn get_links_by_user_id(
         .iter()
         .map(|link_user| link_user.link_id.clone())
         .collect();
-
     let links = link_store::get_batch(link_ids);
+
     let res = PaginateResult::new(links, link_users.metadata);
 
     Ok(res)
