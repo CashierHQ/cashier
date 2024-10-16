@@ -10,9 +10,11 @@ updates:
       directory: "/src/cashier_backend" # Location of Cargo.toml
       schedule:
           interval: "weekly"
+      target-branch: "staging"
 
     # Node.js package updates
     - package-ecosystem: "npm"
       directory: "/src/cashier_frontend" # Location of package.json
       schedule:
           interval: "weekly"
+      target-branch: "staging"
