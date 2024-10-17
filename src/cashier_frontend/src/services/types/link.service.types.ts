@@ -33,7 +33,7 @@ export type UpdateLinkInput = {
     create_at: Date;
 };
 
-export type LinkDetail = {
+export type LinkDetailModel = {
     id: string;
     title: string;
     description: string;
@@ -46,4 +46,5 @@ export type LinkDetail = {
     amount?: number;
     chain?: string;
     create_at: Date;
+    asset_info: [];
 };

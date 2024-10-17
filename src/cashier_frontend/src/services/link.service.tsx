@@ -9,9 +9,9 @@ import {
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
-import { LinkDetail } from "./types/link.service.types";
+import { LinkDetailModel } from "./types/link.service.types";
 
-const parseLink = (link: any): LinkDetail => {
+const parseLink = (link: any): LinkDetailModel => {
     return {
         id: link.id,
         title: link.title ? link.title[0] : undefined,
@@ -27,6 +27,11 @@ const parseLink = (link: any): LinkDetail => {
         create_at: link.create_at ? convertNanoSecondsToDate(link.create_at[0]) : new Date(),
     };
 };
+
+interface ReponseLinksModel {
+    data: LinkDetailModel[];
+    metadada: any;
+}
 
 class LinkService {
     private actor: _SERVICE;
@@ -46,18 +51,22 @@ class LinkService {
                 },
             ]),
         );
+        let responseModel: ReponseLinksModel = {
+            data: [],
+            metadada: response.metadata,
+        };
 
-        response.data = response.data
-            ? (response.data.map((link: any) => {
+        responseModel.data = response.data
+            ? response.data.map((link: any) => {
                   for (const key in link) {
                       if (Array.isArray(link[key]) && link[key].length === 0) {
                           delete link[key];
                       }
                   }
                   return parseLink(link);
-              }) as any)
+              })
             : [];
-        return response;
+        return responseModel;
     }
 
     async getLink(linkId: string) {

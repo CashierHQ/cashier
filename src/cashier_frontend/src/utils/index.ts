@@ -1,4 +1,4 @@
-import { LinkDetail } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 export const safeParseJSON = (arg: Record<string, unknown>): any => {
     return JSON.stringify(arg, (key, value) =>
@@ -99,17 +99,22 @@ export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
     }
 };
 
-export const groupLinkListByDate = (linkList: LinkDetail[]): Record<string, LinkDetail[]> => {
+export const groupLinkListByDate = (
+    linkList: LinkDetailModel[],
+): Record<string, LinkDetailModel[]> => {
     if (linkList?.length > 0) {
         const sortedItems = linkList.sort((a, b) => b.create_at.getTime() - a.create_at.getTime());
-        return sortedItems.reduce((groups: Record<string, LinkDetail[]>, item: LinkDetail) => {
-            const dateKey = item.create_at.toISOString().split("T")[0];
-            if (!groups[dateKey]) {
-                groups[dateKey] = [];
-            }
-            groups[dateKey].push(item);
-            return groups;
-        }, {});
+        return sortedItems.reduce(
+            (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
+                const dateKey = item.create_at.toISOString().split("T")[0];
+                if (!groups[dateKey]) {
+                    groups[dateKey] = [];
+                }
+                groups[dateKey].push(item);
+                return groups;
+            },
+            {},
+        );
     } else {
         return {};
     }

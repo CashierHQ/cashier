@@ -10,13 +10,13 @@ import LinkService from "@/services/link.service";
 import UserService from "@/services/user.service";
 import { Button } from "@/components/ui/button";
 import { sampleLink1, sampleLink2 } from "@/constants/sampleLinks";
-import { LinkDetail } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 import { formatDateString, groupLinkListByDate } from "@/utils";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const { agent, identity } = useIdentityKit();
-    const [links, setLinks] = useState<Record<string, LinkDetail[]>>({});
+    const [links, setLinks] = useState<Record<string, LinkDetailModel[]>>({});
     const [user, setUser] = useState<any>(null);
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -109,7 +109,7 @@ export default function HomePage() {
         localStorage.setItem("showGuide", "false");
     };
 
-    const renderLinkList = (links: Record<string, LinkDetail[]>) => {
+    const renderLinkList = (links: Record<string, LinkDetailModel[]>) => {
         return (
             <div>
                 {Object.entries(links).map(([date, items]) => (
