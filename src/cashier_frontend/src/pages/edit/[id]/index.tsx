@@ -45,7 +45,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleSubmitLinkDetails = async (values: any) => {
-        console.log("HI");
         if (!linkId) return;
         console.log(linkId);
         try {
@@ -57,22 +56,28 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     PendingPreview: null,
                 },
             });
-        } finally {
-            //navigate("/");
+        } catch (error) {
+            console.log(error);
         }
     };
 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
-        await new LinkService(identity).updateLink(linkId, {
-            ...formData,
-            ...values,
-            actions: [{ arg: "string", method: "string", canister_id: "string", label: "string" }],
-            state: {
-                Active: null,
-            },
-        });
-        navigate(`/details/${linkId}`);
+        try {
+            await new LinkService(identity).updateLink(linkId, {
+                ...formData,
+                ...values,
+                actions: [
+                    { arg: "string", method: "string", canister_id: "string", label: "string" },
+                ],
+                state: {
+                    Active: null,
+                },
+            });
+            navigate(`/details/${linkId}`);
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     const handleChange = (values: any) => {

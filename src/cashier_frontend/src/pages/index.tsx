@@ -10,13 +10,13 @@ import LinkService from "@/services/link.service";
 import UserService from "@/services/user.service";
 import { Button } from "@/components/ui/button";
 import { sampleLink1, sampleLink2 } from "@/constants/sampleLinks";
-import { LinkDetail } from "../../../declarations/cashier_backend/cashier_backend.did";
-import { State, UpdateLinkInput } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
+import { formatDateString, groupLinkListByDate } from "@/utils";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const { agent, identity } = useIdentityKit();
-    const [links, setLinks] = useState<any>([]);
+    const [links, setLinks] = useState<Record<string, LinkDetailModel[]>>({});
     const [user, setUser] = useState<any>(null);
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -83,12 +83,14 @@ export default function HomePage() {
                 await createSampleLink(linkService);
                 const newLinkList = await linkService.getLinks();
                 console.log("🚀 ~ fetchData ~ newLinkList:", newLinkList);
-                setLinks(newLinkList.data ?? []);
+                const groupedLinkList = groupLinkListByDate(newLinkList.data);
+                setLinks(groupedLinkList ?? {});
                 setIsLoading(false);
             } else {
                 console.log("🚀 ~ fetchData ~ newLinkList:", links);
+                const groupedLinkList = groupLinkListByDate(links.data);
                 setIsLoading(false);
-                setLinks(links.data ?? []);
+                setLinks(groupedLinkList ?? []);
             }
         };
         fetchData();
@@ -105,6 +107,32 @@ export default function HomePage() {
     const handleHideGuide = () => {
         setShowGuide(false);
         localStorage.setItem("showGuide", "false");
+    };
+
+    const renderLinkList = (links: Record<string, LinkDetailModel[]>) => {
+        return (
+            <div>
+                {Object.entries(links).map(([date, items]) => (
+                    <div key={date} className="mb-3">
+                        <h3 className="text-lightblack">{formatDateString(date)}</h3>
+                        <ul>
+                            {items.map((item) => (
+                                <Link
+                                    to={
+                                        item.state === "Active"
+                                            ? `/details/${item.id}`
+                                            : `/edit/${item.id}`
+                                    }
+                                    key={item.id}
+                                >
+                                    <LinkItem key={item.id} link={item} />
+                                </Link>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
+            </div>
+        );
     };
 
     if (!agent) {
@@ -161,7 +189,7 @@ export default function HomePage() {
                         </button>
                     </div>
                 )}
-                <h2 className="text-base font-semibold mb-3 mt-3">Links created by me</h2>
+                <h2 className="text-base font-semibold mb-3 mt-3 mb-5">Links created by me</h2>
                 {isLoading ? (
                     Array.from({ length: 5 }).map((_, index) => (
                         <div className="flex items-center space-x-4 my-3" key={index}>
@@ -172,7 +200,7 @@ export default function HomePage() {
                             </div>
                         </div>
                     ))
-                ) : links.length === 0 ? (
+                ) : Object.keys(links).length === 0 ? (
                     <div className="w-full flex flex-col items-center mt-[100px]">
                         <IoSearch
                             style={{
@@ -186,16 +214,7 @@ export default function HomePage() {
                         <p className="text-gray-500">{t("home.noLinksFoundDescription")}</p>
                     </div>
                 ) : (
-                    links.map((link: any) => (
-                        <Link
-                            to={
-                                link.state === "Active" ? `/details/${link.id}` : `/edit/${link.id}`
-                            }
-                            key={link.id}
-                        >
-                            <LinkItem key={link.id} link={link} />
-                        </Link>
-                    ))
+                    renderLinkList(links)
                 )}
             </div>
             <button

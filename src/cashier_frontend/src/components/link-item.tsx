@@ -1,3 +1,5 @@
+import { LinkDetailModel } from "@/services/types/link.service.types";
+
 interface LinkData {
     title: string;
     status: string;
@@ -47,7 +49,7 @@ export function StateBadge({ state }: { state: any }) {
     }
 }
 
-export default function LinkItem({ link }: { link: LinkData }) {
+export default function LinkItem({ link }: { link: LinkDetailModel }) {
     return (
         <div className="w-full flex justify-between items-center my-5">
             <div className="flex gap-x-5 items-center">
