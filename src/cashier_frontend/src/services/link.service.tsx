@@ -1,4 +1,4 @@
-import { parseResultResponse } from "@/utils";
+import { convertNanoSecondsToDate, groupLinkListByDate, parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
@@ -9,8 +9,9 @@ import {
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
+import { LinkDetailModel } from "./types/link.service.types";
 
-const parseLink = (link: any) => {
+const parseLink = (link: any): LinkDetailModel => {
     return {
         id: link.id,
         title: link.title ? link.title[0] : undefined,
@@ -23,8 +24,15 @@ const parseLink = (link: any) => {
         creator: link.creator ? link.creator[0] : undefined,
         amount: link.asset_info ? link.asset_info[0].amount : undefined,
         chain: link.asset_info ? Object.keys(link.asset_info[0].chain)[0] : undefined,
+        create_at: link.create_at ? convertNanoSecondsToDate(link.create_at[0]) : new Date(),
+        asset_info: link.asset_info[0],
     };
 };
+
+interface ReponseLinksModel {
+    data: LinkDetailModel[];
+    metadada: any;
+}
 
 class LinkService {
     private actor: _SERVICE;
@@ -44,19 +52,22 @@ class LinkService {
                 },
             ]),
         );
+        let responseModel: ReponseLinksModel = {
+            data: [],
+            metadada: response.metadata,
+        };
 
-        response.data = response.data
-            ? (response.data.map((link: any) => {
+        responseModel.data = response.data
+            ? response.data.map((link: any) => {
                   for (const key in link) {
                       if (Array.isArray(link[key]) && link[key].length === 0) {
                           delete link[key];
                       }
                   }
                   return parseLink(link);
-              }) as any)
+              })
             : [];
-
-        return response;
+        return responseModel;
     }
 
     async getLink(linkId: string) {
