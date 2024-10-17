@@ -1,3 +1,5 @@
+import { AssetAirdropInfo } from "../../../../declarations/cashier_backend/cashier_backend.did";
+
 export enum State {
     New = "New",
     Inactive = "Inactive",
@@ -43,8 +45,8 @@ export type LinkDetailModel = {
     state?: string;
     template?: string;
     creator: string;
-    amount?: number;
+    amount: number;
     chain?: string;
     create_at: Date;
-    asset_info: [];
+    asset_info: AssetAirdropInfo;
 };
