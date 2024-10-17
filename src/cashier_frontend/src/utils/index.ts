@@ -1,3 +1,5 @@
+import { LinkDetail } from "@/services/types/link.service.types";
+
 export const safeParseJSON = (arg: Record<string, unknown>): any => {
     return JSON.stringify(arg, (key, value) =>
         typeof value === "bigint" ? value.toString() : value,
@@ -82,4 +84,45 @@ export const fileToBase64 = (file: Blob) => {
             reject(error);
         };
     });
+};
+
+export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
+    let result = new Date();
+    try {
+        const parseValue = Number(nanoSeconds);
+        console.log("🚀 ~ convertNanoSecondsToDate ~ parseValue:", parseValue);
+        result = new Date(parseValue / 1000000);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        return result;
+    }
+};
+
+export const groupLinkListByDate = (linkList: LinkDetail[]): Record<string, LinkDetail[]> => {
+    if (linkList?.length > 0) {
+        const sortedItems = linkList.sort((a, b) => b.create_at.getTime() - a.create_at.getTime());
+        return sortedItems.reduce((groups: Record<string, LinkDetail[]>, item: LinkDetail) => {
+            const dateKey = item.create_at.toISOString().split("T")[0];
+            if (!groups[dateKey]) {
+                groups[dateKey] = [];
+            }
+            groups[dateKey].push(item);
+            return groups;
+        }, {});
+    } else {
+        return {};
+    }
+};
+
+export const formatDateString = (dateString: string): string => {
+    if (dateString && dateString.trim() !== "") {
+        const date = new Date(dateString);
+        const monthShort = date.toLocaleString("default", { month: "short" });
+        const day = date.getDate();
+        const year = date.getFullYear();
+        return `${monthShort} ${day}, ${year}`;
+    } else {
+        return "";
+    }
 };

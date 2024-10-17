@@ -1,4 +1,4 @@
-import { parseResultResponse } from "@/utils";
+import { convertNanoSecondsToDate, groupLinkListByDate, parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
@@ -9,8 +9,9 @@ import {
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
+import { LinkDetail } from "./types/link.service.types";
 
-const parseLink = (link: any) => {
+const parseLink = (link: any): LinkDetail => {
     return {
         id: link.id,
         title: link.title ? link.title[0] : undefined,
@@ -23,6 +24,7 @@ const parseLink = (link: any) => {
         creator: link.creator ? link.creator[0] : undefined,
         amount: link.asset_info ? link.asset_info[0].amount : undefined,
         chain: link.asset_info ? Object.keys(link.asset_info[0].chain)[0] : undefined,
+        create_at: link.create_at ? convertNanoSecondsToDate(link.create_at[0]) : new Date(),
     };
 };
 
@@ -55,7 +57,6 @@ class LinkService {
                   return parseLink(link);
               }) as any)
             : [];
-
         return response;
     }
 

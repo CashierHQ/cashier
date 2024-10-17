@@ -30,4 +30,20 @@ export type UpdateLinkInput = {
     state: State;
     template: Template;
     image: string;
+    create_at: Date;
+};
+
+export type LinkDetail = {
+    id: string;
+    title: string;
+    description: string;
+    image: string;
+    link_type?: string;
+    actions: [];
+    state?: string;
+    template?: string;
+    creator: string;
+    amount?: number;
+    chain?: string;
+    create_at: Date;
 };
