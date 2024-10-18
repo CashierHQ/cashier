@@ -90,7 +90,6 @@ export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
     let result = new Date();
     try {
         const parseValue = Number(nanoSeconds);
-        console.log("🚀 ~ convertNanoSecondsToDate ~ parseValue:", parseValue);
         result = new Date(parseValue / 1000000);
     } catch (error) {
         console.log(error);
