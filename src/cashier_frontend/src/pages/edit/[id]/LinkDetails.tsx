@@ -18,6 +18,7 @@ import { FileInput } from "@/components/file-input";
 import { fileToBase64, resizeImage } from "@/utils";
 import { NumberInput } from "@/components/number-input";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
+import { useEffect, useState } from "react";
 
 const linkDetailsSchema = z.object({
     image: z.string().min(1, { message: "Image is required" }),
@@ -32,6 +33,7 @@ export default function LinkDetails({
     handleChange,
 }: ParitalFormProps<z.infer<typeof linkDetailsSchema>>) {
     const { t } = useTranslation();
+    const [currentImage, setCurrentImage] = useState<string>("");
 
     const form = useForm<z.infer<typeof linkDetailsSchema>>({
         resolver: zodResolver(linkDetailsSchema),
@@ -54,6 +56,7 @@ export default function LinkDetails({
         const base64 = await fileToBase64(resizedImage);
         form.setValue("image", base64, { shouldValidate: true });
         handleChange({ image: base64 });
+        setCurrentImage(base64);
     };
 
     const handleAdjustAmount = (request: string, value: number) => {
@@ -65,6 +68,10 @@ export default function LinkDetails({
             form.setValue("amount", Number(value) + 1);
         }
     };
+
+    useEffect(() => {
+        setCurrentImage(form.getValues("image"));
+    }, []);
 
     return (
         <div className="w-full">
@@ -83,7 +90,7 @@ export default function LinkDetails({
                                 <div>
                                     <FormLabel>{t("create.photo")}</FormLabel>
                                     <FileInput
-                                        defaultValue={form.getValues("image") as any}
+                                        defaultValue={currentImage}
                                         onFileChange={handleUploadImage}
                                     />
                                     {form.formState.errors.image && (

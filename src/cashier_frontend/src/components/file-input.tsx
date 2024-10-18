@@ -35,6 +35,10 @@ const FileInput = forwardRef<HTMLInputElement, InputProps>(
             };
         }, []);
 
+        useEffect(() => {
+            setImage(defaultValue);
+        }, [defaultValue]);
+
         return (
             <div
                 tabIndex={0}
