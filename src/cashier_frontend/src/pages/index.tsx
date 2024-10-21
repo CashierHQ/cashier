@@ -12,12 +12,13 @@ import { Button } from "@/components/ui/button";
 import { sampleLink1, sampleLink2 } from "@/constants/sampleLinks";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { formatDateString, groupLinkListByDate } from "@/utils";
+import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 export default function HomePage() {
     const { t } = useTranslation();
-    const { agent, identity } = useIdentityKit();
+    const { user: connectedUser, identity } = useIdentityKit();
     const [links, setLinks] = useState<Record<string, LinkDetailModel[]>>({});
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
@@ -135,7 +136,7 @@ export default function HomePage() {
         );
     };
 
-    if (!agent) {
+    if (!connectedUser) {
         return (
             <div className="w-screen flex justify-center py-5">
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">

@@ -3,13 +3,29 @@ import { IdentityKitProvider, useIdentityKit } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";
-import { IdentityKitAuthType } from "@nfid/identitykit";
+import { IdentityKitAuthType, Plug } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { NFIDW, InternetIdentity, Stoic } from "@nfid/identitykit";
+import { useEffect } from "react";
+
+const isMobile = () => {
+    if (
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    ) {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
 function App() {
-    const { connect } = useIdentityKit();
-
+    useEffect(() => {
+        if (!isMobile()) {
+            // listSigners.push(Plug);
+        }
+    }, []);
     return (
         <IdentityKitProvider
             featuredSigner={false}
@@ -17,13 +33,16 @@ function App() {
                 console.log("Connect to Identity fail: " + e);
             }}
             onConnectSuccess={() => {}}
-            onDisconnect={() => {
-                console.log("Disconnected");
-                console.log("Try to login");
-                connect();
-            }}
+            onDisconnect={() => {}}
             authType={IdentityKitAuthType.DELEGATION}
-            signers={[NFIDW, InternetIdentity, Stoic]}
+            signers={
+                isMobile()
+                    ? [NFIDW, InternetIdentity, Stoic]
+                    : [NFIDW, InternetIdentity, Stoic, Plug]
+            }
+            signerClientOptions={{
+                targets,
+            }}
         >
             <AppRouter />
             <Toaster />
