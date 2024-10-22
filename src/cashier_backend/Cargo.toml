@@ -22,4 +22,5 @@ proc-macro2 = "1.0.86"
 quote = "1.0.37"
 syn = "2.0.77"
 serde_bytes = "0.11.15"
+itertools = "0.13.0"
 
