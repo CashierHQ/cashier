@@ -1,4 +1,4 @@
-import { useIdentityKit } from "@nfid/identitykit/react";
+import { ConnectWalletButton, useIdentityKit } from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -143,7 +143,7 @@ export default function HomePage() {
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">
                     <div className="w-full flex justify-between items-center">
                         <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                        <ConnectWallet />
+                        <ConnectWalletButton>Get started</ConnectWalletButton>
                     </div>
 
                     <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
