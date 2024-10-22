@@ -22,6 +22,7 @@ export default function HomePage() {
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+    const { connect } = useIdentityKit();
 
     const createSingleLink = async (linkInput: any, linkService: LinkService) => {
         // First create link ID
@@ -162,7 +163,8 @@ export default function HomePage() {
                     </div>
                 </div>
                 <Button
-                    type="submit"
+                    type="button"
+                    onClick={connect}
                     className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
                 >
                     Get started
