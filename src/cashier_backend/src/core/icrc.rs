@@ -40,9 +40,11 @@ fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
         String::from("http://localhost:3002"),
         String::from("http://localhost:3000"),
         // staging env
-        String::from("https://staging.cashierapp.io/"),
+        String::from("https://staging.cashierapp.io"),
+        String::from("https://iqwhg-ciaaa-aaaam-admvq-cai.icp0.io"),
         // prod env
-        String::from("https://cashierapp.io/"),
+        String::from("https://cashierapp.io"),
+        String::from("https://jg57n-xyaaa-aaaam-admqq-cai.icp0.io"),
     ];
 
     return Icrc28TrustedOriginsResponse { trusted_origins };
