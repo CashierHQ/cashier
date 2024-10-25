@@ -10,7 +10,7 @@ use serde_bytes::ByteBuf;
 
 use super::types::MintNftArgs;
 
-pub async fn mint_nft(args: MintNftArgs, owner: Principal) -> Result<Vec<SetNftResult>, String> {
+pub async fn mint_nft(args: MintNftArgs) -> Result<Vec<SetNftResult>, String> {
     let cashier_nft_pid = Principal::from_text(CASHIER_NFT_CANISTER_ID)
         .map_err(|e| format!("Error parsing cashier nft canister id: {:?}", e))?;
 
@@ -28,7 +28,7 @@ pub async fn mint_nft(args: MintNftArgs, owner: Principal) -> Result<Vec<SetNftR
     let new_nft_record = SetNftItemRequest {
         token_id: next_id,
         owner: Some(Account {
-            owner: owner,
+            owner: ic_cdk::api::caller(),
             subaccount: None,
         }),
         metadata: metadata,

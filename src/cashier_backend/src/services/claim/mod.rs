@@ -7,7 +7,7 @@ use super::ext::{
     types::{MintNftArgs, NftAssetsInfo},
 };
 
-pub async fn claim_nft(id: String, caller: Principal) -> Result<(), String> {
+pub async fn claim_nft(id: String, _caller: Principal) -> Result<(), String> {
     let link = link_store::get(&id);
 
     if link.is_none() {
@@ -33,7 +33,7 @@ pub async fn claim_nft(id: String, caller: Principal) -> Result<(), String> {
         assets: assets,
     };
 
-    let _result = match mint_nft(mint_nft_args, caller).await {
+    let _result = match mint_nft(mint_nft_args).await {
         Ok(result) => result,
         Err(e) => return Err(e),
     };
