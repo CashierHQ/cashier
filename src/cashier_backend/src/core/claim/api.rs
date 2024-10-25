@@ -1,5 +1,6 @@
 use candid::Principal;
 use ic_cdk::update;
+use ic_stable_structures::log;
 
 use crate::{
     services::{self},
@@ -17,6 +18,7 @@ async fn claim_nft(link_id: String, recipient_input: Option<String>) -> Result<(
         },
         None => ic_cdk::api::caller(),
     };
+    logger::info(&format!("Claiming NFT for recipient: {}", recipient));
 
     match services::claim::claim_nft(link_id, recipient).await {
         Ok(_) => Ok(()),

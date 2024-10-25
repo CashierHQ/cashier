@@ -70,8 +70,7 @@ async fn update_link(id: String, input: UpdateLinkInput) -> Result<LinkDetail, C
         Some(LinkType::NftCreateAndAirdrop) => {
             match handle_update_create_and_airdrop_nft(input.to_link_detail_update(), link) {
                 Ok(link) => {
-                    logger::info(&format!("input : {:?}", input));
-                    logger::info(&format!("Link updated: {:?}", link));
+                    logger::info(&format!("Link updated: {:?}", link.id));
                     Ok(link)
                 }
                 Err(e) => {
