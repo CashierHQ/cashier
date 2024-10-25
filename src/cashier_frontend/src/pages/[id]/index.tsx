@@ -22,8 +22,10 @@ import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-fram
 const ClaimSchema = z.object({
     token: z.string().min(5),
     address: z.string().min(5),
-    amount: z.coerce.number().min(0),
+    amount: z.coerce.number().min(1),
 });
+
+const defaultClaimingAmount = 1;
 
 export default function ClaimPage() {
     const [formData, setFormData] = useState<any>({});
@@ -41,7 +43,7 @@ export default function ClaimPage() {
             const link = await new LinkService().getLink(linkId);
             setFormData(link);
             form.setValue("token", link.title);
-            form.setValue("amount", link.amount);
+            form.setValue("amount", defaultClaimingAmount);
             setIsLoading(false);
         };
         fetchData();
@@ -95,7 +97,7 @@ export default function ClaimPage() {
                                         <FormControl>
                                             <Input
                                                 disabled
-                                                defaultValue={formData.amount ?? 1}
+                                                defaultValue={defaultClaimingAmount}
                                                 {...field}
                                             />
                                         </FormControl>
