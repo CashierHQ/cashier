@@ -58,7 +58,7 @@ export default function LinkTemplate({
                             </FormItem>
                         )}
                     />
-                    <div className="w-full h-[1px] bg-gray-200 my-5" />
+                    <div className="w-full h-[1px] bg-gray-200 my-3" />
                     <LinkCard
                         label="Claim"
                         header="Default Template"

@@ -1,7 +1,7 @@
-import { useIdentityKit } from "@nfid/identitykit/react";
+import { ConnectWalletButton, useIdentityKit } from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LinkItem from "@/components/link-item";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +22,7 @@ export default function HomePage() {
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+    const { connect } = useIdentityKit();
 
     const createSingleLink = async (linkInput: any, linkService: LinkService) => {
         // First create link ID
@@ -47,6 +48,12 @@ export default function HomePage() {
         } catch (err) {
             console.log(err);
         }
+    };
+
+    const connectToWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        connect();
     };
 
     useEffect(() => {
@@ -142,7 +149,9 @@ export default function HomePage() {
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">
                     <div className="w-full flex justify-between items-center">
                         <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                        <ConnectWallet />
+                        <ConnectWalletButton onClick={connectToWallet}>
+                            Get started
+                        </ConnectWalletButton>
                     </div>
 
                     <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
@@ -162,7 +171,8 @@ export default function HomePage() {
                     </div>
                 </div>
                 <Button
-                    type="submit"
+                    type="button"
+                    onClick={connectToWallet}
                     className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
                 >
                     Get started

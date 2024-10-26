@@ -16,11 +16,11 @@ export default function LinkCard({
     onClaim?: () => void;
 }) {
     return (
-        <div className="flex flex-col items-center bg-lightgreen rounded-md py-5 mt-5 h-[57vh]">
+        <div className="flex flex-col items-center bg-lightgreen rounded-md py-3 my-3 h-[55vh]">
             <div className="text-lg font-medium">{header}</div>
             <div
                 id="phone-frame"
-                className="flex flex-col items-center bg-white rounded-[2rem] border-black border-8 mt-3 px-3 h-[95vw] w-[50vw] md:w-[70%]"
+                className="flex flex-col items-center bg-white rounded-[2rem] border-black border-8 mt-3 px-3 h-[85vw] w-[50vw] md:w-[70%]"
             >
                 <div
                     id="phone-notch-section"
@@ -30,11 +30,11 @@ export default function LinkCard({
                     <img src="./logo.svg" alt="Cashier logo" className="max-w-[60px]" />
                 </div>
                 <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 p-3">
-                    <img src={src} alt="Link template" />
-                    <h3 className="font-semibold py-2 text-[0.7rem]">{title}</h3>
-                    <h3 className="text-[0.5rem]">{message}</h3>
+                    <img src={src} alt="Link template" width={90} />
+                    <h3 className="font-semibold py-2 text-[0.5rem]">{title}</h3>
+                    <h3 className="text-[0.4rem]">{message}</h3>
                     <div
-                        className="text-white bg-green rounded-full py-1 mt-3 text-[0.6rem] w-[90%] text-center"
+                        className="text-white bg-green rounded-full py-1 mt-3 text-[0.5rem] w-[90%] text-center"
                         onClick={onClaim}
                     >
                         {label}

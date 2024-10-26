@@ -24,7 +24,9 @@ const parseLink = (link: any): LinkDetailModel => {
         creator: link.creator ? link.creator[0] : undefined,
         amount: link.asset_info ? link.asset_info[0].amount : undefined,
         chain: link.asset_info ? Object.keys(link.asset_info[0].chain)[0] : undefined,
-        create_at: link.create_at ? convertNanoSecondsToDate(link.create_at[0]) : new Date(),
+        create_at: link.create_at
+            ? convertNanoSecondsToDate(link.create_at[0])
+            : new Date("2024-10-01"),
         asset_info: link.asset_info ? link.asset_info[0] : null,
     };
 };
