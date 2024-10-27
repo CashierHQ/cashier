@@ -7,10 +7,18 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import LinkService from "@/services/link.service";
+import { LINK_STATUS } from "@/constants/otherConst";
+
+const STEP_LINK_STATUS_ORDER = [
+    LINK_STATUS.NEW,
+    LINK_STATUS.PENDING_DETAIL,
+    LINK_STATUS.PENDING_PREVIEW,
+];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<any>({});
     const [isNameSetByUser, setIsNameSetByUser] = useState(false);
+    const [currentStep, setCurrentStep] = useState<number>(initialStep);
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { linkId } = useParams();
@@ -22,6 +30,10 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!identity) return;
         const fetchData = async () => {
             const link = await new LinkService(identity).getLink(linkId);
+            if (link && link.state) {
+                const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
+                setCurrentStep(step >= 0 ? step : 0);
+            }
             setFormData(link);
             setIsNameSetByUser(true);
             setIsLoading(false);
@@ -93,7 +105,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         <div className="w-screen flex flex-col items-center py-3">
             <div className="w-11/12 max-w-[400px]">
                 <MultiStepForm
-                    initialStep={initialStep}
+                    initialStep={currentStep}
                     formData={formData}
                     handleSubmit={handleSubmit}
                     handleBack={() => navigate("/")}
