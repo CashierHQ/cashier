@@ -1,3 +1,4 @@
+import { LINK_STATUS } from "@/constants/otherConst";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
 interface LinkData {
@@ -8,7 +9,7 @@ interface LinkData {
 }
 
 export function StateBadge({ state }: { state: any }) {
-    if (state === "PendingDetail") {
+    if (state === LINK_STATUS.PENDING_DETAIL) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightyellow text-yellow">
                 Pending details
@@ -16,7 +17,7 @@ export function StateBadge({ state }: { state: any }) {
         );
     }
 
-    if (state === "PendingPreview") {
+    if (state === LINK_STATUS.PENDING_PREVIEW) {
         return (
             <div className="text-sm font-normal rounded-full px-2 bg-lightpurple text-[#3648A1]">
                 Pending preview
@@ -24,7 +25,7 @@ export function StateBadge({ state }: { state: any }) {
         );
     }
 
-    if (state === "Active") {
+    if (state === LINK_STATUS.ACTIVE) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-green text-white">
                 Active
@@ -32,7 +33,7 @@ export function StateBadge({ state }: { state: any }) {
         );
     }
 
-    if (state === "Inactive") {
+    if (state === LINK_STATUS.INACTIVE) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-gray-200 text-gray-700">
                 Inactive
@@ -40,7 +41,7 @@ export function StateBadge({ state }: { state: any }) {
         );
     }
 
-    if (state === "New") {
+    if (state === LINK_STATUS.NEW) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightgreen">
                 New

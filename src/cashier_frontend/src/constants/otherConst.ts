@@ -14,3 +14,10 @@ const monthNames = [
     "Nov",
     "Dec",
 ];
+export const LINK_STATUS = {
+    PENDING_DETAIL: "PendingDetail",
+    PENDING_PREVIEW: "PendingPreview",
+    ACTIVE: "Active",
+    NEW: "New",
+    INACTIVE: "Inactive",
+};
