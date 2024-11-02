@@ -22,6 +22,7 @@ const STEP_LINK_STATUS_ORDER = [
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const [formData, setFormData] = useState<LinkDetailModel>({});
     const [isNameSetByUser, setIsNameSetByUser] = useState(false);
+    const [isDisabled, setDisabled] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { identity } = useIdentityKit();
     const [isRendering, setRendering] = useState(true);
     const queryClient = useQueryClient();
-    const { mutate, isPending, isError, error, isSuccess } = useUpdateLink(queryClient, identity);
+    const { mutate, mutateAsync } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
         if (!linkId) return;
@@ -89,17 +90,19 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
         try {
-            formData.state = State.New;
+            setDisabled(true);
             const updateLinkParams: UpdateLinkParams = {
                 linkId: linkId,
                 linkModel: {
                     ...formData,
                     ...values,
+                    state: State.Active,
                 },
             };
-            mutate(updateLinkParams);
+            await mutateAsync(updateLinkParams);
             navigate(`/details/${linkId}`);
         } catch (error) {
+            setDisabled(false);
             console.log(error);
         }
     };
@@ -126,17 +129,20 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}
                         handleSubmit={handleSubmitLinkTemplate}
+                        isDisabled={isDisabled}
                         render={(props) => <LinkTemplate {...props} />}
                     />
                     <MultiStepForm.Item
                         name={t("create.linkDetails")}
                         handleSubmit={handleSubmitLinkDetails}
+                        isDisabled={isDisabled}
                         render={(props) => <LinkDetails {...props} />}
                     />
                     <MultiStepForm.Item
                         name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
-                        render={(props) => <LinkPreview {...props} />}
+                        isDisabled={isDisabled}
+                        render={(props) => <LinkPreview {...props} isDisabled />}
                     />
                 </MultiStepForm>
             </div>

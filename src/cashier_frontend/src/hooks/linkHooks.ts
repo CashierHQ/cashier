@@ -21,7 +21,6 @@ export const useUpdateLink = (
             return linkService.updateLink(data.linkId, data.linkModel);
         },
         onSuccess: () => {
-            console.log("Create link success");
             queryClient.invalidateQueries({ queryKey: queryKeys.links.list(identity).queryKey });
         },
         onError: (err) => {

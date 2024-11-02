@@ -32,7 +32,6 @@ export default function LinkDetails({
     handleSubmit,
     handleChange,
 }: ParitalFormProps<z.infer<typeof linkDetailsSchema>>) {
-    console.log(defaultValues);
     const { t } = useTranslation();
     const [currentImage, setCurrentImage] = useState<string>("");
 

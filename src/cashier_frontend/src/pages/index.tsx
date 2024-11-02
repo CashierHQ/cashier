@@ -9,7 +9,7 @@ import { IoSearch } from "react-icons/io5";
 import LinkService from "@/services/link.service";
 import { Button } from "@/components/ui/button";
 import { sampleLink1, sampleLink2 } from "@/constants/sampleLinks";
-import { LinkDetailModel } from "@/services/types/link.service.types";
+import { LinkDetailModel, State } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
@@ -39,7 +39,7 @@ export default function HomePage() {
             setIsLoading(false);
         }
     }, [isUserLoading, isLinksLoading]);
-    const createSingleLink = async (linkInput: any, linkService: LinkService) => {
+    const createSingleLink = async (linkInput: LinkDetailModel, linkService: LinkService) => {
         // First create link ID
         let initLink: string = await linkService.createLink({
             link_type: { NftCreateAndAirdrop: null },
@@ -48,9 +48,7 @@ export default function HomePage() {
             await linkService.updateLink(initLink, linkInput);
             linkInput = {
                 ...linkInput,
-                state: {
-                    Active: null,
-                },
+                state: State.Active,
             };
             await linkService.updateLink(initLink, linkInput);
         }
@@ -80,7 +78,7 @@ export default function HomePage() {
     }, []);
 
     useEffect(() => {
-        console.log(connectedUser);
+        console.log("🚀 ~ useEffect ~ connectedUser:", connectedUser);
         if (connectedUser) {
             setUser(connectedUser);
         }

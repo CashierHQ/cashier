@@ -48,18 +48,18 @@ export type UpdateLinkInput = {
     create_at: Date;
 };
 
+// Need to update in future
 export type LinkDetailModel = {
-    id: string;
     title: string;
     description: string;
     image: string;
     link_type?: string;
-    actions: [];
+    actions: Array<string>;
     state?: string;
     template?: string;
-    creator: string;
+    creator?: string;
     amount: number;
     chain?: string;
-    create_at: Date;
-    asset_info: AssetAirdropInfo;
+    create_at?: Date;
+    asset_info?: AssetAirdropInfo;
 };

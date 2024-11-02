@@ -62,10 +62,10 @@ const mapState = (stateName: string): State => {
 const mapActions = (): Array<Action> => {
     return [
         {
-            arg: "",
-            method: "",
-            canister_id: "",
-            label: "",
+            arg: "string",
+            method: "string",
+            canister_id: "string",
+            label: "string",
         },
     ];
 };

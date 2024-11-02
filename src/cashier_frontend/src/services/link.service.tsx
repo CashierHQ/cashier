@@ -82,40 +82,10 @@ class LinkService {
         return parseResultResponse(await this.actor.create_link(input));
     }
 
-    //TODO: refactor type for this
     // TODO: apply state machine for this method or create multiple methods for each state
     async updateLink(linkId: string, data: LinkDetailModel) {
-        // const completeData: UpdateLinkInputModel = {
-        //     title: data.title ? [data.title] : [],
-        //     asset_info: data.amount
-        //         ? [
-        //               {
-        //                   chain: {
-        //                       IC: null,
-        //                   },
-        //                   amount: data.amount ?? 10,
-        //                   address: "",
-        //               },
-        //           ]
-        //         : [],
-        //     description: data.description ? [data.description] : [],
-        //     actions: [
-        //         [
-        //             {
-        //                 arg: "",
-        //                 method: "",
-        //                 canister_id: "",
-        //                 label: "",
-        //             },
-        //         ],
-        //     ],
-        //     state: data.state ? [data.state] : [],
-        //     template: [{ Left: null }],
-        //     image: data.image ? [data.image] : [],
-        // };
-
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(data);
-        console.log("called update_link with linkId =", linkId, "and data =", completeData);
+        //console.log("called update_link with linkId =", linkId, "and data =", completeData);
         const response = parseResultResponse(await this.actor.update_link(linkId, completeData));
         return response;
     }

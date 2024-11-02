@@ -4,6 +4,7 @@ import { ChevronLeftIcon } from "@radix-ui/react-icons";
 export interface ParitalFormProps<T> {
     handleSubmit: (values: T) => any;
     handleChange: (e: any) => any;
+    isDisabled: boolean;
     defaultValues: Partial<T>;
 }
 
@@ -14,10 +15,12 @@ interface MultiStepFormProps<T extends Object> {
     handleSubmit: (values: T) => any;
     handleBack?: () => any;
     handleChange: (e: any) => any;
+    isDisabled: boolean;
 }
 
 interface ItemProp {
     handleSubmit: (values: any) => any;
+    isDisabled: boolean;
     name: string;
     render: (props: ParitalFormProps<any>) => ReactElement<ParitalFormProps<any>>;
 }
@@ -29,6 +32,7 @@ export default function MultiStepForm<T extends Object>({
     children,
     handleBack,
     handleChange,
+    isDisabled,
 }: MultiStepFormProps<T>) {
     const partialForms = Children.toArray(children) as ReactElement<ItemProp>[];
     const [currentStep, setCurrentStep] = useState(initialStep);
@@ -73,6 +77,7 @@ export default function MultiStepForm<T extends Object>({
                                 handleFinish({ ...formData, ...values });
                             else setCurrentStep(index + 1);
                         },
+                        isDisabled: isDisabled,
                     });
                 }
                 return null;
@@ -81,13 +86,14 @@ export default function MultiStepForm<T extends Object>({
     );
 }
 
-const Item: FunctionComponent<ItemProp> = ({ handleSubmit, render }) => {
+const Item: FunctionComponent<ItemProp> = ({ handleSubmit, render, isDisabled }) => {
     return (
         <>
             {render({
                 defaultValues: {},
                 handleChange: () => {},
                 handleSubmit: handleSubmit,
+                isDisabled: isDisabled,
             })}
         </>
     );
