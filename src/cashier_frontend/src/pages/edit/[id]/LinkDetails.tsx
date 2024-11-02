@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 const linkDetailsSchema = z.object({
     image: z.string().min(1, { message: "Image is required" }),
     description: z.string().min(10),
-    name: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
+    title: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
     amount: z.coerce.number().min(1),
 });
 
@@ -32,6 +32,7 @@ export default function LinkDetails({
     handleSubmit,
     handleChange,
 }: ParitalFormProps<z.infer<typeof linkDetailsSchema>>) {
+    console.log(defaultValues);
     const { t } = useTranslation();
     const [currentImage, setCurrentImage] = useState<string>("");
 
@@ -104,7 +105,7 @@ export default function LinkDetails({
                     />
                     <FormField
                         control={form.control}
-                        name="name"
+                        name="title"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t("create.name")}</FormLabel>

@@ -7,6 +7,7 @@ import { IdentityKitAuthType, Plug } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { NFIDW, InternetIdentity, Stoic } from "@nfid/identitykit";
 import { useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const isMobile = () => {
     if (
@@ -21,6 +22,7 @@ const isMobile = () => {
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
 function App() {
+    const queryClient = new QueryClient();
     useEffect(() => {
         if (!isMobile()) {
             // listSigners.push(Plug);
@@ -44,8 +46,10 @@ function App() {
                 targets,
             }}
         >
-            <AppRouter />
-            <Toaster />
+            <QueryClientProvider client={queryClient}>
+                <AppRouter />
+                <Toaster />
+            </QueryClientProvider>
         </IdentityKitProvider>
     );
 }

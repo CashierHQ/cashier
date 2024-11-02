@@ -18,6 +18,19 @@ export enum Chain {
     IC = "IC",
 }
 
+export type ActionModel = {
+    arg: string;
+    method: string;
+    canister_id: string;
+    label: string;
+};
+
+export type AssetInfoModel = {
+    chain: string;
+    address: string;
+    amount: number;
+};
+
 export type UpdateLinkInput = {
     title: string;
     //++ assetInfo

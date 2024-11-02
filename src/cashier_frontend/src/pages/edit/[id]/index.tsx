@@ -8,6 +8,10 @@ import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import LinkService from "@/services/link.service";
 import { LINK_STATUS } from "@/constants/otherConst";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
+import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
+import { LinkDetailModel, State } from "@/services/types/link.service.types";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATUS.NEW,
@@ -16,14 +20,16 @@ const STEP_LINK_STATUS_ORDER = [
 ];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
-    const [formData, setFormData] = useState<any>({});
+    const [formData, setFormData] = useState<LinkDetailModel>({});
     const [isNameSetByUser, setIsNameSetByUser] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { linkId } = useParams();
     const { identity } = useIdentityKit();
-    const [isLoading, setIsLoading] = useState(true);
+    const [isRendering, setRendering] = useState(true);
+    const queryClient = useQueryClient();
+    const { mutate, isPending, isError, error, isSuccess } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
         if (!linkId) return;
@@ -32,42 +38,49 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             const link = await new LinkService(identity).getLink(linkId);
             if (link && link.state) {
                 const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
+                setFormData(link);
+                setIsNameSetByUser(true);
+                setRendering(false);
                 setCurrentStep(step >= 0 ? step : 0);
             }
-            setFormData(link);
-            setIsNameSetByUser(true);
-            setIsLoading(false);
         };
         fetchData();
     }, [linkId, identity]);
 
     const handleSubmitLinkTemplate = async (values: any) => {
         if (!linkId) return;
-        if (!formData.name || !isNameSetByUser) {
-            values.name = values.title;
+        try {
+            if (!formData.title || !isNameSetByUser) {
+                values.name = values.title;
+            }
+            formData.state = State.PendingDetail;
+            const updateLinkParams: UpdateLinkParams = {
+                linkId: linkId,
+                linkModel: {
+                    ...formData,
+                    ...values,
+                },
+            };
+            mutate(updateLinkParams);
+            setFormData({ ...formData, ...values });
+        } catch (err) {
+            console.log(err);
         }
-        setFormData({ ...formData, ...values });
-        await new LinkService(identity).updateLink(linkId, {
-            ...formData,
-            ...values,
-            state: {
-                PendingDetail: null,
-            },
-        });
     };
 
     const handleSubmitLinkDetails = async (values: any) => {
         if (!linkId) return;
-        console.log(linkId);
         try {
-            setFormData({ ...formData, ...values });
-            await new LinkService(identity).updateLink(linkId, {
-                ...formData,
-                ...values,
-                state: {
-                    PendingPreview: null,
+            formData.state = State.PendingPreview;
+            const updateLinkParams: UpdateLinkParams = {
+                linkId: linkId,
+                linkModel: {
+                    ...formData,
+                    ...values,
                 },
-            });
+            };
+            mutate(updateLinkParams);
+            setFormData({ ...formData, ...values });
         } catch (error) {
             console.log(error);
         }
@@ -76,16 +89,15 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
         try {
-            await new LinkService(identity).updateLink(linkId, {
-                ...formData,
-                ...values,
-                actions: [
-                    { arg: "string", method: "string", canister_id: "string", label: "string" },
-                ],
-                state: {
-                    Active: null,
+            formData.state = State.New;
+            const updateLinkParams: UpdateLinkParams = {
+                linkId: linkId,
+                linkModel: {
+                    ...formData,
+                    ...values,
                 },
-            });
+            };
+            mutate(updateLinkParams);
             navigate(`/details/${linkId}`);
         } catch (error) {
             console.log(error);
@@ -99,7 +111,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         setFormData({ ...formData, ...values });
     };
 
-    if (isLoading) return null;
+    if (isRendering) return null;
 
     return (
         <div className="w-screen flex flex-col items-center py-3">

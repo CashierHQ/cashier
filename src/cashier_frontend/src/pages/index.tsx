@@ -1,29 +1,44 @@
 import { ConnectWalletButton, useIdentityKit } from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LinkItem from "@/components/link-item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IoSearch } from "react-icons/io5";
 import LinkService from "@/services/link.service";
-import UserService from "@/services/user.service";
 import { Button } from "@/components/ui/button";
 import { sampleLink1, sampleLink2 } from "@/constants/sampleLinks";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { formatDateString, groupLinkListByDate } from "@/utils";
-import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { formatDateString } from "@/utils";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const { user: connectedUser, identity } = useIdentityKit();
-    const [links, setLinks] = useState<Record<string, LinkDetailModel[]>>({});
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState(connectedUser);
+    const { data, isLoading: isUserLoading } = useQuery({
+        ...queryKeys.users.detail(identity),
+        enabled: !!identity,
+    });
+    const { data: linkData, isLoading: isLinksLoading } = useQuery({
+        ...queryKeys.links.list(identity),
+        enabled: !!user,
+    });
+
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
     const { connect } = useIdentityKit();
 
+    useEffect(() => {
+        if (isUserLoading || isLinksLoading) {
+            setIsLoading(true);
+        } else {
+            setIsLoading(false);
+        }
+    }, [isUserLoading, isLinksLoading]);
     const createSingleLink = async (linkInput: any, linkService: LinkService) => {
         // First create link ID
         let initLink: string = await linkService.createLink({
@@ -65,47 +80,13 @@ export default function HomePage() {
     }, []);
 
     useEffect(() => {
-        if (!identity) return;
-        const createUser = async () => {
-            const userService = new UserService(identity);
-            try {
-                const user = await userService.getUser();
-                setUser(user);
-            } catch (error) {
-                const user = await userService.createUser();
-                setUser(user);
-            }
-        };
-        createUser();
-    }, [identity]);
-
-    useEffect(() => {
-        if (!user) {
-            return;
+        console.log(connectedUser);
+        if (connectedUser) {
+            setUser(connectedUser);
         }
-        const fetchData = async () => {
-            const linkService = new LinkService(identity);
-            const links = await linkService.getLinks();
-            if (links?.data.length == 0) {
-                // User login first time, then create 2 sample links
-                await createSampleLink(linkService);
-                const newLinkList = await linkService.getLinks();
-                console.log("🚀 ~ fetchData ~ newLinkList:", newLinkList);
-                const groupedLinkList = groupLinkListByDate(newLinkList.data);
-                setLinks(groupedLinkList ?? {});
-                setIsLoading(false);
-            } else {
-                console.log("🚀 ~ fetchData ~ newLinkList:", links);
-                const groupedLinkList = groupLinkListByDate(links.data);
-                setIsLoading(false);
-                setLinks(groupedLinkList ?? []);
-            }
-        };
-        fetchData();
-    }, [user]);
+    }, [connectedUser]);
 
     const handleCreateLink = async () => {
-        if (!user) return;
         const response = await new LinkService(identity).createLink({
             link_type: { NftCreateAndAirdrop: null },
         });
@@ -117,30 +98,47 @@ export default function HomePage() {
         localStorage.setItem("showGuide", "false");
     };
 
-    const renderLinkList = (links: Record<string, LinkDetailModel[]>) => {
-        return (
-            <div>
-                {Object.entries(links).map(([date, items]) => (
-                    <div key={date} className="mb-3">
-                        <h3 className="text-lightblack">{formatDateString(date)}</h3>
-                        <ul>
-                            {items.map((item) => (
-                                <Link
-                                    to={
-                                        item.state === "Active"
-                                            ? `/details/${item.id}`
-                                            : `/edit/${item.id}`
-                                    }
-                                    key={item.id}
-                                >
-                                    <LinkItem key={item.id} link={item} />
-                                </Link>
-                            ))}
-                        </ul>
-                    </div>
-                ))}
-            </div>
-        );
+    const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
+        if (links && Object.keys(links).length > 0) {
+            return (
+                <div>
+                    {Object.entries(links).map(([date, items]) => (
+                        <div key={date} className="mb-3">
+                            <h3 className="text-lightblack">{formatDateString(date)}</h3>
+                            <ul>
+                                {items.map((item) => (
+                                    <Link
+                                        to={
+                                            item.state === "Active"
+                                                ? `/details/${item.id}`
+                                                : `/edit/${item.id}`
+                                        }
+                                        key={item.id}
+                                    >
+                                        <LinkItem key={item.id} link={item} />
+                                    </Link>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            );
+        } else {
+            return (
+                <div className="w-full flex flex-col items-center mt-[100px]">
+                    <IoSearch
+                        style={{
+                            borderRadius: "5px",
+                            border: "solid gray 1px",
+                            padding: "8px",
+                        }}
+                        size="40px"
+                    />
+                    <span className="font-semibold mt-5">{t("home.noLinksFound")}</span>
+                    <p className="text-gray-500">{t("home.noLinksFoundDescription")}</p>
+                </div>
+            );
+        }
     };
 
     if (!connectedUser) {
@@ -179,61 +177,46 @@ export default function HomePage() {
                 </Button>
             </div>
         );
-    }
-
-    return (
-        <div className="w-screen flex justify-center py-3">
-            <div className="w-11/12 max-w-[400px]">
-                <div className="w-full flex justify-between items-center">
-                    <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                    <ConnectWallet />
-                </div>
-                {showGuide && (
-                    <div className="my-3">
-                        <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
-                        <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
-                        <button
-                            className="text-green text-sm font-bold mt-3"
-                            onClick={handleHideGuide}
-                        >
-                            {t("home.guide.confirm")}
-                        </button>
+    } else {
+        return (
+            <div className="w-screen flex justify-center py-3">
+                <div className="w-11/12 max-w-[400px]">
+                    <div className="w-full flex justify-between items-center">
+                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                        <ConnectWallet />
                     </div>
-                )}
-                <h2 className="text-base font-semibold mb-3 mt-3 mb-5">Links created by me</h2>
-                {isLoading ? (
-                    Array.from({ length: 5 }).map((_, index) => (
-                        <div className="flex items-center space-x-4 my-3" key={index}>
-                            <Skeleton className="h-10 w-10 rounded-sm" />
-                            <div className="space-y-2">
-                                <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                                <Skeleton className="h-3 w-[200px]" />
-                            </div>
+                    {showGuide && (
+                        <div className="my-3">
+                            <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
+                            <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
+                            <button
+                                className="text-green text-sm font-bold mt-3"
+                                onClick={handleHideGuide}
+                            >
+                                {t("home.guide.confirm")}
+                            </button>
                         </div>
-                    ))
-                ) : Object.keys(links).length === 0 ? (
-                    <div className="w-full flex flex-col items-center mt-[100px]">
-                        <IoSearch
-                            style={{
-                                borderRadius: "5px",
-                                border: "solid gray 1px",
-                                padding: "8px",
-                            }}
-                            size="40px"
-                        />
-                        <span className="font-semibold mt-5">{t("home.noLinksFound")}</span>
-                        <p className="text-gray-500">{t("home.noLinksFoundDescription")}</p>
-                    </div>
-                ) : (
-                    renderLinkList(links)
-                )}
+                    )}
+                    <h2 className="text-base font-semibold mb-3 mt-3 mb-5">Links created by me</h2>
+                    {isLoading
+                        ? Array.from({ length: 5 }).map((_, index) => (
+                              <div className="flex items-center space-x-4 my-3" key={index}>
+                                  <Skeleton className="h-10 w-10 rounded-sm" />
+                                  <div className="space-y-2">
+                                      <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                                      <Skeleton className="h-3 w-[200px]" />
+                                  </div>
+                              </div>
+                          ))
+                        : renderLinkList(linkData)}
+                </div>
+                <button
+                    className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
+                    onClick={handleCreateLink}
+                >
+                    +
+                </button>
             </div>
-            <button
-                className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
-                onClick={handleCreateLink}
-            >
-                +
-            </button>
-        </div>
-    );
+        );
+    }
 }
