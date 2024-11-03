@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import Resizer from "react-image-file-resizer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -46,17 +47,36 @@ export default function LinkDetails({
         },
     });
 
+    const resizeFile = (file: File) =>
+        new Promise((resolve) => {
+            Resizer.imageFileResizer(
+                file,
+                400,
+                400,
+                "JPEG",
+                100,
+                0,
+                (uri) => {
+                    resolve(uri);
+                },
+                "base64",
+                400,
+                400,
+            );
+        });
+
     const handleUploadImage = async (file: File | null) => {
         if (!file) {
             form.setValue("image", "");
             handleChange({ image: "" });
             return;
         }
-        const resizedImage = await resizeImage(file);
-        const base64 = await fileToBase64(resizedImage);
-        form.setValue("image", base64, { shouldValidate: true });
-        handleChange({ image: base64 });
-        setCurrentImage(base64);
+        const resizedImage = (await resizeFile(file)) as string;
+        console.log("🚀 ~ handleUploadImage ~ resizedImage:", resizedImage);
+        //const base64 = await fileToBase64(resizedImage);
+        form.setValue("image", resizedImage, { shouldValidate: true });
+        handleChange({ image: resizedImage });
+        setCurrentImage(resizedImage);
     };
 
     const handleAdjustAmount = (request: string, value: number) => {

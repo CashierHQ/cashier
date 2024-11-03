@@ -27,7 +27,6 @@ export default function LinkPreview({
             />
             <Button
                 onClick={handleSubmit as any}
-                disabled={isDisabled}
                 className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
             >
                 Create

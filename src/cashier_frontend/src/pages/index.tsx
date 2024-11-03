@@ -11,21 +11,25 @@ import { Button } from "@/components/ui/button";
 import { sampleLink1, sampleLink2 } from "@/constants/sampleLinks";
 import { LinkDetailModel, State } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
+import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
+import UserService from "@/services/user.service";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const { user: connectedUser, identity } = useIdentityKit();
-    const [user, setUser] = useState(connectedUser);
-    const { data, isLoading: isUserLoading } = useQuery({
+    const [user, setUser] = useState<any>(connectedUser);
+    const { data: appUser, isLoading: isUserLoading } = useQuery({
         ...queryKeys.users.detail(identity),
         enabled: !!identity,
     });
     const { data: linkData, isLoading: isLinksLoading } = useQuery({
         ...queryKeys.links.list(identity),
-        enabled: !!user,
+        enabled: !!connectedUser,
     });
+    const queryClient = useQueryClient();
+    const { mutateAsync } = useUpdateLink(queryClient, identity);
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -41,16 +45,24 @@ export default function HomePage() {
     }, [isUserLoading, isLinksLoading]);
     const createSingleLink = async (linkInput: LinkDetailModel, linkService: LinkService) => {
         // First create link ID
-        let initLink: string = await linkService.createLink({
+        let initLinkId: string = await linkService.createLink({
             link_type: { NftCreateAndAirdrop: null },
         });
-        if (initLink) {
-            await linkService.updateLink(initLink, linkInput);
+        if (initLinkId) {
+            const updatedLinkParam: UpdateLinkParams = {
+                linkId: initLinkId,
+                linkModel: linkInput,
+            };
+            await mutateAsync(updatedLinkParam);
             linkInput = {
                 ...linkInput,
                 state: State.Active,
             };
-            await linkService.updateLink(initLink, linkInput);
+            const updatedLinkParamActive: UpdateLinkParams = {
+                linkId: initLinkId,
+                linkModel: linkInput,
+            };
+            await mutateAsync(updatedLinkParamActive);
         }
     };
 
@@ -83,6 +95,39 @@ export default function HomePage() {
             setUser(connectedUser);
         }
     }, [connectedUser]);
+
+    useEffect(() => {
+        const initSampleLinks = async () => {
+            try {
+                setIsLoading(true);
+                const linkService = new LinkService(identity);
+                await createSampleLink(linkService);
+            } catch (err) {
+                console.log(err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (linkData && Object.keys(linkData).length === 0) {
+            initSampleLinks();
+        }
+    }, [linkData]);
+
+    useEffect(() => {
+        const createUser = async () => {
+            const userService = new UserService(identity);
+            try {
+                const user = await userService.createUser();
+                setUser(user);
+            } catch (error) {
+                console.log(error);
+            }
+        };
+        if (identity && !appUser) {
+            createUser();
+        }
+    }, [identity, appUser]);
 
     const handleCreateLink = async () => {
         const response = await new LinkService(identity).createLink({

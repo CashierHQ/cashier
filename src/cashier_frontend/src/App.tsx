@@ -35,7 +35,10 @@ function App() {
                 console.log("Connect to Identity fail: " + e);
             }}
             onConnectSuccess={() => {}}
-            onDisconnect={() => {}}
+            onDisconnect={() => {
+                console.log("Log out");
+                queryClient.clear();
+            }}
             authType={IdentityKitAuthType.DELEGATION}
             signers={
                 isMobile()

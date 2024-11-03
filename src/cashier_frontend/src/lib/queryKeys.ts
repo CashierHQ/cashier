@@ -24,8 +24,10 @@ export const queryKeys = createQueryKeyStore({
                 try {
                     const linkService = new LinkService(identity);
                     const links = await linkService.getLinks();
+                    console.log("🚀 ~ queryFn: ~ links:", links);
                     groupedLinkList = groupLinkListByDate(links?.data);
                 } catch (err) {
+                    console.log("🚀 ~ queryFn: ~ err:", err);
                     throw err;
                 }
                 return groupedLinkList;

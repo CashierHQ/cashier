@@ -90,7 +90,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
         try {
-            setDisabled(true);
+            // setDisabled(true);
             const updateLinkParams: UpdateLinkParams = {
                 linkId: linkId,
                 linkModel: {
@@ -125,6 +125,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     handleSubmit={handleSubmit}
                     handleBack={() => navigate("/")}
                     handleChange={handleChange}
+                    isDisabled={isDisabled}
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}
