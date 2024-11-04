@@ -5,10 +5,15 @@ import { Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
+export const QUERY_KEYS = {
+    LINKS: "links",
+    USERS: "users",
+};
+
 export const queryKeys = createQueryKeyStore({
     users: {
         detail: (identity: Identity | PartialIdentity | undefined) => ({
-            queryKey: ["users"],
+            queryKey: [QUERY_KEYS.USERS],
             queryFn: async () => {
                 try {
                     const userService = new UserService(identity);
@@ -23,7 +28,7 @@ export const queryKeys = createQueryKeyStore({
     },
     links: {
         list: (identity: Identity | PartialIdentity | undefined) => ({
-            queryKey: ["links"],
+            queryKey: [QUERY_KEYS.LINKS],
             queryFn: async () => {
                 let groupedLinkList = null;
                 try {

@@ -29,8 +29,11 @@ export default function LinkCard({
                 <div className="w-full flex justify-center items-center mt-3">
                     <img src="./logo.svg" alt="Cashier logo" className="max-w-[60px]" />
                 </div>
-                <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 p-3">
-                    <img src={src} alt="Link template" width={90} />
+                <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 p-3 max-h-[70%]">
+                    <div className="overflow-hidden">
+                        <img src={src} alt="Link template" />
+                    </div>
+
                     <h3 className="font-semibold py-2 text-[0.5rem]">{title}</h3>
                     <h3 className="text-[0.4rem]">{message}</h3>
                     <div

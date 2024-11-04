@@ -59,8 +59,8 @@ export default function LinkDetails({
                     resolve(uri);
                 },
                 "base64",
-                400,
-                400,
+                300,
+                300,
             );
         });
 
