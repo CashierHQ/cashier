@@ -11,7 +11,7 @@ import { LINK_STATUS } from "@/constants/otherConst";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
-import { LinkDetailModel, State } from "@/services/types/link.service.types";
+import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATUS.NEW,
@@ -20,7 +20,18 @@ const STEP_LINK_STATUS_ORDER = [
 ];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
-    const [formData, setFormData] = useState<LinkDetailModel>({});
+    const [formData, setFormData] = useState<LinkDetailModel>({
+        id: "",
+        title: "",
+        image: "",
+        description: "",
+        amount: 0,
+        chain: "",
+        state: "",
+        actions: [],
+        template: Template.Left,
+        create_at: new Date(),
+    });
     const [isNameSetByUser, setIsNameSetByUser] = useState(false);
     const [isDisabled, setDisabled] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
@@ -51,7 +62,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleSubmitLinkTemplate = async (values: any) => {
         if (!linkId) return;
         try {
-            if (!formData.title || !isNameSetByUser) {
+            if (!formData?.title || !isNameSetByUser) {
                 values.name = values.title;
             }
             formData.state = State.PendingDetail;

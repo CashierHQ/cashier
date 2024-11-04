@@ -50,6 +50,7 @@ export type UpdateLinkInput = {
 
 // Need to update in future
 export type LinkDetailModel = {
+    id: string;
     title: string;
     description: string;
     image: string;
@@ -60,6 +61,6 @@ export type LinkDetailModel = {
     creator?: string;
     amount: number;
     chain?: string;
-    create_at?: Date;
+    create_at: Date;
     asset_info?: AssetAirdropInfo;
 };

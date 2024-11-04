@@ -9,6 +9,7 @@ import { LinkDetail } from "../../../declarations/cashier_backend/cashier_backen
 import { base64SampleLinkImage1, base64SampleLinkImage2 } from "./base64Images";
 
 export const sampleLink1: LinkDetailModel = {
+    id: "",
     title: "Example 1: Special moments",
     image: base64SampleLinkImage1,
     description:
@@ -18,9 +19,11 @@ export const sampleLink1: LinkDetailModel = {
     actions: [],
     state: State.PendingPreview,
     template: Template.Left,
+    create_at: new Date(),
 };
 
 export const sampleLink2: LinkDetailModel = {
+    id: "",
     title: "Example 2: Proof of attendance",
     image: base64SampleLinkImage2,
     description:
@@ -30,4 +33,5 @@ export const sampleLink2: LinkDetailModel = {
     state: State.PendingPreview,
     actions: [],
     template: Template.Left,
+    create_at: new Date(),
 };

@@ -16,7 +16,6 @@ import { useTranslation } from "react-i18next";
 import { Textarea } from "@/components/ui/textarea";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import { FileInput } from "@/components/file-input";
-import { fileToBase64, resizeImage } from "@/utils";
 import { NumberInput } from "@/components/number-input";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
 import { useEffect, useState } from "react";
@@ -40,7 +39,7 @@ export default function LinkDetails({
         resolver: zodResolver(linkDetailsSchema),
         defaultValues: {
             description: "",
-            name: "",
+            title: "",
             amount: 1,
             image: "",
             ...defaultValues,

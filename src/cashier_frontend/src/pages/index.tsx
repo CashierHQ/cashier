@@ -87,6 +87,18 @@ export default function HomePage() {
         connect();
     };
 
+    const handleCreateLink = async () => {
+        const response = await new LinkService(identity).createLink({
+            link_type: { NftCreateAndAirdrop: null },
+        });
+        navigate(`/edit/${response}`);
+    };
+
+    const handleHideGuide = () => {
+        setShowGuide(false);
+        localStorage.setItem("showGuide", "false");
+    };
+
     useEffect(() => {
         if (localStorage.getItem("showGuide") === "false") {
             setShowGuide(false);
@@ -150,18 +162,6 @@ export default function HomePage() {
             setIsLoading(false);
         }
     }, [isUserLoading, isLinksLoading, isPending, isLoadingSampleLinks]);
-
-    const handleCreateLink = async () => {
-        const response = await new LinkService(identity).createLink({
-            link_type: { NftCreateAndAirdrop: null },
-        });
-        navigate(`/edit/${response}`);
-    };
-
-    const handleHideGuide = () => {
-        setShowGuide(false);
-        localStorage.setItem("showGuide", "false");
-    };
 
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {
