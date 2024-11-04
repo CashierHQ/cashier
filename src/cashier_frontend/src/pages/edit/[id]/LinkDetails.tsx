@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import Resizer from "react-image-file-resizer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,7 +16,6 @@ import { useTranslation } from "react-i18next";
 import { Textarea } from "@/components/ui/textarea";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import { FileInput } from "@/components/file-input";
-import { fileToBase64, resizeImage } from "@/utils";
 import { NumberInput } from "@/components/number-input";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
 import { useEffect, useState } from "react";
@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 const linkDetailsSchema = z.object({
     image: z.string().min(1, { message: "Image is required" }),
     description: z.string().min(10),
-    name: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
+    title: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
     amount: z.coerce.number().min(1),
 });
 
@@ -39,12 +39,30 @@ export default function LinkDetails({
         resolver: zodResolver(linkDetailsSchema),
         defaultValues: {
             description: "",
-            name: "",
+            title: "",
             amount: 1,
             image: "",
             ...defaultValues,
         },
     });
+
+    const resizeFile = (file: File) =>
+        new Promise((resolve) => {
+            Resizer.imageFileResizer(
+                file,
+                400,
+                400,
+                "JPEG",
+                100,
+                0,
+                (uri) => {
+                    resolve(uri);
+                },
+                "base64",
+                400,
+                400,
+            );
+        });
 
     const handleUploadImage = async (file: File | null) => {
         if (!file) {
@@ -52,11 +70,11 @@ export default function LinkDetails({
             handleChange({ image: "" });
             return;
         }
-        const resizedImage = await resizeImage(file);
-        const base64 = await fileToBase64(resizedImage);
-        form.setValue("image", base64, { shouldValidate: true });
-        handleChange({ image: base64 });
-        setCurrentImage(base64);
+        const resizedImage = (await resizeFile(file)) as string;
+        //const base64 = await fileToBase64(resizedImage);
+        form.setValue("image", resizedImage, { shouldValidate: true });
+        handleChange({ image: resizedImage });
+        setCurrentImage(resizedImage);
     };
 
     const handleAdjustAmount = (request: string, value: number) => {
@@ -104,7 +122,7 @@ export default function LinkDetails({
                     />
                     <FormField
                         control={form.control}
-                        name="name"
+                        name="title"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>{t("create.name")}</FormLabel>

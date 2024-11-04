@@ -9,7 +9,11 @@ interface LinkData {
     description: string;
 }
 
-export default function LinkPreview({ defaultValues, handleSubmit }: ParitalFormProps<LinkData>) {
+export default function LinkPreview({
+    defaultValues,
+    handleSubmit,
+    isDisabled,
+}: ParitalFormProps<LinkData>) {
     const { t } = useTranslation();
 
     return (

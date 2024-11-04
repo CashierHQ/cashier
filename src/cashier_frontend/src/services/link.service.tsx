@@ -10,6 +10,7 @@ import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import { LinkDetailModel } from "./types/link.service.types";
+import { MapLinkDetailModelToUpdateLinkInputModel } from "./types/link.service.mapper";
 
 const parseLink = (link: any): LinkDetailModel => {
     return {
@@ -81,38 +82,9 @@ class LinkService {
         return parseResultResponse(await this.actor.create_link(input));
     }
 
-    //TODO: refactor type for this
     // TODO: apply state machine for this method or create multiple methods for each state
-    async updateLink(linkId: string, data: any) {
-        const completeData: UpdateLinkInputModel = {
-            title: data.title ? [data.title] : [],
-            asset_info: data.amount
-                ? [
-                      {
-                          chain: {
-                              IC: null,
-                          },
-                          amount: data.amount ?? 10,
-                          address: "",
-                      },
-                  ]
-                : [],
-            description: data.description ? [data.description] : [],
-            actions: [
-                [
-                    {
-                        arg: "",
-                        method: "",
-                        canister_id: "",
-                        label: "",
-                    },
-                ],
-            ],
-            state: data.state ? [data.state] : [],
-            template: [{ Left: null }],
-            image: data.image ? [data.image] : [],
-        };
-        console.log("called update_link with linkId =", linkId, "and data =", completeData);
+    async updateLink(linkId: string, data: LinkDetailModel) {
+        const completeData = MapLinkDetailModelToUpdateLinkInputModel(data);
         const response = parseResultResponse(await this.actor.update_link(linkId, completeData));
         return response;
     }
