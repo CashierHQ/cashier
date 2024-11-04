@@ -10,9 +10,14 @@ export const queryKeys = createQueryKeyStore({
         detail: (identity: Identity | PartialIdentity | undefined) => ({
             queryKey: ["users"],
             queryFn: async () => {
-                const userService = new UserService(identity);
-                const user = await userService.getUser();
-                return user;
+                try {
+                    const userService = new UserService(identity);
+                    const user = await userService.getUser();
+                    return user;
+                } catch (error) {
+                    console.log(error);
+                    throw error;
+                }
             },
         }),
     },
@@ -24,7 +29,6 @@ export const queryKeys = createQueryKeyStore({
                 try {
                     const linkService = new LinkService(identity);
                     const links = await linkService.getLinks();
-                    console.log("🚀 ~ queryFn: ~ links:", links);
                     groupedLinkList = groupLinkListByDate(links?.data);
                 } catch (err) {
                     console.log("🚀 ~ queryFn: ~ err:", err);

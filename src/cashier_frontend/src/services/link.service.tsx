@@ -85,7 +85,6 @@ class LinkService {
     // TODO: apply state machine for this method or create multiple methods for each state
     async updateLink(linkId: string, data: LinkDetailModel) {
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(data);
-        //console.log("called update_link with linkId =", linkId, "and data =", completeData);
         const response = parseResultResponse(await this.actor.update_link(linkId, completeData));
         return response;
     }

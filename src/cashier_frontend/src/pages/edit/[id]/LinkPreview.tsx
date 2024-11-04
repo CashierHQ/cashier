@@ -15,7 +15,6 @@ export default function LinkPreview({
     isDisabled,
 }: ParitalFormProps<LinkData>) {
     const { t } = useTranslation();
-    console.log(isDisabled);
 
     return (
         <div className="w-full flex flex-col">

@@ -15,34 +15,40 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import UserService from "@/services/user.service";
+import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
+import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 export default function HomePage() {
     const { t } = useTranslation();
-    const { user: connectedUser, identity } = useIdentityKit();
-    const [user, setUser] = useState<any>(connectedUser);
-    const { data: appUser, isLoading: isUserLoading } = useQuery({
+    const { user: walletUser, identity } = useIdentityKit();
+    const [newAppUser, setNewAppUser] = useState<User>();
+    const {
+        data: appUser,
+        isLoading: isUserLoading,
+        error: loadUserError,
+        refetch: refetchAppUser,
+    } = useQuery({
         ...queryKeys.users.detail(identity),
+        retry: 1,
         enabled: !!identity,
     });
-    const { data: linkData, isLoading: isLinksLoading } = useQuery({
+    const {
+        data: linkData,
+        isLoading: isLinksLoading,
+        refetch: refetchLinks,
+    } = useQuery({
         ...queryKeys.links.list(identity),
-        enabled: !!connectedUser,
+        enabled: !!appUser,
     });
     const queryClient = useQueryClient();
-    const { mutateAsync } = useUpdateLink(queryClient, identity);
+    const { mutateAsync, isPending } = useUpdateLink(queryClient, identity);
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingSampleLinks, setLoadingSampleLinks] = useState(false);
     const navigate = useNavigate();
     const { connect } = useIdentityKit();
 
-    useEffect(() => {
-        if (isUserLoading || isLinksLoading) {
-            setIsLoading(true);
-        } else {
-            setIsLoading(false);
-        }
-    }, [isUserLoading, isLinksLoading]);
     const createSingleLink = async (linkInput: LinkDetailModel, linkService: LinkService) => {
         // First create link ID
         let initLinkId: string = await linkService.createLink({
@@ -89,45 +95,61 @@ export default function HomePage() {
         }
     }, []);
 
-    useEffect(() => {
-        console.log("🚀 ~ useEffect ~ connectedUser:", connectedUser);
-        if (connectedUser) {
-            setUser(connectedUser);
-        }
-    }, [connectedUser]);
-
+    // Create 2 first sample links for new user
     useEffect(() => {
         const initSampleLinks = async () => {
             try {
-                setIsLoading(true);
+                setLoadingSampleLinks(true);
                 const linkService = new LinkService(identity);
                 await createSampleLink(linkService);
             } catch (err) {
                 console.log(err);
             } finally {
-                setIsLoading(false);
+                setLoadingSampleLinks(false);
             }
         };
-
-        if (linkData && Object.keys(linkData).length === 0) {
+        if (linkData && Object.keys(linkData).length === 0 && appUser) {
             initSampleLinks();
         }
-    }, [linkData]);
+    }, [linkData, newAppUser]);
 
+    useEffect(() => {
+        if (newAppUser) {
+            refetchAppUser();
+        }
+    }, [newAppUser]);
+
+    // If users is not exist in Cashier App,
+    // then create account for them
     useEffect(() => {
         const createUser = async () => {
             const userService = new UserService(identity);
             try {
                 const user = await userService.createUser();
-                setUser(user);
+                setNewAppUser(user);
             } catch (error) {
                 console.log(error);
             }
         };
-        if (identity && !appUser) {
+
+        if (
+            identity &&
+            !appUser &&
+            loadUserError?.message.toLowerCase().includes(SERVICE_CALL_ERROR.USER_NOT_FOUND)
+        ) {
             createUser();
+        } else if (identity && appUser) {
+            refetchLinks();
         }
-    }, [identity, appUser]);
+    }, [identity, appUser, loadUserError]);
+
+    useEffect(() => {
+        if (isUserLoading || isLinksLoading || isPending || isLoadingSampleLinks) {
+            setIsLoading(true);
+        } else {
+            setIsLoading(false);
+        }
+    }, [isUserLoading, isLinksLoading, isPending, isLoadingSampleLinks]);
 
     const handleCreateLink = async () => {
         const response = await new LinkService(identity).createLink({
@@ -167,24 +189,19 @@ export default function HomePage() {
                 </div>
             );
         } else {
-            return (
-                <div className="w-full flex flex-col items-center mt-[100px]">
-                    <IoSearch
-                        style={{
-                            borderRadius: "5px",
-                            border: "solid gray 1px",
-                            padding: "8px",
-                        }}
-                        size="40px"
-                    />
-                    <span className="font-semibold mt-5">{t("home.noLinksFound")}</span>
-                    <p className="text-gray-500">{t("home.noLinksFoundDescription")}</p>
+            return Array.from({ length: 5 }).map((_, index) => (
+                <div className="flex items-center space-x-4 my-3" key={index}>
+                    <Skeleton className="h-10 w-10 rounded-sm" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                        <Skeleton className="h-3 w-[200px]" />
+                    </div>
                 </div>
-            );
+            ));
         }
     };
 
-    if (!connectedUser) {
+    if (!walletUser) {
         return (
             <div className="w-screen flex justify-center py-5">
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">

@@ -72,7 +72,6 @@ export default function LinkDetails({
             return;
         }
         const resizedImage = (await resizeFile(file)) as string;
-        console.log("🚀 ~ handleUploadImage ~ resizedImage:", resizedImage);
         //const base64 = await fileToBase64(resizedImage);
         form.setValue("image", resizedImage, { shouldValidate: true });
         handleChange({ image: resizedImage });
