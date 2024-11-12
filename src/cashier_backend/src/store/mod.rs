@@ -3,9 +3,11 @@ use std::cell::RefCell;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
+use crate::types::action::Action;
 use crate::types::link_detail::LinkDetail;
 use crate::types::user::User;
 
+pub mod action_store;
 pub mod link_store;
 pub mod link_user_store;
 pub mod user_store;
@@ -16,6 +18,7 @@ const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
 const USER_WALLET_MEMORY_ID: MemoryId = MemoryId::new(2);
 const LINK_MEMORY_ID: MemoryId = MemoryId::new(3);
 const LINK_USER_MEMORY_ID: MemoryId = MemoryId::new(4);
+const ACTION_MEMORY_ID: MemoryId = MemoryId::new(5);
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -62,6 +65,16 @@ thread_local! {
         )
     );
 
+    static ACTION_STORE: RefCell<StableBTreeMap<
+        String,
+        Action,
+        Memory
+        >> = RefCell::new(
+            StableBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)),
+            )
+        );
+
 }
 
 pub fn get_upgrade_memory() -> Memory {
@@ -87,5 +100,10 @@ pub fn load() {
     LINK_USER_STORE.with(|t| {
         *t.borrow_mut() =
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_USER_MEMORY_ID)));
+    });
+
+    ACTION_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)));
     });
 }
