@@ -17,7 +17,12 @@ pub enum Chain {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct Action {
+pub enum ClientAction {
+    CanisterAction(CanisterAction),
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct CanisterAction {
     pub canister_id: String,
     pub label: String,
     pub method: String,
@@ -25,10 +30,10 @@ pub struct Action {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct AssetAirdropInfo {
+pub struct AssetInfo {
     pub address: String,
     pub chain: Chain,
-    pub amount: u32,
+    pub amount: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
@@ -56,8 +61,8 @@ pub struct LinkDetail {
     pub description: Option<String>,
     pub image: Option<String>,
     pub link_type: Option<LinkType>,
-    pub asset_info: Option<AssetAirdropInfo>,
-    pub actions: Option<Vec<Action>>,
+    pub asset_info: Option<Vec<AssetInfo>>,
+    pub actions: Option<Vec<ClientAction>>,
     pub template: Option<Template>,
     pub state: Option<State>,
     pub creator: Option<String>,
@@ -80,8 +85,8 @@ pub struct LinkDetailUpdate {
     pub title: Option<String>,
     pub description: Option<String>,
     pub image: Option<String>,
-    pub asset_info: Option<AssetAirdropInfo>,
-    pub actions: Option<Vec<Action>>,
+    pub asset_info: Option<Vec<AssetInfo>>,
+    pub actions: Option<Vec<ClientAction>>,
     pub template: Option<Template>,
     pub state: Option<State>,
 }
