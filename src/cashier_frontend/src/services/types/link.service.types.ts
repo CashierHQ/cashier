@@ -64,3 +64,10 @@ export type LinkDetailModel = {
     create_at: Date;
     asset_info?: AssetAirdropInfo;
 };
+
+export type TipLinkModel = {
+    id: string;
+    title: string;
+    asset: string;
+    amount: number;
+};

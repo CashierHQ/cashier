@@ -12,7 +12,8 @@
         "message": "Message",
         "chain": "Chain",
         "amount": "Amount",
-        "defaultTemplate": "Default template"
+        "defaultTemplate": "Default template",
+        "asset": "Asset"
     },
     "claim": {
         "claim": "Claim",
