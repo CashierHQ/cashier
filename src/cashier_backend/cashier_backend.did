@@ -64,6 +64,7 @@ type LinkDetail = record {
   template : opt Template;
   image : opt text;
 };
+type LinkStateMachineAction = variant { Continue; Back };
 type LinkType = variant { NftCreateAndAirdrop };
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
@@ -87,11 +88,16 @@ type Result_6 = variant { Ok : LinkDetail; Err : CanisterError };
 type State = variant { New; Inactive; Active; PendingPreview; PendingDetail };
 type Template = variant { Left; Right; Central };
 type UpdateLinkInput = record {
+  id : text;
+  action : LinkStateMachineAction;
+  state : opt State;
+  params : UpdateLinkParams;
+};
+type UpdateLinkParams = record {
   title : opt text;
   asset_info : opt AssetAirdropInfo;
   description : opt text;
   actions : opt vec Action;
-  state : opt State;
   template : opt Template;
   image : opt text;
 };
@@ -108,5 +114,5 @@ service : () -> {
       Result_5,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
-  update_link : (text, UpdateLinkInput) -> (Result_6);
+  update_link : (UpdateLinkInput) -> (Result_6);
 }
