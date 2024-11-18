@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Action, AssetAirdropInfo, LinkDetailUpdate, LinkType, State, Template};
+use crate::core::{AssetInfo, ClientAction, LinkDetailUpdate, LinkType, State, Template};
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct CreateLinkInput {
@@ -12,8 +12,8 @@ pub struct UpdateLinkParams {
     pub title: Option<String>,
     pub description: Option<String>,
     pub image: Option<String>,
-    pub asset_info: Option<AssetAirdropInfo>,
-    pub actions: Option<Vec<Action>>,
+    pub asset_info: Option<Vec<AssetInfo>>,
+    pub actions: Option<Vec<ClientAction>>,
     pub template: Option<Template>,
 }
 
