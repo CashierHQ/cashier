@@ -12,6 +12,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
+import { DrawerTrigger, Drawer } from "@/components/ui/drawer";
+import ConfirmationPopup from "@/components/confirmation-popup";
+import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
+import { Toast } from "@radix-ui/react-toast";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATUS.NEW,
@@ -34,12 +38,19 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     });
     const [isNameSetByUser, setIsNameSetByUser] = useState(false);
     const [isDisabled, setDisabled] = useState(false);
+    const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
+    const [openValidtionToast, setOpenValidtionToast] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
+    const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
+    const [isRendering, setRendering] = useState(true);
+    const [disabledConfirmButton, setDisabledConfirmButton] = useState(false);
+    const [popupButton, setPopupButton] = useState("");
+
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { linkId } = useParams();
     const { identity } = useIdentityKit();
-    const [isRendering, setRendering] = useState(true);
+
     const queryClient = useQueryClient();
     const { mutate, mutateAsync } = useUpdateLink(queryClient, identity);
 
@@ -100,18 +111,32 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
+        const validationResult = true;
         try {
+            // 1. Call validation, success -> display confirm popup,
+            //   failed -> display error message
+            if (validationResult) {
+                setOpenConfirmationPopup(true);
+            } else {
+                setToastData({
+                    open: true,
+                    title: t("transaction.validation.action_failed"),
+                    description: t("transaction.validation.action_failed_message"),
+                    variant: "error",
+                });
+                setOpenValidtionToast(true);
+            }
             // setDisabled(true);
-            const updateLinkParams: UpdateLinkParams = {
-                linkId: linkId,
-                linkModel: {
-                    ...formData,
-                    ...values,
-                    state: State.Active,
-                },
-            };
-            await mutateAsync(updateLinkParams);
-            navigate(`/details/${linkId}`);
+            // const updateLinkParams: UpdateLinkParams = {
+            //     linkId: linkId,
+            //     linkModel: {
+            //         ...formData,
+            //         ...values,
+            //         state: State.Active,
+            //     },
+            // };
+            // await mutateAsync(updateLinkParams);
+            // navigate(`/details/${linkId}`);
         } catch (error) {
             setDisabled(false);
             console.log(error);
@@ -123,6 +148,18 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             setIsNameSetByUser(true);
         }
         setFormData({ ...formData, ...values });
+    };
+
+    const handleConfirmTransactions = () => {
+        setDisabledConfirmButton(true);
+        setPopupButton(t("transaction.confirm_popup.inprogress_button") as string);
+        setToastData({
+            open: true,
+            title: t("transaction.confirm_popup.transaction_failed"),
+            description: t("transaction.confirm_popup.transaction_failed_message"),
+            variant: "error",
+        });
+        setOpenValidtionToast(true);
     };
 
     if (isRendering) return null;
@@ -157,6 +194,25 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         render={(props) => <LinkPreview {...props} isDisabled />}
                     />
                 </MultiStepForm>
+                <Drawer open={openConfirmationPopup}>
+                    <ConfirmationPopup
+                        handleConfirm={handleConfirmTransactions}
+                        handleClose={() => setOpenConfirmationPopup(false)}
+                        disabled={disabledConfirmButton}
+                        buttonText={
+                            popupButton.length > 0
+                                ? popupButton
+                                : t("transaction.confirm_popup.confirm_button")
+                        }
+                    />
+                </Drawer>
+                <TransactionToast
+                    open={openValidtionToast}
+                    onOpenChange={setOpenValidtionToast}
+                    title={toastData?.title ?? ""}
+                    description={toastData?.description ?? ""}
+                    variant={toastData?.variant ?? "default"}
+                />
             </div>
         </div>
     );

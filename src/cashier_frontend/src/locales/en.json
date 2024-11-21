@@ -34,5 +34,24 @@
         },
         "noLinksFound": "No links found",
         "noLinksFoundDescription": "You haven't created any links yet."
+    },
+    "transaction": {
+        "validation": {
+            "action_failed": "The validation failed",
+            "action_failed_message": "Your links is not valid. Please check again."
+        },
+        "confirm_popup": {
+            "title": "Confirm transaction",
+            "receive_label": "You will receive",
+            "send_label": "You will send",
+            "cashier_fee_label": "Cashier fee",
+            "network_fee_label": "Network fee",
+            "confirm_button": "Confirm",
+            "inprogress_button": "Transaction in progress...",
+            "retry_button": "Retry",
+            "transaction_failed": "Transaction failed",
+            "transaction_failed_message": "Retry failed transaction",
+            "transaction_success": "Transaction success"
+        }
     }
 }
