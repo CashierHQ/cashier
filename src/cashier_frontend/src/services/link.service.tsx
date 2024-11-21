@@ -88,6 +88,11 @@ class LinkService {
         const response = parseResultResponse(await this.actor.update_link(linkId, completeData));
         return response;
     }
+
+    async validateLink(): Promise<boolean> {
+        // Mock function for validation
+        return false;
+    }
 }
 
 export default LinkService;
