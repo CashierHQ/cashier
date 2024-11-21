@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import LinkCard from "@/components/link-card";
 import { descriptionTemplate } from "@/constants/message";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
 
 const linkTemplateSchema = z.object({
     title: z.string().min(5),
@@ -66,12 +67,7 @@ export default function LinkTemplate({
                         message={descriptionTemplate}
                         title="PEDRO giveaway"
                     />
-                    <Button
-                        type="submit"
-                        className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
-                    >
-                        {t("continue")}
-                    </Button>
+                    <FixedBottomButton type="submit">{t("continue")}</FixedBottomButton>
                 </form>
             </Form>
         </div>

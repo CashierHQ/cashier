@@ -19,6 +19,7 @@ import { FileInput } from "@/components/file-input";
 import { NumberInput } from "@/components/number-input";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
 import { useEffect, useState } from "react";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
 
 const linkDetailsSchema = z.object({
     image: z.string().min(1, { message: "Image is required" }),
@@ -175,12 +176,9 @@ export default function LinkDetails({
                             </FormItem>
                         )}
                     />
-                    <Button
-                        type="submit"
-                        className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
-                    >
+                    <FixedBottomButton type="submit" variant="default" size="lg">
                         {t("continue")}
-                    </Button>
+                    </FixedBottomButton>
                 </form>
             </Form>
         </div>
