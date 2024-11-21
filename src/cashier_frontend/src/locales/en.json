@@ -51,7 +51,8 @@
             "retry_button": "Retry",
             "transaction_failed": "Transaction failed",
             "transaction_failed_message": "Retry failed transaction",
-            "transaction_success": "Transaction success"
+            "transaction_success": "Transaction success",
+            "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service"
         }
     }
 }

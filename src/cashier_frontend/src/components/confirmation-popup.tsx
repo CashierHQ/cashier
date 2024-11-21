@@ -35,7 +35,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     />
                 </DrawerTitle>
             </DrawerHeader>
-            <div id="confirmation-popup-section" className="my-3">
+            <div id="confirmation-popup-section-receive" className="my-3">
                 <div className="font-bold ml-2">
                     {translate("transaction.confirm_popup.receive_label")}
                 </div>
@@ -44,7 +44,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     <div>Mason's Tip link</div>
                 </div>
             </div>
-            <div id="confirmation-popup-section" className="my-3">
+            <div id="confirmation-popup-section-send" className="my-3">
                 <div className="font-bold ml-2">
                     {translate("transaction.confirm_popup.send_label")}
                 </div>
@@ -67,6 +67,9 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                         />
                     </div>
                 </div>
+            </div>
+            <div id="confirmation-popup-section-legal-text" className="mb-3">
+                <div>{translate("transaction.confirm_popup.legal_text")}</div>
             </div>
             <Button disabled={disabled} onClick={handleConfirm}>
                 {buttonText}
