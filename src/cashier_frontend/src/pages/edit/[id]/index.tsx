@@ -160,6 +160,10 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             variant: "error",
         });
         setOpenValidtionToast(true);
+        setTimeout(() => {
+            setDisabledConfirmButton(false);
+            setPopupButton(t("transaction.confirm_popup.retry_button") as string);
+        }, 3000);
     };
 
     if (isRendering) return null;

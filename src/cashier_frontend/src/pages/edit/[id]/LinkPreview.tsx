@@ -1,4 +1,5 @@
 import ConfirmationPopup from "@/components/confirmation-popup";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
 import LinkCard from "@/components/link-card";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import { Button } from "@/components/ui/button";
@@ -26,12 +27,7 @@ export default function LinkPreview({
                 message={defaultValues.description as any}
                 title={defaultValues.name as any}
             />
-            <Button
-                onClick={handleSubmit as any}
-                className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
-            >
-                Create
-            </Button>
+            <FixedBottomButton onClick={handleSubmit as any}>Create</FixedBottomButton>
         </div>
     );
 }

@@ -25,7 +25,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
         <DrawerContent className="max-w-[400px] mx-auto p-3">
             <DrawerHeader>
                 <DrawerTitle className="flex justify-center">
-                    <div className="text-center">
+                    <div className="text-center w-[100%]">
                         {translate("transaction.confirm_popup.title")}
                     </div>
                     <IoIosClose
