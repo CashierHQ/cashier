@@ -18,8 +18,10 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { IoIosArrowBack } from "react-icons/io";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
+import { LinkDetailModel } from "@/services/types/link.service.types";
+import ClaimPageForm from "@/components/claim-page/claim-page-form";
 
-const ClaimSchema = z.object({
+export const ClaimSchema = z.object({
     token: z.string().min(5),
     address: z.string().min(5),
     amount: z.coerce.number().min(1),
@@ -28,7 +30,7 @@ const ClaimSchema = z.object({
 const defaultClaimingAmount = 1;
 
 export default function ClaimPage() {
-    const [formData, setFormData] = useState<any>({});
+    const [formData, setFormData] = useState<LinkDetailModel>({});
     const { linkId } = useParams();
     const [isLoading, setIsLoading] = useState(true);
     const [isClaiming, setIsClaiming] = useState(false);
@@ -51,86 +53,18 @@ export default function ClaimPage() {
 
     if (isLoading) return null;
 
-    const handleClaim = async () => {};
+    const handleClaim = async () => {
+        console.log("Claiming");
+    };
 
     if (isClaiming)
         return (
-            <div className="w-screen flex flex-col items-center py-5">
-                <div className="w-11/12 max-w-[400px]">
-                    <div className="w-full flex justify-center items-center">
-                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                    </div>
-                    <div className="w-full flex justify-center items-center mt-5 relative">
-                        <h3 className="font-semibold">{t("claim.claim")}</h3>
-                        <div className="absolute left-[10px]" onClick={() => setIsClaiming(false)}>
-                            <IoIosArrowBack />
-                        </div>
-                    </div>
-                    <Form {...form}>
-                        <form
-                            className="flex flex-col gap-y-[10px] mt-3"
-                            onSubmit={form.handleSubmit(handleClaim)}
-                        >
-                            <FormField
-                                control={form.control}
-                                name="token"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t("claim.claimToken")}</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                disabled
-                                                defaultValue={formData.title}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="amount"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t("claim.amount")}</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                disabled
-                                                defaultValue={defaultClaimingAmount}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="address"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t("claim.address")}</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder={t("claim.addressPlaceholder")}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button
-                                type="submit"
-                                className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
-                            >
-                                {t("continue")}
-                            </Button>
-                        </form>
-                    </Form>
-                </div>
-            </div>
+            <ClaimPageForm
+                form={form}
+                formData={formData}
+                setIsClaiming={setIsClaiming}
+                handleClaim={handleClaim}
+            />
         );
 
     return (
