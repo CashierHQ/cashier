@@ -21,16 +21,7 @@ pub fn handle_update_create_and_airdrop_nft(
             link_detail.update(input);
             Ok(())
         }
-        //FUTURE change
-        // Some(State::New) => link_detail.back_to_new(),
-        // Some(State::PendingDetail) => {
-        //     if link_detail.state == Some(State::New) {
-        //         link_detail.to_pending_detail(input)
-        //     } else {
-        //         link_detail.back_to_pending_detail()
-        //     }
-        // }
-        // Some(State::PendingPreview) => link_detail.to_pending_preview(input),
+
         Some(State::Active) => link_detail.activate(),
         Some(State::Inactive) => link_detail.deactivate(),
         None => Err("State is not implemented".to_string()),
