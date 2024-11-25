@@ -109,100 +109,53 @@ impl LinkDetail {
     }
 
     pub fn update(&mut self, input: LinkDetailUpdate) -> () {
-        if let Some(title) = input.title {
-            self.title = Some(title);
-        }
-        if let Some(description) = input.description {
-            self.description = Some(description);
-        }
-        if let Some(image) = input.image {
-            self.image = Some(image);
-        }
-        if let Some(asset_info) = input.asset_info {
-            self.asset_info = Some(asset_info);
-        }
-        if let Some(actions) = input.actions {
-            self.actions = Some(actions);
-        }
-        if let Some(template) = input.template {
-            self.template = Some(template);
-        }
-        if let Some(state) = input.state {
-            self.state = Some(state);
-        }
+        let LinkDetailUpdate {
+            title,
+            description,
+            image,
+            asset_info,
+            actions,
+            template,
+            state,
+        } = input;
+
+        self.title = title.or(self.title.clone());
+        self.description = description.or(self.description.clone());
+        self.image = image.or(self.image.clone());
+        self.asset_info = asset_info.or(self.asset_info.clone());
+        self.actions = actions.or(self.actions.clone());
+        self.template = template.or(self.template.clone());
+        self.state = state.or(self.state.clone());
     }
 
     pub fn validate_fields_before_active(&self) -> Result<(), String> {
-        if self.id.is_empty() {
-            return Err("id is empty".to_string());
-        }
-        if self.title.as_ref().map_or(true, |s| s.is_empty()) {
-            return Err("title is missing or empty".to_string());
-        }
-        if self.description.as_ref().map_or(true, |s| s.is_empty()) {
-            return Err("description is missing or empty".to_string());
-        }
-        if self.image.as_ref().map_or(true, |s| s.is_empty()) {
-            return Err("image is missing or empty".to_string());
-        }
-        if self.link_type.is_none() {
-            return Err("link_type is missing".to_string());
-        }
-        if self.asset_info.is_none() {
-            return Err("asset_info is missing".to_string());
-        }
-        if self.actions.as_ref().map_or(true, |v| v.is_empty()) {
-            return Err("actions are missing or empty".to_string());
-        }
-        if self.template.is_none() {
-            return Err("template is missing".to_string());
-        }
-        if self.creator.as_ref().map_or(true, |s| s.is_empty()) {
-            return Err("creator is missing or empty".to_string());
+        let validators = [
+            (&self.id.is_empty(), "id"),
+            (&self.title.as_ref().map_or(true, |s| s.is_empty()), "title"),
+            (
+                &self.description.as_ref().map_or(true, |s| s.is_empty()),
+                "description",
+            ),
+            (&self.image.as_ref().map_or(true, |s| s.is_empty()), "image"),
+            (&self.link_type.is_none(), "link_type"),
+            (&self.asset_info.is_none(), "asset_info"),
+            (
+                &self.actions.as_ref().map_or(true, |v| v.is_empty()),
+                "actions",
+            ),
+            (&self.template.is_none(), "template"),
+            (
+                &self.creator.as_ref().map_or(true, |s| s.is_empty()),
+                "creator",
+            ),
+        ];
+
+        for (is_invalid, field_name) in validators {
+            if *is_invalid {
+                return Err(format!("{} is missing or empty", field_name));
+            }
         }
         Ok(())
-    }
-
-    pub fn back_to_new(&mut self) -> Result<(), String> {
-        match self.state {
-            Some(State::PendingDetail) => {
-                self.state = Some(State::New);
-                Ok(())
-            }
-            _ => Err("Invalid state transition back_to_new".to_string()),
-        }
-    }
-
-    pub fn back_to_pending_detail(&mut self) -> Result<(), String> {
-        match self.state {
-            Some(State::PendingPreview) => {
-                self.state = Some(State::PendingDetail);
-                Ok(())
-            }
-            _ => Err("Invalid state transition back_to_pending_detail".to_string()),
-        }
-    }
-
-    pub fn to_pending_detail(&mut self, input: LinkDetailUpdate) -> Result<(), String> {
-        match self.state {
-            Some(State::New) => {
-                self.state = Some(State::PendingDetail);
-                self.update(input);
-                Ok(())
-            }
-            _ => Err("Invalid state transition to_pending_detail".to_string()),
-        }
-    }
-
-    pub fn to_pending_preview(&mut self, input: LinkDetailUpdate) -> Result<(), String> {
-        match self.state {
-            Some(State::PendingDetail) => {
-                self.state = Some(State::PendingPreview);
-                self.update(input);
-                Ok(())
-            }
-            _ => Err("Invalid state transition to_pending_preview".to_string()),
-        }
     }
 
     pub fn activate(&mut self) -> Result<(), String> {

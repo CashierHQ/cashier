@@ -50,14 +50,14 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
 }
 
 #[update(guard = "is_not_anonymous")]
-async fn update_link(id: String, input: UpdateLinkInput) -> Result<LinkDetail, CanisterError> {
+async fn update_link(input: UpdateLinkInput) -> Result<LinkDetail, CanisterError> {
     let creator = ic_cdk::api::caller();
 
     // get link type
-    let link = services::link::get_link_by_id(id.clone())
+    let link = services::link::get_link_by_id(input.id.clone())
         .ok_or_else(|| CanisterError::HandleApiError("Link not found".to_string()))?;
 
-    match is_link_creator(creator.to_text(), &id) {
+    match is_link_creator(creator.to_text(), &input.id) {
         true => (),
         false => {
             return Err(CanisterError::HandleApiError(
