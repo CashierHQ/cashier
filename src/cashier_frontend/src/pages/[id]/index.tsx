@@ -1,22 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import LinkService from "@/services/link.service";
-import LinkCard from "@/components/link-card";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { IoIosArrowBack } from "react-icons/io";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
@@ -30,7 +18,7 @@ export const ClaimSchema = z.object({
 const defaultClaimingAmount = 1;
 
 export default function ClaimPage() {
-    const [formData, setFormData] = useState<LinkDetailModel>({});
+    const [formData, setFormData] = useState<LinkDetailModel>({} as LinkDetailModel);
     const { linkId } = useParams();
     const [isLoading, setIsLoading] = useState(true);
     const [isClaiming, setIsClaiming] = useState(false);
