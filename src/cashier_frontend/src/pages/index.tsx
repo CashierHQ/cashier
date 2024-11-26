@@ -20,7 +20,7 @@ import { User } from "../../../declarations/cashier_backend/cashier_backend.did"
 
 export default function HomePage() {
     const { t } = useTranslation();
-    const { user: walletUser, identity } = useIdentityKit();
+    const { user: walletUser, identity, connect } = useIdentityKit();
     const [newAppUser, setNewAppUser] = useState<User>();
     const {
         data: appUser,
@@ -47,7 +47,6 @@ export default function HomePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingSampleLinks, setLoadingSampleLinks] = useState(false);
     const navigate = useNavigate();
-    const { connect } = useIdentityKit();
 
     const createSingleLink = async (linkInput: LinkDetailModel, linkService: LinkService) => {
         // First create link ID
