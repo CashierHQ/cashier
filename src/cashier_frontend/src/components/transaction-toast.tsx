@@ -10,16 +10,17 @@ import {
 } from "@/components/ui/toast";
 import { FiXCircle } from "react-icons/fi";
 import { CiCircleCheck } from "react-icons/ci";
+import { FaCheck } from "react-icons/fa";
 import { cva, type VariantProps } from "class-variance-authority";
 
 // Define custom variants
 const transactionToastVariants = cva(
-    "group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md border p-4 pr-6 shadow-lg transition-all",
+    "bg-[#FFFAF2] group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md border p-4 pr-6 shadow-lg transition-all",
     {
         variants: {
             variant: {
-                default: "border-green-200 bg-green-50 text-green-900",
-                error: "border-red-200 bg-red-50 text-red-900",
+                default: "border-green-200 text-green-900",
+                error: "border-red-200 text-red-900",
             },
         },
         defaultVariants: {
@@ -58,7 +59,7 @@ const TransactionToast: FC<TransactionToastProps> = ({
                         )}
 
                         <div className="ml-3">
-                            <div className="text-xl font-medium">{title}</div>
+                            <div className="text-xl font-medium text-black">{title}</div>
                             <div className="text-md opacity-90">{description}</div>
                         </div>
                     </div>
