@@ -36,7 +36,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 </DrawerTitle>
             </DrawerHeader>
             <div id="confirmation-popup-section-receive" className="my-3">
-                <div className="font-bold ml-2">
+                <div className="font-medium ml-2">
                     {translate("transaction.confirm_popup.receive_label")}
                 </div>
                 <div className="flex justify-between border-solid border-inherit border-2 rounded-lg p-2">
@@ -45,7 +45,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 </div>
             </div>
             <div id="confirmation-popup-section-send" className="my-3">
-                <div className="font-bold ml-2">
+                <div className="font-medium ml-2">
                     {translate("transaction.confirm_popup.send_label")}
                 </div>
                 <div className="border-solid border-inherit border-2 rounded-lg p-2 divide-y divide-inherit">
@@ -68,6 +68,13 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     </div>
                 </div>
             </div>
+            <div id="confirmation-popup-section-total" className="mb-3">
+                <div className="bg-[#E8F2EE] flex justify-between border-solid border-inherit border-2 rounded-lg p-2">
+                    <div>Total fees ($0.0508)</div>
+                    <div>0.00625 ICP</div>
+                </div>
+            </div>
+
             <div id="confirmation-popup-section-legal-text" className="mb-3">
                 <div>{translate("transaction.confirm_popup.legal_text")}</div>
             </div>
