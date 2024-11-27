@@ -1,13 +1,9 @@
-type Action = record {
+type AssetInfo = record { chain : Chain; address : text; amount : nat64 };
+type CanisterAction = record {
   arg : text;
   method : text;
   canister_id : text;
   label : text;
-};
-type AssetAirdropInfo = record {
-  chain : Chain;
-  address : text;
-  amount : nat32;
 };
 type CanisterError = variant {
   HandleLogicError : text;
@@ -15,6 +11,7 @@ type CanisterError = variant {
   HandleApiError : text;
 };
 type Chain = variant { IC };
+type ClientAction = variant { CanisterAction : CanisterAction };
 type CreateLinkInput = record { link_type : LinkType };
 type Icrc21ConsentInfo = record {
   metadata : Icrc21ConsentMessageMetadata;
@@ -55,11 +52,11 @@ type LinkDetail = record {
   id : text;
   title : opt text;
   creator : opt text;
-  asset_info : opt AssetAirdropInfo;
+  asset_info : opt vec AssetInfo;
   link_type : opt LinkType;
   create_at : opt nat64;
   description : opt text;
-  actions : opt vec Action;
+  actions : opt vec ClientAction;
   state : opt State;
   template : opt Template;
   image : opt text;
@@ -95,9 +92,9 @@ type UpdateLinkInput = record {
 };
 type UpdateLinkParams = record {
   title : opt text;
-  asset_info : opt AssetAirdropInfo;
+  asset_info : opt vec AssetInfo;
   description : opt text;
-  actions : opt vec Action;
+  actions : opt vec ClientAction;
   template : opt Template;
   image : opt text;
 };
