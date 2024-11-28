@@ -1,15 +1,17 @@
 use std::cell::RefCell;
 
+use entities::action::Action;
+use entities::action_transaction::ActionTransaction;
 use entities::link::Link;
+use entities::transaction::Transaction;
 use entities::user_link::UserLink;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
-use crate::types::action::Action;
-
 pub mod action_store;
 pub mod entities;
 pub mod link_store;
+pub mod transaction_store;
 pub mod user_link_store;
 pub mod user_store;
 pub mod user_wallet_store;
@@ -80,11 +82,21 @@ thread_local! {
 
     static TRANSACTION_STORE: RefCell<StableBTreeMap<
         String,
-        String,
+        Transaction,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)),
+        )
+    );
+
+    static ACTION_TRANSACTION_STORE: RefCell<StableBTreeMap<
+        String,
+        ActionTransaction,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_TRANSACTION_MEMORY_ID)),
         )
     );
 
