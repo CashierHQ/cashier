@@ -2,7 +2,7 @@ use crate::core::link::types::*;
 use crate::types::api::*;
 use crate::types::error::*;
 use crate::types::icrc::*;
-use crate::types::link_detail::*;
+use crate::types::link::*;
 use crate::types::user::*;
 
 pub mod claim;

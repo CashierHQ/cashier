@@ -1,40 +1,37 @@
-use crate::types::{
-    api::{FilterInput, PaginateInput, PaginateResult, PaginateResultMetadata},
-    link_user::LinkUser,
-};
+use crate::types::api::{FilterInput, PaginateInput, PaginateResult, PaginateResultMetadata};
 
-use super::LINK_USER_STORE;
+use super::{entities::user_link::UserLink, USER_LINK_STORE};
 
-pub fn create(key: String, ts: u64) {
-    LINK_USER_STORE.with(|store| {
-        store.borrow_mut().insert(key, ts);
+pub fn create(user_link: UserLink) {
+    USER_LINK_STORE.with(|store| {
+        let pk = user_link.pk.clone();
+        store.borrow_mut().insert(pk, user_link);
     });
 }
 
-pub fn get(id: &str) -> Option<u64> {
-    LINK_USER_STORE.with(|store| store.borrow().get(&id.to_string()))
+pub fn get(id: &str) -> Option<UserLink> {
+    USER_LINK_STORE.with(|store| store.borrow().get(&id.to_string()))
 }
 
 pub fn get_links_by_user_id(
     user_id: String,
     pagination: PaginateInput,
     _filter: Option<FilterInput>,
-) -> Result<PaginateResult<LinkUser>, String> {
-    LINK_USER_STORE.with(|store| {
+) -> Result<PaginateResult<UserLink>, String> {
+    USER_LINK_STORE.with(|store| {
         let store = store.borrow();
         let mut result = Vec::new();
         let prefix = format!("{}#", user_id);
 
-        for (key, ts) in store
+        for (_, user_link) in store
             .range(prefix.clone()..)
             .take_while(|(key, _)| key.starts_with(&prefix))
         {
-            let link_user = LinkUser::from_persistent(key, ts);
-            result.push(link_user);
+            result.push(user_link);
         }
 
-        // Sort the result by timestamp (ts)
-        result.sort_by(|a, b| a.create_at.cmp(&b.create_at));
+        // Sort the result by created_date
+        result.sort_by(|a, b| b.created_at.cmp(&a.created_at));
 
         if pagination.offset as usize >= result.len() {
             return Ok(PaginateResult::default());

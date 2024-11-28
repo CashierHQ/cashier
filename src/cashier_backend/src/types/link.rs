@@ -3,12 +3,9 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use crate::store::link_store;
-
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-#[repr(u8)]
 pub enum LinkType {
-    NftCreateAndAirdrop = 1,
+    NftCreateAndAirdrop,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -55,7 +52,7 @@ pub enum Template {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct LinkDetail {
+pub struct Link {
     pub id: String,
     pub title: Option<String>,
     pub description: Option<String>,
@@ -69,7 +66,7 @@ pub struct LinkDetail {
     pub create_at: Option<u64>,
 }
 
-impl Storable for LinkDetail {
+impl Storable for Link {
     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())
     }
@@ -91,8 +88,42 @@ pub struct LinkDetailUpdate {
     pub state: Option<State>,
 }
 
-impl LinkDetail {
-    pub fn create_new(id: String, creator: String, link_type: LinkType) -> Self {
+impl Link {
+    pub fn to_persistence(&self) -> crate::store::entities::link::Link {
+        let pk = crate::store::entities::link::Link::build_pk(self.id.clone());
+        crate::store::entities::link::Link {
+            pk,
+            title: self.title.clone(),
+            description: self.description.clone(),
+            image: self.image.clone(),
+            link_type: self.link_type.clone(),
+            asset_info: self.asset_info.clone(),
+            actions: self.actions.clone(),
+            template: self.template.clone(),
+            state: self.state.clone(),
+            creator: self.creator.clone(),
+            create_at: self.create_at.clone(),
+        }
+    }
+
+    pub fn from_persistence(link: crate::store::entities::link::Link) -> Self {
+        let id = link.pk.split('#').last().unwrap().to_string();
+        Self {
+            id,
+            title: link.title,
+            description: link.description,
+            image: link.image,
+            link_type: link.link_type,
+            asset_info: link.asset_info,
+            actions: link.actions,
+            template: link.template,
+            state: link.state,
+            creator: link.creator,
+            create_at: link.create_at,
+        }
+    }
+
+    pub fn create_new(id: String, creator: String, link_type: LinkType, ts: u64) -> Self {
         Self {
             id,
             title: None,
@@ -104,7 +135,7 @@ impl LinkDetail {
             template: None,
             state: Some(State::New),
             creator: Some(creator),
-            create_at: Some(ic_cdk::api::time()),
+            create_at: Some(ts),
         }
     }
 
@@ -177,10 +208,5 @@ impl LinkDetail {
             }
             _ => Err("Invalid state transition deactivate".to_string()),
         }
-    }
-
-    pub fn save(&self) -> LinkDetail {
-        link_store::update(self.id.clone(), self.clone());
-        self.clone()
     }
 }

@@ -13,21 +13,14 @@ pub fn create_new() -> Result<User, String> {
     let caller = ic_cdk::api::caller();
 
     let id = Uuid::new_v4();
+    let id_str = id.to_string();
 
-    let new_user = User {
-        id: id.to_string(),
-        email: None,
-        wallet: caller.to_string(),
-    };
+    let user = User::new(id_str.clone(), None, caller.to_string());
 
-    user_store::create(id.to_string(), new_user);
-    user_wallet_store::create(caller.to_string(), id.to_string());
+    user_store::create(user.to_persistence());
+    user_wallet_store::create(caller.to_string(), id_str);
 
-    Ok(User {
-        id: id.to_string(),
-        email: None,
-        wallet: caller.to_string(),
-    })
+    Ok(user)
 }
 
 pub fn get() -> Option<User> {
@@ -36,7 +29,13 @@ pub fn get() -> Option<User> {
         Some(user_id) => user_id,
         None => return None,
     };
-    user_store::get(&user_id)
+
+    let user = user_store::get(&user_id);
+
+    match user {
+        Some(user) => Some(User::from_persistence(user)),
+        None => None,
+    }
 }
 
 pub fn is_existed() -> bool {

@@ -1,44 +1,50 @@
 use crate::{
-    types::link_detail::{LinkDetail, LinkDetailUpdate, State},
+    store::link_store,
+    types::link::{Link, LinkDetailUpdate, State},
     utils::logger,
 };
 
 pub fn handle_update_create_and_airdrop_nft(
     input: LinkDetailUpdate,
-    mut link_detail: LinkDetail,
-) -> Result<LinkDetail, String> {
+    mut link: Link,
+) -> Result<Link, String> {
     let state_machine_result = match input.state {
         // current allow free transition for 3 states
         Some(State::New) => {
-            link_detail.update(input);
+            link.update(input);
             Ok(())
         }
         Some(State::PendingDetail) => {
-            link_detail.update(input);
+            link.update(input);
             Ok(())
         }
         Some(State::PendingPreview) => {
-            link_detail.update(input);
+            link.update(input);
             Ok(())
         }
 
-        Some(State::Active) => link_detail.activate(),
-        Some(State::Inactive) => link_detail.deactivate(),
+        Some(State::Active) => link.activate(),
+        Some(State::Inactive) => link.deactivate(),
         None => Err("State is not implemented".to_string()),
     };
 
     match state_machine_result {
-        Ok(_) => return Ok(link_detail.save()),
+        Ok(_) => {
+            return {
+                link_store::update(link.to_persistence());
+                Ok(link)
+            }
+        }
         Err(e) => {
             return {
-                logger::error(&format!("Error to update {:?}", link_detail));
+                logger::error(&format!("Error to update {:?}", link));
                 Err(e)
             }
         }
     }
 }
 
-pub fn is_valid_fields_before_active(link_detail: &LinkDetail) -> Result<bool, String> {
+pub fn is_valid_fields_before_active(link_detail: &Link) -> Result<bool, String> {
     if link_detail.id.is_empty() {
         return Err("id is empty".to_string());
     }

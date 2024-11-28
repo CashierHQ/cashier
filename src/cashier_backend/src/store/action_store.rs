@@ -2,7 +2,8 @@ use crate::types::action::Action;
 
 use super::ACTION_STORE;
 
-pub fn create(id: String, action: Action) -> Action {
+pub fn create(action: Action) -> Action {
+    let id = action.id.clone();
     let action = ACTION_STORE.with(|store| {
         store.borrow_mut().insert(id, action.clone());
         return action;

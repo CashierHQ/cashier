@@ -6,7 +6,8 @@ use crate::{
     store::{link_store, link_user_store, user_wallet_store},
     types::{
         api::{PaginateInput, PaginateResult},
-        link_detail::LinkDetail,
+        link::Link,
+        user_link::UserLink,
     },
     utils::logger,
 };
@@ -17,22 +18,26 @@ pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, Str
         Some(user_id) => user_id,
         None => return Err("User not found".to_string()),
     };
-    let new_link_detail = LinkDetail::create_new(id.to_string(), user_id.clone(), input.link_type);
 
-    let ts: u64 = ic_cdk::api::time();
+    let ts = ic_cdk::api::time();
+    let link_id_str = id.to_string();
 
-    let link_user_key = format!("{}#{}", user_id, id.to_string());
+    let new_link = Link::create_new(link_id_str.clone(), user_id.clone(), input.link_type, ts);
+    let new_user_link = UserLink::new(user_id, link_id_str.clone(), ts);
 
-    link_store::create(id.to_string(), new_link_detail);
-    link_user_store::create(link_user_key, ts);
+    let new_link_persistence = new_link.to_persistence();
+    let new_user_link_persistence = new_user_link.to_persistent();
 
-    Ok(id.to_string())
+    link_store::create(new_link_persistence);
+    link_user_store::create(new_user_link_persistence);
+
+    Ok(link_id_str)
 }
 
 pub fn get_links_by_principal(
     principal: String,
     pagination: PaginateInput,
-) -> Result<PaginateResult<LinkDetail>, String> {
+) -> Result<PaginateResult<Link>, String> {
     let user_id = match user_wallet_store::get(&principal) {
         Some(user_id) => user_id,
         None => return Err("User not found".to_string()),
@@ -49,7 +54,7 @@ pub fn get_links_by_principal(
 pub fn get_links_by_user_id(
     user_id: String,
     pagination: PaginateInput,
-) -> Result<PaginateResult<LinkDetail>, String> {
+) -> Result<PaginateResult<Link>, String> {
     let link_users = match link_user_store::get_links_by_user_id(user_id, pagination, None) {
         Ok(link_users) => link_users,
         Err(e) => return Err(e),
@@ -60,15 +65,23 @@ pub fn get_links_by_user_id(
         .iter()
         .map(|link_user| link_user.link_id.clone())
         .collect();
-    let links = link_store::get_batch(link_ids);
 
-    let res = PaginateResult::new(links, link_users.metadata);
+    let links_persistence = link_store::get_batch(link_ids);
 
+    let link_general = links_persistence
+        .iter()
+        .map(|link| Link::from_persistence(link.clone()))
+        .collect::<Vec<Link>>();
+
+    let res = PaginateResult::new(link_general, link_users.metadata);
     Ok(res)
 }
 
-pub fn get_link_by_id(id: String) -> Option<LinkDetail> {
-    link_store::get(&id)
+pub fn get_link_by_id(id: String) -> Option<Link> {
+    match link_store::get(&id) {
+        Some(link) => Some(Link::from_persistence(link)),
+        None => None,
+    }
 }
 
 pub fn is_link_creator(caller: String, id: &String) -> bool {
