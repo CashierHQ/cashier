@@ -80,12 +80,12 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
                 }
             }
         }
-        Some(_) => {
-            // Handle other link types if necessary
-            return Err(CanisterError::HandleApiError(
-                "Link type is not supported for update".to_string(),
-            ));
-        }
+        // Some(_) => {
+        //     // Handle other link types if necessary
+        //     return Err(CanisterError::HandleApiError(
+        //         "Link type is not supported for update".to_string(),
+        //     ));
+        // }
         None => {
             return Err(CanisterError::HandleApiError(
                 "Link type is not found".to_string(),

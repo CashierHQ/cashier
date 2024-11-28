@@ -1,12 +1,9 @@
-use crate::types::action::Action;
-
-use super::ACTION_STORE;
+use super::{entities::action::Action, ACTION_STORE};
 
 pub fn create(action: Action) -> Action {
-    let id = action.id.clone();
-    let action = ACTION_STORE.with(|store| {
-        store.borrow_mut().insert(id, action.clone());
-        return action;
+    let pk = action.pk.clone();
+    ACTION_STORE.with(|store| {
+        store.borrow_mut().insert(pk, action.clone());
     });
 
     action

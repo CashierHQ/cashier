@@ -3,7 +3,7 @@ pub mod update;
 
 use crate::{
     core::link::types::CreateLinkInput,
-    store::{link_store, link_user_store, user_wallet_store},
+    store::{link_store, user_link_store, user_wallet_store},
     types::{
         api::{PaginateInput, PaginateResult},
         link::Link,
@@ -29,7 +29,7 @@ pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, Str
     let new_user_link_persistence = new_user_link.to_persistent();
 
     link_store::create(new_link_persistence);
-    link_user_store::create(new_user_link_persistence);
+    user_link_store::create(new_user_link_persistence);
 
     Ok(link_id_str)
 }
@@ -55,12 +55,12 @@ pub fn get_links_by_user_id(
     user_id: String,
     pagination: PaginateInput,
 ) -> Result<PaginateResult<Link>, String> {
-    let link_users = match link_user_store::get_links_by_user_id(user_id, pagination, None) {
+    let user_links = match user_link_store::get_links_by_user_id(user_id, pagination, None) {
         Ok(link_users) => link_users,
         Err(e) => return Err(e),
     };
 
-    let link_ids = link_users
+    let link_ids = user_links
         .data
         .iter()
         .map(|link_user| link_user.link_id.clone())
@@ -73,7 +73,7 @@ pub fn get_links_by_user_id(
         .map(|link| Link::from_persistence(link.clone()))
         .collect::<Vec<Link>>();
 
-    let res = PaginateResult::new(link_general, link_users.metadata);
+    let res = PaginateResult::new(link_general, user_links.metadata);
     Ok(res)
 }
 

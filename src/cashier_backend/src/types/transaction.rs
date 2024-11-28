@@ -1,7 +1,4 @@
-use std::borrow::Cow;
-
-use candid::{CandidType, Decode, Encode};
-use ic_stable_structures::{storable::Bound, Storable};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 use super::{account::Account, link::Chain};
@@ -25,14 +22,49 @@ pub struct Transaction {
     pub chain: Chain,
 }
 
-impl Storable for Transaction {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
+impl Transaction {
+    pub fn new(
+        id: String,
+        status: TransactionStatus,
+        to: Account,
+        from: Account,
+        amount: u64,
+        address: String,
+        chain: Chain,
+    ) -> Self {
+        Self {
+            id,
+            status,
+            to,
+            from,
+            amount,
+            address,
+            chain,
+        }
     }
 
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
+    pub fn to_persistence(self) -> crate::store::entities::transaction::Transaction {
+        crate::store::entities::transaction::Transaction::new(
+            self.id,
+            self.status,
+            self.to,
+            self.from,
+            self.amount,
+            self.address,
+            self.chain,
+        )
     }
 
-    const BOUND: Bound = Bound::Unbounded;
+    pub fn from_persistence(transaction: crate::store::entities::transaction::Transaction) -> Self {
+        let id = transaction.pk.split('#').last().unwrap().to_string();
+        Self {
+            id,
+            status: transaction.status,
+            to: transaction.to,
+            from: transaction.from,
+            amount: transaction.amount,
+            address: transaction.address,
+            chain: transaction.chain,
+        }
+    }
 }

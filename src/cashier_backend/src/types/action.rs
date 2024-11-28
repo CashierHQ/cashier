@@ -1,8 +1,7 @@
-use std::borrow::Cow;
-
-use candid::{CandidType, Decode, Encode};
-use ic_stable_structures::{storable::Bound, Storable};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
+
+use super::transaction::Transaction;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub enum Status {
@@ -34,38 +33,69 @@ pub enum ActionType {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
-    action_type: ActionType,
-    params: CreateActionParams,
-    link_id: String,
+    pub action_type: ActionType,
+    pub params: CreateActionParams,
+    pub link_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Action {
     pub id: String,
+    pub creator_id: String,
+    pub link_id: String,
     pub status: Status,
     pub action_type: ActionType,
-    pub link_id: String,
+    pub transactions: Vec<Transaction>,
 }
 
 impl Action {
-    pub fn from_input(id: String, input: CreateActionInput) -> Self {
+    pub fn new(
+        id: String,
+        creator_id: String,
+        link_id: String,
+        status: Status,
+        action_type: ActionType,
+        transactions: Vec<Transaction>,
+    ) -> Self {
         Self {
-            id: id,
-            status: Status::Created,
-            action_type: input.action_type,
-            link_id: input.link_id,
+            id,
+            creator_id,
+            link_id,
+            status,
+            action_type,
+            transactions,
         }
     }
-}
 
-impl Storable for Action {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
+    pub fn add_transaction(&mut self, transaction: Transaction) {
+        self.transactions.push(transaction);
     }
 
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
+    pub fn add_bulk_transactions(&mut self, transactions: Vec<Transaction>) {
+        self.transactions.extend(transactions);
     }
 
-    const BOUND: Bound = Bound::Unbounded;
+    pub fn to_persistence(&self) -> crate::store::entities::action::Action {
+        crate::store::entities::action::Action::new(
+            self.id.clone(),
+            self.status.clone(),
+            self.action_type.clone(),
+            self.link_id.clone(),
+            self.creator_id.clone(),
+        )
+    }
+
+    pub fn from_persistence(
+        action: crate::store::entities::action::Action,
+        transactions: Vec<Transaction>,
+    ) -> Self {
+        Self {
+            id: action.pk.split('#').last().unwrap().to_string(),
+            creator_id: action.creator_id,
+            link_id: action.link_id,
+            status: action.status,
+            action_type: action.action_type,
+            transactions: transactions,
+        }
+    }
 }

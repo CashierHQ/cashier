@@ -8,3 +8,16 @@ pub struct Account {
     pub owner: Principal,
     pub subaccount: Option<Subaccount>,
 }
+
+impl Account {
+    pub fn new(owner: Principal, subaccount: Option<Subaccount>) -> Self {
+        Self { owner, subaccount }
+    }
+
+    pub fn from_link_id(owner: Principal, link_id: String) -> Self {
+        let subaccount_bytes = link_id.into_bytes();
+        let subaccount = Some(subaccount_bytes.into());
+
+        Self { owner, subaccount }
+    }
+}
