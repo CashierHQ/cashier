@@ -1,15 +1,16 @@
 use std::cell::RefCell;
 
+use entities::link::Link;
+use entities::user_link::UserLink;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
 use crate::types::action::Action;
-use crate::types::link_detail::LinkDetail;
-use crate::types::user::User;
 
 pub mod action_store;
+pub mod entities;
 pub mod link_store;
-pub mod link_user_store;
+pub mod user_link_store;
 pub mod user_store;
 pub mod user_wallet_store;
 
@@ -17,8 +18,10 @@ const UPGRADES: MemoryId = MemoryId::new(0);
 const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
 const USER_WALLET_MEMORY_ID: MemoryId = MemoryId::new(2);
 const LINK_MEMORY_ID: MemoryId = MemoryId::new(3);
-const LINK_USER_MEMORY_ID: MemoryId = MemoryId::new(4);
+const USER_LINK_MEMORY_ID: MemoryId = MemoryId::new(4);
 const ACTION_MEMORY_ID: MemoryId = MemoryId::new(5);
+const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(6);
+const ACTION_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(7);
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -27,7 +30,7 @@ thread_local! {
 
     static USER_STORE: RefCell<StableBTreeMap<
         String,
-        User,
+        entities::user::User,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -47,7 +50,7 @@ thread_local! {
 
     static LINK_STORE: RefCell<StableBTreeMap<
         String,
-        LinkDetail,
+        Link,
         Memory
         >> = RefCell::new(
             StableBTreeMap::init(
@@ -55,13 +58,13 @@ thread_local! {
             )
         );
 
-    static LINK_USER_STORE: RefCell<StableBTreeMap<
+    static USER_LINK_STORE: RefCell<StableBTreeMap<
         String,
-        u64,
+        UserLink,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(LINK_USER_MEMORY_ID)),
+            MEMORY_MANAGER.with_borrow(|m| m.get(USER_LINK_MEMORY_ID)),
         )
     );
 
@@ -74,6 +77,17 @@ thread_local! {
                 MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)),
             )
         );
+
+    static TRANSACTION_STORE: RefCell<StableBTreeMap<
+        String,
+        String,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)),
+        )
+    );
+
 
 }
 
@@ -97,13 +111,18 @@ pub fn load() {
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_MEMORY_ID)));
     });
 
-    LINK_USER_STORE.with(|t| {
+    USER_LINK_STORE.with(|t| {
         *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_USER_MEMORY_ID)));
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_LINK_MEMORY_ID)));
     });
 
     ACTION_STORE.with(|t| {
         *t.borrow_mut() =
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)));
+    });
+
+    TRANSACTION_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)));
     });
 }

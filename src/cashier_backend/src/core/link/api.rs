@@ -6,14 +6,14 @@ use crate::{
         self,
         link::{create_new, is_link_creator, update::handle_update_create_and_airdrop_nft},
     },
-    types::{api::PaginateInput, error::CanisterError, link_detail::LinkDetail},
+    types::{api::PaginateInput, error::CanisterError, link::Link},
     utils::logger,
 };
 
 use super::types::CreateLinkInput;
 
 #[query(guard = "is_not_anonymous")]
-async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDetail>, String> {
+async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<Link>, String> {
     let caller = ic_cdk::api::caller();
 
     match services::link::get_links_by_principal(caller.to_text(), input.unwrap_or_default()) {
@@ -28,7 +28,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDe
 }
 
 #[query]
-async fn get_link(id: String) -> Result<LinkDetail, String> {
+async fn get_link(id: String) -> Result<Link, String> {
     match services::link::get_link_by_id(id) {
         Some(link) => Ok(link),
         None => Err("Link not found".to_string()),
@@ -50,7 +50,7 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
 }
 
 #[update(guard = "is_not_anonymous")]
-async fn update_link(input: UpdateLinkInput) -> Result<LinkDetail, CanisterError> {
+async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
     let creator = ic_cdk::api::caller();
 
     // get link type

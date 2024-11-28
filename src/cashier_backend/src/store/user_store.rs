@@ -1,10 +1,9 @@
-use crate::types::user::User;
+use super::{entities::user::User, USER_STORE};
 
-use super::USER_STORE;
-
-pub fn create(id: String, user: User) {
+pub fn create(user: User) {
     USER_STORE.with(|store| {
-        store.borrow_mut().insert(id, user);
+        let pk = user.pk.clone();
+        store.borrow_mut().insert(pk, user);
     });
 }
 

@@ -1,18 +1,27 @@
-use crate::types::link_detail::LinkDetail;
+use super::{entities::link::Link, LINK_STORE};
 
-use super::LINK_STORE;
-
-pub fn create(id: String, link: LinkDetail) {
-    LINK_STORE.with(|store| {
-        store.borrow_mut().insert(id, link);
-    });
+pub fn create(link: Link) {
+    LINK_STORE.with(
+        |store: &std::cell::RefCell<
+            ic_stable_structures::BTreeMap<
+                String,
+                Link,
+                ic_stable_structures::memory_manager::VirtualMemory<
+                    std::rc::Rc<std::cell::RefCell<Vec<u8>>>,
+                >,
+            >,
+        >| {
+            let pk: String = link.pk.clone();
+            store.borrow_mut().insert(pk, link);
+        },
+    );
 }
 
-pub fn get(id: &str) -> Option<LinkDetail> {
+pub fn get(id: &str) -> Option<Link> {
     LINK_STORE.with(|store| store.borrow().get(&id.to_string()))
 }
 
-pub fn get_batch(ids: Vec<String>) -> Vec<LinkDetail> {
+pub fn get_batch(ids: Vec<String>) -> Vec<Link> {
     LINK_STORE.with(|store| {
         let store = store.borrow();
         let mut result = Vec::new();
@@ -33,9 +42,10 @@ pub fn get_batch(ids: Vec<String>) -> Vec<LinkDetail> {
     })
 }
 
-pub fn update(id: String, link: LinkDetail) {
+pub fn update(link: Link) {
     LINK_STORE.with(|store| {
-        store.borrow_mut().insert(id, link);
+        let pk: String = link.pk.clone();
+        store.borrow_mut().insert(pk, link);
     });
 }
 

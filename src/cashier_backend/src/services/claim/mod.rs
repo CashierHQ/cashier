@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use crate::{store::link_store, types::link_detail::State};
+use crate::{store::link_store, types::link::State};
 
 use super::ext::{
     cashier_nft::mint_nft,
