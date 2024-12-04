@@ -1,7 +1,7 @@
 use ic_cdk::{query, update};
 
 use crate::{
-    core::{guard::is_not_anonymous, LinkType, PaginateResult, UpdateLinkInput},
+    core::{guard::is_not_anonymous, GetLinkResp, LinkType, PaginateResult, UpdateLinkInput},
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_create_and_airdrop_nft},
@@ -28,7 +28,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<Link>,
 }
 
 #[query]
-async fn get_link(id: String) -> Result<Link, String> {
+async fn get_link(id: String) -> Result<GetLinkResp, String> {
     match services::link::get_link_by_id(id) {
         Some(link) => Ok(link),
         None => Err("Link not found".to_string()),
@@ -54,7 +54,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
     let creator = ic_cdk::api::caller();
 
     // get link type
-    let link = services::link::get_link_by_id(input.id.clone())
+    let rsp = services::link::get_link_by_id(input.id.clone())
         .ok_or_else(|| CanisterError::HandleApiError("Link not found".to_string()))?;
 
     match is_link_creator(creator.to_text(), &input.id) {
@@ -66,26 +66,24 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
         }
     }
 
-    match link.link_type {
-        Some(LinkType::NftCreateAndAirdrop) => {
-            match handle_update_create_and_airdrop_nft(input, link) {
+    let link_type = rsp.link.link_type.clone();
+
+    if link_type.is_none() {
+        return Err(CanisterError::HandleApiError(
+            "Link type is missing".to_string(),
+        ));
+    }
+
+    let link_type_str = link_type.unwrap();
+    match LinkType::from_string(&link_type_str) {
+        LinkType::NftCreateAndAirdrop => {
+            match handle_update_create_and_airdrop_nft(input, rsp.link) {
                 Ok(link) => Ok(link),
                 Err(e) => {
                     logger::error(&format!("Failed to update link: {}", e));
                     Err(CanisterError::HandleApiError(e))
                 }
             }
-        }
-        // Some(_) => {
-        //     // Handle other link types if necessary
-        //     return Err(CanisterError::HandleApiError(
-        //         "Link type is not supported for update".to_string(),
-        //     ));
-        // }
-        None => {
-            return Err(CanisterError::HandleApiError(
-                "Link type is not found".to_string(),
-            ));
         }
     }
 }
