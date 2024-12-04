@@ -3,7 +3,7 @@ import { _SERVICE, UpdateLinkInput } from "../declarations/cashier_backend/cashi
 export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: string }) => {
     const linkInput: UpdateLinkInput = {
         id: id,
-        action: { Continue: null },
+        action: "Continue",
         params: [
             {
                 Update: {
@@ -20,7 +20,7 @@ export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: s
                                 ],
                             ],
                             description: ["2345678234567"],
-                            template: [{ Central: null }],
+                            template: ["Central"],
                             image: ["23456765432"],
                         },
                     ],
@@ -34,7 +34,7 @@ export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: s
 export const back = async ({ backend, id }: { backend: _SERVICE; id: string }) => {
     const linkInput: UpdateLinkInput = {
         id: id,
-        action: { Back: null },
+        action: "Back",
         params: [],
     };
     return await backend.update_link(linkInput);
@@ -43,7 +43,7 @@ export const back = async ({ backend, id }: { backend: _SERVICE; id: string }) =
 export const continueActive = async ({ backend, id }: { backend: _SERVICE; id: string }) => {
     const linkInput: UpdateLinkInput = {
         id: id,
-        action: { Continue: null },
+        action: "Continue",
         params: [],
     };
 

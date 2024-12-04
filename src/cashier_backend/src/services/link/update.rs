@@ -66,9 +66,10 @@ pub fn handle_update_create_and_airdrop_nft(
         None => return Err("State is missing".to_string()),
     };
 
-    let state_machine_result = transitions
-        .iter()
-        .find(|t| t.source == current_state && t.trigger == input.action);
+    let state_machine_result = transitions.iter().find(|t| {
+        t.source == current_state
+            && t.trigger == LinkStateMachineAction::from_string(input.action.as_str())
+    });
 
     match state_machine_result {
         Some(transition) => {

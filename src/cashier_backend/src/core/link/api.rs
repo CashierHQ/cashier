@@ -51,6 +51,11 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
 
 #[update(guard = "is_not_anonymous")]
 async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
+    match input.validate() {
+        Ok(_) => (),
+        Err(e) => return Err(CanisterError::HandleApiError(e)),
+    }
+
     let creator = ic_cdk::api::caller();
 
     // get link type

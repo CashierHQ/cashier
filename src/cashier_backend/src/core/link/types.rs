@@ -17,7 +17,20 @@ pub struct LinkDetailUpdateInput {
     pub description: Option<String>,
     pub image: Option<String>,
     pub asset_info: Option<Vec<AssetInfo>>,
-    pub template: Option<Template>,
+    pub template: Option<String>,
+}
+
+impl LinkDetailUpdateInput {
+    pub fn validate(&self) -> Result<(), String> {
+        if let Some(template) = &self.template {
+            match Template::from_string_result(template.as_str()) {
+                Ok(_) => Ok(()),
+                Err(e) => Err(e),
+            }
+        } else {
+            Ok(())
+        }
+    }
 }
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct UpdateLinkParams {
@@ -32,7 +45,9 @@ impl UpdateLinkParams {
                 description: params.description.clone(),
                 image: params.image.clone(),
                 asset_info: params.asset_info.clone(),
-                template: params.template.clone(),
+                template: Some(Template::from_string(
+                    params.template.clone().unwrap().as_str(),
+                )),
                 state: None,
             },
             None => LinkDetailUpdate {
@@ -53,6 +68,31 @@ pub enum LinkStateMachineAction {
     Back,
 }
 
+impl LinkStateMachineAction {
+    pub fn to_string(&self) -> String {
+        match self {
+            LinkStateMachineAction::Continue => "Continue".to_string(),
+            LinkStateMachineAction::Back => "Back".to_string(),
+        }
+    }
+
+    pub fn from_string(action: &str) -> LinkStateMachineAction {
+        match action {
+            "Continue" => LinkStateMachineAction::Continue,
+            "Back" => LinkStateMachineAction::Back,
+            _ => LinkStateMachineAction::Continue,
+        }
+    }
+
+    pub fn from_string_result(action: &str) -> Result<LinkStateMachineAction, String> {
+        match action {
+            "Continue" => Ok(LinkStateMachineAction::Continue),
+            "Back" => Ok(LinkStateMachineAction::Back),
+            _ => Err("Invalid LinkStateMachineAction. Valid value: Continue, Back".to_string()),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub enum LinkStateMachineActionParams {
     Update(UpdateLinkParams),
@@ -61,8 +101,32 @@ pub enum LinkStateMachineActionParams {
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct UpdateLinkInput {
     pub id: String,
-    pub action: LinkStateMachineAction,
+    pub action: String,
     pub params: Option<LinkStateMachineActionParams>,
+}
+
+impl UpdateLinkInput {
+    pub fn validate(&self) -> Result<(), String> {
+        match LinkStateMachineAction::from_string_result(self.action.as_str()) {
+            Ok(_) => {}
+            Err(e) => return Err(e),
+        }
+
+        match &self.params {
+            Some(params) => match params {
+                LinkStateMachineActionParams::Update(params) => match params {
+                    UpdateLinkParams { params } => match params {
+                        Some(params) => match params.validate() {
+                            Ok(_) => Ok(()),
+                            Err(e) => Err(e),
+                        },
+                        None => Ok(()),
+                    },
+                },
+            },
+            None => Ok(()),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]

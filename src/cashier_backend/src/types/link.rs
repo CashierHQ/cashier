@@ -119,6 +119,15 @@ impl Template {
         }
     }
 
+    pub fn from_string_result(template: &str) -> Result<Template, String> {
+        match template {
+            "Left" => Ok(Template::Left),
+            "Right" => Ok(Template::Right),
+            "Central" => Ok(Template::Central),
+            _ => Err("Invalid template".to_string()),
+        }
+    }
+
     pub fn is_valid(&self) -> bool {
         match self {
             Template::Left => true,
