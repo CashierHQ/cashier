@@ -2,64 +2,88 @@ use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
     repositories::link_store,
     types::link::{Link, State},
-    utils::logger,
 };
+
+#[derive(Debug, Clone)]
+pub struct Transition {
+    pub trigger: LinkStateMachineAction,
+    pub source: State,
+    pub dest: State,
+    pub requires_update: bool,
+}
+
+pub fn get_transitions() -> Vec<Transition> {
+    vec![
+        // Continue transitions
+        Transition {
+            trigger: LinkStateMachineAction::Continue,
+            source: State::New,
+            dest: State::PendingDetail,
+            requires_update: true,
+        },
+        Transition {
+            trigger: LinkStateMachineAction::Continue,
+            source: State::PendingDetail,
+            dest: State::PendingPreview,
+            requires_update: true,
+        },
+        Transition {
+            trigger: LinkStateMachineAction::Continue,
+            source: State::PendingPreview,
+            dest: State::Active,
+            requires_update: false,
+        },
+        Transition {
+            trigger: LinkStateMachineAction::Continue,
+            source: State::Active,
+            dest: State::Inactive,
+            requires_update: false,
+        },
+        // Back transitions
+        Transition {
+            trigger: LinkStateMachineAction::Back,
+            source: State::PendingPreview,
+            dest: State::PendingDetail,
+            requires_update: false,
+        },
+        Transition {
+            trigger: LinkStateMachineAction::Back,
+            source: State::PendingDetail,
+            dest: State::New,
+            requires_update: false,
+        },
+    ]
+}
 
 pub fn handle_update_create_and_airdrop_nft(
     input: UpdateLinkInput,
     mut link: Link,
 ) -> Result<Link, String> {
-    let state_machine_result = match input.action {
-        LinkStateMachineAction::Update => {
-            if input.params.is_none() {
-                return Err("params is missing".to_string());
-            }
+    let transitions = get_transitions();
 
-            match input.params.unwrap() {
-                LinkStateMachineActionParams::Update(link_detail_update) => {
-                    match link_detail_update.state {
-                        Some(State::New) => {
-                            link.update(link_detail_update.to_link_detail_update());
-                            Ok(link)
-                        }
-                        Some(State::PendingDetail) => {
-                            link.update(link_detail_update.to_link_detail_update());
-                            Ok(link)
-                        }
-                        Some(State::PendingPreview) => {
-                            link.update(link_detail_update.to_link_detail_update());
-                            Ok(link)
-                        }
-                        Some(State::Active) => Err("State Active is not allowed".to_string()),
-                        Some(State::Inactive) => Err("State Inactive is not allowed".to_string()),
-                        None => Err("State is not implemented".to_string()),
-                    }
-                }
-            }
-        }
-        LinkStateMachineAction::Active => {
-            link.activate();
-            Ok(link.clone())
-        }
-        LinkStateMachineAction::Inactive => {
-            link.deactivate();
-            Ok(link.clone())
-        }
-    };
+    let current_state = link.state.unwrap();
+    let state_machine_result = transitions
+        .iter()
+        .find(|t| t.source == current_state && t.trigger == input.action);
 
     match state_machine_result {
-        Ok(updated_link) => {
-            return {
-                link_store::update(updated_link.to_persistence());
-                Ok(updated_link)
+        Some(transition) => {
+            link.state = Some(transition.dest);
+            if transition.requires_update {
+                if let Some(params) = input.params {
+                    match params {
+                        LinkStateMachineActionParams::Update(params) => {
+                            link.update(params.to_link_detail_update());
+                        }
+                    }
+                } else {
+                    return Err("params is missing".to_string());
+                }
             }
+            link_store::update(link.to_persistence());
+            Ok(link)
         }
-        Err(e) => {
-            return {
-                logger::error(&format!("Error to update link {:?}", e));
-                Err(e)
-            }
-        }
+        None => Err("Invalid state transition".to_string()),
     }
 }
 

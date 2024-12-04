@@ -20,7 +20,7 @@ pub struct AssetInfo {
     pub amount: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Copy)]
 pub enum State {
     // allow edit
     New,
@@ -165,22 +165,22 @@ impl Link {
         Ok(())
     }
 
-    pub fn activate(&mut self) -> Result<(), String> {
+    pub fn activate(&mut self) -> Result<Link, String> {
         self.validate_fields_before_active()?;
         match self.state {
             Some(State::PendingPreview) => {
                 self.state = Some(State::Active);
-                Ok(())
+                Ok(self.clone())
             }
             _ => Err("Invalid state transition activate".to_string()),
         }
     }
 
-    pub fn deactivate(&mut self) -> Result<(), String> {
+    pub fn deactivate(&mut self) -> Result<Link, String> {
         match self.state {
             Some(State::Active) => {
                 self.state = Some(State::Inactive);
-                Ok(())
+                Ok(self.clone())
             }
             _ => Err("Invalid state transition deactivate".to_string()),
         }

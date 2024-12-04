@@ -8,7 +8,8 @@ pub fn create(link: Link) {
 }
 
 pub fn get(id: &str) -> Option<Link> {
-    LINK_STORE.with(|store| store.borrow().get(&id.to_string()))
+    let pk = Link::build_pk(id.to_string());
+    LINK_STORE.with(|store| store.borrow().get(&pk.to_string()))
 }
 
 pub fn get_batch(ids: Vec<String>) -> Vec<Link> {
@@ -17,7 +18,8 @@ pub fn get_batch(ids: Vec<String>) -> Vec<Link> {
         let mut result = Vec::new();
 
         for id in ids {
-            let link = store.get(&id);
+            let pk = Link::build_pk(id);
+            let link = store.get(&pk);
             match link {
                 Some(link) => {
                     result.push(link);

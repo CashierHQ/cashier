@@ -13,13 +13,13 @@ use crate::{
 };
 
 pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, String> {
-    let id = Uuid::new_v4();
     let user_id = match user_wallet_store::get(&creator) {
         Some(user_id) => user_id,
         None => return Err("User not found".to_string()),
     };
 
     let ts = ic_cdk::api::time();
+    let id = Uuid::new_v4();
     let link_id_str = id.to_string();
 
     let new_link = Link::create_new(link_id_str.clone(), user_id.clone(), input.link_type, ts);

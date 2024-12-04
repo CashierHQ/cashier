@@ -1,17 +1,10 @@
 type AssetInfo = record { chain : Chain; address : text; amount : nat64 };
-type CanisterAction = record {
-  arg : text;
-  method : text;
-  canister_id : text;
-  label : text;
-};
 type CanisterError = variant {
   HandleLogicError : text;
   AnonymousCall;
   HandleApiError : text;
 };
 type Chain = variant { IC };
-type ClientAction = variant { CanisterAction : CanisterAction };
 type CreateLinkInput = record { link_type : LinkType };
 type Icrc21ConsentInfo = record {
   metadata : Icrc21ConsentMessageMetadata;
@@ -56,12 +49,19 @@ type Link = record {
   link_type : opt LinkType;
   create_at : opt nat64;
   description : opt text;
-  actions : opt vec ClientAction;
   state : opt State;
   template : opt Template;
   image : opt text;
 };
+type LinkDetailUpdateInput = record {
+  title : opt text;
+  asset_info : opt vec AssetInfo;
+  description : opt text;
+  template : opt Template;
+  image : opt text;
+};
 type LinkStateMachineAction = variant { Continue; Back };
+type LinkStateMachineActionParams = variant { Update : UpdateLinkParams };
 type LinkType = variant { NftCreateAndAirdrop };
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
@@ -87,17 +87,9 @@ type Template = variant { Left; Right; Central };
 type UpdateLinkInput = record {
   id : text;
   action : LinkStateMachineAction;
-  state : opt State;
-  params : UpdateLinkParams;
+  params : opt LinkStateMachineActionParams;
 };
-type UpdateLinkParams = record {
-  title : opt text;
-  asset_info : opt vec AssetInfo;
-  description : opt text;
-  actions : opt vec ClientAction;
-  template : opt Template;
-  image : opt text;
-};
+type UpdateLinkParams = record { params : opt LinkDetailUpdateInput };
 type User = record { id : text; email : opt text; wallet : text };
 service : () -> {
   claim_nft : (text, opt text) -> (Result);

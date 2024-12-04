@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{AssetInfo, LinkDetailUpdate, LinkType, State, Template};
+use crate::core::{AssetInfo, LinkDetailUpdate, LinkType, Template};
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct CreateLinkInput {
@@ -19,7 +19,6 @@ pub struct LinkDetailUpdateInput {
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct UpdateLinkParams {
     pub params: Option<LinkDetailUpdateInput>,
-    pub state: Option<State>,
 }
 
 impl UpdateLinkParams {
@@ -31,7 +30,7 @@ impl UpdateLinkParams {
                 image: params.image.clone(),
                 asset_info: params.asset_info.clone(),
                 template: params.template.clone(),
-                state: self.state.clone(),
+                state: None,
             },
             None => LinkDetailUpdate {
                 title: None,
@@ -39,17 +38,16 @@ impl UpdateLinkParams {
                 image: None,
                 asset_info: None,
                 template: None,
-                state: self.state.clone(),
+                state: None,
             },
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
 pub enum LinkStateMachineAction {
-    Active,
-    Inactive,
-    Update,
+    Continue,
+    Back,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]

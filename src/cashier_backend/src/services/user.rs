@@ -30,7 +30,7 @@ pub fn get() -> Option<User> {
         None => return None,
     };
 
-    let user = user_store::get(&user_id);
+    let user = user_store::get(user_id);
 
     match user {
         Some(user) => Some(User::from_persistence(user)),
