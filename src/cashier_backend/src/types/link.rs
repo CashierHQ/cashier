@@ -14,26 +14,13 @@ pub enum Chain {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub enum ClientAction {
-    CanisterAction(CanisterAction),
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct CanisterAction {
-    pub canister_id: String,
-    pub label: String,
-    pub method: String,
-    pub arg: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct AssetInfo {
     pub address: String,
     pub chain: Chain,
     pub amount: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Copy)]
 pub enum State {
     // allow edit
     New,
@@ -59,7 +46,6 @@ pub struct Link {
     pub image: Option<String>,
     pub link_type: Option<LinkType>,
     pub asset_info: Option<Vec<AssetInfo>>,
-    pub actions: Option<Vec<ClientAction>>,
     pub template: Option<Template>,
     pub state: Option<State>,
     pub creator: Option<String>,
@@ -83,22 +69,20 @@ pub struct LinkDetailUpdate {
     pub description: Option<String>,
     pub image: Option<String>,
     pub asset_info: Option<Vec<AssetInfo>>,
-    pub actions: Option<Vec<ClientAction>>,
     pub template: Option<Template>,
     pub state: Option<State>,
 }
 
 impl Link {
-    pub fn to_persistence(&self) -> crate::store::entities::link::Link {
-        let pk = crate::store::entities::link::Link::build_pk(self.id.clone());
-        crate::store::entities::link::Link {
+    pub fn to_persistence(&self) -> crate::repositories::entities::link::Link {
+        let pk = crate::repositories::entities::link::Link::build_pk(self.id.clone());
+        crate::repositories::entities::link::Link {
             pk,
             title: self.title.clone(),
             description: self.description.clone(),
             image: self.image.clone(),
             link_type: self.link_type.clone(),
             asset_info: self.asset_info.clone(),
-            actions: self.actions.clone(),
             template: self.template.clone(),
             state: self.state.clone(),
             creator: self.creator.clone(),
@@ -106,7 +90,7 @@ impl Link {
         }
     }
 
-    pub fn from_persistence(link: crate::store::entities::link::Link) -> Self {
+    pub fn from_persistence(link: crate::repositories::entities::link::Link) -> Self {
         let id = link.pk.split('#').last().unwrap().to_string();
         Self {
             id,
@@ -115,7 +99,6 @@ impl Link {
             image: link.image,
             link_type: link.link_type,
             asset_info: link.asset_info,
-            actions: link.actions,
             template: link.template,
             state: link.state,
             creator: link.creator,
@@ -131,7 +114,6 @@ impl Link {
             image: None,
             link_type: Some(link_type),
             asset_info: None,
-            actions: None,
             template: None,
             state: Some(State::New),
             creator: Some(creator),
@@ -145,7 +127,6 @@ impl Link {
             description,
             image,
             asset_info,
-            actions,
             template,
             state,
         } = input;
@@ -154,7 +135,6 @@ impl Link {
         self.description = description.or(self.description.clone());
         self.image = image.or(self.image.clone());
         self.asset_info = asset_info.or(self.asset_info.clone());
-        self.actions = actions.or(self.actions.clone());
         self.template = template.or(self.template.clone());
         self.state = state.or(self.state.clone());
     }
@@ -162,7 +142,7 @@ impl Link {
     pub fn validate_fields_before_active(&self) -> Result<(), String> {
         let validators = [
             (&self.id.is_empty(), "id"),
-            (&self.title.as_ref().map_or(true, |s| s.is_empty()), "title"),
+            (&self.title.as_ref().map_or(true, |s| s.is_empty()), ","),
             (
                 &self.description.as_ref().map_or(true, |s| s.is_empty()),
                 "description",
@@ -170,10 +150,6 @@ impl Link {
             (&self.image.as_ref().map_or(true, |s| s.is_empty()), "image"),
             (&self.link_type.is_none(), "link_type"),
             (&self.asset_info.is_none(), "asset_info"),
-            (
-                &self.actions.as_ref().map_or(true, |v| v.is_empty()),
-                "actions",
-            ),
             (&self.template.is_none(), "template"),
             (
                 &self.creator.as_ref().map_or(true, |s| s.is_empty()),
@@ -189,22 +165,22 @@ impl Link {
         Ok(())
     }
 
-    pub fn activate(&mut self) -> Result<(), String> {
+    pub fn activate(&mut self) -> Result<Link, String> {
         self.validate_fields_before_active()?;
         match self.state {
             Some(State::PendingPreview) => {
                 self.state = Some(State::Active);
-                Ok(())
+                Ok(self.clone())
             }
             _ => Err("Invalid state transition activate".to_string()),
         }
     }
 
-    pub fn deactivate(&mut self) -> Result<(), String> {
+    pub fn deactivate(&mut self) -> Result<Link, String> {
         match self.state {
             Some(State::Active) => {
                 self.state = Some(State::Inactive);
-                Ok(())
+                Ok(self.clone())
             }
             _ => Err("Invalid state transition deactivate".to_string()),
         }

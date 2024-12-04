@@ -4,19 +4,17 @@ use candid::{CandidType, Decode, Encode};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
-use crate::types::{account::Account, link::Chain, transaction::TransactionStatus};
+use crate::types::transaction::TransactionStatus;
 
 const PK_PATTERN: &str = "transaction";
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
 pub struct Transaction {
     pub pk: String,
+    pub canister_id: String,
+    pub method: String,
+    pub arg: String,
     pub status: TransactionStatus,
-    pub to: Account,
-    pub from: Account,
-    pub amount: u64,
-    pub address: String,
-    pub chain: Chain,
 }
 
 impl Transaction {
@@ -26,21 +24,17 @@ impl Transaction {
 
     pub fn new(
         id: String,
+        canister_id: String,
+        method: String,
+        arg: String,
         status: TransactionStatus,
-        to: Account,
-        from: Account,
-        amount: u64,
-        address: String,
-        chain: Chain,
     ) -> Self {
         Self {
             pk: Self::build_pk(id),
+            canister_id,
+            method,
+            arg,
             status,
-            to,
-            from,
-            amount,
-            address,
-            chain,
         }
     }
 }

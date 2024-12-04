@@ -1,14 +1,13 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use super::transaction::Transaction;
-
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub enum Status {
+pub enum ActionStatus {
     Created,
     Processing,
     Success,
     Failed,
+    Timeout,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -43,9 +42,8 @@ pub struct Action {
     pub id: String,
     pub creator_id: String,
     pub link_id: String,
-    pub status: Status,
+    pub status: ActionStatus,
     pub action_type: ActionType,
-    pub transactions: Vec<Transaction>,
 }
 
 impl Action {
@@ -53,9 +51,8 @@ impl Action {
         id: String,
         creator_id: String,
         link_id: String,
-        status: Status,
+        status: ActionStatus,
         action_type: ActionType,
-        transactions: Vec<Transaction>,
     ) -> Self {
         Self {
             id,
@@ -63,20 +60,11 @@ impl Action {
             link_id,
             status,
             action_type,
-            transactions,
         }
     }
 
-    pub fn add_transaction(&mut self, transaction: Transaction) {
-        self.transactions.push(transaction);
-    }
-
-    pub fn add_bulk_transactions(&mut self, transactions: Vec<Transaction>) {
-        self.transactions.extend(transactions);
-    }
-
-    pub fn to_persistence(&self) -> crate::store::entities::action::Action {
-        crate::store::entities::action::Action::new(
+    pub fn to_persistence(&self) -> crate::repositories::entities::action::Action {
+        crate::repositories::entities::action::Action::new(
             self.id.clone(),
             self.status.clone(),
             self.action_type.clone(),
@@ -85,17 +73,13 @@ impl Action {
         )
     }
 
-    pub fn from_persistence(
-        action: crate::store::entities::action::Action,
-        transactions: Vec<Transaction>,
-    ) -> Self {
+    pub fn from_persistence(action: crate::repositories::entities::action::Action) -> Self {
         Self {
             id: action.pk.split('#').last().unwrap().to_string(),
             creator_id: action.creator_id,
             link_id: action.link_id,
             status: action.status,
             action_type: action.action_type,
-            transactions: transactions,
         }
     }
 }

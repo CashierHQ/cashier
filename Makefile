@@ -9,8 +9,7 @@ build-did:
 deploy:
 	make build-wasm
 	make build-did
-	dfx generate cashier_backend
-	@dfx deploy cashier_backend --ic
+	@dfx deploy cashier_backend 
 
 test:
 	@npx tsx src/example/index.ts

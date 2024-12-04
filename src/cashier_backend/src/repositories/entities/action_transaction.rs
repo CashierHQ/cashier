@@ -4,7 +4,7 @@ use candid::{CandidType, Decode, Encode};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
-const KEY_PATTERN: &str = "action#{}#transaction#{}";
+const _KEY_PATTERN: &str = "action#{}#transaction#{}";
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ActionTransaction {

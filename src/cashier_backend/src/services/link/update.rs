@@ -1,46 +1,89 @@
 use crate::{
-    store::link_store,
-    types::link::{Link, LinkDetailUpdate, State},
-    utils::logger,
+    core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
+    repositories::link_store,
+    types::link::{Link, State},
 };
 
+#[derive(Debug, Clone)]
+pub struct Transition {
+    pub trigger: LinkStateMachineAction,
+    pub source: State,
+    pub dest: State,
+    pub requires_update: bool,
+}
+
+pub fn get_transitions() -> Vec<Transition> {
+    vec![
+        // Continue transitions
+        Transition {
+            trigger: LinkStateMachineAction::Continue,
+            source: State::New,
+            dest: State::PendingDetail,
+            requires_update: true,
+        },
+        Transition {
+            trigger: LinkStateMachineAction::Continue,
+            source: State::PendingDetail,
+            dest: State::PendingPreview,
+            requires_update: true,
+        },
+        Transition {
+            trigger: LinkStateMachineAction::Continue,
+            source: State::PendingPreview,
+            dest: State::Active,
+            requires_update: false,
+        },
+        Transition {
+            trigger: LinkStateMachineAction::Continue,
+            source: State::Active,
+            dest: State::Inactive,
+            requires_update: false,
+        },
+        // Back transitions
+        Transition {
+            trigger: LinkStateMachineAction::Back,
+            source: State::PendingPreview,
+            dest: State::PendingDetail,
+            requires_update: false,
+        },
+        Transition {
+            trigger: LinkStateMachineAction::Back,
+            source: State::PendingDetail,
+            dest: State::New,
+            requires_update: false,
+        },
+    ]
+}
+
 pub fn handle_update_create_and_airdrop_nft(
-    input: LinkDetailUpdate,
+    input: UpdateLinkInput,
     mut link: Link,
 ) -> Result<Link, String> {
-    let state_machine_result = match input.state {
-        // current allow free transition for 3 states
-        Some(State::New) => {
-            link.update(input);
-            Ok(())
-        }
-        Some(State::PendingDetail) => {
-            link.update(input);
-            Ok(())
-        }
-        Some(State::PendingPreview) => {
-            link.update(input);
-            Ok(())
-        }
+    let transitions = get_transitions();
 
-        Some(State::Active) => link.activate(),
-        Some(State::Inactive) => link.deactivate(),
-        None => Err("State is not implemented".to_string()),
-    };
+    let current_state = link.state.unwrap();
+    let state_machine_result = transitions
+        .iter()
+        .find(|t| t.source == current_state && t.trigger == input.action);
 
     match state_machine_result {
-        Ok(_) => {
-            return {
-                link_store::update(link.to_persistence());
-                Ok(link)
+        Some(transition) => {
+            link.state = Some(transition.dest);
+            if transition.requires_update {
+                if let Some(params) = input.params {
+                    match params {
+                        LinkStateMachineActionParams::Update(params) => {
+                            link.update(params.to_link_detail_update());
+                        }
+                    }
+                } else {
+                    return Err("params is missing".to_string());
+                }
             }
+            link_store::update(link.to_persistence());
+            Ok(link)
         }
-        Err(e) => {
-            return {
-                logger::error(&format!("Error to update {:?}", link));
-                Err(e)
-            }
-        }
+        None => Err("Invalid state transition".to_string()),
     }
 }
 
@@ -66,9 +109,6 @@ pub fn is_valid_fields_before_active(link_detail: &Link) -> Result<bool, String>
     }
     if link_detail.asset_info.is_none() {
         return Err("asset_info is missing".to_string());
-    }
-    if link_detail.actions.as_ref().map_or(true, |v| v.is_empty()) {
-        return Err("actions are missing or empty".to_string());
     }
     if link_detail.template.is_none() {
         return Err("template is missing".to_string());
