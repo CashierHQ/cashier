@@ -13,14 +13,14 @@ pub fn create(action: CreateActionInput) -> Result<Action, String> {
         id.to_string(),
         caller.to_text(),
         action.link_id,
-        ActionStatus::Created,
-        ActionType::Create,
+        ActionStatus::Created.to_string(),
+        ActionType::Create.to_string(),
     );
 
-    action_store::create(new_action.to_persistence());
+    let _ = action_store::create(new_action.to_persistence());
 
     match action_store::get(&id.to_string()) {
-        Some(action) => Ok(Action::from_persistence(action)),
+        Some(action) => Ok(action),
         None => Err("Failed to create action".to_string()),
     }
 }

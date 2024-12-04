@@ -10,6 +10,29 @@ pub enum ActionStatus {
     Timeout,
 }
 
+impl ActionStatus {
+    pub fn to_string(&self) -> String {
+        match self {
+            ActionStatus::Created => "Created".to_string(),
+            ActionStatus::Processing => "Processing".to_string(),
+            ActionStatus::Success => "Success".to_string(),
+            ActionStatus::Failed => "Failed".to_string(),
+            ActionStatus::Timeout => "Timeout".to_string(),
+        }
+    }
+
+    pub fn from_string(status: &str) -> ActionStatus {
+        match status {
+            "Created" => ActionStatus::Created,
+            "Processing" => ActionStatus::Processing,
+            "Success" => ActionStatus::Success,
+            "Failed" => ActionStatus::Failed,
+            "Timeout" => ActionStatus::Timeout,
+            _ => ActionStatus::Created,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ClaimActionParams {
     address: Option<String>,
@@ -30,6 +53,25 @@ pub enum ActionType {
     Claim,
 }
 
+impl ActionType {
+    pub fn to_string(&self) -> String {
+        match self {
+            ActionType::Create => "Create".to_string(),
+            ActionType::Withdraw => "Withdraw".to_string(),
+            ActionType::Claim => "Claim".to_string(),
+        }
+    }
+
+    pub fn from_string(action_type: &str) -> ActionType {
+        match action_type {
+            "Create" => ActionType::Create,
+            "Withdraw" => ActionType::Withdraw,
+            "Claim" => ActionType::Claim,
+            _ => ActionType::Create,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
     pub action_type: ActionType,
@@ -42,8 +84,8 @@ pub struct Action {
     pub id: String,
     pub creator_id: String,
     pub link_id: String,
-    pub status: ActionStatus,
-    pub action_type: ActionType,
+    pub status: String,
+    pub action_type: String,
 }
 
 impl Action {
@@ -51,8 +93,8 @@ impl Action {
         id: String,
         creator_id: String,
         link_id: String,
-        status: ActionStatus,
-        action_type: ActionType,
+        status: String,
+        action_type: String,
     ) -> Self {
         Self {
             id,
@@ -66,8 +108,8 @@ impl Action {
     pub fn to_persistence(&self) -> crate::repositories::entities::action::Action {
         crate::repositories::entities::action::Action::new(
             self.id.clone(),
-            self.status.clone(),
-            self.action_type.clone(),
+            self.status.clone().to_string(),
+            self.action_type.clone().to_string(),
             self.link_id.clone(),
             self.creator_id.clone(),
         )

@@ -9,8 +9,16 @@ pub fn create(action: Action) -> Action {
     action
 }
 
-pub fn get(id: &str) -> Option<Action> {
-    ACTION_STORE.with(|store| store.borrow().get(&id.to_string()))
+pub fn get(id: &str) -> Option<crate::types::action::Action> {
+    ACTION_STORE.with(|store| {
+        let action = store.borrow().get(&id.to_string());
+        match action {
+            Some(action) => Some(crate::types::action::Action::from_persistence(
+                action.clone(),
+            )),
+            None => None,
+        }
+    })
 }
 
 pub fn get_batch(ids: Vec<String>) -> Vec<Action> {

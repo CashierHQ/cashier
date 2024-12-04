@@ -13,9 +13,7 @@ export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: s
                             asset_info: [
                                 [
                                     {
-                                        chain: {
-                                            IC: null,
-                                        },
+                                        chain: "IC",
                                         address: "",
                                         amount: 100n,
                                     },
