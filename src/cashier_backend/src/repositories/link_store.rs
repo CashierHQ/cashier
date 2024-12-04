@@ -1,20 +1,10 @@
 use super::{entities::link::Link, LINK_STORE};
 
 pub fn create(link: Link) {
-    LINK_STORE.with(
-        |store: &std::cell::RefCell<
-            ic_stable_structures::BTreeMap<
-                String,
-                Link,
-                ic_stable_structures::memory_manager::VirtualMemory<
-                    std::rc::Rc<std::cell::RefCell<Vec<u8>>>,
-                >,
-            >,
-        >| {
-            let pk: String = link.pk.clone();
-            store.borrow_mut().insert(pk, link);
-        },
-    );
+    LINK_STORE.with(|store| {
+        let pk: String = link.pk.clone();
+        store.borrow_mut().insert(pk, link);
+    });
 }
 
 pub fn get(id: &str) -> Option<Link> {

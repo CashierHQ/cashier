@@ -1,46 +1,65 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{AssetInfo, ClientAction, LinkDetailUpdate, LinkType, State, Template};
+use crate::core::{AssetInfo, LinkDetailUpdate, LinkType, State, Template};
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct CreateLinkInput {
     pub link_type: LinkType,
 }
+
 #[derive(Serialize, Deserialize, Debug, CandidType)]
-pub struct UpdateLinkParams {
+pub struct LinkDetailUpdateInput {
     pub title: Option<String>,
     pub description: Option<String>,
     pub image: Option<String>,
     pub asset_info: Option<Vec<AssetInfo>>,
-    pub actions: Option<Vec<ClientAction>>,
     pub template: Option<Template>,
+}
+#[derive(Serialize, Deserialize, Debug, CandidType)]
+pub struct UpdateLinkParams {
+    pub params: Option<LinkDetailUpdateInput>,
+    pub state: Option<State>,
+}
+
+impl UpdateLinkParams {
+    pub fn to_link_detail_update(&self) -> LinkDetailUpdate {
+        match &self.params {
+            Some(params) => LinkDetailUpdate {
+                title: params.title.clone(),
+                description: params.description.clone(),
+                image: params.image.clone(),
+                asset_info: params.asset_info.clone(),
+                template: params.template.clone(),
+                state: self.state.clone(),
+            },
+            None => LinkDetailUpdate {
+                title: None,
+                description: None,
+                image: None,
+                asset_info: None,
+                template: None,
+                state: self.state.clone(),
+            },
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub enum LinkStateMachineAction {
-    Continue,
-    Back,
+    Active,
+    Inactive,
+    Update,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType)]
+pub enum LinkStateMachineActionParams {
+    Update(UpdateLinkParams),
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct UpdateLinkInput {
     pub id: String,
-    pub params: UpdateLinkParams,
     pub action: LinkStateMachineAction,
-    pub state: Option<State>,
-}
-
-impl UpdateLinkInput {
-    pub fn to_link_detail_update(&self) -> LinkDetailUpdate {
-        LinkDetailUpdate {
-            title: self.params.title.clone(),
-            description: self.params.description.clone(),
-            image: self.params.image.clone(),
-            asset_info: self.params.asset_info.clone(),
-            actions: self.params.actions.clone(),
-            template: self.params.template.clone(),
-            state: self.state.clone(),
-        }
-    }
+    pub params: Option<LinkStateMachineActionParams>,
 }

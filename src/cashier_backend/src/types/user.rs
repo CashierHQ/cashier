@@ -13,7 +13,7 @@ impl User {
         Self { id, email, wallet }
     }
 
-    pub fn from_persistence(user: crate::store::entities::user::User) -> Self {
+    pub fn from_persistence(user: crate::repositories::entities::user::User) -> Self {
         let id = user.pk.split('#').last().unwrap().to_string();
         Self {
             id,
@@ -22,8 +22,8 @@ impl User {
         }
     }
 
-    pub fn to_persistence(&self) -> crate::store::entities::user::User {
-        crate::store::entities::user::User::new(
+    pub fn to_persistence(&self) -> crate::repositories::entities::user::User {
+        crate::repositories::entities::user::User::new(
             self.id.clone(),
             self.email.clone(),
             self.wallet.clone(),

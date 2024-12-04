@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::{
-    store::{user_store, user_wallet_store},
+    repositories::{user_store, user_wallet_store},
     types::user::User,
 };
 

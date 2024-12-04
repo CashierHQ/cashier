@@ -3,6 +3,7 @@ dotenv.config();
 import { createActor } from "../declarations/cashier_backend";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
 import { HttpAgent } from "@dfinity/agent";
+import { UpdateLinkInput } from "../declarations/cashier_backend/cashier_backend.did";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const safeParseJSON = (arg: Record<string, unknown>): any => {
@@ -77,7 +78,7 @@ const main = async () => {
     const id = parseResultResponse(createLinkRes);
     console.log("id", id);
 
-    const updateRes = await backend.update_link(id, {
+    const linkInput: UpdateLinkInput = {
         title: ["test"],
         asset_info: [
             {
@@ -104,7 +105,8 @@ const main = async () => {
         ],
         template: [{ Central: null }],
         image: ["testes"],
-    });
+    };
+    const updateRes = await backend.update_link(id, linkInput);
     console.log("updateRes", updateRes);
 
     const activeRes = await backend.update_link(id, {

@@ -1,43 +1,62 @@
 use crate::{
-    store::link_store,
-    types::link::{Link, LinkDetailUpdate, State},
+    core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
+    repositories::link_store,
+    types::link::{Link, State},
     utils::logger,
 };
 
 pub fn handle_update_create_and_airdrop_nft(
-    input: LinkDetailUpdate,
+    input: UpdateLinkInput,
     mut link: Link,
 ) -> Result<Link, String> {
-    let state_machine_result = match input.state {
-        // current allow free transition for 3 states
-        Some(State::New) => {
-            link.update(input);
-            Ok(())
-        }
-        Some(State::PendingDetail) => {
-            link.update(input);
-            Ok(())
-        }
-        Some(State::PendingPreview) => {
-            link.update(input);
-            Ok(())
-        }
+    let state_machine_result = match input.action {
+        LinkStateMachineAction::Update => {
+            if input.params.is_none() {
+                return Err("params is missing".to_string());
+            }
 
-        Some(State::Active) => link.activate(),
-        Some(State::Inactive) => link.deactivate(),
-        None => Err("State is not implemented".to_string()),
+            match input.params.unwrap() {
+                LinkStateMachineActionParams::Update(link_detail_update) => {
+                    match link_detail_update.state {
+                        Some(State::New) => {
+                            link.update(link_detail_update.to_link_detail_update());
+                            Ok(link)
+                        }
+                        Some(State::PendingDetail) => {
+                            link.update(link_detail_update.to_link_detail_update());
+                            Ok(link)
+                        }
+                        Some(State::PendingPreview) => {
+                            link.update(link_detail_update.to_link_detail_update());
+                            Ok(link)
+                        }
+                        Some(State::Active) => Err("State Active is not allowed".to_string()),
+                        Some(State::Inactive) => Err("State Inactive is not allowed".to_string()),
+                        None => Err("State is not implemented".to_string()),
+                    }
+                }
+            }
+        }
+        LinkStateMachineAction::Active => {
+            link.activate();
+            Ok(link.clone())
+        }
+        LinkStateMachineAction::Inactive => {
+            link.deactivate();
+            Ok(link.clone())
+        }
     };
 
     match state_machine_result {
-        Ok(_) => {
+        Ok(updated_link) => {
             return {
-                link_store::update(link.to_persistence());
-                Ok(link)
+                link_store::update(updated_link.to_persistence());
+                Ok(updated_link)
             }
         }
         Err(e) => {
             return {
-                logger::error(&format!("Error to update {:?}", link));
+                logger::error(&format!("Error to update link {:?}", e));
                 Err(e)
             }
         }
@@ -66,9 +85,6 @@ pub fn is_valid_fields_before_active(link_detail: &Link) -> Result<bool, String>
     }
     if link_detail.asset_info.is_none() {
         return Err("asset_info is missing".to_string());
-    }
-    if link_detail.actions.as_ref().map_or(true, |v| v.is_empty()) {
-        return Err("actions are missing or empty".to_string());
     }
     if link_detail.template.is_none() {
         return Err("template is missing".to_string());

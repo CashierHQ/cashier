@@ -3,7 +3,7 @@ pub mod update;
 
 use crate::{
     core::link::types::CreateLinkInput,
-    store::{link_store, user_link_store, user_wallet_store},
+    repositories::{link_store, user_link_store, user_wallet_store},
     types::{
         api::{PaginateInput, PaginateResult},
         link::Link,
