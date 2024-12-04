@@ -23,9 +23,9 @@ pub struct AssetInfo {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Copy)]
 pub enum State {
     // allow edit
-    New,
-    PendingDetail,
-    PendingPreview,
+    ChooseTemplate,
+    AddAsset,
+    CreateLink,
     // not allow edit
     Active,
     Inactive,
@@ -115,7 +115,7 @@ impl Link {
             link_type: Some(link_type),
             asset_info: None,
             template: None,
-            state: Some(State::New),
+            state: Some(State::ChooseTemplate),
             creator: Some(creator),
             create_at: Some(ts),
         }
@@ -168,7 +168,7 @@ impl Link {
     pub fn activate(&mut self) -> Result<Link, String> {
         self.validate_fields_before_active()?;
         match self.state {
-            Some(State::PendingPreview) => {
+            Some(State::CreateLink) => {
                 self.state = Some(State::Active);
                 Ok(self.clone())
             }

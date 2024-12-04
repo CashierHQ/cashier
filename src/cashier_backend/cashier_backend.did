@@ -82,7 +82,7 @@ type Result_3 = variant { Ok : Link; Err : text };
 type Result_4 = variant { Ok : PaginateResult; Err : text };
 type Result_5 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_6 = variant { Ok : Link; Err : CanisterError };
-type State = variant { New; Inactive; Active; PendingPreview; PendingDetail };
+type State = variant { Inactive; Active; CreateLink; AddAsset; ChooseTemplate };
 type Template = variant { Left; Right; Central };
 type UpdateLinkInput = record {
   id : text;
