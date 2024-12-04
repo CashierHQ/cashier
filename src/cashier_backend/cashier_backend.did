@@ -65,10 +65,9 @@ type LinkDetailUpdateInput = record {
   title : opt text;
   asset_info : opt vec AssetInfo;
   description : opt text;
-  template : opt Template;
+  template : opt text;
   image : opt text;
 };
-type LinkStateMachineAction = variant { Continue; Back };
 type LinkStateMachineActionParams = variant { Update : UpdateLinkParams };
 type LinkType = variant { NftCreateAndAirdrop };
 type PaginateInput = record { offset : nat64; limit : nat64 };
@@ -90,10 +89,9 @@ type Result_3 = variant { Ok : GetLinkResp; Err : text };
 type Result_4 = variant { Ok : PaginateResult; Err : text };
 type Result_5 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_6 = variant { Ok : Link; Err : CanisterError };
-type Template = variant { Left; Right; Central };
 type UpdateLinkInput = record {
   id : text;
-  action : LinkStateMachineAction;
+  action : text;
   params : opt LinkStateMachineActionParams;
 };
 type UpdateLinkParams = record { params : opt LinkDetailUpdateInput };
