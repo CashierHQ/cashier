@@ -2,9 +2,12 @@ use uuid::Uuid;
 pub mod update;
 
 use crate::{
-    core::link::types::CreateLinkInput,
-    repositories::{link_store, user_link_store, user_wallet_store},
+    core::link::types::{CreateLinkInput, GetLinkResp},
+    repositories::{
+        action_store, link_action_store, link_store, user_link_store, user_wallet_store,
+    },
     types::{
+        action::ActionType,
         api::{PaginateInput, PaginateResult},
         link::Link,
         user_link::UserLink,
@@ -22,7 +25,12 @@ pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, Str
     let id = Uuid::new_v4();
     let link_id_str = id.to_string();
 
-    let new_link = Link::create_new(link_id_str.clone(), user_id.clone(), input.link_type, ts);
+    let new_link = Link::create_new(
+        link_id_str.clone(),
+        user_id.clone(),
+        input.link_type.to_string(),
+        ts,
+    );
     let new_user_link = UserLink::new(user_id, link_id_str.clone(), ts);
 
     let new_link_persistence = new_link.to_persistence();
@@ -77,10 +85,34 @@ pub fn get_links_by_user_id(
     Ok(res)
 }
 
-pub fn get_link_by_id(id: String) -> Option<Link> {
-    match link_store::get(&id) {
+pub fn get_link_by_id(id: String) -> Option<GetLinkResp> {
+    let link = match link_store::get(&id) {
         Some(link) => Some(Link::from_persistence(link)),
-        None => None,
+        None => return None,
+    };
+
+    let link_action_prefix = format!("link#{}#type#{}action#", id, ActionType::Create.to_string());
+
+    let link_action_create = link_action_store::find_with_prefix(link_action_prefix.as_str());
+
+    if link_action_create.is_empty() {
+        return Some(GetLinkResp {
+            link: link.unwrap(),
+            action_create: None,
+        });
+    }
+
+    if let Some(first_action) = link_action_create.first().cloned() {
+        let action = action_store::get(&first_action.action_id);
+        Some(GetLinkResp {
+            link: link.unwrap(),
+            action_create: action,
+        })
+    } else {
+        Some(GetLinkResp {
+            link: link.unwrap(),
+            action_create: None,
+        })
     }
 }
 
