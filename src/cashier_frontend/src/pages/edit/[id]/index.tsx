@@ -16,6 +16,9 @@ import { DrawerTrigger, Drawer } from "@/components/ui/drawer";
 import ConfirmationPopup from "@/components/confirmation-popup";
 import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
 import { Toast } from "@radix-ui/react-toast";
+import { useResponsive } from "@/hooks/responsive-hook";
+import { getReponsiveClassname } from "@/utils";
+import { responsiveMapper } from "./index_responsive";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATUS.NEW,
@@ -50,6 +53,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const navigate = useNavigate();
     const { linkId } = useParams();
     const { identity } = useIdentityKit();
+    const responsive = useResponsive();
 
     const queryClient = useQueryClient();
     const { mutate, mutateAsync } = useUpdateLink(queryClient, identity);
@@ -169,7 +173,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     if (isRendering) return null;
 
     return (
-        <div className="w-screen flex flex-col items-center py-3">
+        <div
+            className={getReponsiveClassname(
+                responsive,
+                responsiveMapper.find((o) => (o.htmlId = "edit_multistepform_wrapper")),
+            )}
+            id="edit_multistepform_wrapper"
+        >
             <div className="w-11/12 max-w-[400px]">
                 <MultiStepForm
                     initialStep={currentStep}

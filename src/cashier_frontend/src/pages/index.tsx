@@ -17,6 +17,7 @@ import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import UserService from "@/services/user.service";
 import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -47,6 +48,7 @@ export default function HomePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingSampleLinks, setLoadingSampleLinks] = useState(false);
     const navigate = useNavigate();
+    const responsive = useResponsive();
 
     const createSingleLink = async (linkInput: LinkDetailModel, linkService: LinkService) => {
         // First create link ID
@@ -238,8 +240,14 @@ export default function HomePage() {
         );
     } else {
         return (
-            <div className="w-screen flex justify-center py-3">
-                <div className="w-11/12 max-w-[400px]">
+            <div
+                className={
+                    responsive.isSmallDevice
+                        ? "w-screen flex justify-center py-3"
+                        : "bg-[white] h-[80%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
+                }
+            >
+                <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>
                     <div className="w-full flex justify-between items-center">
                         <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
                         <ConnectWallet />

@@ -1,4 +1,7 @@
+import { MediaQuery } from "@/hooks/responsive-hook";
+import { UIResponsiveType } from "@/pages/edit/[id]/index_responsive";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { string } from "zod";
 
 export const safeParseJSON = (arg: Record<string, unknown>): any => {
     return JSON.stringify(arg, (key, value) =>
@@ -126,5 +129,22 @@ export const formatDateString = (dateString: string): string => {
         return `${monthShort} ${day}, ${year}`;
     } else {
         return "";
+    }
+};
+
+export const getReponsiveClassname = (
+    responsive: MediaQuery,
+    responsiveObject: UIResponsiveType | undefined,
+): string | undefined => {
+    if (responsiveObject) {
+        if (responsive.isSmallDevice) {
+            return responsiveObject.responsive.mobile;
+        } else if (responsive.isMediumDevice) {
+            return responsiveObject.responsive.tablet ?? responsiveObject.responsive.mobile;
+        } else if (responsive.isLargeDevice) {
+            return responsiveObject.responsive.desktop ?? responsiveObject.responsive.mobile;
+        } else if (responsive.isExtraLargeDevice) {
+            return responsiveObject.responsive.widescreen ?? responsiveObject.responsive.mobile;
+        }
     }
 };
