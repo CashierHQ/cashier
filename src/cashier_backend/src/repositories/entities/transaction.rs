@@ -4,8 +4,6 @@ use candid::{CandidType, Decode, Encode};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
-use crate::types::transaction::TransactionStatus;
-
 const PK_PATTERN: &str = "transaction";
 
 #[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
@@ -14,7 +12,7 @@ pub struct Transaction {
     pub canister_id: String,
     pub method: String,
     pub arg: String,
-    pub status: TransactionStatus,
+    pub status: String,
 }
 
 impl Transaction {
@@ -27,7 +25,7 @@ impl Transaction {
         canister_id: String,
         method: String,
         arg: String,
-        status: TransactionStatus,
+        status: String,
     ) -> Self {
         Self {
             pk: Self::build_pk(id),

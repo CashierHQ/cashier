@@ -1,14 +1,14 @@
 use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
     repositories::link_store,
-    types::link::{Link, State},
+    types::link::{Link, LinkState},
 };
 
 #[derive(Debug, Clone)]
 pub struct Transition {
     pub trigger: LinkStateMachineAction,
-    pub source: State,
-    pub dest: State,
+    pub source: LinkState,
+    pub dest: LinkState,
     pub requires_update: bool,
 }
 
@@ -17,39 +17,39 @@ pub fn get_transitions() -> Vec<Transition> {
         // Continue transitions
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: State::ChooseTemplate,
-            dest: State::AddAsset,
+            source: LinkState::ChooseTemplate,
+            dest: LinkState::AddAsset,
             requires_update: true,
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: State::AddAsset,
-            dest: State::CreateLink,
+            source: LinkState::AddAsset,
+            dest: LinkState::CreateLink,
             requires_update: true,
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: State::CreateLink,
-            dest: State::Active,
+            source: LinkState::CreateLink,
+            dest: LinkState::Active,
             requires_update: false,
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: State::Active,
-            dest: State::Inactive,
+            source: LinkState::Active,
+            dest: LinkState::Inactive,
             requires_update: false,
         },
         // Back transitions
         Transition {
             trigger: LinkStateMachineAction::Back,
-            source: State::CreateLink,
-            dest: State::AddAsset,
+            source: LinkState::CreateLink,
+            dest: LinkState::AddAsset,
             requires_update: false,
         },
         Transition {
             trigger: LinkStateMachineAction::Back,
-            source: State::AddAsset,
-            dest: State::ChooseTemplate,
+            source: LinkState::AddAsset,
+            dest: LinkState::ChooseTemplate,
             requires_update: false,
         },
     ]
@@ -61,14 +61,18 @@ pub fn handle_update_create_and_airdrop_nft(
 ) -> Result<Link, String> {
     let transitions = get_transitions();
 
-    let current_state = link.state.unwrap();
+    let current_state = match link.state {
+        Some(state) => LinkState::from_string(&state),
+        None => return Err("State is missing".to_string()),
+    };
+
     let state_machine_result = transitions
         .iter()
         .find(|t| t.source == current_state && t.trigger == input.action);
 
     match state_machine_result {
         Some(transition) => {
-            link.state = Some(transition.dest);
+            link.state = Some(transition.dest.to_string());
             if transition.requires_update {
                 if let Some(params) = input.params {
                     match params {

@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use crate::{repositories::link_store, types::link::State};
+use crate::{repositories::link_store, types::link::LinkState};
 
 use super::ext::{
     cashier_nft::mint_nft,
@@ -15,7 +15,7 @@ pub async fn claim_nft(id: String, _caller: Principal) -> Result<(), String> {
     }
 
     let link = link.unwrap();
-    if link.state.unwrap() != State::Active {
+    if link.state.unwrap() != LinkState::Active.to_string() {
         return Err("Link is not active".to_string());
     }
 

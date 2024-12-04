@@ -1,11 +1,18 @@
-type AssetInfo = record { chain : Chain; address : text; amount : nat64 };
+type Action = record {
+  id : text;
+  status : text;
+  link_id : text;
+  creator_id : text;
+  action_type : text;
+};
+type AssetInfo = record { chain : text; address : text; amount : nat64 };
 type CanisterError = variant {
   HandleLogicError : text;
   AnonymousCall;
   HandleApiError : text;
 };
-type Chain = variant { IC };
 type CreateLinkInput = record { link_type : LinkType };
+type GetLinkResp = record { action_create : opt Action; link : Link };
 type Icrc21ConsentInfo = record {
   metadata : Icrc21ConsentMessageMetadata;
   consent_message : Icrc21ConsentMessage;
@@ -46,11 +53,12 @@ type Link = record {
   title : opt text;
   creator : opt text;
   asset_info : opt vec AssetInfo;
-  link_type : opt LinkType;
+  link_type : opt text;
+  image_url : opt text;
   create_at : opt nat64;
   description : opt text;
-  state : opt State;
-  template : opt Template;
+  state : opt text;
+  template : opt text;
   image : opt text;
 };
 type LinkDetailUpdateInput = record {
@@ -78,11 +86,10 @@ type PaginateResultMetadata = record {
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : text; Err : CanisterError };
 type Result_2 = variant { Ok : User; Err : text };
-type Result_3 = variant { Ok : Link; Err : text };
+type Result_3 = variant { Ok : GetLinkResp; Err : text };
 type Result_4 = variant { Ok : PaginateResult; Err : text };
 type Result_5 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_6 = variant { Ok : Link; Err : CanisterError };
-type State = variant { Inactive; Active; CreateLink; AddAsset; ChooseTemplate };
 type Template = variant { Left; Right; Central };
 type UpdateLinkInput = record {
   id : text;
