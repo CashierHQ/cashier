@@ -1,9 +1,9 @@
 use crate::{
     repositories::action_store,
-    types::action::{Action, Status},
+    types::action::{Action, ActionStatus},
 };
 
-pub fn update_status(id: String, status: Status) -> Result<Action, String> {
+pub fn update_status(id: String, status: ActionStatus) -> Result<Action, String> {
     match action_store::get(&id) {
         Some(mut action) => {
             action.status = status;

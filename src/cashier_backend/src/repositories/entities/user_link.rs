@@ -9,8 +9,6 @@ pub const KEY_PATTERN: &str = "user#{}#link#{}";
 #[derive(Clone, Debug, Default, CandidType, Deserialize, Serialize)]
 pub struct UserLink {
     pub pk: String,
-    pub user_id: String,
-    pub link_id: String,
     pub created_at: u64,
 }
 
@@ -29,8 +27,6 @@ impl UserLink {
     pub fn new(user_id: String, link_id: String, ts: u64) -> Self {
         Self {
             pk: Self::build_pk(user_id.clone(), link_id.clone()),
-            user_id,
-            link_id,
             created_at: ts,
         }
     }

@@ -2,11 +2,12 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub enum Status {
+pub enum ActionStatus {
     Created,
     Processing,
     Success,
     Failed,
+    Timeout,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -41,7 +42,7 @@ pub struct Action {
     pub id: String,
     pub creator_id: String,
     pub link_id: String,
-    pub status: Status,
+    pub status: ActionStatus,
     pub action_type: ActionType,
 }
 
@@ -50,7 +51,7 @@ impl Action {
         id: String,
         creator_id: String,
         link_id: String,
-        status: Status,
+        status: ActionStatus,
         action_type: ActionType,
     ) -> Self {
         Self {

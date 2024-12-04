@@ -63,7 +63,7 @@ pub fn get_links_by_user_id(
     let link_ids = user_links
         .data
         .iter()
-        .map(|link_user| link_user.link_id.clone())
+        .map(|link_user| link_user.split_pk().1)
         .collect();
 
     let links_persistence = link_store::get_batch(link_ids);

@@ -4,14 +4,14 @@ use candid::{CandidType, Decode, Encode};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
-use crate::types::action::{ActionType, Status};
+use crate::types::action::{ActionStatus, ActionType};
 
 const PK_PATTERN: &str = "action";
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Action {
     pub pk: String,
-    pub status: Status,
+    pub status: ActionStatus,
     pub action_type: ActionType,
     pub link_id: String,
     pub creator_id: String,
@@ -24,7 +24,7 @@ impl Action {
 
     pub fn new(
         id: String,
-        status: Status,
+        status: ActionStatus,
         action_type: ActionType,
         link_id: String,
         creator_id: String,

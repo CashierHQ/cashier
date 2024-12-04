@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::{
     repositories::action_store,
-    types::action::{Action, ActionType, CreateActionInput, Status},
+    types::action::{Action, ActionStatus, ActionType, CreateActionInput},
 };
 
 pub fn create(action: CreateActionInput) -> Result<Action, String> {
@@ -13,7 +13,7 @@ pub fn create(action: CreateActionInput) -> Result<Action, String> {
         id.to_string(),
         caller.to_text(),
         action.link_id,
-        Status::Created,
+        ActionStatus::Created,
         ActionType::Create,
     );
 
