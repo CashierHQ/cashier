@@ -3,6 +3,7 @@ dotenv.config();
 import { createActor } from "../declarations/cashier_backend";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
 import { HttpAgent } from "@dfinity/agent";
+import { back, continueActive, continueUpdate } from "./updateLink";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const safeParseJSON = (arg: Record<string, unknown>): any => {
@@ -50,85 +51,77 @@ const main = async () => {
     const identity = Secp256k1KeyIdentity.generate();
     const agent = HttpAgent.createSync({
         identity,
+        host: "http://127.0.0.1:4943",
     });
+
+    if (process.env.DFX_NETWORK !== "ic") {
+        agent.fetchRootKey().catch((err) => {
+            console.warn(
+                "Unable to fetch root key. Check to ensure that your local replica is running",
+            );
+            console.error(err);
+        });
+    }
 
     const backend = createActor(canisterId, {
         agent,
     });
-    const createUserRes = await backend.create_user();
+
+    await backend.create_user();
     const createLinkRes = await backend.create_link({
         link_type: {
             NftCreateAndAirdrop: null,
         },
     });
 
-    console.log("createUserRes", createUserRes);
-    console.log("createLinkRes", createLinkRes);
+    const linkId = parseResultResponse(createLinkRes);
+
     const links = await backend.get_links([
         {
             offset: BigInt(0),
             limit: BigInt(10),
         },
     ]);
-    console.log("links", safeParseJSON(links));
-    const user = await backend.get_user();
-    console.log("user", user);
 
-    const id = parseResultResponse(createLinkRes);
-    console.log("id", id);
+    console.log("link", links);
+    await backend.get_user();
 
-    const updateRes = await backend.update_link(id, {
-        title: ["test"],
-        asset_info: [
-            {
-                chain: { IC: null },
-                address: "test",
-                amount: 100,
-            },
-        ],
-        description: ["tesst"],
-        actions: [
-            [
-                {
-                    arg: "test",
-                    method: "tesst",
-                    canister_id: "tst",
-                    label: "tesst",
-                },
-            ],
-        ],
-        state: [
-            {
-                PendingPreview: null,
-            },
-        ],
-        template: [{ Central: null }],
-        image: ["testes"],
-    });
-    console.log("updateRes", updateRes);
-
-    const activeRes = await backend.update_link(id, {
-        title: [],
-        asset_info: [],
-        description: [],
-        actions: [],
-        state: [
-            {
-                Active: null,
-            },
-        ],
-        template: [],
-        image: [],
+    // Update the link to preview
+    // new -> pending detail
+    const res = await continueUpdate({
+        backend,
+        id: linkId,
     });
 
-    console.log("activeRes", activeRes);
+    console.log("res", safeParseJSON(res));
 
-    const link = await backend.get_link(id);
-    console.log("link", safeParseJSON(link));
+    const back_res = await back({
+        backend,
+        id: linkId,
+    });
 
-    const claim = await backend.claim_nft(id, []);
+    console.log("back_res", back_res);
 
-    console.log("claim", claim);
+    // pending detail -> preview
+    const res2 = await continueUpdate({
+        backend,
+        id: linkId,
+    });
+
+    await continueUpdate({
+        backend,
+        id: linkId,
+    });
+
+    console.log("res2", safeParseJSON(res2));
+
+    // Active the link
+    const active_link_res = await continueActive({
+        backend,
+        id: linkId,
+    });
+
+    console.log("active_link_res", safeParseJSON(active_link_res));
 };
 
 main();

@@ -1,24 +1,15 @@
 use super::{entities::link::Link, LINK_STORE};
 
 pub fn create(link: Link) {
-    LINK_STORE.with(
-        |store: &std::cell::RefCell<
-            ic_stable_structures::BTreeMap<
-                String,
-                Link,
-                ic_stable_structures::memory_manager::VirtualMemory<
-                    std::rc::Rc<std::cell::RefCell<Vec<u8>>>,
-                >,
-            >,
-        >| {
-            let pk: String = link.pk.clone();
-            store.borrow_mut().insert(pk, link);
-        },
-    );
+    LINK_STORE.with(|store| {
+        let pk: String = link.pk.clone();
+        store.borrow_mut().insert(pk, link);
+    });
 }
 
 pub fn get(id: &str) -> Option<Link> {
-    LINK_STORE.with(|store| store.borrow().get(&id.to_string()))
+    let pk = Link::build_pk(id.to_string());
+    LINK_STORE.with(|store| store.borrow().get(&pk.to_string()))
 }
 
 pub fn get_batch(ids: Vec<String>) -> Vec<Link> {
@@ -27,7 +18,8 @@ pub fn get_batch(ids: Vec<String>) -> Vec<Link> {
         let mut result = Vec::new();
 
         for id in ids {
-            let link = store.get(&id);
+            let pk = Link::build_pk(id);
+            let link = store.get(&pk);
             match link {
                 Some(link) => {
                     result.push(link);

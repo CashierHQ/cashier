@@ -3,7 +3,7 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use crate::types::link::{AssetInfo, ClientAction, LinkType, State, Template};
+use crate::types::link::{AssetInfo, LinkType, State, Template};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Link {
@@ -13,7 +13,6 @@ pub struct Link {
     pub image: Option<String>,
     pub link_type: Option<LinkType>,
     pub asset_info: Option<Vec<AssetInfo>>,
-    pub actions: Option<Vec<ClientAction>>,
     pub template: Option<Template>,
     pub state: Option<State>,
     pub creator: Option<String>,
@@ -37,7 +36,6 @@ impl From<crate::types::link::Link> for Link {
             image: link.image,
             link_type: link.link_type.into(),
             asset_info: link.asset_info,
-            actions: link.actions,
             template: link.template,
             state: link.state,
             creator: link.creator,

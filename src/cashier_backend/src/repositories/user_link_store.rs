@@ -21,7 +21,7 @@ pub fn get_links_by_user_id(
     USER_LINK_STORE.with(|store| {
         let store = store.borrow();
         let mut result = Vec::new();
-        let prefix = format!("{}#", user_id);
+        let prefix = format!("user#{}#link#", user_id);
 
         for (_, user_link) in store
             .range(prefix.clone()..)

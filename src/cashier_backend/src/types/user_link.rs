@@ -17,7 +17,7 @@ impl UserLink {
         }
     }
 
-    pub fn from_persistent(record: crate::store::entities::user_link::UserLink) -> Self {
+    pub fn from_persistent(record: crate::repositories::entities::user_link::UserLink) -> Self {
         let (user_id, link_id) = record.split_pk();
         Self {
             link_id,
@@ -26,8 +26,8 @@ impl UserLink {
         }
     }
 
-    pub fn to_persistent(&self) -> crate::store::entities::user_link::UserLink {
-        crate::store::entities::user_link::UserLink::new(
+    pub fn to_persistent(&self) -> crate::repositories::entities::user_link::UserLink {
+        crate::repositories::entities::user_link::UserLink::new(
             self.creator_id.clone(),
             self.link_id.clone(),
             self.created_at,
