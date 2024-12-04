@@ -17,19 +17,19 @@ pub fn get_transitions() -> Vec<Transition> {
         // Continue transitions
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: State::New,
-            dest: State::PendingDetail,
+            source: State::ChooseTemplate,
+            dest: State::AddAsset,
             requires_update: true,
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: State::PendingDetail,
-            dest: State::PendingPreview,
+            source: State::AddAsset,
+            dest: State::CreateLink,
             requires_update: true,
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: State::PendingPreview,
+            source: State::CreateLink,
             dest: State::Active,
             requires_update: false,
         },
@@ -42,14 +42,14 @@ pub fn get_transitions() -> Vec<Transition> {
         // Back transitions
         Transition {
             trigger: LinkStateMachineAction::Back,
-            source: State::PendingPreview,
-            dest: State::PendingDetail,
+            source: State::CreateLink,
+            dest: State::AddAsset,
             requires_update: false,
         },
         Transition {
             trigger: LinkStateMachineAction::Back,
-            source: State::PendingDetail,
-            dest: State::New,
+            source: State::AddAsset,
+            dest: State::ChooseTemplate,
             requires_update: false,
         },
     ]

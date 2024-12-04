@@ -1,5 +1,3 @@
-use crate::utils::logger;
-
 use super::USER_WALLET_STORE;
 
 pub fn create(wallet: String, user_id: String) {
