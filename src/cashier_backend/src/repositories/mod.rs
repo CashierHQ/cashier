@@ -10,7 +10,9 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemor
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
 pub mod action_store;
+pub mod action_transaction_store;
 pub mod entities;
+pub mod link_action_store;
 pub mod link_store;
 pub mod transaction_store;
 pub mod user_link_store;
