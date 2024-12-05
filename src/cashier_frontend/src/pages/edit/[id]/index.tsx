@@ -63,6 +63,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!identity) return;
         const fetchData = async () => {
             const link = await new LinkService(identity).getLink(linkId);
+            console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
                 const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
@@ -71,7 +72,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 setCurrentStep(step >= 0 ? step : 0);
             }
         };
-        fetchData();
+        try {
+            fetchData();
+        } catch (err) {
+            console.log(err);
+        }
     }, [linkId, identity]);
 
     const handleSubmitLinkTemplate = async (values: any) => {

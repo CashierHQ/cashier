@@ -55,12 +55,9 @@ export type LinkDetailModel = {
     description: string;
     image: string;
     link_type?: string;
-    actions: Array<string>;
     state?: string;
     template?: string;
     creator?: string;
-    amount: number;
-    chain?: string;
     create_at: Date;
     asset_info?: AssetAirdropInfo;
 };
