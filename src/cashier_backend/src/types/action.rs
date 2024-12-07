@@ -39,7 +39,6 @@ pub struct ClaimActionParams {
 
 pub enum CreateActionParams {
     Claim(ClaimActionParams),
-    None,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -72,7 +71,7 @@ impl ActionType {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
     pub action_type: String,
-    pub params: CreateActionParams,
+    pub params: Option<CreateActionParams>,
     pub link_id: String,
 }
 

@@ -18,6 +18,13 @@ type CanisterError = variant {
   AnonymousCall;
   HandleApiError : text;
 };
+type ClaimActionParams = record { address : opt text };
+type CreateActionInput = record {
+  link_id : text;
+  action_type : text;
+  params : opt CreateActionParams;
+};
+type CreateActionParams = variant { Claim : ClaimActionParams };
 type CreateLinkInput = record { link_type : LinkType };
 type GetLinkResp = record { action_create : opt Action; link : Link };
 type Icrc21ConsentInfo = record {
@@ -98,12 +105,13 @@ type PaginateResultMetadata = record {
   limit : nat64;
 };
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : text; Err : CanisterError };
-type Result_2 = variant { Ok : User; Err : text };
-type Result_3 = variant { Ok : GetLinkResp; Err : text };
-type Result_4 = variant { Ok : PaginateResult; Err : text };
-type Result_5 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
-type Result_6 = variant { Ok : Link; Err : CanisterError };
+type Result_1 = variant { Ok : Action; Err : text };
+type Result_2 = variant { Ok : text; Err : CanisterError };
+type Result_3 = variant { Ok : User; Err : text };
+type Result_4 = variant { Ok : GetLinkResp; Err : text };
+type Result_5 = variant { Ok : PaginateResult; Err : text };
+type Result_6 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
+type Result_7 = variant { Ok : Link; Err : CanisterError };
 type UpdateLinkInput = record {
   id : text;
   action : text;
@@ -113,15 +121,16 @@ type UpdateLinkParams = record { params : opt LinkDetailUpdateInput };
 type User = record { id : text; email : opt text; wallet : text };
 service : () -> {
   claim_nft : (text, opt text) -> (Result);
-  create_link : (CreateLinkInput) -> (Result_1);
-  create_user : () -> (Result_2);
-  get_link : (text) -> (Result_3) query;
-  get_links : (opt PaginateInput) -> (Result_4) query;
-  get_user : () -> (Result_2) query;
+  create_action : (CreateActionInput) -> (Result_1);
+  create_link : (CreateLinkInput) -> (Result_2);
+  create_user : () -> (Result_3);
+  get_link : (text) -> (Result_4) query;
+  get_links : (opt PaginateInput) -> (Result_5) query;
+  get_user : () -> (Result_3) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
   icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
-      Result_5,
+      Result_6,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
-  update_link : (UpdateLinkInput) -> (Result_6);
+  update_link : (UpdateLinkInput) -> (Result_7);
 }

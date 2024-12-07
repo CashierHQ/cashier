@@ -6,7 +6,12 @@ use crate::{
         self,
         link::{create_new, is_link_creator, update::handle_update_create_and_airdrop_nft},
     },
-    types::{api::PaginateInput, error::CanisterError, link::Link},
+    types::{
+        action::{Action, CreateActionInput},
+        api::PaginateInput,
+        error::CanisterError,
+        link::Link,
+    },
     utils::logger,
 };
 
@@ -94,4 +99,10 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
             "Invalid link type".to_string(),
         )),
     }
+}
+
+#[update(guard = "is_not_anonymous")]
+pub fn create_action(input: CreateActionInput) -> Result<Action, String> {
+    // inside already check caller is creator
+    services::action::create::create(input)
 }
