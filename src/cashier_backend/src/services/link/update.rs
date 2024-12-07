@@ -1,7 +1,9 @@
 use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
     repositories::link_store,
+    services::link::validate_active_link::{is_action_exist, is_valid_fields_before_active},
     types::link::{Link, LinkState},
+    utils::logger,
 };
 
 #[derive(Debug, Clone)]
@@ -10,6 +12,7 @@ pub struct Transition {
     pub source: LinkState,
     pub dest: LinkState,
     pub requires_update: bool,
+    pub validate: fn(Link) -> Result<(), String>,
 }
 
 pub fn get_transitions() -> Vec<Transition> {
@@ -17,109 +20,128 @@ pub fn get_transitions() -> Vec<Transition> {
         // Continue transitions
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: LinkState::ChooseTemplate,
-            dest: LinkState::AddAsset,
+            source: LinkState::ChooseLinkType,
+            dest: LinkState::AddAssets,
             requires_update: true,
+            validate: |_| Ok(()),
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
-            source: LinkState::AddAsset,
+            source: LinkState::AddAssets,
             dest: LinkState::CreateLink,
             requires_update: true,
+            validate: |_| Ok(()),
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
             source: LinkState::CreateLink,
             dest: LinkState::Active,
             requires_update: false,
+            validate: |link| {
+                is_action_exist(link.get("id").unwrap().as_str())?;
+                is_valid_fields_before_active(link.clone())?;
+                Ok(())
+            },
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
             source: LinkState::Active,
             dest: LinkState::Inactive,
             requires_update: false,
+            validate: |_| Ok(()),
         },
         // Back transitions
         Transition {
             trigger: LinkStateMachineAction::Back,
             source: LinkState::CreateLink,
-            dest: LinkState::AddAsset,
+            dest: LinkState::AddAssets,
             requires_update: false,
+            // TODO: validate if the action is exist
+            validate: |_| Ok(()),
         },
         Transition {
             trigger: LinkStateMachineAction::Back,
-            source: LinkState::AddAsset,
-            dest: LinkState::ChooseTemplate,
+            source: LinkState::AddAssets,
+            dest: LinkState::ChooseLinkType,
             requires_update: false,
+            // TODO: validate if the action is exist
+            validate: |_| Ok(()),
         },
     ]
 }
 
 pub fn handle_update_create_and_airdrop_nft(
     input: UpdateLinkInput,
-    mut link: Link,
+    mut link_input: Link,
 ) -> Result<Link, String> {
     let transitions = get_transitions();
 
-    let current_state = match link.state {
-        Some(state) => LinkState::from_string(&state),
-        None => return Err("State is missing".to_string()),
+    let current_state = match link_input.get("state") {
+        Some(state) => {
+            let state = state.as_str();
+            match LinkState::from_string(state) {
+                Ok(state) => state,
+                Err(e) => return Err(e),
+            }
+        }
+        None => return Err("state is missing".to_string()),
     };
 
     let state_machine_result = transitions.iter().find(|t| {
-        t.source == current_state
-            && t.trigger == LinkStateMachineAction::from_string(input.action.as_str())
+        let is_match_source = t.source == current_state;
+
+        let is_match_trigger = match LinkStateMachineAction::from_string(input.action.as_str()) {
+            Ok(action) => t.trigger == action,
+            Err(_) => false,
+        };
+
+        is_match_source && is_match_trigger
     });
+
+    logger::info(&format!(
+        "
+        current state: {:?}
+        input action: {:?}
+        state_machine_result: {:?}
+        ",
+        current_state, input.action, state_machine_result
+    ));
 
     match state_machine_result {
         Some(transition) => {
-            link.state = Some(transition.dest.to_string());
+            (transition.validate)(link_input.clone())?;
+
+            logger::info(&format!("transition: {:?}", transition));
+            // update state
+            link_input.set("state", transition.dest.to_string());
+
+            // if requires update, update the link detail with the input params
             if transition.requires_update {
                 if let Some(params) = input.params {
                     match params {
                         LinkStateMachineActionParams::Update(params) => {
-                            link.update(params.to_link_detail_update());
+                            link_input.update(params.to_link_detail_update());
                         }
                     }
                 } else {
                     return Err("params is missing".to_string());
                 }
             }
-            link_store::update(link.to_persistence());
-            Ok(link)
+
+            // update link to db
+            link_store::update(link_input.to_persistence());
+
+            let link = link_store::get(link_input.get("id").unwrap().as_str());
+            match link {
+                Some(link) => {
+                    logger::info(&format!("updated link: {:?}", link));
+                    return Ok(Link::from_persistence(link));
+                }
+                None => {
+                    return Err("Link not found".to_string());
+                }
+            }
         }
         None => Err("Invalid state transition".to_string()),
     }
-}
-
-pub fn is_valid_fields_before_active(link_detail: &Link) -> Result<bool, String> {
-    if link_detail.id.is_empty() {
-        return Err("id is empty".to_string());
-    }
-    if link_detail.title.as_ref().map_or(true, |s| s.is_empty()) {
-        return Err("title is missing or empty".to_string());
-    }
-    if link_detail
-        .description
-        .as_ref()
-        .map_or(true, |s| s.is_empty())
-    {
-        return Err("description is missing or empty".to_string());
-    }
-    if link_detail.image.as_ref().map_or(true, |s| s.is_empty()) {
-        return Err("image is missing or empty".to_string());
-    }
-    if link_detail.link_type.is_none() {
-        return Err("link_type is missing".to_string());
-    }
-    if link_detail.asset_info.is_none() {
-        return Err("asset_info is missing".to_string());
-    }
-    if link_detail.template.is_none() {
-        return Err("template is missing".to_string());
-    }
-    if link_detail.creator.as_ref().map_or(true, |s| s.is_empty()) {
-        return Err("creator is missing or empty".to_string());
-    }
-    Ok(true)
 }

@@ -1,5 +1,6 @@
 use uuid::Uuid;
 pub mod update;
+pub mod validate_active_link;
 
 use crate::{
     core::link::types::{CreateLinkInput, GetLinkResp},

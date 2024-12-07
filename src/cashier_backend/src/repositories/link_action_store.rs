@@ -27,3 +27,15 @@ pub fn find_with_prefix(prefix: &str) -> Vec<crate::types::link_action::LinkActi
             .collect()
     })
 }
+
+pub fn find_create_action_by_link_id(
+    link_id: &str,
+) -> Option<crate::types::link_action::LinkAction> {
+    let link_action_prefix = format!(
+        "link#{}#type#{}action#",
+        link_id,
+        crate::types::action::ActionType::Create.to_string()
+    );
+    let link_action = find_with_prefix(link_action_prefix.as_str());
+    link_action.into_iter().next()
+}

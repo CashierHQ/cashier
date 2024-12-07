@@ -13,3 +13,6 @@ deploy:
 
 test:
 	@npx tsx src/example/index.ts
+
+g: 
+	@dfx generate cashier_backend

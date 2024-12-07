@@ -71,7 +71,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
         }
     }
 
-    let link_type = rsp.link.link_type.clone();
+    let link_type = rsp.link.get("link_type");
 
     if link_type.is_none() {
         return Err(CanisterError::HandleApiError(
@@ -81,7 +81,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
 
     let link_type_str = link_type.unwrap();
     match LinkType::from_string(&link_type_str) {
-        LinkType::NftCreateAndAirdrop => {
+        Ok(LinkType::NftCreateAndAirdrop) => {
             match handle_update_create_and_airdrop_nft(input, rsp.link) {
                 Ok(link) => Ok(link),
                 Err(e) => {
@@ -90,5 +90,8 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
                 }
             }
         }
+        Err(_) => Err(CanisterError::HandleApiError(
+            "Invalid link type".to_string(),
+        )),
     }
 }

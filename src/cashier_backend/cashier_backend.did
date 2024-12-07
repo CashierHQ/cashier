@@ -5,7 +5,14 @@ type Action = record {
   creator_id : text;
   action_type : text;
 };
-type AssetInfo = record { chain : text; address : text; amount : nat64 };
+type AssetInfo = record {
+  total_amount : nat64;
+  chain : text;
+  current_amount : nat64;
+  address : text;
+  total_claim : nat64;
+  amount_per_claim : nat64;
+};
 type CanisterError = variant {
   HandleLogicError : text;
   AnonymousCall;
@@ -48,28 +55,36 @@ type Icrc21ErrorInfo = record { description : text };
 type Icrc21LineDisplayPage = record { lines : vec text };
 type Icrc21SupportedStandard = record { url : text; name : text };
 type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
-type Link = record {
+type Link = variant { NftCreateAndAirdropLink : NftCreateAndAirdropLink };
+type LinkDetailUpdateAssetInfoInput = record {
+  total_amount : nat64;
+  chain : text;
+  address : text;
+  amount_per_claim : nat64;
+};
+type LinkDetailUpdateInput = record {
+  title : opt text;
+  asset_info : opt vec LinkDetailUpdateAssetInfoInput;
+  description : opt text;
+  link_image_url : opt text;
+  template : opt text;
+  nft_image : opt text;
+};
+type LinkStateMachineActionParams = variant { Update : UpdateLinkParams };
+type LinkType = variant { NftCreateAndAirdrop };
+type NftCreateAndAirdropLink = record {
   id : text;
   title : opt text;
   creator : opt text;
   asset_info : opt vec AssetInfo;
   link_type : opt text;
-  image_url : opt text;
   create_at : opt nat64;
   description : opt text;
+  link_image_url : opt text;
   state : opt text;
   template : opt text;
-  image : opt text;
+  nft_image : opt text;
 };
-type LinkDetailUpdateInput = record {
-  title : opt text;
-  asset_info : opt vec AssetInfo;
-  description : opt text;
-  template : opt text;
-  image : opt text;
-};
-type LinkStateMachineActionParams = variant { Update : UpdateLinkParams };
-type LinkType = variant { NftCreateAndAirdrop };
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
   metadata : PaginateResultMetadata;
