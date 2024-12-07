@@ -1,5 +1,3 @@
-use crate::utils::logger;
-
 use super::{entities::link::Link, LINK_STORE};
 
 pub fn create(link: Link) {
@@ -39,7 +37,6 @@ pub fn get_batch(ids: Vec<String>) -> Vec<Link> {
 pub fn update(link: Link) {
     LINK_STORE.with(|store| {
         let pk: String = link.pk.clone();
-        logger::info(&format!("update link: {:?}", link));
         store.borrow_mut().insert(pk, link);
     });
 }

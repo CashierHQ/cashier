@@ -32,7 +32,6 @@ pub fn is_valid_fields_before_active(link_detail: Link) -> Result<bool, String> 
             }
             return Ok(true);
         }
-        _ => Err("Invalid link type".to_string()),
     }
 }
 

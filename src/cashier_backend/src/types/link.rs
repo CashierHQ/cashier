@@ -1,8 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::logger;
-
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub enum LinkType {
     NftCreateAndAirdrop,
@@ -188,7 +186,6 @@ impl Link {
 
     pub fn set<T: Into<Option<String>>>(&mut self, prop_name: &str, value: T) {
         let value = value.into();
-        logger::info(&format!("set prop_name: {}, value: {:?}", prop_name, value));
         match self {
             Link::NftCreateAndAirdropLink(link) => match prop_name {
                 "title" => link.title = value,
@@ -229,7 +226,7 @@ impl Link {
     pub fn from_persistence(link: crate::repositories::entities::link::Link) -> Self {
         match link {
             crate::repositories::entities::link::Link {
-                pk: pk,
+                pk,
                 title,
                 description,
                 nft_image,
