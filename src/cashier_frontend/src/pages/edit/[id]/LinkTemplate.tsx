@@ -17,7 +17,7 @@ import LinkCard from "@/components/link-card";
 import { descriptionTemplate } from "@/constants/message";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 
-const linkTemplateSchema = z.object({
+export const linkTemplateSchema = z.object({
     title: z.string().min(5),
 });
 

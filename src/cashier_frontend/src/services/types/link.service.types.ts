@@ -1,4 +1,4 @@
-import { AssetAirdropInfo } from "../../../../declarations/cashier_backend/cashier_backend.did";
+import { AssetInfo } from "../../../../declarations/cashier_backend/cashier_backend.did";
 
 export enum State {
     New = "New",
@@ -28,7 +28,7 @@ export type ActionModel = {
 export type AssetInfoModel = {
     chain: string;
     address: string;
-    amount: number;
+    amount: bigint;
 };
 
 export type UpdateLinkInput = {
@@ -55,14 +55,11 @@ export type LinkDetailModel = {
     description: string;
     image: string;
     link_type?: string;
-    actions: Array<string>;
     state?: string;
     template?: string;
     creator?: string;
-    amount: number;
-    chain?: string;
     create_at: Date;
-    asset_info?: AssetAirdropInfo;
+    amount: number;
 };
 
 export type TipLinkModel = {

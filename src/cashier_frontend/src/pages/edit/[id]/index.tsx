@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import LinkTemplate from "./LinkTemplate";
+import LinkTemplate, { linkTemplateSchema } from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
 import { useNavigate, useParams } from "react-router-dom";
 import MultiStepForm from "@/components/multi-step-form";
@@ -19,6 +19,7 @@ import { Toast } from "@radix-ui/react-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
+import { z } from "zod";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATUS.NEW,
@@ -32,12 +33,10 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         title: "",
         image: "",
         description: "",
-        amount: 0,
-        chain: "",
         state: "",
-        actions: [],
         template: Template.Left,
         create_at: new Date(),
+        amount: 0,
     });
     const [isNameSetByUser, setIsNameSetByUser] = useState(false);
     const [isDisabled, setDisabled] = useState(false);
@@ -56,13 +55,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const responsive = useResponsive();
 
     const queryClient = useQueryClient();
-    const { mutate, mutateAsync } = useUpdateLink(queryClient, identity);
+    const { mutate, mutateAsync, error: updateLinkError } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
             const link = await new LinkService(identity).getLink(linkId);
+            console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
                 const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
@@ -71,28 +71,31 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 setCurrentStep(step >= 0 ? step : 0);
             }
         };
-        fetchData();
-    }, [linkId, identity]);
-
-    const handleSubmitLinkTemplate = async (values: any) => {
-        if (!linkId) return;
         try {
-            if (!formData?.title || !isNameSetByUser) {
-                values.name = values.title;
-            }
-            formData.state = State.PendingDetail;
-            const updateLinkParams: UpdateLinkParams = {
-                linkId: linkId,
-                linkModel: {
-                    ...formData,
-                    ...values,
-                },
-            };
-            mutate(updateLinkParams);
-            setFormData({ ...formData, ...values });
+            fetchData();
         } catch (err) {
             console.log(err);
         }
+    }, [linkId, identity]);
+
+    const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
+        console.log("🚀 ~ handleSubmitLinkTemplate ~ values:", values);
+        if (!linkId) return;
+        // if (!formData?.title || !isNameSetByUser) {
+        //     values.name = values.title;
+        // }
+        const updateLinkParams: UpdateLinkParams = {
+            linkId: linkId,
+            linkModel: {
+                ...formData,
+                title: values.title,
+            },
+        };
+        mutate(updateLinkParams);
+        if (updateLinkError) {
+            throw updateLinkError;
+        }
+        setFormData({ ...formData, ...values });
     };
 
     const handleSubmitLinkDetails = async (values: any) => {
@@ -106,6 +109,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     ...values,
                 },
             };
+            console.log("🚀 ~ handleSubmitLinkDetails ~ updateLinkParams:", updateLinkParams);
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
@@ -120,7 +124,17 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             // 1. Call validation, success -> display confirm popup,
             //   failed -> display error message
             if (validationResult) {
-                setOpenConfirmationPopup(true);
+                setDisabled(true);
+                const updateLinkParams: UpdateLinkParams = {
+                    linkId: linkId,
+                    linkModel: {
+                        ...formData,
+                        ...values,
+                    },
+                };
+                await mutateAsync(updateLinkParams);
+                navigate(`/details/${linkId}`);
+                // setOpenConfirmationPopup(true);
             } else {
                 setToastData({
                     open: true,
@@ -130,17 +144,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 });
                 setOpenValidtionToast(true);
             }
-            // setDisabled(true);
-            // const updateLinkParams: UpdateLinkParams = {
-            //     linkId: linkId,
-            //     linkModel: {
-            //         ...formData,
-            //         ...values,
-            //         state: State.Active,
-            //     },
-            // };
-            // await mutateAsync(updateLinkParams);
-            // navigate(`/details/${linkId}`);
         } catch (error) {
             setDisabled(false);
             console.log(error);

@@ -3,32 +3,35 @@ import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
     CreateLinkInput,
-    State,
+    GetLinkResp,
+    Link,
+    UpdateLinkInput,
     UpdateLinkInput as UpdateLinkInputModel,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import { LinkDetailModel } from "./types/link.service.types";
-import { MapLinkDetailModelToUpdateLinkInputModel } from "./types/link.service.mapper";
+import {
+    MapLinkDetailModelToUpdateLinkInputModel,
+    MapLinkToLinkDetailModel,
+} from "./types/link.service.mapper";
 
-const parseLink = (link: any): LinkDetailModel => {
+const parseLink = (getLinkResponse: GetLinkResp): LinkDetailModel => {
+    const link: Link = getLinkResponse.link;
     return {
         id: link.id,
-        title: link.title ? link.title[0] : undefined,
-        description: link.description ? link.description[0] : undefined,
-        image: link.image ? link.image[0] : undefined,
-        link_type: link.link_type ? Object.keys(link.link_type[0])[0] : undefined,
-        actions: link.actions ? link.actions[0] : undefined,
-        state: link.state ? Object.keys(link.state[0])[0] : undefined,
-        template: link.template ? Object.keys(link.template[0])[0] : undefined,
+        title: link.title?.[0] ?? "",
+        description: link.description?.[0] ?? "",
+        amount: Number(link.asset_info?.[0]?.[0].amount) ?? 0,
+        image: link.image?.[0] ?? "",
+        link_type: link.link_type ? link.link_type[0] : undefined,
+        state: link.state ? link.state[0] : undefined,
+        template: link.template ? link.template[0] : undefined,
         creator: link.creator ? link.creator[0] : undefined,
-        amount: link.asset_info ? link.asset_info[0].amount : undefined,
-        chain: link.asset_info ? Object.keys(link.asset_info[0].chain)[0] : undefined,
-        create_at: link.create_at
+        create_at: link.create_at[0]
             ? convertNanoSecondsToDate(link.create_at[0])
             : new Date("2024-10-01"),
-        asset_info: link.asset_info ? link.asset_info[0] : null,
     };
 };
 
@@ -55,19 +58,15 @@ class LinkService {
                 },
             ]),
         );
+        console.log("🚀 ~ LinkService ~ getLinks ~ response:", response.data);
         let responseModel: ReponseLinksModel = {
             data: [],
             metadada: response.metadata,
         };
 
         responseModel.data = response.data
-            ? response.data.map((link: any) => {
-                  for (const key in link) {
-                      if (Array.isArray(link[key]) && link[key].length === 0) {
-                          delete link[key];
-                      }
-                  }
-                  return parseLink(link);
+            ? response.data.map((link: Link) => {
+                  return MapLinkToLinkDetailModel(link);
               })
             : [];
         return responseModel;
@@ -75,6 +74,7 @@ class LinkService {
 
     async getLink(linkId: string) {
         const response = parseResultResponse(await this.actor.get_link(linkId));
+        console.log("🚀 ~ LinkService ~ getLink ~ response:", response);
         return parseLink(response);
     }
 
@@ -82,10 +82,11 @@ class LinkService {
         return parseResultResponse(await this.actor.create_link(input));
     }
 
-    // TODO: apply state machine for this method or create multiple methods for each state
     async updateLink(linkId: string, data: LinkDetailModel) {
-        const completeData = MapLinkDetailModelToUpdateLinkInputModel(data);
-        const response = parseResultResponse(await this.actor.update_link(linkId, completeData));
+        const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data);
+        console.log("🚀 ~ LinkService ~ updateLink ~ completeData:", completeData);
+        const response = parseResultResponse(await this.actor.update_link(completeData));
+        console.log("🚀 ~ LinkService ~ updateLink ~ response:", response);
         return response;
     }
 
