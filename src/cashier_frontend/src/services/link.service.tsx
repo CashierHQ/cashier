@@ -23,6 +23,7 @@ const parseLink = (getLinkResponse: GetLinkResp): LinkDetailModel => {
         id: link.id,
         title: link.title?.[0] ?? "",
         description: link.description?.[0] ?? "",
+        amount: Number(link.asset_info?.[0]?.[0].amount) ?? 0,
         image: link.image?.[0] ?? "",
         link_type: link.link_type ? link.link_type[0] : undefined,
         state: link.state ? link.state[0] : undefined,
@@ -31,7 +32,6 @@ const parseLink = (getLinkResponse: GetLinkResp): LinkDetailModel => {
         create_at: link.create_at[0]
             ? convertNanoSecondsToDate(link.create_at[0])
             : new Date("2024-10-01"),
-        asset_info: link.asset_info ? link.asset_info[0] : null,
     };
 };
 
@@ -83,12 +83,10 @@ class LinkService {
     }
 
     async updateLink(linkId: string, data: LinkDetailModel) {
-        console.log("update");
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data);
         console.log("🚀 ~ LinkService ~ updateLink ~ completeData:", completeData);
-        const response = await this.actor.update_link(completeData);
+        const response = parseResultResponse(await this.actor.update_link(completeData));
         console.log("🚀 ~ LinkService ~ updateLink ~ response:", response);
-        //const response = parseResultResponse(await this.actor.update_link(completeData));
         return response;
     }
 

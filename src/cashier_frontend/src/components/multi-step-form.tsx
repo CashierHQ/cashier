@@ -19,7 +19,7 @@ interface MultiStepFormProps<T extends Object> {
 }
 
 interface ItemProp {
-    handleSubmit: (values: any) => any;
+    handleSubmit: (values: any) => Promise<any>;
     isDisabled: boolean;
     name: string;
     render: (props: ParitalFormProps<any>) => ReactElement<ParitalFormProps<any>>;
@@ -71,11 +71,17 @@ export default function MultiStepForm<T extends Object>({
                     return partialForm.props.render({
                         defaultValues: formData,
                         handleChange: handleChange,
-                        handleSubmit: (values: any) => {
-                            partialForm.props.handleSubmit(values);
-                            if (index == partialForms.length - 1)
-                                handleFinish({ ...formData, ...values });
-                            else setCurrentStep(index + 1);
+                        handleSubmit: async (values: any) => {
+                            try {
+                                const result = await partialForm.props.handleSubmit(values);
+                                if (index == partialForms.length - 1)
+                                    handleFinish({ ...formData, ...values });
+                                else {
+                                    setCurrentStep(index + 1);
+                                }
+                            } catch (err) {
+                                console.log(err);
+                            }
                         },
                         isDisabled: isDisabled,
                     });
