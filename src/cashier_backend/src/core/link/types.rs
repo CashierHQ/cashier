@@ -12,18 +12,40 @@ pub struct CreateLinkInput {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
+pub struct LinkDetailUpdateAssetInfoInput {
+    pub address: String,
+    pub chain: String,
+    pub total_amount: u64,
+    pub amount_per_claim: u64,
+}
+
+impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfo {
+    fn from(input: &LinkDetailUpdateAssetInfoInput) -> Self {
+        AssetInfo {
+            address: input.address.clone(),
+            chain: input.chain.clone(),
+            current_amount: input.total_amount, // Set current_amount to total_amount
+            total_amount: input.total_amount,
+            amount_per_claim: input.amount_per_claim,
+            total_claim: 0, // Set total_claim to 0
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct LinkDetailUpdateInput {
     pub title: Option<String>,
     pub description: Option<String>,
-    pub image: Option<String>,
-    pub asset_info: Option<Vec<AssetInfo>>,
+    pub link_image_url: Option<String>,
+    pub nft_image: Option<String>,
+    pub asset_info: Option<Vec<LinkDetailUpdateAssetInfoInput>>,
     pub template: Option<String>,
 }
 
 impl LinkDetailUpdateInput {
     pub fn validate(&self) -> Result<(), String> {
         if let Some(template) = &self.template {
-            match Template::from_string_result(template.as_str()) {
+            match Template::from_string(template.as_str()) {
                 Ok(_) => Ok(()),
                 Err(e) => Err(e),
             }
@@ -38,22 +60,39 @@ pub struct UpdateLinkParams {
 }
 
 impl UpdateLinkParams {
+    // This method is used to validate the input of UpdateLinkParams
     pub fn to_link_detail_update(&self) -> LinkDetailUpdate {
         match &self.params {
-            Some(params) => LinkDetailUpdate {
-                title: params.title.clone(),
-                description: params.description.clone(),
-                image: params.image.clone(),
-                asset_info: params.asset_info.clone(),
-                template: Some(Template::from_string(
-                    params.template.clone().unwrap().as_str(),
-                )),
-                state: None,
-            },
+            Some(params) => {
+                let template = match &params.template {
+                    Some(template) => Some(Template::from_string(template.as_str()).unwrap()),
+                    None => None,
+                };
+                let asset_info = match &params.asset_info {
+                    Some(asset_info) => {
+                        let mut asset_info_vec = Vec::new();
+                        for asset_info_input in asset_info {
+                            asset_info_vec.push(AssetInfo::from(asset_info_input));
+                        }
+                        Some(asset_info_vec)
+                    }
+                    None => None,
+                };
+                LinkDetailUpdate {
+                    title: params.title.clone(),
+                    description: params.description.clone(),
+                    link_image_url: params.link_image_url.clone(),
+                    nft_image: params.nft_image.clone(),
+                    asset_info: asset_info,
+                    template: template,
+                    state: None,
+                }
+            }
             None => LinkDetailUpdate {
                 title: None,
                 description: None,
-                image: None,
+                link_image_url: None,
+                nft_image: None,
                 asset_info: None,
                 template: None,
                 state: None,
@@ -76,15 +115,7 @@ impl LinkStateMachineAction {
         }
     }
 
-    pub fn from_string(action: &str) -> LinkStateMachineAction {
-        match action {
-            "Continue" => LinkStateMachineAction::Continue,
-            "Back" => LinkStateMachineAction::Back,
-            _ => LinkStateMachineAction::Continue,
-        }
-    }
-
-    pub fn from_string_result(action: &str) -> Result<LinkStateMachineAction, String> {
+    pub fn from_string(action: &str) -> Result<LinkStateMachineAction, String> {
         match action {
             "Continue" => Ok(LinkStateMachineAction::Continue),
             "Back" => Ok(LinkStateMachineAction::Back),
@@ -107,7 +138,7 @@ pub struct UpdateLinkInput {
 
 impl UpdateLinkInput {
     pub fn validate(&self) -> Result<(), String> {
-        match LinkStateMachineAction::from_string_result(self.action.as_str()) {
+        match LinkStateMachineAction::from_string(self.action.as_str()) {
             Ok(_) => {}
             Err(e) => return Err(e),
         }

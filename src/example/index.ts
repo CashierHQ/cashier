@@ -102,11 +102,24 @@ const main = async () => {
 
     console.log("back_res", back_res);
 
+    console.log(
+        safeParseJSON(
+            await backend.get_links([
+                {
+                    offset: BigInt(0),
+                    limit: BigInt(10),
+                },
+            ]),
+        ),
+    );
+
     // pending detail -> preview
     const res2 = await continueUpdate({
         backend,
         id: linkId,
     });
+
+    console.log("res2", safeParseJSON(res2));
 
     await continueUpdate({
         backend,

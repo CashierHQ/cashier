@@ -10,8 +10,8 @@ pub struct Link {
     pub pk: String,
     pub title: Option<String>,
     pub description: Option<String>,
-    pub image: Option<String>,
-    pub image_url: Option<String>,
+    pub nft_image: Option<String>,
+    pub link_image_url: Option<String>,
     pub link_type: Option<String>,
     pub asset_info: Option<Vec<AssetInfo>>,
     pub template: Option<String>,
@@ -26,23 +26,9 @@ impl Link {
     pub fn build_pk(id: String) -> String {
         format!("{}#{}", PK_PREFIX, id)
     }
-}
 
-impl From<crate::types::link::Link> for Link {
-    fn from(link: crate::types::link::Link) -> Self {
-        Self {
-            pk: Link::build_pk(link.id.clone()),
-            title: link.title,
-            description: link.description,
-            image: link.image,
-            link_type: link.link_type.into(),
-            asset_info: link.asset_info,
-            template: link.template,
-            state: link.state,
-            creator: link.creator,
-            create_at: link.create_at,
-            image_url: link.image_url,
-        }
+    pub fn split_pk(pk: &str) -> String {
+        pk.split('#').collect::<Vec<&str>>()[1].to_string()
     }
 }
 

@@ -21,7 +21,7 @@ pub async fn claim_nft(id: String, _caller: Principal) -> Result<(), String> {
 
     // TODO: Check if user has already claimed the link
 
-    let url = link.image.unwrap();
+    let url = link.link_image_url.unwrap();
     let mine = "image/jpeg".to_string();
     let purpose = "icrc97:image".to_string();
 
