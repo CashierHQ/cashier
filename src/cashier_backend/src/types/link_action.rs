@@ -42,7 +42,7 @@ impl LinkAction {
     ) -> LinkAction {
         let (link_id, action_type_str, action_id) = link_action.split_pk();
 
-        let action_type = ActionType::from_string(&action_type_str);
+        let action_type = ActionType::from_string(&action_type_str).unwrap();
 
         LinkAction {
             link_id,
