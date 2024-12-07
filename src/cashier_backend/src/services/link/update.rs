@@ -3,7 +3,6 @@ use crate::{
     repositories::link_store,
     services::link::validate_active_link::{is_action_exist, is_valid_fields_before_active},
     types::link::{Link, LinkState},
-    utils::logger,
 };
 
 #[derive(Debug, Clone)]
@@ -98,20 +97,10 @@ pub fn handle_update_create_and_airdrop_nft(
         is_match_source && is_match_trigger
     });
 
-    logger::info(&format!(
-        "
-        current state: {:?}
-        input action: {:?}
-        state_machine_result: {:?}
-        ",
-        current_state, input.action, state_machine_result
-    ));
-
     match state_machine_result {
         Some(transition) => {
             (transition.validate)(link_input.clone())?;
 
-            logger::info(&format!("transition: {:?}", transition));
             // update state
             link_input.set("state", transition.dest.to_string());
 
@@ -131,16 +120,7 @@ pub fn handle_update_create_and_airdrop_nft(
             // update link to db
             link_store::update(link_input.to_persistence());
 
-            let link = link_store::get(link_input.get("id").unwrap().as_str());
-            match link {
-                Some(link) => {
-                    logger::info(&format!("updated link: {:?}", link));
-                    return Ok(Link::from_persistence(link));
-                }
-                None => {
-                    return Err("Link not found".to_string());
-                }
-            }
+            Ok(link_input)
         }
         None => Err("Invalid state transition".to_string()),
     }
