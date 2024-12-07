@@ -109,22 +109,22 @@ export default function HomePage() {
     }, []);
 
     // Create 2 first sample links for new user
-    useEffect(() => {
-        const initSampleLinks = async () => {
-            try {
-                setLoadingSampleLinks(true);
-                const linkService = new LinkService(identity);
-                await createSampleLink(linkService);
-            } catch (err) {
-                console.log(err);
-            } finally {
-                setLoadingSampleLinks(false);
-            }
-        };
-        if (linkData && Object.keys(linkData).length === 0 && appUser) {
-            initSampleLinks();
-        }
-    }, [linkData, newAppUser]);
+    // useEffect(() => {
+    //     const initSampleLinks = async () => {
+    //         try {
+    //             setLoadingSampleLinks(true);
+    //             const linkService = new LinkService(identity);
+    //             await createSampleLink(linkService);
+    //         } catch (err) {
+    //             console.log(err);
+    //         } finally {
+    //             setLoadingSampleLinks(false);
+    //         }
+    //     };
+    //     if (linkData && Object.keys(linkData).length === 0 && appUser) {
+    //         initSampleLinks();
+    //     }
+    // }, [linkData, newAppUser]);
 
     useEffect(() => {
         if (newAppUser) {
@@ -165,6 +165,7 @@ export default function HomePage() {
     }, [isUserLoading, isLinksLoading, isPending, isLoadingSampleLinks]);
 
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
+        console.log(links);
         if (links && Object.keys(links).length > 0) {
             return (
                 <div>
