@@ -9,7 +9,7 @@ export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: s
                 Update: {
                     params: [
                         {
-                            title: [""],
+                            title: ["213132"],
                             asset_info: [
                                 [
                                     {

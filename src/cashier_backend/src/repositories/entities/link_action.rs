@@ -4,7 +4,7 @@ use candid::{CandidType, Decode, Encode};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
-const _KEY_PATTERN: &str = "link#{}#type#{}action#{}";
+const _KEY_PATTERN: &str = "link#{}#type#{}#action#{}";
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkAction {
@@ -14,7 +14,7 @@ pub struct LinkAction {
 
 impl LinkAction {
     pub fn build_pk(link_id: String, action_type: String, action_id: String) -> String {
-        format!("link#{}#type#{}action#{}", link_id, action_type, action_id)
+        format!("link#{}#type#{}#action#{}", link_id, action_type, action_id)
     }
 
     pub fn new(link_id: String, action_type: String, action_id: String, ts: u64) -> Self {

@@ -4,6 +4,8 @@ import { createActor } from "../declarations/cashier_backend";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
 import { HttpAgent } from "@dfinity/agent";
 import { back, continueActive, continueUpdate } from "./updateLink";
+import { callCreateAction } from "./createAction";
+import { _SERVICE } from "../declarations/cashier_backend/cashier_backend.did";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const safeParseJSON = (arg: Record<string, unknown>): any => {
@@ -41,13 +43,7 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
     throw new Error("Invalid response");
 };
 
-const main = async () => {
-    const canisterId = process.env.CANISTER_ID_CASHIER_BACKEND;
-
-    if (!canisterId) {
-        console.error("CANISTER_ID_CASHIER_BACKEND is not set");
-        return;
-    }
+const initializeAgent = (canisterId: string) => {
     const identity = Secp256k1KeyIdentity.generate();
     const agent = HttpAgent.createSync({
         identity,
@@ -63,10 +59,10 @@ const main = async () => {
         });
     }
 
-    const backend = createActor(canisterId, {
-        agent,
-    });
+    return createActor(canisterId, { agent });
+};
 
+const createLink = async (backend: _SERVICE) => {
     await backend.create_user();
     const createLinkRes = await backend.create_link({
         link_type: {
@@ -74,8 +70,10 @@ const main = async () => {
         },
     });
 
-    const linkId = parseResultResponse(createLinkRes);
+    return parseResultResponse(createLinkRes);
+};
 
+const getLinks = async (backend: _SERVICE) => {
     const links = await backend.get_links([
         {
             offset: BigInt(0),
@@ -84,57 +82,83 @@ const main = async () => {
     ]);
 
     console.log("link", links);
-    await backend.get_user();
+    return links;
+};
 
-    // Update the link to preview
-    // new -> pending detail
+const updateLink = async (backend: _SERVICE, linkId: string) => {
     const res = await continueUpdate({
         backend,
         id: linkId,
     });
 
-    console.log("res", safeParseJSON(res));
+    console.log("updateLink res", safeParseJSON(res));
+    return res;
+};
 
+const updateActive = async (backend: _SERVICE, linkId: string) => {
+    const res = await continueActive({
+        backend,
+        id: linkId,
+    });
+
+    console.log("updateActive res", safeParseJSON(res));
+    return res;
+};
+
+const backLink = async (backend: _SERVICE, linkId: string) => {
     const back_res = await back({
         backend,
         id: linkId,
     });
 
     console.log("back_res", back_res);
+    return back_res;
+};
 
-    console.log(
-        safeParseJSON(
-            await backend.get_links([
-                {
-                    offset: BigInt(0),
-                    limit: BigInt(10),
-                },
-            ]),
-        ),
-    );
-
-    // pending detail -> preview
-    const res2 = await continueUpdate({
+const createAction = async (backend: _SERVICE, linkId: string) => {
+    const create_action_res = await callCreateAction({
         backend,
         id: linkId,
     });
 
-    console.log("res2", safeParseJSON(res2));
+    console.log("create_action_res", safeParseJSON(create_action_res));
+    return create_action_res;
+};
 
-    await continueUpdate({
-        backend,
-        id: linkId,
-    });
+const main = async () => {
+    const canisterId = process.env.CANISTER_ID_CASHIER_BACKEND;
 
-    console.log("res2", safeParseJSON(res2));
+    if (!canisterId) {
+        console.error("CANISTER_ID_CASHIER_BACKEND is not set");
+        return;
+    }
 
-    // Active the link
-    const active_link_res = await continueActive({
-        backend,
-        id: linkId,
-    });
+    const backend = initializeAgent(canisterId);
 
-    console.log("active_link_res", safeParseJSON(active_link_res));
+    const linkId = await createLink(backend);
+
+    await getLinks(backend);
+    await backend.get_user();
+
+    // Update the link to preview
+    await updateLink(backend, linkId);
+
+    // Add assets -> choose link type
+    await backLink(backend, linkId);
+
+    await getLinks(backend);
+
+    // Add assets -> create link
+    await updateLink(backend, linkId);
+
+    // Create link -> active (this should fail)
+    await updateLink(backend, linkId);
+
+    // Create link action
+    await createAction(backend, linkId);
+
+    // Create link -> active
+    await updateActive(backend, linkId);
 };
 
 main();

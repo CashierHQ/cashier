@@ -2,33 +2,30 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub enum ActionStatus {
+pub enum ActionState {
     Created,
     Processing,
     Success,
-    Failed,
-    Timeout,
+    Fail,
 }
 
-impl ActionStatus {
+impl ActionState {
     pub fn to_string(&self) -> String {
         match self {
-            ActionStatus::Created => "Created".to_string(),
-            ActionStatus::Processing => "Processing".to_string(),
-            ActionStatus::Success => "Success".to_string(),
-            ActionStatus::Failed => "Failed".to_string(),
-            ActionStatus::Timeout => "Timeout".to_string(),
+            ActionState::Created => "Action_state_created".to_string(),
+            ActionState::Processing => "Action_state_processing".to_string(),
+            ActionState::Success => "Action_state_success".to_string(),
+            ActionState::Fail => "Action_state_fail".to_string(),
         }
     }
 
-    pub fn from_string(status: &str) -> ActionStatus {
+    pub fn from_string(status: &str) -> Result<ActionState, String> {
         match status {
-            "Created" => ActionStatus::Created,
-            "Processing" => ActionStatus::Processing,
-            "Success" => ActionStatus::Success,
-            "Failed" => ActionStatus::Failed,
-            "Timeout" => ActionStatus::Timeout,
-            _ => ActionStatus::Created,
+            "Action_state_created" => Ok(ActionState::Created),
+            "Action_state_processing" => Ok(ActionState::Processing),
+            "Action_state_success" => Ok(ActionState::Success),
+            "Action_state_fail" => Ok(ActionState::Fail),
+            _ => Err("Invalid action state".to_string()),
         }
     }
 }
@@ -42,7 +39,6 @@ pub struct ClaimActionParams {
 
 pub enum CreateActionParams {
     Claim(ClaimActionParams),
-    None,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -62,20 +58,20 @@ impl ActionType {
         }
     }
 
-    pub fn from_string(action_type: &str) -> ActionType {
+    pub fn from_string(action_type: &str) -> Result<ActionType, String> {
         match action_type {
-            "Create" => ActionType::Create,
-            "Withdraw" => ActionType::Withdraw,
-            "Claim" => ActionType::Claim,
-            _ => ActionType::Create,
+            "Create" => Ok(ActionType::Create),
+            "Withdraw" => Ok(ActionType::Withdraw),
+            "Claim" => Ok(ActionType::Claim),
+            _ => Err("Invalid action type".to_string()),
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
-    pub action_type: ActionType,
-    pub params: CreateActionParams,
+    pub action_type: String,
+    pub params: Option<CreateActionParams>,
     pub link_id: String,
 }
 
