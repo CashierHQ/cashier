@@ -6,12 +6,12 @@ export enum TEMPLATE {
 
 export enum LINK_STATE {
     // allow edit
-    CHOOSETEMPLATE = "ChooseTemplate",
-    ADD_ASSET = "AddAsset",
-    CREATE_LINK = "CreateLink",
+    CHOOSETEMPLATE = "Link_state_choose_link_type",
+    ADD_ASSET = "Link_state_add_assets",
+    CREATE_LINK = "Link_state_create_link",
     // not allow edit
-    ACTIVE = "Active",
-    INACTIVE = "Inactive",
+    ACTIVE = "Link_state_active",
+    INACTIVE = "Link_state_inactive",
 }
 
 export enum LINK_TYPE {

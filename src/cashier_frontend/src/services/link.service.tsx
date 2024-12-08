@@ -5,6 +5,7 @@ import {
     CreateLinkInput,
     GetLinkResp,
     Link,
+    NftCreateAndAirdropLink,
     UpdateLinkInput,
     UpdateLinkInput as UpdateLinkInputModel,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
@@ -16,24 +17,6 @@ import {
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
 } from "./types/link.service.mapper";
-
-const parseLink = (getLinkResponse: GetLinkResp): LinkDetailModel => {
-    const link: Link = getLinkResponse.link;
-    return {
-        id: link.id,
-        title: link.title?.[0] ?? "",
-        description: link.description?.[0] ?? "",
-        amount: Number(link.asset_info?.[0]?.[0].amount) ?? 0,
-        image: link.image?.[0] ?? "",
-        link_type: link.link_type ? link.link_type[0] : undefined,
-        state: link.state ? link.state[0] : undefined,
-        template: link.template ? link.template[0] : undefined,
-        creator: link.creator ? link.creator[0] : undefined,
-        create_at: link.create_at[0]
-            ? convertNanoSecondsToDate(link.create_at[0])
-            : new Date("2024-10-01"),
-    };
-};
 
 interface ReponseLinksModel {
     data: LinkDetailModel[];
@@ -58,7 +41,6 @@ class LinkService {
                 },
             ]),
         );
-        console.log("🚀 ~ LinkService ~ getLinks ~ response:", response.data);
         let responseModel: ReponseLinksModel = {
             data: [],
             metadada: response.metadata,
@@ -69,13 +51,14 @@ class LinkService {
                   return MapLinkToLinkDetailModel(link);
               })
             : [];
+        console.log("🚀 ~ LinkService ~ getLinks ~ responseModel:", responseModel);
         return responseModel;
     }
 
     async getLink(linkId: string) {
         const response = parseResultResponse(await this.actor.get_link(linkId));
         console.log("🚀 ~ LinkService ~ getLink ~ response:", response);
-        return parseLink(response);
+        return MapLinkToLinkDetailModel(response.link);
     }
 
     async createLink(input: CreateLinkInput) {

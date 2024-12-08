@@ -15,8 +15,6 @@ export const sampleLink1: LinkDetailModel = {
     description:
         "I wanted to capture this special moment forever. And I’d like to share it with my closest of friends.",
     amount: 10,
-    chain: Chain.IC,
-    actions: [],
     state: State.PendingPreview,
     template: Template.Left,
     create_at: new Date(),

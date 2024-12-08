@@ -29,7 +29,8 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
                                 : [],
                             description: [linkDetailModel.description],
                             template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
-                            image: [linkDetailModel.image],
+                            nft_image: [linkDetailModel.image],
+                            link_image_url: ["Test"],
                         },
                     ],
                 },
@@ -39,29 +40,36 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
     return updateLinkInput;
 };
 
+// Map back-end 'Link' to Front-end model
 export const MapLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
+    const nftLink = link.NftCreateAndAirdropLink;
+    console.log("🚀 ~ MapLinkToLinkDetailModel ~ nftLink:", nftLink);
     return {
-        id: link.id,
-        title: link.title?.[0] ?? "",
-        description: link.description?.[0] ?? "",
-        image: link.image?.[0] ?? "",
-        link_type: link.link_type ? link.link_type[0] : undefined,
-        state: link.state ? link.state[0] : undefined,
-        template: link.template ? link.template[0] : undefined,
-        creator: link.creator ? link.creator[0] : undefined,
-        create_at: link.create_at[0]
-            ? convertNanoSecondsToDate(link.create_at[0])
+        id: nftLink.id,
+        title: nftLink.title?.[0] ?? "",
+        description: nftLink.description?.[0] ?? "",
+        image: nftLink.nft_image?.[0] ?? "",
+        link_type: nftLink.link_type ? nftLink.link_type[0] : undefined,
+        state: nftLink.state ? nftLink.state[0] : undefined,
+        template: nftLink.template ? nftLink.template[0] : undefined,
+        creator: nftLink.creator ? nftLink.creator[0] : undefined,
+        create_at: nftLink.create_at[0]
+            ? convertNanoSecondsToDate(nftLink.create_at[0])
             : new Date("2000-10-01"),
-        asset_info: link.asset_info ? link.asset_info[0] : null,
+        amount: nftLink.asset_info?.[0]?.[0].total_amount
+            ? Number(nftLink.asset_info?.[0]?.[0].total_amount)
+            : 0,
     };
 };
 
 // May need to update in future, now received 'amount' as param, others are constants
 const mapAssetInfo = (amount: number): AssetInfo => {
-    const asset: AssetInfoModel = {
+    return {
         address: "",
-        amount: BigInt(amount),
         chain: CHAIN.IC,
+        amount_per_claim: BigInt(0),
+        current_amount: BigInt(amount),
+        total_amount: BigInt(amount),
+        total_claim: BigInt(0),
     };
-    return asset;
 };
