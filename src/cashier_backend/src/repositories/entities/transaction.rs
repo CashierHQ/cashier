@@ -20,6 +20,10 @@ impl Transaction {
         format!("{}#{}", PK_PATTERN, id)
     }
 
+    pub fn split_pk(pk: &str) -> String {
+        pk.split('#').last().unwrap().to_string()
+    }
+
     pub fn new(
         id: String,
         canister_id: String,
