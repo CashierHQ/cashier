@@ -2,6 +2,7 @@ import { convertNanoSecondsToDate, groupLinkListByDate, parseResultResponse } fr
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
+    CreateActionInput,
     CreateLinkInput,
     GetLinkResp,
     Link,
@@ -12,14 +13,15 @@ import {
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
-import { LinkDetailModel } from "./types/link.service.types";
+import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
+    MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
-    MapLinkToLinkDetailModel,
+    MapNftLinkToLinkDetailModel,
 } from "./types/link.service.mapper";
 
 interface ReponseLinksModel {
-    data: LinkDetailModel[];
+    data: LinkModel[];
     metadada: any;
 }
 
@@ -48,17 +50,19 @@ class LinkService {
 
         responseModel.data = response.data
             ? response.data.map((link: Link) => {
-                  return MapLinkToLinkDetailModel(link);
+                  return {
+                      link: MapNftLinkToLinkDetailModel(link),
+                      action_create: undefined,
+                  };
               })
             : [];
-        console.log("🚀 ~ LinkService ~ getLinks ~ responseModel:", responseModel);
         return responseModel;
     }
 
     async getLink(linkId: string) {
         const response = parseResultResponse(await this.actor.get_link(linkId));
         console.log("🚀 ~ LinkService ~ getLink ~ response:", response);
-        return MapLinkToLinkDetailModel(response.link);
+        return MapLinkDetailModel(response);
     }
 
     async createLink(input: CreateLinkInput) {
@@ -67,15 +71,17 @@ class LinkService {
 
     async updateLink(linkId: string, data: LinkDetailModel, isContinue: boolean) {
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
-        console.log("🚀 ~ LinkService ~ updateLink ~ completeData:", completeData);
         const response = parseResultResponse(await this.actor.update_link(completeData));
-        console.log("🚀 ~ LinkService ~ updateLink ~ response:", response);
         return response;
     }
 
     async validateLink(): Promise<boolean> {
         // Mock function for validation
         return false;
+    }
+
+    async createAction(input: CreateActionInput) {
+        return parseResultResponse(await this.actor.create_action(input));
     }
 }
 

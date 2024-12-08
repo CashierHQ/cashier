@@ -165,7 +165,6 @@ export default function HomePage() {
     }, [isUserLoading, isLinksLoading, isPending, isLoadingSampleLinks]);
 
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
-        console.log(links);
         if (links && Object.keys(links).length > 0) {
             return (
                 <div>

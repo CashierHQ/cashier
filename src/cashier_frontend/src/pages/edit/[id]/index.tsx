@@ -21,6 +21,7 @@ import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { LINK_STATE } from "@/services/types/enum";
+import { CreateActionInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATE.CHOOSETEMPLATE,
@@ -62,7 +63,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = await new LinkService(identity).getLink(linkId);
+            const link = (await new LinkService(identity).getLink(linkId)).link;
             console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
                 const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
@@ -80,7 +81,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     }, [linkId, identity]);
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
-        console.log("🚀 ~ handleSubmitLinkTemplate ~ values:", values);
         if (!linkId) return;
         // if (!formData?.title || !isNameSetByUser) {
         //     values.name = values.title;
@@ -112,7 +112,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 },
                 isContinue: true,
             };
-            console.log("🚀 ~ handleSubmitLinkDetails ~ updateLinkParams:", updateLinkParams);
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
@@ -136,8 +135,16 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     },
                     isContinue: true,
                 };
-                await mutateAsync(updateLinkParams);
-                navigate(`/details/${linkId}`);
+                const createActionInout: CreateActionInput = {
+                    link_id: linkId,
+                    action_type: "Create",
+                    params: [],
+                };
+                const linkService = new LinkService(identity);
+                const result = await linkService.createAction(createActionInout);
+                console.log("🚀 ~ handleSubmit ~ result:", result);
+                //await mutateAsync(updateLinkParams);
+                //navigate(`/details/${linkId}`);
                 // setOpenConfirmationPopup(true);
             } else {
                 setToastData({

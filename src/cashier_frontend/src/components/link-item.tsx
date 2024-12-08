@@ -52,7 +52,6 @@ export function StateBadge({ state }: { state: any }) {
 }
 
 export default function LinkItem({ link }: { link: LinkDetailModel }) {
-    console.log(link);
     return (
         <div className="w-full flex justify-between items-center my-5">
             <div className="flex gap-x-5 items-center">
