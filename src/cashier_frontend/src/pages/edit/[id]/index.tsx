@@ -20,11 +20,12 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
+import { LINK_STATE } from "@/services/types/enum";
 
 const STEP_LINK_STATUS_ORDER = [
-    LINK_STATUS.NEW,
-    LINK_STATUS.PENDING_DETAIL,
-    LINK_STATUS.PENDING_PREVIEW,
+    LINK_STATE.CHOOSETEMPLATE,
+    LINK_STATE.ADD_ASSET,
+    LINK_STATE.CREATE_LINK,
 ];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
@@ -90,6 +91,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 ...formData,
                 title: values.title,
             },
+            isContinue: true,
         };
         mutate(updateLinkParams);
         if (updateLinkError) {
@@ -108,6 +110,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     ...formData,
                     ...values,
                 },
+                isContinue: true,
             };
             console.log("🚀 ~ handleSubmitLinkDetails ~ updateLinkParams:", updateLinkParams);
             mutate(updateLinkParams);
@@ -131,6 +134,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         ...formData,
                         ...values,
                     },
+                    isContinue: true,
                 };
                 await mutateAsync(updateLinkParams);
                 navigate(`/details/${linkId}`);
@@ -173,6 +177,25 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }, 3000);
     };
 
+    const handleBackstep = async () => {
+        if (!linkId) {
+            return;
+        }
+        try {
+            const updateLinkParams: UpdateLinkParams = {
+                linkId: linkId,
+                linkModel: {
+                    ...formData,
+                },
+                isContinue: false,
+            };
+
+            mutate(updateLinkParams);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     if (isRendering) return null;
 
     return (
@@ -190,6 +213,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     handleSubmit={handleSubmit}
                     handleBack={() => navigate("/")}
                     handleChange={handleChange}
+                    handleBackStep={handleBackstep}
                     isDisabled={isDisabled}
                 >
                     <MultiStepForm.Item

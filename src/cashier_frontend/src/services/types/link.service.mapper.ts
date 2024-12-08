@@ -13,11 +13,12 @@ const IS_USE_DEFAULT_LINK_TEMPLATE = true;
 export const MapLinkDetailModelToUpdateLinkInputModel = (
     linkId: string,
     linkDetailModel: LinkDetailModel,
+    isContinue: boolean,
 ): UpdateLinkInput => {
     console.log(linkDetailModel);
     const updateLinkInput: UpdateLinkInput = {
         id: linkId,
-        action: "Continue",
+        action: isContinue ? "Continue" : "Back",
         params: [
             {
                 Update: {
