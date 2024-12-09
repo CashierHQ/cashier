@@ -5,7 +5,6 @@ import {
     Template,
     UpdateLinkInput,
 } from "@/services/types/link.service.types";
-import { LinkDetail } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { base64SampleLinkImage1, base64SampleLinkImage2 } from "./base64Images";
 
 export const sampleLink1: LinkDetailModel = {
@@ -15,8 +14,6 @@ export const sampleLink1: LinkDetailModel = {
     description:
         "I wanted to capture this special moment forever. And I’d like to share it with my closest of friends.",
     amount: 10,
-    chain: Chain.IC,
-    actions: [],
     state: State.PendingPreview,
     template: Template.Left,
     create_at: new Date(),
@@ -29,9 +26,7 @@ export const sampleLink2: LinkDetailModel = {
     description:
         "Thank you for attending our coffee brewing workshop. Here is an NFT as a proof of your attendance.",
     amount: 20,
-    chain: Chain.IC,
     state: State.PendingPreview,
-    actions: [],
     template: Template.Left,
     create_at: new Date(),
 };
