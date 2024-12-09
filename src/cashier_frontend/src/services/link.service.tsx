@@ -2,41 +2,26 @@ import { convertNanoSecondsToDate, groupLinkListByDate, parseResultResponse } fr
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
+    CreateActionInput,
     CreateLinkInput,
     GetLinkResp,
     Link,
+    NftCreateAndAirdropLink,
     UpdateLinkInput,
     UpdateLinkInput as UpdateLinkInputModel,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
-import { LinkDetailModel } from "./types/link.service.types";
+import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
+    MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
-    MapLinkToLinkDetailModel,
+    MapNftLinkToLinkDetailModel,
 } from "./types/link.service.mapper";
 
-const parseLink = (getLinkResponse: GetLinkResp): LinkDetailModel => {
-    const link: Link = getLinkResponse.link;
-    return {
-        id: link.id,
-        title: link.title?.[0] ?? "",
-        description: link.description?.[0] ?? "",
-        amount: Number(link.asset_info?.[0]?.[0].amount) ?? 0,
-        image: link.image?.[0] ?? "",
-        link_type: link.link_type ? link.link_type[0] : undefined,
-        state: link.state ? link.state[0] : undefined,
-        template: link.template ? link.template[0] : undefined,
-        creator: link.creator ? link.creator[0] : undefined,
-        create_at: link.create_at[0]
-            ? convertNanoSecondsToDate(link.create_at[0])
-            : new Date("2024-10-01"),
-    };
-};
-
 interface ReponseLinksModel {
-    data: LinkDetailModel[];
+    data: LinkModel[];
     metadada: any;
 }
 
@@ -58,7 +43,6 @@ class LinkService {
                 },
             ]),
         );
-        console.log("🚀 ~ LinkService ~ getLinks ~ response:", response.data);
         let responseModel: ReponseLinksModel = {
             data: [],
             metadada: response.metadata,
@@ -66,7 +50,10 @@ class LinkService {
 
         responseModel.data = response.data
             ? response.data.map((link: Link) => {
-                  return MapLinkToLinkDetailModel(link);
+                  return {
+                      link: MapNftLinkToLinkDetailModel(link),
+                      action_create: undefined,
+                  };
               })
             : [];
         return responseModel;
@@ -75,24 +62,26 @@ class LinkService {
     async getLink(linkId: string) {
         const response = parseResultResponse(await this.actor.get_link(linkId));
         console.log("🚀 ~ LinkService ~ getLink ~ response:", response);
-        return parseLink(response);
+        return MapLinkDetailModel(response);
     }
 
     async createLink(input: CreateLinkInput) {
         return parseResultResponse(await this.actor.create_link(input));
     }
 
-    async updateLink(linkId: string, data: LinkDetailModel) {
-        const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data);
-        console.log("🚀 ~ LinkService ~ updateLink ~ completeData:", completeData);
+    async updateLink(linkId: string, data: LinkDetailModel, isContinue: boolean) {
+        const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
         const response = parseResultResponse(await this.actor.update_link(completeData));
-        console.log("🚀 ~ LinkService ~ updateLink ~ response:", response);
         return response;
     }
 
     async validateLink(): Promise<boolean> {
         // Mock function for validation
         return false;
+    }
+
+    async createAction(input: CreateActionInput) {
+        return parseResultResponse(await this.actor.create_action(input));
     }
 }
 

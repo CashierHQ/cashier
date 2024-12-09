@@ -1,4 +1,5 @@
 import { AssetInfo } from "../../../../declarations/cashier_backend/cashier_backend.did";
+import { ActionCreateModel } from "./action.service.types";
 
 export enum State {
     New = "New",
@@ -60,6 +61,11 @@ export type LinkDetailModel = {
     creator?: string;
     create_at: Date;
     amount: number;
+};
+
+export type LinkModel = {
+    link: LinkDetailModel;
+    action_create?: ActionCreateModel;
 };
 
 export type TipLinkModel = {

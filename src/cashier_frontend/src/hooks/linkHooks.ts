@@ -9,6 +9,7 @@ import { Link } from "../../../declarations/cashier_backend/cashier_backend.did"
 export interface UpdateLinkParams {
     linkId: string;
     linkModel: LinkDetailModel;
+    isContinue: boolean;
 }
 
 export const useUpdateLink = (
@@ -18,7 +19,7 @@ export const useUpdateLink = (
     useMutation({
         mutationFn: (data: UpdateLinkParams) => {
             const linkService = new LinkService(identity);
-            return linkService.updateLink(data.linkId, data.linkModel);
+            return linkService.updateLink(data.linkId, data.linkModel, data.isContinue);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: queryKeys.links.list(identity).queryKey });

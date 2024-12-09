@@ -20,11 +20,13 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
+import { LINK_STATE } from "@/services/types/enum";
+import { CreateActionInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 
 const STEP_LINK_STATUS_ORDER = [
-    LINK_STATUS.NEW,
-    LINK_STATUS.PENDING_DETAIL,
-    LINK_STATUS.PENDING_PREVIEW,
+    LINK_STATE.CHOOSETEMPLATE,
+    LINK_STATE.ADD_ASSET,
+    LINK_STATE.CREATE_LINK,
 ];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
@@ -61,7 +63,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = await new LinkService(identity).getLink(linkId);
+            const linkObj = await new LinkService(identity).getLink(linkId);
+            const { link, action_create } = linkObj;
             console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
                 const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
@@ -79,7 +82,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     }, [linkId, identity]);
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
-        console.log("🚀 ~ handleSubmitLinkTemplate ~ values:", values);
         if (!linkId) return;
         // if (!formData?.title || !isNameSetByUser) {
         //     values.name = values.title;
@@ -90,6 +92,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 ...formData,
                 title: values.title,
             },
+            isContinue: true,
         };
         mutate(updateLinkParams);
         if (updateLinkError) {
@@ -108,8 +111,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     ...formData,
                     ...values,
                 },
+                isContinue: true,
             };
-            console.log("🚀 ~ handleSubmitLinkDetails ~ updateLinkParams:", updateLinkParams);
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
@@ -131,9 +134,18 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         ...formData,
                         ...values,
                     },
+                    isContinue: true,
                 };
-                await mutateAsync(updateLinkParams);
-                navigate(`/details/${linkId}`);
+                const createActionInout: CreateActionInput = {
+                    link_id: linkId,
+                    action_type: "Create",
+                    params: [],
+                };
+                const linkService = new LinkService(identity);
+                const result = await linkService.createAction(createActionInout);
+                console.log("🚀 ~ handleSubmit ~ result:", result);
+                //await mutateAsync(updateLinkParams);
+                //navigate(`/details/${linkId}`);
                 // setOpenConfirmationPopup(true);
             } else {
                 setToastData({
@@ -173,6 +185,25 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }, 3000);
     };
 
+    const handleBackstep = async () => {
+        if (!linkId) {
+            return;
+        }
+        try {
+            const updateLinkParams: UpdateLinkParams = {
+                linkId: linkId,
+                linkModel: {
+                    ...formData,
+                },
+                isContinue: false,
+            };
+
+            mutate(updateLinkParams);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     if (isRendering) return null;
 
     return (
@@ -190,6 +221,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     handleSubmit={handleSubmit}
                     handleBack={() => navigate("/")}
                     handleChange={handleChange}
+                    handleBackStep={handleBackstep}
                     isDisabled={isDisabled}
                 >
                     <MultiStepForm.Item
