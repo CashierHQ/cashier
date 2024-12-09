@@ -50,38 +50,6 @@ export default function HomePage() {
     const navigate = useNavigate();
     const responsive = useResponsive();
 
-    const createSingleLink = async (linkInput: LinkDetailModel, linkService: LinkService) => {
-        // First create link ID
-        let initLinkId: string = await linkService.createLink({
-            link_type: { NftCreateAndAirdrop: null },
-        });
-        if (initLinkId) {
-            const updatedLinkParam: UpdateLinkParams = {
-                linkId: initLinkId,
-                linkModel: linkInput,
-            };
-            await mutateAsync(updatedLinkParam);
-            linkInput = {
-                ...linkInput,
-                state: State.Active,
-            };
-            const updatedLinkParamActive: UpdateLinkParams = {
-                linkId: initLinkId,
-                linkModel: linkInput,
-            };
-            await mutateAsync(updatedLinkParamActive);
-        }
-    };
-
-    const createSampleLink = async (linkService: LinkService) => {
-        try {
-            await createSingleLink(sampleLink1, linkService);
-            await createSingleLink(sampleLink2, linkService);
-        } catch (err) {
-            console.log(err);
-        }
-    };
-
     const connectToWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();

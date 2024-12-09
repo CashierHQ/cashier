@@ -63,7 +63,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = (await new LinkService(identity).getLink(linkId)).link;
+            const linkObj = await new LinkService(identity).getLink(linkId);
+            const { link, action_create } = linkObj;
             console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
                 const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
