@@ -62,7 +62,7 @@ const initializeAgent = (canisterId: string) => {
     return createActor(canisterId, { agent });
 };
 
-const createLink = async (backend: _SERVICE) => {
+const createUserAndLink = async (backend: _SERVICE) => {
     await backend.create_user();
     const createLinkRes = await backend.create_link({
         link_type: {
@@ -83,6 +83,13 @@ const getLinks = async (backend: _SERVICE) => {
 
     console.log("link", links);
     return links;
+};
+
+const getLink = async (backend: _SERVICE, linkId: string) => {
+    const link = await backend.get_link(linkId);
+
+    console.log("link", link);
+    return link;
 };
 
 const updateLink = async (backend: _SERVICE, linkId: string) => {
@@ -135,7 +142,7 @@ const main = async () => {
 
     const backend = initializeAgent(canisterId);
 
-    const linkId = await createLink(backend);
+    const linkId = await createUserAndLink(backend);
 
     await getLinks(backend);
     await backend.get_user();
@@ -146,16 +153,19 @@ const main = async () => {
     // Add assets -> choose link type
     await backLink(backend, linkId);
 
-    await getLinks(backend);
-
-    // Add assets -> create link
+    // choose link type -> Add assets
     await updateLink(backend, linkId);
 
-    // Create link -> active (this should fail)
+    // Add assets -> Create link
+    await updateLink(backend, linkId);
+
+    console.log("=====================================");
     await updateLink(backend, linkId);
 
     // Create link action
     await createAction(backend, linkId);
+
+    await getLink(backend, linkId);
 
     // Create link -> active
     await updateActive(backend, linkId);

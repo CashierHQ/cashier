@@ -5,6 +5,7 @@ use entities::action_transaction::ActionTransaction;
 use entities::link::Link;
 use entities::link_action::LinkAction;
 use entities::transaction::Transaction;
+use entities::user_action::UserAction;
 use entities::user_link::UserLink;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
@@ -15,6 +16,7 @@ pub mod entities;
 pub mod link_action_store;
 pub mod link_store;
 pub mod transaction_store;
+pub mod user_action_store;
 pub mod user_link_store;
 pub mod user_store;
 pub mod user_wallet_store;
@@ -28,6 +30,7 @@ const ACTION_MEMORY_ID: MemoryId = MemoryId::new(5);
 const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(6);
 const ACTION_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(7);
 const LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(8);
+const USER_ACTION_MEMORY_ID: MemoryId = MemoryId::new(9);
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -114,6 +117,16 @@ thread_local! {
         )
     );
 
+    static USER_ACTION_STORE: RefCell<StableBTreeMap<
+        String,
+        UserAction,
+        Memory
+        >> = RefCell::new(
+            StableBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)),
+            )
+        );
+
 
 }
 
@@ -161,5 +174,10 @@ pub fn load() {
     LINK_ACTION_STORE.with(|t| {
         *t.borrow_mut() =
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_ACTION_MEMORY_ID)));
+    });
+
+    USER_ACTION_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)));
     });
 }

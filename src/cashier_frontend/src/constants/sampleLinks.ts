@@ -20,9 +20,7 @@ export const sampleLink2 = {
     description:
         "Thank you for attending our coffee brewing workshop. Here is an NFT as a proof of your attendance.",
     amount: 20,
-    chain: Chain.IC,
     state: State.PendingPreview,
-    actions: [],
     template: Template.Left,
     create_at: new Date(),
 };
