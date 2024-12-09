@@ -85,6 +85,13 @@ const getLinks = async (backend: _SERVICE) => {
     return links;
 };
 
+const getLink = async (backend: _SERVICE, linkId: string) => {
+    const link = await backend.get_link(linkId);
+
+    console.log("link", link);
+    return link;
+};
+
 const updateLink = async (backend: _SERVICE, linkId: string) => {
     const res = await continueUpdate({
         backend,
@@ -146,16 +153,19 @@ const main = async () => {
     // Add assets -> choose link type
     await backLink(backend, linkId);
 
-    await getLinks(backend);
-
-    // Add assets -> create link
+    // choose link type -> Add assets
     await updateLink(backend, linkId);
 
-    // Create link -> active (this should fail)
+    // Add assets -> Create link
+    await updateLink(backend, linkId);
+
+    console.log("=====================================");
     await updateLink(backend, linkId);
 
     // Create link action
     await createAction(backend, linkId);
+
+    await getLink(backend, linkId);
 
     // Create link -> active
     await updateActive(backend, linkId);

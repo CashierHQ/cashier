@@ -1,4 +1,6 @@
 use uuid::Uuid;
+pub mod create_example_link;
+pub mod example_data;
 pub mod update;
 pub mod validate_active_link;
 
@@ -35,7 +37,7 @@ pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, Str
     let new_user_link = UserLink::new(user_id, link_id_str.clone(), ts);
 
     let new_link_persistence = new_link.to_persistence();
-    let new_user_link_persistence = new_user_link.to_persistent();
+    let new_user_link_persistence = new_user_link.to_persistence();
 
     link_store::create(new_link_persistence);
     user_link_store::create(new_user_link_persistence);
@@ -92,9 +94,15 @@ pub fn get_link_by_id(id: String) -> Option<GetLinkResp> {
         None => return None,
     };
 
-    let link_action_prefix = format!("link#{}#type#{}action#", id, ActionType::Create.to_string());
+    let link_action_prefix = format!(
+        "link#{}#type#{}#action#",
+        id,
+        ActionType::Create.to_string()
+    );
 
     let link_action_create = link_action_store::find_with_prefix(link_action_prefix.as_str());
+
+    logger::info(&format!("link_action_create: {:?}", link_action_create));
 
     if link_action_create.is_empty() {
         return Some(GetLinkResp {

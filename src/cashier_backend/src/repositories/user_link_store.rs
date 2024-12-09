@@ -9,6 +9,16 @@ pub fn create(user_link: UserLink) {
     });
 }
 
+pub fn batch_create(user_links: Vec<UserLink>) {
+    USER_LINK_STORE.with(|store| {
+        let mut store = store.borrow_mut();
+        for user_link in user_links {
+            let pk = user_link.pk.clone();
+            store.insert(pk, user_link);
+        }
+    });
+}
+
 pub fn get(id: &str) -> Option<UserLink> {
     USER_LINK_STORE.with(|store| store.borrow().get(&id.to_string()))
 }
