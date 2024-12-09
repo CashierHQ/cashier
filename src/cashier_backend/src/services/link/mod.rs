@@ -94,9 +94,15 @@ pub fn get_link_by_id(id: String) -> Option<GetLinkResp> {
         None => return None,
     };
 
-    let link_action_prefix = format!("link#{}#type#{}action#", id, ActionType::Create.to_string());
+    let link_action_prefix = format!(
+        "link#{}#type#{}#action#",
+        id,
+        ActionType::Create.to_string()
+    );
 
     let link_action_create = link_action_store::find_with_prefix(link_action_prefix.as_str());
+
+    logger::info(&format!("link_action_create: {:?}", link_action_create));
 
     if link_action_create.is_empty() {
         return Some(GetLinkResp {
