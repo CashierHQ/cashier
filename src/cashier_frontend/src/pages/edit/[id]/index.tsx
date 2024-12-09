@@ -22,6 +22,7 @@ import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { LINK_STATE } from "@/services/types/enum";
 import { CreateActionInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
+import { ActionCreateModel } from "@/services/types/action.service.types";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATE.CHOOSETEMPLATE,
@@ -49,6 +50,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [isRendering, setRendering] = useState(true);
     const [disabledConfirmButton, setDisabledConfirmButton] = useState(false);
     const [popupButton, setPopupButton] = useState("");
+    const [actionCreate, setActionCreate] = useState<ActionCreateModel>();
 
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -72,6 +74,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 setIsNameSetByUser(true);
                 setRendering(false);
                 setCurrentStep(step >= 0 ? step : 0);
+            }
+            if (action_create) {
+                setActionCreate(action_create);
             }
         };
         try {
@@ -223,6 +228,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     handleChange={handleChange}
                     handleBackStep={handleBackstep}
                     isDisabled={isDisabled}
+                    actionCreate={actionCreate}
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}

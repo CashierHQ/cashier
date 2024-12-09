@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Children, FunctionComponent, ReactElement, useState } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
+import { ActionCreateModel } from "@/services/types/action.service.types";
 export interface ParitalFormProps<T> {
     handleSubmit: (values: T) => any;
     handleChange: (e: any) => any;
@@ -17,6 +18,7 @@ interface MultiStepFormProps<T extends Object> {
     handleBack?: () => any;
     handleChange: (e: any) => any;
     isDisabled: boolean;
+    actionCreate: ActionCreateModel | undefined;
 }
 
 interface ItemProp {
@@ -35,6 +37,7 @@ export default function MultiStepForm<T extends Object>({
     handleBack,
     handleChange,
     isDisabled,
+    actionCreate,
 }: MultiStepFormProps<T>) {
     const partialForms = Children.toArray(children) as ReactElement<ItemProp>[];
     const [currentStep, setCurrentStep] = useState(initialStep);
@@ -48,13 +51,15 @@ export default function MultiStepForm<T extends Object>({
         }
     };
 
+    console.log(!!actionCreate);
+
     return (
         <div className="w-full flex flex-col items-center">
             <div className="w-full flex items-center justify-center mb-3 relative">
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {partialForms[currentStep].props.name}
                 </h4>
-                {currentStep || (!currentStep && handleBack) ? (
+                {!actionCreate && (currentStep || (!currentStep && handleBack)) ? (
                     <div
                         className="absolute left-1 cursor-pointer text-[1.5rem]"
                         onClick={handleClickBack}
