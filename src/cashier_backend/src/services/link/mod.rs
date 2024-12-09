@@ -1,4 +1,6 @@
 use uuid::Uuid;
+pub mod create_example_link;
+pub mod example_data;
 pub mod update;
 pub mod validate_active_link;
 
@@ -35,7 +37,7 @@ pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, Str
     let new_user_link = UserLink::new(user_id, link_id_str.clone(), ts);
 
     let new_link_persistence = new_link.to_persistence();
-    let new_user_link_persistence = new_user_link.to_persistent();
+    let new_user_link_persistence = new_user_link.to_persistence();
 
     link_store::create(new_link_persistence);
     user_link_store::create(new_user_link_persistence);

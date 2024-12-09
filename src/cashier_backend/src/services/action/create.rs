@@ -3,6 +3,7 @@ use uuid::Uuid;
 use crate::{
     repositories::{
         action_store, action_transaction_store, link_action_store, link_store, transaction_store,
+        user_wallet_store,
     },
     services::link::is_link_creator,
     types::{
@@ -21,6 +22,11 @@ pub fn create(action: CreateActionInput) -> Result<Action, String> {
         Some(_) => return Err("You are not the creator of this link".to_string()),
         None => return Err("Link not found".to_string()),
     }
+    let user_id = match user_wallet_store::get(&caller.to_text()) {
+        Some(user_id) => user_id,
+        None => return Err("User not found".to_string()),
+    };
+
     let action_type = ActionType::from_string(&action.action_type)?;
     let id: Uuid = Uuid::new_v4();
     let link_id = action.link_id.clone();
@@ -28,7 +34,7 @@ pub fn create(action: CreateActionInput) -> Result<Action, String> {
 
     let new_action = Action::new(
         id.to_string(),
-        caller.to_text(),
+        user_id,
         action.link_id,
         ActionState::Created.to_string(),
         action_type.to_string(),

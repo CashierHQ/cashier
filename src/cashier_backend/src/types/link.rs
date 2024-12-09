@@ -144,6 +144,36 @@ pub struct NftCreateAndAirdropLink {
     pub nft_image: Option<String>,
 }
 
+impl NftCreateAndAirdropLink {
+    pub fn new(
+        id: String,
+        title: Option<String>,
+        description: Option<String>,
+        link_type: Option<String>,
+        asset_info: Option<Vec<AssetInfo>>,
+        template: Option<String>,
+        state: Option<String>,
+        creator: Option<String>,
+        create_at: Option<u64>,
+        link_image_url: Option<String>,
+        nft_image: Option<String>,
+    ) -> Self {
+        NftCreateAndAirdropLink {
+            id,
+            title,
+            description,
+            link_type,
+            asset_info,
+            template,
+            state,
+            creator,
+            create_at,
+            link_image_url,
+            nft_image,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub enum Link {
     NftCreateAndAirdropLink(NftCreateAndAirdropLink),
