@@ -43,4 +43,4 @@ fi
 
 # Run dfx deploy
 
-dfx deploy $package $network
+dfx deploy $package $network --identity cashier-dev
