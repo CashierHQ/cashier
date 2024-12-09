@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
-import { LinkDetailModel } from "@/services/types/link.service.types";
+import { LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
 
 export const ClaimSchema = z.object({
@@ -30,7 +30,8 @@ export default function ClaimPage() {
     useEffect(() => {
         if (!linkId) return;
         const fetchData = async () => {
-            const link = await new LinkService().getLink(linkId);
+            const linkObj = await new LinkService().getLink(linkId);
+            const link = linkObj.link;
             setFormData(link);
             form.setValue("token", link.title);
             form.setValue("amount", defaultClaimingAmount);

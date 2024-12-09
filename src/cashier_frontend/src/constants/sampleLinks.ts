@@ -1,13 +1,7 @@
-import {
-    Chain,
-    LinkDetailModel,
-    State,
-    Template,
-    UpdateLinkInput,
-} from "@/services/types/link.service.types";
+import { Chain, State, Template } from "@/services/types/link.service.types";
 import { base64SampleLinkImage1, base64SampleLinkImage2 } from "./base64Images";
 
-export const sampleLink1: LinkDetailModel = {
+export const sampleLink1 = {
     id: "",
     title: "Example 1: Special moments",
     image: base64SampleLinkImage1,
@@ -19,7 +13,7 @@ export const sampleLink1: LinkDetailModel = {
     create_at: new Date(),
 };
 
-export const sampleLink2: LinkDetailModel = {
+export const sampleLink2 = {
     id: "",
     title: "Example 2: Proof of attendance",
     image: base64SampleLinkImage2,

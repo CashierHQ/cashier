@@ -13,13 +13,14 @@ interface MultiStepFormProps<T extends Object> {
     formData: T;
     children: ReactElement<ItemProp> | ReactElement<ItemProp>[];
     handleSubmit: (values: T) => any;
+    handleBackStep: () => Promise<void>;
     handleBack?: () => any;
     handleChange: (e: any) => any;
     isDisabled: boolean;
 }
 
 interface ItemProp {
-    handleSubmit: (values: any) => Promise<any>;
+    handleSubmit: (values: any) => Promise<void>;
     isDisabled: boolean;
     name: string;
     render: (props: ParitalFormProps<any>) => ReactElement<ParitalFormProps<any>>;
@@ -29,6 +30,7 @@ export default function MultiStepForm<T extends Object>({
     initialStep = 0,
     formData,
     handleSubmit: handleFinish,
+    handleBackStep,
     children,
     handleBack,
     handleChange,
@@ -36,6 +38,15 @@ export default function MultiStepForm<T extends Object>({
 }: MultiStepFormProps<T>) {
     const partialForms = Children.toArray(children) as ReactElement<ItemProp>[];
     const [currentStep, setCurrentStep] = useState(initialStep);
+
+    const handleClickBack = async () => {
+        if (!currentStep && handleBack) {
+            handleBack();
+        } else {
+            await handleBackStep();
+            setCurrentStep(currentStep - 1);
+        }
+    };
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -46,10 +57,7 @@ export default function MultiStepForm<T extends Object>({
                 {currentStep || (!currentStep && handleBack) ? (
                     <div
                         className="absolute left-1 cursor-pointer text-[1.5rem]"
-                        onClick={() => {
-                            if (!currentStep && handleBack) handleBack();
-                            else setCurrentStep(currentStep - 1);
-                        }}
+                        onClick={handleClickBack}
                     >
                         <ChevronLeftIcon width={25} height={25} />
                     </div>
@@ -73,7 +81,7 @@ export default function MultiStepForm<T extends Object>({
                         handleChange: handleChange,
                         handleSubmit: async (values: any) => {
                             try {
-                                const result = await partialForm.props.handleSubmit(values);
+                                await partialForm.props.handleSubmit(values);
                                 if (index == partialForms.length - 1)
                                     handleFinish({ ...formData, ...values });
                                 else {
