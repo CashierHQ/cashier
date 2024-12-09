@@ -62,7 +62,7 @@ const initializeAgent = (canisterId: string) => {
     return createActor(canisterId, { agent });
 };
 
-const createLink = async (backend: _SERVICE) => {
+const createUserAndLink = async (backend: _SERVICE) => {
     await backend.create_user();
     const createLinkRes = await backend.create_link({
         link_type: {
@@ -142,7 +142,7 @@ const main = async () => {
 
     const backend = initializeAgent(canisterId);
 
-    const linkId = await createLink(backend);
+    const linkId = await createUserAndLink(backend);
 
     await getLinks(backend);
     await backend.get_user();
