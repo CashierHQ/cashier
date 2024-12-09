@@ -7,6 +7,16 @@ pub fn create(link: Link) {
     });
 }
 
+pub fn batch_create(links: Vec<Link>) {
+    LINK_STORE.with(|store| {
+        let mut store = store.borrow_mut();
+        for link in links {
+            let pk: String = link.pk.clone();
+            store.insert(pk, link);
+        }
+    });
+}
+
 pub fn get(id: &str) -> Option<Link> {
     let pk = Link::build_pk(id.to_string());
     LINK_STORE.with(|store| store.borrow().get(&pk.to_string()))
