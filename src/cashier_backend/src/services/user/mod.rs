@@ -3,7 +3,10 @@ use uuid::Uuid;
 use crate::{
     repositories::{user_store, user_wallet_store},
     types::user::User,
+    utils::logger,
 };
+
+use super::link::create_example_link::create_example_link;
 
 pub fn create_new() -> Result<User, String> {
     if is_existed() {
@@ -18,7 +21,15 @@ pub fn create_new() -> Result<User, String> {
     let user = User::new(id_str.clone(), None, caller.to_string());
 
     user_store::create(user.to_persistence());
-    user_wallet_store::create(caller.to_string(), id_str);
+    user_wallet_store::create(caller.to_string(), id_str.clone());
+
+    // ignore if failed
+    match create_example_link(id_str.clone()) {
+        Ok(_) => (),
+        Err(_) => {
+            logger::error("Failed to create example link");
+        }
+    }
 
     Ok(user)
 }

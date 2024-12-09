@@ -1,5 +1,3 @@
-use crate::utils::logger;
-
 use super::{entities::link_action::LinkAction, LINK_ACTION_STORE};
 
 pub fn create(link_action: LinkAction) -> LinkAction {
