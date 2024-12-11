@@ -5,15 +5,13 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LinkItem from "@/components/link-item";
 import { Skeleton } from "@/components/ui/skeleton";
-import { IoSearch } from "react-icons/io5";
 import LinkService from "@/services/link.service";
 import { Button } from "@/components/ui/button";
-import { sampleLink1, sampleLink2 } from "@/constants/sampleLinks";
 import { LinkDetailModel, State } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
+import { useUpdateLink } from "@/hooks/linkHooks";
 import UserService from "@/services/user.service";
 import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
@@ -42,11 +40,10 @@ export default function HomePage() {
         enabled: !!appUser,
     });
     const queryClient = useQueryClient();
-    const { mutateAsync, isPending } = useUpdateLink(queryClient, identity);
+    const { isPending } = useUpdateLink(queryClient, identity);
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [isLoadingSampleLinks, setLoadingSampleLinks] = useState(false);
     const navigate = useNavigate();
     const responsive = useResponsive();
 
@@ -125,12 +122,12 @@ export default function HomePage() {
     }, [identity, appUser, loadUserError]);
 
     useEffect(() => {
-        if (isUserLoading || isLinksLoading || isPending || isLoadingSampleLinks) {
+        if (isUserLoading || isLinksLoading || isPending) {
             setIsLoading(true);
         } else {
             setIsLoading(false);
         }
-    }, [isUserLoading, isLinksLoading, isPending, isLoadingSampleLinks]);
+    }, [isUserLoading, isLinksLoading, isPending]);
 
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {

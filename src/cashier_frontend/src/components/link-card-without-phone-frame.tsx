@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils";
 
 export default function LinkCardWithoutPhoneFrame({
     src,
-    header,
     title,
     message,
     label,

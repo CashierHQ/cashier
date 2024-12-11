@@ -1,10 +1,9 @@
-import { Button } from "@/components/ui/button";
 import { Children, FunctionComponent, ReactElement, useState } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { ActionCreateModel } from "@/services/types/action.service.types";
 export interface ParitalFormProps<T> {
-    handleSubmit: (values: T) => any;
-    handleChange: (e: any) => any;
+    handleSubmit: (values: T) => void;
+    handleChange: (e: any) => void;
     isDisabled: boolean;
     defaultValues: Partial<T>;
 }
@@ -13,10 +12,10 @@ interface MultiStepFormProps<T extends Object> {
     initialStep: number;
     formData: T;
     children: ReactElement<ItemProp> | ReactElement<ItemProp>[];
-    handleSubmit: (values: T) => any;
+    handleSubmit: (values: T) => void;
     handleBackStep: () => Promise<void>;
-    handleBack?: () => any;
-    handleChange: (e: any) => any;
+    handleBack?: () => void;
+    handleChange: (e: any) => void;
     isDisabled: boolean;
     actionCreate: ActionCreateModel | undefined;
 }
@@ -50,8 +49,6 @@ export default function MultiStepForm<T extends Object>({
             setCurrentStep(currentStep - 1);
         }
     };
-
-    console.log(!!actionCreate);
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -87,9 +84,7 @@ export default function MultiStepForm<T extends Object>({
                         handleSubmit: async (values: any) => {
                             try {
                                 await partialForm.props.handleSubmit(values);
-                                if (index == partialForms.length - 1)
-                                    handleFinish({ ...formData, ...values });
-                                else {
+                                if (index != partialForms.length - 1) {
                                     setCurrentStep(index + 1);
                                 }
                             } catch (err) {

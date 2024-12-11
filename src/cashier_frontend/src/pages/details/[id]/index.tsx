@@ -16,9 +16,10 @@ import copy from "copy-to-clipboard";
 import LinkService from "@/services/link.service";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import QRCode from "react-qr-code";
+import { LinkModel } from "@/services/types/link.service.types";
 
 export default function DetailPage() {
-    const [linkData, setLinkData] = React.useState<any>({});
+    const [linkData, setLinkData] = React.useState<LinkModel>({} as LinkModel);
     const { linkId } = useParams();
     const { identity } = useIdentityKit();
     const { toast } = useToast();
@@ -59,12 +60,12 @@ export default function DetailPage() {
                             <ChevronLeftIcon width={25} height={25} />
                         </div>
                         <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center mx-auto">
-                            {linkData?.title}
+                            {linkData?.link?.title}
                         </h4>
                     </div>
                     <div id="qr-code-section" className="flex flex-col">
                         <div className="flex items-center justify-center grow">
-                            <StateBadge state={linkData?.state} />
+                            <StateBadge state={linkData?.link?.state} />
                         </div>
                         <div className="flex items-center justify-center grow mt-3">
                             <QRCode
@@ -90,9 +91,7 @@ export default function DetailPage() {
                                     <TableCell className="font-medium px-5">Chain</TableCell>
                                     <TableCell></TableCell>
                                     <TableCell></TableCell>
-                                    <TableCell className="text-right px-5">
-                                        {linkData?.chain}
-                                    </TableCell>
+                                    <TableCell className="text-right px-5">ICP</TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium px-5">Token</TableCell>
@@ -107,7 +106,7 @@ export default function DetailPage() {
                                     <TableCell></TableCell>
                                     <TableCell></TableCell>
                                     <TableCell className="text-right px-5">
-                                        {linkData?.amount}
+                                        {linkData?.link?.amount}
                                     </TableCell>
                                 </TableRow>
                             </TableBody>

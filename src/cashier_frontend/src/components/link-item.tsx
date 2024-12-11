@@ -2,14 +2,7 @@ import { LINK_STATUS } from "@/constants/otherConst";
 import { LINK_STATE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
-interface LinkData {
-    title: string;
-    status: string;
-    image: string;
-    state: any;
-}
-
-export function StateBadge({ state }: { state: any }) {
+export function StateBadge({ state }: { state: string | undefined }) {
     if (state === LINK_STATE.ADD_ASSET) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightyellow text-yellow">

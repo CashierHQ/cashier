@@ -1,9 +1,8 @@
 import { MediaQuery } from "@/hooks/responsive-hook";
 import { UIResponsiveType } from "@/pages/edit/[id]/index_responsive";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { string } from "zod";
 
-export const safeParseJSON = (arg: Record<string, unknown>): any => {
+export const safeParseJSON = (arg: Record<string, unknown>): string => {
     return JSON.stringify(arg, (key, value) =>
         typeof value === "bigint" ? value.toString() : value,
     );

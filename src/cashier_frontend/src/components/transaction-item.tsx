@@ -1,7 +1,6 @@
 import { TRANSACTION_STATUS } from "@/services/types/transaction.service.types";
-import React, { FC } from "react";
-import { FiXCircle, FiRefreshCw } from "react-icons/fi";
-import { CiCircleCheck } from "react-icons/ci";
+import { FC } from "react";
+import { FiRefreshCw } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import { IoMdCheckmark } from "react-icons/io";
 

@@ -1,9 +1,6 @@
-import ConfirmationPopup from "@/components/confirmation-popup";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import LinkCard from "@/components/link-card";
 import { ParitalFormProps } from "@/components/multi-step-form";
-import { Button } from "@/components/ui/button";
-import { DrawerTrigger, Drawer } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 
 interface LinkData {
@@ -23,9 +20,9 @@ export default function LinkPreview({
         <div className="w-full flex flex-col">
             <LinkCard
                 label="Claim"
-                src={defaultValues.image as any}
-                message={defaultValues.description as any}
-                title={defaultValues.name as any}
+                src={defaultValues.image as string}
+                message={defaultValues.description as string}
+                title={defaultValues.name as string}
             />
             <FixedBottomButton onClick={handleSubmit as any}>Create</FixedBottomButton>
         </div>
