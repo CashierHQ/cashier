@@ -48,7 +48,7 @@ export default function DetailPage() {
 
     return (
         <div className="w-screen flex flex-col items-center py-3">
-            <div className="w-11/12 max-w-[400px]">
+            <div className="h-[80vh] w-11/12 max-w-[400px]">
                 <div className="w-full flex flex-col">
                     <div id="heading-section" className="flex mb-5">
                         <div

@@ -12,7 +12,7 @@ interface LinkData {
 export default function LinkPreview({
     defaultValues,
     handleSubmit,
-    isDisabled,
+    isDisabled = false,
 }: ParitalFormProps<LinkData>) {
     const { t } = useTranslation();
 
@@ -24,7 +24,9 @@ export default function LinkPreview({
                 message={defaultValues.description as string}
                 title={defaultValues.name as string}
             />
-            <FixedBottomButton onClick={handleSubmit as any}>Create</FixedBottomButton>
+            <FixedBottomButton disabled={isDisabled} onClick={handleSubmit as any}>
+                Create
+            </FixedBottomButton>
         </div>
     );
 }

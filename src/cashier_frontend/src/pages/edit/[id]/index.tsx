@@ -244,7 +244,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
                         isDisabled={isDisabled}
-                        render={(props) => <LinkPreview {...props} isDisabled />}
+                        render={(props) => <LinkPreview {...props} />}
                     />
                 </MultiStepForm>
                 <Drawer open={openConfirmationPopup}>
