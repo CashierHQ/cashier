@@ -1,27 +1,25 @@
 import { useEffect, useState } from "react";
 import LinkTemplate, { linkTemplateSchema } from "./LinkTemplate";
-import LinkDetails from "./LinkDetails";
+import LinkDetails, { linkDetailsSchema } from "./LinkDetails";
 import { useNavigate, useParams } from "react-router-dom";
 import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentityKit } from "@nfid/identitykit/react";
 import LinkService from "@/services/link.service";
-import { LINK_STATUS } from "@/constants/otherConst";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
+import { useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
-import { DrawerTrigger, Drawer } from "@/components/ui/drawer";
+import { Drawer } from "@/components/ui/drawer";
 import ConfirmationPopup from "@/components/confirmation-popup";
 import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
-import { Toast } from "@radix-ui/react-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { LINK_STATE } from "@/services/types/enum";
 import { CreateActionInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
+import { ActionCreateModel } from "@/services/types/action.service.types";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATE.CHOOSETEMPLATE,
@@ -40,7 +38,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         create_at: new Date(),
         amount: 0,
     });
-    const [isNameSetByUser, setIsNameSetByUser] = useState(false);
     const [isDisabled, setDisabled] = useState(false);
     const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
     const [openValidtionToast, setOpenValidtionToast] = useState(false);
@@ -49,6 +46,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [isRendering, setRendering] = useState(true);
     const [disabledConfirmButton, setDisabledConfirmButton] = useState(false);
     const [popupButton, setPopupButton] = useState("");
+    const [actionCreate, setActionCreate] = useState<ActionCreateModel>();
 
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -69,9 +67,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             if (link && link.state) {
                 const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
-                setIsNameSetByUser(true);
                 setRendering(false);
                 setCurrentStep(step >= 0 ? step : 0);
+            }
+            if (action_create) {
+                setActionCreate(action_create);
             }
         };
         try {
@@ -101,7 +101,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         setFormData({ ...formData, ...values });
     };
 
-    const handleSubmitLinkDetails = async (values: any) => {
+    const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
         if (!linkId) return;
         try {
             formData.state = State.PendingPreview;
@@ -122,6 +122,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmit = async (values: any) => {
         if (!linkId) return;
+        console.log("Click submit");
         const validationResult = true;
         try {
             // 1. Call validation, success -> display confirm popup,
@@ -132,7 +133,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     linkId: linkId,
                     linkModel: {
                         ...formData,
-                        ...values,
                     },
                     isContinue: true,
                 };
@@ -142,10 +142,16 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     params: [],
                 };
                 const linkService = new LinkService(identity);
-                const result = await linkService.createAction(createActionInout);
-                console.log("🚀 ~ handleSubmit ~ result:", result);
-                //await mutateAsync(updateLinkParams);
-                //navigate(`/details/${linkId}`);
+                const createActionResult = await linkService.createAction(createActionInout);
+                console.log("🚀 ~ handleSubmit ~ createActionResult:", createActionResult);
+
+                // If action is created successfully
+                // then update the NFT link to active
+                if (createActionResult) {
+                    console.log("Update to active");
+                    await mutateAsync(updateLinkParams);
+                    navigate(`/details/${linkId}`);
+                }
                 // setOpenConfirmationPopup(true);
             } else {
                 setToastData({
@@ -163,9 +169,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleChange = (values: any) => {
-        if (values.name) {
-            setIsNameSetByUser(true);
-        }
         setFormData({ ...formData, ...values });
     };
 
@@ -223,6 +226,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     handleChange={handleChange}
                     handleBackStep={handleBackstep}
                     isDisabled={isDisabled}
+                    actionCreate={actionCreate}
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}

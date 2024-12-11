@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
 import { Children, FunctionComponent, ReactElement, useState } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
+import { ActionCreateModel } from "@/services/types/action.service.types";
 export interface ParitalFormProps<T> {
-    handleSubmit: (values: T) => any;
-    handleChange: (e: any) => any;
+    handleSubmit: (values: T) => void;
+    handleChange: (e: any) => void;
     isDisabled: boolean;
     defaultValues: Partial<T>;
 }
@@ -12,11 +12,12 @@ interface MultiStepFormProps<T extends Object> {
     initialStep: number;
     formData: T;
     children: ReactElement<ItemProp> | ReactElement<ItemProp>[];
-    handleSubmit: (values: T) => any;
+    handleSubmit: (values: T) => void;
     handleBackStep: () => Promise<void>;
-    handleBack?: () => any;
-    handleChange: (e: any) => any;
+    handleBack?: () => void;
+    handleChange: (e: any) => void;
     isDisabled: boolean;
+    actionCreate: ActionCreateModel | undefined;
 }
 
 interface ItemProp {
@@ -35,6 +36,7 @@ export default function MultiStepForm<T extends Object>({
     handleBack,
     handleChange,
     isDisabled,
+    actionCreate,
 }: MultiStepFormProps<T>) {
     const partialForms = Children.toArray(children) as ReactElement<ItemProp>[];
     const [currentStep, setCurrentStep] = useState(initialStep);
@@ -54,7 +56,7 @@ export default function MultiStepForm<T extends Object>({
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {partialForms[currentStep].props.name}
                 </h4>
-                {currentStep || (!currentStep && handleBack) ? (
+                {!actionCreate && (currentStep || (!currentStep && handleBack)) ? (
                     <div
                         className="absolute left-1 cursor-pointer text-[1.5rem]"
                         onClick={handleClickBack}
@@ -82,9 +84,7 @@ export default function MultiStepForm<T extends Object>({
                         handleSubmit: async (values: any) => {
                             try {
                                 await partialForm.props.handleSubmit(values);
-                                if (index == partialForms.length - 1)
-                                    handleFinish({ ...formData, ...values });
-                                else {
+                                if (index != partialForms.length - 1) {
                                     setCurrentStep(index + 1);
                                 }
                             } catch (err) {

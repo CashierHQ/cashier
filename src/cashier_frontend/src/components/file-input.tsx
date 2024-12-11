@@ -1,6 +1,5 @@
 import { useEffect, forwardRef, useRef, useState } from "react";
 import { FiUploadCloud, FiTrash } from "react-icons/fi";
-import { LuRefreshCw } from "react-icons/lu";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     onFileChange: (file: File | null) => void;
