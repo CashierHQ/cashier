@@ -1,4 +1,3 @@
-import { AssetInfo } from "../../../../declarations/cashier_backend/cashier_backend.did";
 import { ActionCreateModel } from "./action.service.types";
 
 export enum State {

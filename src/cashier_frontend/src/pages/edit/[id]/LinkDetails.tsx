@@ -21,7 +21,7 @@ import { DECREASE, INCREASE } from "@/constants/otherConst";
 import { useEffect, useState } from "react";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 
-const linkDetailsSchema = z.object({
+export const linkDetailsSchema = z.object({
     image: z.string().min(1, { message: "Image is required" }),
     description: z.string().min(10),
     title: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),

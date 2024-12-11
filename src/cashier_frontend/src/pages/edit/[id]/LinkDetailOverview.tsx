@@ -1,4 +1,3 @@
-import React from "react";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import { StateBadge } from "@/components/link-item";
 import {

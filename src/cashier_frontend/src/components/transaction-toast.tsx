@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/toast";
 import { FiXCircle } from "react-icons/fi";
 import { CiCircleCheck } from "react-icons/ci";
-import { FaCheck } from "react-icons/fa";
 import { cva, type VariantProps } from "class-variance-authority";
 
 // Define custom variants

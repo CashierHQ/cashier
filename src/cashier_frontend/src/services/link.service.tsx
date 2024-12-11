@@ -1,14 +1,10 @@
-import { convertNanoSecondsToDate, groupLinkListByDate, parseResultResponse } from "@/utils";
+import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
     CreateActionInput,
     CreateLinkInput,
-    GetLinkResp,
     Link,
-    NftCreateAndAirdropLink,
-    UpdateLinkInput,
-    UpdateLinkInput as UpdateLinkInputModel,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
@@ -19,6 +15,7 @@ import {
     MapLinkDetailModelToUpdateLinkInputModel,
     MapNftLinkToLinkDetailModel,
 } from "./types/link.service.mapper";
+import { ActionCreateModel } from "./types/action.service.types";
 
 interface ReponseLinksModel {
     data: LinkModel[];
@@ -72,6 +69,7 @@ class LinkService {
     async updateLink(linkId: string, data: LinkDetailModel, isContinue: boolean) {
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
         const response = parseResultResponse(await this.actor.update_link(completeData));
+        console.log("🚀 ~ LinkService ~ updateLink ~ response:", response);
         return response;
     }
 
@@ -80,8 +78,9 @@ class LinkService {
         return false;
     }
 
-    async createAction(input: CreateActionInput) {
-        return parseResultResponse(await this.actor.create_action(input));
+    async createAction(input: CreateActionInput): Promise<ActionCreateModel> {
+        const response = parseResultResponse(await this.actor.create_action(input));
+        return response as ActionCreateModel;
     }
 }
 

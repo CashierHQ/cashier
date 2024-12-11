@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 export default function LinkCard({
     src,
     header,

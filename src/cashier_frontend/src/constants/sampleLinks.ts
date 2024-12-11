@@ -1,4 +1,4 @@
-import { Chain, State, Template } from "@/services/types/link.service.types";
+import { State, Template } from "@/services/types/link.service.types";
 import { base64SampleLinkImage1, base64SampleLinkImage2 } from "./base64Images";
 
 export const sampleLink1 = {
