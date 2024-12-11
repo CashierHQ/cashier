@@ -16,6 +16,7 @@ import UserService from "@/services/user.service";
 import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
+import { LINK_STATE } from "@/services/types/enum";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -140,7 +141,7 @@ export default function HomePage() {
                                 {items.map((item) => (
                                     <Link
                                         to={
-                                            item.state === "Active"
+                                            item.state === LINK_STATE.ACTIVE
                                                 ? `/details/${item.id}`
                                                 : `/edit/${item.id}`
                                         }
@@ -209,7 +210,7 @@ export default function HomePage() {
                 className={
                     responsive.isSmallDevice
                         ? "w-screen flex justify-center py-3"
-                        : "bg-[white] h-[80%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
+                        : "bg-[white] h-[100%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
                 }
             >
                 <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>
