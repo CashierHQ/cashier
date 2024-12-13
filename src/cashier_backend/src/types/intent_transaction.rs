@@ -2,13 +2,13 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct ActionTransaction {
+pub struct IntentTransaction {
     pub acton_id: String,
     pub transaction_id: String,
     pub created_at: u64,
 }
 
-impl ActionTransaction {
+impl IntentTransaction {
     pub fn new(acton_id: String, transaction_id: String, ts: u64) -> Self {
         Self {
             acton_id,
@@ -19,8 +19,8 @@ impl ActionTransaction {
 
     pub fn to_persistence(
         &self,
-    ) -> crate::repositories::entities::action_transaction::ActionTransaction {
-        crate::repositories::entities::action_transaction::ActionTransaction::new(
+    ) -> crate::repositories::entities::intent_transaction::IntentTransaction {
+        crate::repositories::entities::intent_transaction::IntentTransaction::new(
             self.acton_id.clone(),
             self.transaction_id.clone(),
             self.created_at,
@@ -28,17 +28,17 @@ impl ActionTransaction {
     }
 
     pub fn from_persistence(
-        action_transaction: crate::repositories::entities::action_transaction::ActionTransaction,
+        intent_transaction: crate::repositories::entities::intent_transaction::IntentTransaction,
     ) -> Self {
         let (acton_id, transaction_id) =
-            crate::repositories::entities::action_transaction::ActionTransaction::split_pk(
-                &action_transaction,
+            crate::repositories::entities::intent_transaction::IntentTransaction::split_pk(
+                &intent_transaction,
             );
 
         Self {
             acton_id,
             transaction_id,
-            created_at: action_transaction.created_at,
+            created_at: intent_transaction.created_at,
         }
     }
 }

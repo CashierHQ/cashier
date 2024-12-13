@@ -1,13 +1,6 @@
 import { ParitalFormProps } from "@/components/multi-step-form";
 import { StateBadge } from "@/components/link-item";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +16,7 @@ interface LinkDetailOverviewData {
 export const LinkDetailOverview = ({
     defaultValues,
     handleSubmit,
-}: ParitalFormProps<LinkDetailOverviewData>) => {
+}: ParitalFormProps<LinkDetailOverviewData, Partial<LinkDetailOverviewData>>) => {
     const { toast } = useToast();
     const handleCopyLink = () => {
         toast({
