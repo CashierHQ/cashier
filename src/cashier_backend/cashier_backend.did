@@ -8,6 +8,7 @@ type AssetInfo = record {
 };
 type CanisterError = variant {
   HandleLogicError : text;
+  ValidationErrors : text;
   AnonymousCall;
   HandleApiError : text;
 };
@@ -62,7 +63,10 @@ type Intent = record {
   creator_id : text;
   intent_type : text;
 };
-type Link = variant { NftCreateAndAirdropLink : NftCreateAndAirdropLink };
+type Link = variant {
+  NftCreateAndAirdropLink : NftCreateAndAirdropLink;
+  TipLink : TipLink;
+};
 type LinkDetailUpdateAssetInfoInput = record {
   total_amount : nat64;
   chain : text;
@@ -78,7 +82,7 @@ type LinkDetailUpdateInput = record {
   nft_image : opt text;
 };
 type LinkStateMachineActionParams = variant { Update : UpdateLinkParams };
-type LinkType = variant { NftCreateAndAirdrop };
+type LinkType = variant { TipLink; NftCreateAndAirdrop };
 type NftCreateAndAirdropLink = record {
   id : text;
   title : opt text;
@@ -112,6 +116,18 @@ type Result_4 = variant { Ok : GetLinkResp; Err : text };
 type Result_5 = variant { Ok : PaginateResult; Err : text };
 type Result_6 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_7 = variant { Ok : Link; Err : CanisterError };
+type TipLink = record {
+  id : text;
+  title : opt text;
+  creator : opt text;
+  asset_info : opt vec AssetInfo;
+  link_type : opt text;
+  create_at : opt nat64;
+  description : opt text;
+  link_image_url : opt text;
+  state : opt text;
+  template : opt text;
+};
 type UpdateLinkInput = record {
   id : text;
   action : text;

@@ -1,9 +1,11 @@
+use crate::info;
 use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
     repositories::link_store,
     services::link::validate_active_link::{is_intent_exist, is_valid_fields_before_active},
+    types::error::CanisterError, // Import CanisterError
     types::link::{Link, LinkState},
-};
+}; // Import the logger macro
 
 #[derive(Debug, Clone)]
 pub struct Transition {
@@ -55,24 +57,34 @@ pub fn get_transitions() -> Vec<Transition> {
             source: LinkState::CreateLink,
             dest: LinkState::AddAssets,
             requires_update: false,
-            // TODO: validate if the intent is exist
-            validate: |_| Ok(()),
+            validate: |link| {
+                if is_intent_exist(link.get("id").unwrap().as_str()).is_ok() {
+                    Err("Intent exists, cannot transition back".to_string())
+                } else {
+                    Ok(())
+                }
+            },
         },
         Transition {
             trigger: LinkStateMachineAction::Back,
             source: LinkState::AddAssets,
             dest: LinkState::ChooseLinkType,
             requires_update: false,
-            // TODO: validate if the intent is exist
-            validate: |_| Ok(()),
+            validate: |link| {
+                if is_intent_exist(link.get("id").unwrap().as_str()).is_ok() {
+                    Err("Intent exists, cannot transition back".to_string())
+                } else {
+                    Ok(())
+                }
+            },
         },
     ]
 }
 
-pub fn handle_update_create_and_airdrop_nft(
+pub fn handle_update_link(
     input: UpdateLinkInput,
     mut link_input: Link,
-) -> Result<Link, String> {
+) -> Result<Link, CanisterError> {
     let transitions = get_transitions();
 
     let current_state = match link_input.get("state") {
@@ -80,10 +92,14 @@ pub fn handle_update_create_and_airdrop_nft(
             let state = state.as_str();
             match LinkState::from_string(state) {
                 Ok(state) => state,
-                Err(e) => return Err(e),
+                Err(e) => return Err(CanisterError::ValidationErrors(e)),
             }
         }
-        None => return Err("state is missing".to_string()),
+        None => {
+            return Err(CanisterError::ValidationErrors(
+                "state is missing".to_string(),
+            ))
+        }
     };
 
     let state_machine_result = transitions.iter().find(|t| {
@@ -99,7 +115,7 @@ pub fn handle_update_create_and_airdrop_nft(
 
     match state_machine_result {
         Some(transition) => {
-            (transition.validate)(link_input.clone())?;
+            (transition.validate)(link_input.clone()).map_err(CanisterError::ValidationErrors)?;
 
             // update state
             link_input.set("state", transition.dest.to_string());
@@ -113,15 +129,21 @@ pub fn handle_update_create_and_airdrop_nft(
                         }
                     }
                 } else {
-                    return Err("params is missing".to_string());
+                    return Err(CanisterError::ValidationErrors(
+                        "params is missing".to_string(),
+                    ));
                 }
             }
 
             // update link to db
             link_store::update(link_input.to_persistence());
 
+            info!("Link updated successfully: {:?}", link_input); // Add logging
+
             Ok(link_input)
         }
-        None => Err("Invalid state transition".to_string()),
+        None => Err(CanisterError::ValidationErrors(
+            "Invalid state transition".to_string(),
+        )),
     }
 }

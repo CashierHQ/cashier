@@ -3,7 +3,10 @@ use uuid::Uuid;
 use crate::{
     repositories::{link_store, user_link_store},
     types::{
-        link::{AssetInfo, Chain, Link, LinkState, LinkType, NftCreateAndAirdropLink, Template},
+        link::{
+            nft_create_and_airdrop_link::NftCreateAndAirdropLink, AssetInfo, Chain, Link,
+            LinkState, LinkType, Template,
+        },
         user_link::UserLink,
     },
 };

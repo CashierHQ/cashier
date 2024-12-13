@@ -31,5 +31,19 @@ pub fn assemble_created_transaction(
                 intent_transactions: vec![new_intent_transaction],
             };
         }
+        Link::TipLink(_) => {
+            let id = Uuid::new_v4();
+
+            // TODO: update this to create tip transaction
+            let new_transaction = Transaction::create_and_airdrop_nft_default(id.to_string());
+
+            let new_intent_transaction =
+                IntentTransaction::new(intent_id.to_string(), new_transaction.id.clone(), ts);
+
+            return AssembleTransactionResp {
+                transactions: vec![new_transaction],
+                intent_transactions: vec![new_intent_transaction],
+            };
+        }
     }
 }

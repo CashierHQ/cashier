@@ -6,6 +6,7 @@ pub mod validate_active_link;
 
 use crate::{
     core::link::types::{CreateLinkInput, GetLinkResp},
+    info,
     repositories::{
         intent_store, link_intent_store, link_store, user_link_store, user_wallet_store,
     },
@@ -15,7 +16,7 @@ use crate::{
         link::Link,
         user_link::UserLink,
     },
-    utils::logger,
+    warn,
 };
 
 pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, String> {
@@ -102,7 +103,7 @@ pub fn get_link_by_id(id: String) -> Option<GetLinkResp> {
 
     let link_intent_create = link_intent_store::find_with_prefix(link_intent_prefix.as_str());
 
-    logger::info(&format!("link_intent_create: {:?}", link_intent_create));
+    info!("link_intent_create: {:?}", link_intent_create);
 
     if link_intent_create.is_empty() {
         return Some(GetLinkResp {
@@ -129,20 +130,20 @@ pub fn is_link_creator(caller: String, id: &String) -> bool {
     let user_id = match user_wallet_store::get(&caller) {
         Some(user_id) => user_id,
         None => {
-            logger::error(&format!("User not found"));
+            warn!("User not found");
             return false;
         }
     };
 
     match link_store::get(&id) {
         None => {
-            logger::error(&format!("Link not found"));
+            warn!("Link not found");
             return false;
         }
         Some(link_detail) => {
             let creator = link_detail.creator.clone().unwrap();
             if creator != user_id {
-                logger::error(&format!("Caller is not creator"));
+                warn!("User is not the creator of the link");
                 return false;
             }
             return true;
