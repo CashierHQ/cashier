@@ -76,7 +76,7 @@ pub fn create_example_link(user_id: String) -> Result<(), String> {
     link_store::batch_create(links_to_create);
     user_link_store::batch_create(user_links_to_create);
 
-    //TODO: create action for user
+    //TODO: create intent for user
 
     Ok(())
 }

@@ -7,11 +7,11 @@ pub mod validate_active_link;
 use crate::{
     core::link::types::{CreateLinkInput, GetLinkResp},
     repositories::{
-        action_store, link_action_store, link_store, user_link_store, user_wallet_store,
+        intent_store, link_intent_store, link_store, user_link_store, user_wallet_store,
     },
     types::{
-        action::ActionType,
         api::{PaginateInput, PaginateResult},
+        intent::IntentType,
         link::Link,
         user_link::UserLink,
     },
@@ -94,33 +94,33 @@ pub fn get_link_by_id(id: String) -> Option<GetLinkResp> {
         None => return None,
     };
 
-    let link_action_prefix = format!(
-        "link#{}#type#{}#action#",
+    let link_intent_prefix = format!(
+        "link#{}#type#{}#intent#",
         id,
-        ActionType::Create.to_string()
+        IntentType::Create.to_string()
     );
 
-    let link_action_create = link_action_store::find_with_prefix(link_action_prefix.as_str());
+    let link_intent_create = link_intent_store::find_with_prefix(link_intent_prefix.as_str());
 
-    logger::info(&format!("link_action_create: {:?}", link_action_create));
+    logger::info(&format!("link_intent_create: {:?}", link_intent_create));
 
-    if link_action_create.is_empty() {
+    if link_intent_create.is_empty() {
         return Some(GetLinkResp {
             link: link.unwrap(),
-            action_create: None,
+            intent_create: None,
         });
     }
 
-    if let Some(first_action) = link_action_create.first().cloned() {
-        let action = action_store::get(&first_action.action_id);
+    if let Some(first_intent) = link_intent_create.first().cloned() {
+        let intent = intent_store::get(&first_intent.intent_id);
         Some(GetLinkResp {
             link: link.unwrap(),
-            action_create: action,
+            intent_create: intent,
         })
     } else {
         Some(GetLinkResp {
             link: link.unwrap(),
-            action_create: None,
+            intent_create: None,
         })
     }
 }

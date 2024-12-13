@@ -7,9 +7,9 @@ use crate::{
         link::{create_new, is_link_creator, update::handle_update_create_and_airdrop_nft},
     },
     types::{
-        action::{Action, CreateActionInput},
         api::PaginateInput,
         error::CanisterError,
+        intent::{CreateIntentInput, Intent},
         link::Link,
     },
     utils::logger,
@@ -102,7 +102,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
 }
 
 #[update(guard = "is_not_anonymous")]
-pub fn create_action(input: CreateActionInput) -> Result<Action, String> {
+pub fn create_intent(input: CreateIntentInput) -> Result<Intent, String> {
     // inside already check caller is creator
-    services::action::create::create(input)
+    services::transaction::create::create(input)
 }
