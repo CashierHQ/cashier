@@ -5,7 +5,7 @@ import {
     Link,
     UpdateLinkInput,
 } from "../../../../declarations/cashier_backend/cashier_backend.did";
-import { AssetInfoModel, LinkDetailModel, LinkModel } from "./link.service.types";
+import { LinkDetailModel, LinkModel } from "./link.service.types";
 import { CHAIN, TEMPLATE } from "./enum";
 import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 

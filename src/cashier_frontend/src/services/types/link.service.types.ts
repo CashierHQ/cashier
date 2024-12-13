@@ -48,7 +48,6 @@ export type UpdateLinkInput = {
     create_at: Date;
 };
 
-// Need to update in future
 export type LinkDetailModel = {
     id: string;
     title: string;

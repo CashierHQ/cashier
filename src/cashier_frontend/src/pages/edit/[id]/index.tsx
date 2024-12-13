@@ -18,8 +18,8 @@ import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { LINK_STATE } from "@/services/types/enum";
-import { CreateActionInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
-import { ActionCreateModel } from "@/services/types/action.service.types";
+import { CreateIntentInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
+import { IntentCreateModel } from "@/services/types/intent.service.types";
 
 const STEP_LINK_STATUS_ORDER = [
     LINK_STATE.CHOOSETEMPLATE,
@@ -34,7 +34,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         image: "",
         description: "",
         state: "",
-        template: Template.Left,
+        template: Template.Central,
         create_at: new Date(),
         amount: 0,
     });
@@ -46,7 +46,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [isRendering, setRendering] = useState(true);
     const [disabledConfirmButton, setDisabledConfirmButton] = useState(false);
     const [popupButton, setPopupButton] = useState("");
-    const [actionCreate, setActionCreate] = useState<ActionCreateModel>();
+    const [actionCreate, setActionCreate] = useState<IntentCreateModel>();
 
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -62,7 +62,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!identity) return;
         const fetchData = async () => {
             const linkObj = await new LinkService(identity).getLink(linkId);
-            const { link, action_create } = linkObj;
+            const { link, intent_create } = linkObj;
             console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
                 const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
@@ -70,8 +70,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 setRendering(false);
                 setCurrentStep(step >= 0 ? step : 0);
             }
-            if (action_create) {
-                setActionCreate(action_create);
+            if (intent_create) {
+                setActionCreate(intent_create);
             }
         };
         try {
@@ -120,9 +120,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
-    const handleSubmit = async (values: any) => {
+    const handleSubmit = async (_values: Partial<LinkDetailModel>) => {
         if (!linkId) return;
-        console.log("Click submit");
         const validationResult = true;
         try {
             // 1. Call validation, success -> display confirm popup,
@@ -136,9 +135,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     },
                     isContinue: true,
                 };
-                const createActionInout: CreateActionInput = {
+                const createActionInout: CreateIntentInput = {
                     link_id: linkId,
-                    action_type: "Create",
+                    intent_type: "Create",
                     params: [],
                 };
                 const linkService = new LinkService(identity);
@@ -168,7 +167,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
-    const handleChange = (values: any) => {
+    const handleChange = (values: Partial<LinkDetailModel>) => {
         setFormData({ ...formData, ...values });
     };
 

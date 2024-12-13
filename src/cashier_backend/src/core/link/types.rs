@@ -119,7 +119,7 @@ impl LinkStateMachineAction {
         match intent {
             "Continue" => Ok(LinkStateMachineAction::Continue),
             "Back" => Ok(LinkStateMachineAction::Back),
-            _ => Err("Invalid LinkStateMachineIntent. Valid value: Continue, Back".to_string()),
+            _ => Err("Invalid LinkStateMachineAction. Valid value: Continue, Back".to_string()),
         }
     }
 }

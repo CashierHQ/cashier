@@ -23,7 +23,7 @@ interface LinkDetailOverviewData {
 export const LinkDetailOverview = ({
     defaultValues,
     handleSubmit,
-}: ParitalFormProps<LinkDetailOverviewData>) => {
+}: ParitalFormProps<LinkDetailOverviewData, Partial<LinkDetailOverviewData>>) => {
     const { toast } = useToast();
     const handleCopyLink = () => {
         toast({

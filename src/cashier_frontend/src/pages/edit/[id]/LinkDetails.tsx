@@ -28,15 +28,17 @@ export const linkDetailsSchema = z.object({
     amount: z.coerce.number().min(1),
 });
 
+type InputSchema = z.infer<typeof linkDetailsSchema>;
+
 export default function LinkDetails({
     defaultValues = {},
     handleSubmit,
     handleChange,
-}: ParitalFormProps<z.infer<typeof linkDetailsSchema>>) {
+}: ParitalFormProps<InputSchema, Partial<InputSchema>>) {
     const { t } = useTranslation();
     const [currentImage, setCurrentImage] = useState<string>("");
 
-    const form = useForm<z.infer<typeof linkDetailsSchema>>({
+    const form = useForm<InputSchema>({
         resolver: zodResolver(linkDetailsSchema),
         defaultValues: {
             description: "",
