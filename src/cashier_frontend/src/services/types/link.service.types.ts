@@ -1,4 +1,4 @@
-import { ActionCreateModel } from "./action.service.types";
+import { IntentCreateModel } from "./intent.service.types";
 
 export enum State {
     New = "New",
@@ -64,7 +64,7 @@ export type LinkDetailModel = {
 
 export type LinkModel = {
     link: LinkDetailModel;
-    action_create?: ActionCreateModel;
+    intent_create?: IntentCreateModel;
 };
 
 export type TipLinkModel = {

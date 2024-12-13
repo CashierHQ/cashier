@@ -7,6 +7,7 @@ import {
 } from "../../../../declarations/cashier_backend/cashier_backend.did";
 import { AssetInfoModel, LinkDetailModel, LinkModel } from "./link.service.types";
 import { CHAIN, TEMPLATE } from "./enum";
+import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 
 const IS_USE_DEFAULT_LINK_TEMPLATE = true;
 
@@ -45,42 +46,42 @@ export const MapNftLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
     const nftLink = link.NftCreateAndAirdropLink;
     return {
         id: nftLink.id,
-        title: nftLink.title?.[0] ?? "",
-        description: nftLink.description?.[0] ?? "",
-        image: nftLink.nft_image?.[0] ?? "",
-        link_type: nftLink.link_type ? nftLink.link_type[0] : undefined,
-        state: nftLink.state ? nftLink.state[0] : undefined,
-        template: nftLink.template ? nftLink.template[0] : undefined,
-        creator: nftLink.creator ? nftLink.creator[0] : undefined,
-        create_at: nftLink.create_at[0]
-            ? convertNanoSecondsToDate(nftLink.create_at[0])
+        title: fromNullable(nftLink.title) ?? "",
+        description: fromNullable(nftLink.description) ?? "",
+        image: fromNullable(nftLink.nft_image) ?? "",
+        link_type: fromNullable(nftLink.link_type),
+        state: fromNullable(nftLink.state),
+        template: fromNullable(nftLink.template),
+        creator: fromNullable(nftLink.creator),
+        create_at: fromNullable(nftLink.create_at)
+            ? convertNanoSecondsToDate(fromDefinedNullable(nftLink.create_at))
             : new Date("2000-10-01"),
-        amount: nftLink.asset_info?.[0]?.[0].total_amount
-            ? Number(nftLink.asset_info?.[0]?.[0].total_amount)
+        amount: fromNullable(nftLink.asset_info)
+            ? Number(fromDefinedNullable(nftLink.asset_info)[0].total_amount)
             : 0,
     };
 };
 
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const MapLinkDetailModel = (linkObj: GetLinkResp): LinkModel => {
-    const { action_create: actionCreate, link } = linkObj;
+    const { intent_create: intentCreate, link } = linkObj;
     const nftLink = link.NftCreateAndAirdropLink;
     return {
-        action_create: actionCreate ? actionCreate[0] : undefined,
+        intent_create: fromNullable(intentCreate),
         link: {
             id: nftLink.id,
-            title: nftLink.title?.[0] ?? "",
-            description: nftLink.description?.[0] ?? "",
-            image: nftLink.nft_image?.[0] ?? "",
-            link_type: nftLink.link_type ? nftLink.link_type[0] : undefined,
-            state: nftLink.state ? nftLink.state[0] : undefined,
-            template: nftLink.template ? nftLink.template[0] : undefined,
-            creator: nftLink.creator ? nftLink.creator[0] : undefined,
-            create_at: nftLink.create_at[0]
-                ? convertNanoSecondsToDate(nftLink.create_at[0])
+            title: fromNullable(nftLink.title) ?? "",
+            description: fromNullable(nftLink.description) ?? "",
+            image: fromNullable(nftLink.nft_image) ?? "",
+            link_type: fromNullable(nftLink.link_type),
+            state: fromNullable(nftLink.state),
+            template: fromNullable(nftLink.template),
+            creator: fromNullable(nftLink.creator),
+            create_at: fromNullable(nftLink.create_at)
+                ? convertNanoSecondsToDate(fromDefinedNullable(nftLink.create_at))
                 : new Date("2000-10-01"),
-            amount: nftLink.asset_info?.[0]?.[0].total_amount
-                ? Number(nftLink.asset_info?.[0]?.[0].total_amount)
+            amount: fromNullable(nftLink.asset_info)
+                ? Number(fromDefinedNullable(nftLink.asset_info)[0].total_amount)
                 : 0,
         },
     };
