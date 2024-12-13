@@ -9,8 +9,9 @@ export default [
         ignores: [
             "**/dist/**",
             "**/node_modules/**",
-            "**/src/declarations",
-            "**/src/cashier_frontend/*.config.js",
+            "**/src/declarations/**",
+            "**/*.config.js",
+            "**/*.did.*",
             "**/src/example",
         ],
     },

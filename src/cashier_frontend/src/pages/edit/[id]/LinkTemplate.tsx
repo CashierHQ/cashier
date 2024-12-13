@@ -20,11 +20,13 @@ export const linkTemplateSchema = z.object({
     title: z.string().min(5),
 });
 
+type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
+
 export default function LinkTemplate({
     defaultValues = {},
     handleSubmit,
     handleChange,
-}: ParitalFormProps<z.infer<typeof linkTemplateSchema>, { title: string }>) {
+}: ParitalFormProps<LinkTemplateInput, LinkTemplateInput>) {
     const { t } = useTranslation();
 
     const form = useForm<z.infer<typeof linkTemplateSchema>>({
