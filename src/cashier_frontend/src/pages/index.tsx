@@ -210,7 +210,7 @@ export default function HomePage() {
                 className={
                     responsive.isSmallDevice
                         ? "w-screen flex justify-center py-3"
-                        : "bg-[white] h-[100%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
+                        : "bg-[white] h-[90%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
                 }
             >
                 <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>
