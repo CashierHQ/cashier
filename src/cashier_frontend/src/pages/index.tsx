@@ -7,7 +7,7 @@ import LinkItem from "@/components/link-item";
 import { Skeleton } from "@/components/ui/skeleton";
 import LinkService from "@/services/link.service";
 import { Button } from "@/components/ui/button";
-import { LinkDetailModel, State } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";

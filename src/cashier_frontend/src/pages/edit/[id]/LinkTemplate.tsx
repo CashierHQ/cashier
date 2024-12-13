@@ -10,7 +10,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import LinkCard from "@/components/link-card";
@@ -21,11 +20,13 @@ export const linkTemplateSchema = z.object({
     title: z.string().min(5),
 });
 
+type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
+
 export default function LinkTemplate({
     defaultValues = {},
     handleSubmit,
     handleChange,
-}: ParitalFormProps<z.infer<typeof linkTemplateSchema>>) {
+}: ParitalFormProps<LinkTemplateInput, LinkTemplateInput>) {
     const { t } = useTranslation();
 
     const form = useForm<z.infer<typeof linkTemplateSchema>>({
@@ -41,7 +42,11 @@ export default function LinkTemplate({
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
-                    onChange={(e: any) => handleChange({ [e.target?.name]: e.target.value })}
+                    onChange={(e: any) => {
+                        if (e.target?.name == "title") {
+                            handleChange({ title: e.target.value });
+                        }
+                    }}
                 >
                     <FormField
                         control={form.control}

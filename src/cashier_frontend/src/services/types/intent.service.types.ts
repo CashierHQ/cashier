@@ -1,7 +1,7 @@
-export type ActionCreateModel = {
+export type IntentCreateModel = {
     id: string;
     status: string;
     link_id: string;
     creator_id: string;
-    action_type: string;
+    intent_type: string;
 };

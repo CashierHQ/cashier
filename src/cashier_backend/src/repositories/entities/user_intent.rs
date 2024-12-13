@@ -4,35 +4,37 @@ use candid::{CandidType, Decode, Encode};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 
-const _KEY_PATTERN: &str = "action#{}#transaction#{}";
+const _KEY_PATTERN: &str = "user#{}#intent#{}}";
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct ActionTransaction {
+pub struct UserIntent {
     pub pk: String,
     pub created_at: u64,
+    pub intent_type: String,
 }
 
-impl ActionTransaction {
-    pub fn build_pk(action_id: String, transaction_id: String) -> String {
-        format!("action#{}#transaction#{}", action_id, transaction_id)
+impl UserIntent {
+    pub fn build_pk(user_id: String, intent_id: String) -> String {
+        format!("user#{}#intent#{}", user_id, intent_id)
     }
 
-    pub fn new(action_id: String, transaction_id: String, ts: u64) -> Self {
+    pub fn new(user_id: String, intent_id: String, intent_type: String, ts: u64) -> Self {
         Self {
-            pk: Self::build_pk(action_id.clone(), transaction_id.clone()),
+            pk: Self::build_pk(user_id.clone(), intent_id.clone()),
             created_at: ts,
+            intent_type: intent_type,
         }
     }
 
     pub fn split_pk(&self) -> (String, String) {
         let parts: Vec<&str> = self.pk.split('#').collect();
-        let action_id = parts.get(1).unwrap_or(&"").to_string();
-        let transaction_id = parts.get(3).unwrap_or(&"").to_string();
-        (action_id, transaction_id)
+        let user_id = parts.get(1).unwrap_or(&"").to_string();
+        let intent_id = parts.get(3).unwrap_or(&"").to_string();
+        (user_id, intent_id)
     }
 }
 
-impl Storable for ActionTransaction {
+impl Storable for UserIntent {
     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())
     }

@@ -16,6 +16,11 @@ predeploy:
 	make build-wasm
 	make build-did
 
+build: 
+	make build-wasm
+	make build-did
+	make g
+
 deploy:
 	@bash scripts/deploy.sh
 local:

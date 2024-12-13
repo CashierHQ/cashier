@@ -1,7 +1,7 @@
 use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
     repositories::link_store,
-    services::link::validate_active_link::{is_action_exist, is_valid_fields_before_active},
+    services::link::validate_active_link::{is_intent_exist, is_valid_fields_before_active},
     types::link::{Link, LinkState},
 };
 
@@ -37,7 +37,7 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::Active,
             requires_update: false,
             validate: |link| {
-                is_action_exist(link.get("id").unwrap().as_str())?;
+                is_intent_exist(link.get("id").unwrap().as_str())?;
                 is_valid_fields_before_active(link.clone())?;
                 Ok(())
             },
@@ -55,7 +55,7 @@ pub fn get_transitions() -> Vec<Transition> {
             source: LinkState::CreateLink,
             dest: LinkState::AddAssets,
             requires_update: false,
-            // TODO: validate if the action is exist
+            // TODO: validate if the intent is exist
             validate: |_| Ok(()),
         },
         Transition {
@@ -63,7 +63,7 @@ pub fn get_transitions() -> Vec<Transition> {
             source: LinkState::AddAssets,
             dest: LinkState::ChooseLinkType,
             requires_update: false,
-            // TODO: validate if the action is exist
+            // TODO: validate if the intent is exist
             validate: |_| Ok(()),
         },
     ]

@@ -1,8 +1,8 @@
-pub mod action;
-pub mod action_transaction;
+pub mod intent;
+pub mod intent_transaction;
 pub mod link;
-pub mod link_action;
+pub mod link_intent;
 pub mod transaction;
 pub mod user;
-pub mod user_action;
+pub mod user_intent;
 pub mod user_link;

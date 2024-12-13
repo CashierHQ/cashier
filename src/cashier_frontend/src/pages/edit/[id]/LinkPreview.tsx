@@ -13,9 +13,7 @@ export default function LinkPreview({
     defaultValues,
     handleSubmit,
     isDisabled = false,
-}: ParitalFormProps<LinkData>) {
-    const { t } = useTranslation();
-
+}: ParitalFormProps<{}, LinkData>) {
     return (
         <div className="w-full flex flex-col">
             <LinkCard

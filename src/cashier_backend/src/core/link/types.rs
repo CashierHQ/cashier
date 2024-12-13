@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{AssetInfo, Link, LinkDetailUpdate, LinkType, Template},
-    types::action::Action,
+    types::intent::Intent,
 };
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
@@ -115,8 +115,8 @@ impl LinkStateMachineAction {
         }
     }
 
-    pub fn from_string(action: &str) -> Result<LinkStateMachineAction, String> {
-        match action {
+    pub fn from_string(intent: &str) -> Result<LinkStateMachineAction, String> {
+        match intent {
             "Continue" => Ok(LinkStateMachineAction::Continue),
             "Back" => Ok(LinkStateMachineAction::Back),
             _ => Err("Invalid LinkStateMachineAction. Valid value: Continue, Back".to_string()),
@@ -163,5 +163,5 @@ impl UpdateLinkInput {
 #[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct GetLinkResp {
     pub link: Link,
-    pub action_create: Option<Action>,
+    pub intent_create: Option<Intent>,
 }

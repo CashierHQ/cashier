@@ -1,4 +1,4 @@
-use crate::{repositories::link_action_store, types::link::Link};
+use crate::{repositories::link_intent_store, types::link::Link};
 
 pub fn is_valid_fields_before_active(link_detail: Link) -> Result<bool, String> {
     match link_detail {
@@ -35,11 +35,11 @@ pub fn is_valid_fields_before_active(link_detail: Link) -> Result<bool, String> 
     }
 }
 
-pub fn is_action_exist(link_id: &str) -> Result<bool, String> {
-    let link_action_create = link_action_store::find_create_action_by_link_id(link_id);
+pub fn is_intent_exist(link_id: &str) -> Result<bool, String> {
+    let link_intent_create = link_intent_store::find_create_intent_by_link_id(link_id);
 
-    match link_action_create {
+    match link_intent_create {
         Some(_) => Ok(true),
-        None => Err("Action not found".to_string()),
+        None => Err("Intent not found".to_string()),
     }
 }

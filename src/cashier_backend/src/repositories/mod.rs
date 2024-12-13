@@ -1,22 +1,22 @@
 use std::cell::RefCell;
 
-use entities::action::Action;
-use entities::action_transaction::ActionTransaction;
+use entities::intent::Intent;
+use entities::intent_transaction::IntentTransaction;
 use entities::link::Link;
-use entities::link_action::LinkAction;
+use entities::link_intent::LinkIntent;
 use entities::transaction::Transaction;
-use entities::user_action::UserAction;
+use entities::user_intent::UserIntent;
 use entities::user_link::UserLink;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
-pub mod action_store;
-pub mod action_transaction_store;
 pub mod entities;
-pub mod link_action_store;
+pub mod intent_store;
+pub mod intent_transaction_store;
+pub mod link_intent_store;
 pub mod link_store;
 pub mod transaction_store;
-pub mod user_action_store;
+pub mod user_intent_store;
 pub mod user_link_store;
 pub mod user_store;
 pub mod user_wallet_store;
@@ -26,11 +26,11 @@ const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
 const USER_WALLET_MEMORY_ID: MemoryId = MemoryId::new(2);
 const LINK_MEMORY_ID: MemoryId = MemoryId::new(3);
 const USER_LINK_MEMORY_ID: MemoryId = MemoryId::new(4);
-const ACTION_MEMORY_ID: MemoryId = MemoryId::new(5);
+const INTENT_MEMORY_ID: MemoryId = MemoryId::new(5);
 const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(6);
-const ACTION_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(7);
-const LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(8);
-const USER_ACTION_MEMORY_ID: MemoryId = MemoryId::new(9);
+const INTENT_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(7);
+const LINK_INTENT_MEMORY_ID: MemoryId = MemoryId::new(8);
+const USER_INTENT_MEMORY_ID: MemoryId = MemoryId::new(9);
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -77,13 +77,13 @@ thread_local! {
         )
     );
 
-    static ACTION_STORE: RefCell<StableBTreeMap<
+    static INTENT_STORE: RefCell<StableBTreeMap<
         String,
-        Action,
+        Intent,
         Memory
         >> = RefCell::new(
             StableBTreeMap::init(
-                MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)),
+                MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_MEMORY_ID)),
             )
         );
 
@@ -97,33 +97,33 @@ thread_local! {
         )
     );
 
-    static ACTION_TRANSACTION_STORE: RefCell<StableBTreeMap<
+    static INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
         String,
-        ActionTransaction,
+        IntentTransaction,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_TRANSACTION_MEMORY_ID)),
+            MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_TRANSACTION_MEMORY_ID)),
         )
     );
 
-    static LINK_ACTION_STORE: RefCell<StableBTreeMap<
+    static LINK_INTENT_STORE: RefCell<StableBTreeMap<
         String,
-        LinkAction,
+        LinkIntent,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(LINK_ACTION_MEMORY_ID)),
+            MEMORY_MANAGER.with_borrow(|m| m.get(LINK_INTENT_MEMORY_ID)),
         )
     );
 
-    static USER_ACTION_STORE: RefCell<StableBTreeMap<
+    static USER_INTENT_STORE: RefCell<StableBTreeMap<
         String,
-        UserAction,
+        UserIntent,
         Memory
         >> = RefCell::new(
             StableBTreeMap::init(
-                MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)),
+                MEMORY_MANAGER.with_borrow(|m| m.get(USER_INTENT_MEMORY_ID)),
             )
         );
 
@@ -155,9 +155,9 @@ pub fn load() {
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_LINK_MEMORY_ID)));
     });
 
-    ACTION_STORE.with(|t| {
+    INTENT_STORE.with(|t| {
         *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)));
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_MEMORY_ID)));
     });
 
     TRANSACTION_STORE.with(|t| {
@@ -165,19 +165,19 @@ pub fn load() {
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)));
     });
 
-    ACTION_TRANSACTION_STORE.with(|t| {
+    INTENT_TRANSACTION_STORE.with(|t| {
         *t.borrow_mut() = StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_TRANSACTION_MEMORY_ID)),
+            MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_TRANSACTION_MEMORY_ID)),
         );
     });
 
-    LINK_ACTION_STORE.with(|t| {
+    LINK_INTENT_STORE.with(|t| {
         *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_ACTION_MEMORY_ID)));
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_INTENT_MEMORY_ID)));
     });
 
-    USER_ACTION_STORE.with(|t| {
+    USER_INTENT_STORE.with(|t| {
         *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)));
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_INTENT_MEMORY_ID)));
     });
 }
