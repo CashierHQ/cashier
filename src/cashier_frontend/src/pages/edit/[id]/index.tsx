@@ -120,6 +120,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleSubmit = async (_values: Partial<LinkDetailModel>) => {
         if (!linkId) return;
         const validationResult = true;

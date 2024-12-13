@@ -14,7 +14,7 @@
         "test": "jest",
         "prepare": "npx husky",
         "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
-        "lint": "eslint ."
+        "lint": "eslint src/cashier_frontend --config eslint.config.js"
     },
     "lint-staged": {
         "**/*": [
