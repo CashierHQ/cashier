@@ -17,7 +17,7 @@ export interface ParitalFormProps<V1, V2> {
  * - V1: type for handle submit
  * - V2: type for handle change
  */
-interface MultiStepFormProps<V1 extends Object, V2 extends Object> {
+interface MultiStepFormProps<V1 extends object, V2 extends object> {
     initialStep: number;
     formData: V2;
     children: ReactNode;
@@ -44,7 +44,7 @@ interface ItemProp<V1, V2> {
  * - V1: type for handle submit
  * - V2: type for handle change
  */
-export default function MultiStepForm<V1 extends Object, V2 extends Object>({
+export default function MultiStepForm<V1 extends object, V2 extends object>({
     initialStep = 0,
     formData,
     handleBackStep,

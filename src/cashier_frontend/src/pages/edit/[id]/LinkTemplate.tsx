@@ -42,8 +42,8 @@ export default function LinkTemplate({
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
-                    onChange={(e: any) => {
-                        if (e.target?.name == "title") {
+                    onChange={(e: React.ChangeEvent<HTMLFormElement>) => {
+                        if (e.target.name == "title") {
                             handleChange({ title: e.target.value });
                         }
                     }}
