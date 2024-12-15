@@ -41,7 +41,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 </div>
                 <div className="flex justify-between border-solid border-inherit border-2 rounded-lg p-2">
                     <div>Cashier Link</div>
-                    <div>Mason's Tip link</div>
+                    <div>{`Mason's Tip link`}</div>
                 </div>
             </div>
             <div id="confirmation-popup-section-send" className="my-3">

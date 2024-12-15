@@ -4,11 +4,16 @@ import HomePage from "@/pages";
 import ClaimPage from "./pages/[id]";
 import DetailPage from "./pages/details/[id]";
 import { useResponsive } from "./hooks/responsive-hook";
+import { TestPage } from "./pages/test";
 
 const router = createBrowserRouter([
     {
         path: "/",
         element: <HomePage />,
+    },
+    {
+        path: "/test",
+        element: <TestPage />,
     },
     {
         path: "/edit/:linkId",

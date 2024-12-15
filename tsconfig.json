@@ -7,6 +7,7 @@
         "strictPropertyInitialization": false,
         "moduleResolution": "node",
         "allowJs": true,
-        "preserveSymlinks": true
+        "preserveSymlinks": true,
+        "types": ["node"]
     }
 }

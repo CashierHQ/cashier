@@ -21,6 +21,7 @@ import { LINK_STATE } from "@/services/types/enum";
 export default function HomePage() {
     const { t } = useTranslation();
     const { user: walletUser, identity, connect } = useIdentityKit();
+
     const [newAppUser, setNewAppUser] = useState<User>();
     const {
         data: appUser,
