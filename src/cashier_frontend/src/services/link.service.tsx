@@ -19,6 +19,7 @@ import { IntentCreateModel } from "./types/intent.service.types";
 
 interface ReponseLinksModel {
     data: LinkModel[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadada: any;
 }
 
@@ -40,7 +41,7 @@ class LinkService {
                 },
             ]),
         );
-        let responseModel: ReponseLinksModel = {
+        const responseModel: ReponseLinksModel = {
             data: [],
             metadada: response.metadata,
         };

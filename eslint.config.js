@@ -13,6 +13,7 @@ export default [
             "**/*.config.js",
             "**/*.did.*",
             "**/src/example",
+            "**/src/cashier_frontend/src/components/ui/**",
         ],
     },
     {
