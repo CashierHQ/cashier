@@ -4,9 +4,9 @@ import { FiUploadCloud, FiTrash } from "react-icons/fi";
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     onFileChange: (file: File | null) => void;
 }
-
 const FileInput = forwardRef<HTMLInputElement, InputProps>(
-    ({ className, defaultValue, onFileChange, ...props }: any, ref) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ({ defaultValue, onFileChange }: any) => {
         const inputRef = useRef<HTMLInputElement>(null);
         const [image, setImage] = useState<string | null>(defaultValue || null);
 

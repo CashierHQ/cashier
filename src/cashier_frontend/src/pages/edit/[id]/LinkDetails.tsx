@@ -11,7 +11,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "@/components/ui/textarea";
 import { ParitalFormProps } from "@/components/multi-step-form";
@@ -99,6 +98,7 @@ export default function LinkDetails({
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
                     className="space-y-8 mb-[100px]"
                 >
