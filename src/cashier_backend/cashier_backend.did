@@ -20,7 +20,8 @@ type CreateIntentInput = record {
 };
 type CreateIntentParams = variant { Claim : ClaimIntentParams };
 type CreateLinkInput = record { link_type : LinkType };
-type GetLinkResp = record { link : Link; intent_create : opt Intent };
+type GetLinkOptions = record { intent_type : text };
+type GetLinkResp = record { link : Link; intent : opt IntentResp };
 type Icrc21ConsentInfo = record {
   metadata : Icrc21ConsentMessageMetadata;
   consent_message : Icrc21ConsentMessage;
@@ -61,6 +62,14 @@ type Intent = record {
   status : text;
   link_id : text;
   creator_id : text;
+  intent_type : text;
+};
+type IntentResp = record {
+  id : text;
+  status : text;
+  link_id : text;
+  creator_id : text;
+  transactions : vec Transaction;
   intent_type : text;
 };
 type Link = record {
@@ -112,6 +121,13 @@ type Result_4 = variant { Ok : GetLinkResp; Err : text };
 type Result_5 = variant { Ok : PaginateResult; Err : text };
 type Result_6 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_7 = variant { Ok : Link; Err : CanisterError };
+type Transaction = record {
+  id : text;
+  arg : text;
+  status : text;
+  method : text;
+  canister_id : text;
+};
 type UpdateLinkInput = record {
   id : text;
   action : text;
@@ -124,7 +140,7 @@ service : () -> {
   create_intent : (CreateIntentInput) -> (Result_1);
   create_link : (CreateLinkInput) -> (Result_2);
   create_user : () -> (Result_3);
-  get_link : (text) -> (Result_4) query;
+  get_link : (text, opt GetLinkOptions) -> (Result_4) query;
   get_links : (opt PaginateInput) -> (Result_5) query;
   get_user : () -> (Result_3) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;

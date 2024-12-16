@@ -1,4 +1,5 @@
-use candid::CandidType;
+use base64::{engine::general_purpose, Engine};
+use candid::{CandidType, Encode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -84,13 +85,26 @@ impl Transaction {
     }
 
     pub fn create_and_airdrop_nft_default(id: String) -> Self {
-        // TODO: make correct default values
         Self {
             id,
             canister_id: "canister_id".to_string(),
             method: "create_and_airdrop_nft".to_string(),
             arg: "arg".to_string(),
             status: "Transaction_state_created".to_string(),
+        }
+    }
+
+    pub fn build_icrc_transfer(
+        id: String,
+        canister_id: String,
+        transfer_arg: icrc_ledger_types::icrc1::transfer::TransferArg,
+    ) -> Self {
+        Self {
+            id,
+            canister_id,
+            method: "icrc1_transfer".to_string(),
+            arg: general_purpose::STANDARD.encode(Encode!(&transfer_arg).unwrap()),
+            status: TransactionState::Created.to_string(),
         }
     }
 }

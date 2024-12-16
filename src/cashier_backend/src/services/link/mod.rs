@@ -5,11 +5,9 @@ pub mod update;
 pub mod validate_active_link;
 
 use crate::{
-    core::link::types::{CreateLinkInput, GetLinkResp},
-    info,
-    repositories::{
-        intent_store, link_intent_store, link_store, user_link_store, user_wallet_store,
-    },
+    core::link::types::{CreateLinkInput, GetLinkOptions, GetLinkResp},
+    error,
+    repositories::{link_store, user_link_store, user_wallet_store},
     types::{
         api::{PaginateInput, PaginateResult},
         intent::IntentType,
@@ -18,6 +16,8 @@ use crate::{
     },
     warn,
 };
+
+use super::transaction::get::get_create_intent;
 
 pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, String> {
     let user_id = match user_wallet_store::get(&creator) {
@@ -89,41 +89,43 @@ pub fn get_links_by_user_id(
     Ok(res)
 }
 
-pub fn get_link_by_id(id: String) -> Option<GetLinkResp> {
+pub fn get_link_by_id(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     let link = match link_store::get(&id) {
         Some(link) => Some(Link::from_persistence(link)),
-        None => return None,
+        None => return Err("Link not found".to_string()),
     };
 
-    let link_intent_prefix = format!(
-        "link#{}#type#{}#intent#",
-        id,
-        IntentType::Create.to_string()
-    );
-
-    let link_intent_create = link_intent_store::find_with_prefix(link_intent_prefix.as_str());
-
-    info!("link_intent_create: {:?}", link_intent_create);
-
-    if link_intent_create.is_empty() {
-        return Some(GetLinkResp {
+    if options.is_none() {
+        return Ok(GetLinkResp {
             link: link.unwrap(),
-            intent_create: None,
+            intent: None,
         });
     }
 
-    if let Some(first_intent) = link_intent_create.first().cloned() {
-        let intent = intent_store::get(&first_intent.intent_id);
-        Some(GetLinkResp {
-            link: link.unwrap(),
-            intent_create: intent,
-        })
-    } else {
-        Some(GetLinkResp {
-            link: link.unwrap(),
-            intent_create: None,
-        })
-    }
+    match IntentType::from_string(options.unwrap().intent_type.as_str()) {
+        Ok(intent_type) => match intent_type {
+            IntentType::Create => {
+                let intent_resp = match get_create_intent(id.clone()) {
+                    Ok(intent_resp) => intent_resp,
+                    Err(e) => {
+                        error!("Failed to get create intent: {}", e);
+                        return Err(e);
+                    }
+                };
+                return Ok(GetLinkResp {
+                    link: link.unwrap(),
+                    intent: Some(intent_resp),
+                });
+            }
+            _ => return Err("Intent type not supported".to_string()),
+        },
+        Err(_) => {
+            return Ok(GetLinkResp {
+                link: link.unwrap(),
+                intent: None,
+            })
+        }
+    };
 }
 
 pub fn is_link_creator(caller: String, id: &String) -> bool {

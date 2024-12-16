@@ -138,8 +138,6 @@ pub fn handle_update_link(
             // update link to db
             link_store::update(link_input.to_persistence());
 
-            info!("Link updated successfully: {:?}", link_input); // Add logging
-
             Ok(link_input)
         }
         None => Err(CanisterError::ValidationErrors(

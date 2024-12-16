@@ -2,7 +2,8 @@ use ic_cdk::{query, update};
 
 use crate::{
     core::{
-        guard::is_not_anonymous, link_type::LinkType, GetLinkResp, PaginateResult, UpdateLinkInput,
+        guard::is_not_anonymous, link_type::LinkType, GetLinkOptions, GetLinkResp, PaginateResult,
+        UpdateLinkInput,
     },
     error,
     services::{
@@ -35,11 +36,8 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<Link>,
 }
 
 #[query]
-async fn get_link(id: String) -> Result<GetLinkResp, String> {
-    match services::link::get_link_by_id(id) {
-        Some(link) => Ok(link),
-        None => Err("Link not found".to_string()),
-    }
+async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
+    services::link::get_link_by_id(id, options)
 }
 
 #[update(guard = "is_not_anonymous")]
@@ -66,8 +64,13 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
     let creator = ic_cdk::api::caller();
 
     // get link type
-    let rsp = services::link::get_link_by_id(input.id.clone())
-        .ok_or_else(|| CanisterError::HandleApiError("Link not found".to_string()))?;
+    let rsp = match services::link::get_link_by_id(input.id.clone(), None) {
+        Ok(rsp) => rsp,
+        Err(e) => {
+            error!("Failed to get link: {:#?}", e);
+            return Err(CanisterError::HandleApiError("Link not found".to_string()));
+        }
+    };
 
     match is_link_creator(creator.to_text(), &input.id) {
         true => (),

@@ -66,7 +66,7 @@ const createUserAndLink = async (backend: _SERVICE) => {
     await backend.create_user();
     const createLinkRes = await backend.create_link({
         link_type: {
-            NftCreateAndAirdrop: null,
+            TipLink: null,
         },
     });
 
@@ -86,9 +86,13 @@ const getLinks = async (backend: _SERVICE) => {
 };
 
 const getLink = async (backend: _SERVICE, linkId: string) => {
-    const link = await backend.get_link(linkId);
+    const link = await backend.get_link(linkId, [
+        {
+            intent_type: "Create",
+        },
+    ]);
 
-    console.log("link", link);
+    console.log("link", safeParseJSON(link));
     return link;
 };
 
@@ -165,10 +169,20 @@ const main = async () => {
     // Create link action
     await createAction(backend, linkId);
 
+    console.log("=====================================");
+
     await getLink(backend, linkId);
+
+    console.log("=====================================");
 
     // Create link -> active
     await updateActive(backend, linkId);
+
+    console.log("=====================================");
+
+    await getLink(backend, linkId);
+
+    console.log("=====================================");
 };
 
 main();
