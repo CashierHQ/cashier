@@ -1,4 +1,3 @@
-use crate::info;
 use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
     repositories::link_store,

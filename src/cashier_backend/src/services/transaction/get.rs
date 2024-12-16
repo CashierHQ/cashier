@@ -40,9 +40,11 @@ pub fn get_create_intent(link_id: String) -> Result<IntentResp, String> {
         .map(|intent| intent.transaction_id.clone())
         .collect::<Vec<String>>();
 
-    info!("transaction_ids: {:?}", intent_transactions);
+    info!("transaction_ids: {:?}", transaction_ids);
 
     let transactions = transaction_store::batch_get(transaction_ids);
+
+    info!("transactions: {:?}", transactions);
 
     return Ok(IntentResp {
         id: intent.id,

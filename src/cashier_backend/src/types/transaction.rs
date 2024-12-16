@@ -61,9 +61,8 @@ impl Transaction {
     }
 
     pub fn to_persistence(&self) -> crate::repositories::entities::transaction::Transaction {
-        let pk = crate::repositories::entities::transaction::Transaction::build_pk(self.id.clone());
         crate::repositories::entities::transaction::Transaction::new(
-            pk,
+            self.id.clone(),
             self.canister_id.clone(),
             self.method.clone(),
             self.arg.clone(),

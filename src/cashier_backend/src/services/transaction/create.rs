@@ -71,6 +71,13 @@ pub fn create(intent: CreateIntentInput) -> Result<Intent, String> {
         ts,
     );
 
+    info!("transactions_persistence {:#?}", transactions_persistence);
+    info!(
+        "intent_transactions_persistence {:#?}",
+        intent_transactions_persistence
+    );
+    info!("user_intent {:#?}", user_intent);
+
     // Store all record
     let _ = intent_store::create(new_intent.to_persistence());
     let _ = transaction_store::batch_create(transactions_persistence);
