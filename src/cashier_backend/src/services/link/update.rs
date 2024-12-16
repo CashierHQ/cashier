@@ -4,7 +4,7 @@ use crate::{
     repositories::link_store,
     services::link::validate_active_link::{is_intent_exist, is_valid_fields_before_active},
     types::error::CanisterError, // Import CanisterError
-    types::link::{Link, LinkState},
+    types::link::{link_state::LinkState, Link},
 }; // Import the logger macro
 
 #[derive(Debug, Clone)]

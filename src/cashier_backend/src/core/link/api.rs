@@ -1,7 +1,9 @@
 use ic_cdk::{query, update};
 
 use crate::{
-    core::{guard::is_not_anonymous, GetLinkResp, LinkType, PaginateResult, UpdateLinkInput},
+    core::{
+        guard::is_not_anonymous, link_type::LinkType, GetLinkResp, PaginateResult, UpdateLinkInput,
+    },
     error,
     services::{
         self,

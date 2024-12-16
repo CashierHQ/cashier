@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{AssetInfo, Link, LinkDetailUpdate, LinkType, Template},
+    core::{link_type::LinkType, template::Template, AssetInfo, Link, LinkDetailUpdate},
     types::intent::Intent,
 };
 
