@@ -15,9 +15,10 @@ import {
     defaultStrategy,
     pollForResponse,
     v2ResponseBody,
+    SignIdentity,
 } from "@dfinity/agent";
 import { AgentError } from "@dfinity/agent/lib/cjs/errors";
-import { DelegationIdentity, Ed25519KeyIdentity } from "@dfinity/identity";
+import { DelegationIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { fromBase64 } from "@nfid/identitykit";
 import { useIdentity, useSigner } from "@nfid/identitykit/react";
@@ -171,7 +172,11 @@ class CallCanisterService {
 
 export const TestPage = () => {
     const signer = useSigner();
-    const idenity = useIdentity();
+    const identity = useIdentity();
+
+    const isSignIdentity = (identity: Identity): identity is SignIdentity => {
+        return (identity as SignIdentity).getPublicKey !== undefined;
+    };
 
     const checkSigner = async () => {
         console.log("🚀 ~ checkSigner ~ signer", signer);
@@ -183,42 +188,55 @@ export const TestPage = () => {
             return;
         }
 
-        if (!idenity) {
+        if (!identity) {
             console.error("Identity is not found");
             return;
         }
 
-        const sessionKey = Ed25519KeyIdentity.generate();
-        if (!sessionKey) {
-            console.error("Session key is not found");
+        if (!isSignIdentity(identity)) {
+            console.error("Identity is not a SignIdentity");
             return;
         }
 
-        const delegationChain = await signer.delegation({
-            publicKey: idenity?.getPrincipal().toUint8Array() as unknown as ArrayBuffer,
-        });
+        // CODE TO GENERATE DelegationIdentity
+
+        // const sessionKey = Ed25519KeyIdentity.generate();
+        // if (!sessionKey) {
+        //     console.error("Session key is not found");
+        //     return;
+        // }
+
         // const delegationChain = await signer.delegation({
-        //     publicKey: sessionKey.getPublicKey().rawKey,
+        //     publicKey: identity.getPublicKey().toDer(),
         // });
-        if (!delegationChain) {
-            console.error("Delegation chain is not found");
-            return;
-        }
+        // // const delegationChain = await signer.delegation({
+        // //     publicKey: sessionKey.getPublicKey().rawKey,
+        // // });
+        // if (!delegationChain) {
+        //     console.error("Delegation chain is not found");
+        //     return;
+        // }
 
-        const delegation = DelegationIdentity.fromDelegation(sessionKey, delegationChain);
+        // const delegation = DelegationIdentity.fromDelegation(sessionKey, delegationChain);
 
+        // END OF CODE TO GENERATE DelegationIdentity
+
+        /**
+         * If using internet identity, identity here is DelegationIdentity
+         * If using wallet like NFID wallet you have to create DelegationIdentity line 201 - 222
+         */
         const agent: Agent = HttpAgent.createSync({
             host: "https://ic0.app",
-            identity: delegation as unknown as Identity,
+            identity: identity,
         });
 
         const service = new CallCanisterService();
 
         const callResponse = await service.call({
-            canisterId: "etik7-oiaaa-aaaar-qagia-cai",
-            calledMethodName: "icrc2_approve",
+            canisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            calledMethodName: "icrc1_transfer",
             parameters:
-                "RElETAZufW17bgFueGwCs7DawwNorYbKgwUCbAjG/LYCALqJ5cIEAqLelOsGAoLz85EMA9ijjKgNfZGcnL8NAN6n99oNA8uW3LQOBAEFAAAAAICAgMnVm5n4jJ4EAAABHddbvOJ4U2u2S79mR0+xkJBPtwHztu02la8/gFECAA==",
+                "RElETAZte24AbAKzsNrDA2ithsqDBQFufW54bAb7ygECxvy2AgO6ieXCBAGi3pTrBgGC8/ORDATYo4yoDX0BBQEdXdZAg85gOc3s6DkTiv7FBn9RDHSPT6rgmlsBGgIAAAAAAICAgPXduOvktWw=",
             delegation: delegation,
             agent,
         });
