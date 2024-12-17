@@ -10,15 +10,23 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import LinkCard from "@/components/link-card";
-import { descriptionTemplate } from "@/constants/message";
+import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    type CarouselApi,
+} from "@/components/ui/carousel";
+import React, { useEffect } from "react";
+import { LINK_TYPE } from "@/services/types/enum";
 
 export const linkTemplateSchema = z.object({
     title: z.string().min(5),
+    link_type: z.string(),
 });
 
 export default function LinkTemplate({
@@ -27,7 +35,9 @@ export default function LinkTemplate({
     handleChange,
 }: ParitalFormProps<z.infer<typeof linkTemplateSchema>>) {
     const { t } = useTranslation();
-
+    const [api, setApi] = React.useState<CarouselApi>();
+    const [current, setCurrent] = React.useState(0);
+    const [count, setCount] = React.useState(0);
     const form = useForm<z.infer<typeof linkTemplateSchema>>({
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
@@ -35,6 +45,27 @@ export default function LinkTemplate({
             ...defaultValues,
         },
     });
+
+    const TEMPLATE_ORDER = [LINK_TYPE.NFT_CREATE_AND_AIRDROP, LINK_TYPE.TIP_LINK];
+
+    useEffect(() => {
+        if (!api) {
+            return;
+        }
+
+        setCount(api.scrollSnapList().length);
+        setCurrent(api.selectedScrollSnap());
+
+        api.on("select", () => {
+            setCurrent(api.selectedScrollSnap());
+        });
+    }, [api]);
+
+    useEffect(() => {
+        handleChange({
+            link_type: TEMPLATE_ORDER[current],
+        });
+    }, [current]);
 
     return (
         <div className="w-full flex flex-col">
@@ -60,13 +91,31 @@ export default function LinkTemplate({
                         )}
                     />
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
-                    <LinkCard
-                        label="Claim"
-                        header="Default Template"
-                        src="/defaultLinkImage.png"
-                        message={descriptionTemplate}
-                        title="PEDRO giveaway"
-                    />
+                    <div className="flex flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3 my-3 h-[52vh]">
+                        <Carousel className="items-center" setApi={setApi}>
+                            <CarouselContent>
+                                <CarouselItem>
+                                    <LinkCard
+                                        label="Claim"
+                                        header="Default Template"
+                                        src="/defaultLinkImage.png"
+                                        message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.NFT}
+                                        title="PEDRO giveaway"
+                                    />
+                                </CarouselItem>
+                                <CarouselItem>
+                                    <LinkCard
+                                        label="Claim"
+                                        header="Tip"
+                                        src="/defaultLinkImage.png"
+                                        message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP}
+                                        title="Tipping crypto"
+                                    />
+                                </CarouselItem>
+                            </CarouselContent>
+                        </Carousel>
+                    </div>
+
                     <FixedBottomButton type="submit">{t("continue")}</FixedBottomButton>
                 </form>
             </Form>

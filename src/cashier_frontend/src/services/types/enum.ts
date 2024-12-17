@@ -16,6 +16,7 @@ export enum LINK_STATE {
 
 export enum LINK_TYPE {
     NFT_CREATE_AND_AIRDROP = "NftCreateAndAirdrop",
+    TIP_LINK = "TipLink",
 }
 
 export enum CHAIN {

@@ -37,6 +37,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         template: Template.Left,
         create_at: new Date(),
         amount: 0,
+        link_type: "",
     });
     const [isDisabled, setDisabled] = useState(false);
     const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
@@ -91,9 +92,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             linkModel: {
                 ...formData,
                 title: values.title,
+                link_type: values.link_type,
             },
             isContinue: true,
         };
+        console.log("🚀 ~ handleSubmitLinkTemplate ~ updateLinkParams:", updateLinkParams);
         mutate(updateLinkParams);
         if (updateLinkError) {
             throw updateLinkError;
