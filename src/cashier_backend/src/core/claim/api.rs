@@ -1,10 +1,8 @@
 use candid::Principal;
 use ic_cdk::update;
 
-use crate::{
-    services::{self},
-    utils::logger,
-};
+use crate::error;
+use crate::services::{self};
 
 #[update]
 async fn claim_nft(link_id: String, recipient_input: Option<String>) -> Result<(), String> {
@@ -21,7 +19,7 @@ async fn claim_nft(link_id: String, recipient_input: Option<String>) -> Result<(
     match services::claim::claim_nft(link_id, recipient).await {
         Ok(_) => Ok(()),
         Err(e) => {
-            logger::error(&format!("Error claiming NFT: {}", e));
+            error!("Error claiming NFT: {}", e);
             Err(e)
         }
     }

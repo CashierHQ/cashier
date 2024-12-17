@@ -12,4 +12,6 @@ pub enum CanisterError {
 
     #[serde(rename = "HandleApiError")]
     HandleApiError(String),
+
+    ValidationErrors(String),
 }

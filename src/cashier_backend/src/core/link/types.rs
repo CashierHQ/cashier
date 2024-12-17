@@ -2,8 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{AssetInfo, Link, LinkDetailUpdate, LinkType, Template},
-    types::intent::Intent,
+    core::{link_type::LinkType, template::Template, AssetInfo, Link, LinkDetailUpdate},
+    types::transaction::Transaction,
 };
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
@@ -161,7 +161,22 @@ impl UpdateLinkInput {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
+pub struct GetLinkOptions {
+    pub intent_type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct GetLinkResp {
     pub link: Link,
-    pub intent_create: Option<Intent>,
+    pub intent: Option<IntentResp>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType)]
+pub struct IntentResp {
+    pub id: String,
+    pub creator_id: String,
+    pub link_id: String,
+    pub status: String,
+    pub intent_type: String,
+    pub transactions: Vec<Transaction>,
 }

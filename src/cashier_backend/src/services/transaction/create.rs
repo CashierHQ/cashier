@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use crate::{
+    info,
     repositories::{
         intent_store, intent_transaction_store, link_intent_store, link_store, transaction_store,
         user_intent_store, user_wallet_store,
@@ -13,7 +14,7 @@ use crate::{
     },
 };
 
-use super::assemble_intent::{assemble_created_transaction, AssembleTransactionResp};
+use super::assemble_intent::assemble_created_transaction;
 
 pub fn create(intent: CreateIntentInput) -> Result<Intent, String> {
     let caller = ic_cdk::api::caller();
@@ -23,6 +24,9 @@ pub fn create(intent: CreateIntentInput) -> Result<Intent, String> {
         Some(_) => return Err("You are not the creator of this link".to_string()),
         None => return Err("Link not found".to_string()),
     }
+
+    let general_link = crate::types::link::Link::from_persistence(link.unwrap());
+
     let user_id = match user_wallet_store::get(&caller.to_text()) {
         Some(user_id) => user_id,
         None => return Err("User not found".to_string()),
@@ -42,15 +46,21 @@ pub fn create(intent: CreateIntentInput) -> Result<Intent, String> {
     );
 
     let new_link_intent = LinkIntent::new(link_id.clone(), IntentType::Create, id.to_string(), ts);
-    let AssembleTransactionResp {
-        transactions,
-        intent_transactions,
-    } = assemble_created_transaction(&link_id, &id.to_string(), ts);
-    let transactions_persistence = transactions
+
+    let assemble_res = match assemble_created_transaction(&general_link, &id.to_string(), ts) {
+        Ok(resp) => resp,
+        Err(e) => return Err(e),
+    };
+
+    info!("Assemble created transaction: {:#?}", assemble_res);
+
+    let transactions_persistence = assemble_res
+        .transactions
         .iter()
         .map(|t| t.to_persistence())
         .collect::<Vec<_>>();
-    let intent_transactions_persistence = intent_transactions
+    let intent_transactions_persistence = assemble_res
+        .intent_transactions
         .iter()
         .map(|t| t.to_persistence())
         .collect::<Vec<_>>();
@@ -60,6 +70,13 @@ pub fn create(intent: CreateIntentInput) -> Result<Intent, String> {
         new_intent.intent_type.clone(),
         ts,
     );
+
+    info!("transactions_persistence {:#?}", transactions_persistence);
+    info!(
+        "intent_transactions_persistence {:#?}",
+        intent_transactions_persistence
+    );
+    info!("user_intent {:#?}", user_intent);
 
     // Store all record
     let _ = intent_store::create(new_intent.to_persistence());
