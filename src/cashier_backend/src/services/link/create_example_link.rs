@@ -3,7 +3,10 @@ use uuid::Uuid;
 use crate::{
     repositories::{link_store, user_link_store},
     types::{
-        link::{AssetInfo, Chain, Link, LinkState, LinkType, NftCreateAndAirdropLink, Template},
+        link::{
+            chain::Chain, link_state::LinkState, link_type::LinkType, template::Template,
+            AssetInfo, Link,
+        },
         user_link::UserLink,
     },
 };
@@ -34,7 +37,7 @@ pub fn create_example_link(user_id: String) -> Result<(), String> {
         total_claim: 1,
     };
 
-    let new_link_1 = NftCreateAndAirdropLink::new(
+    let new_link_1 = Link::new(
         link1_id_str.clone(),
         LINK_1_TITLE.to_string().into(),
         LINK_1_DESCRIPTION.to_string().into(),
@@ -49,7 +52,7 @@ pub fn create_example_link(user_id: String) -> Result<(), String> {
     );
     let new_user_link_1 = UserLink::new(user_id.clone(), link1_id_str, ts);
 
-    let new_link_2 = NftCreateAndAirdropLink::new(
+    let new_link_2 = Link::new(
         link2_id_str.clone(),
         LINK_2_TITLE.to_string().into(),
         LINK_2_DESCRIPTION.to_string().into(),
@@ -76,7 +79,7 @@ pub fn create_example_link(user_id: String) -> Result<(), String> {
     link_store::batch_create(links_to_create);
     user_link_store::batch_create(user_links_to_create);
 
-    //TODO: create action for user
+    //TODO: create intent for user
 
     Ok(())
 }

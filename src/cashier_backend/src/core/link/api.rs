@@ -1,18 +1,21 @@
 use ic_cdk::{query, update};
 
 use crate::{
-    core::{guard::is_not_anonymous, GetLinkResp, LinkType, PaginateResult, UpdateLinkInput},
+    core::{
+        guard::is_not_anonymous, link_type::LinkType, GetLinkOptions, GetLinkResp, PaginateResult,
+        UpdateLinkInput,
+    },
+    error,
     services::{
         self,
-        link::{create_new, is_link_creator, update::handle_update_create_and_airdrop_nft},
+        link::{create_new, is_link_creator, update::handle_update_link},
     },
     types::{
-        action::{Action, CreateActionInput},
         api::PaginateInput,
         error::CanisterError,
+        intent::{CreateIntentInput, Intent},
         link::Link,
     },
-    utils::logger,
 };
 
 use super::types::CreateLinkInput;
@@ -25,7 +28,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<Link>,
         Ok(links) => Ok(links),
         Err(e) => {
             return {
-                logger::error(&format!("Failed to get links: {}", e));
+                error!("Failed to get links: {}", e);
                 Err(e)
             }
         }
@@ -33,11 +36,8 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<Link>,
 }
 
 #[query]
-async fn get_link(id: String) -> Result<GetLinkResp, String> {
-    match services::link::get_link_by_id(id) {
-        Some(link) => Ok(link),
-        None => Err("Link not found".to_string()),
-    }
+async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
+    services::link::get_link_by_id(id, options)
 }
 
 #[update(guard = "is_not_anonymous")]
@@ -48,7 +48,7 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
     match id {
         Ok(id) => Ok(id),
         Err(e) => {
-            logger::error(&format!("Failed to create link: {}", e));
+            error!("Failed to create link: {}", e);
             Err(CanisterError::HandleApiError(e))
         }
     }
@@ -64,8 +64,13 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
     let creator = ic_cdk::api::caller();
 
     // get link type
-    let rsp = services::link::get_link_by_id(input.id.clone())
-        .ok_or_else(|| CanisterError::HandleApiError("Link not found".to_string()))?;
+    let rsp = match services::link::get_link_by_id(input.id.clone(), None) {
+        Ok(rsp) => rsp,
+        Err(e) => {
+            error!("Failed to get link: {:#?}", e);
+            return Err(CanisterError::HandleApiError("Link not found".to_string()));
+        }
+    };
 
     match is_link_creator(creator.to_text(), &input.id) {
         true => (),
@@ -86,15 +91,21 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
 
     let link_type_str = link_type.unwrap();
     match LinkType::from_string(&link_type_str) {
-        Ok(LinkType::NftCreateAndAirdrop) => {
-            match handle_update_create_and_airdrop_nft(input, rsp.link) {
-                Ok(link) => Ok(link),
-                Err(e) => {
-                    logger::error(&format!("Failed to update link: {}", e));
-                    Err(CanisterError::HandleApiError(e))
-                }
+        Ok(LinkType::NftCreateAndAirdrop) => match handle_update_link(input, rsp.link) {
+            Ok(link) => Ok(link),
+            Err(e) => {
+                error!("Failed to update link: {:#?}", e);
+                Err(e)
             }
-        }
+        },
+        Ok(LinkType::TipLink) => match handle_update_link(input, rsp.link) {
+            Ok(link) => Ok(link),
+            Err(e) => {
+                error!("Failed to update link: {:#?}", e);
+                Err(e)
+            }
+        },
+
         Err(_) => Err(CanisterError::HandleApiError(
             "Invalid link type".to_string(),
         )),
@@ -102,7 +113,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
 }
 
 #[update(guard = "is_not_anonymous")]
-pub fn create_action(input: CreateActionInput) -> Result<Action, String> {
+pub fn create_intent(input: CreateIntentInput) -> Result<Intent, String> {
     // inside already check caller is creator
-    services::action::create::create(input)
+    services::transaction::create::create(input)
 }

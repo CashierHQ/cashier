@@ -5,18 +5,19 @@ pub mod update;
 pub mod validate_active_link;
 
 use crate::{
-    core::link::types::{CreateLinkInput, GetLinkResp},
-    repositories::{
-        action_store, link_action_store, link_store, user_link_store, user_wallet_store,
-    },
+    core::link::types::{CreateLinkInput, GetLinkOptions, GetLinkResp},
+    error,
+    repositories::{link_store, user_link_store, user_wallet_store},
     types::{
-        action::ActionType,
         api::{PaginateInput, PaginateResult},
+        intent::IntentType,
         link::Link,
         user_link::UserLink,
     },
-    utils::logger,
+    warn,
 };
+
+use super::transaction::get::get_create_intent;
 
 pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, String> {
     let user_id = match user_wallet_store::get(&creator) {
@@ -88,61 +89,63 @@ pub fn get_links_by_user_id(
     Ok(res)
 }
 
-pub fn get_link_by_id(id: String) -> Option<GetLinkResp> {
+pub fn get_link_by_id(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     let link = match link_store::get(&id) {
         Some(link) => Some(Link::from_persistence(link)),
-        None => return None,
+        None => return Err("Link not found".to_string()),
     };
 
-    let link_action_prefix = format!(
-        "link#{}#type#{}#action#",
-        id,
-        ActionType::Create.to_string()
-    );
-
-    let link_action_create = link_action_store::find_with_prefix(link_action_prefix.as_str());
-
-    logger::info(&format!("link_action_create: {:?}", link_action_create));
-
-    if link_action_create.is_empty() {
-        return Some(GetLinkResp {
+    if options.is_none() {
+        return Ok(GetLinkResp {
             link: link.unwrap(),
-            action_create: None,
+            intent: None,
         });
     }
 
-    if let Some(first_action) = link_action_create.first().cloned() {
-        let action = action_store::get(&first_action.action_id);
-        Some(GetLinkResp {
-            link: link.unwrap(),
-            action_create: action,
-        })
-    } else {
-        Some(GetLinkResp {
-            link: link.unwrap(),
-            action_create: None,
-        })
-    }
+    match IntentType::from_string(options.unwrap().intent_type.as_str()) {
+        Ok(intent_type) => match intent_type {
+            IntentType::Create => {
+                let intent_resp = match get_create_intent(id.clone()) {
+                    Ok(intent_resp) => intent_resp,
+                    Err(e) => {
+                        error!("Failed to get create intent: {}", e);
+                        return Err(e);
+                    }
+                };
+                return Ok(GetLinkResp {
+                    link: link.unwrap(),
+                    intent: Some(intent_resp),
+                });
+            }
+            _ => return Err("Intent type not supported".to_string()),
+        },
+        Err(_) => {
+            return Ok(GetLinkResp {
+                link: link.unwrap(),
+                intent: None,
+            })
+        }
+    };
 }
 
 pub fn is_link_creator(caller: String, id: &String) -> bool {
     let user_id = match user_wallet_store::get(&caller) {
         Some(user_id) => user_id,
         None => {
-            logger::error(&format!("User not found"));
+            warn!("User not found");
             return false;
         }
     };
 
     match link_store::get(&id) {
         None => {
-            logger::error(&format!("Link not found"));
+            warn!("Link not found");
             return false;
         }
         Some(link_detail) => {
             let creator = link_detail.creator.clone().unwrap();
             if creator != user_id {
-                logger::error(&format!("Caller is not creator"));
+                warn!("User is not the creator of the link");
                 return false;
             }
             return true;

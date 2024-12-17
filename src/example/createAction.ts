@@ -1,10 +1,10 @@
-import { _SERVICE, CreateActionInput } from "../declarations/cashier_backend/cashier_backend.did";
+import { _SERVICE, CreateIntentInput } from "../declarations/cashier_backend/cashier_backend.did";
 
 export const callCreateAction = async ({ backend, id }: { backend: _SERVICE; id: string }) => {
-    const input: CreateActionInput = {
+    const input: CreateIntentInput = {
         link_id: id,
-        action_type: "Create",
+        intent_type: "Create",
         params: [],
     };
-    return await backend.create_action(input);
+    return await backend.create_intent(input);
 };

@@ -1,10 +1,3 @@
-type Action = record {
-  id : text;
-  status : text;
-  link_id : text;
-  creator_id : text;
-  action_type : text;
-};
 type AssetInfo = record {
   total_amount : nat64;
   chain : text;
@@ -15,18 +8,20 @@ type AssetInfo = record {
 };
 type CanisterError = variant {
   HandleLogicError : text;
+  ValidationErrors : text;
   AnonymousCall;
   HandleApiError : text;
 };
-type ClaimActionParams = record { address : opt text };
-type CreateActionInput = record {
+type ClaimIntentParams = record { address : opt text };
+type CreateIntentInput = record {
   link_id : text;
-  action_type : text;
-  params : opt CreateActionParams;
+  intent_type : text;
+  params : opt CreateIntentParams;
 };
-type CreateActionParams = variant { Claim : ClaimActionParams };
+type CreateIntentParams = variant { Claim : ClaimIntentParams };
 type CreateLinkInput = record { link_type : LinkType };
-type GetLinkResp = record { action_create : opt Action; link : Link };
+type GetLinkOptions = record { intent_type : text };
+type GetLinkResp = record { link : Link; intent : opt IntentResp };
 type Icrc21ConsentInfo = record {
   metadata : Icrc21ConsentMessageMetadata;
   consent_message : Icrc21ConsentMessage;
@@ -62,7 +57,34 @@ type Icrc21ErrorInfo = record { description : text };
 type Icrc21LineDisplayPage = record { lines : vec text };
 type Icrc21SupportedStandard = record { url : text; name : text };
 type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
-type Link = variant { NftCreateAndAirdropLink : NftCreateAndAirdropLink };
+type Intent = record {
+  id : text;
+  status : text;
+  link_id : text;
+  creator_id : text;
+  intent_type : text;
+};
+type IntentResp = record {
+  id : text;
+  status : text;
+  link_id : text;
+  creator_id : text;
+  transactions : vec Transaction;
+  intent_type : text;
+};
+type Link = record {
+  id : text;
+  title : opt text;
+  creator : opt text;
+  asset_info : opt vec AssetInfo;
+  link_type : opt text;
+  create_at : opt nat64;
+  description : opt text;
+  link_image_url : opt text;
+  state : opt text;
+  template : opt text;
+  nft_image : opt text;
+};
 type LinkDetailUpdateAssetInfoInput = record {
   total_amount : nat64;
   chain : text;
@@ -78,20 +100,7 @@ type LinkDetailUpdateInput = record {
   nft_image : opt text;
 };
 type LinkStateMachineActionParams = variant { Update : UpdateLinkParams };
-type LinkType = variant { NftCreateAndAirdrop };
-type NftCreateAndAirdropLink = record {
-  id : text;
-  title : opt text;
-  creator : opt text;
-  asset_info : opt vec AssetInfo;
-  link_type : opt text;
-  create_at : opt nat64;
-  description : opt text;
-  link_image_url : opt text;
-  state : opt text;
-  template : opt text;
-  nft_image : opt text;
-};
+type LinkType = variant { TipLink; NftCreateAndAirdrop };
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
   metadata : PaginateResultMetadata;
@@ -105,13 +114,20 @@ type PaginateResultMetadata = record {
   limit : nat64;
 };
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : Action; Err : text };
+type Result_1 = variant { Ok : Intent; Err : text };
 type Result_2 = variant { Ok : text; Err : CanisterError };
 type Result_3 = variant { Ok : User; Err : text };
 type Result_4 = variant { Ok : GetLinkResp; Err : text };
 type Result_5 = variant { Ok : PaginateResult; Err : text };
 type Result_6 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_7 = variant { Ok : Link; Err : CanisterError };
+type Transaction = record {
+  id : text;
+  arg : text;
+  status : text;
+  method : text;
+  canister_id : text;
+};
 type UpdateLinkInput = record {
   id : text;
   action : text;
@@ -121,10 +137,10 @@ type UpdateLinkParams = record { params : opt LinkDetailUpdateInput };
 type User = record { id : text; email : opt text; wallet : text };
 service : () -> {
   claim_nft : (text, opt text) -> (Result);
-  create_action : (CreateActionInput) -> (Result_1);
+  create_intent : (CreateIntentInput) -> (Result_1);
   create_link : (CreateLinkInput) -> (Result_2);
   create_user : () -> (Result_3);
-  get_link : (text) -> (Result_4) query;
+  get_link : (text, opt GetLinkOptions) -> (Result_4) query;
   get_links : (opt PaginateInput) -> (Result_5) query;
   get_user : () -> (Result_3) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;

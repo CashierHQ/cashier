@@ -1,5 +1,5 @@
 import AppRouter from "./Router";
-import { IdentityKitProvider, useIdentityKit } from "@nfid/identitykit/react";
+import { IdentityKitProvider } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";

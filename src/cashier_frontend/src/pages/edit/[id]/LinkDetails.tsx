@@ -11,7 +11,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "@/components/ui/textarea";
 import { ParitalFormProps } from "@/components/multi-step-form";
@@ -28,15 +27,17 @@ export const linkDetailsSchema = z.object({
     amount: z.coerce.number().min(1),
 });
 
+type InputSchema = z.infer<typeof linkDetailsSchema>;
+
 export default function LinkDetails({
     defaultValues = {},
     handleSubmit,
     handleChange,
-}: ParitalFormProps<z.infer<typeof linkDetailsSchema>>) {
+}: ParitalFormProps<InputSchema, Partial<InputSchema>>) {
     const { t } = useTranslation();
     const [currentImage, setCurrentImage] = useState<string>("");
 
-    const form = useForm<z.infer<typeof linkDetailsSchema>>({
+    const form = useForm<InputSchema>({
         resolver: zodResolver(linkDetailsSchema),
         defaultValues: {
             description: "",
@@ -97,6 +98,7 @@ export default function LinkDetails({
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
                     className="space-y-8 mb-[100px]"
                 >

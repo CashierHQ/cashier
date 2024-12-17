@@ -4,9 +4,8 @@ import LinkService from "@/services/link.service";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslation } from "react-i18next";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
-import { LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
 
 export const ClaimSchema = z.object({
@@ -22,7 +21,6 @@ export default function ClaimPage() {
     const { linkId } = useParams();
     const [isLoading, setIsLoading] = useState(true);
     const [isClaiming, setIsClaiming] = useState(false);
-    const { t } = useTranslation();
     const form = useForm<z.infer<typeof ClaimSchema>>({
         resolver: zodResolver(ClaimSchema),
     });

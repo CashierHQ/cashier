@@ -29,11 +29,13 @@ export const linkTemplateSchema = z.object({
     link_type: z.string(),
 });
 
+type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
+
 export default function LinkTemplate({
     defaultValues = {},
     handleSubmit,
     handleChange,
-}: ParitalFormProps<z.infer<typeof linkTemplateSchema>>) {
+}: ParitalFormProps<LinkTemplateInput, LinkTemplateInput>) {
     const { t } = useTranslation();
     const [api, setApi] = React.useState<CarouselApi>();
     const [current, setCurrent] = React.useState(0);
@@ -72,7 +74,11 @@ export default function LinkTemplate({
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
-                    onChange={(e: any) => handleChange({ [e.target?.name]: e.target.value })}
+                    onChange={(e: React.ChangeEvent<HTMLFormElement>) => {
+                        if (e.target.name == "title") {
+                            handleChange({ title: e.target.value });
+                        }
+                    }}
                 >
                     <FormField
                         control={form.control}

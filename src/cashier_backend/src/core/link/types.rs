@@ -2,8 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::{AssetInfo, Link, LinkDetailUpdate, LinkType, Template},
-    types::action::Action,
+    core::{link_type::LinkType, template::Template, AssetInfo, Link, LinkDetailUpdate},
+    types::transaction::Transaction,
 };
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
@@ -115,8 +115,8 @@ impl LinkStateMachineAction {
         }
     }
 
-    pub fn from_string(action: &str) -> Result<LinkStateMachineAction, String> {
-        match action {
+    pub fn from_string(intent: &str) -> Result<LinkStateMachineAction, String> {
+        match intent {
             "Continue" => Ok(LinkStateMachineAction::Continue),
             "Back" => Ok(LinkStateMachineAction::Back),
             _ => Err("Invalid LinkStateMachineAction. Valid value: Continue, Back".to_string()),
@@ -161,7 +161,22 @@ impl UpdateLinkInput {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType)]
+pub struct GetLinkOptions {
+    pub intent_type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType)]
 pub struct GetLinkResp {
     pub link: Link,
-    pub action_create: Option<Action>,
+    pub intent: Option<IntentResp>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType)]
+pub struct IntentResp {
+    pub id: String,
+    pub creator_id: String,
+    pub link_id: String,
+    pub status: String,
+    pub intent_type: String,
+    pub transactions: Vec<Transaction>,
 }

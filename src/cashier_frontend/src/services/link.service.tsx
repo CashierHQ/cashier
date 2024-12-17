@@ -2,7 +2,7 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
-    CreateActionInput,
+    CreateIntentInput,
     CreateLinkInput,
     Link,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
@@ -15,10 +15,11 @@ import {
     MapLinkDetailModelToUpdateLinkInputModel,
     MapNftLinkToLinkDetailModel,
 } from "./types/link.service.mapper";
-import { ActionCreateModel } from "./types/action.service.types";
+import { IntentCreateModel } from "./types/intent.service.types";
 
 interface ReponseLinksModel {
     data: LinkModel[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadada: any;
 }
 
@@ -40,7 +41,7 @@ class LinkService {
                 },
             ]),
         );
-        let responseModel: ReponseLinksModel = {
+        const responseModel: ReponseLinksModel = {
             data: [],
             metadada: response.metadata,
         };
@@ -78,9 +79,9 @@ class LinkService {
         return false;
     }
 
-    async createAction(input: CreateActionInput): Promise<ActionCreateModel> {
-        const response = parseResultResponse(await this.actor.create_action(input));
-        return response as ActionCreateModel;
+    async createAction(input: CreateIntentInput): Promise<IntentCreateModel> {
+        const response = parseResultResponse(await this.actor.create_intent(input));
+        return response as IntentCreateModel;
     }
 }
 
