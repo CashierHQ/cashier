@@ -1,9 +1,9 @@
 use uuid::Uuid;
 
 use crate::{
+    error,
     repositories::{user_store, user_wallet_store},
     types::user::User,
-    utils::logger,
 };
 
 use super::link::create_example_link::create_example_link;
@@ -27,7 +27,7 @@ pub fn create_new() -> Result<User, String> {
     match create_example_link(id_str.clone()) {
         Ok(_) => (),
         Err(_) => {
-            logger::error("Failed to create example link");
+            error!("Failed to create example link");
         }
     }
 

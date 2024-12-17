@@ -17,3 +17,26 @@ pub fn batch_create(transactions: Vec<Transaction>) {
         }
     });
 }
+
+pub fn batch_get(ids: Vec<String>) -> Vec<crate::types::transaction::Transaction> {
+    TRANSACTION_STORE.with(|store| {
+        let store = store.borrow();
+        let mut result = Vec::new();
+
+        for id in ids {
+            let transaction = store.get(&Transaction::build_pk(id));
+            match transaction {
+                Some(transaction) => {
+                    result.push(crate::types::transaction::Transaction::from_persistence(
+                        transaction,
+                    ));
+                }
+                None => {
+                    continue;
+                }
+            }
+        }
+
+        result
+    })
+}
