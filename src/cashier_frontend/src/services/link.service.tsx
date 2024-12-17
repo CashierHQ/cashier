@@ -13,7 +13,7 @@ import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
-    MapNftLinkToLinkDetailModel,
+    MapLinkToLinkDetailModel,
 } from "./types/link.service.mapper";
 import { IntentCreateModel } from "./types/intent.service.types";
 
@@ -49,7 +49,7 @@ class LinkService {
         responseModel.data = response.data
             ? response.data.map((link: Link) => {
                   return {
-                      link: MapNftLinkToLinkDetailModel(link),
+                      link: MapLinkToLinkDetailModel(link),
                       action_create: undefined,
                   };
               })
@@ -58,7 +58,13 @@ class LinkService {
     }
 
     async getLink(linkId: string) {
-        const response = parseResultResponse(await this.actor.get_link(linkId));
+        const response = parseResultResponse(
+            await this.actor.get_link(linkId, [
+                {
+                    intent_type: "Create",
+                },
+            ]),
+        );
         console.log("🚀 ~ LinkService ~ getLink ~ response:", response);
         return MapLinkDetailModel(response);
     }

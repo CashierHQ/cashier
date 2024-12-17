@@ -3,7 +3,7 @@ import LinkCard from "@/components/link-card";
 import { ParitalFormProps } from "@/components/multi-step-form";
 
 interface LinkData {
-    name: string;
+    title: string;
     image: string;
     description: string;
 }
@@ -19,7 +19,7 @@ export default function LinkPreview({
                 label="Claim"
                 src={defaultValues.image as string}
                 message={defaultValues.description as string}
-                title={defaultValues.name as string}
+                title={defaultValues.title as string}
             />
             <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
                 Create

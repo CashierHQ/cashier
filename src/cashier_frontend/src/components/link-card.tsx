@@ -18,14 +18,14 @@ export default function LinkCard({
             <div className="text-md md:text-md 2xl:text-lg font-medium">{header}</div>
             <div
                 id="phone-frame"
-                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-1 h-[85vw] md:h-[100%] 2xl:h-[85vw] w-[50vw] md:w-[45%] 2xl:w-[70%]"
+                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-1 2xl:pb-5 h-[85vw] min-h-[15rem] md:h-[100%] md:min-h-[15rem] 2xl:h-[100%] 2xl:min-h-[25rem] w-[50vw] md:w-[45%] 2xl:w-[65%]"
             >
                 <div
                     id="phone-notch-section"
                     className="flex w-3/5 h-3 md:h-1 2xl:h-5 bg-black items-center border-black border-8 rounded-b-2xl md:rounded-b-xl 2xl:rounded-b-2xl"
                 ></div>
                 <div className="w-full flex justify-center items-center mt-3 md:mt-1 2xl:mt-3">
-                    <img src="./logo.svg" alt="Cashier logo" className="max-w-[60px]" />
+                    <img src="./logo.svg" alt="Cashier logo" className="w-[60px] 2xl:w-[100px]" />
                 </div>
                 <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 max-h-[70%]">
                     <div className="overflow-hidden">
@@ -36,12 +36,12 @@ export default function LinkCard({
                         />
                     </div>
 
-                    <h3 className="font-semibold py-2 md:py-1 2xl:py-2 text-[0.5rem] md:text-[0.4rem] 2xl:text-[0.4rem]">
+                    <h3 className="font-semibold py-2 md:py-1 2xl:py-2 text-[0.5rem] md:text-[0.4rem] 2xl:text-[1rem]">
                         {title}
                     </h3>
-                    <h3 className="text-[0.4rem] md:text-[0.3rem] 2xl:text-[0.5rem]">{message}</h3>
+                    <h3 className="text-[0.4rem] md:text-[0.3rem] 2xl:text-[0.7rem]">{message}</h3>
                     <div
-                        className="text-white bg-green rounded-full py-1 mt-3 text-[0.5rem] md:text-[0.5rem] 2xl:text-[0.6rem] w-[90%] text-center"
+                        className="text-white bg-green rounded-full py-1 mt-3 text-[0.5rem] md:text-[0.5rem] 2xl:text-[1rem] w-[90%] text-center"
                         onClick={onClaim}
                     >
                         {label}

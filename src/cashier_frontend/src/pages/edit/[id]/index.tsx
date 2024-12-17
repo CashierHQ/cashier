@@ -56,7 +56,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const responsive = useResponsive();
 
     const queryClient = useQueryClient();
-    const { mutate, mutateAsync, error: updateLinkError } = useUpdateLink(queryClient, identity);
+    const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
         if (!linkId) return;
@@ -132,13 +132,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             //   failed -> display error message
             if (validationResult) {
                 setDisabled(true);
-                const updateLinkParams: UpdateLinkParams = {
-                    linkId: linkId,
-                    linkModel: {
-                        ...formData,
-                    },
-                    isContinue: true,
-                };
+                // const updateLinkParams: UpdateLinkParams = {
+                //     linkId: linkId,
+                //     linkModel: {
+                //         ...formData,
+                //     },
+                //     isContinue: true,
+                // };
                 const createActionInout: CreateIntentInput = {
                     link_id: linkId,
                     intent_type: "Create",
@@ -150,11 +150,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
                 // If action is created successfully
                 // then update the NFT link to active
-                if (createActionResult) {
-                    console.log("Update to active");
-                    await mutateAsync(updateLinkParams);
-                    navigate(`/details/${linkId}`);
-                }
+                // if (createActionResult) {
+                //     console.log("Update to active");
+                //     await mutateAsync(updateLinkParams);
+                //     navigate(`/details/${linkId}`);
+                // }
                 // setOpenConfirmationPopup(true);
             } else {
                 setToastData({

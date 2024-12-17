@@ -42,46 +42,44 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
     return updateLinkInput;
 };
 
-export const MapNftLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
-    const nftLink = link.NftCreateAndAirdropLink;
+export const MapLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
     return {
-        id: nftLink.id,
-        title: fromNullable(nftLink.title) ?? "",
-        description: fromNullable(nftLink.description) ?? "",
-        image: fromNullable(nftLink.nft_image) ?? "",
-        link_type: fromNullable(nftLink.link_type),
-        state: fromNullable(nftLink.state),
-        template: fromNullable(nftLink.template),
-        creator: fromNullable(nftLink.creator),
-        create_at: fromNullable(nftLink.create_at)
-            ? convertNanoSecondsToDate(fromDefinedNullable(nftLink.create_at))
+        id: link.id,
+        title: fromNullable(link.title) ?? "",
+        description: fromNullable(link.description) ?? "",
+        image: fromNullable(link.nft_image) ?? "",
+        link_type: fromNullable(link.link_type),
+        state: fromNullable(link.state),
+        template: fromNullable(link.template),
+        creator: fromNullable(link.creator),
+        create_at: fromNullable(link.create_at)
+            ? convertNanoSecondsToDate(fromDefinedNullable(link.create_at))
             : new Date("2000-10-01"),
-        amount: fromNullable(nftLink.asset_info)
-            ? Number(fromDefinedNullable(nftLink.asset_info)[0].total_amount)
+        amount: fromNullable(link.asset_info)
+            ? Number(fromDefinedNullable(link.asset_info)[0].total_amount)
             : 0,
     };
 };
 
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const MapLinkDetailModel = (linkObj: GetLinkResp): LinkModel => {
-    const { intent_create: intentCreate, link } = linkObj;
-    const nftLink = link.NftCreateAndAirdropLink;
+    const { intent, link } = linkObj;
     return {
-        intent_create: fromNullable(intentCreate),
+        intent_create: fromNullable(intent),
         link: {
-            id: nftLink.id,
-            title: fromNullable(nftLink.title) ?? "",
-            description: fromNullable(nftLink.description) ?? "",
-            image: fromNullable(nftLink.nft_image) ?? "",
-            link_type: fromNullable(nftLink.link_type),
-            state: fromNullable(nftLink.state),
-            template: fromNullable(nftLink.template),
-            creator: fromNullable(nftLink.creator),
-            create_at: fromNullable(nftLink.create_at)
-                ? convertNanoSecondsToDate(fromDefinedNullable(nftLink.create_at))
+            id: link.id,
+            title: fromNullable(link.title) ?? "",
+            description: fromNullable(link.description) ?? "",
+            image: fromNullable(link.nft_image) ?? "",
+            link_type: fromNullable(link.link_type),
+            state: fromNullable(link.state),
+            template: fromNullable(link.template),
+            creator: fromNullable(link.creator),
+            create_at: fromNullable(link.create_at)
+                ? convertNanoSecondsToDate(fromDefinedNullable(link.create_at))
                 : new Date("2000-10-01"),
-            amount: fromNullable(nftLink.asset_info)
-                ? Number(fromDefinedNullable(nftLink.asset_info)[0].total_amount)
+            amount: fromNullable(link.asset_info)
+                ? Number(fromDefinedNullable(link.asset_info)[0].total_amount)
                 : 0,
         },
     };
@@ -92,9 +90,9 @@ const mapAssetInfo = (amount: number): AssetInfo => {
     return {
         address: "",
         chain: CHAIN.IC,
-        amount_per_claim: BigInt(0),
+        amount_per_claim: BigInt(1),
         current_amount: BigInt(amount),
         total_amount: BigInt(amount),
-        total_claim: BigInt(0),
+        total_claim: BigInt(1),
     };
 };
