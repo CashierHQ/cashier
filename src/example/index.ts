@@ -163,26 +163,29 @@ const main = async () => {
     // Add assets -> Create link
     await updateLink(backend, linkId);
 
-    console.log("=====================================");
     await updateLink(backend, linkId);
+
+    console.log("===================  168  ==================\n");
+
+    await getLink(backend, linkId);
 
     // Create link action
     await createAction(backend, linkId);
 
-    console.log("=====================================");
+    console.log("================= 175 ====================\n");
 
     await getLink(backend, linkId);
 
-    console.log("=====================================");
+    console.log("==================   179   ===================\n");
 
     // Create link -> active
     await updateActive(backend, linkId);
 
-    console.log("=====================================");
+    console.log("===================   184   ==================\n");
 
     await getLink(backend, linkId);
 
-    console.log("=====================================");
+    console.log("==================   188   ===================\n");
 };
 
 main();
