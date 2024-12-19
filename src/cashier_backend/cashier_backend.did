@@ -114,7 +114,7 @@ type PaginateResultMetadata = record {
   limit : nat64;
 };
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : Intent; Err : text };
+type Result_1 = variant { Ok : Intent; Err : CanisterError };
 type Result_2 = variant { Ok : text; Err : CanisterError };
 type Result_3 = variant { Ok : User; Err : text };
 type Result_4 = variant { Ok : GetLinkResp; Err : text };
