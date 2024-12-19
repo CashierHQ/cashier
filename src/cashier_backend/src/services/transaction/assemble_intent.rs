@@ -18,7 +18,7 @@ pub struct AssembleTransactionResp {
     pub intent_transactions: Vec<IntentTransaction>,
 }
 
-pub fn assemble_created_transaction(
+pub fn assemble_create_trasaction(
     link: &Link,
     intent_id: &str,
     ts: u64,
@@ -34,7 +34,7 @@ pub fn assemble_created_transaction(
                 return assemble_create_and_airdrop_nft(intent_id, ts);
             }
             LinkType::TipLink => {
-                return assemble_tip_transaction(link, intent_id, ts);
+                return assemble_create_tip_transaction(link, intent_id, ts);
             }
         },
         Err(e) => {
@@ -73,7 +73,7 @@ pub fn assemble_create_and_airdrop_nft(
 // This method will create two transaction
 // 1. Transfer fee
 // 2. Transfer token to tip
-pub fn assemble_tip_transaction(
+pub fn assemble_create_tip_transaction(
     link: &Link,
     intent_id: &str,
     ts: u64,
@@ -104,6 +104,8 @@ pub fn assemble_tip_transaction(
 
     info!("transfer_tx: {:?}", transfer_tx);
     info!("transfer_fee_tx: {:?}", transfer_fee_tx);
+
+    // TODO: add update_intent transaction to transactions and its intent_transactions
 
     return Ok(AssembleTransactionResp {
         transactions: vec![transfer_tx, transfer_fee_tx],

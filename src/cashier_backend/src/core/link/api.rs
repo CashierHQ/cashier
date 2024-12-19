@@ -113,7 +113,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
 }
 
 #[update(guard = "is_not_anonymous")]
-pub fn create_intent(input: CreateIntentInput) -> Result<Intent, String> {
+pub async fn create_intent(input: CreateIntentInput) -> Result<Intent, CanisterError> {
     // inside already check caller is creator
-    services::transaction::create::create(input)
+    services::transaction::create::create(input).await
 }

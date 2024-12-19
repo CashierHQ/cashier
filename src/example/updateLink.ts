@@ -14,8 +14,8 @@ export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: s
                                 [
                                     {
                                         chain: "IC",
-                                        address: "",
-                                        amount_per_claim: 1n,
+                                        address: "x5qut-viaaa-aaaar-qajda-cai",
+                                        amount_per_claim: 100n,
                                         total_amount: 100n,
                                     },
                                 ],
@@ -24,6 +24,7 @@ export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: s
                             template: ["Central"],
                             link_image_url: ["https://www.google.com"],
                             nft_image: ["12345678"],
+                            link_type: ["TipLink"],
                         },
                     ],
                 },
