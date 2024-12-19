@@ -107,9 +107,11 @@ pub fn get_link_by_id(id: String, options: Option<GetLinkOptions>) -> Result<Get
             IntentType::Create => {
                 let intent_resp = match get_create_intent(id.clone()) {
                     Ok(intent_resp) => intent_resp,
-                    Err(e) => {
-                        error!("Failed to get create intent: {}", e);
-                        return Err(e);
+                    Err(_) => {
+                        return Ok(GetLinkResp {
+                            link: link.unwrap(),
+                            intent: None,
+                        });
                     }
                 };
                 return Ok(GetLinkResp {
