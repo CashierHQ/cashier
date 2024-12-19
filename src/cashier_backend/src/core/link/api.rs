@@ -91,14 +91,14 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
 
     let link_type_str = link_type.unwrap();
     match LinkType::from_string(&link_type_str) {
-        Ok(LinkType::NftCreateAndAirdrop) => match handle_update_link(input, rsp.link) {
+        Ok(LinkType::NftCreateAndAirdrop) => match handle_update_link(input, rsp.link).await {
             Ok(link) => Ok(link),
             Err(e) => {
                 error!("Failed to update link: {:#?}", e);
                 Err(e)
             }
         },
-        Ok(LinkType::TipLink) => match handle_update_link(input, rsp.link) {
+        Ok(LinkType::TipLink) => match handle_update_link(input, rsp.link).await {
             Ok(link) => Ok(link),
             Err(e) => {
                 error!("Failed to update link: {:#?}", e);
