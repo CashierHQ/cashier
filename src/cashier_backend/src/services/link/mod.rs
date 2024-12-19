@@ -6,7 +6,6 @@ pub mod validate_active_link;
 
 use crate::{
     core::link::types::{CreateLinkInput, GetLinkOptions, GetLinkResp},
-    error,
     repositories::{link_store, user_link_store, user_wallet_store},
     types::{
         api::{PaginateInput, PaginateResult},
