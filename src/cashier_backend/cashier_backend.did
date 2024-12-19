@@ -94,6 +94,7 @@ type LinkDetailUpdateAssetInfoInput = record {
 type LinkDetailUpdateInput = record {
   title : opt text;
   asset_info : opt vec LinkDetailUpdateAssetInfoInput;
+  link_type : opt text;
   description : opt text;
   link_image_url : opt text;
   template : opt text;

@@ -24,6 +24,7 @@ export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: s
                             template: ["Central"],
                             link_image_url: ["https://www.google.com"],
                             nft_image: ["12345678"],
+                            link_type: ["TipLink"],
                         },
                     ],
                 },
