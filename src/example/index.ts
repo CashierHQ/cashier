@@ -82,7 +82,7 @@ const convertPrivateKeyToIdentity = (user: string) => {
 };
 
 const initializeAgent = (canisterId: string) => {
-    const identity = convertPrivateKeyToIdentity("user2");
+    const identity = convertPrivateKeyToIdentity("user1");
 
     const agent = HttpAgent.createSync({
         identity,

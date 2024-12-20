@@ -1,18 +1,27 @@
+use std::{future::Future, pin::Pin};
+
 use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
     repositories::link_store,
-    services::link::validate_active_link::{is_intent_exist, is_valid_fields_before_active},
-    types::error::CanisterError, // Import CanisterError
-    types::link::{link_state::LinkState, Link},
+    services::{
+        link::validate_active_link::{is_intent_exist, is_valid_fields_before_active},
+        transaction::validate::validate_balance_with_asset_info,
+    },
+    types::{
+        error::CanisterError,
+        link::{link_state::LinkState, Link},
+    },
 }; // Import the logger macro
 
-#[derive(Debug, Clone)]
+type AsyncValidateFn =
+    Box<dyn Fn(Link) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync>;
+
 pub struct Transition {
     pub trigger: LinkStateMachineAction,
     pub source: LinkState,
     pub dest: LinkState,
     pub requires_update: bool,
-    pub validate: fn(Link) -> Result<(), String>,
+    pub validate: AsyncValidateFn,
 }
 
 pub fn get_transitions() -> Vec<Transition> {
@@ -23,32 +32,36 @@ pub fn get_transitions() -> Vec<Transition> {
             source: LinkState::ChooseLinkType,
             dest: LinkState::AddAssets,
             requires_update: true,
-            validate: |_| Ok(()),
+            validate: Box::new(|_| Box::pin(async { Ok(()) })),
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
             source: LinkState::AddAssets,
             dest: LinkState::CreateLink,
             requires_update: true,
-            validate: |_| Ok(()),
+            validate: Box::new(|_| Box::pin(async { Ok(()) })),
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
             source: LinkState::CreateLink,
             dest: LinkState::Active,
             requires_update: false,
-            validate: |link| {
-                is_intent_exist(link.get("id").unwrap().as_str())?;
-                is_valid_fields_before_active(link.clone())?;
-                Ok(())
-            },
+            validate: Box::new(|link| {
+                Box::pin(async move {
+                    let caller = ic_cdk::api::caller();
+                    validate_balance_with_asset_info(link.clone(), caller).await?;
+                    is_intent_exist(link.get("id").unwrap().as_str())?;
+                    is_valid_fields_before_active(link.clone())?;
+                    Ok(())
+                })
+            }),
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
             source: LinkState::Active,
             dest: LinkState::Inactive,
             requires_update: false,
-            validate: |_| Ok(()),
+            validate: Box::new(|_| Box::pin(async { Ok(()) })),
         },
         // Back transitions
         Transition {
@@ -56,31 +69,35 @@ pub fn get_transitions() -> Vec<Transition> {
             source: LinkState::CreateLink,
             dest: LinkState::AddAssets,
             requires_update: false,
-            validate: |link| {
-                if is_intent_exist(link.get("id").unwrap().as_str()).is_ok() {
-                    Err("Intent exists, cannot transition back".to_string())
-                } else {
-                    Ok(())
-                }
-            },
+            validate: Box::new(|link| {
+                Box::pin(async move {
+                    if is_intent_exist(link.get("id").unwrap().as_str()).is_ok() {
+                        Err("Intent exists, cannot transition back".to_string())
+                    } else {
+                        Ok(())
+                    }
+                })
+            }),
         },
         Transition {
             trigger: LinkStateMachineAction::Back,
             source: LinkState::AddAssets,
             dest: LinkState::ChooseLinkType,
             requires_update: false,
-            validate: |link| {
-                if is_intent_exist(link.get("id").unwrap().as_str()).is_ok() {
-                    Err("Intent exists, cannot transition back".to_string())
-                } else {
-                    Ok(())
-                }
-            },
+            validate: Box::new(|link| {
+                Box::pin(async move {
+                    if is_intent_exist(link.get("id").unwrap().as_str()).is_ok() {
+                        Err("Intent exists, cannot transition back".to_string())
+                    } else {
+                        Ok(())
+                    }
+                })
+            }),
         },
     ]
 }
 
-pub fn handle_update_link(
+pub async fn handle_update_link(
     input: UpdateLinkInput,
     mut link_input: Link,
 ) -> Result<Link, CanisterError> {
@@ -114,7 +131,10 @@ pub fn handle_update_link(
 
     match state_machine_result {
         Some(transition) => {
-            (transition.validate)(link_input.clone()).map_err(CanisterError::ValidationErrors)?;
+            match (transition.validate)(link_input.clone()).await {
+                Ok(_) => {}
+                Err(e) => return Err(CanisterError::ValidationErrors(e)),
+            }
 
             // update state
             link_input.set("state", transition.dest.to_string());
