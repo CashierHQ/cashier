@@ -1,4 +1,4 @@
-import { TRANSACTION_STATUS } from "@/services/types/transaction.service.types";
+import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
 import { FC } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
@@ -7,17 +7,17 @@ import { IoMdCheckmark } from "react-icons/io";
 interface TransactionItemProps {
     title: string;
     asset: string;
-    status?: string;
+    state?: string;
 }
 
 const TransactionItem: FC<TransactionItemProps> = (props) => {
     const renderTransactionStatus = (transactionStatus?: string) => {
         switch (transactionStatus) {
-            case TRANSACTION_STATUS.SUCCESS:
+            case TRANSACTION_STATE.SUCCESS:
                 return <IoMdCheckmark color="green" size={22} />;
-            case TRANSACTION_STATUS.FAILED:
+            case TRANSACTION_STATE.FAILED:
                 return <IoMdClose color="red" size={22} />;
-            case TRANSACTION_STATUS.PROCESSING:
+            case TRANSACTION_STATE.PROCESSING:
                 return <FiRefreshCw size={20} />;
             default:
                 return null;
@@ -30,7 +30,7 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
                 <div id="transaction-title" className="mr-3">
                     {props.title}
                 </div>
-                {renderTransactionStatus(props.status)}
+                {renderTransactionStatus(props.state)}
             </div>
             <div>{props.asset}</div>
         </div>

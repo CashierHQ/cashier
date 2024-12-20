@@ -59,16 +59,16 @@ type Icrc21SupportedStandard = record { url : text; name : text };
 type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
 type Intent = record {
   id : text;
-  status : text;
   link_id : text;
   creator_id : text;
+  state : text;
   intent_type : text;
 };
 type IntentResp = record {
   id : text;
-  status : text;
   link_id : text;
   creator_id : text;
+  state : text;
   transactions : vec Transaction;
   intent_type : text;
 };
@@ -125,9 +125,14 @@ type Result_7 = variant { Ok : Link; Err : CanisterError };
 type Transaction = record {
   id : text;
   arg : text;
-  status : text;
   method : text;
   canister_id : text;
+  state : text;
+};
+type UpdateIntentInput = record {
+  transaction_id : text;
+  block_id : nat64;
+  intent_id : text;
 };
 type UpdateLinkInput = record {
   id : text;
@@ -149,5 +154,6 @@ service : () -> {
       Result_6,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
+  update_intent : (UpdateIntentInput) -> ();
   update_link : (UpdateLinkInput) -> (Result_7);
 }
