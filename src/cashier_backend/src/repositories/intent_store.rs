@@ -43,8 +43,9 @@ pub fn get_batch(ids: Vec<String>) -> Vec<Intent> {
     })
 }
 
-pub fn update(id: String, intent: Intent) {
-    INTENT_STORE.with(|store| {
-        store.borrow_mut().insert(id, intent);
+pub fn update(intent: Intent) {
+    let pk: String = intent.pk.clone();
+    INTENT_STORE.with_borrow_mut(|store| {
+        store.insert(pk, intent);
     });
 }

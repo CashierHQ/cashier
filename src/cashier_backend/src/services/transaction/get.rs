@@ -50,7 +50,7 @@ pub fn get_create_intent(link_id: String) -> Result<IntentResp, String> {
         id: intent.id,
         creator_id: intent.creator_id,
         link_id: intent.link_id,
-        status: intent.status,
+        state: intent.state,
         intent_type: intent.intent_type,
         transactions,
     });

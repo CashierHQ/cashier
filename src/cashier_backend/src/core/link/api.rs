@@ -10,12 +10,7 @@ use crate::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link},
     },
-    types::{
-        api::PaginateInput,
-        error::CanisterError,
-        intent::{CreateIntentInput, Intent},
-        link::Link,
-    },
+    types::{api::PaginateInput, error::CanisterError, link::Link},
 };
 
 use super::types::CreateLinkInput;
@@ -110,10 +105,4 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
             "Invalid link type".to_string(),
         )),
     }
-}
-
-#[update(guard = "is_not_anonymous")]
-pub async fn create_intent(input: CreateIntentInput) -> Result<Intent, CanisterError> {
-    // inside already check caller is creator
-    services::transaction::create::create(input).await
 }

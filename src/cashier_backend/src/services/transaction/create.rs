@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use crate::{
+    core::intent::types::CreateIntentInput,
     repositories::{
         intent_store, intent_transaction_store, link_intent_store, link_store, transaction_store,
         user_intent_store, user_wallet_store,
@@ -8,7 +9,7 @@ use crate::{
     services::link::is_link_creator,
     types::{
         error::CanisterError,
-        intent::{CreateIntentInput, Intent, IntentState, IntentType},
+        intent::{Intent, IntentState, IntentType},
         link_intent::LinkIntent,
         user_intent::UserIntent,
     },
