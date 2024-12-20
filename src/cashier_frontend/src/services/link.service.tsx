@@ -58,7 +58,7 @@ class LinkService {
     }
 
     async getLink(linkId: string) {
-        const response = parseResultResponse(await this.actor.get_link(linkId));
+        const response = parseResultResponse(await this.actor.get_link(linkId, []));
         console.log("🚀 ~ LinkService ~ getLink ~ response:", response);
         return MapLinkDetailModel(response);
     }

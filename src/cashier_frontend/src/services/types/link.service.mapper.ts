@@ -33,6 +33,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
                             template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
                             nft_image: [linkDetailModel.image],
                             link_image_url: ["Test"],
+                            link_type: [],
                         },
                     ],
                 },
@@ -43,7 +44,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
 };
 
 export const MapNftLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
-    const nftLink = link.NftCreateAndAirdropLink;
+    const nftLink = link;
     return {
         id: nftLink.id,
         title: fromNullable(nftLink.title) ?? "",
@@ -64,8 +65,8 @@ export const MapNftLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
 
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const MapLinkDetailModel = (linkObj: GetLinkResp): LinkModel => {
-    const { intent_create: intentCreate, link } = linkObj;
-    const nftLink = link.NftCreateAndAirdropLink;
+    const { intent: intentCreate, link } = linkObj;
+    const nftLink = link;
     return {
         intent_create: fromNullable(intentCreate),
         link: {
