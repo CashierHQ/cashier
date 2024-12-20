@@ -7,11 +7,13 @@ use crate::{
     },
 };
 
+// This function set the intent and all transactions to processing state
 pub fn set_processing_intent(intent_id: String) -> Result<(), String> {
-    let intent = intent_store::get(&intent_id).ok_or_else(|| "Intent not found".to_string())?;
-    let prefix = "intent#{intent_id}#transaction#";
+    let intent = intent_store::get(&intent_id)
+        .ok_or_else(|| "[set_processing_intent] Intent not found".to_string())?;
+    let prefix = format!("intent#{}#transaction#", intent_id);
 
-    let intent_transactions = intent_transaction_store::find_with_prefix(prefix);
+    let intent_transactions = intent_transaction_store::find_with_prefix(prefix.as_str());
     let transaction_ids = intent_transactions
         .iter()
         .map(|t| t.transaction_id.clone())
