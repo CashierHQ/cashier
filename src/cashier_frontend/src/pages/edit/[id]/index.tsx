@@ -17,7 +17,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { LINK_STATE } from "@/services/types/enum";
+import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { CreateIntentInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { IntentCreateModel } from "@/services/types/intent.service.types";
 
@@ -37,7 +37,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         template: Template.Central,
         create_at: new Date(),
         amount: 0,
-        link_type: "",
+        linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
     });
     const [isDisabled, setDisabled] = useState(false);
     const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
@@ -92,7 +92,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             linkModel: {
                 ...formData,
                 title: values.title,
-                link_type: values.link_type,
+                linkType: values.linkType,
             },
             isContinue: true,
         };
@@ -172,6 +172,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleChange = (values: Partial<LinkDetailModel>) => {
+        console.log("🚀 ~ handleChange ~ values:", values);
         setFormData({ ...formData, ...values });
     };
 
@@ -233,6 +234,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}
+                        linkType={formData.linkType as LINK_TYPE}
                         handleSubmit={handleSubmitLinkTemplate}
                         isDisabled={isDisabled}
                         render={(props) => <LinkTemplate {...props} />}
@@ -241,12 +243,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         name={t("create.linkDetails")}
                         handleSubmit={handleSubmitLinkDetails}
                         isDisabled={isDisabled}
+                        linkType={formData.linkType as LINK_TYPE}
                         render={(props) => <LinkDetails {...props} />}
                     />
                     <MultiStepForm.Item
                         name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
                         isDisabled={isDisabled}
+                        linkType={formData.linkType as LINK_TYPE}
                         render={(props) => <LinkPreview {...props} />}
                     />
                 </MultiStepForm>

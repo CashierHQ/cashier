@@ -56,7 +56,7 @@ export default function HomePage() {
 
     const handleCreateLink = async () => {
         const response = await new LinkService(identity).createLink({
-            link_type: { NftCreateAndAirdrop: null },
+            link_type: { TipLink: null },
         });
         navigate(`/edit/${response}`);
     };

@@ -12,6 +12,7 @@ import { FormControl } from "./ui/form";
 export interface AssetSelectItem {
     name: string;
     amount: number;
+    tokenAddress: string;
 }
 
 export default function AssetSelect({
@@ -26,13 +27,13 @@ export default function AssetSelect({
             <FormControl>
                 <>
                     <SelectTrigger className="w-[300px] h-[100%]">
-                        <SelectValue placeholder="Select a fruit" />
+                        <SelectValue placeholder="Choose asset" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
                             <SelectLabel>Choose assets</SelectLabel>
                             {assetList?.map((asset) => (
-                                <SelectItem key={asset.name} value={asset.name}>
+                                <SelectItem key={asset.name} value={asset.tokenAddress}>
                                     <div className="flex">
                                         <img
                                             id="asset-logo"

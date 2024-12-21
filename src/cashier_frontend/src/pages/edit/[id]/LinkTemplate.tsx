@@ -26,7 +26,7 @@ import { LINK_TYPE } from "@/services/types/enum";
 
 export const linkTemplateSchema = z.object({
     title: z.string().min(5),
-    link_type: z.string(),
+    linkType: z.string(),
 });
 
 type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
@@ -35,11 +35,11 @@ export default function LinkTemplate({
     defaultValues = {},
     handleSubmit,
     handleChange,
-}: ParitalFormProps<LinkTemplateInput, LinkTemplateInput>) {
+}: ParitalFormProps<LinkTemplateInput, Partial<LinkTemplateInput>>) {
     const { t } = useTranslation();
     const [api, setApi] = React.useState<CarouselApi>();
     const [current, setCurrent] = React.useState(0);
-    const [count, setCount] = React.useState(0);
+    //const [count, setCount] = React.useState(0);
     const form = useForm<z.infer<typeof linkTemplateSchema>>({
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
@@ -55,7 +55,7 @@ export default function LinkTemplate({
             return;
         }
 
-        setCount(api.scrollSnapList().length);
+        //setCount(api.scrollSnapList().length);
         setCurrent(api.selectedScrollSnap());
 
         api.on("select", () => {
@@ -64,8 +64,8 @@ export default function LinkTemplate({
     }, [api]);
 
     useEffect(() => {
-        handleChange({
-            link_type: TEMPLATE_ORDER[current],
+        return handleChange({
+            linkType: TEMPLATE_ORDER[current],
         });
     }, [current]);
 
@@ -76,7 +76,9 @@ export default function LinkTemplate({
                     onSubmit={form.handleSubmit(handleSubmit)}
                     onChange={(e: React.ChangeEvent<HTMLFormElement>) => {
                         if (e.target.name == "title") {
-                            handleChange({ title: e.target.value });
+                            handleChange({
+                                title: e.target.value,
+                            });
                         }
                     }}
                 >
