@@ -2,7 +2,7 @@ import React from "react";
 import { DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { Button } from "./ui/button";
 import TransactionItem from "./transaction-item";
-import { TRANSACTION_STATUS } from "@/services/types/transaction.service.types";
+import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
 import { IoIosClose } from "react-icons/io";
 import { useTranslation } from "react-i18next";
 
@@ -52,18 +52,18 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     <TransactionItem
                         title="Asset to add to link"
                         asset="1 ICP"
-                        status={TRANSACTION_STATUS.PROCESSING}
+                        state={TRANSACTION_STATE.PROCESSING}
                     />
                     <div className="mt-1">
                         <TransactionItem
                             title={translate("transaction.confirm_popup.cashier_fee_label")}
                             asset="1 ICP"
-                            status={TRANSACTION_STATUS.FAILED}
+                            state={TRANSACTION_STATE.FAILED}
                         />
                         <TransactionItem
                             title={translate("transaction.confirm_popup.network_fee_label")}
                             asset="1 ICP"
-                            status={TRANSACTION_STATUS.SUCCESS}
+                            state={TRANSACTION_STATE.SUCCESS}
                         />
                     </div>
                 </div>

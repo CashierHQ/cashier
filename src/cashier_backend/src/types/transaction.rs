@@ -22,8 +22,8 @@ impl TransactionState {
         }
     }
 
-    pub fn from_string(status: &str) -> Result<TransactionState, String> {
-        match status {
+    pub fn from_string(state: &str) -> Result<TransactionState, String> {
+        match state {
             "Transaction_state_created" => Ok(TransactionState::Created),
             "Transaction_state_processing" => Ok(TransactionState::Processing),
             "Transaction_state_success" => Ok(TransactionState::Success),
@@ -40,7 +40,7 @@ pub struct Transaction {
     pub canister_id: String,
     pub method: String,
     pub arg: String,
-    pub status: String,
+    pub state: String,
 }
 
 impl Transaction {
@@ -49,14 +49,14 @@ impl Transaction {
         canister_id: String,
         method: String,
         arg: String,
-        status: String,
+        state: String,
     ) -> Self {
         Self {
             id,
             canister_id,
             method,
             arg,
-            status,
+            state,
         }
     }
 
@@ -66,7 +66,7 @@ impl Transaction {
             self.canister_id.clone(),
             self.method.clone(),
             self.arg.clone(),
-            self.status.clone(),
+            self.state.clone(),
         )
     }
 
@@ -79,7 +79,7 @@ impl Transaction {
             canister_id: transaction.canister_id,
             method: transaction.method,
             arg: transaction.arg,
-            status: transaction.status,
+            state: transaction.state,
         }
     }
 
@@ -89,7 +89,7 @@ impl Transaction {
             canister_id: "canister_id".to_string(),
             method: "create_and_airdrop_nft".to_string(),
             arg: "arg".to_string(),
-            status: "Transaction_state_created".to_string(),
+            state: "Transaction_state_created".to_string(),
         }
     }
 
@@ -103,7 +103,7 @@ impl Transaction {
             canister_id,
             method: "icrc1_transfer".to_string(),
             arg: general_purpose::STANDARD.encode(Encode!(&transfer_arg).unwrap()),
-            status: TransactionState::Created.to_string(),
+            state: TransactionState::Created.to_string(),
         }
     }
 }

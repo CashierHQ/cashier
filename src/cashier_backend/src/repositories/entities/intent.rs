@@ -9,7 +9,7 @@ const PK_PATTERN: &str = "intent";
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Intent {
     pub pk: String,
-    pub status: String,
+    pub state: String,
     pub intent_type: String,
     pub link_id: String,
     pub creator_id: String,
@@ -22,14 +22,14 @@ impl Intent {
 
     pub fn new(
         id: String,
-        status: String,
+        state: String,
         intent_type: String,
         link_id: String,
         creator_id: String,
     ) -> Self {
         Self {
             pk: Self::build_pk(id),
-            status,
+            state,
             intent_type: intent_type,
             link_id,
             creator_id,

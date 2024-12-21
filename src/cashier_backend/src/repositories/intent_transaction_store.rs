@@ -22,6 +22,7 @@ pub fn get(pk: &str) -> Option<IntentTransaction> {
     INTENT_TRANSACTION_STORE.with(|store| store.borrow().get(&pk.to_string()))
 }
 
+// prefix intent#<intent_id>#transaction#
 pub fn find_with_prefix(prefix: &str) -> Vec<crate::types::intent_transaction::IntentTransaction> {
     INTENT_TRANSACTION_STORE.with(|store| {
         let store = store.borrow();
