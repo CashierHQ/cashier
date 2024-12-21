@@ -23,5 +23,10 @@ build:
 
 deploy:
 	@bash scripts/deploy.sh
+
+local-setup:
+	@bash scripts/local/setup_icp_ledger.sh
+
 local:
+	make local-setup
 	@bash scripts/deploy.sh --skip

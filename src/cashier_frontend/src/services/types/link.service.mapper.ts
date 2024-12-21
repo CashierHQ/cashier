@@ -33,6 +33,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
                             template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
                             nft_image: [linkDetailModel.image],
                             link_image_url: ["Test"],
+                            link_type: [],
                         },
                     ],
                 },

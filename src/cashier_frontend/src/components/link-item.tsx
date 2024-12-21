@@ -1,20 +1,19 @@
-import { LINK_STATUS } from "@/constants/otherConst";
-import { LINK_STATE } from "@/services/types/enum";
+import { LINK_STATE, linkStateToString } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
 export function StateBadge({ state }: { state: string | undefined }) {
     if (state === LINK_STATE.ADD_ASSET) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightyellow text-yellow">
-                {LINK_STATUS.PENDING_DETAIL}
+                {linkStateToString(LINK_STATE.ADD_ASSET)}
             </div>
         );
     }
 
-    if (state === LINK_STATE.CREATE_LINK) {
+    if (state === LINK_STATE.CHOOSE_TEMPLATE) {
         return (
             <div className="text-sm font-normal rounded-full px-2 bg-lightpurple text-[#3648A1]">
-                {LINK_STATUS.PENDING_PREVIEW}
+                {linkStateToString(LINK_STATE.CHOOSE_TEMPLATE)}
             </div>
         );
     }
@@ -22,7 +21,7 @@ export function StateBadge({ state }: { state: string | undefined }) {
     if (state === LINK_STATE.ACTIVE) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-green text-white">
-                {LINK_STATUS.ACTIVE}
+                {linkStateToString(LINK_STATE.ACTIVE)}
             </div>
         );
     }
@@ -30,15 +29,15 @@ export function StateBadge({ state }: { state: string | undefined }) {
     if (state === LINK_STATE.INACTIVE) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-gray-200 text-gray-700">
-                {LINK_STATUS.INACTIVE}
+                {linkStateToString(LINK_STATE.INACTIVE)}
             </div>
         );
     }
 
-    if (state === LINK_STATE.CHOOSETEMPLATE) {
+    if (state === LINK_STATE.CREATE_LINK) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightgreen">
-                {LINK_STATUS.NEW}
+                {linkStateToString(LINK_STATE.CREATE_LINK)}
             </div>
         );
     }

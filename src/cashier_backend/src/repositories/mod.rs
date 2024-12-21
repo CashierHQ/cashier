@@ -35,9 +35,9 @@ const USER_INTENT_MEMORY_ID: MemoryId = MemoryId::new(9);
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
-    static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
+    pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
 
-    static USER_STORE: RefCell<StableBTreeMap<
+    pub static USER_STORE: RefCell<StableBTreeMap<
         String,
         entities::user::User,
         Memory
@@ -47,7 +47,7 @@ thread_local! {
         )
     );
 
-    static USER_WALLET_STORE: RefCell<StableBTreeMap<
+    pub static USER_WALLET_STORE: RefCell<StableBTreeMap<
         String,
         String,
         Memory
@@ -57,7 +57,7 @@ thread_local! {
         )
     );
 
-    static LINK_STORE: RefCell<StableBTreeMap<
+    pub static LINK_STORE: RefCell<StableBTreeMap<
         String,
         Link,
         Memory
@@ -67,7 +67,7 @@ thread_local! {
             )
         );
 
-    static USER_LINK_STORE: RefCell<StableBTreeMap<
+    pub static USER_LINK_STORE: RefCell<StableBTreeMap<
         String,
         UserLink,
         Memory
@@ -77,7 +77,7 @@ thread_local! {
         )
     );
 
-    static INTENT_STORE: RefCell<StableBTreeMap<
+    pub static INTENT_STORE: RefCell<StableBTreeMap<
         String,
         Intent,
         Memory
@@ -87,7 +87,7 @@ thread_local! {
             )
         );
 
-    static TRANSACTION_STORE: RefCell<StableBTreeMap<
+    pub static TRANSACTION_STORE: RefCell<StableBTreeMap<
         String,
         Transaction,
         Memory
@@ -97,7 +97,7 @@ thread_local! {
         )
     );
 
-    static INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
+    pub static INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
         String,
         IntentTransaction,
         Memory
@@ -107,7 +107,7 @@ thread_local! {
         )
     );
 
-    static LINK_INTENT_STORE: RefCell<StableBTreeMap<
+    pub static LINK_INTENT_STORE: RefCell<StableBTreeMap<
         String,
         LinkIntent,
         Memory
@@ -117,7 +117,7 @@ thread_local! {
         )
     );
 
-    static USER_INTENT_STORE: RefCell<StableBTreeMap<
+    pub static USER_INTENT_STORE: RefCell<StableBTreeMap<
         String,
         UserIntent,
         Memory

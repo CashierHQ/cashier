@@ -21,8 +21,8 @@ import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { CreateIntentInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { IntentCreateModel } from "@/services/types/intent.service.types";
 
-const STEP_LINK_STATUS_ORDER = [
-    LINK_STATE.CHOOSETEMPLATE,
+const STEP_LINK_STATE_ORDER = [
+    LINK_STATE.CHOOSE_TEMPLATE,
     LINK_STATE.ADD_ASSET,
     LINK_STATE.CREATE_LINK,
 ];
@@ -66,7 +66,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             const { link, intent_create } = linkObj;
             console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
-                const step = STEP_LINK_STATUS_ORDER.findIndex((x) => x === link.state);
+                const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
                 setRendering(false);
                 setCurrentStep(step >= 0 ? step : 0);

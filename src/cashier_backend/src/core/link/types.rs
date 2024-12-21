@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -17,6 +17,21 @@ pub struct LinkDetailUpdateAssetInfoInput {
     pub chain: String,
     pub total_amount: u64,
     pub amount_per_claim: u64,
+}
+
+impl LinkDetailUpdateAssetInfoInput {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.total_amount < self.amount_per_claim {
+            return Err("Total amount should be greater than amount per claim".to_string());
+        }
+
+        match Principal::from_text(self.address.as_str()) {
+            Ok(_) => {}
+            Err(_) => return Err("Invalid address".to_string()),
+        }
+
+        Ok(())
+    }
 }
 
 impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfo {
@@ -40,18 +55,26 @@ pub struct LinkDetailUpdateInput {
     pub nft_image: Option<String>,
     pub asset_info: Option<Vec<LinkDetailUpdateAssetInfoInput>>,
     pub template: Option<String>,
+    pub link_type: Option<String>,
 }
 
 impl LinkDetailUpdateInput {
     pub fn validate(&self) -> Result<(), String> {
         if let Some(template) = &self.template {
-            match Template::from_string(template.as_str()) {
-                Ok(_) => Ok(()),
-                Err(e) => Err(e),
-            }
-        } else {
-            Ok(())
+            Template::from_string(template).map_err(|e| format!("Invalid template: {}", e))?;
         }
+
+        if let Some(link_type) = &self.link_type {
+            LinkType::from_string(link_type).map_err(|e| format!("Invalid link type: {}", e))?;
+        }
+
+        if let Some(asset_info) = &self.asset_info {
+            for asset_info_input in asset_info {
+                asset_info_input.validate()?;
+            }
+        }
+
+        Ok(())
     }
 }
 #[derive(Serialize, Deserialize, Debug, CandidType)]
@@ -176,7 +199,7 @@ pub struct IntentResp {
     pub id: String,
     pub creator_id: String,
     pub link_id: String,
-    pub status: String,
+    pub state: String,
     pub intent_type: String,
     pub transactions: Vec<Transaction>,
 }

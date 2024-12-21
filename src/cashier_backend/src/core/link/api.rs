@@ -10,12 +10,7 @@ use crate::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link},
     },
-    types::{
-        api::PaginateInput,
-        error::CanisterError,
-        intent::{CreateIntentInput, Intent},
-        link::Link,
-    },
+    types::{api::PaginateInput, error::CanisterError, link::Link},
 };
 
 use super::types::CreateLinkInput;
@@ -91,14 +86,14 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
 
     let link_type_str = link_type.unwrap();
     match LinkType::from_string(&link_type_str) {
-        Ok(LinkType::NftCreateAndAirdrop) => match handle_update_link(input, rsp.link) {
+        Ok(LinkType::NftCreateAndAirdrop) => match handle_update_link(input, rsp.link).await {
             Ok(link) => Ok(link),
             Err(e) => {
                 error!("Failed to update link: {:#?}", e);
                 Err(e)
             }
         },
-        Ok(LinkType::TipLink) => match handle_update_link(input, rsp.link) {
+        Ok(LinkType::TipLink) => match handle_update_link(input, rsp.link).await {
             Ok(link) => Ok(link),
             Err(e) => {
                 error!("Failed to update link: {:#?}", e);
@@ -110,10 +105,4 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
             "Invalid link type".to_string(),
         )),
     }
-}
-
-#[update(guard = "is_not_anonymous")]
-pub fn create_intent(input: CreateIntentInput) -> Result<Intent, String> {
-    // inside already check caller is creator
-    services::transaction::create::create(input)
 }
