@@ -11,8 +11,8 @@ interface TransactionItemProps {
 }
 
 const TransactionItem: FC<TransactionItemProps> = (props) => {
-    const renderTransactionStatus = (transactionStatus?: string) => {
-        switch (transactionStatus) {
+    const renderTransactionState = (transactionState?: string) => {
+        switch (transactionState) {
             case TRANSACTION_STATE.SUCCESS:
                 return <IoMdCheckmark color="green" size={22} />;
             case TRANSACTION_STATE.FAILED:
@@ -30,7 +30,7 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
                 <div id="transaction-title" className="mr-3">
                     {props.title}
                 </div>
-                {renderTransactionStatus(props.state)}
+                {renderTransactionState(props.state)}
             </div>
             <div>{props.asset}</div>
         </div>
