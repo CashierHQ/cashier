@@ -19,8 +19,8 @@ impl IntentState {
         }
     }
 
-    pub fn from_string(status: &str) -> Result<IntentState, String> {
-        match status {
+    pub fn from_string(state: &str) -> Result<IntentState, String> {
+        match state {
             "Intent_state_created" => Ok(IntentState::Created),
             "Intent_state_processing" => Ok(IntentState::Processing),
             "Intent_state_success" => Ok(IntentState::Success),
@@ -28,17 +28,6 @@ impl IntentState {
             _ => Err("Invalid intent state".to_string()),
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct ClaimIntentParams {
-    address: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-
-pub enum CreateIntentParams {
-    Claim(ClaimIntentParams),
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -69,18 +58,11 @@ impl IntentType {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct CreateIntentInput {
-    pub intent_type: String,
-    pub params: Option<CreateIntentParams>,
-    pub link_id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Intent {
     pub id: String,
     pub creator_id: String,
     pub link_id: String,
-    pub status: String,
+    pub state: String,
     pub intent_type: String,
 }
 
@@ -89,14 +71,14 @@ impl Intent {
         id: String,
         creator_id: String,
         link_id: String,
-        status: String,
+        state: String,
         intent_type: String,
     ) -> Self {
         Self {
             id,
             creator_id,
             link_id,
-            status,
+            state,
             intent_type,
         }
     }
@@ -104,7 +86,7 @@ impl Intent {
     pub fn to_persistence(&self) -> crate::repositories::entities::intent::Intent {
         crate::repositories::entities::intent::Intent::new(
             self.id.clone(),
-            self.status.clone().to_string(),
+            self.state.clone().to_string(),
             self.intent_type.clone().to_string(),
             self.link_id.clone(),
             self.creator_id.clone(),
@@ -116,7 +98,7 @@ impl Intent {
             id: intent.pk.split('#').last().unwrap().to_string(),
             creator_id: intent.creator_id,
             link_id: intent.link_id,
-            status: intent.status,
+            state: intent.state,
             intent_type: intent.intent_type,
         }
     }

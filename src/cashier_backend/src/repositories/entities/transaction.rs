@@ -12,7 +12,7 @@ pub struct Transaction {
     pub canister_id: String,
     pub method: String,
     pub arg: String,
-    pub status: String,
+    pub state: String,
 }
 
 impl Transaction {
@@ -29,14 +29,14 @@ impl Transaction {
         canister_id: String,
         method: String,
         arg: String,
-        status: String,
+        state: String,
     ) -> Self {
         Self {
             pk: Self::build_pk(id),
             canister_id,
             method,
             arg,
-            status,
+            state,
         }
     }
 }

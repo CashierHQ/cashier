@@ -199,7 +199,7 @@ pub struct IntentResp {
     pub id: String,
     pub creator_id: String,
     pub link_id: String,
-    pub status: String,
+    pub state: String,
     pub intent_type: String,
     pub transactions: Vec<Transaction>,
 }
