@@ -57,7 +57,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const responsive = useResponsive();
 
     const queryClient = useQueryClient();
-    const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
+    const { mutate, mutateAsync, error: updateLinkError } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
         if (!linkId) return;
@@ -79,7 +79,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         try {
             fetchData();
         } catch (err) {
-            console.log(err);
+            console.log("🚀 ~ useEffect ~ err:", err);
         }
     }, [linkId, identity]);
 
@@ -97,7 +97,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             },
             isContinue: true,
         };
-        console.log("🚀 ~ handleSubmitLinkTemplate ~ updateLinkParams:", updateLinkParams);
         mutate(updateLinkParams);
         if (updateLinkError) {
             throw updateLinkError;
@@ -107,7 +106,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
         if (!linkId) return;
-        console.log(values);
         try {
             formData.state = State.PendingPreview;
             const updateLinkParams: UpdateLinkParams = {
@@ -115,13 +113,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 linkModel: {
                     ...formData,
                     ...values,
+                    description: "test",
                 },
                 isContinue: true,
             };
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
-            console.log(error);
+            console.log("🚀 ~ handleSubmitLinkDetails ~ error:", error);
         }
     };
 
@@ -149,15 +148,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 const linkService = new LinkService(identity);
                 const createActionResult = await linkService.createAction(createActionInput);
                 console.log("🚀 ~ handleSubmit ~ createActionResult:", createActionResult);
-
-                // If action is created successfully
-                // then update the NFT link to active
-                // if (createActionResult) {
-                //     console.log("Update to active");
-                //     await mutateAsync(updateLinkParams);
-                //     navigate(`/details/${linkId}`);
-                // }
-                // setOpenConfirmationPopup(true);
+                setOpenConfirmationPopup(true);
             } else {
                 setToastData({
                     open: true,
@@ -168,30 +159,41 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 setOpenValidtionToast(true);
             }
         } catch (error) {
+            console.log("🚀 ~ handleSubmit ~ error:", error);
             setDisabled(false);
-            console.log(error);
         }
     };
 
     const handleChange = (values: Partial<LinkDetailModel>) => {
-        console.log("🚀 ~ handleChange ~ values:", values);
         setFormData({ ...formData, ...values });
     };
 
-    const handleConfirmTransactions = () => {
+    const handleConfirmTransactions = async () => {
         setDisabledConfirmButton(true);
         setPopupButton(t("transaction.confirm_popup.inprogress_button") as string);
-        setToastData({
-            open: true,
-            title: t("transaction.confirm_popup.transaction_failed"),
-            description: t("transaction.confirm_popup.transaction_failed_message"),
-            variant: "error",
-        });
-        setOpenValidtionToast(true);
-        setTimeout(() => {
-            setDisabledConfirmButton(false);
-            setPopupButton(t("transaction.confirm_popup.retry_button") as string);
-        }, 3000);
+        if (!linkId) return;
+        const updateLinkParams: UpdateLinkParams = {
+            linkId: linkId,
+            linkModel: {
+                ...formData,
+                description: "aaa",
+            },
+            isContinue: true,
+        };
+        await mutateAsync(updateLinkParams);
+        navigate(`/details/${linkId}`);
+
+        // setToastData({
+        //     open: true,
+        //     title: t("transaction.confirm_popup.transaction_failed"),
+        //     description: t("transaction.confirm_popup.transaction_failed_message"),
+        //     variant: "error",
+        // });
+        // setOpenValidtionToast(true);
+        // setTimeout(() => {
+        //     setDisabledConfirmButton(false);
+        //     setPopupButton(t("transaction.confirm_popup.retry_button") as string);
+        // }, 3000);
     };
 
     const handleBackstep = async () => {

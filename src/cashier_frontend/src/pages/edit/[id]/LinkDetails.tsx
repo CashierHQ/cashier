@@ -27,7 +27,7 @@ import {
     initializeDefautGetUserTokenRequest,
     mapAPITokenModelToAssetSelectModel,
     UserToken,
-} from "@/services/ic-explorer";
+} from "@/services/icExplorer";
 
 export const linkDetailsSchema = z.object({
     image: z.string(),
@@ -132,7 +132,6 @@ export default function LinkDetails({
                     return mapAPITokenModelToAssetSelectModel(token);
                 });
                 setAssetList((prev) => [...prev, assetList].flat());
-                console.log("🚀 ~ useEffect ~ result:", assetList);
             }
         }
 
@@ -160,7 +159,7 @@ export default function LinkDetails({
                         <FormField
                             name="tokenAddress"
                             control={form.control}
-                            render={({ field }) => (
+                            render={() => (
                                 <FormItem>
                                     <FormLabel>{t("create.asset")}</FormLabel>
                                     <AssetSelect

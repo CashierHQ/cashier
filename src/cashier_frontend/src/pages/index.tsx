@@ -1,9 +1,4 @@
-import {
-    ConnectWalletButton,
-    useAccounts,
-    useBalance,
-    useIdentityKit,
-} from "@nfid/identitykit/react";
+import { ConnectWalletButton, useIdentityKit } from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -26,7 +21,6 @@ import { LINK_STATE } from "@/services/types/enum";
 export default function HomePage() {
     const { t } = useTranslation();
     const { user: walletUser, identity, connect } = useIdentityKit();
-    const accounts = useAccounts();
     const [newAppUser, setNewAppUser] = useState<User>();
     const {
         data: appUser,
@@ -81,10 +75,6 @@ export default function HomePage() {
     }, []);
 
     useEffect(() => {
-        console.log("🚀 ~ HomePage ~ walletUser:", walletUser?.principal.toString());
-    }, [walletUser]);
-
-    useEffect(() => {
         if (newAppUser) {
             refetchAppUser();
         }
@@ -99,7 +89,7 @@ export default function HomePage() {
                 const user = await userService.createUser();
                 setNewAppUser(user);
             } catch (error) {
-                console.log(error);
+                console.log("🚀 ~ createUser ~ error:", error);
             }
         };
 

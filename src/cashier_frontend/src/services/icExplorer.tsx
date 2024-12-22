@@ -1,4 +1,4 @@
-import axiosClient from "@/axios/axiosClient";
+import icExplorerAxiosClient from "@/axios/axiosClient";
 import { AssetSelectItem } from "@/components/asset-select";
 
 export interface GetUserTokensRequest {
@@ -22,12 +22,11 @@ export const initializeDefautGetUserTokenRequest = (princical: string): GetUserT
         principal: princical,
         isDesc: true,
         page: 1,
-        size: 10,
+        size: 100,
     };
 };
 
 export const mapAPITokenModelToAssetSelectModel = (token: UserToken): AssetSelectItem => {
-    console.log(typeof token.amount);
     return {
         name: token.symbol,
         amount: Number.parseFloat(token.amount),
@@ -38,6 +37,6 @@ export const mapAPITokenModelToAssetSelectModel = (token: UserToken): AssetSelec
 export const icExplorerService = {
     getUserTokens: (data: GetUserTokensRequest) => {
         const url = "holder/user";
-        return axiosClient.post(url, data);
+        return icExplorerAxiosClient.post(url, data);
     },
 };

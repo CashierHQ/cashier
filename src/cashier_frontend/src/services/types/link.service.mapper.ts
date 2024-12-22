@@ -59,7 +59,9 @@ export const MapLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
         amount: fromNullable(link.asset_info)
             ? Number(fromDefinedNullable(link.asset_info)[0].total_amount)
             : 0,
-        tokenAddress: fromDefinedNullable(link.asset_info)[0].address,
+        tokenAddress: fromNullable(link.asset_info)
+            ? fromDefinedNullable(link.asset_info)[0].address
+            : "",
     };
 };
 
@@ -83,7 +85,9 @@ export const MapLinkDetailModel = (linkObj: GetLinkResp): LinkModel => {
             amount: fromNullable(link.asset_info)
                 ? Number(fromDefinedNullable(link.asset_info)[0].total_amount)
                 : 0,
-            tokenAddress: fromDefinedNullable(link.asset_info)[0].address,
+            tokenAddress: fromNullable(link.asset_info)
+                ? fromDefinedNullable(link.asset_info)[0].address
+                : "",
         },
     };
 };

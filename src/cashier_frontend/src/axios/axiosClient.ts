@@ -1,7 +1,7 @@
 import axios from "axios";
 import queryString from "query-string";
 
-const axiosClient = axios.create({
+const icExplorerAxiosClient = axios.create({
     baseURL: "https://api.icexplorer.io/api",
     headers: {},
     paramsSerializer: {
@@ -9,7 +9,7 @@ const axiosClient = axios.create({
     },
 });
 
-axiosClient.interceptors.response.use(
+icExplorerAxiosClient.interceptors.response.use(
     (response) => {
         if (response && response.data) {
             return response.data;
@@ -22,4 +22,4 @@ axiosClient.interceptors.response.use(
     },
 );
 
-export default axiosClient;
+export default icExplorerAxiosClient;
