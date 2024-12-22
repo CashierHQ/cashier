@@ -1,4 +1,4 @@
-import { ConnectWalletButton, useIdentityKit } from "@nfid/identitykit/react";
+import { ConnectWalletButton, useAuth, useIdentity, useIdentityKit } from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -20,7 +20,8 @@ import { LINK_STATE } from "@/services/types/enum";
 
 export default function HomePage() {
     const { t } = useTranslation();
-    const { user: walletUser, identity, connect } = useIdentityKit();
+    const identity = useIdentity();
+    const { connect, user: walletUser } = useAuth();
     const [newAppUser, setNewAppUser] = useState<User>();
     const {
         data: appUser,
