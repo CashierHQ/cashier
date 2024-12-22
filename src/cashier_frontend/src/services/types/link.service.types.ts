@@ -59,6 +59,7 @@ export type LinkDetailModel = {
     creator?: string;
     create_at: Date;
     amount: number;
+    tokenAddress: string;
 };
 
 export type LinkModel = {

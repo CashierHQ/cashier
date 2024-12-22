@@ -27,7 +27,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
                         {
                             title: [linkDetailModel.title],
                             asset_info: linkDetailModel.amount
-                                ? [Array<AssetInfo>(mapAssetInfo(linkDetailModel.amount))]
+                                ? [Array<AssetInfo>(mapAssetInfo(linkDetailModel))]
                                 : [],
                             description: [linkDetailModel.description],
                             template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
@@ -59,6 +59,7 @@ export const MapLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
         amount: fromNullable(link.asset_info)
             ? Number(fromDefinedNullable(link.asset_info)[0].total_amount)
             : 0,
+        tokenAddress: fromDefinedNullable(link.asset_info)[0].address,
     };
 };
 
@@ -82,18 +83,20 @@ export const MapLinkDetailModel = (linkObj: GetLinkResp): LinkModel => {
             amount: fromNullable(link.asset_info)
                 ? Number(fromDefinedNullable(link.asset_info)[0].total_amount)
                 : 0,
+            tokenAddress: fromDefinedNullable(link.asset_info)[0].address,
         },
     };
 };
 
+const IS_TEST_LOCAL_TOKEN = true;
 // May need to update in future, now received 'amount' as param, others are constants
-const mapAssetInfo = (amount: number): AssetInfo => {
+const mapAssetInfo = (linkDetailModel: LinkDetailModel): AssetInfo => {
     return {
-        address: "",
+        address: IS_TEST_LOCAL_TOKEN ? "x5qut-viaaa-aaaar-qajda-cai" : linkDetailModel.tokenAddress,
         chain: CHAIN.IC,
         amount_per_claim: BigInt(1),
-        current_amount: BigInt(amount),
-        total_amount: BigInt(amount),
+        current_amount: BigInt(linkDetailModel.amount),
+        total_amount: BigInt(linkDetailModel.amount),
         total_claim: BigInt(1),
     };
 };

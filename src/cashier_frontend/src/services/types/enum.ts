@@ -14,14 +14,14 @@ export enum LINK_STATE {
     INACTIVE = "Link_state_inactive",
 }
 
-export function linkStateToString(state: LINK_STATE): string {
+export function getLinkLabel(state: LINK_STATE): string {
     switch (state) {
         case LINK_STATE.CHOOSE_TEMPLATE:
-            return "Choose link type";
+            return "New";
         case LINK_STATE.ADD_ASSET:
-            return "Addd assets";
+            return "Pending details";
         case LINK_STATE.CREATE_LINK:
-            return "Preview";
+            return "Pending preview";
         case LINK_STATE.ACTIVE:
             return "Active";
         case LINK_STATE.INACTIVE:

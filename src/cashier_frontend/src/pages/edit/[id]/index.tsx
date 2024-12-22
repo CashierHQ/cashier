@@ -38,6 +38,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         create_at: new Date(),
         amount: 0,
         linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
+        tokenAddress: "",
     });
     const [isDisabled, setDisabled] = useState(false);
     const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
@@ -106,6 +107,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
         if (!linkId) return;
+        console.log(values);
         try {
             formData.state = State.PendingPreview;
             const updateLinkParams: UpdateLinkParams = {
@@ -139,13 +141,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 //     },
                 //     isContinue: true,
                 // };
-                const createActionInout: CreateIntentInput = {
+                const createActionInput: CreateIntentInput = {
                     link_id: linkId,
                     intent_type: "Create",
                     params: [],
                 };
                 const linkService = new LinkService(identity);
-                const createActionResult = await linkService.createAction(createActionInout);
+                const createActionResult = await linkService.createAction(createActionInput);
                 console.log("🚀 ~ handleSubmit ~ createActionResult:", createActionResult);
 
                 // If action is created successfully

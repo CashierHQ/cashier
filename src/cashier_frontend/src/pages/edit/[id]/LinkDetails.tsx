@@ -21,10 +21,17 @@ import { useEffect, useState } from "react";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import AssetSelect, { AssetSelectItem } from "@/components/asset-select";
 import { LINK_TYPE } from "@/services/types/enum";
+import { useAuth } from "@nfid/identitykit/react";
+import {
+    icExplorerService,
+    initializeDefautGetUserTokenRequest,
+    mapAPITokenModelToAssetSelectModel,
+    UserToken,
+} from "@/services/ic-explorer";
 
 export const linkDetailsSchema = z.object({
-    image: z.string().min(1, { message: "Image is required" }),
-    description: z.string().min(10),
+    image: z.string(),
+    description: z.string(),
     title: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
     amount: z.coerce.number().min(1),
     tokenAddress: z.string(),
@@ -34,29 +41,14 @@ type InputSchema = z.infer<typeof linkDetailsSchema>;
 
 const ASSET_LIST: AssetSelectItem[] = [
     {
-        name: "ICP",
+        name: "TK 1",
         amount: 200,
         tokenAddress: "abc",
     },
     {
-        name: "ETH",
+        name: "TK 2",
         amount: 120,
         tokenAddress: "def",
-    },
-];
-
-const COMMON_TOKEN_ADDRESS = [
-    {
-        name: "ICP",
-        address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-    },
-    {
-        name: "CHAT",
-        address: "2ouva-viaaa-aaaaq-aaamq-cai",
-    },
-    {
-        name: "ORIGYN",
-        address: "lkwrt-vyaaa-aaaaq-aadhq-cai",
     },
 ];
 
@@ -66,7 +58,10 @@ export default function LinkDetails({
     handleChange,
 }: ParitalFormProps<InputSchema, Partial<InputSchema>>) {
     const { t } = useTranslation();
+    const { user: walletUser } = useAuth();
+    const walletAddress = walletUser ? walletUser.principal.toString() : "";
     const [currentImage, setCurrentImage] = useState<string>("");
+    const [assetList, setAssetList] = useState<AssetSelectItem[]>(ASSET_LIST);
 
     const form = useForm<InputSchema>({
         resolver: zodResolver(linkDetailsSchema),
@@ -121,9 +116,36 @@ export default function LinkDetails({
         }
     };
 
+    const onSelectAsset = (value: string) => {
+        const selectedToken = assetList.find((asset) => asset.tokenAddress === value);
+        if (selectedToken) {
+            form.setValue("tokenAddress", selectedToken.tokenAddress);
+        }
+    };
+
+    // Fetch user current assets
     useEffect(() => {
+        async function fetchUserToken() {
+            if (walletAddress) {
+                const result = await getUserToken();
+                const assetList: AssetSelectItem[] = result.map((token) => {
+                    return mapAPITokenModelToAssetSelectModel(token);
+                });
+                setAssetList((prev) => [...prev, assetList].flat());
+                console.log("🚀 ~ useEffect ~ result:", assetList);
+            }
+        }
+
         setCurrentImage(form.getValues("image"));
-    }, []);
+        fetchUserToken();
+    }, [walletAddress]);
+
+    async function getUserToken(): Promise<UserToken[]> {
+        const request = initializeDefautGetUserTokenRequest(walletAddress);
+        const response = await icExplorerService.getUserTokens(request);
+        const userTokenList = response.data.list as UserToken[];
+        return userTokenList;
+    }
 
     const renderTipLinkAssetForm = () => {
         return (
@@ -141,7 +163,10 @@ export default function LinkDetails({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>{t("create.asset")}</FormLabel>
-                                    <AssetSelect assetList={ASSET_LIST} />
+                                    <AssetSelect
+                                        assetList={assetList}
+                                        onValueChange={onSelectAsset}
+                                    />
                                     <FormMessage />
                                 </FormItem>
                             )}

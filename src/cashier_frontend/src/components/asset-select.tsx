@@ -18,12 +18,14 @@ export interface AssetSelectItem {
 export default function AssetSelect({
     assetList,
     defaultValue,
+    onValueChange,
 }: {
     assetList: AssetSelectItem[];
     defaultValue?: string;
+    onValueChange: (value: string) => void;
 }) {
     return (
-        <Select defaultValue={defaultValue}>
+        <Select defaultValue={defaultValue} onValueChange={onValueChange}>
             <FormControl>
                 <>
                     <SelectTrigger className="w-[300px] h-[100%]">
@@ -43,10 +45,7 @@ export default function AssetSelect({
                                         />
                                         <div id="asset-info" className="text-md text-left">
                                             <div>{asset.name}</div>
-                                            <div>
-                                                Balance {asset.amount}
-                                                {asset.name}
-                                            </div>
+                                            <div>{`Balance ${asset.amount} ${asset.name}`}</div>
                                         </div>
                                     </div>
                                 </SelectItem>

@@ -1,4 +1,9 @@
-import { ConnectWalletButton, useIdentityKit } from "@nfid/identitykit/react";
+import {
+    ConnectWalletButton,
+    useAccounts,
+    useBalance,
+    useIdentityKit,
+} from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -21,6 +26,7 @@ import { LINK_STATE } from "@/services/types/enum";
 export default function HomePage() {
     const { t } = useTranslation();
     const { user: walletUser, identity, connect } = useIdentityKit();
+    const accounts = useAccounts();
     const [newAppUser, setNewAppUser] = useState<User>();
     const {
         data: appUser,
@@ -74,23 +80,9 @@ export default function HomePage() {
         }
     }, []);
 
-    // Create 2 first sample links for new user
-    // useEffect(() => {
-    //     const initSampleLinks = async () => {
-    //         try {
-    //             setLoadingSampleLinks(true);
-    //             const linkService = new LinkService(identity);
-    //             await createSampleLink(linkService);
-    //         } catch (err) {
-    //             console.log(err);
-    //         } finally {
-    //             setLoadingSampleLinks(false);
-    //         }
-    //     };
-    //     if (linkData && Object.keys(linkData).length === 0 && appUser) {
-    //         initSampleLinks();
-    //     }
-    // }, [linkData, newAppUser]);
+    useEffect(() => {
+        console.log("🚀 ~ HomePage ~ walletUser:", walletUser?.principal.toString());
+    }, [walletUser]);
 
     useEffect(() => {
         if (newAppUser) {
