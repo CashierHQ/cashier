@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
-import { useIdentityKit } from "@nfid/identitykit/react";
+import { useIdentity } from "@nfid/identitykit/react";
 import LinkService from "@/services/link.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
@@ -51,7 +51,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { linkId } = useParams();
-    const { identity } = useIdentityKit();
+    const identity = useIdentity();
     const responsive = useResponsive();
 
     const queryClient = useQueryClient();

@@ -1,4 +1,4 @@
-import { ConnectWalletButton, useAuth, useIdentity, useIdentityKit } from "@nfid/identitykit/react";
+import { ConnectWalletButton, useAuth, useIdentity } from "@nfid/identitykit/react";
 import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
