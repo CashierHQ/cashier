@@ -44,6 +44,7 @@
         "prettier": "^3.3.3",
         "query-string": "^9.1.1",
         "react": "^18.2.0",
+        "react-currency-input-field": "^3.9.0",
         "react-dom": "^18.2.0",
         "react-hook-form": "^7.53.0",
         "react-i18next": "^15.0.1",
@@ -59,6 +60,7 @@
     "devDependencies": {
         "@types/react": "^18.2.14",
         "@types/react-dom": "^18.2.6",
+        "@types/react-text-mask": "^5.4.14",
         "@vitejs/plugin-react": "^4.0.1",
         "autoprefixer": "^10.4.20",
         "dotenv": "^16.3.1",

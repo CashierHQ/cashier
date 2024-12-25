@@ -8,6 +8,7 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { FormControl } from "./ui/form";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer";
 
 export interface AssetSelectItem {
     name: string;
@@ -28,7 +29,7 @@ export default function AssetSelect({
         <Select defaultValue={defaultValue} onValueChange={onValueChange}>
             <FormControl>
                 <>
-                    <SelectTrigger className="w-[300px] h-[100%]">
+                    <SelectTrigger className="w-[100%] h-[100%]">
                         <SelectValue placeholder="Choose asset" />
                     </SelectTrigger>
                     <SelectContent>
@@ -39,7 +40,7 @@ export default function AssetSelect({
                                     <div className="flex">
                                         <img
                                             id="asset-logo"
-                                            src="/ICP_logo.png"
+                                            src={`${IC_EXPLORER_IMAGES_PATH}${asset.tokenAddress}`}
                                             width={40}
                                             className="mr-5"
                                         />

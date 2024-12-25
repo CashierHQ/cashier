@@ -85,9 +85,17 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
-        // if (!formData?.title || !isNameSetByUser) {
-        //     values.name = values.title;
-        // }
+        console.log(values);
+        if (values.linkType === LINK_TYPE.NFT_CREATE_AND_AIRDROP) {
+            setToastData({
+                open: true,
+                title: "Unsupported link type",
+                description:
+                    "The NFT is currently not supported now. Please choose another link type.",
+                variant: "error",
+            });
+            throw new Error();
+        }
         const updateLinkParams: UpdateLinkParams = {
             linkId: linkId,
             linkModel: {
@@ -156,7 +164,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     description: t("transaction.validation.action_failed_message"),
                     variant: "error",
                 });
-                setOpenValidtionToast(true);
             }
         } catch (error) {
             console.log("🚀 ~ handleSubmit ~ error:", error);
@@ -165,6 +172,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleChange = (values: Partial<LinkDetailModel>) => {
+        console.log(values);
         setFormData({ ...formData, ...values });
     };
 
@@ -182,18 +190,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         };
         await mutateAsync(updateLinkParams);
         navigate(`/details/${linkId}`);
-
-        // setToastData({
-        //     open: true,
-        //     title: t("transaction.confirm_popup.transaction_failed"),
-        //     description: t("transaction.confirm_popup.transaction_failed_message"),
-        //     variant: "error",
-        // });
-        // setOpenValidtionToast(true);
-        // setTimeout(() => {
-        //     setDisabledConfirmButton(false);
-        //     setPopupButton(t("transaction.confirm_popup.retry_button") as string);
-        // }, 3000);
     };
 
     const handleBackstep = async () => {
@@ -271,8 +267,15 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     />
                 </Drawer>
                 <TransactionToast
-                    open={openValidtionToast}
-                    onOpenChange={setOpenValidtionToast}
+                    open={toastData?.open ?? false}
+                    onOpenChange={(open) =>
+                        setToastData({
+                            open: open as boolean,
+                            title: "",
+                            description: "",
+                            variant: null,
+                        })
+                    }
                     title={toastData?.title ?? ""}
                     description={toastData?.description ?? ""}
                     variant={toastData?.variant ?? "default"}

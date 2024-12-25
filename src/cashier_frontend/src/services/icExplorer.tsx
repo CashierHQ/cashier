@@ -1,6 +1,8 @@
 import icExplorerAxiosClient from "@/axios/axiosClient";
 import { AssetSelectItem } from "@/components/asset-select";
 
+export const IC_EXPLORER_IMAGES_PATH = "https://api.icexplorer.io/images/";
+
 export interface GetUserTokensRequest {
     principal: string;
     isDesc: boolean;

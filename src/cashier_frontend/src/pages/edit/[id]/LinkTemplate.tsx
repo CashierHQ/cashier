@@ -44,6 +44,7 @@ export default function LinkTemplate({
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
             title: "",
+            linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
             ...defaultValues,
         },
     });
@@ -64,9 +65,10 @@ export default function LinkTemplate({
     }, [api]);
 
     useEffect(() => {
-        return handleChange({
+        handleChange({
             linkType: TEMPLATE_ORDER[current],
         });
+        form.setValue("linkType", TEMPLATE_ORDER[current]);
     }, [current]);
 
     return (
@@ -115,7 +117,7 @@ export default function LinkTemplate({
                                     <LinkCard
                                         label="Claim"
                                         header="Tip"
-                                        src="/defaultLinkImage.png"
+                                        src="/icpLogo.png"
                                         message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP}
                                         title="Tipping crypto"
                                     />
