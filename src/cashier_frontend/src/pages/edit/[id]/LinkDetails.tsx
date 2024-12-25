@@ -30,6 +30,10 @@ import {
     UserToken,
 } from "@/services/icExplorer";
 import { MaskInput } from "@/components/mask-input";
+import AssetButton from "@/components/asset-button";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { IoIosClose } from "react-icons/io";
+import AssetDrawer from "@/components/asset-drawer";
 
 export const linkDetailsSchema = z.object({
     image: z.string(),
@@ -64,6 +68,7 @@ export default function LinkDetails({
     const walletAddress = walletUser ? walletUser.principal.toString() : "";
     const [currentImage, setCurrentImage] = useState<string>("");
     const [assetList, setAssetList] = useState<AssetSelectItem[]>(ASSET_LIST);
+    const [openAssetList, setOpenAssetList] = useState<boolean>(false);
 
     const form = useForm<InputSchema>({
         resolver: zodResolver(linkDetailsSchema),
@@ -166,7 +171,7 @@ export default function LinkDetails({
                         //onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
                         className="space-y-8 mb-[100px]"
                     >
-                        <FormField
+                        {/* <FormField
                             name="tokenAddress"
                             control={form.control}
                             render={() => (
@@ -179,7 +184,22 @@ export default function LinkDetails({
                                     <FormMessage />
                                 </FormItem>
                             )}
+                        /> */}
+                        <FormField
+                            name="tokenAddress"
+                            control={form.control}
+                            render={() => (
+                                <FormItem>
+                                    <FormLabel>{t("create.asset")}</FormLabel>
+                                    <AssetButton
+                                        handleClick={() => setOpenAssetList(true)}
+                                        text="Choose Asset"
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
+
                         <FormItem>
                             <FormLabel>{t("create.amount")}</FormLabel>
                             <MaskInput
@@ -195,6 +215,12 @@ export default function LinkDetails({
                         </FixedBottomButton>
                     </form>
                 </Form>
+                <AssetDrawer
+                    title="Select Asset"
+                    open={openAssetList}
+                    handleClose={() => setOpenAssetList(false)}
+                    assetList={assetList}
+                />
             </div>
         );
     };
