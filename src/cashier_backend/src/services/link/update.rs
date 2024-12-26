@@ -51,24 +51,16 @@ fn transition_function(
 }
 
 // Update intent and transactiopn to processing state
-fn continue_create_link_to_active(
+fn continue_create_link_state_to_active(
     state: String,
     mut link: Link,
-    params: Option<LinkStateMachineActionParams>,
+    _params: Option<LinkStateMachineActionParams>,
 ) -> Pin<Box<dyn Future<Output = Result<Link, String>> + Send>> {
     Box::pin(async move {
         let link_id = link.id.clone();
         let intent_id = get_create_intent_id(link_id)?;
 
         link.set("state", state);
-
-        if params.is_some() {
-            match params.unwrap() {
-                LinkStateMachineActionParams::Update(params) => {
-                    link.update(params.to_link_detail_update());
-                }
-            }
-        }
 
         set_processing_intent(intent_id)?;
 
@@ -116,7 +108,7 @@ pub fn get_transitions() -> Vec<Transition> {
                     Ok(())
                 })
             })),
-            execute: Box::new(continue_create_link_to_active),
+            execute: Box::new(continue_create_link_state_to_active),
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,
