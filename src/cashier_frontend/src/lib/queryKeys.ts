@@ -15,7 +15,7 @@ export const queryKeys = createQueryKeyStore({
                     const user = await userService.getUser();
                     return user;
                 } catch (error) {
-                    console.log(error);
+                    console.log("🚀 ~ queryFn: ~ error:", error);
                     throw error;
                 }
             },

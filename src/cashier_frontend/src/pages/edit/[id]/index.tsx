@@ -17,7 +17,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { LINK_STATE } from "@/services/types/enum";
+import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { CreateIntentInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { IntentCreateModel } from "@/services/types/intent.service.types";
 
@@ -37,10 +37,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         template: Template.Central,
         create_at: new Date(),
         amount: 0,
+        linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
+        tokenAddress: "",
     });
     const [isDisabled, setDisabled] = useState(false);
     const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
-    const [openValidtionToast, setOpenValidtionToast] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
     const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
     const [isRendering, setRendering] = useState(true);
@@ -63,7 +64,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         const fetchData = async () => {
             const linkObj = await new LinkService(identity).getLink(linkId);
             const { link, intent_create } = linkObj;
-            console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
                 const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
@@ -77,20 +77,29 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         try {
             fetchData();
         } catch (err) {
-            console.log(err);
+            console.log("🚀 ~ useEffect ~ err:", err);
         }
     }, [linkId, identity]);
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
-        // if (!formData?.title || !isNameSetByUser) {
-        //     values.name = values.title;
-        // }
+        console.log(values);
+        if (values.linkType === LINK_TYPE.NFT_CREATE_AND_AIRDROP) {
+            setToastData({
+                open: true,
+                title: "Unsupported link type",
+                description:
+                    "The NFT is currently not supported now. Please choose another link type.",
+                variant: "error",
+            });
+            throw new Error();
+        }
         const updateLinkParams: UpdateLinkParams = {
             linkId: linkId,
             linkModel: {
                 ...formData,
                 title: values.title,
+                linkType: values.linkType,
             },
             isContinue: true,
         };
@@ -110,13 +119,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 linkModel: {
                     ...formData,
                     ...values,
+                    description: "test",
                 },
                 isContinue: true,
             };
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
-            console.log(error);
+            console.log("🚀 ~ handleSubmitLinkDetails ~ error:", error);
         }
     };
 
@@ -129,30 +139,16 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             //   failed -> display error message
             if (validationResult) {
                 setDisabled(true);
-                const updateLinkParams: UpdateLinkParams = {
-                    linkId: linkId,
-                    linkModel: {
-                        ...formData,
-                    },
-                    isContinue: true,
-                };
-                const createActionInout: CreateIntentInput = {
+                const createActionInput: CreateIntentInput = {
                     link_id: linkId,
                     intent_type: "Create",
                     params: [],
                 };
                 const linkService = new LinkService(identity);
-                const createActionResult = await linkService.createAction(createActionInout);
-                console.log("🚀 ~ handleSubmit ~ createActionResult:", createActionResult);
-
-                // If action is created successfully
-                // then update the NFT link to active
+                const createActionResult = await linkService.createAction(createActionInput);
                 if (createActionResult) {
-                    console.log("Update to active");
-                    await mutateAsync(updateLinkParams);
-                    navigate(`/details/${linkId}`);
+                    setOpenConfirmationPopup(true);
                 }
-                // setOpenConfirmationPopup(true);
             } else {
                 setToastData({
                     open: true,
@@ -160,32 +156,32 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     description: t("transaction.validation.action_failed_message"),
                     variant: "error",
                 });
-                setOpenValidtionToast(true);
             }
         } catch (error) {
+            console.log("🚀 ~ handleSubmit ~ error:", error);
             setDisabled(false);
-            console.log(error);
         }
     };
 
     const handleChange = (values: Partial<LinkDetailModel>) => {
+        console.log(values);
         setFormData({ ...formData, ...values });
     };
 
-    const handleConfirmTransactions = () => {
+    const handleConfirmTransactions = async () => {
         setDisabledConfirmButton(true);
         setPopupButton(t("transaction.confirm_popup.inprogress_button") as string);
-        setToastData({
-            open: true,
-            title: t("transaction.confirm_popup.transaction_failed"),
-            description: t("transaction.confirm_popup.transaction_failed_message"),
-            variant: "error",
-        });
-        setOpenValidtionToast(true);
-        setTimeout(() => {
-            setDisabledConfirmButton(false);
-            setPopupButton(t("transaction.confirm_popup.retry_button") as string);
-        }, 3000);
+        if (!linkId) return;
+        const updateLinkParams: UpdateLinkParams = {
+            linkId: linkId,
+            linkModel: {
+                ...formData,
+                description: "aaa",
+            },
+            isContinue: true,
+        };
+        await mutateAsync(updateLinkParams);
+        navigate(`/details/${linkId}`);
     };
 
     const handleBackstep = async () => {
@@ -230,6 +226,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}
+                        linkType={formData.linkType as LINK_TYPE}
                         handleSubmit={handleSubmitLinkTemplate}
                         isDisabled={isDisabled}
                         render={(props) => <LinkTemplate {...props} />}
@@ -238,12 +235,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         name={t("create.linkDetails")}
                         handleSubmit={handleSubmitLinkDetails}
                         isDisabled={isDisabled}
+                        linkType={formData.linkType as LINK_TYPE}
                         render={(props) => <LinkDetails {...props} />}
                     />
                     <MultiStepForm.Item
                         name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
                         isDisabled={isDisabled}
+                        linkType={formData.linkType as LINK_TYPE}
                         render={(props) => <LinkPreview {...props} />}
                     />
                 </MultiStepForm>
@@ -260,8 +259,15 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     />
                 </Drawer>
                 <TransactionToast
-                    open={openValidtionToast}
-                    onOpenChange={setOpenValidtionToast}
+                    open={toastData?.open ?? false}
+                    onOpenChange={(open) =>
+                        setToastData({
+                            open: open as boolean,
+                            title: "",
+                            description: "",
+                            variant: null,
+                        })
+                    }
                     title={toastData?.title ?? ""}
                     description={toastData?.description ?? ""}
                     variant={toastData?.variant ?? "default"}
