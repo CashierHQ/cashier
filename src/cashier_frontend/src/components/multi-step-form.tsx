@@ -1,6 +1,7 @@
 import { Children, ReactElement, ReactNode, useState } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { IntentCreateModel } from "@/services/types/intent.service.types";
+import { LINK_TYPE } from "@/services/types/enum";
 
 /**
  * - V1: type for handle submit
@@ -11,6 +12,7 @@ export interface ParitalFormProps<V1, V2> {
     handleChange: (value: V2) => void;
     isDisabled: boolean;
     defaultValues: Partial<V2>;
+    linkType: LINK_TYPE;
 }
 
 /**
@@ -37,6 +39,7 @@ interface ItemProp<V1, V2> {
     handleSubmit: (values: V1) => Promise<void>;
     isDisabled: boolean;
     name: string;
+    linkType: LINK_TYPE;
     render: (props: ParitalFormProps<V1, V2>) => ReactElement<ParitalFormProps<V1, V2>>;
 }
 
@@ -108,6 +111,7 @@ export default function MultiStepForm<V1 extends object, V2 extends object>({
                             }
                         },
                         isDisabled: isDisabled,
+                        linkType: partialForm.props.linkType,
                     });
                 }
                 return null;
@@ -116,7 +120,7 @@ export default function MultiStepForm<V1 extends object, V2 extends object>({
     );
 }
 
-const Item = <V1, V2>({ handleSubmit, render, isDisabled }: ItemProp<V1, V2>) => {
+const Item = <V1, V2>({ handleSubmit, render, isDisabled, linkType }: ItemProp<V1, V2>) => {
     return (
         <>
             {render({
@@ -124,6 +128,7 @@ const Item = <V1, V2>({ handleSubmit, render, isDisabled }: ItemProp<V1, V2>) =>
                 handleChange: () => {},
                 handleSubmit: handleSubmit,
                 isDisabled: isDisabled,
+                linkType: linkType,
             })}
         </>
     );

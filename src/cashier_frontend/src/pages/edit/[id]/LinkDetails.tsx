@@ -19,15 +19,43 @@ import { NumberInput } from "@/components/number-input";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
 import { useEffect, useState } from "react";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
+import { AssetSelectItem } from "@/components/asset-select";
+import { LINK_TYPE } from "@/services/types/enum";
+import { useAuth } from "@nfid/identitykit/react";
+import {
+    icExplorerService,
+    initializeDefautGetUserTokenRequest,
+    mapAPITokenModelToAssetSelectModel,
+    UserToken,
+} from "@/services/icExplorer";
+import AssetButton from "@/components/asset-button";
+import AssetDrawer from "@/components/asset-drawer";
+import { IconInput } from "@/components/icon-input";
 
 export const linkDetailsSchema = z.object({
-    image: z.string().min(1, { message: "Image is required" }),
-    description: z.string().min(10),
+    image: z.string(),
+    description: z.string(),
     title: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
-    amount: z.coerce.number().min(1),
+    amount: z.coerce
+        .number({ message: "Must input number" })
+        .positive({ message: "Must be greater than 0" }),
+    tokenAddress: z.string(),
+    linkType: z.string(),
 });
-
 type InputSchema = z.infer<typeof linkDetailsSchema>;
+
+const ASSET_LIST: AssetSelectItem[] = [
+    {
+        name: "TK 1",
+        amount: 200,
+        tokenAddress: "abc",
+    },
+    {
+        name: "TK 2",
+        amount: 120,
+        tokenAddress: "def",
+    },
+];
 
 export default function LinkDetails({
     defaultValues = {},
@@ -35,7 +63,11 @@ export default function LinkDetails({
     handleChange,
 }: ParitalFormProps<InputSchema, Partial<InputSchema>>) {
     const { t } = useTranslation();
+    const { user: walletUser } = useAuth();
+    const walletAddress = walletUser ? walletUser.principal.toString() : "";
     const [currentImage, setCurrentImage] = useState<string>("");
+    const [assetList, setAssetList] = useState<AssetSelectItem[]>(ASSET_LIST);
+    const [openAssetList, setOpenAssetList] = useState<boolean>(false);
 
     const form = useForm<InputSchema>({
         resolver: zodResolver(linkDetailsSchema),
@@ -44,6 +76,7 @@ export default function LinkDetails({
             title: "",
             amount: 1,
             image: "",
+            linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
             ...defaultValues,
         },
     });
@@ -89,100 +122,206 @@ export default function LinkDetails({
         }
     };
 
-    useEffect(() => {
-        setCurrentImage(form.getValues("image"));
-    }, []);
+    const onSelectAsset = (value: string) => {
+        const selectedToken = assetList.find((asset) => asset.tokenAddress === value);
+        if (selectedToken) {
+            handleChange({ tokenAddress: selectedToken.tokenAddress });
+            form.setValue("tokenAddress", selectedToken.tokenAddress);
+            setOpenAssetList(false);
+        }
+    };
 
-    return (
-        <div className="w-full">
-            <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit(handleSubmit)}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
-                    className="space-y-8 mb-[100px]"
-                >
-                    <Controller
-                        name="image"
-                        control={form.control}
-                        rules={{ required: true }}
-                        render={() => {
-                            return (
-                                <div>
-                                    <FormLabel>{t("create.photo")}</FormLabel>
-                                    <FileInput
-                                        defaultValue={currentImage}
-                                        onFileChange={handleUploadImage}
+    // Fetch user current assets
+    useEffect(() => {
+        async function fetchUserToken() {
+            if (walletAddress) {
+                const result = await getUserToken();
+                const assetList: AssetSelectItem[] = result.map((token) => {
+                    return mapAPITokenModelToAssetSelectModel(token);
+                });
+                setAssetList((prev) => [...prev, assetList].flat());
+            }
+        }
+
+        setCurrentImage(form.getValues("image"));
+        fetchUserToken();
+    }, [walletAddress]);
+
+    async function getUserToken(): Promise<UserToken[]> {
+        const request = initializeDefautGetUserTokenRequest(walletAddress);
+        const response = await icExplorerService.getUserTokens(request);
+        const userTokenList = response.data.list as UserToken[];
+        return userTokenList;
+    }
+
+    const renderTipLinkAssetForm = () => {
+        return (
+            <div className="w-full">
+                <Form {...form}>
+                    <form
+                        onSubmit={form.handleSubmit(handleSubmit)}
+                        //onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
+                        className="space-y-8 mb-[100px]"
+                    >
+                        {/* <FormField
+                            name="tokenAddress"
+                            control={form.control}
+                            render={() => (
+                                <FormItem>
+                                    <FormLabel>{t("create.asset")}</FormLabel>
+                                    <AssetSelect
+                                        assetList={assetList}
+                                        onValueChange={onSelectAsset}
                                     />
-                                    {form.formState.errors.image && (
-                                        <FormMessage>
-                                            {form.formState.errors.image.message}
-                                        </FormMessage>
-                                    )}
-                                </div>
-                            );
-                        }}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t("create.name")}</FormLabel>
-                                <FormControl>
-                                    <Input placeholder={t("create.name")} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t("create.message")}</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                        className="resize-none"
-                                        placeholder={t("create.message")}
-                                        {...field}
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        /> */}
+                        <FormField
+                            name="tokenAddress"
+                            control={form.control}
+                            render={() => (
+                                <FormItem>
+                                    <FormLabel>{t("create.asset")}</FormLabel>
+                                    <AssetButton
+                                        handleClick={() => setOpenAssetList(true)}
+                                        text="Choose Asset"
                                     />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="amount"
-                        defaultValue={1}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t("create.amount")}</FormLabel>
-                                <FormControl>
-                                    <NumberInput
-                                        placeholder={t("create.amount")}
-                                        handleIncrease={() =>
-                                            handleAdjustAmount(INCREASE, Number(field.value))
-                                        }
-                                        handleDecrease={() =>
-                                            handleAdjustAmount(DECREASE, Number(field.value))
-                                        }
-                                        min={1}
-                                        disableDecrease={Number(field.value) <= 1}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FixedBottomButton type="submit" variant="default" size="lg">
-                        {t("continue")}
-                    </FixedBottomButton>
-                </form>
-            </Form>
-        </div>
-    );
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <IconInput
+                                            isCurrencyInput={true}
+                                            currencySymbol="USD"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FixedBottomButton type="submit" variant="default" size="lg">
+                            {t("continue")}
+                        </FixedBottomButton>
+                    </form>
+                </Form>
+                <AssetDrawer
+                    title="Select Asset"
+                    open={openAssetList}
+                    handleClose={() => setOpenAssetList(false)}
+                    handleChange={onSelectAsset}
+                    assetList={assetList}
+                />
+            </div>
+        );
+    };
+
+    const renderNFTAssetForm = () => {
+        return (
+            <div className="w-full">
+                <Form {...form}>
+                    <form
+                        onSubmit={form.handleSubmit(handleSubmit)}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
+                        className="space-y-8 mb-[100px]"
+                    >
+                        <Controller
+                            name="image"
+                            control={form.control}
+                            rules={{ required: true }}
+                            render={() => {
+                                return (
+                                    <div>
+                                        <FormLabel>{t("create.photo")}</FormLabel>
+                                        <FileInput
+                                            defaultValue={currentImage}
+                                            onFileChange={handleUploadImage}
+                                        />
+                                        {form.formState.errors.image && (
+                                            <FormMessage>
+                                                {form.formState.errors.image.message}
+                                            </FormMessage>
+                                        )}
+                                    </div>
+                                );
+                            }}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t("create.name")}</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder={t("create.name")} {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t("create.message")}</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            className="resize-none"
+                                            placeholder={t("create.message")}
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="amount"
+                            defaultValue={1}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t("create.amount")}</FormLabel>
+                                    <FormControl>
+                                        <NumberInput
+                                            placeholder={t("create.amount")}
+                                            handleIncrease={() =>
+                                                handleAdjustAmount(INCREASE, Number(field.value))
+                                            }
+                                            handleDecrease={() =>
+                                                handleAdjustAmount(DECREASE, Number(field.value))
+                                            }
+                                            min={1}
+                                            disableDecrease={Number(field.value) <= 1}
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FixedBottomButton type="submit" variant="default" size="lg">
+                            {t("continue")}
+                        </FixedBottomButton>
+                    </form>
+                </Form>
+            </div>
+        );
+    };
+
+    if (form.getValues("linkType") === LINK_TYPE.TIP_LINK) {
+        return renderTipLinkAssetForm();
+    } else {
+        return renderNFTAssetForm();
+    }
 }
