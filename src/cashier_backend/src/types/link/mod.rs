@@ -3,7 +3,6 @@ use link_state::LinkState;
 use serde::{Deserialize, Serialize};
 use template::Template;
 
-pub mod chain;
 pub mod link_state;
 pub mod link_type;
 pub mod template;

@@ -3,10 +3,8 @@ use uuid::Uuid;
 use crate::{
     repositories::{link_store, user_link_store},
     types::{
-        link::{
-            chain::Chain, link_state::LinkState, link_type::LinkType, template::Template,
-            AssetInfo, Link,
-        },
+        chain::Chain,
+        link::{link_state::LinkState, link_type::LinkType, template::Template, AssetInfo, Link},
         user_link::UserLink,
     },
 };

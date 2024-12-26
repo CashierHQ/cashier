@@ -1,5 +1,7 @@
 pub mod account;
 pub mod api;
+pub mod chain;
+pub mod consent_messsage;
 pub mod error;
 pub mod ext;
 pub mod icrc;
