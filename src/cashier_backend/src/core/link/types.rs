@@ -106,9 +106,10 @@ impl UpdateLinkParams {
                     description: params.description.clone(),
                     link_image_url: params.link_image_url.clone(),
                     nft_image: params.nft_image.clone(),
-                    asset_info: asset_info,
-                    template: template,
+                    asset_info,
+                    template,
                     state: None,
+                    link_type: params.link_type.clone(),
                 }
             }
             None => LinkDetailUpdate {
@@ -119,6 +120,7 @@ impl UpdateLinkParams {
                 asset_info: None,
                 template: None,
                 state: None,
+                link_type: None,
             },
         }
     }
