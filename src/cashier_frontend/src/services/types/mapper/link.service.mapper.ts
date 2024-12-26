@@ -4,9 +4,9 @@ import {
     GetLinkResp,
     Link,
     UpdateLinkInput,
-} from "../../../../declarations/cashier_backend/cashier_backend.did";
-import { LinkDetailModel, LinkModel } from "./link.service.types";
-import { CHAIN, TEMPLATE } from "./enum";
+} from "../../../../../declarations/cashier_backend/cashier_backend.did";
+import { LinkDetailModel, LinkModel } from "../link.service.types";
+import { CHAIN, TEMPLATE } from "../enum";
 import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 
 const IS_USE_DEFAULT_LINK_TEMPLATE = true;

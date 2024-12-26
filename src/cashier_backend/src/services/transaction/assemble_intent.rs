@@ -1,21 +1,23 @@
 use uuid::Uuid;
 
 use crate::{
-    info,
     services::transaction::build_tx::build_transfer_to_link_escrow_wallet,
     types::{
+        chain::Chain,
+        consent_messsage::{ConsentType, ReceiveType},
         intent_transaction::IntentTransaction,
         link::{link_type::LinkType, Link},
         transaction::Transaction,
     },
 };
 
-use super::build_tx::build_transfer_fee;
+use super::build_tx::build_transfer_cashier_fee;
 
 #[derive(Debug)]
 pub struct AssembleTransactionResp {
     pub transactions: Vec<Transaction>,
     pub intent_transactions: Vec<IntentTransaction>,
+    pub consent_messages: Vec<ConsentType>,
 }
 
 pub fn assemble_create_trasaction(
@@ -67,6 +69,7 @@ pub fn assemble_create_and_airdrop_nft(
     return Ok(AssembleTransactionResp {
         transactions: vec![new_transaction],
         intent_transactions: vec![new_intent_transaction],
+        consent_messages: vec![],
     });
 }
 
@@ -91,27 +94,55 @@ pub fn assemble_create_tip_transaction(
         None => return Err("Link type not found".to_string()),
     };
 
-    let transfer_tx =
-        build_transfer_to_link_escrow_wallet(link.id.clone(), amount_need_to_transfer);
+    let first_asset = match &link.asset_info {
+        Some(asset_info) if !asset_info.is_empty() => &asset_info[0],
+        _ => return Err("Asset info not found".to_string()),
+    };
 
-    let transfer_fee_tx = build_transfer_fee(&LinkType::from_string(link_type).unwrap());
+    let build_trasfer_res = build_transfer_to_link_escrow_wallet(
+        link.id.clone(),
+        first_asset.address.clone(),
+        amount_need_to_transfer,
+    );
 
-    let transfer_intent_transacrtion =
-        IntentTransaction::new(intent_id.to_string(), transfer_tx.id.clone(), ts);
+    let build_transfer_fee_res =
+        build_transfer_cashier_fee(&LinkType::from_string(link_type).unwrap());
 
-    let transfer_fee_intent_transacrtion =
-        IntentTransaction::new(intent_id.to_string(), transfer_fee_tx.id.clone(), ts);
+    let transfer_intent_transacrtion = IntentTransaction::new(
+        intent_id.to_string(),
+        build_trasfer_res.transaction.id.clone(),
+        ts,
+    );
 
-    info!("transfer_tx: {:?}", transfer_tx);
-    info!("transfer_fee_tx: {:?}", transfer_fee_tx);
+    let transfer_fee_intent_transacrtion = IntentTransaction::new(
+        intent_id.to_string(),
+        build_transfer_fee_res.transaction.id.clone(),
+        ts,
+    );
+
+    let consent_receive_tip = ConsentType::build_receive_consent(
+        Chain::IC,
+        ReceiveType::Link,
+        link.title.clone().unwrap(),
+        None,
+        None,
+    );
 
     // TODO: add update_intent transaction to transactions and its intent_transactions
 
     return Ok(AssembleTransactionResp {
-        transactions: vec![transfer_tx, transfer_fee_tx],
+        transactions: vec![
+            build_trasfer_res.transaction,
+            build_transfer_fee_res.transaction,
+        ],
         intent_transactions: vec![
             transfer_intent_transacrtion,
             transfer_fee_intent_transacrtion,
+        ],
+        consent_messages: vec![
+            consent_receive_tip,
+            build_trasfer_res.consent,
+            build_transfer_fee_res.consent,
         ],
     });
 }

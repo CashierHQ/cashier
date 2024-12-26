@@ -14,7 +14,7 @@ import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
-} from "./types/link.service.mapper";
+} from "./types/mapper/link.service.mapper";
 import { IntentCreateModel } from "./types/intent.service.types";
 
 interface ReponseLinksModel {
@@ -85,7 +85,7 @@ class LinkService {
 
     async createAction(input: CreateIntentInput): Promise<IntentCreateModel> {
         const response = parseResultResponse(await this.actor.create_intent(input));
-        return response as IntentCreateModel;
+        return response.intent as IntentCreateModel;
     }
 }
 

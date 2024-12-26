@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     constant::ICP_CANISTER_ID,
-    types::{link::link_type::LinkType, transaction::Transaction},
+    types::{consent_messsage::ConsentType, link::link_type::LinkType, transaction::Transaction},
     utils::helper::{to_memo, to_subaccount},
 };
 
@@ -21,7 +21,12 @@ impl Fee {
     }
 }
 
-pub fn build_transfer_fee(link_type: &LinkType) -> Transaction {
+pub struct BuildTxResp {
+    pub transaction: Transaction,
+    pub consent: ConsentType,
+}
+
+pub fn build_transfer_cashier_fee(link_type: &LinkType) -> BuildTxResp {
     match link_type {
         LinkType::TipLink => {
             let id = Uuid::new_v4();
@@ -30,22 +35,41 @@ pub fn build_transfer_fee(link_type: &LinkType) -> Transaction {
                 subaccount: None,
             };
 
+            let fee = Fee::CreateTipLinkFeeIcp.as_u64();
+            let token_fee_address = ICP_CANISTER_ID.to_string();
+
             let arg = TransferArg {
                 to: fee_wallet_account,
-                amount: Nat::from(Fee::CreateTipLinkFeeIcp.as_u64()),
+                amount: Nat::from(fee),
                 memo: Some(to_memo(id.to_string())),
                 fee: None,
                 created_at_time: None,
                 from_subaccount: None,
             };
 
-            Transaction::build_icrc_transfer(id.to_string(), ICP_CANISTER_ID.to_string(), arg)
+            let consent = ConsentType::build_send_app_fee_consent(
+                crate::types::chain::Chain::IC,
+                fee,
+                token_fee_address.clone(),
+            );
+
+            let transaction =
+                Transaction::build_icrc_transfer(id.to_string(), token_fee_address, arg);
+
+            return BuildTxResp {
+                transaction,
+                consent,
+            };
         }
         LinkType::NftCreateAndAirdrop => todo!(),
     }
 }
 
-pub fn build_transfer_to_link_escrow_wallet(link_id: String, transfer_amount: u64) -> Transaction {
+pub fn build_transfer_to_link_escrow_wallet(
+    link_id: String,
+    token_address: String,
+    transfer_amount: u64,
+) -> BuildTxResp {
     let id: Uuid = Uuid::new_v4();
 
     let account = Account {
@@ -62,5 +86,16 @@ pub fn build_transfer_to_link_escrow_wallet(link_id: String, transfer_amount: u6
         from_subaccount: None,
     };
 
-    Transaction::build_icrc_transfer(id.to_string(), ICP_CANISTER_ID.to_string(), arg)
+    let consent = ConsentType::build_send_consent(
+        crate::types::chain::Chain::IC,
+        transfer_amount,
+        token_address.clone(),
+    );
+
+    let transaction = Transaction::build_icrc_transfer(id.to_string(), token_address, arg);
+
+    return BuildTxResp {
+        transaction,
+        consent,
+    };
 }
