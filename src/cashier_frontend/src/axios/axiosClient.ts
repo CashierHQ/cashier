@@ -2,7 +2,7 @@ import axios from "axios";
 import queryString from "query-string";
 
 const icExplorerAxiosClient = axios.create({
-    baseURL: "https://api.icexplorer.io/api",
+    baseURL: import.meta.env.VITE_IC_EXPLORER_BASE_URL,
     headers: {},
     paramsSerializer: {
         serialize: (params) => queryString.stringify(params),
