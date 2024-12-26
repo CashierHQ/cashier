@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::{
-    core::intent::types::CreateIntentInput,
+    core::intent::types::{CreateIntentConsent, CreateIntentConsentResponse, CreateIntentInput},
     repositories::{
         intent_store, intent_transaction_store, link_intent_store, link_store, transaction_store,
         user_intent_store, user_wallet_store,
@@ -19,7 +19,9 @@ use super::{
     assemble_intent::assemble_create_trasaction, validate::validate_balance_with_asset_info,
 };
 
-pub async fn create(intent: CreateIntentInput) -> Result<Intent, CanisterError> {
+pub async fn create(
+    intent: CreateIntentInput,
+) -> Result<CreateIntentConsentResponse, CanisterError> {
     let caller = ic_cdk::api::caller();
     let link = link_store::get(&intent.link_id);
     match link {
@@ -109,7 +111,17 @@ pub async fn create(intent: CreateIntentInput) -> Result<Intent, CanisterError> 
     let _ = link_intent_store::create(new_link_intent.to_persistence());
     let _ = user_intent_store::create(user_intent.to_persistence());
 
-    // Retrieve and return the created intent
-    intent_store::get(&id.to_string())
+    let intent = match intent_store::get(&id.to_string())
         .ok_or_else(|| CanisterError::HandleApiError("Failed to create intent".to_string()))
+    {
+        Ok(intent) => intent,
+        Err(e) => return Err(e),
+    };
+
+    Ok(CreateIntentConsentResponse {
+        intent,
+        consents: CreateIntentConsent::from(assemble_res.consent_messages),
+    })
+
+    // Retrieve and return the created intent
 }
