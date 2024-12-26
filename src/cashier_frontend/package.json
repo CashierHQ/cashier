@@ -59,7 +59,7 @@
     },
     "devDependencies": {
         "@types/react": "^18.2.14",
-        "@types/react-dom": "^18.2.6",
+        "@types/react-dom": "^19.0.1",
         "@types/react-text-mask": "^5.4.14",
         "@vitejs/plugin-react": "^4.0.1",
         "autoprefixer": "^10.4.20",
