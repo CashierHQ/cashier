@@ -6,13 +6,19 @@ import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer";
 
 interface AssetMenuProps {
     assetList: AssetSelectItem[];
+    onSelect: (val: string) => void;
 }
 
-const Menu: React.FC<AssetMenuProps> = ({ assetList }) => {
+const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect }) => {
     return (
-        <NavigationMenu className="w-[100%] max-w-[100%] justify-start">
+        <NavigationMenu
+            onValueChange={(val) => console.log(val)}
+            className="w-[100%] max-w-[100%] justify-start"
+        >
             <ul className="w-[100%]">
-                {assetList?.map((asset) => <ListItem key={asset.tokenAddress} asset={asset} />)}
+                {assetList?.map((asset) => (
+                    <ListItem key={asset.tokenAddress} onSelected={onSelect} asset={asset} />
+                ))}
             </ul>
         </NavigationMenu>
     );
@@ -20,12 +26,13 @@ const Menu: React.FC<AssetMenuProps> = ({ assetList }) => {
 
 interface AssetItemProps {
     asset: AssetSelectItem;
+    onSelected: (val: string) => void;
 }
 
-const ListItem: React.FC<AssetItemProps> = ({ asset }) => {
+const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
     return (
         <li>
-            <NavigationMenuLink asChild>
+            <NavigationMenuLink onSelect={() => onSelected(asset.tokenAddress)} asChild>
                 <a
                     className={cn(
                         "w-[100%] block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",

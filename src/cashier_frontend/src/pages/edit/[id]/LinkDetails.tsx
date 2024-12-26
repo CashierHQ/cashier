@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import CurrencyInput from "react-currency-input-field";
 import Resizer from "react-image-file-resizer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -18,9 +17,9 @@ import { ParitalFormProps } from "@/components/multi-step-form";
 import { FileInput } from "@/components/file-input";
 import { NumberInput } from "@/components/number-input";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
-import AssetSelect, { AssetSelectItem } from "@/components/asset-select";
+import { AssetSelectItem } from "@/components/asset-select";
 import { LINK_TYPE } from "@/services/types/enum";
 import { useAuth } from "@nfid/identitykit/react";
 import {
@@ -29,17 +28,17 @@ import {
     mapAPITokenModelToAssetSelectModel,
     UserToken,
 } from "@/services/icExplorer";
-import { MaskInput } from "@/components/mask-input";
 import AssetButton from "@/components/asset-button";
-import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
-import { IoIosClose } from "react-icons/io";
 import AssetDrawer from "@/components/asset-drawer";
+import { IconInput } from "@/components/icon-input";
 
 export const linkDetailsSchema = z.object({
     image: z.string(),
     description: z.string(),
     title: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
-    amount: z.coerce.number().min(1),
+    amount: z.coerce
+        .number({ message: "Must input number" })
+        .positive({ message: "Must be greater than 0" }),
     tokenAddress: z.string(),
     linkType: z.string(),
 });
@@ -128,14 +127,7 @@ export default function LinkDetails({
         if (selectedToken) {
             handleChange({ tokenAddress: selectedToken.tokenAddress });
             form.setValue("tokenAddress", selectedToken.tokenAddress);
-        }
-    };
-
-    const onCurrencyInputChange = (value: string | undefined) => {
-        const val = value ? parseFloat(value) : undefined;
-        if (val) {
-            handleChange({ amount: val });
-            form.setValue("amount", val);
+            setOpenAssetList(false);
         }
     };
 
@@ -199,17 +191,23 @@ export default function LinkDetails({
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <IconInput
+                                            isCurrencyInput={true}
+                                            currencySymbol="USD"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                        <FormItem>
-                            <FormLabel>{t("create.amount")}</FormLabel>
-                            <MaskInput
-                                suffix="ICP"
-                                defaultValue={0}
-                                step={1}
-                                onValueChange={onCurrencyInputChange}
-                            />
-                            <FormMessage />
-                        </FormItem>
                         <FixedBottomButton type="submit" variant="default" size="lg">
                             {t("continue")}
                         </FixedBottomButton>
@@ -219,6 +217,7 @@ export default function LinkDetails({
                     title="Select Asset"
                     open={openAssetList}
                     handleClose={() => setOpenAssetList(false)}
+                    handleChange={onSelectAsset}
                     assetList={assetList}
                 />
             </div>

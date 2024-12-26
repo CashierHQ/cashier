@@ -8,12 +8,23 @@ import { AssetSelectItem } from "./asset-select";
 interface AssetDrawerProps {
     open: boolean;
     title: string;
-    handleClose: () => void;
     assetList: AssetSelectItem[];
+    handleClose: () => void;
+    handleChange: (val: string) => void;
 }
 
-const AssetDrawer: React.FC<AssetDrawerProps> = ({ open, title, handleClose, assetList }) => {
+const AssetDrawer: React.FC<AssetDrawerProps> = ({
+    open,
+    title,
+    handleClose,
+    handleChange,
+    assetList,
+}) => {
     const { t: translate } = useTranslation();
+    const onSelectItem = (val: string) => {
+        console.log(val);
+        handleClose();
+    };
 
     return (
         <Drawer open={open} onClose={handleClose}>
@@ -29,7 +40,7 @@ const AssetDrawer: React.FC<AssetDrawerProps> = ({ open, title, handleClose, ass
                     </DrawerTitle>
                 </DrawerHeader>
                 <div className="font-semibold mb-3">Your asset</div>
-                <Menu assetList={assetList} />
+                <Menu assetList={assetList} onSelect={handleChange} />
             </DrawerContent>
         </Drawer>
     );
