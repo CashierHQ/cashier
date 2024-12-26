@@ -1,7 +1,6 @@
 import React from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { IoIosClose } from "react-icons/io";
-import { useTranslation } from "react-i18next";
 import Menu from "./asset-menu";
 import { AssetSelectItem } from "./asset-select";
 
@@ -20,12 +19,6 @@ const AssetDrawer: React.FC<AssetDrawerProps> = ({
     handleChange,
     assetList,
 }) => {
-    const { t: translate } = useTranslation();
-    const onSelectItem = (val: string) => {
-        console.log(val);
-        handleClose();
-    };
-
     return (
         <Drawer open={open} onClose={handleClose}>
             <DrawerContent className="max-w-[400px] mx-auto p-3">

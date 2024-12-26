@@ -42,7 +42,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     });
     const [isDisabled, setDisabled] = useState(false);
     const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
-    const [openValidtionToast, setOpenValidtionToast] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
     const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
     const [isRendering, setRendering] = useState(true);
@@ -65,7 +64,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         const fetchData = async () => {
             const linkObj = await new LinkService(identity).getLink(linkId);
             const { link, intent_create } = linkObj;
-            console.log("🚀 ~ fetchData ~ link:", link);
             if (link && link.state) {
                 const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
@@ -141,13 +139,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             //   failed -> display error message
             if (validationResult) {
                 setDisabled(true);
-                // const updateLinkParams: UpdateLinkParams = {
-                //     linkId: linkId,
-                //     linkModel: {
-                //         ...formData,
-                //     },
-                //     isContinue: true,
-                // };
                 const createActionInput: CreateIntentInput = {
                     link_id: linkId,
                     intent_type: "Create",
@@ -155,8 +146,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 };
                 const linkService = new LinkService(identity);
                 const createActionResult = await linkService.createAction(createActionInput);
-                console.log("🚀 ~ handleSubmit ~ createActionResult:", createActionResult);
-                setOpenConfirmationPopup(true);
+                if (createActionResult) {
+                    setOpenConfirmationPopup(true);
+                }
             } else {
                 setToastData({
                     open: true,
