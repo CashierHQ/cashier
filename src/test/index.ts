@@ -3,9 +3,9 @@ dotenv.config();
 import { createActor } from "../declarations/cashier_backend";
 import { Secp256k1KeyIdentity } from "@dfinity/identity-secp256k1";
 import { HttpAgent } from "@dfinity/agent";
-import { back, continueActive, continueUpdate } from "./updateLink";
-import { callCreateAction } from "./createAction";
-import { _SERVICE } from "../declarations/cashier_backend/cashier_backend.did";
+import { back, continueActive, continueUpdate } from "./utils/updateLink";
+import { callCreateAction } from "./utils/createAction";
+import type { _SERVICE } from "../declarations/cashier_backend/cashier_backend.did";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const safeParseJSON = (arg: Record<string, unknown>): any => {
