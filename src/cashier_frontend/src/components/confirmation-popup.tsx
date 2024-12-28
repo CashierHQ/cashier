@@ -30,6 +30,8 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     buttonText,
 }) => {
     const { t: translate } = useTranslation();
+    const [networkFees, setNetworkFees] = React.useState<bigint[]>([BigInt(0)]);
+
     return (
         <DrawerContent className="max-w-[400px] mx-auto p-3">
             <DrawerHeader>
@@ -58,12 +60,13 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     {translate("transaction.confirm_popup.send_label")}
                 </div>
                 <div className="border-solid border-inherit border-2 rounded-lg p-2 divide-y divide-inherit">
+                    {/* ---- LINK ASSET ---  */}
                     <TransactionItem
                         title="Asset to add to link"
                         assets={data?.feeModel.send.map((asset) => mapFeeModelToAssetModel(asset))}
-                        state={TRANSACTION_STATE.PROCESSING}
                     />
                     <div className="mt-1">
+                        {/* ---- CASHIER FEE ---  */}
                         <TransactionItem
                             title={translate("transaction.confirm_popup.cashier_fee_label")}
                             assets={[
@@ -73,12 +76,12 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                                     ),
                                 ),
                             ]}
-                            state={TRANSACTION_STATE.FAILED}
                         />
+                        {/* ---- NETWORK FEE ---  */}
                         <TransactionItem
                             title={translate("transaction.confirm_popup.network_fee_label")}
-                            asset="1 ICP"
-                            state={TRANSACTION_STATE.SUCCESS}
+                            assets={[mapFeeModelToAssetModel(data?.feeModel.send[0])]}
+                            isNetWorkFee={true}
                         />
                     </div>
                 </div>
