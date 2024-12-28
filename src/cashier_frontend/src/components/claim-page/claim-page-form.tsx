@@ -10,7 +10,7 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import { IoWallet } from "react-icons/io5";
 import { IconInput } from "../icon-input";
 import WalletButton from "./connect-wallet-button";
-import { useIdentityKit } from "@nfid/identitykit/react";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 
 const defaultClaimingAmount = 1;
@@ -29,7 +29,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     setIsClaiming,
 }) => {
     const { t } = useTranslation();
-    const { connect, identity, user } = useIdentityKit();
+    const { connect, user } = useAuth();
+    const identity = useIdentity();
     const [selectOptionWallet, setSelectOptionWallet] = useState("");
 
     const handleConnectWallet = () => {
