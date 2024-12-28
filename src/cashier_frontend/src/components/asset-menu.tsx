@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { NavigationMenu, NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { AssetSelectItem } from "./asset-select";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 interface AssetMenuProps {
     assetList: AssetSelectItem[];
@@ -39,13 +40,10 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
                     )}
                 >
                     <div className="flex items-center">
-                        <img
-                            id="asset-logo"
-                            src={`${IC_EXPLORER_IMAGES_PATH}${asset?.tokenAddress}`}
-                            width={40}
-                            className="mr-5"
-                        />
-
+                        <Avatar className="mr-3">
+                            <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${asset.tokenAddress}`} />
+                            <AvatarFallback>{asset.name}</AvatarFallback>
+                        </Avatar>
                         <div id="asset-info" className="text-md text-left">
                             <div>{asset?.name}</div>
                         </div>

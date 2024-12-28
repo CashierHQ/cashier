@@ -111,6 +111,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
+        console.log("🚀 ~ handleSubmitLinkDetails ~ values:", values);
         if (!linkId) return;
         try {
             formData.state = State.PendingPreview;

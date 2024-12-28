@@ -74,7 +74,9 @@ class LinkService {
 
     async updateLink(linkId: string, data: LinkDetailModel, isContinue: boolean) {
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
+        console.log("🚀 ~ LinkService ~ updateLink ~ completeData:", completeData);
         const response = parseResultResponse(await this.actor.update_link(completeData));
+        console.log("🚀 ~ LinkService ~ updateLink ~ response:", response);
         return response;
     }
 
