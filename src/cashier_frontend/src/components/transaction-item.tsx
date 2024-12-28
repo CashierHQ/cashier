@@ -1,16 +1,37 @@
+import TokenUtilsService from "@/services/tokenUtils.service";
+import { LINK_ASSET_TYPE } from "@/services/types/enum";
 import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
-import { FC } from "react";
+import { defaultAgent } from "@dfinity/utils";
+import { FC, useEffect, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import { IoMdCheckmark } from "react-icons/io";
 
+export type AssetModel = {
+    address: string;
+    amount: bigint;
+    chain: string;
+    type: LINK_ASSET_TYPE;
+};
+
 interface TransactionItemProps {
     title: string;
-    asset: string;
+    assets: (AssetModel | undefined)[] | undefined;
     state?: string;
 }
 
 const TransactionItem: FC<TransactionItemProps> = (props) => {
+    const [tokenSymbol, setTokenSymbol] = useState<string>("");
+
+    useEffect(() => {
+        const fetchTokenMetadata = async () => {
+            if (props.assets && props.assets[0]?.address) {
+                const symbol = await getTokenMetaData(props.assets[0].address);
+                setTokenSymbol(symbol);
+            }
+        };
+        fetchTokenMetadata();
+    }, [props.assets]);
     const renderTransactionState = (transactionState?: string) => {
         switch (transactionState) {
             case TRANSACTION_STATE.SUCCESS:
@@ -24,6 +45,13 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
         }
     };
 
+    const getTokenMetaData = async (tokenAddress: string) => {
+        const anonymousAgent = defaultAgent();
+        const tokenService = new TokenUtilsService(anonymousAgent);
+        const metadata = await tokenService.getICRCTokenMetadata(tokenAddress);
+        return metadata?.symbol ?? "";
+    };
+
     return (
         <div id="confirmation-transaction" className="flex justify-between">
             <div className="flex">
@@ -32,7 +60,7 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
                 </div>
                 {renderTransactionState(props.state)}
             </div>
-            <div>{props.asset}</div>
+            <div>{`${Number(props.assets?.[0]?.amount)} ${tokenSymbol}`}</div>
         </div>
     );
 };

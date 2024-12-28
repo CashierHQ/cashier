@@ -12,10 +12,7 @@ interface AssetMenuProps {
 
 const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect }) => {
     return (
-        <NavigationMenu
-            onValueChange={(val) => console.log(val)}
-            className="w-[100%] max-w-[100%] justify-start"
-        >
+        <NavigationMenu className="w-[100%] max-w-[100%] justify-start">
             <ul className="w-[100%]">
                 {assetList?.map((asset) => (
                     <ListItem key={asset.tokenAddress} onSelected={onSelect} asset={asset} />

@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
 import { Drawer } from "@/components/ui/drawer";
-import ConfirmationPopup from "@/components/confirmation-popup";
+import ConfirmationPopup, { ConfirmTransactionModel } from "@/components/confirmation-popup";
 import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
@@ -48,6 +48,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [disabledConfirmButton, setDisabledConfirmButton] = useState(false);
     const [popupButton, setPopupButton] = useState("");
     const [actionCreate, setActionCreate] = useState<IntentCreateModel>();
+    const [transactionConfirmModel, setTransactionConfirmModel] =
+        useState<ConfirmTransactionModel>();
 
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -64,6 +66,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         const fetchData = async () => {
             const linkObj = await new LinkService(identity).getLink(linkId);
             const { link, intent_create } = linkObj;
+            console.log("🚀 ~ fetchData ~ linkObj:", linkObj);
             if (link && link.state) {
                 const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
@@ -83,7 +86,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
-        console.log(values);
         if (values.linkType === LINK_TYPE.NFT_CREATE_AND_AIRDROP) {
             setToastData({
                 open: true,
@@ -111,7 +113,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
-        console.log("🚀 ~ handleSubmitLinkDetails ~ values:", values);
         if (!linkId) return;
         try {
             formData.state = State.PendingPreview;
@@ -131,8 +132,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleSubmit = async (_values: Partial<LinkDetailModel>) => {
+    const handleSubmit = async () => {
         if (!linkId) return;
         const validationResult = true;
         try {
@@ -147,7 +147,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 };
                 const linkService = new LinkService(identity);
                 const createActionResult = await linkService.createAction(createActionInput);
+                console.log("🚀 ~ handleSubmit ~ createActionResult:", createActionResult);
                 if (createActionResult) {
+                    const transactionConfirmObj: ConfirmTransactionModel = {
+                        linkName: formData.title ?? "",
+                        feeModel: createActionResult.consent,
+                    };
+                    setTransactionConfirmModel(transactionConfirmObj);
+                    setActionCreate(createActionResult.intent);
                     setOpenConfirmationPopup(true);
                 }
             } else {
@@ -249,6 +256,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 </MultiStepForm>
                 <Drawer open={openConfirmationPopup}>
                     <ConfirmationPopup
+                        data={transactionConfirmModel}
                         handleConfirm={handleConfirmTransactions}
                         handleClose={() => setOpenConfirmationPopup(false)}
                         disabled={disabledConfirmButton}
