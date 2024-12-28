@@ -53,12 +53,13 @@ export type LinkDetailModel = {
     title: string;
     description: string;
     image: string;
-    link_type?: string;
+    linkType?: string;
     state?: string;
     template?: string;
     creator?: string;
     create_at: Date;
     amount: number;
+    tokenAddress: string;
 };
 
 export type LinkModel = {

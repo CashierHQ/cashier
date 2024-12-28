@@ -13,8 +13,8 @@ import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
-    MapNftLinkToLinkDetailModel,
-} from "./types/link.service.mapper";
+    MapLinkToLinkDetailModel,
+} from "./types/mapper/link.service.mapper";
 import { IntentCreateModel } from "./types/intent.service.types";
 
 interface ReponseLinksModel {
@@ -49,7 +49,7 @@ class LinkService {
         responseModel.data = response.data
             ? response.data.map((link: Link) => {
                   return {
-                      link: MapNftLinkToLinkDetailModel(link),
+                      link: MapLinkToLinkDetailModel(link),
                       action_create: undefined,
                   };
               })
@@ -58,8 +58,13 @@ class LinkService {
     }
 
     async getLink(linkId: string) {
-        const response = parseResultResponse(await this.actor.get_link(linkId, []));
-        console.log("🚀 ~ LinkService ~ getLink ~ response:", response);
+        const response = parseResultResponse(
+            await this.actor.get_link(linkId, [
+                {
+                    intent_type: "Create",
+                },
+            ]),
+        );
         return MapLinkDetailModel(response);
     }
 
@@ -70,7 +75,6 @@ class LinkService {
     async updateLink(linkId: string, data: LinkDetailModel, isContinue: boolean) {
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
         const response = parseResultResponse(await this.actor.update_link(completeData));
-        console.log("🚀 ~ LinkService ~ updateLink ~ response:", response);
         return response;
     }
 
@@ -81,7 +85,7 @@ class LinkService {
 
     async createAction(input: CreateIntentInput): Promise<IntentCreateModel> {
         const response = parseResultResponse(await this.actor.create_intent(input));
-        return response as IntentCreateModel;
+        return response.intent as IntentCreateModel;
     }
 }
 

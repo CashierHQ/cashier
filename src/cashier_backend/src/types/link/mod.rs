@@ -3,7 +3,6 @@ use link_state::LinkState;
 use serde::{Deserialize, Serialize};
 use template::Template;
 
-pub mod chain;
 pub mod link_state;
 pub mod link_type;
 pub mod template;
@@ -154,6 +153,9 @@ impl Link {
         if let Some(state) = input.state {
             self.state = Some(state.to_string());
         }
+        if let Some(link_type) = input.link_type {
+            self.link_type = Some(link_type);
+        }
     }
 
     pub fn is_valid_fields_before_active(&self) -> Result<bool, String> {
@@ -203,4 +205,5 @@ pub struct LinkDetailUpdate {
     pub asset_info: Option<Vec<AssetInfo>>,
     pub template: Option<Template>,
     pub state: Option<LinkState>,
+    pub link_type: Option<String>,
 }

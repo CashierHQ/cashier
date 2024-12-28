@@ -57,7 +57,7 @@ export default function HomePage() {
 
     const handleCreateLink = async () => {
         const response = await new LinkService(identity).createLink({
-            link_type: { NftCreateAndAirdrop: null },
+            link_type: { TipLink: null },
         });
         navigate(`/edit/${response}`);
     };
@@ -75,24 +75,6 @@ export default function HomePage() {
         }
     }, []);
 
-    // Create 2 first sample links for new user
-    // useEffect(() => {
-    //     const initSampleLinks = async () => {
-    //         try {
-    //             setLoadingSampleLinks(true);
-    //             const linkService = new LinkService(identity);
-    //             await createSampleLink(linkService);
-    //         } catch (err) {
-    //             console.log(err);
-    //         } finally {
-    //             setLoadingSampleLinks(false);
-    //         }
-    //     };
-    //     if (linkData && Object.keys(linkData).length === 0 && appUser) {
-    //         initSampleLinks();
-    //     }
-    // }, [linkData, newAppUser]);
-
     useEffect(() => {
         if (newAppUser) {
             refetchAppUser();
@@ -108,7 +90,7 @@ export default function HomePage() {
                 const user = await userService.createUser();
                 setNewAppUser(user);
             } catch (error) {
-                console.log(error);
+                console.log("🚀 ~ createUser ~ error:", error);
             }
         };
 
@@ -211,7 +193,7 @@ export default function HomePage() {
                 className={
                     responsive.isSmallDevice
                         ? "w-screen flex justify-center py-3"
-                        : "bg-[white] h-[100%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
+                        : "bg-[white] h-[90%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
                 }
             >
                 <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>

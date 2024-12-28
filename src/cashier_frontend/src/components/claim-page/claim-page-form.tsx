@@ -86,6 +86,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                 <FormItem>
                                     <FormControl>
                                         <IconInput
+                                            isCurrencyInput={false}
                                             icon={<IoWallet />} // You need to import this icon
                                             placeholder={t("claim.addressPlaceholder")}
                                             onFocus={() => setSelectOptionWallet("Typed Wallet")}
