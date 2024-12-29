@@ -29,6 +29,14 @@ type AsyncExecuteFn = Box<
         + Sync,
 >;
 
+pub struct Transition {
+    pub trigger: LinkStateMachineAction,
+    pub source: LinkState,
+    pub dest: LinkState,
+    pub validate: Option<AsyncValidateFn>,
+    pub execute: AsyncExecuteFn,
+}
+
 fn transition_function(
     state: String,
     mut link: Link,
@@ -68,14 +76,6 @@ fn continue_create_link_state_to_active(
 
         Ok(link)
     })
-}
-
-pub struct Transition {
-    pub trigger: LinkStateMachineAction,
-    pub source: LinkState,
-    pub dest: LinkState,
-    pub validate: Option<AsyncValidateFn>,
-    pub execute: AsyncExecuteFn,
 }
 
 pub fn get_transitions() -> Vec<Transition> {
