@@ -18,12 +18,8 @@ const listUser: Record<string, string> = {
 
 //     // Convert secret key to hexadecimal string
 //     const secretKeyHex = Buffer.from(secretKey).toString("hex");
-//     console.log("secretKey (hex):", secretKeyHex);
-
-//     console.log("getPrincipal 1:", identity.getPrincipal().toText());
 
 //     const oldIdentity = Secp256k1KeyIdentity.fromSecretKey(secretKey);
-//     console.log("getPrincipal 2:", oldIdentity.getPrincipal().toText());
 // };
 
 const convertPrivateKeyToIdentity = (user: string) => {
@@ -40,4 +36,9 @@ const convertPrivateKeyToIdentity = (user: string) => {
 
 export const getIdentity = (user: string) => {
     return convertPrivateKeyToIdentity(user);
+};
+
+export const getRandomIdentity = () => {
+    const identity = Secp256k1KeyIdentity.generate();
+    return identity;
 };
