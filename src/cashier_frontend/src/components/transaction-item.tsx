@@ -1,16 +1,38 @@
+import useTokenMetadata from "@/hooks/tokenUtilsHooks";
+import { LINK_ASSET_TYPE } from "@/services/types/enum";
 import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
-import { FC } from "react";
+import { defaultAgent } from "@dfinity/utils";
+import { FC, useEffect, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import { IoMdCheckmark } from "react-icons/io";
 
+export type AssetModel = {
+    address: string;
+    amount: bigint;
+    chain: string;
+    type: LINK_ASSET_TYPE;
+};
+
 interface TransactionItemProps {
     title: string;
-    asset: string;
+    assets: (AssetModel | undefined)[] | undefined;
     state?: string;
+    isNetWorkFee?: boolean;
 }
 
 const TransactionItem: FC<TransactionItemProps> = (props) => {
+    const anonymousAgent = defaultAgent();
+    const [tokenSymbol, setTokenSymbol] = useState<string>("");
+    const [networkFee, setNetWorkFee] = useState<bigint>(BigInt(0));
+    const { metadata } = useTokenMetadata(anonymousAgent, props?.assets?.[0]?.address);
+
+    useEffect(() => {
+        if (metadata) {
+            setTokenSymbol(metadata?.symbol ?? "");
+            setNetWorkFee(metadata?.fee ?? BigInt(0));
+        }
+    }, [metadata]);
     const renderTransactionState = (transactionState?: string) => {
         switch (transactionState) {
             case TRANSACTION_STATE.SUCCESS:
@@ -32,7 +54,11 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
                 </div>
                 {renderTransactionState(props.state)}
             </div>
-            <div>{props.asset}</div>
+            <div>
+                {props.isNetWorkFee
+                    ? `${networkFee} ${tokenSymbol}`
+                    : `${Number(props.assets?.[0]?.amount)} ${tokenSymbol}`}
+            </div>
         </div>
     );
 };

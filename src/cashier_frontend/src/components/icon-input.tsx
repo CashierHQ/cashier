@@ -6,6 +6,7 @@ interface IconInputProps extends InputProps {
     icon?: React.ReactNode;
     isCurrencyInput: boolean;
     currencySymbol?: string;
+    isDisabled?: boolean;
 }
 
 const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(

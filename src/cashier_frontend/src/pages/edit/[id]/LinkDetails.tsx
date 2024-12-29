@@ -23,6 +23,7 @@ import { AssetSelectItem } from "@/components/asset-select";
 import { LINK_TYPE } from "@/services/types/enum";
 import { useAuth } from "@nfid/identitykit/react";
 import {
+    IC_EXPLORER_IMAGES_PATH,
     icExplorerService,
     initializeDefautGetUserTokenRequest,
     mapAPITokenModelToAssetSelectModel,
@@ -31,6 +32,7 @@ import {
 import AssetButton from "@/components/asset-button";
 import AssetDrawer from "@/components/asset-drawer";
 import { IconInput } from "@/components/icon-input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const linkDetailsSchema = z.object({
     image: z.string(),
@@ -39,7 +41,7 @@ export const linkDetailsSchema = z.object({
     amount: z.coerce
         .number({ message: "Must input number" })
         .positive({ message: "Must be greater than 0" }),
-    tokenAddress: z.string(),
+    tokenAddress: z.string().min(1, { message: "Asset is required" }),
     linkType: z.string(),
 });
 type InputSchema = z.infer<typeof linkDetailsSchema>;
@@ -68,6 +70,7 @@ export default function LinkDetails({
     const [currentImage, setCurrentImage] = useState<string>("");
     const [assetList, setAssetList] = useState<AssetSelectItem[]>(ASSET_LIST);
     const [openAssetList, setOpenAssetList] = useState<boolean>(false);
+    const [selectedToken, setSelectedToken] = useState<AssetSelectItem>();
 
     const form = useForm<InputSchema>({
         resolver: zodResolver(linkDetailsSchema),
@@ -124,9 +127,12 @@ export default function LinkDetails({
 
     const onSelectAsset = (value: string) => {
         const selectedToken = assetList.find((asset) => asset.tokenAddress === value);
+        console.log(selectedToken);
         if (selectedToken) {
             handleChange({ tokenAddress: selectedToken.tokenAddress });
             form.setValue("tokenAddress", selectedToken.tokenAddress);
+            form.clearErrors("amount");
+            setSelectedToken(selectedToken);
             setOpenAssetList(false);
         }
     };
@@ -147,6 +153,21 @@ export default function LinkDetails({
         fetchUserToken();
     }, [walletAddress]);
 
+    useEffect(() => {
+        if (assetList && assetList.length > 0) {
+            if (defaultValues.tokenAddress) {
+                const selectedToken = assetList.find(
+                    (asset) => asset.tokenAddress === defaultValues.tokenAddress,
+                );
+                if (selectedToken) {
+                    onSelectAsset(selectedToken.tokenAddress);
+                }
+            } else {
+                onSelectAsset(assetList[0].tokenAddress);
+            }
+        }
+    }, [assetList]);
+
     async function getUserToken(): Promise<UserToken[]> {
         const request = initializeDefautGetUserTokenRequest(walletAddress);
         const response = await icExplorerService.getUserTokens(request);
@@ -154,29 +175,35 @@ export default function LinkDetails({
         return userTokenList;
     }
 
+    const selectedAssetButtonInfo = (): React.ReactNode => {
+        if (selectedToken) {
+            return (
+                <div className="flex font-normal">
+                    <Avatar className="mr-3">
+                        <AvatarImage
+                            src={`${IC_EXPLORER_IMAGES_PATH}${selectedToken.tokenAddress}`}
+                        />
+                        <AvatarFallback>{selectedToken.name}</AvatarFallback>
+                    </Avatar>
+                    <div id="asset-info" className="text-md text-left">
+                        <div>{selectedToken.name}</div>
+                        <div>{`Balance ${selectedToken.amount} ${selectedToken.name}`}</div>
+                    </div>
+                </div>
+            );
+        } else {
+            return null;
+        }
+    };
+
     const renderTipLinkAssetForm = () => {
         return (
             <div className="w-full">
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(handleSubmit)}
-                        //onChange={(e: any) => handleChange({ [e.target.name]: e.target.value })}
                         className="space-y-8 mb-[100px]"
                     >
-                        {/* <FormField
-                            name="tokenAddress"
-                            control={form.control}
-                            render={() => (
-                                <FormItem>
-                                    <FormLabel>{t("create.asset")}</FormLabel>
-                                    <AssetSelect
-                                        assetList={assetList}
-                                        onValueChange={onSelectAsset}
-                                    />
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        /> */}
                         <FormField
                             name="tokenAddress"
                             control={form.control}
@@ -186,6 +213,7 @@ export default function LinkDetails({
                                     <AssetButton
                                         handleClick={() => setOpenAssetList(true)}
                                         text="Choose Asset"
+                                        childrenNode={selectedAssetButtonInfo()}
                                     />
                                     <FormMessage />
                                 </FormItem>
@@ -199,7 +227,7 @@ export default function LinkDetails({
                                     <FormControl>
                                         <IconInput
                                             isCurrencyInput={true}
-                                            currencySymbol="USD"
+                                            currencySymbol={selectedToken?.name ?? ""}
                                             {...field}
                                         />
                                     </FormControl>
