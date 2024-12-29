@@ -30,8 +30,6 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     buttonText,
 }) => {
     const { t: translate } = useTranslation();
-    const [networkFees, setNetworkFees] = React.useState<bigint[]>([BigInt(0)]);
-
     return (
         <DrawerContent className="max-w-[400px] mx-auto p-3">
             <DrawerHeader>

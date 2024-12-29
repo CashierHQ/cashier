@@ -14,12 +14,14 @@ import { Drawer } from "@/components/ui/drawer";
 import ConfirmationPopup, { ConfirmTransactionModel } from "@/components/confirmation-popup";
 import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { getReponsiveClassname } from "@/utils";
+import { convertTokenAmountToNumber, getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { CreateIntentInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { IntentCreateModel } from "@/services/types/intent.service.types";
+import TokenUtilsService from "@/services/tokenUtils.service";
+import { defaultAgent } from "@dfinity/utils";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -114,6 +116,17 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
         if (!linkId) return;
+
+        // Get selected token metadata
+        if (values.amount && values.tokenAddress) {
+            const anonymousAgent = defaultAgent();
+            const tokenUtilService = new TokenUtilsService(anonymousAgent);
+            const metadata = await tokenUtilService.getICRCTokenMetadata(values.tokenAddress);
+            const tokenDecimals = metadata?.decimals;
+            if (tokenDecimals) {
+                values.amount = convertTokenAmountToNumber(values.amount, tokenDecimals);
+            }
+        }
         try {
             formData.state = State.PendingPreview;
             const updateLinkParams: UpdateLinkParams = {

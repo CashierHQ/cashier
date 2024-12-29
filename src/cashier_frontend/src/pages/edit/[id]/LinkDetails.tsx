@@ -83,7 +83,6 @@ export default function LinkDetails({
             ...defaultValues,
         },
     });
-    console.log(defaultValues);
 
     const resizeFile = (file: File) =>
         new Promise((resolve) => {
