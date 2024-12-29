@@ -1,4 +1,4 @@
-import { _SERVICE, UpdateLinkInput } from "../declarations/cashier_backend/cashier_backend.did";
+import { _SERVICE, UpdateLinkInput } from "../../declarations/cashier_backend/cashier_backend.did";
 
 export const continueUpdate = async ({ backend, id }: { backend: _SERVICE; id: string }) => {
     const linkInput: UpdateLinkInput = {

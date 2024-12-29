@@ -30,7 +30,7 @@ jobs:
               run: dfx --version
 
             - name: Install project dependencies
-              run: npm install
+              run: npm install --force
 
             - name: Build project
               run: |
