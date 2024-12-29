@@ -15,7 +15,8 @@ import {
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
 } from "./types/mapper/link.service.mapper";
-import { IntentCreateModel } from "./types/intent.service.types";
+import { IntentCreateModel, CreateIntentConsentModel } from "./types/intent.service.types";
+import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
 
 interface ReponseLinksModel {
     data: LinkModel[];
@@ -75,6 +76,7 @@ class LinkService {
     async updateLink(linkId: string, data: LinkDetailModel, isContinue: boolean) {
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
         const response = parseResultResponse(await this.actor.update_link(completeData));
+        console.log("🚀 ~ LinkService ~ updateLink ~ response:", response);
         return response;
     }
 
@@ -83,9 +85,18 @@ class LinkService {
         return false;
     }
 
-    async createAction(input: CreateIntentInput): Promise<IntentCreateModel> {
+    async createAction(
+        input: CreateIntentInput,
+    ): Promise<{ intent: IntentCreateModel; consent: CreateIntentConsentModel }> {
         const response = parseResultResponse(await this.actor.create_intent(input));
-        return response.intent as IntentCreateModel;
+        return {
+            intent: response.intent as IntentCreateModel,
+            consent: {
+                fee: response.consents.fee,
+                receive: response.consents.receive.map((receive) => mapReceiveModel(receive)),
+                send: response.consents.send,
+            },
+        };
     }
 }
 

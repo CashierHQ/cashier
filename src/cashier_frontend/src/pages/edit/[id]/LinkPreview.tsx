@@ -16,7 +16,6 @@ export default function LinkPreview({
     isDisabled = false,
     linkType,
 }: ParitalFormProps<object, LinkData>) {
-    console.log(linkType);
     if (linkType === LINK_TYPE.TIP_LINK) {
         return (
             <div className="w-full flex flex-col">

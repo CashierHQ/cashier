@@ -5,9 +5,10 @@ import { FaChevronDown } from "react-icons/fa";
 interface AssetButtonProps {
     handleClick: () => void;
     text: string;
+    childrenNode?: React.ReactNode;
 }
 
-const AssetButton: React.FC<AssetButtonProps> = ({ text, handleClick }) => {
+const AssetButton: React.FC<AssetButtonProps> = ({ text, handleClick, childrenNode }) => {
     return (
         <button
             onClick={handleClick}
@@ -24,9 +25,16 @@ const AssetButton: React.FC<AssetButtonProps> = ({ text, handleClick }) => {
                 "flex items-center justify-start",
             )}
         >
-            <span className="flex items-center">
-                <span className="flex-grow text-left">{text}</span>{" "}
-            </span>
+            {childrenNode ? (
+                <span className="flex items-center">
+                    <span className="flex-grow text-left">{childrenNode}</span>{" "}
+                </span>
+            ) : (
+                <span className="flex items-center">
+                    <span className="flex-grow text-left">{text}</span>{" "}
+                </span>
+            )}
+
             <FaChevronDown className="ml-auto h-4 w-4" color="#36A18B" />
         </button>
     );

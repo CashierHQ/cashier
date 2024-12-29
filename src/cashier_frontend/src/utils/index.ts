@@ -148,3 +148,8 @@ export const getReponsiveClassname = (
         }
     }
 };
+
+// Convert token amount to number with exponential token's decimals
+export const convertTokenAmountToNumber = (amount: number, decimals: number): number => {
+    return Math.floor(amount * 10 ** decimals);
+};

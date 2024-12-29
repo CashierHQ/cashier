@@ -14,6 +14,11 @@ export enum LINK_STATE {
     INACTIVE = "Link_state_inactive",
 }
 
+export enum LINK_ASSET_TYPE {
+    CASHIER_FEE = "CashierFee",
+    ASSET_ADDED = "Asset",
+}
+
 export function getLinkLabel(state: LINK_STATE): string {
     switch (state) {
         case LINK_STATE.CHOOSE_TEMPLATE:
