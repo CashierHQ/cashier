@@ -1,7 +1,6 @@
-import TokenUtilsService from "@/services/tokenUtils.service";
+import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { LINK_ASSET_TYPE } from "@/services/types/enum";
 import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
-import { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import { defaultAgent } from "@dfinity/utils";
 import { FC, useEffect, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
@@ -23,20 +22,17 @@ interface TransactionItemProps {
 }
 
 const TransactionItem: FC<TransactionItemProps> = (props) => {
+    const anonymousAgent = defaultAgent();
     const [tokenSymbol, setTokenSymbol] = useState<string>("");
     const [networkFee, setNetWorkFee] = useState<bigint>(BigInt(0));
+    const { metadata } = useTokenMetadata(anonymousAgent, props?.assets?.[0]?.address);
 
     useEffect(() => {
-        const fetchTokenMetadata = async () => {
-            if (props.assets && props.assets[0]?.address) {
-                const metadata = await getTokenMetaData(props.assets[0].address);
-                const symbol = metadata?.symbol ?? "";
-                setTokenSymbol(symbol);
-                setNetWorkFee(metadata?.fee ?? BigInt(0));
-            }
-        };
-        fetchTokenMetadata();
-    }, [props.assets]);
+        if (metadata) {
+            setTokenSymbol(metadata?.symbol ?? "");
+            setNetWorkFee(metadata?.fee ?? BigInt(0));
+        }
+    }, [metadata]);
     const renderTransactionState = (transactionState?: string) => {
         switch (transactionState) {
             case TRANSACTION_STATE.SUCCESS:
@@ -48,15 +44,6 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
             default:
                 return null;
         }
-    };
-
-    const getTokenMetaData = async (
-        tokenAddress: string,
-    ): Promise<IcrcTokenMetadata | undefined> => {
-        const anonymousAgent = defaultAgent();
-        const tokenService = new TokenUtilsService(anonymousAgent);
-        const metadata = await tokenService.getICRCTokenMetadata(tokenAddress);
-        return metadata;
     };
 
     return (

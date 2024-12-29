@@ -2,7 +2,6 @@ import React from "react";
 import { DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { Button } from "./ui/button";
 import TransactionItem from "./transaction-item";
-import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
 import { IoIosClose } from "react-icons/io";
 import { useTranslation } from "react-i18next";
 import { CreateIntentConsentModel } from "@/services/types/intent.service.types";

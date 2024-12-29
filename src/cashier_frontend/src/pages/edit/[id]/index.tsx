@@ -20,8 +20,8 @@ import { z } from "zod";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { CreateIntentInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { IntentCreateModel } from "@/services/types/intent.service.types";
-import TokenUtilsService from "@/services/tokenUtils.service";
 import { defaultAgent } from "@dfinity/utils";
+import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -30,6 +30,7 @@ const STEP_LINK_STATE_ORDER = [
 ];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
+    const anonymousAgent = defaultAgent();
     const [formData, setFormData] = useState<LinkDetailModel>({
         id: "",
         title: "",
@@ -58,6 +59,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { linkId } = useParams();
     const { identity } = useIdentityKit();
     const responsive = useResponsive();
+    const { metadata } = useTokenMetadata(anonymousAgent, formData.tokenAddress);
 
     const queryClient = useQueryClient();
     const { mutate, mutateAsync, error: updateLinkError } = useUpdateLink(queryClient, identity);
@@ -119,10 +121,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
         // Get selected token metadata
         if (values.amount && values.tokenAddress) {
-            const anonymousAgent = defaultAgent();
-            const tokenUtilService = new TokenUtilsService(anonymousAgent);
-            const metadata = await tokenUtilService.getICRCTokenMetadata(values.tokenAddress);
             const tokenDecimals = metadata?.decimals;
+            console.log("🚀 ~ handleSubmitLinkDetails ~ tokenDecimals:", tokenDecimals);
             if (tokenDecimals) {
                 values.amount = convertTokenAmountToNumber(values.amount, tokenDecimals);
             }
