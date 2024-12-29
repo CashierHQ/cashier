@@ -14,6 +14,14 @@ pub struct CreateIntentInput {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct GetConsentMessageInput {
+    pub intent_type: String,
+    pub params: Option<CreateIntentParams>,
+    pub link_id: String,
+    pub intent_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateIntentResponse {
     pub intent: Intent,
 }

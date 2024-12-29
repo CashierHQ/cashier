@@ -16,10 +16,11 @@ use crate::{
 };
 
 use super::{
-    assemble_intent::assemble_create_trasaction, validate::validate_balance_with_asset_info,
+    assemble_intent::{assemble_create_trasaction, AssembleTransactionResp},
+    validate::validate_balance_with_asset_info,
 };
 
-pub async fn create(
+pub async fn create_create_link_intent(
     intent: CreateIntentInput,
 ) -> Result<CreateIntentConsentResponse, CanisterError> {
     let caller = ic_cdk::api::caller();
@@ -40,11 +41,22 @@ pub async fn create(
 
     let general_link = crate::types::link::Link::from_persistence(link.unwrap());
 
+    //validate this link have create_link intent before
+    match link_intent_store::find_create_intent_by_link_id(&intent.link_id) {
+        Some(_) => {
+            return Err(CanisterError::ValidationErrors(
+                "Link already has create intent".to_string(),
+            ))
+        }
+        None => (),
+    }
+
     // Validate the user's balance
     match validate_balance_with_asset_info(general_link.clone(), caller).await {
         Ok(_) => (),
         Err(e) => return Err(CanisterError::ValidationErrors(e)),
     }
+
     // Get the user ID from the user wallet store
     let user_id = user_wallet_store::get(&caller.to_text())
         .ok_or_else(|| CanisterError::ValidationErrors("User wallet not found".to_string()))?;
@@ -85,31 +97,13 @@ pub async fn create(
         }
     };
 
-    // store all record
-
-    let transactions_persistence = assemble_res
-        .transactions
-        .iter()
-        .map(|t| t.to_persistence())
-        .collect::<Vec<_>>();
-    let intent_transactions_persistence = assemble_res
-        .intent_transactions
-        .iter()
-        .map(|t| t.to_persistence())
-        .collect::<Vec<_>>();
-    let user_intent = UserIntent::new(
-        user_id.clone(),
-        new_intent.id.clone(),
-        new_intent.intent_type.clone(),
-        ts,
-    );
-
-    // Store all record
-    let _ = intent_store::create(new_intent.to_persistence());
-    let _ = transaction_store::batch_create(transactions_persistence);
-    let _ = intent_transaction_store::batch_create(intent_transactions_persistence);
-    let _ = link_intent_store::create(new_link_intent.to_persistence());
-    let _ = user_intent_store::create(user_intent.to_persistence());
+    store_records(
+        &new_intent,
+        &new_link_intent,
+        &assemble_res,
+        &user_id,
+        ic_cdk::api::time(),
+    )?;
 
     let intent = match intent_store::get(&id.to_string())
         .ok_or_else(|| CanisterError::HandleApiError("Failed to create intent".to_string()))
@@ -124,4 +118,38 @@ pub async fn create(
     })
 
     // Retrieve and return the created intent
+}
+
+fn store_records(
+    new_intent: &Intent,
+    new_link_intent: &LinkIntent,
+    assemble_res: &AssembleTransactionResp,
+    user_id: &str,
+    ts: u64,
+) -> Result<(), CanisterError> {
+    let transactions_persistence = assemble_res
+        .transactions
+        .iter()
+        .map(|t| t.to_persistence())
+        .collect::<Vec<_>>();
+    let intent_transactions_persistence = assemble_res
+        .intent_transactions
+        .iter()
+        .map(|t| t.to_persistence())
+        .collect::<Vec<_>>();
+    let user_intent = UserIntent::new(
+        user_id.to_string(),
+        new_intent.id.clone(),
+        new_intent.intent_type.clone(),
+        ts,
+    );
+
+    // Store all records
+    let _ = intent_store::create(new_intent.to_persistence());
+    let _ = transaction_store::batch_create(transactions_persistence);
+    let _ = intent_transaction_store::batch_create(intent_transactions_persistence);
+    let _ = link_intent_store::create(new_link_intent.to_persistence());
+    let _ = user_intent_store::create(user_intent.to_persistence());
+
+    Ok(())
 }

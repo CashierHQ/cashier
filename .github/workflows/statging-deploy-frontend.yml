@@ -43,7 +43,7 @@ jobs:
                   dfx identity get-principal
 
             - name: Install project dependencies
-              run: npm install
+              run: npm install --force
 
             - name: Build project
               run: |
