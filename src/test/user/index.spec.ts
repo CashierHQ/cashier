@@ -1,5 +1,8 @@
 // Import generated types for your canister
-import { type _SERVICE } from "../../declarations/cashier_backend/cashier_backend.did";
+import {
+    CreateLinkInput,
+    type _SERVICE,
+} from "../../declarations/cashier_backend/cashier_backend.did";
 import { resolve } from "path";
 import { getRandomIdentity } from "../utils/wallet";
 import { parseResultResponse } from "../utils/parser";
@@ -74,5 +77,18 @@ describe("User", () => {
 
         expect(user).toHaveProperty("wallet");
         expect(user.wallet).toBe(identity.getPrincipal().toText());
+    });
+
+    it("should create link success", async () => {
+        const input: CreateLinkInput = {
+            link_type: {
+                TipLink: null,
+            },
+        };
+
+        const createLinkRes = await actor.create_link(input);
+
+        // Assert
+        expect(createLinkRes).toHaveProperty("Ok");
     });
 });
