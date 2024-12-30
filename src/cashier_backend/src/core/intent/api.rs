@@ -2,8 +2,8 @@ use ic_cdk::{query, update};
 
 use crate::{
     core::{
-        guard::is_not_anonymous, CanisterError, CreateIntentConsent, CreateIntentConsentResponse,
-        GetConsentMessageInput, UpdateIntentInput,
+        guard::is_not_anonymous, CanisterError, ConfirmIntentInput, CreateIntentConsent,
+        CreateIntentConsentResponse, GetConsentMessageInput, UpdateIntentInput,
     },
     services,
 };
@@ -16,6 +16,12 @@ pub async fn create_intent(
 ) -> Result<CreateIntentConsentResponse, CanisterError> {
     // inside already check caller is creator
     services::transaction::create::create_create_link_intent(input).await
+}
+
+#[update(guard = "is_not_anonymous")]
+pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<(), String> {
+    // inside already check caller is creator
+    services::transaction::confirm::confirm_intent(input).await
 }
 
 #[update(guard = "is_not_anonymous")]

@@ -1,5 +1,6 @@
 // Import generated types for your canister
 import {
+    ConfirmIntentInput,
     CreateIntentInput,
     CreateLinkInput,
     GetConsentMessageInput,
@@ -7,9 +8,9 @@ import {
     type _SERVICE,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 import { getIdentity } from "../utils/wallet";
-import { initLocalAgent } from "../utils/agent";
 import { ActorSubclass } from "@dfinity/agent";
-import { parseResultResponse } from "../utils/parser";
+import { parseResultResponse, safeParseJSON } from "../utils/parser";
+import { ServiceHelper } from "../utils/service";
 
 // Define the path to your canister's WASM file
 // export const WASM_PATH = resolve(
@@ -43,7 +44,9 @@ describe("Link", () => {
     // let canisterId: Principal;
     let actor: ActorSubclass<_SERVICE>;
 
-    const identity = getIdentity("user1");
+    const identity1 = getIdentity("user1");
+
+    let servicerHelper: ServiceHelper;
 
     let linkId: string;
     let userId: string;
@@ -53,7 +56,7 @@ describe("Link", () => {
     //
     // This can be replaced with a `beforeAll` hook to persist canister
     // state between tests.
-    beforeEach(async () => {
+    beforeAll(async () => {
         // create a new PocketIC instance
         // pic = await PocketIc.create(process.env.PIC_URL);
 
@@ -64,7 +67,12 @@ describe("Link", () => {
         // });
 
         // Save the actor and canister ID for use in tests
-        actor = initLocalAgent("jjio5-5aaaa-aaaam-adhaq-cai", identity);
+        servicerHelper = new ServiceHelper({
+            canisterId: "jjio5-5aaaa-aaaam-adhaq-cai",
+            identity: identity1,
+        });
+
+        actor = await servicerHelper.initActor();
 
         const user = await actor.get_user();
 
@@ -208,5 +216,47 @@ describe("Link", () => {
         expect(res.fee).toHaveLength(1);
         expect(res.send).toHaveLength(1);
         expect(res.receive).toHaveLength(1);
+    });
+
+    it("should confirm the intent and validate based on the intent", async () => {
+        const input: ConfirmIntentInput = {
+            link_id: linkId,
+            intent_id: createLinkIntentId,
+        };
+
+        const createLinkRes = await actor.confirm_intent(input);
+        const res = parseResultResponse(createLinkRes);
+        const getLinkRes = await actor.get_link(linkId, [
+            {
+                intent_type: "Create",
+            },
+        ]);
+        const link = parseResultResponse(getLinkRes);
+
+        // Ensure the intent array has length greater than or equal to 1
+        expect(link.intent.length).toBeGreaterThanOrEqual(1);
+
+        if (link.intent.length === 0) {
+            return;
+        }
+
+        // Get the first intent
+        const intent = link.intent[0];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        console.log("link", safeParseJSON(link as any));
+
+        // Perform validation based on the intent
+        expect(intent.state).toEqual("Intent_state_processing");
+
+        // Check the state of all transactions
+        intent.transactions.forEach((transaction) => {
+            expect(transaction.state).toEqual("Transaction_state_processing");
+        });
+
+        // Assert
+        expect(res).toEqual(null);
+        expect(link.intent).toHaveLength(1);
+        expect(intent.transactions).toHaveLength(2);
     });
 });

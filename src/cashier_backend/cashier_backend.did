@@ -13,6 +13,7 @@ type CanisterError = variant {
   HandleApiError : text;
 };
 type ClaimIntentParams = record { address : opt text };
+type ConfirmIntentInput = record { link_id : text; intent_id : text };
 type CreateIntentConsent = record {
   fee : vec Fee;
   receive : vec Receive;
@@ -175,6 +176,7 @@ type UpdateLinkParams = record { params : opt LinkDetailUpdateInput };
 type User = record { id : text; email : opt text; wallet : text };
 service : () -> {
   claim_nft : (text, opt text) -> (Result);
+  confirm_intent : (ConfirmIntentInput) -> (Result);
   create_intent : (CreateIntentInput) -> (Result_1);
   create_link : (CreateLinkInput) -> (Result_2);
   create_user : () -> (Result_3);

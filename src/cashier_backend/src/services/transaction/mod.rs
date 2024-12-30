@@ -1,5 +1,6 @@
 pub mod assemble_intent;
 pub mod build_tx;
+pub mod confirm;
 pub mod consent_message;
 pub mod create;
 pub mod get;
