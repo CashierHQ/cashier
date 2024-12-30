@@ -18,7 +18,10 @@ import { convertTokenAmountToNumber, getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { CreateIntentInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
+import {
+    CreateIntentInput,
+    GetConsentMessageInput,
+} from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { IntentCreateModel } from "@/services/types/intent.service.types";
 import { defaultAgent } from "@dfinity/utils";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
@@ -149,26 +152,40 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         const validationResult = true;
         try {
-            // 1. Call validation, success -> display confirm popup,
-            //   failed -> display error message
             if (validationResult) {
+                const linkService = new LinkService(identity);
                 setDisabled(true);
                 const createActionInput: CreateIntentInput = {
                     link_id: linkId,
                     intent_type: "Create",
                     params: [],
                 };
-                const linkService = new LinkService(identity);
-                const createActionResult = await linkService.createAction(createActionInput);
-                console.log("🚀 ~ handleSubmit ~ createActionResult:", createActionResult);
-                if (createActionResult) {
-                    const transactionConfirmObj: ConfirmTransactionModel = {
-                        linkName: formData.title ?? "",
-                        feeModel: createActionResult.consent,
+                const handleCreateAction = async () => {
+                    const intentCreateConsentInput: GetConsentMessageInput = {
+                        link_id: linkId,
+                        intent_type: "Create",
+                        params: [],
+                        intent_id: actionCreate?.id ?? "",
                     };
-                    setTransactionConfirmModel(transactionConfirmObj);
-                    setActionCreate(createActionResult.intent);
-                    setOpenConfirmationPopup(true);
+
+                    const consent = actionCreate
+                        ? await linkService.getConsentMessage(intentCreateConsentInput)
+                        : await linkService.createAction(createActionInput).then((result) => {
+                              setActionCreate(result.intent);
+                              return result.consent;
+                          });
+
+                    if (consent) {
+                        const transactionConfirmObj: ConfirmTransactionModel = {
+                            linkName: formData.title ?? "",
+                            feeModel: consent,
+                        };
+                        setTransactionConfirmModel(transactionConfirmObj);
+                        setOpenConfirmationPopup(true);
+                    }
+                };
+                if (actionCreate || createActionInput) {
+                    await handleCreateAction();
                 }
             } else {
                 setToastData({
@@ -180,6 +197,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             }
         } catch (error) {
             console.log("🚀 ~ handleSubmit ~ error:", error);
+            setDisabled(false);
+        } finally {
             setDisabled(false);
         }
     };
