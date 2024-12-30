@@ -42,7 +42,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         state: "",
         template: Template.Central,
         create_at: new Date(),
-        amount: 0,
+        amount: BigInt(0),
+        amountNumber: 0,
         linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
         tokenAddress: "",
     });
@@ -123,13 +124,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
 
         // Get selected token metadata
-        if (values.amount && values.tokenAddress) {
-            const tokenDecimals = metadata?.decimals;
-            console.log("🚀 ~ handleSubmitLinkDetails ~ tokenDecimals:", tokenDecimals);
-            if (tokenDecimals) {
-                values.amount = convertTokenAmountToNumber(values.amount, tokenDecimals);
-            }
-        }
+        // if (values.amountNumber && values.tokenAddress) {
+        //     const tokenDecimals = metadata?.decimals;
+        //     if (tokenDecimals) {
+        //         values.amount = BigInt(
+        //             convertTokenAmountToNumber(values.amountNumber, tokenDecimals),
+        //         );
+        //     }
+        // }
         try {
             formData.state = State.PendingPreview;
             const updateLinkParams: UpdateLinkParams = {
@@ -137,6 +139,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 linkModel: {
                     ...formData,
                     ...values,
+                    amount: values.amount,
                     description: "test",
                 },
                 isContinue: true,

@@ -67,7 +67,8 @@ class LinkService {
                 },
             ]),
         );
-        return MapLinkDetailModel(response);
+        const result = await MapLinkDetailModel(response);
+        return result;
     }
 
     async createLink(input: CreateLinkInput) {
