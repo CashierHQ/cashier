@@ -74,3 +74,9 @@ pub struct UpdateIntentInput {
     pub transaction_id: String,
     pub block_id: u64,
 }
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct ConfirmIntentInput {
+    pub intent_id: String,
+    pub link_id: String,
+}
