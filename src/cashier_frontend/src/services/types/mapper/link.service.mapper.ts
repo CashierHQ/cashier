@@ -104,7 +104,7 @@ export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkMode
 };
 
 /* TODO: Remove testing flag later*/
-const IS_TEST_LOCAL_TOKEN = false;
+const IS_TEST_LOCAL_TOKEN = true;
 // May need to update in future, now received 'amount' as param, others are constants
 const mapAssetInfo = (linkDetailModel: LinkDetailModel): AssetInfo => {
     return {

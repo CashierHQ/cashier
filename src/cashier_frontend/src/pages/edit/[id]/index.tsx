@@ -25,6 +25,7 @@ import {
 import { IntentCreateModel } from "@/services/types/intent.service.types";
 import { defaultAgent } from "@dfinity/utils";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
+import IntentService from "@/services/intent.service";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -66,7 +67,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { metadata } = useTokenMetadata(anonymousAgent, formData.tokenAddress);
 
     const queryClient = useQueryClient();
-    const { mutate, mutateAsync, error: updateLinkError } = useUpdateLink(queryClient, identity);
+    const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
         if (!linkId) return;
@@ -214,17 +215,16 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleConfirmTransactions = async () => {
         setDisabledConfirmButton(true);
         setPopupButton(t("transaction.confirm_popup.inprogress_button") as string);
-        if (!linkId) return;
-        const updateLinkParams: UpdateLinkParams = {
-            linkId: linkId,
-            linkModel: {
-                ...formData,
-                description: "aaa",
-            },
-            isContinue: true,
-        };
-        await mutateAsync(updateLinkParams);
-        navigate(`/details/${linkId}`);
+        if (!linkId && !actionCreate?.id) return;
+        console.log(linkId);
+        console.log(actionCreate);
+        try {
+            const intentService = new IntentService(identity);
+            const result = await intentService.confirmIntent(linkId ?? "", actionCreate?.id ?? "");
+            console.log("🚀 ~ handleConfirmTransactions ~ result:", result);
+        } catch (err) {
+            console.log(err);
+        }
     };
 
     const handleBackstep = async () => {

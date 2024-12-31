@@ -20,12 +20,9 @@ class TokenUtils {
     }
 
     async getHumanReadableAmount(amount: bigint, tokenAddress: string): Promise<number> {
-        console.log("🚀 ~ TokenUtils ~ getHumanReadableAmount ~ amount:", amount);
         const tokenMetadata = await this.getTokenMetadata(tokenAddress);
         const tokenV2 = TokenAmountV2.fromUlps({ amount, token: tokenMetadata as Token });
-        console.log("🚀 ~ TokenUtils ~ getHumanReadableAmount ~ tokenV2:", tokenV2);
         const upls = tokenV2.toUlps();
-        console.log("🚀 ~ TokenUtils ~ getHumanReadableAmount ~ upls:", upls);
         return Number(upls) / 10 ** tokenV2.token.decimals;
     }
 }
