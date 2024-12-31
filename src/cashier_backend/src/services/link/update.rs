@@ -5,10 +5,7 @@ use crate::{
     repositories::link_store,
     services::{
         link::validate_active_link::{is_intent_exist, is_valid_fields_before_active},
-        transaction::{
-            get::get_create_intent_id, update::set_processing_intent,
-            validate::validate_balance_with_asset_info,
-        },
+        transaction::validate::validate_balance_with_asset_info,
     },
     types::{
         error::CanisterError,

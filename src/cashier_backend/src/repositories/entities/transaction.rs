@@ -16,7 +16,7 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn build_pk(id: String) -> String {
+    pub fn build_pk(id: &str) -> String {
         format!("{}#{}", PK_PATTERN, id)
     }
 
@@ -32,7 +32,7 @@ impl Transaction {
         state: String,
     ) -> Self {
         Self {
-            pk: Self::build_pk(id),
+            pk: Self::build_pk(id.as_str()),
             canister_id,
             method,
             arg,

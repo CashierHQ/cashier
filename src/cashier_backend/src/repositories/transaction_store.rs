@@ -42,7 +42,7 @@ pub fn batch_get(ids: Vec<String>) -> Vec<crate::types::transaction::Transaction
         let mut result = Vec::new();
 
         for id in ids {
-            let transaction = store.get(&Transaction::build_pk(id));
+            let transaction = store.get(&Transaction::build_pk(id.as_str()));
             match transaction {
                 Some(transaction) => {
                     result.push(crate::types::transaction::Transaction::from_persistence(
@@ -59,9 +59,9 @@ pub fn batch_get(ids: Vec<String>) -> Vec<crate::types::transaction::Transaction
     })
 }
 
-pub fn get(id: String) -> Option<crate::types::transaction::Transaction> {
+pub fn get(id: &str) -> Option<crate::types::transaction::Transaction> {
     TRANSACTION_STORE.with_borrow(|store| {
-        let pk = Transaction::build_pk(id.clone());
+        let pk = Transaction::build_pk(id);
         let transaction = store.get(&pk);
         match transaction {
             Some(transaction) => Some(crate::types::transaction::Transaction::from_persistence(

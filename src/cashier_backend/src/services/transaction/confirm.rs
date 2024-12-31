@@ -1,9 +1,14 @@
+use std::time::Duration;
+
+use ic_cdk::spawn;
+use ic_cdk_timers::set_timer;
+
 use crate::{
     core::intent::types::ConfirmIntentInput,
     info,
     repositories::{intent_store, link_store},
-    services::link::is_link_creator,
-    types::intent::IntentType,
+    services::{link::is_link_creator, transaction::update::timeout_intent},
+    types::intent::{IntentState, IntentType},
 };
 
 use super::{update::set_processing_intent, validate::validate_balance_with_asset_info};
@@ -15,6 +20,10 @@ pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<(), String> {
 
     let intent = intent_store::get(&input.intent_id)
         .ok_or_else(|| "[confirm_intent] Intent not found".to_string())?;
+
+    if intent.state != IntentState::Created.to_string() {
+        return Err("[confirm_intent] Intent state is not Created".to_string());
+    }
 
     let intent_type = IntentType::from_string(&intent.intent_type)?;
 
@@ -38,7 +47,15 @@ pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<(), String> {
             validate_balance_with_asset_info(general_link.clone(), caller).await?;
 
             // set all to processing
-            set_processing_intent(input.intent_id)?;
+            set_processing_intent(input.intent_id.clone())?;
+
+            set_timer(Duration::from_secs(10), move || {
+                spawn(async move {
+                    let _ = timeout_intent(&input.intent_id);
+                });
+            });
+
+            info!("confirmed return");
 
             // set_processing_intent(input.intent_id)
             Ok(())
