@@ -14,7 +14,7 @@ import { Drawer } from "@/components/ui/drawer";
 import ConfirmationPopup, { ConfirmTransactionModel } from "@/components/confirmation-popup";
 import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { convertTokenAmountToNumber, getReponsiveClassname } from "@/utils";
+import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
@@ -22,10 +22,12 @@ import {
     CreateIntentInput,
     GetConsentMessageInput,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
-import { IntentCreateModel } from "@/services/types/intent.service.types";
+import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
 import { defaultAgent } from "@dfinity/utils";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import IntentService from "@/services/intent.service";
+import SignerService from "@/services/signer.service";
+import { Identity } from "@dfinity/agent";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -34,7 +36,6 @@ const STEP_LINK_STATE_ORDER = [
 ];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
-    const anonymousAgent = defaultAgent();
     const [formData, setFormData] = useState<LinkDetailModel>({
         id: "",
         title: "",
@@ -64,8 +65,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { linkId } = useParams();
     const identity = useIdentity();
     const responsive = useResponsive();
-    const { metadata } = useTokenMetadata(anonymousAgent, formData.tokenAddress);
-
     const queryClient = useQueryClient();
     const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
 
@@ -123,16 +122,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
         if (!linkId) return;
-
-        // Get selected token metadata
-        // if (values.amountNumber && values.tokenAddress) {
-        //     const tokenDecimals = metadata?.decimals;
-        //     if (tokenDecimals) {
-        //         values.amount = BigInt(
-        //             convertTokenAmountToNumber(values.amountNumber, tokenDecimals),
-        //         );
-        //     }
-        // }
         try {
             formData.state = State.PendingPreview;
             const updateLinkParams: UpdateLinkParams = {
@@ -207,6 +196,24 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
+    const callTransfer = async (
+        transactions: TransactionModel[] | undefined,
+        identity: Identity | undefined,
+    ) => {
+        if (!identity) return;
+        if (!transactions || transactions.length === 0) {
+            console.log("THERE IS NO TRANSACTION --> RETURN");
+            return;
+        }
+        try {
+            const signerService = new SignerService(transactions, identity);
+            const res = await signerService.callCanisterTransfer();
+            console.log("🚀 ~ LinkPage ~ res:", res);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     const handleChange = (values: Partial<LinkDetailModel>) => {
         console.log(values);
         setFormData({ ...formData, ...values });
@@ -220,8 +227,17 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         console.log(actionCreate);
         try {
             const intentService = new IntentService(identity);
-            const result = await intentService.confirmIntent(linkId ?? "", actionCreate?.id ?? "");
-            console.log("🚀 ~ handleConfirmTransactions ~ result:", result);
+            const confirmItenResult = await intentService.confirmIntent(
+                linkId ?? "",
+                actionCreate?.id ?? "",
+            );
+            console.log("🚀 ~ handleConfirmTransactions ~ confirmItenResult:", confirmItenResult);
+            if (confirmItenResult == null) {
+                // If the result is null, means it success
+                // If success, then call canister transfer
+                console.log("Call canister transfer");
+                await callTransfer(actionCreate?.transactions, identity);
+            }
         } catch (err) {
             console.log(err);
         }
