@@ -134,6 +134,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 },
                 isContinue: true,
             };
+            console.log(updateLinkParams);
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {

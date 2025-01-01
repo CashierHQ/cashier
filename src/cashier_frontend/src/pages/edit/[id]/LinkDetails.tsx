@@ -28,7 +28,7 @@ import {
     initializeDefautGetUserTokenRequest,
     mapAPITokenModelToAssetSelectModel,
     UserToken,
-} from "@/services/icExplorer";
+} from "@/services/icExplorer.service";
 import AssetButton from "@/components/asset-button";
 import AssetDrawer from "@/components/asset-drawer";
 import { IconInput } from "@/components/icon-input";
@@ -54,12 +54,12 @@ const ASSET_LIST: AssetSelectItem[] = [
     {
         name: "TK 1",
         amount: 200,
-        tokenAddress: "abc",
+        tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
     },
     {
         name: "TK 2",
         amount: 120,
-        tokenAddress: "def",
+        tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
     },
 ];
 
