@@ -23,8 +23,6 @@ import {
     GetConsentMessageInput,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
-import { defaultAgent } from "@dfinity/utils";
-import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import IntentService from "@/services/intent.service";
 import SignerService from "@/services/signer.service";
 import { Identity } from "@dfinity/agent";
