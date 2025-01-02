@@ -2,7 +2,6 @@ import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { LINK_ASSET_TYPE } from "@/services/types/enum";
 import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
 import { convertDecimalBigIntToNumber } from "@/utils";
-import { defaultAgent } from "@dfinity/utils";
 import { FC, useEffect, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
@@ -23,10 +22,9 @@ interface TransactionItemProps {
 }
 
 const TransactionItem: FC<TransactionItemProps> = (props) => {
-    const anonymousAgent = defaultAgent();
     const [tokenSymbol, setTokenSymbol] = useState<string>("");
     const [displayAmount, setDisplayAmount] = useState<number>(0);
-    const { metadata } = useTokenMetadata(anonymousAgent, props?.assets?.[0]?.address);
+    const { metadata } = useTokenMetadata(props?.assets?.[0]?.address);
 
     useEffect(() => {
         if (metadata && props.assets?.[0]) {

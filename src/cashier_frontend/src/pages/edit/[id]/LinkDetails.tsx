@@ -90,7 +90,7 @@ export default function LinkDetails({
             ...defaultValues,
         },
     });
-    const { metadata } = useTokenMetadata(anonymousAgent, form.getValues("tokenAddress"));
+    const { metadata } = useTokenMetadata(form.getValues("tokenAddress"));
 
     const resizeFile = (file: File) =>
         new Promise((resolve) => {
