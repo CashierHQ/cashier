@@ -4,6 +4,7 @@ import {
     _SERVICE,
     CreateIntentInput,
     CreateLinkInput,
+    GetConsentMessageInput,
     Link,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
@@ -66,7 +67,8 @@ class LinkService {
                 },
             ]),
         );
-        return MapLinkDetailModel(response);
+        const result = await MapLinkDetailModel(response);
+        return result;
     }
 
     async createLink(input: CreateLinkInput) {
@@ -96,6 +98,15 @@ class LinkService {
                 receive: response.consents.receive.map((receive) => mapReceiveModel(receive)),
                 send: response.consents.send,
             },
+        };
+    }
+
+    async getConsentMessage(input: GetConsentMessageInput): Promise<CreateIntentConsentModel> {
+        const response = parseResultResponse(await this.actor.get_consent_message(input));
+        return {
+            fee: response.fee,
+            receive: response.receive.map((receive) => mapReceiveModel(receive)),
+            send: response.send,
         };
     }
 }

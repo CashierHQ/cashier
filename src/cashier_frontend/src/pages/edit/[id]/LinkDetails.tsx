@@ -28,19 +28,23 @@ import {
     initializeDefautGetUserTokenRequest,
     mapAPITokenModelToAssetSelectModel,
     UserToken,
-} from "@/services/icExplorer";
+} from "@/services/icExplorer.service";
 import AssetButton from "@/components/asset-button";
 import AssetDrawer from "@/components/asset-drawer";
 import { IconInput } from "@/components/icon-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import useTokenMetadata from "@/hooks/tokenUtilsHooks";
+import { convertTokenAmountToNumber } from "@/utils";
+import { defaultAgent } from "@dfinity/utils";
 
 export const linkDetailsSchema = z.object({
     image: z.string(),
     description: z.string(),
     title: z.string({ required_error: "Name is required" }).min(1, { message: "Name is required" }),
-    amount: z.coerce
+    amountNumber: z.coerce
         .number({ message: "Must input number" })
         .positive({ message: "Must be greater than 0" }),
+    amount: z.bigint(),
     tokenAddress: z.string().min(1, { message: "Asset is required" }),
     linkType: z.string(),
 });
@@ -50,12 +54,12 @@ const ASSET_LIST: AssetSelectItem[] = [
     {
         name: "TK 1",
         amount: 200,
-        tokenAddress: "abc",
+        tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
     },
     {
         name: "TK 2",
         amount: 120,
-        tokenAddress: "def",
+        tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
     },
 ];
 
@@ -66,6 +70,8 @@ export default function LinkDetails({
 }: ParitalFormProps<InputSchema, Partial<InputSchema>>) {
     const { t } = useTranslation();
     const { user: walletUser } = useAuth();
+    const anonymousAgent = defaultAgent();
+
     const walletAddress = walletUser ? walletUser.principal.toString() : "";
     const [currentImage, setCurrentImage] = useState<string>("");
     const [assetList, setAssetList] = useState<AssetSelectItem[]>(ASSET_LIST);
@@ -77,12 +83,14 @@ export default function LinkDetails({
         defaultValues: {
             description: "",
             title: "",
-            amount: 1,
+            amount: BigInt(0),
+            amountNumber: 0,
             image: "",
             linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
             ...defaultValues,
         },
     });
+    const { metadata } = useTokenMetadata(form.getValues("tokenAddress"));
 
     const resizeFile = (file: File) =>
         new Promise((resolve) => {
@@ -118,10 +126,10 @@ export default function LinkDetails({
     const handleAdjustAmount = (request: string, value: number) => {
         if (request === DECREASE) {
             if (value > 1) {
-                form.setValue("amount", Number(value) - 1);
+                form.setValue("amountNumber", Number(value) - 1);
             }
         } else {
-            form.setValue("amount", Number(value) + 1);
+            form.setValue("amountNumber", Number(value) + 1);
         }
     };
 
@@ -221,7 +229,7 @@ export default function LinkDetails({
                         />
                         <FormField
                             control={form.control}
-                            name="amount"
+                            name="amountNumber"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormControl>
@@ -229,6 +237,22 @@ export default function LinkDetails({
                                             isCurrencyInput={true}
                                             currencySymbol={selectedToken?.name ?? ""}
                                             {...field}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                const tokenDecimals = metadata?.decimals;
+                                                if (tokenDecimals) {
+                                                    form.setValue(
+                                                        "amount",
+                                                        BigInt(
+                                                            convertTokenAmountToNumber(
+                                                                Number(val),
+                                                                tokenDecimals,
+                                                            ),
+                                                        ),
+                                                    );
+                                                }
+                                                field.onChange(e);
+                                            }}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -315,7 +339,7 @@ export default function LinkDetails({
                         />
                         <FormField
                             control={form.control}
-                            name="amount"
+                            name="amountNumber"
                             defaultValue={1}
                             render={({ field }) => (
                                 <FormItem>

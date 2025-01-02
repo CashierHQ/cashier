@@ -1,9 +1,18 @@
+export type TransactionModel = {
+    id: string;
+    arg: string;
+    method: string;
+    canister_id: string;
+    state: string;
+};
+
 export type IntentCreateModel = {
     id: string;
     state: string;
     link_id: string;
     creator_id: string;
     intent_type: string;
+    transactions?: TransactionModel[];
 };
 
 export type FeeModel = {

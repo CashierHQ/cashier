@@ -1,6 +1,6 @@
 import { AssetModel } from "@/components/transaction-item";
 import { Receive } from "../../../../../declarations/cashier_backend/cashier_backend.did";
-import { FeeModel, ReceiveModel } from "../intent.service.types";
+import { FeeModel, ReceiveModel, TransactionModel } from "../intent.service.types";
 import { LINK_ASSET_TYPE } from "../enum";
 
 export const mapReceiveModel = (fee: Receive): ReceiveModel => {
@@ -26,5 +26,13 @@ export const mapFeeModelToAssetModel = (fee: FeeModel | undefined): AssetModel |
             fee.type === LINK_ASSET_TYPE.CASHIER_FEE
                 ? LINK_ASSET_TYPE.CASHIER_FEE
                 : LINK_ASSET_TYPE.ASSET_ADDED,
+    };
+};
+
+export const toCanisterCallRequest = (tx: TransactionModel) => {
+    return {
+        canisterId: tx.canister_id,
+        method: tx.method,
+        arg: tx.arg,
     };
 };

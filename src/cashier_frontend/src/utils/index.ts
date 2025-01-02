@@ -153,3 +153,6 @@ export const getReponsiveClassname = (
 export const convertTokenAmountToNumber = (amount: number, decimals: number): number => {
     return Math.floor(amount * 10 ** decimals);
 };
+export const convertDecimalBigIntToNumber = (amount: bigint, decimals: number): number => {
+    return Number(amount) / 10 ** decimals;
+};
