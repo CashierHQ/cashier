@@ -2,7 +2,7 @@ use crate::{
     core::intent::types::UpdateIntentInput,
     repositories::{intent_store, intent_transaction_store, transaction_store},
     types::{
-        intent::{Intent, IntentState},
+        intent::{Intent, IntentState, IntentType},
         transaction::TransactionState,
     },
 };
@@ -48,36 +48,45 @@ pub fn update_intent_state(id: String, state: IntentState) -> Result<Intent, Str
 
 pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<(), String> {
     let UpdateIntentInput {
+        link_id: _,
         intent_id,
-        transaction_id,
-        block_id: _,
+        transaction_update,
     } = input;
 
     let intent = intent_store::get(&intent_id).ok_or_else(|| "Intent not found".to_string())?;
-    let _ = transaction_store::get(transaction_id.as_str())
-        .ok_or_else(|| "Transaction not found".to_string())?;
-    let prefix = "intent#{intent_id}#transaction#";
 
-    let intent_transactions = intent_transaction_store::find_with_prefix(prefix);
+    match IntentType::from_string(&intent.intent_type) {
+        Ok(intent_type) => match intent_type {
+            IntentType::Create => {
+                for transaction_update in transaction_update {
+                    if transaction_update.is_send {
+                        set_transaction_state(
+                            transaction_update.transaction_id.as_str(),
+                            TransactionState::Success,
+                        )?;
+                    } else {
+                        set_transaction_state(
+                            transaction_update.transaction_id.as_str(),
+                            TransactionState::Fail,
+                        )?;
+                    }
+                }
 
-    // TODO: Validate block id
-    // This is mock code, it should be replaced with real code
-    let is_transfer_success = true;
+                roll_up_intent_state(intent);
 
-    if is_transfer_success {
-        set_transaction_state(transaction_id.as_str(), TransactionState::Success)?;
-
-        // check all transaction to roll up
-        roll_up_intent_state(intent, intent_transactions);
+                Ok(())
+            }
+            _ => Err("Not supported".to_string()),
+        },
+        Err(e) => Err(e),
     }
-
-    Ok(())
 }
 
-pub fn roll_up_intent_state(
-    intent: Intent,
-    intent_transactions: Vec<crate::types::intent_transaction::IntentTransaction>,
-) {
+pub fn roll_up_intent_state(intent: Intent) {
+    let intent_transactions = intent_transaction_store::find_with_prefix(
+        format!("intent#{}#transaction#", intent.id).as_str(),
+    );
+
     let transaction_ids: Vec<String> = intent_transactions
         .iter()
         .map(|t| t.transaction_id.clone())
@@ -131,7 +140,7 @@ pub fn timeout_intent(intent_id: &str) -> Result<(), String> {
     }
 
     // rollup intent state
-    roll_up_intent_state(intent, intent_transactions);
+    roll_up_intent_state(intent);
 
     Ok(())
 }

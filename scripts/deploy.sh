@@ -9,11 +9,12 @@ if [[ "$1" == "--skip" ]]; then
     echo "Skipping configuration. Using default values."
 else
     # Prompt for network
-    read -p "Enter network (ic or none): " network_input
+    read -p "Enter network (ic or local): " network_input
     if [ "$network_input" == "ic" ]; then
-            network="--ic"
-    fi
-    if [ "$network_input" != "ic" ] && [ "$network_input" != "local" ]; then
+        network="--ic"
+    elif [ "$network_input" == "local" ]; then
+        network=""
+    else
         echo "Invalid network. Please enter ic or local."
         exit 1
     fi
@@ -41,6 +42,18 @@ else
     fi
 fi
 
-# Run dfx deploy
+# Source the appropriate environment file
+if [ "$network" == "--ic" ]; then
+    echo "Using .env.staging"
+    set -a
+    source .env.staging
+    set +a
+else
+    echo "Using .env.local"
+    set -a
+    source .env.local
+    set +a
+fi
 
+# Run dfx deploy
 dfx deploy $package $network --identity cashier-dev
