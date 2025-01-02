@@ -1,5 +1,5 @@
 use crate::{
-    core::intent::types::UpdateIntentInput,
+    core::{intent::types::UpdateIntentInput, link::types::IntentResp},
     repositories::{intent_store, intent_transaction_store, transaction_store},
     types::{
         intent::{Intent, IntentState, IntentType},
@@ -46,7 +46,7 @@ pub fn update_intent_state(id: String, state: IntentState) -> Result<Intent, Str
     }
 }
 
-pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<(), String> {
+pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<IntentResp, String> {
     let UpdateIntentInput {
         link_id: _,
         intent_id,
@@ -76,9 +76,7 @@ pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<(), St
                     }
                 }
 
-                roll_up_intent_state(intent);
-
-                Ok(())
+                Ok(roll_up_intent_state(intent))
             }
             _ => Err("Not supported".to_string()),
         },
@@ -86,7 +84,7 @@ pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<(), St
     }
 }
 
-pub fn roll_up_intent_state(intent: Intent) {
+pub fn roll_up_intent_state(intent: Intent) -> IntentResp {
     let intent_transactions = intent_transaction_store::find_with_prefix(
         format!("intent#{}#transaction#", intent.id).as_str(),
     );
@@ -96,7 +94,7 @@ pub fn roll_up_intent_state(intent: Intent) {
         .map(|t| t.transaction_id.clone())
         .collect();
 
-    let transactions = transaction_store::batch_get(transaction_ids);
+    let transactions = transaction_store::batch_get(transaction_ids.clone());
 
     let all_success = transactions
         .iter()
@@ -112,6 +110,18 @@ pub fn roll_up_intent_state(intent: Intent) {
     } else if any_fail_or_timeout {
         let _ = update_intent_state(intent.id.clone(), IntentState::Fail);
     }
+
+    let updated_intent = intent_store::get(&intent.id).unwrap();
+    let updated_transactions = transaction_store::batch_get(transaction_ids);
+
+    return IntentResp {
+        id: updated_intent.id.clone(),
+        creator_id: updated_intent.creator_id.clone(),
+        link_id: updated_intent.link_id.clone(),
+        state: updated_intent.state.clone(),
+        intent_type: updated_intent.intent_type.clone(),
+        transactions: updated_transactions,
+    };
 }
 pub fn set_transaction_state(transaction_id: &str, state: TransactionState) -> Result<(), String> {
     let mut transaction = transaction_store::get(transaction_id)
