@@ -3,6 +3,9 @@ import UserService from "@/services/user.service";
 import { groupLinkListByDate } from "@/utils";
 import { Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
+import { IcrcLedgerCanister, mapTokenMetadata } from "@dfinity/ledger-icrc";
+import { Principal } from "@dfinity/principal";
+import { defaultAgent } from "@dfinity/utils";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
 export const queryKeys = createQueryKeyStore({
@@ -35,6 +38,20 @@ export const queryKeys = createQueryKeyStore({
                     throw err;
                 }
                 return groupedLinkList;
+            },
+        }),
+    },
+    tokens: {
+        metadata: (tokenAddress: string | undefined) => ({
+            queryKey: ["tokens", tokenAddress],
+            queryFn: async () => {
+                if (!tokenAddress) throw new Error("Token address is required");
+                const { metadata } = IcrcLedgerCanister.create({
+                    agent: defaultAgent(),
+                    canisterId: Principal.fromText(tokenAddress),
+                });
+                const data = await metadata({});
+                return mapTokenMetadata(data);
             },
         }),
     },
