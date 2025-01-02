@@ -5,10 +5,7 @@ use crate::{
     repositories::link_store,
     services::{
         link::validate_active_link::{is_intent_exist, is_valid_fields_before_active},
-        transaction::{
-            get::get_create_intent_id, update::set_processing_intent,
-            validate::validate_balance_with_asset_info,
-        },
+        transaction::validate::validate_balance_with_asset_info,
     },
     types::{
         error::CanisterError,
@@ -58,26 +55,6 @@ fn transition_function(
     })
 }
 
-// Update intent and transactiopn to processing state
-fn continue_create_link_state_to_active(
-    state: String,
-    mut link: Link,
-    _params: Option<LinkStateMachineActionParams>,
-) -> Pin<Box<dyn Future<Output = Result<Link, String>> + Send>> {
-    Box::pin(async move {
-        let link_id = link.id.clone();
-        let intent_id = get_create_intent_id(link_id)?;
-
-        link.set("state", state);
-
-        set_processing_intent(intent_id)?;
-
-        link_store::update(link.to_persistence());
-
-        Ok(link)
-    })
-}
-
 pub fn get_transitions() -> Vec<Transition> {
     vec![
         // Continue transitions
@@ -108,7 +85,7 @@ pub fn get_transitions() -> Vec<Transition> {
                     Ok(())
                 })
             })),
-            execute: Box::new(continue_create_link_state_to_active),
+            execute: Box::new(transition_function),
         },
         Transition {
             trigger: LinkStateMachineAction::Continue,

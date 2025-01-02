@@ -11,6 +11,7 @@ import { getIdentity } from "../utils/wallet";
 import { ActorSubclass } from "@dfinity/agent";
 import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { ServiceHelper } from "../utils/service";
+import { sleep } from "../utils/sleep";
 
 // Define the path to your canister's WASM file
 // export const WASM_PATH = resolve(
@@ -243,9 +244,6 @@ describe("Link", () => {
         // Get the first intent
         const intent = link.intent[0];
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        console.log("link", safeParseJSON(link as any));
-
         // Perform validation based on the intent
         expect(intent.state).toEqual("Intent_state_processing");
 
@@ -258,5 +256,44 @@ describe("Link", () => {
         expect(res).toEqual(null);
         expect(link.intent).toHaveLength(1);
         expect(intent.transactions).toHaveLength(2);
+    });
+
+    it("Should set transaction to timeout", async () => {
+        // Act
+        const input: ConfirmIntentInput = {
+            link_id: linkId,
+            intent_id: createLinkIntentId,
+        };
+
+        const res = await actor.confirm_intent(input);
+        console.log("res", res);
+
+        // Sleep for 12 seconds to wait for the update
+        await sleep(12000);
+
+        // Get the link after waiting
+        const getLinkRes = await actor.get_link(linkId, [
+            {
+                intent_type: "Create",
+            },
+        ]);
+        const link = parseResultResponse(getLinkRes);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        console.log("link", safeParseJSON(link as any));
+
+        // Ensure the intent array has length greater than or equal to 1
+        expect(link.intent.length).toBeGreaterThanOrEqual(1);
+
+        if (link.intent.length === 0) {
+            return;
+        }
+
+        // Perform assertions
+        const intent = link.intent[0];
+        expect(intent.state).toEqual("Intent_state_fail");
+        intent.transactions.forEach((transaction) => {
+            expect(transaction.state).toEqual("Transaction_state_timeout");
+        });
     });
 });

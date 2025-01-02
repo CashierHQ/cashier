@@ -69,10 +69,17 @@ pub enum CreateIntentParams {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct UpdateIntentInput {
-    pub intent_id: String,
+
+pub struct TransactionUpdate {
     pub transaction_id: String,
-    pub block_id: u64,
+    pub is_send: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct UpdateIntentInput {
+    pub link_id: String,
+    pub intent_id: String,
+    pub transaction_update: Vec<TransactionUpdate>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]

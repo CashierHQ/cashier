@@ -7,7 +7,7 @@ build-did:
 	@candid-extractor target/wasm32-unknown-unknown/release/cashier_backend.wasm > src/cashier_backend/cashier_backend.did
 
 test:
-	@npx tsx src/example/index.ts
+	@npm run test
 
 g: 
 	@dfx generate cashier_backend
