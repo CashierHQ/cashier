@@ -55,6 +55,10 @@ pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<(), St
 
     let intent = intent_store::get(&intent_id).ok_or_else(|| "Intent not found".to_string())?;
 
+    if intent.state != IntentState::Processing.to_string() {
+        return Err("Intent state is not Processing".to_string());
+    }
+
     match IntentType::from_string(&intent.intent_type) {
         Ok(intent_type) => match intent_type {
             IntentType::Create => {
