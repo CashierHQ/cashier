@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    core::Intent,
+    core::{Intent, IntentResp},
     types::consent_messsage::{ConsentType, Fee, Receive, Send},
 };
 
@@ -35,7 +35,7 @@ pub struct CreateIntentConsent {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateIntentConsentResponse {
-    pub intent: Intent,
+    pub intent: IntentResp,
     pub consents: CreateIntentConsent,
 }
 
