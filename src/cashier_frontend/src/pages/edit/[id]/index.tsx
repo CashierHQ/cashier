@@ -14,14 +14,19 @@ import { Drawer } from "@/components/ui/drawer";
 import ConfirmationPopup, { ConfirmTransactionModel } from "@/components/confirmation-popup";
 import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { convertTokenAmountToNumber, getReponsiveClassname } from "@/utils";
+import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { CreateIntentInput } from "../../../../../declarations/cashier_backend/cashier_backend.did";
-import { IntentCreateModel } from "@/services/types/intent.service.types";
-import { defaultAgent } from "@dfinity/utils";
-import useTokenMetadata from "@/hooks/tokenUtilsHooks";
+import {
+    CreateIntentInput,
+    GetConsentMessageInput,
+} from "../../../../../declarations/cashier_backend/cashier_backend.did";
+import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
+import IntentService from "@/services/intent.service";
+import SignerService from "@/services/signer.service";
+import { Identity } from "@dfinity/agent";
+import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -30,7 +35,6 @@ const STEP_LINK_STATE_ORDER = [
 ];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
-    const anonymousAgent = defaultAgent();
     const [formData, setFormData] = useState<LinkDetailModel>({
         id: "",
         title: "",
@@ -39,7 +43,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         state: "",
         template: Template.Central,
         create_at: new Date(),
-        amount: 0,
+        amount: BigInt(0),
+        amountNumber: 0,
         linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
         tokenAddress: "",
     });
@@ -59,10 +64,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { linkId } = useParams();
     const identity = useIdentity();
     const responsive = useResponsive();
-    const { metadata } = useTokenMetadata(anonymousAgent, formData.tokenAddress);
-
     const queryClient = useQueryClient();
-    const { mutate, mutateAsync, error: updateLinkError } = useUpdateLink(queryClient, identity);
+    const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
         if (!linkId) return;
@@ -118,15 +121,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
         if (!linkId) return;
-
-        // Get selected token metadata
-        if (values.amount && values.tokenAddress) {
-            const tokenDecimals = metadata?.decimals;
-            console.log("🚀 ~ handleSubmitLinkDetails ~ tokenDecimals:", tokenDecimals);
-            if (tokenDecimals) {
-                values.amount = convertTokenAmountToNumber(values.amount, tokenDecimals);
-            }
-        }
         try {
             formData.state = State.PendingPreview;
             const updateLinkParams: UpdateLinkParams = {
@@ -134,10 +128,12 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 linkModel: {
                     ...formData,
                     ...values,
+                    amount: values.amount,
                     description: "test",
                 },
                 isContinue: true,
             };
+            console.log(updateLinkParams);
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
@@ -149,26 +145,40 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         const validationResult = true;
         try {
-            // 1. Call validation, success -> display confirm popup,
-            //   failed -> display error message
             if (validationResult) {
+                const linkService = new LinkService(identity);
                 setDisabled(true);
                 const createActionInput: CreateIntentInput = {
                     link_id: linkId,
                     intent_type: "Create",
                     params: [],
                 };
-                const linkService = new LinkService(identity);
-                const createActionResult = await linkService.createAction(createActionInput);
-                console.log("🚀 ~ handleSubmit ~ createActionResult:", createActionResult);
-                if (createActionResult) {
-                    const transactionConfirmObj: ConfirmTransactionModel = {
-                        linkName: formData.title ?? "",
-                        feeModel: createActionResult.consent,
+                const handleCreateAction = async () => {
+                    const intentCreateConsentInput: GetConsentMessageInput = {
+                        link_id: linkId,
+                        intent_type: "Create",
+                        params: [],
+                        intent_id: actionCreate?.id ?? "",
                     };
-                    setTransactionConfirmModel(transactionConfirmObj);
-                    setActionCreate(createActionResult.intent);
-                    setOpenConfirmationPopup(true);
+
+                    const consent = actionCreate
+                        ? await linkService.getConsentMessage(intentCreateConsentInput)
+                        : await linkService.createAction(createActionInput).then((result) => {
+                              setActionCreate(result.intent);
+                              return result.consent;
+                          });
+
+                    if (consent) {
+                        const transactionConfirmObj: ConfirmTransactionModel = {
+                            linkName: formData.title ?? "",
+                            feeModel: consent,
+                        };
+                        setTransactionConfirmModel(transactionConfirmObj);
+                        setOpenConfirmationPopup(true);
+                    }
+                };
+                if (actionCreate || createActionInput) {
+                    await handleCreateAction();
                 }
             } else {
                 setToastData({
@@ -181,6 +191,31 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         } catch (error) {
             console.log("🚀 ~ handleSubmit ~ error:", error);
             setDisabled(false);
+        } finally {
+            setDisabled(false);
+        }
+    };
+
+    const callExecute = async (
+        transactions: TransactionModel[] | undefined,
+        identity: Identity | undefined,
+    ) => {
+        if (!identity) return;
+        if (!transactions || transactions.length === 0) {
+            console.log("THERE IS NO TRANSACTION --> RETURN");
+            return;
+        }
+        try {
+            const signerService = new SignerService(identity);
+
+            const icrcxRequests = transactions.map((tx) => {
+                return toCanisterCallRequest(tx);
+            });
+
+            const res = await signerService.icrcxExecute([icrcxRequests]);
+            console.log("🚀 ~ LinkPage ~ res:", res);
+        } catch (err) {
+            console.log(err);
         }
     };
 
@@ -192,17 +227,25 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleConfirmTransactions = async () => {
         setDisabledConfirmButton(true);
         setPopupButton(t("transaction.confirm_popup.inprogress_button") as string);
-        if (!linkId) return;
-        const updateLinkParams: UpdateLinkParams = {
-            linkId: linkId,
-            linkModel: {
-                ...formData,
-                description: "aaa",
-            },
-            isContinue: true,
-        };
-        await mutateAsync(updateLinkParams);
-        navigate(`/details/${linkId}`);
+        if (!linkId && !actionCreate?.id) return;
+        console.log(linkId);
+        console.log(actionCreate);
+        try {
+            const intentService = new IntentService(identity);
+            const confirmItenResult = await intentService.confirmIntent(
+                linkId ?? "",
+                actionCreate?.id ?? "",
+            );
+            console.log("🚀 ~ handleConfirmTransactions ~ confirmItenResult:", confirmItenResult);
+            if (confirmItenResult == null) {
+                // If the result is null, means it success
+                // If success, then call canister transfer
+                console.log("Call canister transfer");
+                await callExecute(actionCreate?.transactions, identity);
+            }
+        } catch (err) {
+            console.log(err);
+        }
     };
 
     const handleBackstep = async () => {

@@ -153,8 +153,8 @@ export default function HomePage() {
 
     if (!walletUser) {
         return (
-            <div className="w-screen flex justify-center py-5">
-                <div className="w-11/12 max-w-[400px] flex flex-col items-center">
+            <div className="w-screen flex justify-center py-5 h-[90%]">
+                <div className="w-11/12 max-w-[400px] flex flex-col">
                     <div className="w-full flex justify-between items-center">
                         <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
                         <ConnectWalletButton onClick={connectToWallet}>

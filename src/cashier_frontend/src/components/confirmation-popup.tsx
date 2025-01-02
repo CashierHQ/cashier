@@ -84,10 +84,14 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 </div>
             </div>
             <div id="confirmation-popup-section-total" className="mb-3">
-                <div className="bg-[#E8F2EE] flex justify-between border-solid border-inherit border-2 rounded-lg p-2">
-                    <div>Total fees ($0.0508)</div>
-                    <div>0.00625 ICP</div>
-                </div>
+                <TransactionItem
+                    title={translate("transaction.confirm_popup.total_fee_label")}
+                    assets={[
+                        mapFeeModelToAssetModel(
+                            data?.feeModel.fee.find((f) => f.type === LINK_ASSET_TYPE.CASHIER_FEE),
+                        ),
+                    ]}
+                />
             </div>
 
             <div id="confirmation-popup-section-legal-text" className="mb-3">
