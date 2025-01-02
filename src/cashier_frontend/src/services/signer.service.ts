@@ -1,6 +1,5 @@
 import { Agent, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { TransactionModel } from "./types/intent.service.types";
 import { CallCanisterResponse, callCanisterService } from "./callCanister.service";
 
 /* Define types */
@@ -10,16 +9,21 @@ export interface ICRCXRequest {
     arg: string;
 }
 
-export interface ParallelRequest {
-    requests: ICRCXRequest[];
-}
+export type ParallelRequests = Array<ICRCXRequest>;
 
-export interface CallCanisterRequestModel {
+/**
+ * Each sub array will execute in parallel and the next sub array will execute after the previous one is completed.
+ */
+export type SequenceRequest = Array<ParallelRequests>;
+
+export type IcrcxRequests = SequenceRequest;
+
+export interface CallCanisterRequest {
     jsonrpc: string;
     method: string;
     params: {
         sender: string;
-        requests: Array<ICRCXRequest[]>;
+        requests: SequenceRequest;
         validation?: {
             canisterId: string;
             method: string;
@@ -48,27 +52,25 @@ export interface IcrcXResponse {
 
 class SignerService {
     private agent: Agent;
-    private parallelRequest: ParallelRequest;
 
-    constructor(
-        transactions: TransactionModel[],
-        identity?: Identity | PartialIdentity | undefined,
-    ) {
+    constructor(identity?: Identity | PartialIdentity | undefined) {
         this.agent = HttpAgent.createSync({ identity, host: "https://icp0.io" });
-        this.parallelRequest = {
-            requests: transactions.map((transaction) => ({
-                canisterId: transaction.canister_id,
-                method: transaction.method,
-                arg: transaction.arg,
-            })),
-        };
     }
 
-    async callCanisterTransfer(): Promise<IcrcXResponse> {
-        const requiredParams = await this.getRequiredParams();
+    async icrcxExecute(input: IcrcxRequests): Promise<IcrcXResponse> {
+        const arg = {
+            jsonrpc: "2.0",
+            method: this.getMethod(),
+            params: {
+                sender: (await this.agent.getPrincipal()).toString(),
+                requests: input,
+            },
+        };
+
         const finalResponse: IcrcXResponse = { responses: [] };
-        for (let i = 0; i < requiredParams.params.requests.length; i++) {
-            const paralellRequests = requiredParams.params.requests[i];
+
+        for (let i = 0; i < arg.params.requests.length; i++) {
+            const paralellRequests = arg.params.requests[i];
             const responsesFromBatchCall = await this.callBatchICRCXRequests(paralellRequests);
 
             //Process each response and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
@@ -79,18 +81,7 @@ class SignerService {
         return finalResponse;
     }
 
-    private processResponse(
-        response: Array<
-            | { result: CallCanisterResponse }
-            | {
-                  error: {
-                      code: number;
-                      message: string;
-                      data?: unknown;
-                  };
-              }
-        >,
-    ): IcrcXResponseItem[] {
+    private processResponse(response: Array<IcrcXResponseItem>): IcrcXResponseItem[] {
         const responses: IcrcXResponseItem[] = [];
         response.forEach((response) => {
             if ("result" in response) {
@@ -102,29 +93,11 @@ class SignerService {
         return responses;
     }
 
-    private async callBatchICRCXRequests(requests: ICRCXRequest[]): Promise<
-        Array<
-            | { result: CallCanisterResponse }
-            | {
-                  error: {
-                      code: number;
-                      message: string;
-                      data?: unknown;
-                  };
-              }
-        >
-    > {
+    private async callBatchICRCXRequests(
+        requests: ParallelRequests,
+    ): Promise<Array<IcrcXResponseItem>> {
         const process_tasks: Promise<CallCanisterResponse>[] = [];
-        const responses: Array<
-            | { result: CallCanisterResponse }
-            | {
-                  error: {
-                      code: number;
-                      message: string;
-                      data?: unknown;
-                  };
-              }
-        > = [];
+        const responses: Array<IcrcXResponseItem> = [];
 
         requests.forEach((request) => {
             const task = callCanisterService.call({
@@ -152,17 +125,6 @@ class SignerService {
             }
         });
         return responses;
-    }
-
-    private async getRequiredParams(): Promise<CallCanisterRequestModel> {
-        return {
-            jsonrpc: "2.0",
-            method: this.getMethod(),
-            params: {
-                sender: (await this.agent.getPrincipal()).toString(),
-                requests: [this.parallelRequest.requests],
-            },
-        };
     }
 
     private getMethod(): string {

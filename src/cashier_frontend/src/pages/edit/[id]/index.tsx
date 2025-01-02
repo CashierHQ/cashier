@@ -26,6 +26,7 @@ import { IntentCreateModel, TransactionModel } from "@/services/types/intent.ser
 import IntentService from "@/services/intent.service";
 import SignerService from "@/services/signer.service";
 import { Identity } from "@dfinity/agent";
+import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -195,7 +196,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
-    const callTransfer = async (
+    const callExecute = async (
         transactions: TransactionModel[] | undefined,
         identity: Identity | undefined,
     ) => {
@@ -205,8 +206,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             return;
         }
         try {
-            const signerService = new SignerService(transactions, identity);
-            const res = await signerService.callCanisterTransfer();
+            const signerService = new SignerService(identity);
+
+            const icrcxRequests = transactions.map((tx) => {
+                return toCanisterCallRequest(tx);
+            });
+
+            const res = await signerService.icrcxExecute([icrcxRequests]);
             console.log("🚀 ~ LinkPage ~ res:", res);
         } catch (err) {
             console.log(err);
@@ -235,7 +241,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 // If the result is null, means it success
                 // If success, then call canister transfer
                 console.log("Call canister transfer");
-                await callTransfer(actionCreate?.transactions, identity);
+                await callExecute(actionCreate?.transactions, identity);
             }
         } catch (err) {
             console.log(err);
