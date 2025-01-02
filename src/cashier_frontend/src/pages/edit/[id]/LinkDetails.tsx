@@ -35,7 +35,6 @@ import { IconInput } from "@/components/icon-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { convertTokenAmountToNumber } from "@/utils";
-import { defaultAgent } from "@dfinity/utils";
 
 export const linkDetailsSchema = z.object({
     image: z.string(),
@@ -70,7 +69,6 @@ export default function LinkDetails({
 }: ParitalFormProps<InputSchema, Partial<InputSchema>>) {
     const { t } = useTranslation();
     const { user: walletUser } = useAuth();
-    const anonymousAgent = defaultAgent();
 
     const walletAddress = walletUser ? walletUser.principal.toString() : "";
     const [currentImage, setCurrentImage] = useState<string>("");
