@@ -48,6 +48,7 @@
             "send_label": "You will send",
             "cashier_fee_label": "Cashier fee",
             "network_fee_label": "Network fee",
+            "total_fee_label": "Total fee",
             "confirm_button": "Confirm",
             "inprogress_button": "Transaction in progress...",
             "retry_button": "Retry",

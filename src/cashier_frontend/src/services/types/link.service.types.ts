@@ -58,7 +58,8 @@ export type LinkDetailModel = {
     template?: string;
     creator?: string;
     create_at: Date;
-    amount: number;
+    amount: bigint;
+    amountNumber: number;
     tokenAddress: string;
 };
 

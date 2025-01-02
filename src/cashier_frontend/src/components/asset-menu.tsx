@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { NavigationMenu, NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { AssetSelectItem } from "./asset-select";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 interface AssetMenuProps {

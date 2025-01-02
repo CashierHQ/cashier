@@ -8,7 +8,7 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { FormControl } from "./ui/form";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 export interface AssetSelectItem {
     name: string;
