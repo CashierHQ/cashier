@@ -6,12 +6,12 @@ use crate::{
     types::transaction::Transaction,
 };
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateLinkInput {
     pub link_type: LinkType,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkDetailUpdateAssetInfoInput {
     pub address: String,
     pub chain: String,
@@ -47,7 +47,7 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfo {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkDetailUpdateInput {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -77,7 +77,7 @@ impl LinkDetailUpdateInput {
         Ok(())
     }
 }
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct UpdateLinkParams {
     pub params: Option<LinkDetailUpdateInput>,
 }
@@ -149,12 +149,12 @@ impl LinkStateMachineAction {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub enum LinkStateMachineActionParams {
     Update(UpdateLinkParams),
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct UpdateLinkInput {
     pub id: String,
     pub action: String,
@@ -185,18 +185,18 @@ impl UpdateLinkInput {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct GetLinkOptions {
     pub intent_type: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct GetLinkResp {
     pub link: Link,
     pub intent: Option<IntentResp>,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct IntentResp {
     pub id: String,
     pub creator_id: String,

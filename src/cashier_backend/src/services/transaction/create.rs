@@ -1,7 +1,10 @@
 use uuid::Uuid;
 
 use crate::{
-    core::intent::types::{CreateIntentConsent, CreateIntentConsentResponse, CreateIntentInput},
+    core::{
+        intent::types::{CreateIntentConsent, CreateIntentConsentResponse, CreateIntentInput},
+        link::types::IntentResp,
+    },
     repositories::{
         intent_store, intent_transaction_store, link_intent_store, link_store, transaction_store,
         user_intent_store, user_wallet_store,
@@ -112,8 +115,17 @@ pub async fn create_create_link_intent(
         Err(e) => return Err(e),
     };
 
+    let intent_rsp = IntentResp {
+        id: intent.id.clone(),
+        creator_id: intent.creator_id.clone(),
+        link_id: intent.link_id.clone(),
+        state: intent.state.clone(),
+        intent_type: intent.intent_type.clone(),
+        transactions: assemble_res.transactions,
+    };
+
     Ok(CreateIntentConsentResponse {
-        intent,
+        intent: intent_rsp,
         consents: CreateIntentConsent::from(assemble_res.consent_messages),
     })
 
