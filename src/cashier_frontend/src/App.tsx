@@ -8,6 +8,7 @@ import { Toaster } from "./components/ui/toaster";
 import { NFIDW, InternetIdentity, Stoic } from "@nfid/identitykit";
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 const isMobile = () => {
     if (
@@ -23,6 +24,7 @@ const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
 function App() {
     const queryClient = new QueryClient();
+    const navigate = useNavigate();
     useEffect(() => {
         if (!isMobile()) {
             // listSigners.push(Plug);
@@ -38,6 +40,7 @@ function App() {
             onDisconnect={() => {
                 console.log("Log out");
                 queryClient.clear();
+                navigate("/");
             }}
             authType={IdentityKitAuthType.DELEGATION}
             signers={

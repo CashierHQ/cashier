@@ -22,10 +22,6 @@ export const mapFeeModelToAssetModel = (fee: FeeModel | undefined): AssetModel |
         address: fee.address,
         amount: fee.amount,
         chain: fee.chain,
-        type:
-            fee.type === LINK_ASSET_TYPE.CASHIER_FEE
-                ? LINK_ASSET_TYPE.CASHIER_FEE
-                : LINK_ASSET_TYPE.ASSET_ADDED,
     };
 };
 
