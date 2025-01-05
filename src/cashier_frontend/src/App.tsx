@@ -24,7 +24,6 @@ const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
 function App() {
     const queryClient = new QueryClient();
-    const navigate = useNavigate();
     useEffect(() => {
         if (!isMobile()) {
             // listSigners.push(Plug);
@@ -40,7 +39,6 @@ function App() {
             onDisconnect={() => {
                 console.log("Log out");
                 queryClient.clear();
-                navigate("/");
             }}
             authType={IdentityKitAuthType.DELEGATION}
             signers={

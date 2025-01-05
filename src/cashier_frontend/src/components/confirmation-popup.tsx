@@ -8,6 +8,7 @@ import { CreateIntentConsentModel } from "@/services/types/intent.service.types"
 import { mapFeeModelToAssetModel } from "@/services/types/mapper/intent.service.mapper";
 import { LINK_ASSET_TYPE } from "@/services/types/enum";
 import { TokenUtilService } from "@/services/tokenUtils.service";
+import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
 
 export type ConfirmTransactionModel = {
     linkName: string;
@@ -109,12 +110,57 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
 
     useEffect(() => {
         const fetchNetworkFees = async () => {
-            if (data) {
+            if (data && !networkFees.length && !totalFees.length) {
                 await processAllTheFees();
             }
         };
         fetchNetworkFees();
     }, [data]);
+
+    const renderNetworkFees = () => {
+        if (networkFees.length === 0) {
+            return (
+                <TransactionItem
+                    key={`networkfee-0`}
+                    title={translate("transaction.confirm_popup.network_fee_label")}
+                    assets={[]}
+                    isNetWorkFee={true}
+                    isLoading={true}
+                />
+            );
+        } else {
+            return networkFees?.map((fee, index) => (
+                <TransactionItem
+                    key={`networkfee-${index}`}
+                    title={translate("transaction.confirm_popup.network_fee_label")}
+                    assets={[fee]}
+                    isNetWorkFee={true}
+                    state={TRANSACTION_STATE.PROCESSING}
+                />
+            ));
+        }
+    };
+
+    const renderTotalFees = () => {
+        if (networkFees.length === 0) {
+            return (
+                <TransactionItem
+                    key={`totalfee-0`}
+                    title={translate("transaction.confirm_popup.total_fee_label")}
+                    assets={[]}
+                    isLoading={true}
+                />
+            );
+        } else {
+            return totalFees?.map((fee, index) => (
+                <TransactionItem
+                    key={`totalfee-${index}`}
+                    title={translate("transaction.confirm_popup.total_fee_label")}
+                    assets={[fee]}
+                />
+            ));
+        }
+    };
 
     return (
         <DrawerContent className="max-w-[400px] mx-auto p-3">
@@ -143,14 +189,18 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 <div className="font-medium ml-2">
                     {translate("transaction.confirm_popup.send_label")}
                 </div>
-                <div className="border-solid border-inherit border-2 rounded-lg p-2 divide-y divide-inherit">
+                <div
+                    className="border-solid border-inherit border-2 rounded-lg p-2 divide-y divide-inherit"
+                    style={{ maxHeight: "200px", overflowY: "auto" }}
+                >
                     {/* ---- LINK ASSET ---  */}
                     <TransactionItem
                         title="Asset to add to link"
                         assets={data?.feeModel.send.map((asset) => mapFeeModelToAssetModel(asset))}
+                        state={TRANSACTION_STATE.SUCCESS}
                     />
                     <div className="mt-1">
-                        {/* ---- CASHIER FEE ---  */}
+                        {/* ---- CASHIER FEES ---  */}
                         <TransactionItem
                             title={translate("transaction.confirm_popup.cashier_fee_label")}
                             assets={[
@@ -160,27 +210,16 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                                     ),
                                 ),
                             ]}
+                            state={TRANSACTION_STATE.FAILED}
                         />
-                        {/* ---- NETWORK FEE ---  */}
-                        {networkFees?.map((fee, index) => (
-                            <TransactionItem
-                                key={`networkfee-${index}`}
-                                title={translate("transaction.confirm_popup.network_fee_label")}
-                                assets={[fee]}
-                                isNetWorkFee={true}
-                            />
-                        ))}
+                        {/* ---- NETWORK FEES ---  */}
+                        {renderNetworkFees()}
                     </div>
                 </div>
             </div>
             <div id="confirmation-popup-section-total" className="mb-3">
-                {totalFees?.map((fee, index) => (
-                    <TransactionItem
-                        key={`totalfee-${index}`}
-                        title={translate("transaction.confirm_popup.total_fee_label")}
-                        assets={[fee]}
-                    />
-                ))}
+                {/* ---- TOTAL FEES ---  */}
+                {renderTotalFees()}
             </div>
 
             <div id="confirmation-popup-section-legal-text" className="mb-3">

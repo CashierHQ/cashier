@@ -220,7 +220,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleChange = (values: Partial<LinkDetailModel>) => {
-        console.log(values);
         setFormData({ ...formData, ...values });
     };
 
@@ -228,8 +227,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         setDisabledConfirmButton(true);
         setPopupButton(t("transaction.confirm_popup.inprogress_button") as string);
         if (!linkId && !actionCreate?.id) return;
-        console.log(linkId);
-        console.log(actionCreate);
         try {
             const intentService = new IntentService(identity);
             const confirmItenResult = await intentService.confirmIntent(
@@ -238,8 +235,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             );
             console.log("🚀 ~ handleConfirmTransactions ~ confirmItenResult:", confirmItenResult);
             if (confirmItenResult == null) {
-                // If the result is null, means it success
-                // If success, then call canister transfer
+                // If the result is null, means it success -> call canister transfer
                 console.log("Call canister transfer");
                 await callExecute(actionCreate?.transactions, identity);
             }

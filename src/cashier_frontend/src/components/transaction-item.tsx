@@ -19,20 +19,25 @@ interface TransactionItemProps {
     assets: (AssetModel | undefined)[] | undefined;
     state?: string;
     isNetWorkFee?: boolean;
+    isLoading?: boolean;
 }
 
 const TransactionItem: FC<TransactionItemProps> = (props) => {
     const [tokenSymbol, setTokenSymbol] = useState<string>("");
     const [displayAmount, setDisplayAmount] = useState<number>(0);
-    const { data: metadata, isLoading } = useTokenMetadataQuery(props?.assets?.[0]?.address);
+    const { data: tokenData, isLoading: isLoadingMetadata } = useTokenMetadataQuery(
+        props?.assets?.[0]?.address,
+    );
 
     useEffect(() => {
-        if (metadata && props.assets?.[0]) {
+        if (tokenData && props.assets?.[0]) {
             const amount = props.assets?.[0]?.amount;
-            setDisplayAmount(convertDecimalBigIntToNumber(amount ?? BigInt(0), metadata.decimals));
-            setTokenSymbol(metadata?.symbol ?? "");
+            setDisplayAmount(
+                convertDecimalBigIntToNumber(amount ?? BigInt(0), tokenData.metadata.decimals),
+            );
+            setTokenSymbol(tokenData.metadata.symbol ?? "");
         }
-    }, [metadata, props.assets, props.isNetWorkFee]);
+    }, [tokenData, props.assets, props.isNetWorkFee]);
 
     const renderTransactionState = (transactionState?: string) => {
         switch (transactionState) {
@@ -41,7 +46,7 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
             case TRANSACTION_STATE.FAILED:
                 return <IoMdClose color="red" size={22} />;
             case TRANSACTION_STATE.PROCESSING:
-                return <FiRefreshCw size={20} />;
+                return <img src="/loading.gif" width={22} />;
             default:
                 return null;
         }
@@ -52,20 +57,26 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
             {`${displayAmount} ${tokenSymbol}`}
             <Avatar className="w-7 h-7 ml-3">
                 <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${props?.assets?.[0]?.address}`} />
-                <AvatarFallback>{metadata?.symbol}</AvatarFallback>
+                <AvatarFallback>{tokenData?.metadata?.symbol}</AvatarFallback>
             </Avatar>
         </div>
     );
 
     return (
-        <div id="confirmation-transaction" className="flex justify-between my-3">
+        <div id="confirmation-transaction" className="flex justify-between my-2">
             <div className="flex">
-                <div id="transaction-title" className="mr-3">
+                {renderTransactionState(props.state)}
+                <div id="transaction-title" className="ml-3">
                     {props.title}
                 </div>
-                {renderTransactionState(props.state)}
             </div>
-            <div>{isLoading ? <FiRefreshCw size={20} /> : assetItem()}</div>
+            <div>
+                {props.isLoading || isLoadingMetadata ? (
+                    <img src="/loading.gif" width={22} />
+                ) : (
+                    assetItem()
+                )}
+            </div>
         </div>
     );
 };
