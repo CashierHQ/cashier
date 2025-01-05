@@ -4,15 +4,15 @@ import { Button } from "./ui/button";
 import TransactionItem, { AssetModel } from "./transaction-item";
 import { IoIosClose } from "react-icons/io";
 import { useTranslation } from "react-i18next";
-import { CreateIntentConsentModel } from "@/services/types/intent.service.types";
+import { CreateIntentConsentModel, TransactionModel } from "@/services/types/intent.service.types";
 import { mapFeeModelToAssetModel } from "@/services/types/mapper/intent.service.mapper";
 import { LINK_ASSET_TYPE } from "@/services/types/enum";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
 
 export type ConfirmTransactionModel = {
     linkName: string;
     feeModel: CreateIntentConsentModel;
+    transactions?: TransactionModel[];
 };
 
 interface ConfirmationPopupProps {
@@ -75,7 +75,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                         chain: data?.feeModel.send[i].chain,
                     };
                     totalFees = totalFees.concat([
-                        mapFeeModelToAssetModel(data?.feeModel.send[i]),
+                        mapFeeModelToAssetModel(data?.feeModel.send[i], undefined),
                         networkFeeFromSendAsset,
                     ]);
                     setNetworkFees((prevFees) => [...prevFees, networkFeeFromSendAsset]);
@@ -99,7 +99,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     chain: data?.feeModel.fee[0].chain,
                 };
                 totalFees = totalFees.concat([
-                    mapFeeModelToAssetModel(data?.feeModel.fee[0]),
+                    mapFeeModelToAssetModel(data?.feeModel.fee[0], undefined),
                     networkFeeFromCashierFee,
                 ]);
                 setNetworkFees((prevFees) => [...prevFees, networkFeeFromCashierFee]);
@@ -135,7 +135,6 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     title={translate("transaction.confirm_popup.network_fee_label")}
                     assets={[fee]}
                     isNetWorkFee={true}
-                    state={TRANSACTION_STATE.PROCESSING}
                 />
             ));
         }
@@ -196,8 +195,9 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     {/* ---- LINK ASSET ---  */}
                     <TransactionItem
                         title="Asset to add to link"
-                        assets={data?.feeModel.send.map((asset) => mapFeeModelToAssetModel(asset))}
-                        state={TRANSACTION_STATE.SUCCESS}
+                        assets={data?.feeModel.send.map((asset) =>
+                            mapFeeModelToAssetModel(asset, data?.transactions),
+                        )}
                     />
                     <div className="mt-1">
                         {/* ---- CASHIER FEES ---  */}
@@ -208,9 +208,9 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                                     data?.feeModel.fee.find(
                                         (f) => f.type === LINK_ASSET_TYPE.CASHIER_FEE,
                                     ),
+                                    data?.transactions,
                                 ),
                             ]}
-                            state={TRANSACTION_STATE.FAILED}
                         />
                         {/* ---- NETWORK FEES ---  */}
                         {renderNetworkFees()}

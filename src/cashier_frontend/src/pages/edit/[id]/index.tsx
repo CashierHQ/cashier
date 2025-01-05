@@ -17,7 +17,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { LINK_STATE, LINK_TYPE, TRANSACTION_STATE } from "@/services/types/enum";
 import {
     CreateIntentInput,
     GetConsentMessageInput,
@@ -172,6 +172,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         const transactionConfirmObj: ConfirmTransactionModel = {
                             linkName: formData.title ?? "",
                             feeModel: consent,
+                            transactions: actionCreate?.transactions,
                         };
                         setTransactionConfirmModel(transactionConfirmObj);
                         setOpenConfirmationPopup(true);
@@ -236,6 +237,26 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             console.log("🚀 ~ handleConfirmTransactions ~ confirmItenResult:", confirmItenResult);
             if (confirmItenResult == null) {
                 // If the result is null, means it success -> call canister transfer
+
+                // Change transaction status to processing
+                const processingTrans = actionCreate?.transactions;
+                processingTrans?.map((t) => (t.state = TRANSACTION_STATE.PROCESSING));
+                console.log("🚀 ~ handleConfirmTransactions ~ processingTrans:", processingTrans);
+                setActionCreate(
+                    (prev) =>
+                        ({
+                            ...prev,
+                            transactions: processingTrans,
+                        }) as IntentCreateModel,
+                );
+                setTransactionConfirmModel(
+                    (prevModel) =>
+                        ({
+                            ...prevModel,
+                            transactions: processingTrans,
+                        }) as ConfirmTransactionModel,
+                );
+
                 console.log("Call canister transfer");
                 await callExecute(actionCreate?.transactions, identity);
             }

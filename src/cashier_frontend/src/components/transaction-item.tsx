@@ -1,17 +1,18 @@
 import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
-import { TRANSACTION_STATE } from "@/services/types/transaction.service.types";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FC, useEffect, useState } from "react";
-import { FiRefreshCw } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import { IoMdCheckmark } from "react-icons/io";
+import { TransactionModel } from "@/services/types/intent.service.types";
+import { TRANSACTION_STATE } from "@/services/types/enum";
 
 export type AssetModel = {
     address: string;
     amount: bigint;
     chain: string;
+    transaction?: TransactionModel;
 };
 
 interface TransactionItemProps {
@@ -43,7 +44,8 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
         switch (transactionState) {
             case TRANSACTION_STATE.SUCCESS:
                 return <IoMdCheckmark color="green" size={22} />;
-            case TRANSACTION_STATE.FAILED:
+            case TRANSACTION_STATE.FAIL:
+            case TRANSACTION_STATE.TIMEOUT:
                 return <IoMdClose color="red" size={22} />;
             case TRANSACTION_STATE.PROCESSING:
                 return <img src="/loading.gif" width={22} />;
@@ -65,7 +67,7 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
     return (
         <div id="confirmation-transaction" className="flex justify-between my-2">
             <div className="flex">
-                {renderTransactionState(props.state)}
+                {renderTransactionState(props.assets?.[0]?.transaction?.state)}
                 <div id="transaction-title" className="ml-3">
                     {props.title}
                 </div>

@@ -1,7 +1,6 @@
 import { AssetModel } from "@/components/transaction-item";
 import { Receive } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { FeeModel, ReceiveModel, TransactionModel } from "../intent.service.types";
-import { LINK_ASSET_TYPE } from "../enum";
 
 export const mapReceiveModel = (fee: Receive): ReceiveModel => {
     return {
@@ -14,7 +13,10 @@ export const mapReceiveModel = (fee: Receive): ReceiveModel => {
 };
 
 // Mapping between FeeModel -> AssetModel
-export const mapFeeModelToAssetModel = (fee: FeeModel | undefined): AssetModel | undefined => {
+export const mapFeeModelToAssetModel = (
+    fee: FeeModel | undefined,
+    transactions: TransactionModel[] | undefined,
+): AssetModel | undefined => {
     if (!fee) {
         return undefined;
     }
@@ -22,6 +24,7 @@ export const mapFeeModelToAssetModel = (fee: FeeModel | undefined): AssetModel |
         address: fee.address,
         amount: fee.amount,
         chain: fee.chain,
+        transaction: transactions?.find((t) => t.canister_id === fee.address),
     };
 };
 

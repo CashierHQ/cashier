@@ -8,7 +8,6 @@ import { Toaster } from "./components/ui/toaster";
 import { NFIDW, InternetIdentity, Stoic } from "@nfid/identitykit";
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 
 const isMobile = () => {
     if (
