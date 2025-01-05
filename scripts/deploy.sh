@@ -3,6 +3,7 @@
 # Default values
 network=""
 package="cashier_backend"
+identity=""
 
 # Check for --skip flag
 if [[ "$1" == "--skip" ]]; then
@@ -40,6 +41,14 @@ else
             exit 1
         fi
     fi
+
+    # Prompt for identity
+    read -p "Enter identity (default is empty): " identity_input
+    if [ -n "$identity_input" ]; then
+        identity="--identity $identity_input"
+    else
+        identity=""
+    fi
 fi
 
 # Source the appropriate environment file
@@ -56,4 +65,4 @@ else
 fi
 
 # Run dfx deploy
-dfx deploy $package $network --identity cashier-dev
+dfx deploy $package $network $identity
