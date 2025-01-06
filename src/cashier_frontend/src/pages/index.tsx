@@ -157,7 +157,10 @@ export default function HomePage() {
                 <div className="w-11/12 max-w-[400px] flex flex-col">
                     <div className="w-full flex justify-between items-center">
                         <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                        <ConnectWalletButton onClick={connectToWallet}>
+                        <ConnectWalletButton
+                            onClick={connectToWallet}
+                            className="bg-green text-primary-foreground shadow hover:bg-green/90"
+                        >
                             Get started
                         </ConnectWalletButton>
                     </div>

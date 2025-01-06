@@ -93,12 +93,12 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
-        if (values.linkType === LINK_TYPE.NFT_CREATE_AND_AIRDROP) {
+        if (values.linkType !== LINK_TYPE.TIP_LINK) {
             setToastData({
                 open: true,
                 title: "Unsupported link type",
                 description:
-                    "The NFT is currently not supported now. Please choose another link type.",
+                    "The current link type is currently not supported now. Please choose another link type.",
                 variant: "error",
             });
             throw new Error();
