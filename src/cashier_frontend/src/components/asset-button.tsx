@@ -14,7 +14,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({ text, handleClick, childrenNo
             onClick={handleClick}
             type="button"
             className={cn(
-                "w-full h-10 px-3 py-2",
+                "w-full px-3 py-2",
                 "bg-background text-foreground",
                 "border border-input",
                 "hover:bg-accent hover:text-accent-foreground",
