@@ -8,7 +8,7 @@ import {
 import { LinkDetailModel, LinkModel } from "../link.service.types";
 import { CHAIN, TEMPLATE } from "../enum";
 import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
-import TokenUtils from "@/services/tokenUtils.service";
+import { TokenUtilService } from "@/services/tokenUtils.service";
 
 const IS_USE_DEFAULT_LINK_TEMPLATE = true;
 
@@ -72,7 +72,6 @@ export const MapLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkModel> => {
     const { intent, link } = linkObj;
-    const tokenUtilService = new TokenUtils();
     return {
         intent_create: fromNullable(intent),
         link: {
@@ -88,7 +87,7 @@ export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkMode
                 ? convertNanoSecondsToDate(fromDefinedNullable(link.create_at))
                 : new Date("2000-10-01"),
             amountNumber: fromNullable(link.asset_info)
-                ? await tokenUtilService.getHumanReadableAmount(
+                ? await TokenUtilService.getHumanReadableAmount(
                       fromDefinedNullable(link.asset_info)[0].total_amount,
                       fromDefinedNullable(link.asset_info)[0].address,
                   )
@@ -104,7 +103,7 @@ export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkMode
 };
 
 /* TODO: Remove testing flag later*/
-const IS_TEST_LOCAL_TOKEN = true;
+const IS_TEST_LOCAL_TOKEN = false;
 // May need to update in future, now received 'amount' as param, others are constants
 const mapAssetInfo = (linkDetailModel: LinkDetailModel): AssetInfo => {
     return {

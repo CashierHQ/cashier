@@ -14,6 +14,14 @@ export enum LINK_STATE {
     INACTIVE = "Link_state_inactive",
 }
 
+export enum TRANSACTION_STATE {
+    CREATED = "Transaction_state_created",
+    PROCESSING = "Transaction_state_processing",
+    SUCCESS = "Transaction_state_success",
+    FAIL = "Transaction_state_fail",
+    TIMEOUT = "Transaction_state_timeout",
+}
+
 export enum LINK_ASSET_TYPE {
     CASHIER_FEE = "CashierFee",
     ASSET_ADDED = "Asset",
