@@ -165,7 +165,7 @@ export default function HomePage() {
     if (!walletUser) {
         return (
             <div className="w-screen flex justify-center py-5 h-[90%]">
-                <div className="w-11/12 max-w-[400px] flex flex-col">
+                <div className="w-11/12 max-w-[400px] flex flex-col items-center">
                     <div className="w-full flex justify-between items-center">
                         <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
                         <ConnectWalletButton
@@ -177,6 +177,9 @@ export default function HomePage() {
                     </div>
 
                     <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
+                        <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
+                            Cashier is still in development. Use with caution.
+                        </p>
                         <span className="font-semibold mt-5 text-3xl text-center">
                             Cashier Links - <br />
                             fast, easy, and safe{" "}
