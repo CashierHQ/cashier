@@ -17,6 +17,10 @@ import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE } from "@/services/types/enum";
+import { RiMenu2Line } from "react-icons/ri";
+import { Sheet, SheetTrigger } from "@/components/ui/sheet";
+import AppSidebar from "@/components/app-sidebar";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -46,6 +50,8 @@ export default function HomePage() {
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
+    const [documentUrl, setDocumentUrl] = useState("");
     const navigate = useNavigate();
     const responsive = useResponsive();
 
@@ -60,6 +66,11 @@ export default function HomePage() {
             link_type: { TipLink: null },
         });
         navigate(`/edit/${response}`);
+    };
+
+    const handleMenuClick = (docSource: string) => {
+        setDocumentUrl(docSource);
+        setOpenDocumentDialog(true);
     };
 
     const handleHideGuide = () => {
@@ -199,42 +210,65 @@ export default function HomePage() {
                         : "bg-[white] h-[90%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
                 }
             >
-                <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>
-                    <div className="w-full flex justify-between items-center">
-                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                        <ConnectWallet />
-                    </div>
-                    {showGuide && (
-                        <div className="my-3">
-                            <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
-                            <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
-                            <button
-                                className="text-green text-sm font-bold mt-3"
-                                onClick={handleHideGuide}
-                            >
-                                {t("home.guide.confirm")}
-                            </button>
+                <Sheet>
+                    <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>
+                        <div className="w-full flex justify-between items-center">
+                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                            <ConnectWallet />
+                            <SheetTrigger asChild>
+                                <Button variant="outline" size="icon" className="rounded-sm">
+                                    <RiMenu2Line />
+                                </Button>
+                            </SheetTrigger>
                         </div>
-                    )}
-                    <h2 className="text-base font-semibold mb-3 mt-3 mb-5">Links created by me</h2>
-                    {isLoading
-                        ? Array.from({ length: 5 }).map((_, index) => (
-                              <div className="flex items-center space-x-4 my-3" key={index}>
-                                  <Skeleton className="h-10 w-10 rounded-sm" />
-                                  <div className="space-y-2">
-                                      <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                                      <Skeleton className="h-3 w-[200px]" />
+                        {showGuide && (
+                            <div className="my-3">
+                                <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
+                                <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
+                                <button
+                                    className="text-green text-sm font-bold mt-3"
+                                    onClick={handleHideGuide}
+                                >
+                                    {t("home.guide.confirm")}
+                                </button>
+                            </div>
+                        )}
+                        <h2 className="text-base font-semibold mb-3 mt-3 mb-5">
+                            Links created by me
+                        </h2>
+                        {isLoading
+                            ? Array.from({ length: 5 }).map((_, index) => (
+                                  <div className="flex items-center space-x-4 my-3" key={index}>
+                                      <Skeleton className="h-10 w-10 rounded-sm" />
+                                      <div className="space-y-2">
+                                          <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                                          <Skeleton className="h-3 w-[200px]" />
+                                      </div>
                                   </div>
-                              </div>
-                          ))
-                        : renderLinkList(linkData)}
-                </div>
-                <button
-                    className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
-                    onClick={handleCreateLink}
-                >
-                    +
-                </button>
+                              ))
+                            : renderLinkList(linkData)}
+                    </div>
+                    <button
+                        className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
+                        onClick={handleCreateLink}
+                    >
+                        +
+                    </button>
+
+                    <AppSidebar onItemClick={handleMenuClick} />
+                    <Dialog open={openDocumentDialog} onOpenChange={setOpenDocumentDialog}>
+                        <DialogContent className="h-[80%] w-[90%]">
+                            <DialogDescription>
+                                <iframe
+                                    src={documentUrl}
+                                    title="description"
+                                    width="100%"
+                                    height="100%"
+                                ></iframe>
+                            </DialogDescription>
+                        </DialogContent>
+                    </Dialog>
+                </Sheet>
             </div>
         );
     }
