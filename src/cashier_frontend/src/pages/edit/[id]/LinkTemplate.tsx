@@ -51,15 +51,15 @@ const templates: TEMPLATE[] = [
     {
         label: "Claim",
         header: "Airdrop (Comming soon)",
-        src: "/defaultLinkImage.png",
-        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.NFT,
+        src: "/chatToken.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
         title: "PEDRO giveaway",
     },
     {
         label: "Claim",
         header: "Token basket (Comming soon)",
         src: "/defaultLinkImage.png",
-        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.NFT,
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
         title: "PEDRO giveaway",
     },
 ];
@@ -140,7 +140,7 @@ export default function LinkTemplate({
                                         <LinkCard
                                             label={template.label}
                                             header={template.header}
-                                            src="/icpLogo.png"
+                                            src={template.src}
                                             message={template.message}
                                             title={template.title}
                                         />

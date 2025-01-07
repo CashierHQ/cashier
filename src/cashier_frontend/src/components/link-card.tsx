@@ -18,7 +18,7 @@ export default function LinkCard({
             <div className="text-md md:text-md 2xl:text-lg font-medium">{header}</div>
             <div
                 id="phone-frame"
-                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-1 2xl:pb-5 h-[85vw] min-h-[15rem] md:h-[100%] md:min-h-[15rem] 2xl:h-[100%] 2xl:min-h-[25rem] w-[50vw] md:w-[45%] 2xl:w-[65%]"
+                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-1 2xl:pb-5 h-[85vw] min-h-[15rem] md:h-[100%] md:min-h-[15rem] 2xl:h-[100%] 2xl:min-h-[30rem] w-[50vw] md:w-[45%] 2xl:w-[65%]"
             >
                 <div
                     id="phone-notch-section"
@@ -32,7 +32,7 @@ export default function LinkCard({
                         <img
                             src={src}
                             alt="Link template"
-                            className="w-[100%] md:w-[80px] 2xl:w-[100%]"
+                            className="w-[200px] md:w-[80px] 2xl:w-[200px]"
                         />
                     </div>
 
