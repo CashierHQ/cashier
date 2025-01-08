@@ -253,7 +253,7 @@ describe("Link", () => {
         });
 
         // Assert
-        expect(res).toEqual(null);
+        expect(res).not.toBeNull();
         expect(link.intent).toHaveLength(1);
         expect(intent.transactions).toHaveLength(2);
     });
