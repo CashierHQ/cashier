@@ -145,6 +145,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         const validationResult = true;
         try {
+            setToastData({
+                open: true,
+                title: "The tip link is being created.",
+                description: "We are processing your request. Please come back later.",
+                variant: "default",
+            });
+            return;
             if (validationResult) {
                 const linkService = new LinkService(identity);
                 setDisabled(true);

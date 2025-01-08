@@ -53,14 +53,14 @@ const templates: TEMPLATE[] = [
         header: "Airdrop (Comming soon)",
         src: "/chatToken.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
-        title: "PEDRO giveaway",
+        title: "Airdrop",
     },
     {
         label: "Claim",
         header: "Token basket (Comming soon)",
-        src: "/defaultLinkImage.png",
+        src: "/tokenBasket.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
-        title: "PEDRO giveaway",
+        title: "Token basket",
     },
 ];
 
