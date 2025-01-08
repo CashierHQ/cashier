@@ -145,6 +145,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         const validationResult = true;
         try {
+            /* TODO: Remove after grant submit */
             setToastData({
                 open: true,
                 title: "The tip link is being created.",

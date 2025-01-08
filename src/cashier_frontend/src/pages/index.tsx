@@ -180,18 +180,18 @@ export default function HomePage() {
                         <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
                             Cashier is still in development. Use with caution.
                         </p>
-                        <span className="font-semibold mt-5 text-3xl text-center">
+                        <span className="font-semibold mt-3 text-3xl md:text-2xl 2xl:text-3xl text-center">
                             Cashier Links - <br />
                             fast, easy, and safe{" "}
                         </span>
-                        <p className="text-gray-500 text-center mt-3">
+                        <p className="text-gray-500 text-md md:text-sm 2xl:text-md text-center mt-3">
                             Start creating transaction links with Cashier: create & airdrop NFTs,
                             and more features coming!
                         </p>
                         <img
                             src="./landingPage.png"
                             alt="Cashier illustration"
-                            className="max-w-[300px] mt-5"
+                            className="w-[100%] md:w-[20vw] 2xl:w-[100%] max-w-[300px] mt-5"
                         />
                     </div>
                 </div>

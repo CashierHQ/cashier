@@ -78,7 +78,9 @@ export default function DetailPage() {
                                     <TableCell className="font-medium px-5">Link Type</TableCell>
                                     <TableCell></TableCell>
                                     <TableCell></TableCell>
-                                    <TableCell className="text-right px-5">AirDrop</TableCell>
+                                    <TableCell className="text-right px-5">
+                                        {linkData?.link.linkType}
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium px-5">Chain</TableCell>
@@ -105,7 +107,9 @@ export default function DetailPage() {
                             </TableBody>
                         </Table>
                     </div>
-                    <div
+
+                    {/* Temporarily comment for grant application */}
+                    {/* <div
                         id="additional-info-section"
                         className="flex flex-col my-5 border-2 rounded-xl"
                     >
@@ -158,7 +162,7 @@ export default function DetailPage() {
                                 </TableRow>
                             </TableBody>
                         </Table>
-                    </div>
+                    </div> */}
                     <Button
                         onClick={handleCopyLink}
                         className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
