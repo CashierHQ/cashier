@@ -1,5 +1,4 @@
 import { ConnectWalletButton, useAuth, useIdentity } from "@nfid/identitykit/react";
-import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,11 +20,12 @@ import { RiMenu2Line } from "react-icons/ri";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import AppSidebar from "@/components/app-sidebar";
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
+import ConnectedWalletDropdownIcon from "@/components/connected-wallet-icon";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const { connect, user: walletUser } = useAuth();
+    const { connect, user: walletUser, disconnect } = useAuth();
     const [newAppUser, setNewAppUser] = useState<User>();
     const {
         data: appUser,
@@ -217,7 +217,13 @@ export default function HomePage() {
                     <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>
                         <div className="w-full flex justify-between items-center">
                             <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                            <ConnectWallet />
+                            <div className="ml-auto mr-3">
+                                <ConnectedWalletDropdownIcon
+                                    connectedAccount={walletUser.principal.toString()}
+                                    disconnect={disconnect}
+                                />
+                            </div>
+
                             <SheetTrigger asChild>
                                 <Button variant="outline" size="icon" className="rounded-sm">
                                     <RiMenu2Line />
