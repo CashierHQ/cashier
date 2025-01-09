@@ -79,7 +79,7 @@ export default function DetailPage() {
                                     <TableCell></TableCell>
                                     <TableCell></TableCell>
                                     <TableCell className="text-right px-5">
-                                        {linkData?.link.linkType}
+                                        {linkData?.link?.linkType}
                                     </TableCell>
                                 </TableRow>
                                 <TableRow>

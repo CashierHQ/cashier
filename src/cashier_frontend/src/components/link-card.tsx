@@ -13,9 +13,24 @@ export default function LinkCard({
     label: string;
     onClaim?: () => void;
 }) {
+    /* TODO: Remove after we have all the flows for templates */
+    const commingSoonLabel = header?.includes("(Comming soon)") ? "Comming soon" : "";
+    const renderHeaderTitle = () => {
+        if (commingSoonLabel.length > 0) {
+            return (
+                <span>
+                    {header?.replace("(Comming soon)", "").trim()}{" "}
+                    <span className="text-red-500 font-bold">{`(Comming soon)`}</span>
+                </span>
+            );
+        } else {
+            return <span>{header}</span>;
+        }
+    };
+
     return (
         <div className="flex flex-col items-center">
-            <div className="text-md md:text-md 2xl:text-lg font-medium">{header}</div>
+            <div className="text-md md:text-md 2xl:text-lg font-medium">{renderHeaderTitle()}</div>
             <div
                 id="phone-frame"
                 className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-1 2xl:pb-5 h-[85vw] min-h-[15rem] md:h-[100%] md:min-h-[15rem] 2xl:h-[100%] 2xl:min-h-[30rem] w-[50vw] md:w-[45%] 2xl:w-[65%]"
@@ -27,7 +42,7 @@ export default function LinkCard({
                 <div className="w-full flex justify-center items-center mt-3 md:mt-1 2xl:mt-3">
                     <img src="./logo.svg" alt="Cashier logo" className="w-[60px] 2xl:w-[100px]" />
                 </div>
-                <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 max-h-[70%]">
+                <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 max-h-[70%] w-[100%]">
                     <div className="overflow-hidden">
                         <img
                             src={src}
