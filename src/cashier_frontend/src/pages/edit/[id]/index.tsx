@@ -93,12 +93,12 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
-        if (values.linkType === LINK_TYPE.NFT_CREATE_AND_AIRDROP) {
+        if (values.linkType !== LINK_TYPE.TIP_LINK) {
             setToastData({
                 open: true,
                 title: "Unsupported link type",
                 description:
-                    "The NFT is currently not supported now. Please choose another link type.",
+                    "The current link type is currently not supported now. Please choose another link type.",
                 variant: "error",
             });
             throw new Error();
@@ -145,17 +145,25 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         const validationResult = true;
         try {
+            /* TODO: Remove after grant submit */
+            setToastData({
+                open: true,
+                title: "The tip link is being created.",
+                description: "We are processing your request. Please come back later.",
+                variant: "default",
+            });
+            return;
             if (validationResult) {
                 const linkService = new LinkService(identity);
                 setDisabled(true);
                 const createActionInput: CreateIntentInput = {
-                    link_id: linkId,
+                    link_id: linkId ?? "",
                     intent_type: "Create",
                     params: [],
                 };
                 const handleCreateAction = async () => {
                     const intentCreateConsentInput: GetConsentMessageInput = {
-                        link_id: linkId,
+                        link_id: linkId ?? "",
                         intent_type: "Create",
                         params: [],
                         intent_id: actionCreate?.id ?? "",

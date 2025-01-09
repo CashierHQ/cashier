@@ -26,7 +26,7 @@
         "src/cashier_frontend"
     ],
     "devDependencies": {
-        "@hadronous/pic": "^0.10.0",
+        "@hadronous/pic": "^0.11.0",
         "@types/jest": "^29.5.14",
         "@types/node": "^22.7.5",
         "dotenv": "^16.4.5",

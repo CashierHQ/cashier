@@ -17,6 +17,9 @@ export abstract class TokenUtilService {
         amount: bigint,
         tokenAddress: string,
     ): Promise<number> {
+        if (!amount || !tokenAddress) {
+            return 0;
+        }
         const tokenMetadata = await this.getTokenMetadata(tokenAddress);
         const tokenV2 = TokenAmountV2.fromUlps({ amount, token: tokenMetadata as Token });
         const upls = tokenV2.toUlps();

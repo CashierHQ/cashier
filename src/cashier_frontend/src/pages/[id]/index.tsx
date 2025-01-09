@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
+import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -21,6 +22,8 @@ export default function ClaimPage() {
     const { linkId } = useParams();
     const [isLoading, setIsLoading] = useState(true);
     const [isClaiming, setIsClaiming] = useState(false);
+    const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
+
     const form = useForm<z.infer<typeof ClaimSchema>>({
         resolver: zodResolver(ClaimSchema),
     });
@@ -44,6 +47,16 @@ export default function ClaimPage() {
         console.log("Claiming");
     };
 
+    /* TODO: Remove after grant submit */
+    const handleClaimClick = () => {
+        setToastData({
+            open: true,
+            title: "Under development",
+            description: "We are developing the claiming feature. It'll be available soon.",
+            variant: "error",
+        });
+    };
+
     if (isClaiming)
         return (
             <ClaimPageForm
@@ -65,15 +78,24 @@ export default function ClaimPage() {
                     src={formData.image}
                     message={formData.description}
                     title={formData.title}
-                    onClaim={() => setIsClaiming(true)}
+                    onClaim={handleClaimClick}
                 />
-                <div id="about-user-section" className="mt-5 px-3">
-                    <div className="text-lg font-medium">About user</div>
-                    <div className="text-base">
-                        User has confirmed he owns the handles of the following social accounts
-                    </div>
-                </div>
             </div>
+
+            <TransactionToast
+                open={toastData?.open ?? false}
+                onOpenChange={(open) =>
+                    setToastData({
+                        open: open as boolean,
+                        title: "",
+                        description: "",
+                        variant: null,
+                    })
+                }
+                title={toastData?.title ?? ""}
+                description={toastData?.description ?? ""}
+                variant={toastData?.variant ?? "default"}
+            />
         </div>
     );
 }
