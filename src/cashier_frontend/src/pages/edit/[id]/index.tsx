@@ -157,13 +157,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 const linkService = new LinkService(identity);
                 setDisabled(true);
                 const createActionInput: CreateIntentInput = {
-                    link_id: linkId,
+                    link_id: linkId ?? "",
                     intent_type: "Create",
                     params: [],
                 };
                 const handleCreateAction = async () => {
                     const intentCreateConsentInput: GetConsentMessageInput = {
-                        link_id: linkId,
+                        link_id: linkId ?? "",
                         intent_type: "Create",
                         params: [],
                         intent_id: actionCreate?.id ?? "",
