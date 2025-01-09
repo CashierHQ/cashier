@@ -7,13 +7,11 @@
             "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai"
         },
         "cashier_frontend": {
-            "dependencies": ["cashier_backend"],
             "source": ["src/cashier_frontend/dist"],
             "type": "assets",
             "workspace": "cashier_frontend"
         },
         "cashier_frontend_staging": {
-            "dependencies": ["cashier_backend"],
             "source": ["src/cashier_frontend/dist"],
             "type": "assets",
             "workspace": "cashier_frontend"
