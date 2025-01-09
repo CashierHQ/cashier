@@ -48,6 +48,7 @@ jobs:
             - name: Build project
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
+
               run: |
                   echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
                   rustup target add wasm32-unknown-unknown
