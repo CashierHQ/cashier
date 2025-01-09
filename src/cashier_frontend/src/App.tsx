@@ -20,6 +20,8 @@ const isMobile = () => {
 
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
+console.log("ENV", import.meta.env.VITE_IC_EXPLORER_BASE_URL);
+
 function App() {
     const queryClient = new QueryClient();
     useEffect(() => {
