@@ -84,6 +84,25 @@ pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<Intent
     }
 }
 
+pub fn get_intent_resp(intent_id: &str) -> Result<IntentResp, String> {
+    let intent = intent_store::get(intent_id).ok_or_else(|| "Intent not found".to_string())?;
+    let prefix = format!("intent#{}#transaction#", intent_id);
+    let intent_transactions = intent_transaction_store::find_with_prefix(prefix.as_str());
+    let transaction_ids: Vec<String> = intent_transactions
+        .iter()
+        .map(|t| t.transaction_id.clone())
+        .collect();
+    let transactions = transaction_store::batch_get(transaction_ids.clone());
+    Ok(IntentResp {
+        id: intent.id.clone(),
+        creator_id: intent.creator_id.clone(),
+        link_id: intent.link_id.clone(),
+        state: intent.state.clone(),
+        intent_type: intent.intent_type.clone(),
+        transactions: transactions,
+    })
+}
+
 pub fn roll_up_intent_state(intent: Intent) -> IntentResp {
     let intent_transactions = intent_transaction_store::find_with_prefix(
         format!("intent#{}#transaction#", intent.id).as_str(),

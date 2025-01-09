@@ -19,7 +19,7 @@ pub async fn create_intent(
 }
 
 #[update(guard = "is_not_anonymous")]
-pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<(), String> {
+pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<IntentResp, String> {
     services::transaction::confirm::confirm_intent(input).await
 }
 

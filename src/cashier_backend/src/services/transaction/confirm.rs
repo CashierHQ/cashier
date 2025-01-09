@@ -4,15 +4,18 @@ use ic_cdk::spawn;
 use ic_cdk_timers::set_timer;
 
 use crate::{
-    core::intent::types::ConfirmIntentInput,
+    core::{intent::types::ConfirmIntentInput, link::types::IntentResp},
     repositories::{intent_store, link_store, user_wallet_store},
     services::{link::is_link_creator, transaction::update::timeout_intent},
     types::intent::{IntentState, IntentType},
 };
 
-use super::{update::set_processing_intent, validate::validate_balance_with_asset_info};
+use super::{
+    update::{get_intent_resp, set_processing_intent},
+    validate::validate_balance_with_asset_info,
+};
 
-pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<(), String> {
+pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<IntentResp, String> {
     // validate
     let link = link_store::get(&input.link_id)
         .ok_or_else(|| "[confirm_intent] Link not found".to_string())?;
@@ -60,14 +63,16 @@ pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<(), String> {
             let timeout = option_env!("TX_TIMEOUT").unwrap_or("120");
             let timeout_sec = timeout.parse::<u64>().unwrap_or(120);
 
+            let id = input.intent_id.clone();
+
             set_timer(Duration::from_secs(timeout_sec), move || {
                 spawn(async move {
-                    let _ = timeout_intent(&input.intent_id);
+                    let _ = timeout_intent(&input.intent_id.clone());
                 });
             });
 
             // set_processing_intent(input.intent_id)
-            Ok(())
+            get_intent_resp(&id)
         }
         _ => {
             return Err("[confirm_intent] Intent type is not supported".to_string());
