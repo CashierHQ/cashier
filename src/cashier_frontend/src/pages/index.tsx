@@ -21,6 +21,7 @@ import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import AppSidebar from "@/components/app-sidebar";
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import ConnectedWalletDropdownIcon from "@/components/connected-wallet-icon";
+import TransactionToast from "@/components/transaction-toast";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -50,8 +51,10 @@ export default function HomePage() {
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [disableCreateButton, setDisableCreateButton] = useState(false);
     const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
     const [documentUrl, setDocumentUrl] = useState("");
+    const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
     const navigate = useNavigate();
     const responsive = useResponsive();
 
@@ -62,10 +65,28 @@ export default function HomePage() {
     };
 
     const handleCreateLink = async () => {
-        const response = await new LinkService(identity).createLink({
-            link_type: { TipLink: null },
-        });
-        navigate(`/edit/${response}`);
+        try {
+            setDisableCreateButton(true);
+            setToastData({
+                open: true,
+                title: "Creating",
+                description: "The link is being created. Please wait for seconds.",
+                variant: "default",
+            });
+            const response = await new LinkService(identity).createLink({
+                link_type: { TipLink: null },
+            });
+            navigate(`/edit/${response}`);
+        } catch (err) {
+            setToastData({
+                open: true,
+                title: "Error",
+                description: err,
+                variant: "default",
+            });
+        } finally {
+            setDisableCreateButton(true);
+        }
     };
 
     const handleMenuClick = (docSource: string) => {
@@ -258,8 +279,13 @@ export default function HomePage() {
                             : renderLinkList(linkData)}
                     </div>
                     <button
-                        className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
+                        className={`fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] ${
+                            disableCreateButton
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-green hover:bg-green/90"
+                        } text-white`}
                         onClick={handleCreateLink}
+                        disabled={disableCreateButton}
                     >
                         +
                     </button>
@@ -277,6 +303,20 @@ export default function HomePage() {
                             </DialogDescription>
                         </DialogContent>
                     </Dialog>
+                    <TransactionToast
+                        open={toastData?.open ?? false}
+                        onOpenChange={(open) =>
+                            setToastData({
+                                open: open as boolean,
+                                title: "",
+                                description: "",
+                                variant: null,
+                            })
+                        }
+                        title={toastData?.title ?? ""}
+                        description={toastData?.description ?? ""}
+                        variant={toastData?.variant ?? "default"}
+                    />
                 </Sheet>
             </div>
         );
