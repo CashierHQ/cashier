@@ -1,7 +1,7 @@
 {
     "name": "cashier_frontend",
     "private": true,
-    "version": "0.0.1",
+    "version": "0.0.2",
     "type": "module",
     "scripts": {
         "setup": "npm i && dfx canister create cashier_backend && dfx generate cashier_backend",
