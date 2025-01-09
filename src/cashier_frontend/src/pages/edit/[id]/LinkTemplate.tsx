@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { string, z } from "zod";
 import {
     Form,
     FormControl,
@@ -30,6 +30,39 @@ export const linkTemplateSchema = z.object({
 });
 
 type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
+const TEMPLATE_ORDER = [LINK_TYPE.TIP_LINK, LINK_TYPE.AIRDROP, LINK_TYPE.TOKEN_BASKET];
+
+interface TEMPLATE {
+    label: string;
+    header: string;
+    message: string;
+    title: string;
+    src: string;
+}
+
+const templates: TEMPLATE[] = [
+    {
+        label: "Claim",
+        header: "Tip",
+        src: "/icpLogo.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
+        title: "Tipping crypto",
+    },
+    {
+        label: "Claim",
+        header: "Airdrop (Comming soon)",
+        src: "/chatToken.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
+        title: "Airdrop",
+    },
+    {
+        label: "Claim",
+        header: "Token basket (Comming soon)",
+        src: "/tokenBasket.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
+        title: "Token basket",
+    },
+];
 
 export default function LinkTemplate({
     defaultValues = {},
@@ -48,8 +81,6 @@ export default function LinkTemplate({
             ...defaultValues,
         },
     });
-
-    const TEMPLATE_ORDER = [LINK_TYPE.NFT_CREATE_AND_AIRDROP, LINK_TYPE.TIP_LINK];
 
     useEffect(() => {
         if (!api) {
@@ -104,7 +135,19 @@ export default function LinkTemplate({
                     <div className="flex flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3 my-3 h-[52vh] 2xl:h-[60vh]">
                         <Carousel className="items-center" setApi={setApi}>
                             <CarouselContent>
-                                <CarouselItem>
+                                {templates.map((template, index) => (
+                                    <CarouselItem key={`template-${index}`}>
+                                        <LinkCard
+                                            label={template.label}
+                                            header={template.header}
+                                            src={template.src}
+                                            message={template.message}
+                                            title={template.title}
+                                        />
+                                    </CarouselItem>
+                                ))}
+
+                                {/* <CarouselItem>
                                     <LinkCard
                                         label="Claim"
                                         header="Default Template"
@@ -112,16 +155,7 @@ export default function LinkTemplate({
                                         message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.NFT}
                                         title="PEDRO giveaway"
                                     />
-                                </CarouselItem>
-                                <CarouselItem>
-                                    <LinkCard
-                                        label="Claim"
-                                        header="Tip"
-                                        src="/icpLogo.png"
-                                        message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP}
-                                        title="Tipping crypto"
-                                    />
-                                </CarouselItem>
+                                </CarouselItem> */}
                             </CarouselContent>
                         </Carousel>
                     </div>

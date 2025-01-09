@@ -1,5 +1,4 @@
 import { ConnectWalletButton, useAuth, useIdentity } from "@nfid/identitykit/react";
-import { ConnectWallet } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,11 +16,16 @@ import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE } from "@/services/types/enum";
+import { RiMenu2Line } from "react-icons/ri";
+import { Sheet, SheetTrigger } from "@/components/ui/sheet";
+import AppSidebar from "@/components/app-sidebar";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
+import ConnectedWalletDropdownIcon from "@/components/connected-wallet-icon";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const { connect, user: walletUser } = useAuth();
+    const { connect, user: walletUser, disconnect } = useAuth();
     const [newAppUser, setNewAppUser] = useState<User>();
     const {
         data: appUser,
@@ -46,6 +50,8 @@ export default function HomePage() {
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
+    const [documentUrl, setDocumentUrl] = useState("");
     const navigate = useNavigate();
     const responsive = useResponsive();
 
@@ -60,6 +66,11 @@ export default function HomePage() {
             link_type: { TipLink: null },
         });
         navigate(`/edit/${response}`);
+    };
+
+    const handleMenuClick = (docSource: string) => {
+        setDocumentUrl(docSource);
+        setOpenDocumentDialog(true);
     };
 
     const handleHideGuide = () => {
@@ -154,27 +165,33 @@ export default function HomePage() {
     if (!walletUser) {
         return (
             <div className="w-screen flex justify-center py-5 h-[90%]">
-                <div className="w-11/12 max-w-[400px] flex flex-col">
+                <div className="w-11/12 max-w-[400px] flex flex-col items-center">
                     <div className="w-full flex justify-between items-center">
                         <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                        <ConnectWalletButton onClick={connectToWallet}>
+                        <ConnectWalletButton
+                            onClick={connectToWallet}
+                            className="bg-green text-primary-foreground shadow hover:bg-green/90"
+                        >
                             Get started
                         </ConnectWalletButton>
                     </div>
 
                     <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
-                        <span className="font-semibold mt-5 text-3xl text-center">
+                        <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
+                            Cashier is still in development. Use with caution.
+                        </p>
+                        <span className="font-semibold mt-3 text-3xl md:text-2xl 2xl:text-3xl text-center">
                             Cashier Links - <br />
                             fast, easy, and safe{" "}
                         </span>
-                        <p className="text-gray-500 text-center mt-3">
+                        <p className="text-gray-500 text-md md:text-sm 2xl:text-md text-center mt-3">
                             Start creating transaction links with Cashier: create & airdrop NFTs,
                             and more features coming!
                         </p>
                         <img
                             src="./landingPage.png"
                             alt="Cashier illustration"
-                            className="max-w-[300px] mt-5"
+                            className="w-[100%] md:w-[20vw] 2xl:w-[100%] max-w-[300px] mt-5"
                         />
                     </div>
                 </div>
@@ -196,42 +213,71 @@ export default function HomePage() {
                         : "bg-[white] h-[90%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
                 }
             >
-                <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>
-                    <div className="w-full flex justify-between items-center">
-                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                        <ConnectWallet />
-                    </div>
-                    {showGuide && (
-                        <div className="my-3">
-                            <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
-                            <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
-                            <button
-                                className="text-green text-sm font-bold mt-3"
-                                onClick={handleHideGuide}
-                            >
-                                {t("home.guide.confirm")}
-                            </button>
+                <Sheet>
+                    <div className={responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"}>
+                        <div className="w-full flex justify-between items-center">
+                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                            <div className="ml-auto mr-3">
+                                <ConnectedWalletDropdownIcon
+                                    connectedAccount={walletUser.principal.toString()}
+                                    disconnect={disconnect}
+                                />
+                            </div>
+
+                            <SheetTrigger asChild>
+                                <Button variant="outline" size="icon" className="rounded-sm">
+                                    <RiMenu2Line />
+                                </Button>
+                            </SheetTrigger>
                         </div>
-                    )}
-                    <h2 className="text-base font-semibold mb-3 mt-3 mb-5">Links created by me</h2>
-                    {isLoading
-                        ? Array.from({ length: 5 }).map((_, index) => (
-                              <div className="flex items-center space-x-4 my-3" key={index}>
-                                  <Skeleton className="h-10 w-10 rounded-sm" />
-                                  <div className="space-y-2">
-                                      <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                                      <Skeleton className="h-3 w-[200px]" />
+                        {showGuide && (
+                            <div className="my-3">
+                                <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
+                                <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
+                                <button
+                                    className="text-green text-sm font-bold mt-3"
+                                    onClick={handleHideGuide}
+                                >
+                                    {t("home.guide.confirm")}
+                                </button>
+                            </div>
+                        )}
+                        <h2 className="text-base font-semibold mb-3 mt-3 mb-5">
+                            Links created by me
+                        </h2>
+                        {isLoading
+                            ? Array.from({ length: 5 }).map((_, index) => (
+                                  <div className="flex items-center space-x-4 my-3" key={index}>
+                                      <Skeleton className="h-10 w-10 rounded-sm" />
+                                      <div className="space-y-2">
+                                          <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                                          <Skeleton className="h-3 w-[200px]" />
+                                      </div>
                                   </div>
-                              </div>
-                          ))
-                        : renderLinkList(linkData)}
-                </div>
-                <button
-                    className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
-                    onClick={handleCreateLink}
-                >
-                    +
-                </button>
+                              ))
+                            : renderLinkList(linkData)}
+                    </div>
+                    <button
+                        className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
+                        onClick={handleCreateLink}
+                    >
+                        +
+                    </button>
+
+                    <AppSidebar onItemClick={handleMenuClick} />
+                    <Dialog open={openDocumentDialog} onOpenChange={setOpenDocumentDialog}>
+                        <DialogContent className="h-[80%] w-[90%]">
+                            <DialogDescription>
+                                <iframe
+                                    src={documentUrl}
+                                    title="description"
+                                    width="100%"
+                                    height="100%"
+                                ></iframe>
+                            </DialogDescription>
+                        </DialogContent>
+                    </Dialog>
+                </Sheet>
             </div>
         );
     }

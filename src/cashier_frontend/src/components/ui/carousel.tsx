@@ -138,7 +138,7 @@ const CarouselContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HT
         const { carouselRef, orientation } = useCarousel();
 
         return (
-            <div ref={carouselRef} className="overflow-hidden">
+            <div ref={carouselRef} className="overflow-hidden w-[100vw] md:w-[100%]">
                 <div
                     ref={ref}
                     className={cn(
@@ -187,7 +187,7 @@ const CarouselPrevious = React.forwardRef<HTMLButtonElement, React.ComponentProp
                 className={cn(
                     "absolute h-8 w-8 rounded-full",
                     orientation === "horizontal"
-                        ? "left-1 top-1/2 -translate-y-1/2 z-10"
+                        ? "left-6 md:left-3 2xl:left-6 top-1/2 -translate-y-1/2 z-10"
                         : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
                     className,
                 )}
@@ -215,7 +215,7 @@ const CarouselNext = React.forwardRef<HTMLButtonElement, React.ComponentProps<ty
                 className={cn(
                     "absolute h-8 w-8 rounded-full",
                     orientation === "horizontal"
-                        ? "right-1 top-1/2 -translate-y-1/2 z-10"
+                        ? "right-6 md:right-3 2xl:right-6 top-1/2 -translate-y-1/2 z-10"
                         : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
                     className,
                 )}
