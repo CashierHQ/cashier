@@ -187,42 +187,44 @@ export default function HomePage() {
         return (
             <div className="w-screen flex justify-center py-5 h-[90%]">
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">
-                    <div className="w-full flex justify-between items-center">
-                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                        <ConnectWalletButton
-                            onClick={connectToWallet}
-                            className="bg-green text-primary-foreground shadow hover:bg-green/90"
-                        >
-                            Get started
-                        </ConnectWalletButton>
-                    </div>
+                    <div className="w-11/12 max-w-[400px] flex flex-col items-center">
+                        <div className="w-full flex justify-between items-center">
+                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                            <ConnectWalletButton
+                                onClick={connectToWallet}
+                                className="bg-green text-primary-foreground shadow hover:bg-green/90"
+                            >
+                                Get started
+                            </ConnectWalletButton>
+                        </div>
 
-                    <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
-                        <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
-                            Cashier is still in development. Use with caution.
-                        </p>
-                        <span className="font-semibold mt-3 text-3xl md:text-2xl 2xl:text-3xl text-center">
-                            Cashier Links - <br />
-                            fast, easy, and safe{" "}
-                        </span>
-                        <p className="text-gray-500 text-md md:text-sm 2xl:text-md text-center mt-3">
-                            Start creating transaction links with Cashier: create & airdrop NFTs,
-                            and more features coming!
-                        </p>
-                        <img
-                            src="./landingPage.png"
-                            alt="Cashier illustration"
-                            className="w-[100%] md:w-[20vw] 2xl:w-[100%] max-w-[300px] mt-5"
-                        />
+                        <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
+                            <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
+                                Cashier is still in development. Use with caution.
+                            </p>
+                            <span className="font-semibold mt-3 text-3xl md:text-2xl 2xl:text-3xl text-center">
+                                Cashier Links - <br />
+                                fast, easy, and safe{" "}
+                            </span>
+                            <p className="text-gray-500 text-md md:text-sm 2xl:text-md text-center mt-3">
+                                Start creating transaction links with Cashier: create & airdrop
+                                NFTs, and more features coming!
+                            </p>
+                            <img
+                                src="./landingPage.png"
+                                alt="Cashier illustration"
+                                className="w-[100%] md:w-[20vw] 2xl:w-[100%] max-w-[300px] mt-5"
+                            />
+                        </div>
                     </div>
+                    <Button
+                        type="button"
+                        onClick={connectToWallet}
+                        className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
+                    >
+                        Get started
+                    </Button>
                 </div>
-                <Button
-                    type="button"
-                    onClick={connectToWallet}
-                    className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
-                >
-                    Get started
-                </Button>
             </div>
         );
     } else {

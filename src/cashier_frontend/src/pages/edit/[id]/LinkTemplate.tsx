@@ -40,6 +40,14 @@ interface TEMPLATE {
     src: string;
 }
 
+interface TEMPLATE {
+    label: string;
+    header: string;
+    message: string;
+    title: string;
+    src: string;
+}
+
 const templates: TEMPLATE[] = [
     {
         label: "Claim",
