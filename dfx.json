@@ -7,16 +7,25 @@
             "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai"
         },
         "cashier_frontend": {
-            "dependencies": ["cashier_backend"],
             "source": ["src/cashier_frontend/dist"],
             "type": "assets",
             "workspace": "cashier_frontend"
         },
         "cashier_frontend_staging": {
-            "dependencies": ["cashier_backend"],
             "source": ["src/cashier_frontend/dist"],
             "type": "assets",
             "workspace": "cashier_frontend"
+        },
+        "icp_ledger_canister": {
+            "type": "custom",
+            "candid": "https://raw.githubusercontent.com/dfinity/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/rs/rosetta-api/icp_ledger/ledger.did",
+            "wasm": "https://download.dfinity.systems/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/canisters/ledger-canister.wasm.gz",
+            "specified_id": "x5qut-viaaa-aaaar-qajda-cai",
+            "remote": {
+                "id": {
+                    "ic": "x5qut-viaaa-aaaar-qajda-cai"
+                }
+            }
         }
     },
     "defaults": {

@@ -1,15 +1,34 @@
 import AppRouter from "./Router";
-import { IdentityKitProvider, useIdentityKit } from "@nfid/identitykit/react";
+import { IdentityKitProvider } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";
 import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
-import { NFIDW, InternetIdentity, Stoic } from "@nfid/identitykit";
+import { InternetIdentity } from "@nfid/identitykit";
+import { useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+const isMobile = () => {
+    if (
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    ) {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
+
+console.log("ENV", import.meta.env.VITE_IC_EXPLORER_BASE_URL);
 
 function App() {
-    const { connect } = useIdentityKit();
-
+    const queryClient = new QueryClient();
+    useEffect(() => {
+        if (!isMobile()) {
+            // listSigners.push(Plug);
+        }
+    }, []);
     return (
         <IdentityKitProvider
             featuredSigner={false}
@@ -18,15 +37,19 @@ function App() {
             }}
             onConnectSuccess={() => {}}
             onDisconnect={() => {
-                console.log("Disconnected");
-                console.log("Try to login");
-                connect();
+                console.log("Log out");
+                queryClient.clear();
             }}
             authType={IdentityKitAuthType.DELEGATION}
-            signers={[NFIDW, InternetIdentity, Stoic]}
+            signers={isMobile() ? [InternetIdentity] : [InternetIdentity]}
+            signerClientOptions={{
+                targets,
+            }}
         >
-            <AppRouter />
-            <Toaster />
+            <QueryClientProvider client={queryClient}>
+                <AppRouter />
+                <Toaster />
+            </QueryClientProvider>
         </IdentityKitProvider>
     );
 }

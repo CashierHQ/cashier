@@ -3,6 +3,8 @@ import LinkPage from "./pages/edit/[id]";
 import HomePage from "@/pages";
 import ClaimPage from "./pages/[id]";
 import DetailPage from "./pages/details/[id]";
+import { useResponsive } from "./hooks/responsive-hook";
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -22,5 +24,16 @@ const router = createBrowserRouter([
     },
 ]);
 export default function AppRouter() {
-    return <RouterProvider router={router} />;
+    const { isSmallDevice } = useResponsive();
+    return (
+        <div
+            className={
+                isSmallDevice
+                    ? ""
+                    : "bg-gradient-to-r from-[#F4FCF9] to-[#F7FAF8] h-[100vh] flex items-center justify-center"
+            }
+        >
+            <RouterProvider router={router} />
+        </div>
+    );
 }

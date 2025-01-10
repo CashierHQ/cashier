@@ -1,31 +1,48 @@
+import { FixedBottomButton } from "@/components/fix-bottom-button";
 import LinkCard from "@/components/link-card";
 import { ParitalFormProps } from "@/components/multi-step-form";
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
+import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
+import { LINK_TYPE } from "@/services/types/enum";
 
 interface LinkData {
-    name: string;
+    title: string;
     image: string;
     description: string;
 }
 
-export default function LinkPreview({ defaultValues, handleSubmit }: ParitalFormProps<LinkData>) {
-    const { t } = useTranslation();
+export default function LinkPreview({
+    defaultValues,
+    handleSubmit,
+    isDisabled = false,
+    linkType,
+}: ParitalFormProps<object, LinkData>) {
+    if (linkType === LINK_TYPE.TIP_LINK) {
+        return (
+            <div className="w-full flex flex-col">
+                <LinkCard
+                    label="Tip"
+                    src="/icpLogo.png"
+                    message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP}
+                    title={defaultValues.title as string}
+                />
+                <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
+                    Create
+                </FixedBottomButton>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full flex flex-col">
             <LinkCard
                 label="Claim"
-                src={defaultValues.image as any}
-                message={defaultValues.description as any}
-                title={defaultValues.name as any}
+                src={defaultValues.image as string}
+                message={defaultValues.description as string}
+                title={defaultValues.title as string}
             />
-            <Button
-                onClick={handleSubmit as any}
-                className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
-            >
+            <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
                 Create
-            </Button>
+            </FixedBottomButton>
         </div>
     );
 }

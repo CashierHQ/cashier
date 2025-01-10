@@ -1,6 +1,6 @@
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 
-use crate::{store, utils::random::init_ic_rand};
+use crate::{repositories, utils::random::init_ic_rand};
 
 #[init]
 fn init() {
@@ -12,6 +12,6 @@ fn pre_upgrade() {}
 
 #[post_upgrade]
 fn post_upgrade() {
-    store::load();
+    repositories::load();
     init_ic_rand();
 }
