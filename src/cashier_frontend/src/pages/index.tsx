@@ -148,7 +148,7 @@ export default function HomePage() {
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {
             return (
-                <div className="max-h-[60%] md:max-h-[30%] 2xl:max-h-[60%] overflow-y-auto custom-scrollbar">
+                <div className="max-h-[60%] md:max-h-[30%] xl:max-h-[40%] 2xl:max-h-[60%] overflow-y-auto custom-scrollbar">
                     {Object.entries(links).map(([date, items]) => (
                         <div key={date} className="mb-3">
                             <h3 className="text-lightblack">{formatDateString(date)}</h3>
