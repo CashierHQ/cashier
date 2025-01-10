@@ -2,7 +2,7 @@ import { SidebarMenuItem } from "@/components/app-sidebar";
 import { FaLink } from "react-icons/fa6";
 import { LuCompass } from "react-icons/lu";
 import { CiSettings } from "react-icons/ci";
-import { MdTravelExplore } from "react-icons/md";
+import { LuGanttChartSquare } from "react-icons/lu";
 import React from "react";
 
 export const INCREASE = "increase";
@@ -36,7 +36,7 @@ export const TOP_MENU_ITEMS: SidebarMenuItem[] = [
     },
     {
         title: "Cashier project overview",
-        icon: React.createElement(MdTravelExplore, { size: 22 }),
+        icon: React.createElement(LuGanttChartSquare, { size: 22 }),
         docSource: "https://doc.clickup.com/9012452868/d/h/8cjy7g4-4292/9a3796b6e853ef0",
     },
 ];
