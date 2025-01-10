@@ -1,4 +1,8 @@
-export const safeParseJSON = (arg: Record<string, unknown>): any => {
+import { MediaQuery } from "@/hooks/responsive-hook";
+import { UIResponsiveType } from "@/pages/edit/[id]/index_responsive";
+import { LinkDetailModel } from "@/services/types/link.service.types";
+
+export const safeParseJSON = (arg: Record<string, unknown>): string => {
     return JSON.stringify(arg, (key, value) =>
         typeof value === "bigint" ? value.toString() : value,
     );
@@ -19,8 +23,7 @@ export type Response<T, E> =
       };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
-    console.log("🚀 ~ parseResultResponse ~ response:", response);
-
+    console.log("response", response);
     if ("ok" in response) {
         return response.ok;
     } else if ("Ok" in response) {
@@ -82,4 +85,74 @@ export const fileToBase64 = (file: Blob) => {
             reject(error);
         };
     });
+};
+
+export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
+    let result = new Date();
+    try {
+        const parseValue = Number(nanoSeconds);
+        result = new Date(parseValue / 1000000);
+    } catch (error) {
+        console.log(error);
+    } finally {
+        return result;
+    }
+};
+
+export const groupLinkListByDate = (
+    linkList: LinkDetailModel[],
+): Record<string, LinkDetailModel[]> => {
+    if (linkList?.length > 0) {
+        const sortedItems = linkList.sort((a, b) => b.create_at.getTime() - a.create_at.getTime());
+        return sortedItems.reduce(
+            (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
+                const dateKey = item.create_at.toISOString().split("T")[0];
+                if (!groups[dateKey]) {
+                    groups[dateKey] = [];
+                }
+                groups[dateKey].push(item);
+                return groups;
+            },
+            {},
+        );
+    } else {
+        return {};
+    }
+};
+
+export const formatDateString = (dateString: string): string => {
+    if (dateString && dateString.trim() !== "") {
+        const date = new Date(dateString);
+        const monthShort = date.toLocaleString("default", { month: "short" });
+        const day = date.getDate();
+        const year = date.getFullYear();
+        return `${monthShort} ${day}, ${year}`;
+    } else {
+        return "";
+    }
+};
+
+export const getReponsiveClassname = (
+    responsive: MediaQuery,
+    responsiveObject: UIResponsiveType | undefined,
+): string | undefined => {
+    if (responsiveObject) {
+        if (responsive.isSmallDevice) {
+            return responsiveObject.responsive.mobile;
+        } else if (responsive.isMediumDevice) {
+            return responsiveObject.responsive.tablet ?? responsiveObject.responsive.mobile;
+        } else if (responsive.isLargeDevice) {
+            return responsiveObject.responsive.desktop ?? responsiveObject.responsive.mobile;
+        } else if (responsive.isExtraLargeDevice) {
+            return responsiveObject.responsive.widescreen ?? responsiveObject.responsive.mobile;
+        }
+    }
+};
+
+// Convert token amount to number with exponential token's decimals
+export const convertTokenAmountToNumber = (amount: number, decimals: number): number => {
+    return Math.floor(amount * 10 ** decimals);
+};
+export const convertDecimalBigIntToNumber = (amount: bigint, decimals: number): number => {
+    return Number(amount) / 10 ** decimals;
 };

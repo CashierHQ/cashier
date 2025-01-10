@@ -1,13 +1,6 @@
 import * as React from "react";
 import { StateBadge } from "@/components/link-item";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
@@ -16,9 +9,10 @@ import copy from "copy-to-clipboard";
 import LinkService from "@/services/link.service";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import QRCode from "react-qr-code";
+import { LinkModel } from "@/services/types/link.service.types";
 
 export default function DetailPage() {
-    const [linkData, setLinkData] = React.useState<any>({});
+    const [linkData, setLinkData] = React.useState<LinkModel>({} as LinkModel);
     const { linkId } = useParams();
     const { identity } = useIdentityKit();
     const { toast } = useToast();
@@ -47,7 +41,7 @@ export default function DetailPage() {
 
     return (
         <div className="w-screen flex flex-col items-center py-3">
-            <div className="w-11/12 max-w-[400px]">
+            <div className="h-[80vh] w-11/12 max-w-[400px]">
                 <div className="w-full flex flex-col">
                     <div id="heading-section" className="flex mb-5">
                         <div
@@ -59,12 +53,12 @@ export default function DetailPage() {
                             <ChevronLeftIcon width={25} height={25} />
                         </div>
                         <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center mx-auto">
-                            {linkData?.title}
+                            {linkData?.link?.title}
                         </h4>
                     </div>
                     <div id="qr-code-section" className="flex flex-col">
                         <div className="flex items-center justify-center grow">
-                            <StateBadge state={linkData?.state} />
+                            <StateBadge state={linkData?.link?.state} />
                         </div>
                         <div className="flex items-center justify-center grow mt-3">
                             <QRCode
@@ -84,15 +78,15 @@ export default function DetailPage() {
                                     <TableCell className="font-medium px-5">Link Type</TableCell>
                                     <TableCell></TableCell>
                                     <TableCell></TableCell>
-                                    <TableCell className="text-right px-5">AirDrop</TableCell>
+                                    <TableCell className="text-right px-5">
+                                        {linkData?.link?.linkType}
+                                    </TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium px-5">Chain</TableCell>
                                     <TableCell></TableCell>
                                     <TableCell></TableCell>
-                                    <TableCell className="text-right px-5">
-                                        {linkData?.chain}
-                                    </TableCell>
+                                    <TableCell className="text-right px-5">ICP</TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium px-5">Token</TableCell>
@@ -107,13 +101,15 @@ export default function DetailPage() {
                                     <TableCell></TableCell>
                                     <TableCell></TableCell>
                                     <TableCell className="text-right px-5">
-                                        {linkData?.amount}
+                                        {linkData?.link?.amountNumber}
                                     </TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
                     </div>
-                    <div
+
+                    {/* Temporarily comment for grant application */}
+                    {/* <div
                         id="additional-info-section"
                         className="flex flex-col my-5 border-2 rounded-xl"
                     >
@@ -166,7 +162,7 @@ export default function DetailPage() {
                                 </TableRow>
                             </TableBody>
                         </Table>
-                    </div>
+                    </div> */}
                     <Button
                         onClick={handleCopyLink}
                         className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"

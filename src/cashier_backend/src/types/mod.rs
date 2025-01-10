@@ -1,6 +1,15 @@
+pub mod account;
 pub mod api;
+pub mod chain;
+pub mod consent_messsage;
 pub mod error;
 pub mod ext;
-pub mod link_detail;
-pub mod link_user;
+pub mod icrc;
+pub mod intent;
+pub mod intent_transaction;
+pub mod link;
+pub mod link_intent;
+pub mod transaction;
 pub mod user;
+pub mod user_intent;
+pub mod user_link;

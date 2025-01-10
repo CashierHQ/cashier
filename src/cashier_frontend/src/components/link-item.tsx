@@ -1,53 +1,49 @@
-interface LinkData {
-    title: string;
-    status: string;
-    image: string;
-    state: any;
-}
+import { getLinkLabel, LINK_STATE } from "@/services/types/enum";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
-export function StateBadge({ state }: { state: any }) {
-    if (state === "PendingDetail") {
+export function StateBadge({ state }: { state: string | undefined }) {
+    if (state === LINK_STATE.ADD_ASSET) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightyellow text-yellow">
-                Pending details
+                {getLinkLabel(LINK_STATE.ADD_ASSET)}
             </div>
         );
     }
 
-    if (state === "PendingPreview") {
+    if (state === LINK_STATE.CHOOSE_TEMPLATE) {
         return (
             <div className="text-sm font-normal rounded-full px-2 bg-lightpurple text-[#3648A1]">
-                Pending preview
+                {getLinkLabel(LINK_STATE.CHOOSE_TEMPLATE)}
             </div>
         );
     }
 
-    if (state === "Active") {
+    if (state === LINK_STATE.ACTIVE) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-green text-white">
-                Active
+                {getLinkLabel(LINK_STATE.ACTIVE)}
             </div>
         );
     }
 
-    if (state === "Inactive") {
+    if (state === LINK_STATE.INACTIVE) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-gray-200 text-gray-700">
-                Inactive
+                {getLinkLabel(LINK_STATE.INACTIVE)}
             </div>
         );
     }
 
-    if (state === "New") {
+    if (state === LINK_STATE.CREATE_LINK) {
         return (
             <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightgreen">
-                New
+                {getLinkLabel(LINK_STATE.CREATE_LINK)}
             </div>
         );
     }
 }
 
-export default function LinkItem({ link }: { link: LinkData }) {
+export default function LinkItem({ link }: { link: LinkDetailModel }) {
     return (
         <div className="w-full flex justify-between items-center my-5">
             <div className="flex gap-x-5 items-center">
@@ -58,7 +54,9 @@ export default function LinkItem({ link }: { link: LinkData }) {
                 )}
             </div>
             <div className="flex items-center justify-between grow ml-3">
-                <h3 className="text-lg font-base">{link.title ?? "No title"}</h3>
+                <h3 className="text-lg font-base">
+                    {link.title.length > 0 ? link.title : "No title"}
+                </h3>
                 <StateBadge state={link.state} />
             </div>
         </div>

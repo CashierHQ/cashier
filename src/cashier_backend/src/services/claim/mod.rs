@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use crate::{store::link_store, types::link_detail::State};
+use crate::{repositories::link_store, types::link::link_state::LinkState};
 
 use super::ext::{
     cashier_nft::mint_nft,
@@ -15,13 +15,13 @@ pub async fn claim_nft(id: String, _caller: Principal) -> Result<(), String> {
     }
 
     let link = link.unwrap();
-    if link.state.unwrap() != State::Active {
+    if link.state.unwrap() != LinkState::Active.to_string() {
         return Err("Link is not active".to_string());
     }
 
     // TODO: Check if user has already claimed the link
 
-    let url = link.image.unwrap();
+    let url = link.link_image_url.unwrap();
     let mine = "image/jpeg".to_string();
     let purpose = "icrc97:image".to_string();
 

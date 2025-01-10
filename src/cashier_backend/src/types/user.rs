@@ -1,7 +1,4 @@
-use std::borrow::Cow;
-
-use candid::{CandidType, Decode, Encode};
-use ic_stable_structures::{storable::Bound, Storable};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, CandidType, Deserialize, Serialize)]
@@ -11,14 +8,25 @@ pub struct User {
     pub wallet: String,
 }
 
-impl Storable for User {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
+impl User {
+    pub fn new(id: String, email: Option<String>, wallet: String) -> Self {
+        Self { id, email, wallet }
     }
 
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
+    pub fn from_persistence(user: crate::repositories::entities::user::User) -> Self {
+        let id = user.pk.split('#').last().unwrap().to_string();
+        Self {
+            id,
+            email: user.email,
+            wallet: user.wallet,
+        }
     }
 
-    const BOUND: Bound = Bound::Unbounded;
+    pub fn to_persistence(&self) -> crate::repositories::entities::user::User {
+        crate::repositories::entities::user::User::new(
+            self.id.clone(),
+            self.email.clone(),
+            self.wallet.clone(),
+        )
+    }
 }

@@ -1,37 +1,73 @@
-import { Button } from "@/components/ui/button";
-import { Children, FunctionComponent, ReactElement, useState } from "react";
+import { Children, ReactElement, ReactNode, useState } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-export interface ParitalFormProps<T> {
-    handleSubmit: (values: T) => any;
-    handleChange: (e: any) => any;
-    defaultValues: Partial<T>;
+import { IntentCreateModel } from "@/services/types/intent.service.types";
+import { LINK_TYPE } from "@/services/types/enum";
+
+/**
+ * - V1: type for handle submit
+ * - V2: type for handle change
+ */
+export interface ParitalFormProps<V1, V2> {
+    handleSubmit: (values: V1) => void;
+    handleChange: (value: V2) => void;
+    isDisabled: boolean;
+    defaultValues: Partial<V2>;
+    linkType: LINK_TYPE;
 }
 
-interface MultiStepFormProps<T extends Object> {
+/**
+ * - V1: type for handle submit
+ * - V2: type for handle change
+ */
+interface MultiStepFormProps<V1 extends object, V2 extends object> {
     initialStep: number;
-    formData: T;
-    children: ReactElement<ItemProp> | ReactElement<ItemProp>[];
-    handleSubmit: (values: T) => any;
-    handleBack?: () => any;
-    handleChange: (e: any) => any;
+    formData: V2;
+    children: ReactNode;
+    handleSubmit: (values: V1) => void;
+    handleBackStep: () => Promise<void>;
+    handleBack?: () => void;
+    handleChange: (value: V2) => void;
+    isDisabled: boolean;
+    actionCreate: IntentCreateModel | undefined;
 }
 
-interface ItemProp {
-    handleSubmit: (values: any) => any;
+/**
+ * - V1: type for handle submit
+ * - V2: type for handle change
+ */
+interface ItemProp<V1, V2> {
+    handleSubmit: (values: V1) => Promise<void>;
+    isDisabled: boolean;
     name: string;
-    render: (props: ParitalFormProps<any>) => ReactElement<ParitalFormProps<any>>;
+    linkType: LINK_TYPE;
+    render: (props: ParitalFormProps<V1, V2>) => ReactElement<ParitalFormProps<V1, V2>>;
 }
 
-export default function MultiStepForm<T extends Object>({
+/**
+ * - V1: type for handle submit
+ * - V2: type for handle change
+ */
+export default function MultiStepForm<V1 extends object, V2 extends object>({
     initialStep = 0,
     formData,
-    handleSubmit: handleFinish,
+    handleBackStep,
     children,
     handleBack,
     handleChange,
-}: MultiStepFormProps<T>) {
-    const partialForms = Children.toArray(children) as ReactElement<ItemProp>[];
+    isDisabled,
+    actionCreate,
+}: MultiStepFormProps<V1, V2>) {
+    const partialForms = Children.toArray(children) as ReactElement<ItemProp<V1, V2>>[];
     const [currentStep, setCurrentStep] = useState(initialStep);
+
+    const handleClickBack = async () => {
+        if (!currentStep && handleBack) {
+            handleBack();
+        } else {
+            await handleBackStep();
+            setCurrentStep(currentStep - 1);
+        }
+    };
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -39,13 +75,10 @@ export default function MultiStepForm<T extends Object>({
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {partialForms[currentStep].props.name}
                 </h4>
-                {currentStep || (!currentStep && handleBack) ? (
+                {!actionCreate && (currentStep || (!currentStep && handleBack)) ? (
                     <div
                         className="absolute left-1 cursor-pointer text-[1.5rem]"
-                        onClick={() => {
-                            if (!currentStep && handleBack) handleBack();
-                            else setCurrentStep(currentStep - 1);
-                        }}
+                        onClick={handleClickBack}
                     >
                         <ChevronLeftIcon width={25} height={25} />
                     </div>
@@ -67,12 +100,18 @@ export default function MultiStepForm<T extends Object>({
                     return partialForm.props.render({
                         defaultValues: formData,
                         handleChange: handleChange,
-                        handleSubmit: (values: any) => {
-                            partialForm.props.handleSubmit(values);
-                            if (index == partialForms.length - 1)
-                                handleFinish({ ...formData, ...values });
-                            else setCurrentStep(index + 1);
+                        handleSubmit: async (values: V1) => {
+                            try {
+                                await partialForm.props.handleSubmit(values);
+                                if (index != partialForms.length - 1) {
+                                    setCurrentStep(index + 1);
+                                }
+                            } catch (err) {
+                                console.log(err);
+                            }
                         },
+                        isDisabled: isDisabled,
+                        linkType: partialForm.props.linkType,
                     });
                 }
                 return null;
@@ -81,13 +120,15 @@ export default function MultiStepForm<T extends Object>({
     );
 }
 
-const Item: FunctionComponent<ItemProp> = ({ handleSubmit, render }) => {
+const Item = <V1, V2>({ handleSubmit, render, isDisabled, linkType }: ItemProp<V1, V2>) => {
     return (
         <>
             {render({
-                defaultValues: {},
+                defaultValues: {} as V2,
                 handleChange: () => {},
                 handleSubmit: handleSubmit,
+                isDisabled: isDisabled,
+                linkType: linkType,
             })}
         </>
     );

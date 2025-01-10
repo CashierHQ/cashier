@@ -1,15 +1,22 @@
 // logger.rs
 
-use ic_cdk::println;
-
-pub fn info(message: &str) {
-    println!("[INFO] {}", message);
+#[macro_export]
+macro_rules! info {
+    ($($arg:tt)*) => ({
+        ic_cdk::println!("[INFO] {}", format!($($arg)*));
+    })
 }
 
-pub fn warn(message: &str) {
-    println!("[WARN] {}", message);
+#[macro_export]
+macro_rules! warn {
+    ($($arg:tt)*) => ({
+        ic_cdk::println!("[WARN] {}", format!($($arg)*));
+    })
 }
 
-pub fn error(message: &str) {
-    println!("[ERROR] {}", message);
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => ({
+        ic_cdk::println!("[ERROR] {}", format!($($arg)*));
+    })
 }

@@ -1,13 +1,12 @@
 import { useEffect, forwardRef, useRef, useState } from "react";
 import { FiUploadCloud, FiTrash } from "react-icons/fi";
-import { LuRefreshCw } from "react-icons/lu";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     onFileChange: (file: File | null) => void;
 }
-
 const FileInput = forwardRef<HTMLInputElement, InputProps>(
-    ({ className, defaultValue, onFileChange, ...props }: any, ref) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ({ defaultValue, onFileChange }: any) => {
         const inputRef = useRef<HTMLInputElement>(null);
         const [image, setImage] = useState<string | null>(defaultValue || null);
 
@@ -34,6 +33,10 @@ const FileInput = forwardRef<HTMLInputElement, InputProps>(
                 setImage(null);
             };
         }, []);
+
+        useEffect(() => {
+            setImage(defaultValue);
+        }, [defaultValue]);
 
         return (
             <div
