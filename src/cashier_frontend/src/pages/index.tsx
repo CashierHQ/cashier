@@ -69,19 +69,19 @@ export default function HomePage() {
             setDisableCreateButton(true);
             setToastData({
                 open: true,
-                title: "Creating",
-                description: "The link is being created. Please wait for seconds.",
+                title: t("common.creating"),
+                description: t("common.creatingLink"),
                 variant: "default",
             });
             const response = await new LinkService(identity).createLink({
                 link_type: { TipLink: null },
             });
             navigate(`/edit/${response}`);
-        } catch (err) {
+        } catch {
             setToastData({
                 open: true,
-                title: "Error",
-                description: err,
+                title: t("common.error"),
+                description: t("common.commonErrorMessage"),
                 variant: "default",
             });
         } finally {
