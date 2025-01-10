@@ -7,6 +7,8 @@ use crate::{
     },
 };
 
+use super::assemble_intent::map_tx_map_to_transactions;
+
 // This function set the intent and all transactions to processing state
 pub fn set_processing_intent(intent_id: String) -> Result<(), String> {
     let intent = intent_store::get(&intent_id)
@@ -93,13 +95,16 @@ pub fn get_intent_resp(intent_id: &str) -> Result<IntentResp, String> {
         .map(|t| t.transaction_id.clone())
         .collect();
     let transactions = transaction_store::batch_get(transaction_ids.clone());
+
+    let icrcx_transactions = map_tx_map_to_transactions(intent.tx_map, transactions);
+
     Ok(IntentResp {
         id: intent.id.clone(),
         creator_id: intent.creator_id.clone(),
         link_id: intent.link_id.clone(),
         state: intent.state.clone(),
         intent_type: intent.intent_type.clone(),
-        transactions: transactions,
+        transactions: icrcx_transactions,
     })
 }
 
@@ -133,13 +138,15 @@ pub fn roll_up_intent_state(intent: Intent) -> IntentResp {
     let updated_intent = intent_store::get(&intent.id).unwrap();
     let updated_transactions = transaction_store::batch_get(transaction_ids);
 
+    let icrcx_transactions = map_tx_map_to_transactions(intent.tx_map, transactions);
+
     return IntentResp {
         id: updated_intent.id.clone(),
         creator_id: updated_intent.creator_id.clone(),
         link_id: updated_intent.link_id.clone(),
         state: updated_intent.state.clone(),
         intent_type: updated_intent.intent_type.clone(),
-        transactions: updated_transactions,
+        transactions: icrcx_transactions,
     };
 }
 pub fn set_transaction_state(transaction_id: &str, state: TransactionState) -> Result<(), String> {

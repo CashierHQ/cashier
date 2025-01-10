@@ -13,6 +13,7 @@ pub struct Intent {
     pub intent_type: String,
     pub link_id: String,
     pub creator_id: String,
+    pub tx_map: Vec<Vec<String>>,
 }
 
 impl Intent {
@@ -26,6 +27,7 @@ impl Intent {
         intent_type: String,
         link_id: String,
         creator_id: String,
+        tx_map: Vec<Vec<String>>,
     ) -> Self {
         Self {
             pk: Self::build_pk(id),
@@ -33,6 +35,7 @@ impl Intent {
             intent_type: intent_type,
             link_id,
             creator_id,
+            tx_map,
         }
     }
 }

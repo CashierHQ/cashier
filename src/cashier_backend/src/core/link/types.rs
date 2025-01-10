@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{link_type::LinkType, template::Template, AssetInfo, Link, LinkDetailUpdate},
-    types::transaction::Transaction,
+    types::{icrcx_transaction::IcrcxRequests, transaction::Transaction},
 };
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -203,5 +203,5 @@ pub struct IntentResp {
     pub link_id: String,
     pub state: String,
     pub intent_type: String,
-    pub transactions: Vec<Transaction>,
+    pub transactions: IcrcxRequests,
 }

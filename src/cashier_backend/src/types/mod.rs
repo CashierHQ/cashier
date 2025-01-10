@@ -5,6 +5,7 @@ pub mod consent_messsage;
 pub mod error;
 pub mod ext;
 pub mod icrc;
+pub mod icrcx_transaction;
 pub mod intent;
 pub mod intent_transaction;
 pub mod link;
