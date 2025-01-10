@@ -19,7 +19,9 @@ use crate::{
 };
 
 use super::{
-    assemble_intent::{assemble_create_trasaction, AssembleTransactionResp},
+    assemble_intent::{
+        assemble_create_trasaction, map_tx_map_to_transactions, AssembleTransactionResp,
+    },
     validate::validate_balance_with_asset_info,
 };
 
@@ -72,12 +74,14 @@ pub async fn create_create_link_intent(
     let link_id = intent.link_id.clone();
     let ts: u64 = ic_cdk::api::time();
 
-    let new_intent = Intent::new(
+    // create tx without tx_map
+    let mut new_intent = Intent::new(
         id.to_string(),
         user_id.clone(),
         intent.link_id,
         IntentState::Created.to_string(),
         intent_type.to_string(),
+        vec![],
     );
     let new_link_intent = LinkIntent::new(link_id.clone(), IntentType::Create, id.to_string(), ts);
 
@@ -99,6 +103,13 @@ pub async fn create_create_link_intent(
             ))
         }
     };
+    let tx_map = assemble_res.tx_map.clone();
+    let txs = assemble_res.transactions.clone();
+
+    // update new tx_map
+    new_intent.tx_map = tx_map.clone();
+
+    let icrcx_transactions = map_tx_map_to_transactions(tx_map, txs);
 
     store_records(
         &new_intent,
@@ -121,7 +132,7 @@ pub async fn create_create_link_intent(
         link_id: intent.link_id.clone(),
         state: intent.state.clone(),
         intent_type: intent.intent_type.clone(),
-        transactions: assemble_res.transactions,
+        transactions: icrcx_transactions,
     };
 
     Ok(CreateIntentConsentResponse {

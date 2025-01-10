@@ -4,6 +4,8 @@ use crate::{
     types::intent::IntentType,
 };
 
+use super::assemble_intent::map_tx_map_to_transactions;
+
 pub fn get_create_intent_id(link_id: String) -> Result<String, String> {
     let link_intent_prefix = format!(
         "link#{}#type#{}#intent#",
@@ -55,12 +57,14 @@ pub fn get_create_intent(link_id: String) -> Result<IntentResp, String> {
 
     let transactions = transaction_store::batch_get(transaction_ids);
 
+    let icrcx_transactions = map_tx_map_to_transactions(intent.tx_map, transactions);
+
     return Ok(IntentResp {
         id: intent.id,
         creator_id: intent.creator_id,
         link_id: intent.link_id,
         state: intent.state,
         intent_type: intent.intent_type,
-        transactions,
+        transactions: icrcx_transactions,
     });
 }

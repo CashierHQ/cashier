@@ -64,6 +64,7 @@ pub struct Intent {
     pub link_id: String,
     pub state: String,
     pub intent_type: String,
+    pub tx_map: Vec<Vec<String>>,
 }
 
 impl Intent {
@@ -73,6 +74,7 @@ impl Intent {
         link_id: String,
         state: String,
         intent_type: String,
+        tx_maps: Vec<Vec<String>>,
     ) -> Self {
         Self {
             id,
@@ -80,6 +82,7 @@ impl Intent {
             link_id,
             state,
             intent_type,
+            tx_map: tx_maps,
         }
     }
 
@@ -90,6 +93,7 @@ impl Intent {
             self.intent_type.clone().to_string(),
             self.link_id.clone(),
             self.creator_id.clone(),
+            self.tx_map.clone(),
         )
     }
 
@@ -100,6 +104,7 @@ impl Intent {
             link_id: intent.link_id,
             state: intent.state,
             intent_type: intent.intent_type,
+            tx_map: intent.tx_map,
         }
     }
 }

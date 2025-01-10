@@ -1,8 +1,11 @@
+pub mod assemble;
 pub mod assemble_intent;
 pub mod build_tx;
+pub mod builder;
 pub mod confirm;
 pub mod consent_message;
 pub mod create;
+pub mod fee;
 pub mod get;
 pub mod update;
 pub mod validate;

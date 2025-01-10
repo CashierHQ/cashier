@@ -1,5 +1,4 @@
-use base64::{engine::general_purpose, Engine};
-use candid::{CandidType, Encode};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -98,11 +97,31 @@ impl Transaction {
         canister_id: String,
         transfer_arg: icrc_ledger_types::icrc1::transfer::TransferArg,
     ) -> Self {
+        let canister_call =
+            ic_icrc_tx::builder::icrc1::build_icrc1_transfer(canister_id, transfer_arg);
+
         Self {
             id,
-            canister_id,
-            method: "icrc1_transfer".to_string(),
-            arg: general_purpose::STANDARD.encode(Encode!(&transfer_arg).unwrap()),
+            canister_id: canister_call.canister_id,
+            method: canister_call.method,
+            arg: canister_call.arg,
+            state: TransactionState::Created.to_string(),
+        }
+    }
+
+    pub fn build_icrc_approve(
+        id: String,
+        canister_id: String,
+        approve_arg: icrc_ledger_types::icrc2::approve::ApproveArgs,
+    ) -> Self {
+        let canister_call =
+            ic_icrc_tx::builder::icrc2::build_icrc2_approve(canister_id, approve_arg);
+
+        Self {
+            id,
+            canister_id: canister_call.canister_id,
+            method: canister_call.method,
+            arg: canister_call.arg,
             state: TransactionState::Created.to_string(),
         }
     }
