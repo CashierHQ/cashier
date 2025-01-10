@@ -57,5 +57,11 @@
             "transaction_success": "Transaction success",
             "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service"
         }
+    },
+    "common": {
+        "error": "Error",
+        "commonErrorMessage": "There was a error while creating the link. Please try again later.",
+        "creating": "Creating",
+        "creatingLink": "The link is being created. Please wait for seconds."
     }
 }

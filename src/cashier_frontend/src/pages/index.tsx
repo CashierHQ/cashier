@@ -21,6 +21,7 @@ import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import AppSidebar from "@/components/app-sidebar";
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import ConnectedWalletDropdownIcon from "@/components/connected-wallet-icon";
+import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -50,8 +51,10 @@ export default function HomePage() {
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [disableCreateButton, setDisableCreateButton] = useState(false);
     const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
     const [documentUrl, setDocumentUrl] = useState("");
+    const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
     const navigate = useNavigate();
     const responsive = useResponsive();
 
@@ -62,10 +65,28 @@ export default function HomePage() {
     };
 
     const handleCreateLink = async () => {
-        const response = await new LinkService(identity).createLink({
-            link_type: { TipLink: null },
-        });
-        navigate(`/edit/${response}`);
+        try {
+            setDisableCreateButton(true);
+            setToastData({
+                open: true,
+                title: t("common.creating"),
+                description: t("common.creatingLink"),
+                variant: "default",
+            });
+            const response = await new LinkService(identity).createLink({
+                link_type: { TipLink: null },
+            });
+            navigate(`/edit/${response}`);
+        } catch {
+            setToastData({
+                open: true,
+                title: t("common.error"),
+                description: t("common.commonErrorMessage"),
+                variant: "default",
+            });
+        } finally {
+            setDisableCreateButton(true);
+        }
     };
 
     const handleMenuClick = (docSource: string) => {
@@ -127,7 +148,7 @@ export default function HomePage() {
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {
             return (
-                <div className="max-h-[60%] md:max-h-[30%] 2xl:max-h-[60%] overflow-y-auto custom-scrollbar">
+                <div className="max-h-[60%] md:max-h-[30%] xl:max-h-[40%] 2xl:max-h-[60%] overflow-y-auto custom-scrollbar">
                     {Object.entries(links).map(([date, items]) => (
                         <div key={date} className="mb-3">
                             <h3 className="text-lightblack">{formatDateString(date)}</h3>
@@ -166,42 +187,44 @@ export default function HomePage() {
         return (
             <div className="w-screen flex justify-center py-5 h-[90%]">
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">
-                    <div className="w-full flex justify-between items-center">
-                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                        <ConnectWalletButton
-                            onClick={connectToWallet}
-                            className="bg-green text-primary-foreground shadow hover:bg-green/90"
-                        >
-                            Get started
-                        </ConnectWalletButton>
-                    </div>
+                    <div className="w-11/12 max-w-[400px] flex flex-col items-center">
+                        <div className="w-full flex justify-between items-center">
+                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                            <ConnectWalletButton
+                                onClick={connectToWallet}
+                                className="bg-green text-primary-foreground shadow hover:bg-green/90"
+                            >
+                                Get started
+                            </ConnectWalletButton>
+                        </div>
 
-                    <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
-                        <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
-                            Cashier is still in development. Use with caution.
-                        </p>
-                        <span className="font-semibold mt-3 text-3xl md:text-2xl 2xl:text-3xl text-center">
-                            Cashier Links - <br />
-                            fast, easy, and safe{" "}
-                        </span>
-                        <p className="text-gray-500 text-md md:text-sm 2xl:text-md text-center mt-3">
-                            Start creating transaction links with Cashier: create & airdrop NFTs,
-                            and more features coming!
-                        </p>
-                        <img
-                            src="./landingPage.png"
-                            alt="Cashier illustration"
-                            className="w-[100%] md:w-[20vw] 2xl:w-[100%] max-w-[300px] mt-5"
-                        />
+                        <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
+                            <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
+                                Cashier is still in development. Use with caution.
+                            </p>
+                            <span className="font-semibold mt-3 text-3xl md:text-2xl 2xl:text-3xl text-center">
+                                Cashier Links - <br />
+                                fast, easy, and safe{" "}
+                            </span>
+                            <p className="text-gray-500 text-md md:text-sm 2xl:text-md text-center mt-3">
+                                Start creating transaction links with Cashier: create & airdrop
+                                NFTs, and more features coming!
+                            </p>
+                            <img
+                                src="./landingPage.png"
+                                alt="Cashier illustration"
+                                className="w-[100%] md:w-[20vw] 2xl:w-[100%] max-w-[300px] mt-5"
+                            />
+                        </div>
                     </div>
+                    <Button
+                        type="button"
+                        onClick={connectToWallet}
+                        className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
+                    >
+                        Get started
+                    </Button>
                 </div>
-                <Button
-                    type="button"
-                    onClick={connectToWallet}
-                    className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
-                >
-                    Get started
-                </Button>
             </div>
         );
     } else {
@@ -258,8 +281,13 @@ export default function HomePage() {
                             : renderLinkList(linkData)}
                     </div>
                     <button
-                        className="fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] bg-green text-white hover:bg-green/90"
+                        className={`fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[60px] h-[60px] ${
+                            disableCreateButton
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-green hover:bg-green/90"
+                        } text-white`}
                         onClick={handleCreateLink}
+                        disabled={disableCreateButton}
                     >
                         +
                     </button>
@@ -277,6 +305,20 @@ export default function HomePage() {
                             </DialogDescription>
                         </DialogContent>
                     </Dialog>
+                    <TransactionToast
+                        open={toastData?.open ?? false}
+                        onOpenChange={(open) =>
+                            setToastData({
+                                open: open as boolean,
+                                title: "",
+                                description: "",
+                                variant: null,
+                            })
+                        }
+                        title={toastData?.title ?? ""}
+                        description={toastData?.description ?? ""}
+                        variant={toastData?.variant ?? "default"}
+                    />
                 </Sheet>
             </div>
         );

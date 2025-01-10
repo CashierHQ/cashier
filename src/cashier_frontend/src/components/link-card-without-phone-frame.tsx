@@ -17,7 +17,11 @@ export default function LinkCardWithoutPhoneFrame({
     return (
         <div className="flex flex-col items-center bg-lightgreen rounded-md mt-5 py-5 px-8">
             <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 p-3">
-                <img src={src} alt="Link template" />
+                <img
+                    src={src}
+                    alt="Link template"
+                    className="w-[200px] md:w-[60px] xl:w-[60px] 2xl:w-[100px]"
+                />
                 <h3 className="font-semibold py-2">{title}</h3>
                 <h3 className="text-xs">{message}</h3>
                 <div
