@@ -3,9 +3,9 @@ import { IdentityKitProvider } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";
-import { IdentityKitAuthType, Plug } from "@nfid/identitykit";
+import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
-import { NFIDW, InternetIdentity, Stoic } from "@nfid/identitykit";
+import { InternetIdentity } from "@nfid/identitykit";
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const isMobile = () => {
@@ -41,11 +41,7 @@ function App() {
                 queryClient.clear();
             }}
             authType={IdentityKitAuthType.DELEGATION}
-            signers={
-                isMobile()
-                    ? [NFIDW, InternetIdentity, Stoic]
-                    : [NFIDW, InternetIdentity, Stoic, Plug]
-            }
+            signers={isMobile() ? [InternetIdentity] : [InternetIdentity]}
             signerClientOptions={{
                 targets,
             }}
