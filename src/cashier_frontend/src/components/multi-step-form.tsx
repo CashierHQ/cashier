@@ -61,7 +61,7 @@ export default function MultiStepForm<V1 extends object, V2 extends object>({
     const [currentStep, setCurrentStep] = useState(initialStep);
 
     const handleClickBack = async () => {
-        if (!currentStep && handleBack) {
+        if ((!currentStep || actionCreate) && handleBack) {
             handleBack();
         } else {
             await handleBackStep();
@@ -75,16 +75,12 @@ export default function MultiStepForm<V1 extends object, V2 extends object>({
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {partialForms[currentStep].props.name}
                 </h4>
-                {!actionCreate && (currentStep || (!currentStep && handleBack)) ? (
-                    <div
-                        className="absolute left-1 cursor-pointer text-[1.5rem]"
-                        onClick={handleClickBack}
-                    >
-                        <ChevronLeftIcon width={25} height={25} />
-                    </div>
-                ) : (
-                    <div></div>
-                )}
+                <div
+                    className="absolute left-1 cursor-pointer text-[1.5rem]"
+                    onClick={handleClickBack}
+                >
+                    <ChevronLeftIcon width={25} height={25} />
+                </div>
             </div>
             <div className="flex w-full mb-3">
                 {partialForms.map((_, index) => (
