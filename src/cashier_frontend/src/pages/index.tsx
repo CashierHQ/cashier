@@ -22,6 +22,7 @@ import AppSidebar from "@/components/app-sidebar";
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import ConnectedWalletDropdownIcon from "@/components/connected-wallet-icon";
 import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
+import useToast from "@/hooks/useToast";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -54,7 +55,8 @@ export default function HomePage() {
     const [disableCreateButton, setDisableCreateButton] = useState(false);
     const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
     const [documentUrl, setDocumentUrl] = useState("");
-    const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
+    //const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
+    const { toastData, showToast, hideToast } = useToast();
     const navigate = useNavigate();
     const responsive = useResponsive();
 
@@ -67,23 +69,13 @@ export default function HomePage() {
     const handleCreateLink = async () => {
         try {
             setDisableCreateButton(true);
-            setToastData({
-                open: true,
-                title: t("common.creating"),
-                description: t("common.creatingLink"),
-                variant: "default",
-            });
+            showToast(t("common.creating"), t("common.creatingLink"), "default");
             const response = await new LinkService(identity).createLink({
                 link_type: { TipLink: null },
             });
             navigate(`/edit/${response}`);
         } catch {
-            setToastData({
-                open: true,
-                title: t("common.error"),
-                description: t("common.commonErrorMessage"),
-                variant: "default",
-            });
+            showToast(t("common.error"), t("common.commonErrorMessage"), "error");
         } finally {
             setDisableCreateButton(true);
         }
@@ -307,14 +299,7 @@ export default function HomePage() {
                     </Dialog>
                     <TransactionToast
                         open={toastData?.open ?? false}
-                        onOpenChange={(open) =>
-                            setToastData({
-                                open: open as boolean,
-                                title: "",
-                                description: "",
-                                variant: null,
-                            })
-                        }
+                        onOpenChange={hideToast}
                         title={toastData?.title ?? ""}
                         description={toastData?.description ?? ""}
                         variant={toastData?.variant ?? "default"}
