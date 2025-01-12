@@ -27,6 +27,8 @@ import IntentService from "@/services/intent.service";
 import SignerService from "@/services/signer.service";
 import { Identity } from "@dfinity/agent";
 import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
+import useToast from "@/hooks/useToast";
+import { getCashierError } from "@/services/errorProcess.service";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -51,7 +53,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [isDisabled, setDisabled] = useState(false);
     const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
-    const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
+    //const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
     const [isRendering, setRendering] = useState(true);
     const [disabledConfirmButton, setDisabledConfirmButton] = useState(false);
     const [popupButton, setPopupButton] = useState("");
@@ -65,6 +67,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const identity = useIdentity();
     const responsive = useResponsive();
     const queryClient = useQueryClient();
+    const { toastData, showToast, hideToast } = useToast();
     const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
@@ -94,13 +97,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
         if (values.linkType !== LINK_TYPE.TIP_LINK) {
-            setToastData({
-                open: true,
-                title: "Unsupported link type",
-                description:
-                    "The current link type is currently not supported now. Please choose another link type.",
-                variant: "error",
-            });
+            showToast(
+                "Unsupported link type",
+                "The current link type is currently not supported now. Please choose another link type.",
+                "error",
+            );
             throw new Error();
         }
         const updateLinkParams: UpdateLinkParams = {
@@ -145,14 +146,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         const validationResult = true;
         try {
-            /* TODO: Remove after grant submit */
-            setToastData({
-                open: true,
-                title: "The tip link is being created.",
-                description: "We are processing your request. Please come back later.",
-                variant: "default",
-            });
-            return;
             if (validationResult) {
                 const linkService = new LinkService(identity);
                 setDisabled(true);
@@ -190,14 +183,21 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     await handleCreateAction();
                 }
             } else {
-                setToastData({
-                    open: true,
-                    title: t("transaction.validation.action_failed"),
-                    description: t("transaction.validation.action_failed_message"),
-                    variant: "error",
-                });
+                showToast(
+                    t("transaction.validation.action_failed"),
+                    t("transaction.validation.action_failed_message"),
+                    "error",
+                );
             }
         } catch (error) {
+            if (error instanceof Error) {
+                const cashierError = getCashierError(error);
+                showToast(
+                    t("transaction.create_intent.action_failed"),
+                    cashierError.message,
+                    "error",
+                );
+            }
             console.log("🚀 ~ handleSubmit ~ error:", error);
             setDisabled(false);
         } finally {
@@ -243,25 +243,20 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 actionCreate?.id ?? "",
             );
             console.log("🚀 ~ handleConfirmTransactions ~ confirmItenResult:", confirmItenResult);
-            if (confirmItenResult == null) {
-                // If the result is null, means it success -> call canister transfer
-
+            if (confirmItenResult?.transactions) {
                 // Change transaction status to processing
-                const processingTrans = actionCreate?.transactions;
-                processingTrans?.map((t) => (t.state = TRANSACTION_STATE.PROCESSING));
-                console.log("🚀 ~ handleConfirmTransactions ~ processingTrans:", processingTrans);
                 setActionCreate(
                     (prev) =>
                         ({
                             ...prev,
-                            transactions: processingTrans,
+                            transactions: confirmItenResult?.transactions,
                         }) as IntentCreateModel,
                 );
                 setTransactionConfirmModel(
                     (prevModel) =>
                         ({
                             ...prevModel,
-                            transactions: processingTrans,
+                            transactions: confirmItenResult?.transactions,
                         }) as ConfirmTransactionModel,
                 );
 
@@ -350,14 +345,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 </Drawer>
                 <TransactionToast
                     open={toastData?.open ?? false}
-                    onOpenChange={(open) =>
-                        setToastData({
-                            open: open as boolean,
-                            title: "",
-                            description: "",
-                            variant: null,
-                        })
-                    }
+                    onOpenChange={hideToast}
                     title={toastData?.title ?? ""}
                     description={toastData?.description ?? ""}
                     variant={toastData?.variant ?? "default"}

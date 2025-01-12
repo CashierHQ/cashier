@@ -36,7 +36,7 @@ const TransactionToast: FC<TransactionToastProps> = ({
     onOpenChange,
 }) => {
     return (
-        <ToastProvider duration={Infinity}>
+        <ToastProvider>
             <Toast
                 open={open}
                 onOpenChange={onOpenChange}

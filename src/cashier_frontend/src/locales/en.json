@@ -42,6 +42,9 @@
             "action_failed": "The validation failed",
             "action_failed_message": "Your links is not valid. Please check again."
         },
+        "create_intent": {
+            "action_failed": "Creating link failed."
+        },
         "confirm_popup": {
             "title": "Confirm transaction",
             "receive_label": "You will receive",
