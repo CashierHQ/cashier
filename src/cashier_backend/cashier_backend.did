@@ -6,6 +6,7 @@ type AssetInfo = record {
   total_claim : nat64;
   amount_per_claim : nat64;
 };
+type CanisterCallResponse = record { certificate : text; content_map : text };
 type CanisterError = variant {
   HandleLogicError : text;
   ValidationErrors : text;
@@ -30,6 +31,8 @@ type CreateIntentInput = record {
 };
 type CreateIntentParams = variant { Claim : ClaimIntentParams };
 type CreateLinkInput = record { link_type : LinkType };
+type ErrorDetail = record { code : int32; message : text };
+type ErrorResponse = record { error : ErrorDetail };
 type Fee = record {
   chain : text;
   "type" : text;
@@ -79,12 +82,16 @@ type Icrc21ErrorInfo = record { description : text };
 type Icrc21LineDisplayPage = record { lines : vec text };
 type Icrc21SupportedStandard = record { url : text; name : text };
 type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
+type IcrcXResponseItem = variant {
+  Error : ErrorResponse;
+  Success : SuccessResponse;
+};
 type IntentResp = record {
   id : text;
   link_id : text;
   creator_id : text;
   state : text;
-  transactions : vec Transaction;
+  transactions : vec vec Transaction;
   intent_type : text;
 };
 type Link = record {
@@ -149,6 +156,7 @@ type Result_6 = variant { Ok : GetLinkResp; Err : text };
 type Result_7 = variant { Ok : PaginateResult; Err : text };
 type Result_8 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_9 = variant { Ok : Link; Err : CanisterError };
+type SuccessResponse = record { result : CanisterCallResponse };
 type Transaction = record {
   id : text;
   arg : text;
@@ -156,10 +164,9 @@ type Transaction = record {
   canister_id : text;
   state : text;
 };
-type TransactionUpdate = record { transaction_id : text; is_send : bool };
 type UpdateIntentInput = record {
   link_id : text;
-  transaction_update : vec TransactionUpdate;
+  icrcx_responses : opt vec vec IcrcXResponseItem;
   intent_id : text;
 };
 type UpdateLinkInput = record {

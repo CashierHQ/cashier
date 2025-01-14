@@ -4,7 +4,9 @@ use ic_cdk::spawn;
 use ic_cdk_timers::set_timer;
 
 use crate::{
+    constant::TX_TIMEOUT,
     core::{intent::types::ConfirmIntentInput, link::types::IntentResp},
+    info,
     repositories::{intent_store, link_store, user_wallet_store},
     services::{link::is_link_creator, transaction::update::timeout_intent},
     types::intent::{IntentState, IntentType},
@@ -60,8 +62,10 @@ pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<IntentResp, Str
             // set all to processing
             set_processing_intent(input.intent_id.clone())?;
 
-            let timeout = option_env!("TX_TIMEOUT").unwrap_or("120");
+            let timeout = TX_TIMEOUT;
             let timeout_sec = timeout.parse::<u64>().unwrap_or(120);
+
+            info!("Set timer for intent {} {}", input.intent_id, timeout_sec);
 
             let id = input.intent_id.clone();
 

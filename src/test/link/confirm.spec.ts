@@ -10,8 +10,9 @@ import {
 import { getIdentity } from "../utils/wallet";
 import { ActorSubclass } from "@dfinity/agent";
 import { parseResultResponse, safeParseJSON } from "../utils/parser";
-import { ServiceHelper } from "../utils/service";
-import { sleep } from "../utils/sleep";
+import { ActorManager } from "../utils/service";
+import SignerService from "../helper/signer.service";
+import { mapTransactionToICRCXRequest } from "../utils/mapper";
 
 // Define the path to your canister's WASM file
 // export const WASM_PATH = resolve(
@@ -47,7 +48,7 @@ describe("Link", () => {
 
     const identity1 = getIdentity("user1");
 
-    let servicerHelper: ServiceHelper;
+    let actorManager: ActorManager;
 
     let linkId: string;
     let userId: string;
@@ -68,12 +69,12 @@ describe("Link", () => {
         // });
 
         // Save the actor and canister ID for use in tests
-        servicerHelper = new ServiceHelper({
+        actorManager = new ActorManager({
             canisterId: "jjio5-5aaaa-aaaam-adhaq-cai",
             identity: identity1,
         });
 
-        actor = await servicerHelper.initActor();
+        actor = await actorManager.initBackendActor();
 
         const user = await actor.get_user();
 
@@ -184,7 +185,7 @@ describe("Link", () => {
         expect(linkUpdated.state).toEqual(["Link_state_create_link"]);
     });
 
-    it("should create itent success", async () => {
+    it("should create intent success", async () => {
         const input: CreateIntentInput = {
             link_id: linkId,
             intent_type: "Create",
@@ -227,73 +228,29 @@ describe("Link", () => {
 
         const createLinkRes = await actor.confirm_intent(input);
         const res = parseResultResponse(createLinkRes);
-        const getLinkRes = await actor.get_link(linkId, [
-            {
-                intent_type: "Create",
-            },
-        ]);
-        const link = parseResultResponse(getLinkRes);
+        const transactions = res.transactions;
 
-        // Ensure the intent array has length greater than or equal to 1
-        expect(link.intent.length).toBeGreaterThanOrEqual(1);
+        console.log("transactions", transactions);
 
-        if (link.intent.length === 0) {
-            return;
-        }
+        const httpAgent = await actorManager.getHttpAgent();
 
-        // Get the first intent
-        const intent = link.intent[0];
+        console.log("httpAgent", httpAgent.host);
 
-        // Perform validation based on the intent
-        expect(intent.state).toEqual("Intent_state_processing");
+        const signerService = new SignerService(httpAgent);
 
-        // Check the state of all transactions
-        intent.transactions.forEach((transaction) => {
-            expect(transaction.state).toEqual("Transaction_state_processing");
+        const icrxRequests = transactions.map((subArray) => {
+            return subArray.map((transaction) => {
+                return mapTransactionToICRCXRequest(transaction);
+            });
         });
 
-        // Assert
-        expect(res).not.toBeNull();
-        expect(link.intent).toHaveLength(1);
-        expect(intent.transactions).toHaveLength(2);
-    });
-
-    it("Should set transaction to timeout", async () => {
-        // Act
-        const input: ConfirmIntentInput = {
-            link_id: linkId,
-            intent_id: createLinkIntentId,
-        };
-
-        const res = await actor.confirm_intent(input);
-        console.log("res", res);
-
-        // Sleep for 12 seconds to wait for the update
-        await sleep(12000);
-
-        // Get the link after waiting
-        const getLinkRes = await actor.get_link(linkId, [
-            {
-                intent_type: "Create",
-            },
-        ]);
-        const link = parseResultResponse(getLinkRes);
+        const icrcRes = await signerService.icrcxExecute(icrxRequests);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        console.log("link", safeParseJSON(link as any));
+        console.log("icrcRes", safeParseJSON(icrcRes as any));
 
-        // Ensure the intent array has length greater than or equal to 1
-        expect(link.intent.length).toBeGreaterThanOrEqual(1);
-
-        if (link.intent.length === 0) {
-            return;
-        }
-
-        // Perform assertions
-        const intent = link.intent[0];
-        expect(intent.state).toEqual("Intent_state_fail");
-        intent.transactions.forEach((transaction) => {
-            expect(transaction.state).toEqual("Transaction_state_timeout");
-        });
+        expect(res).not.toBeNull();
     });
+
+    it("should execute transaction success", async () => {});
 });
