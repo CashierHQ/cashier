@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{Intent, IntentResp},
-    types::consent_messsage::{ConsentType, Fee, Receive, Send},
+    types::{
+        consent_messsage::{ConsentType, Fee, Receive, Send},
+        icrcx_transaction::IcrcxResponses,
+    },
 };
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -79,7 +82,7 @@ pub struct TransactionUpdate {
 pub struct UpdateIntentInput {
     pub link_id: String,
     pub intent_id: String,
-    pub transaction_update: Vec<TransactionUpdate>,
+    pub icrcx_responses: Option<IcrcxResponses>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]

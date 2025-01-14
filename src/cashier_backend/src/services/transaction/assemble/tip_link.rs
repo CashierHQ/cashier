@@ -13,8 +13,6 @@ pub fn create(link: &Link, intent_id: &str, ts: u64) -> Result<AssembleTransacti
     let mut tx_map_template = vec![
         // one for deposit tip, one for approve backend use the fee
         vec!["icrc1_transfer".to_string(), "icrc2_approve".to_string()],
-        // update the intent and charge fee after two above finished
-        vec!["update_intent".to_string()],
     ];
 
     let amount_need_to_transfer = match &link.asset_info {
@@ -23,11 +21,6 @@ pub fn create(link: &Link, intent_id: &str, ts: u64) -> Result<AssembleTransacti
             first_item.total_amount
         }
         _ => return Err("Asset info not found".to_string()),
-    };
-
-    let link_type = match &link.link_type {
-        Some(link_type) => link_type,
-        None => return Err("Link type not found".to_string()),
     };
 
     let first_asset = match &link.asset_info {
@@ -67,8 +60,6 @@ pub fn create(link: &Link, intent_id: &str, ts: u64) -> Result<AssembleTransacti
         None,
         None,
     );
-
-    // TODO: add update_intent transaction to transactions and its intent_transactions
 
     return Ok(AssembleTransactionResp {
         transactions: vec![
