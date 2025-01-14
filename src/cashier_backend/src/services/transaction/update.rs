@@ -1,5 +1,6 @@
 use crate::{
     core::{intent::types::UpdateIntentInput, link::types::IntentResp},
+    info,
     repositories::{intent_store, intent_transaction_store, transaction_store},
     types::{
         intent::{Intent, IntentState, IntentType},
@@ -52,7 +53,7 @@ pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<Intent
     let UpdateIntentInput {
         link_id: _,
         intent_id,
-        transaction_update,
+        icrcx_responses,
     } = input;
 
     let intent = intent_store::get(&intent_id).ok_or_else(|| "Intent not found".to_string())?;
@@ -61,25 +62,15 @@ pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<Intent
         return Err("Intent state is not Processing".to_string());
     }
 
+    //TODO: validate icrcx response
+    if icrcx_responses.is_some() {
+        let _responses = icrcx_responses.unwrap();
+        info!("icrcx_responses: {:?}", _responses);
+    }
+
     match IntentType::from_string(&intent.intent_type) {
         Ok(intent_type) => match intent_type {
-            IntentType::Create => {
-                for transaction_update in transaction_update {
-                    if transaction_update.is_send {
-                        set_transaction_state(
-                            transaction_update.transaction_id.as_str(),
-                            TransactionState::Success,
-                        )?;
-                    } else {
-                        set_transaction_state(
-                            transaction_update.transaction_id.as_str(),
-                            TransactionState::Fail,
-                        )?;
-                    }
-                }
-
-                Ok(roll_up_intent_state(intent))
-            }
+            IntentType::Create => Ok(roll_up_intent_state(intent)),
             _ => Err("Not supported".to_string()),
         },
         Err(e) => Err(e),
@@ -136,7 +127,6 @@ pub fn roll_up_intent_state(intent: Intent) -> IntentResp {
     }
 
     let updated_intent = intent_store::get(&intent.id).unwrap();
-    let updated_transactions = transaction_store::batch_get(transaction_ids);
 
     let icrcx_transactions = map_tx_map_to_transactions(intent.tx_map, transactions);
 
@@ -166,6 +156,8 @@ pub fn timeout_intent(intent_id: &str) -> Result<(), String> {
         .ok_or_else(|| "[check_intent_processing] Intent not found".to_string())?;
     let prefix = format!("intent#{}#transaction#", intent_id);
     let intent_transactions = intent_transaction_store::find_with_prefix(prefix.as_str());
+
+    info!("timeout itent: {:?}", intent_id);
 
     let transaction_ids: Vec<String> = intent_transactions
         .iter()
