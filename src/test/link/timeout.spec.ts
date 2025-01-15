@@ -255,7 +255,7 @@ describe("Link", () => {
         // Assert
         expect(res).not.toBeNull();
         expect(link.intent).toHaveLength(1);
-        expect(intent.transactions).toHaveLength(1);
+        expect(intent.transactions).toHaveLength(2);
     });
 
     it("Should set transaction to timeout", async () => {
