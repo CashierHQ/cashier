@@ -7,35 +7,45 @@ use crate::{
     types::{consent_messsage::ConsentType, transaction::Transaction},
 };
 
-pub fn build(token_address: String, fee_amount: u64) -> BuildTxResp {
-    let id: Uuid = Uuid::new_v4();
+use super::TransactionBuilder;
 
-    let spender = Account {
-        owner: ic_cdk::id(),
-        subaccount: None,
-    };
+pub struct ApproveCashierFeeBuilder {
+    pub token_address: String,
+    pub fee_amount: u64,
+}
 
-    let arg = ApproveArgs {
-        from_subaccount: None,
-        spender,
-        amount: Nat::from(fee_amount),
-        expected_allowance: None,
-        expires_at: None,
-        fee: None,
-        memo: None,
-        created_at_time: None,
-    };
+impl TransactionBuilder for ApproveCashierFeeBuilder {
+    fn build(&self) -> BuildTxResp {
+        let id: Uuid = Uuid::new_v4();
 
-    let transaction = Transaction::build_icrc_approve(id.to_string(), token_address.clone(), arg);
+        let spender = Account {
+            owner: ic_cdk::id(),
+            subaccount: None,
+        };
 
-    let consent = ConsentType::build_send_app_fee_consent(
-        crate::types::chain::Chain::IC,
-        fee_amount,
-        token_address.clone(),
-    );
+        let arg = ApproveArgs {
+            from_subaccount: None,
+            spender,
+            amount: Nat::from(self.fee_amount),
+            expected_allowance: None,
+            expires_at: None,
+            fee: None,
+            memo: None,
+            created_at_time: None,
+        };
 
-    return BuildTxResp {
-        transaction,
-        consent,
-    };
+        let transaction =
+            Transaction::build_icrc_approve(id.to_string(), self.token_address.clone(), arg);
+
+        let consent = ConsentType::build_send_app_fee_consent(
+            crate::types::chain::Chain::IC,
+            self.fee_amount,
+            self.token_address.clone(),
+        );
+
+        BuildTxResp {
+            transaction,
+            consent,
+        }
+    }
 }
