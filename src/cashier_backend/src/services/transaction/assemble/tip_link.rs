@@ -5,8 +5,7 @@ use crate::{
     constant::ICP_CANISTER_ID,
     services::transaction::{
         assemble_intent::AssembleTransactionResp,
-        builder::{self, transfer_to_link_escrow_wallet::TransferToLinkEscrowWalletBuilder},
-        fee::Fee,
+        builder::transfer_to_link_escrow_wallet::TransferToLinkEscrowWalletBuilder, fee::Fee,
     },
     types::{
         chain::Chain,
