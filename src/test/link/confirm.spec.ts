@@ -230,11 +230,7 @@ describe("Link", () => {
         const res = parseResultResponse(createLinkRes);
         const transactions = res.transactions;
 
-        console.log("transactions", transactions);
-
         const httpAgent = await actorManager.getHttpAgent();
-
-        console.log("httpAgent", httpAgent.host);
 
         const signerService = new SignerService(httpAgent);
 
