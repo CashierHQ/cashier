@@ -13,7 +13,7 @@ import { Skeleton } from "./ui/skeleton";
 export type ConfirmTransactionModel = {
     linkName: string;
     feeModel: CreateIntentConsentModel;
-    transactions?: TransactionModel[];
+    transactions?: TransactionModel[][];
 };
 
 interface ConfirmationPopupProps {
