@@ -206,7 +206,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const callExecute = async (
-        transactions: TransactionModel[] | undefined,
+        transactions: TransactionModel[][] | undefined,
         identity: Identity | undefined,
     ) => {
         if (!identity) return;
@@ -216,12 +216,10 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
         try {
             const signerService = new SignerService(identity);
-
-            const icrcxRequests = transactions.map((tx) => {
-                return toCanisterCallRequest(tx);
+            const icrcxRequests = transactions.map((subTrans) => {
+                return subTrans.map((tx) => toCanisterCallRequest(tx));
             });
-
-            const res = await signerService.icrcxExecute([icrcxRequests]);
+            const res = await signerService.icrcxExecute(icrcxRequests);
             console.log("🚀 ~ LinkPage ~ res:", res);
         } catch (err) {
             console.log(err);

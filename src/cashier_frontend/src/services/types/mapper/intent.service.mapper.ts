@@ -15,7 +15,7 @@ export const mapReceiveModel = (fee: Receive): ReceiveModel => {
 // Mapping between FeeModel -> AssetModel
 export const mapFeeModelToAssetModel = (
     fee: FeeModel | undefined,
-    transactions: TransactionModel[] | undefined,
+    transactions: TransactionModel[][] | undefined,
 ): AssetModel | undefined => {
     if (!fee) {
         return undefined;
@@ -24,8 +24,15 @@ export const mapFeeModelToAssetModel = (
         address: fee.address,
         amount: fee.amount,
         chain: fee.chain,
-        transaction: transactions?.find((t) => t.canister_id === fee.address),
+        transaction: getTransactionMapWithTheFeeModel(fee.address, transactions),
     };
+};
+
+const getTransactionMapWithTheFeeModel = (
+    address: string,
+    transactions: TransactionModel[][] | undefined,
+) => {
+    return transactions?.flat().find((t) => t.canister_id === address);
 };
 
 export const toCanisterCallRequest = (tx: TransactionModel) => {
