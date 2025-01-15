@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     core::{link_type::LinkType, template::Template, AssetInfo, Link, LinkDetailUpdate},
-    types::{icrcx_transaction::IcrcxRequests, transaction::Transaction},
+    types::icrcx_transaction::IcrcxRequests,
 };
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]

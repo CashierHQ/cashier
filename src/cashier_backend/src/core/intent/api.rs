@@ -33,7 +33,7 @@ pub async fn update_intent(input: UpdateIntentInput) -> Result<IntentResp, Strin
         return Err("User is not the creator of the intent".to_string());
     }
 
-    services::transaction::update::update_transaction_and_roll_up(input)
+    services::transaction::update::update_transaction_and_roll_up(input).await
 }
 
 #[query(guard = "is_not_anonymous")]

@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-use super::{assemble_intent::map_tx_map_to_transactions, validate::validate_tip_link};
+use super::{assemble_intent::map_tx_map_to_transactions, finalize};
 
 // This function set the intent and all transactions to processing state
 pub fn set_processing_intent(intent_id: String) -> Result<(), String> {
@@ -78,7 +78,7 @@ pub async fn update_transaction_and_roll_up(
     match LinkType::from_string(&link.link_type.clone().unwrap()) {
         Ok(link_type) => match link_type {
             LinkType::TipLink => {
-                let _ = validate_tip_link(link).await;
+                finalize::create_tip_link::execute(intent.clone(), link).await?;
             }
             _ => return Err("Not supported".to_string()),
         },

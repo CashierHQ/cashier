@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-pub async fn finalize_create_tip_link(intent: Intent, link: Link) -> Result<(), String> {
+pub async fn execute(intent: Intent, link: Link) -> Result<(), String> {
     let intent_transactions = get_intent_transactions(&intent.id)?;
 
     let is_allowance_enough = validate_allowance().await.unwrap_or(false);

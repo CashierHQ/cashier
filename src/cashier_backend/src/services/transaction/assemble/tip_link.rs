@@ -13,6 +13,7 @@ pub fn create(link: &Link, intent_id: &str, ts: u64) -> Result<AssembleTransacti
     let mut tx_map_template = vec![
         // one for deposit tip, one for approve backend use the fee
         vec!["icrc1_transfer".to_string(), "icrc2_approve".to_string()],
+        vec!["update_intent".to_string()],
     ];
 
     let amount_need_to_transfer = match &link.asset_info {
@@ -41,15 +42,25 @@ pub fn create(link: &Link, intent_id: &str, ts: u64) -> Result<AssembleTransacti
     let build_approve_fee_res = builder::approve_cashier_fee::build(token_fee_address, fee);
     tx_map_template[0][1] = build_approve_fee_res.transaction.id.clone();
 
-    let transfer_intent_transacrtion = IntentTransaction::new(
+    let build_update_intent_res =
+        builder::update_intent::build(link.id.clone(), intent_id.to_string());
+    tx_map_template[1][0] = build_update_intent_res.transaction.id.clone();
+
+    let transfer_intent_transaction = IntentTransaction::new(
         intent_id.to_string(),
         build_trasfer_res.transaction.id.clone(),
         ts,
     );
 
-    let approve_fee_intent_transacrtion = IntentTransaction::new(
+    let approve_fee_intent_transaction = IntentTransaction::new(
         intent_id.to_string(),
         build_approve_fee_res.transaction.id.clone(),
+        ts,
+    );
+
+    let update_intent_intent_transaction = IntentTransaction::new(
+        intent_id.to_string(),
+        build_update_intent_res.transaction.id.clone(),
         ts,
     );
 
@@ -65,10 +76,12 @@ pub fn create(link: &Link, intent_id: &str, ts: u64) -> Result<AssembleTransacti
         transactions: vec![
             build_trasfer_res.transaction,
             build_approve_fee_res.transaction,
+            build_update_intent_res.transaction,
         ],
         intent_transactions: vec![
-            transfer_intent_transacrtion,
-            approve_fee_intent_transacrtion,
+            transfer_intent_transaction,
+            approve_fee_intent_transaction,
+            update_intent_intent_transaction,
         ],
         consent_messages: vec![
             consent_receive_tip_link,
