@@ -12,7 +12,7 @@ export type IntentCreateModel = {
     link_id: string;
     creator_id: string;
     intent_type: string;
-    transactions?: TransactionModel[];
+    transactions?: TransactionModel[][];
 };
 
 export type FeeModel = {
