@@ -7,24 +7,33 @@ use base64::Engine;
 use candid::Encode;
 use uuid::Uuid;
 
-pub fn build(link_id: String, intent_id: String) -> BuildTxResp {
-    let id: Uuid = Uuid::new_v4();
+use super::TransactionBuilder;
 
-    let input = UpdateIntentInput {
-        link_id,
-        intent_id,
-        icrcx_responses: None,
-    };
+pub struct UpdateIntentBuilder {
+    pub link_id: String,
+    pub intent_id: String,
+}
 
-    let canister_id = ic_cdk::id().to_string();
-    let method = "update_intent".to_string();
-    let arg = general_purpose::STANDARD.encode(Encode!(&input).unwrap());
-    let state = TransactionState::Created.to_string();
+impl TransactionBuilder for UpdateIntentBuilder {
+    fn build(&self) -> BuildTxResp {
+        let id: Uuid = Uuid::new_v4();
 
-    let transaction = Transaction::new(id.to_string(), canister_id, method, arg, state);
+        let input = UpdateIntentInput {
+            link_id: self.link_id.clone(),
+            intent_id: self.intent_id.clone(),
+            icrcx_responses: None,
+        };
 
-    return BuildTxResp {
-        transaction,
-        consent: ConsentType::None,
-    };
+        let canister_id = ic_cdk::id().to_string();
+        let method = "update_intent".to_string();
+        let arg = general_purpose::STANDARD.encode(Encode!(&input).unwrap());
+        let state = TransactionState::Created.to_string();
+
+        let transaction = Transaction::new(id.to_string(), canister_id, method, arg, state);
+
+        BuildTxResp {
+            transaction,
+            consent: ConsentType::None,
+        }
+    }
 }
