@@ -14,13 +14,13 @@ export default function LinkCard({
     onClaim?: () => void;
 }) {
     /* TODO: Remove after we have all the flows for templates */
-    const commingSoonLabel = header?.includes("(Comming soon)") ? "Comming soon" : "";
+    const comingSoonLabel = header?.includes("(Coming soon)") ? "Coming soon" : "";
     const renderHeaderTitle = () => {
-        if (commingSoonLabel.length > 0) {
+        if (comingSoonLabel.length > 0) {
             return (
                 <span>
-                    {header?.replace("(Comming soon)", "").trim()}{" "}
-                    <span className="text-red-500 font-bold">{`(Comming soon)`}</span>
+                    {header?.replace("(Coming soon)", "").trim()}{" "}
+                    <span className="text-red-500 font-bold">{`(Coming soon)`}</span>
                 </span>
             );
         } else {
