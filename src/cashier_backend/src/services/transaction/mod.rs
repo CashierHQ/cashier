@@ -6,6 +6,7 @@ pub mod confirm;
 pub mod consent_message;
 pub mod create;
 pub mod fee;
+pub mod finalize;
 pub mod get;
 pub mod update;
 pub mod validate;

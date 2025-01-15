@@ -1,14 +1,15 @@
 use crate::{
     core::{intent::types::UpdateIntentInput, link::types::IntentResp},
     info,
-    repositories::{intent_store, intent_transaction_store, transaction_store},
+    repositories::{intent_store, intent_transaction_store, link_store, transaction_store},
     types::{
         intent::{Intent, IntentState, IntentType},
+        link::link_type::LinkType,
         transaction::TransactionState,
     },
 };
 
-use super::assemble_intent::map_tx_map_to_transactions;
+use super::{assemble_intent::map_tx_map_to_transactions, validate::validate_tip_link};
 
 // This function set the intent and all transactions to processing state
 pub fn set_processing_intent(intent_id: String) -> Result<(), String> {
@@ -49,7 +50,9 @@ pub fn update_intent_state(id: String, state: IntentState) -> Result<Intent, Str
     }
 }
 
-pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<IntentResp, String> {
+pub async fn update_transaction_and_roll_up(
+    input: UpdateIntentInput,
+) -> Result<IntentResp, String> {
     let UpdateIntentInput {
         link_id: _,
         intent_id,
@@ -62,10 +65,24 @@ pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<Intent
         return Err("Intent state is not Processing".to_string());
     }
 
+    let link: crate::repositories::entities::link::Link = link_store::get(&intent.link_id)
+        .ok_or_else(|| "[update_transaction_and_roll_up] Link not found".to_string())?;
+    let link = crate::types::link::Link::from_persistence(link);
+
     //TODO: validate icrcx response
-    if icrcx_responses.is_some() {
-        let _responses = icrcx_responses.unwrap();
-        info!("icrcx_responses: {:?}", _responses);
+    // if icrcx_responses.is_some() {
+    //     let _responses = icrcx_responses.unwrap();
+    //     info!("icrcx_responses: {:?}", _responses);
+    // }
+
+    match LinkType::from_string(&link.link_type.clone().unwrap()) {
+        Ok(link_type) => match link_type {
+            LinkType::TipLink => {
+                let _ = validate_tip_link(link).await;
+            }
+            _ => return Err("Not supported".to_string()),
+        },
+        Err(e) => return Err(e),
     }
 
     match IntentType::from_string(&intent.intent_type) {
@@ -75,28 +92,6 @@ pub fn update_transaction_and_roll_up(input: UpdateIntentInput) -> Result<Intent
         },
         Err(e) => Err(e),
     }
-}
-
-pub fn get_intent_resp(intent_id: &str) -> Result<IntentResp, String> {
-    let intent = intent_store::get(intent_id).ok_or_else(|| "Intent not found".to_string())?;
-    let prefix = format!("intent#{}#transaction#", intent_id);
-    let intent_transactions = intent_transaction_store::find_with_prefix(prefix.as_str());
-    let transaction_ids: Vec<String> = intent_transactions
-        .iter()
-        .map(|t| t.transaction_id.clone())
-        .collect();
-    let transactions = transaction_store::batch_get(transaction_ids.clone());
-
-    let icrcx_transactions = map_tx_map_to_transactions(intent.tx_map, transactions);
-
-    Ok(IntentResp {
-        id: intent.id.clone(),
-        creator_id: intent.creator_id.clone(),
-        link_id: intent.link_id.clone(),
-        state: intent.state.clone(),
-        intent_type: intent.intent_type.clone(),
-        transactions: icrcx_transactions,
-    })
 }
 
 pub fn roll_up_intent_state(intent: Intent) -> IntentResp {
@@ -187,6 +182,20 @@ pub fn set_timeout_if_needed(transaction_id: &str) -> Result<(), String> {
         transaction.state = TransactionState::Timeout.to_string();
         transaction_store::update(transaction.to_persistence());
     }
+
+    Ok(())
+}
+
+pub fn update_transaction_state(
+    transaction_id: &str,
+    state: TransactionState,
+) -> Result<(), String> {
+    let mut transaction = transaction_store::get(transaction_id)
+        .ok_or_else(|| "[update_transaction_state] Transaction not found".to_string())?;
+
+    transaction.state = state.to_string();
+
+    transaction_store::update(transaction.to_persistence());
 
     Ok(())
 }

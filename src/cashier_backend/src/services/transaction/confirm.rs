@@ -13,8 +13,7 @@ use crate::{
 };
 
 use super::{
-    update::{get_intent_resp, set_processing_intent},
-    validate::validate_balance_with_asset_info,
+    get::get_intent_resp, update::set_processing_intent, validate::validate_balance_with_asset_info,
 };
 
 pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<IntentResp, String> {
