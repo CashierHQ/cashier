@@ -100,6 +100,7 @@ pub enum ConsentType {
     Receive(Receive),
     Send(Send),
     Fee(Fee),
+    None,
 }
 
 impl ConsentType {

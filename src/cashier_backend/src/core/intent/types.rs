@@ -53,6 +53,7 @@ impl From<Vec<ConsentType>> for CreateIntentConsent {
                 ConsentType::Receive(r) => receive.push(r),
                 ConsentType::Send(s) => send.push(s),
                 ConsentType::Fee(f) => fee.push(f),
+                _ => {}
             }
         }
 

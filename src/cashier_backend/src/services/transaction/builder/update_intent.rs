@@ -1,0 +1,30 @@
+use crate::services::transaction::build_tx::BuildTxResp;
+use crate::types::consent_messsage::ConsentType;
+use crate::types::transaction::TransactionState;
+use crate::{core::intent::types::UpdateIntentInput, types::transaction::Transaction};
+use base64::engine::general_purpose;
+use base64::Engine;
+use candid::Encode;
+use uuid::Uuid;
+
+pub fn build(link_id: String, intent_id: String) -> BuildTxResp {
+    let id: Uuid = Uuid::new_v4();
+
+    let input = UpdateIntentInput {
+        link_id,
+        intent_id,
+        icrcx_responses: None,
+    };
+
+    let canister_id = ic_cdk::id().to_string();
+    let method = "update_intent".to_string();
+    let arg = general_purpose::STANDARD.encode(Encode!(&input).unwrap());
+    let state = TransactionState::Created.to_string();
+
+    let transaction = Transaction::new(id.to_string(), canister_id, method, arg, state);
+
+    return BuildTxResp {
+        transaction,
+        consent: ConsentType::None,
+    };
+}

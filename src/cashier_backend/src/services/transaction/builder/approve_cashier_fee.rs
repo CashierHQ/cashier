@@ -26,12 +26,6 @@ pub fn build(token_address: String, fee_amount: u64) -> BuildTxResp {
         created_at_time: None,
     };
 
-    let consent = ConsentType::build_send_consent(
-        crate::types::chain::Chain::IC,
-        fee_amount,
-        token_address.clone(),
-    );
-
     let transaction = Transaction::build_icrc_approve(id.to_string(), token_address.clone(), arg);
 
     let consent = ConsentType::build_send_app_fee_consent(
