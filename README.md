@@ -1,17 +1,30 @@
-## Build backend
+## Local enviroment
 
-```
-npm run build:backend
-```
+### Copy `.env.example` to `.env.local`
 
-## .env
-
-```
-CANISTER_ID_CASHIER_BACKEND=
+````bash
+cp .env.example .env.local
 ```
 
-## canister
+### Deploy
 
-| Canister        | ID                            |
-| --------------- | ----------------------------- |
-| cashier backend | `jjio5-5aaaa-aaaam-adhaq-cai` |
+```bash
+make deploy
+````
+
+### Run unit test
+
+```bash
+make test
+
+```
+
+## Staging enviroment
+
+### Copy `.env.example` to `.env.staging`
+
+````bash
+cp .env.example .env.staging
+```
+
+````
