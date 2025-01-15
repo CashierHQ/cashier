@@ -8,33 +8,44 @@ use crate::{
     utils::helper::{to_memo, to_subaccount},
 };
 
-pub fn build(link_id: String, token_address: String, transfer_amount: u64) -> BuildTxResp {
-    let id: Uuid = Uuid::new_v4();
+use super::TransactionBuilder;
 
-    let account = Account {
-        owner: ic_cdk::id(),
-        subaccount: Some(to_subaccount(link_id)),
-    };
+pub struct TransferToLinkEscrowWalletBuilder {
+    pub link_id: String,
+    pub token_address: String,
+    pub transfer_amount: u64,
+}
 
-    let arg = TransferArg {
-        to: account,
-        amount: Nat::from(transfer_amount),
-        memo: Some(to_memo(id.to_string())),
-        fee: None,
-        created_at_time: None,
-        from_subaccount: None,
-    };
+impl TransactionBuilder for TransferToLinkEscrowWalletBuilder {
+    fn build(&self) -> BuildTxResp {
+        let id: Uuid = Uuid::new_v4();
 
-    let consent = ConsentType::build_send_consent(
-        crate::types::chain::Chain::IC,
-        transfer_amount,
-        token_address.clone(),
-    );
+        let account = Account {
+            owner: ic_cdk::id(),
+            subaccount: Some(to_subaccount(self.link_id.clone())),
+        };
 
-    let transaction = Transaction::build_icrc_transfer(id.to_string(), token_address, arg);
+        let arg = TransferArg {
+            to: account,
+            amount: Nat::from(self.transfer_amount),
+            memo: Some(to_memo(id.to_string())),
+            fee: None,
+            created_at_time: None,
+            from_subaccount: None,
+        };
 
-    return BuildTxResp {
-        transaction,
-        consent,
-    };
+        let consent = ConsentType::build_send_consent(
+            crate::types::chain::Chain::IC,
+            self.transfer_amount,
+            self.token_address.clone(),
+        );
+
+        let transaction =
+            Transaction::build_icrc_transfer(id.to_string(), self.token_address.clone(), arg);
+
+        BuildTxResp {
+            transaction,
+            consent,
+        }
+    }
 }
