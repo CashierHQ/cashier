@@ -3,7 +3,7 @@ import { IdentityKitProvider } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";
-import { IdentityKitAuthType } from "@nfid/identitykit";
+import { IdentityKitAuthType, NFIDW } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { InternetIdentity } from "@nfid/identitykit";
 import { useEffect } from "react";
@@ -41,7 +41,7 @@ function App() {
                 queryClient.clear();
             }}
             authType={IdentityKitAuthType.DELEGATION}
-            signers={isMobile() ? [InternetIdentity] : [InternetIdentity]}
+            signers={isMobile() ? [InternetIdentity, NFIDW] : [InternetIdentity, NFIDW]}
             signerClientOptions={{
                 targets,
             }}

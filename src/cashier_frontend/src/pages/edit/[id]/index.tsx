@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LinkTemplate, { linkTemplateSchema } from "./LinkTemplate";
 import LinkDetails, { linkDetailsSchema } from "./LinkDetails";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentity } from "@nfid/identitykit/react";
 import LinkService from "@/services/link.service";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
 import { Drawer } from "@/components/ui/drawer";
@@ -17,7 +17,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { LINK_STATE, LINK_TYPE, TRANSACTION_STATE } from "@/services/types/enum";
+import { INTENT_STATE, LINK_STATE, LINK_TYPE, TRANSACTION_STATE } from "@/services/types/enum";
 import {
     CreateIntentInput,
     GetConsentMessageInput,
@@ -29,6 +29,7 @@ import { Identity } from "@dfinity/agent";
 import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 import useToast from "@/hooks/useToast";
 import { getCashierError } from "@/services/errorProcess.service";
+import { queryKeys } from "@/lib/queryKeys";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -60,6 +61,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [actionCreate, setActionCreate] = useState<IntentCreateModel>();
     const [transactionConfirmModel, setTransactionConfirmModel] =
         useState<ConfirmTransactionModel>();
+    const [shouldPoll, setShouldPoll] = useState(false);
+    const intervalRef = useRef<number | undefined>(undefined);
 
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -69,6 +72,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const queryClient = useQueryClient();
     const { toastData, showToast, hideToast } = useToast();
     const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
+    const { data: updatedLinkDetail, refetch } = useQuery({
+        queryKey: queryKeys.links.detail(linkId, identity).queryKey,
+        queryFn: queryKeys.links.detail(linkId, identity).queryFn,
+        enabled: !!linkId,
+    });
 
     useEffect(() => {
         if (!linkId) return;
@@ -93,6 +101,48 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             console.log("🚀 ~ useEffect ~ err:", err);
         }
     }, [linkId, identity]);
+
+    useEffect(() => {
+        if (shouldPoll && updatedLinkDetail?.intent_create?.state === INTENT_STATE.PROCESSING) {
+            intervalRef.current = window.setInterval(() => {
+                refetch();
+            }, 1000);
+        } else {
+            if (intervalRef.current !== undefined) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = undefined;
+            }
+            setShouldPoll(false);
+        }
+        return () => {
+            if (intervalRef.current !== undefined) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = undefined;
+            }
+        };
+    }, [shouldPoll, updatedLinkDetail, refetch]);
+
+    useEffect(() => {
+        if (updatedLinkDetail?.intent_create?.transactions?.length) {
+            setActionCreate(
+                (prev) =>
+                    ({
+                        ...prev,
+                        transactions: updatedLinkDetail?.intent_create?.transactions,
+                    }) as IntentCreateModel,
+            );
+            setTransactionConfirmModel(
+                (prevModel) =>
+                    ({
+                        ...prevModel,
+                        transactions: updatedLinkDetail?.intent_create?.transactions,
+                    }) as ConfirmTransactionModel,
+            );
+        }
+        if (updatedLinkDetail?.intent_create?.state !== INTENT_STATE.PROCESSING) {
+            setShouldPoll(false);
+        }
+    }, [updatedLinkDetail]);
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
@@ -220,7 +270,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 return subTrans.map((tx) => toCanisterCallRequest(tx));
             });
             const res = await signerService.icrcxExecute(icrcxRequests);
-            console.log("🚀 ~ LinkPage ~ res:", res);
+            return res;
         } catch (err) {
             console.log(err);
         }
@@ -259,7 +309,32 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 );
 
                 console.log("Call canister transfer");
-                await callExecute(actionCreate?.transactions, identity);
+                const result = await callExecute(actionCreate?.transactions, identity);
+                if (result) {
+                    console.log(
+                        "Canister service call complete. Now re-fetch the link data to get the intent.",
+                    );
+                    setShouldPoll(true);
+
+                    // if (linkId) {
+                    //     const linkObj = await new LinkService(identity).getLink(linkId);
+                    //     const { intent_create } = linkObj;
+                    //     setActionCreate(
+                    //         (prev) =>
+                    //             ({
+                    //                 ...prev,
+                    //                 transactions: intent_create?.transactions,
+                    //             }) as IntentCreateModel,
+                    //     );
+                    //     setTransactionConfirmModel(
+                    //         (prevModel) =>
+                    //             ({
+                    //                 ...prevModel,
+                    //                 transactions: intent_create?.transactions,
+                    //             }) as ConfirmTransactionModel,
+                    //     );
+                    // }
+                }
             }
         } catch (err) {
             console.log(err);

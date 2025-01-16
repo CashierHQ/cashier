@@ -50,7 +50,7 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
             case TRANSACTION_STATE.PROCESSING:
                 return <img src="/loading.gif" width={22} />;
             default:
-                return null;
+                return <IoMdCheckmark color="green" size={22} className="opacity-0 hidden" />;
         }
     };
 
@@ -68,7 +68,7 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
         <div id="confirmation-transaction" className="flex justify-between my-2">
             <div className="flex">
                 {renderTransactionState(props.assets?.[0]?.transaction?.state)}
-                <div id="transaction-title" className="ml-3">
+                <div id="transaction-title" className="ml-3 text-right">
                     {props.title}
                 </div>
             </div>

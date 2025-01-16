@@ -181,7 +181,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                             {translate("transaction.confirm_popup.receive_label")}
                         </div>
                         <div className="flex justify-between border-solid border-inherit border-2 rounded-lg p-2">
-                            <div>Cashier Link</div>
+                            <div className="ml-3">Cashier Link</div>
                             <div>{data?.linkName}</div>
                         </div>
                     </div>
