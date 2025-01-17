@@ -8,7 +8,7 @@ use crate::{
     core::{intent::types::ConfirmIntentInput, link::types::IntentResp},
     info,
     repositories::{intent_store, link_store, user_wallet_store},
-    services::{link::is_link_creator, transaction::update::timeout_intent},
+    services::{link::is_link_creator, transaction_manager::update::timeout_intent},
     types::intent::{IntentState, IntentType},
 };
 

@@ -1,4 +1,4 @@
-use crate::services::transaction::build_tx::BuildTxResp;
+use crate::services::transaction_manager::build_tx::BuildTxResp;
 use crate::types::consent_messsage::ConsentType;
 use crate::types::transaction::TransactionState;
 use crate::{core::intent::types::UpdateIntentInput, types::transaction::Transaction};

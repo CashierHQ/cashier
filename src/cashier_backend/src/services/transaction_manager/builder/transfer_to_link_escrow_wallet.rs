@@ -3,7 +3,7 @@ use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
 use uuid::Uuid;
 
 use crate::{
-    services::transaction::build_tx::BuildTxResp,
+    services::transaction_manager::build_tx::BuildTxResp,
     types::{consent_messsage::ConsentType, transaction::Transaction},
     utils::helper::{to_memo, to_subaccount},
 };
