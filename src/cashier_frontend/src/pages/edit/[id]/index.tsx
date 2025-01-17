@@ -71,7 +71,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const responsive = useResponsive();
     const queryClient = useQueryClient();
     const { toastData, showToast, hideToast } = useToast();
-    const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
+    const { mutate, error: updateLinkError, mutateAsync } = useUpdateLink(queryClient, identity);
     const { data: updatedLinkDetail, refetch } = useQuery({
         queryKey: queryKeys.links.detail(linkId, identity).queryKey,
         queryFn: queryKeys.links.detail(linkId, identity).queryFn,
@@ -93,6 +93,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             }
             if (intent_create) {
                 setActionCreate(intent_create);
+                if (intent_create?.state === INTENT_STATE.SUCCESS) {
+                    setPopupButton("Continue");
+                }
             }
         };
         try {
@@ -141,6 +144,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
         if (updatedLinkDetail?.intent_create?.state !== INTENT_STATE.PROCESSING) {
             setShouldPoll(false);
+        }
+        if (updatedLinkDetail?.intent_create?.state === INTENT_STATE.SUCCESS) {
+            console.log("Update button state");
+            setPopupButton("Continue");
+            setDisabledConfirmButton(false);
         }
     }, [updatedLinkDetail]);
 
@@ -192,6 +200,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
+    // User click "Create" button
     const handleSubmit = async () => {
         if (!linkId) return;
         const validationResult = true;
@@ -285,55 +294,53 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         setPopupButton(t("transaction.confirm_popup.inprogress_button") as string);
         if (!linkId && !actionCreate?.id) return;
         try {
-            const intentService = new IntentService(identity);
-            const confirmItenResult = await intentService.confirmIntent(
-                linkId ?? "",
-                actionCreate?.id ?? "",
-            );
-            console.log("🚀 ~ handleConfirmTransactions ~ confirmItenResult:", confirmItenResult);
-            if (confirmItenResult?.transactions) {
-                // Change transaction status to processing
-                setActionCreate(
-                    (prev) =>
-                        ({
-                            ...prev,
-                            transactions: confirmItenResult?.transactions,
-                        }) as IntentCreateModel,
+            if (updatedLinkDetail?.intent_create?.state === INTENT_STATE.SUCCESS) {
+                console.log("ALL OF THE TRANS SUCCESS. CALL TO UPDATE LINK TO ACTIVE");
+                const updateLinkParams: UpdateLinkParams = {
+                    linkId: linkId ?? "",
+                    linkModel: {
+                        ...formData,
+                    },
+                    isContinue: true,
+                };
+                console.log(updateLinkParams);
+                await mutateAsync(updateLinkParams);
+                navigate(`/details/${linkId}`);
+            } else {
+                const intentService = new IntentService(identity);
+                const confirmItenResult = await intentService.confirmIntent(
+                    linkId ?? "",
+                    actionCreate?.id ?? "",
                 );
-                setTransactionConfirmModel(
-                    (prevModel) =>
-                        ({
-                            ...prevModel,
-                            transactions: confirmItenResult?.transactions,
-                        }) as ConfirmTransactionModel,
+                console.log(
+                    "🚀 ~ handleConfirmTransactions ~ confirmItenResult:",
+                    confirmItenResult,
                 );
-
-                console.log("Call canister transfer");
-                const result = await callExecute(actionCreate?.transactions, identity);
-                if (result) {
-                    console.log(
-                        "Canister service call complete. Now re-fetch the link data to get the intent.",
+                if (confirmItenResult?.transactions) {
+                    // Change transaction status to processing
+                    setActionCreate(
+                        (prev) =>
+                            ({
+                                ...prev,
+                                transactions: confirmItenResult?.transactions,
+                            }) as IntentCreateModel,
                     );
-                    setShouldPoll(true);
+                    setTransactionConfirmModel(
+                        (prevModel) =>
+                            ({
+                                ...prevModel,
+                                transactions: confirmItenResult?.transactions,
+                            }) as ConfirmTransactionModel,
+                    );
 
-                    // if (linkId) {
-                    //     const linkObj = await new LinkService(identity).getLink(linkId);
-                    //     const { intent_create } = linkObj;
-                    //     setActionCreate(
-                    //         (prev) =>
-                    //             ({
-                    //                 ...prev,
-                    //                 transactions: intent_create?.transactions,
-                    //             }) as IntentCreateModel,
-                    //     );
-                    //     setTransactionConfirmModel(
-                    //         (prevModel) =>
-                    //             ({
-                    //                 ...prevModel,
-                    //                 transactions: intent_create?.transactions,
-                    //             }) as ConfirmTransactionModel,
-                    //     );
-                    // }
+                    console.log("Call canister transfer");
+                    const result = await callExecute(actionCreate?.transactions, identity);
+                    if (result) {
+                        console.log(
+                            "Canister service call complete. Now re-fetch the link data to get the intent.",
+                        );
+                        setShouldPoll(true);
+                    }
                 }
             }
         } catch (err) {
