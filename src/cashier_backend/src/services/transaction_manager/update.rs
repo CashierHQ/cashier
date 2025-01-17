@@ -3,7 +3,7 @@ use crate::{
     info,
     repositories::{intent_store, intent_transaction_store, link_store, transaction_store},
     types::{
-        intent::{Intent, IntentState, IntentType},
+        intent::{Intent, IntentState},
         link::link_type::LinkType,
         transaction::TransactionState,
     },
@@ -77,20 +77,10 @@ pub async fn update_transaction_and_roll_up(
 
     match LinkType::from_string(&link.link_type.clone().unwrap()) {
         Ok(link_type) => match link_type {
-            LinkType::TipLink => {
-                finalize::create_tip_link::execute(intent.clone(), link).await?;
-            }
+            LinkType::TipLink => finalize::create_tip_link::execute(intent.clone(), link).await,
             _ => return Err("Not supported".to_string()),
         },
         Err(e) => return Err(e),
-    }
-
-    match IntentType::from_string(&intent.intent_type) {
-        Ok(intent_type) => match intent_type {
-            IntentType::Create => Ok(roll_up_intent_state(intent)),
-            _ => Err("Not supported".to_string()),
-        },
-        Err(e) => Err(e),
     }
 }
 
@@ -133,16 +123,6 @@ pub fn roll_up_intent_state(intent: Intent) -> IntentResp {
         intent_type: updated_intent.intent_type.clone(),
         transactions: icrcx_transactions,
     };
-}
-pub fn set_transaction_state(transaction_id: &str, state: TransactionState) -> Result<(), String> {
-    let mut transaction = transaction_store::get(transaction_id)
-        .ok_or_else(|| "[set_transaction_timeout] Transaction not found".to_string())?;
-
-    transaction.state = state.to_string();
-
-    transaction_store::update(transaction.to_persistence());
-
-    Ok(())
 }
 
 // This method will used when need to change intent's transactions to timeout

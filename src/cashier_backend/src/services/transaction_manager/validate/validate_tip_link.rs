@@ -3,7 +3,8 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
     constant::ICP_CANISTER_ID,
-    services::transaction::fee::Fee,
+    info,
+    services::transaction_manager::fee::Fee,
     types::link::Link,
     utils::{
         helper::to_subaccount,
@@ -32,6 +33,8 @@ pub async fn validate_balance_transfer(link: &Link) -> Result<bool, String> {
 
     let balance = balance_of(Principal::from_text(asset_address).unwrap(), account).await?;
 
+    info!("balance: {:?}", balance);
+
     if balance < total_amount {
         return Ok(false);
     }
@@ -47,7 +50,7 @@ pub async fn validate_allowance() -> Result<bool, String> {
     };
 
     let spender = Account {
-        owner: Principal::from_text(ICP_CANISTER_ID).unwrap(),
+        owner: ic_cdk::api::id(),
         subaccount: None,
     };
 
@@ -57,6 +60,8 @@ pub async fn validate_allowance() -> Result<bool, String> {
         spender,
     )
     .await?;
+
+    info!("allowance_fee: {:?}", allowance_fee);
 
     if allowance_fee.allowance < Nat::from(Fee::CreateTipLinkFeeIcp.as_u64()) {
         return Ok(false);

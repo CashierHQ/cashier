@@ -15,30 +15,33 @@ pub async fn create_intent(
     input: CreateIntentInput,
 ) -> Result<CreateIntentConsentResponse, CanisterError> {
     // inside already check caller is creator
-    services::transaction::create::create_create_link_intent(input).await
+    services::transaction_manager::create::create_type_create_link_intent(input).await
 }
 
 #[update(guard = "is_not_anonymous")]
 pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<IntentResp, String> {
-    services::transaction::confirm::confirm_intent(input).await
+    services::transaction_manager::confirm::confirm_intent(input).await
 }
 
 #[update(guard = "is_not_anonymous")]
 pub async fn update_intent(input: UpdateIntentInput) -> Result<IntentResp, String> {
     let caller = ic_cdk::api::caller();
 
-    if !services::transaction::validate::is_intent_creator(caller.to_text(), &input.intent_id)
-        .await?
+    if !services::transaction_manager::validate::is_intent_creator(
+        caller.to_text(),
+        &input.intent_id,
+    )
+    .await?
     {
         return Err("User is not the creator of the intent".to_string());
     }
 
-    services::transaction::update::update_transaction_and_roll_up(input).await
+    services::transaction_manager::update::update_transaction_and_roll_up(input).await
 }
 
 #[query(guard = "is_not_anonymous")]
 pub async fn get_consent_message(
     input: GetConsentMessageInput,
 ) -> Result<CreateIntentConsent, CanisterError> {
-    services::transaction::consent_message::get_consent_message(input)
+    services::transaction_manager::consent_message::get_consent_message(input)
 }
