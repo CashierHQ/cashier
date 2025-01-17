@@ -94,7 +94,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             if (intent_create) {
                 setActionCreate(intent_create);
                 if (intent_create?.state === INTENT_STATE.SUCCESS) {
-                    setPopupButton("Continue");
+                    setPopupButton(t("continue"));
                 }
             }
         };
@@ -146,8 +146,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             setShouldPoll(false);
         }
         if (updatedLinkDetail?.intent_create?.state === INTENT_STATE.SUCCESS) {
-            console.log("Update button state");
-            setPopupButton("Continue");
+            setPopupButton(t("continue"));
             setDisabledConfirmButton(false);
         }
     }, [updatedLinkDetail]);
@@ -192,7 +191,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 },
                 isContinue: true,
             };
-            console.log(updateLinkParams);
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
