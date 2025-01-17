@@ -1,9 +1,9 @@
-use crate::services::transaction::builder::approve_cashier_fee::ApproveCashierFeeBuilder;
-use crate::services::transaction::builder::update_intent::UpdateIntentBuilder;
-use crate::services::transaction::builder::TransactionBuilder;
+use crate::services::transaction_manager::builder::approve_cashier_fee::ApproveCashierFeeBuilder;
+use crate::services::transaction_manager::builder::update_intent::UpdateIntentBuilder;
+use crate::services::transaction_manager::builder::TransactionBuilder;
 use crate::{
     constant::ICP_CANISTER_ID,
-    services::transaction::{
+    services::transaction_manager::{
         assemble_intent::AssembleTransactionResp,
         builder::transfer_to_link_escrow_wallet::TransferToLinkEscrowWalletBuilder, fee::Fee,
     },

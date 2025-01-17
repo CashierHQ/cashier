@@ -16,7 +16,7 @@ use crate::{
     warn,
 };
 
-use super::transaction::get::get_create_intent;
+use super::transaction_manager::get::get_create_intent;
 
 pub fn create_new(creator: String, input: CreateLinkInput) -> Result<String, String> {
     let user_id = match user_wallet_store::get(&creator) {
