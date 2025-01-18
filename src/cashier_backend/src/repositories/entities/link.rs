@@ -1,11 +1,9 @@
-use candid::{CandidType, Decode, Encode};
-use ic_stable_structures::{storable::Bound, Storable};
-use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
-
 use crate::types::link::AssetInfo;
+use candid::CandidType;
+use cashier_essentials::storable;
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Debug, CandidType, Clone)]
+#[storable]
 pub struct Link {
     pub pk: String,
     pub title: Option<String>,
@@ -30,16 +28,4 @@ impl Link {
     pub fn split_pk(pk: &str) -> String {
         pk.split('#').collect::<Vec<&str>>()[1].to_string()
     }
-}
-
-impl Storable for Link {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }

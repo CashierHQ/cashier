@@ -1,12 +1,10 @@
-use std::borrow::Cow;
-
-use candid::{CandidType, Decode, Encode};
-use ic_stable_structures::{storable::Bound, Storable};
-use serde::{Deserialize, Serialize};
+use candid::CandidType;
+use cashier_essentials::storable;
 
 const PK_PATTERN: &str = "intent";
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Debug, CandidType, Clone)]
+#[storable]
 pub struct Intent {
     pub pk: String,
     pub state: String,
@@ -38,16 +36,4 @@ impl Intent {
             tx_map,
         }
     }
-}
-
-impl Storable for Intent {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }

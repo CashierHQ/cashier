@@ -1,12 +1,10 @@
-use std::borrow::Cow;
-
-use candid::{CandidType, Decode, Encode};
-use ic_stable_structures::{storable::Bound, Storable};
-use serde::{Deserialize, Serialize};
+use candid::CandidType;
+use cashier_essentials::storable;
 
 const PK_PATTERN: &str = "transaction";
 
-#[derive(Clone, Debug, CandidType, Deserialize, Serialize)]
+#[derive(Clone, Debug, CandidType)]
+#[storable]
 pub struct Transaction {
     pub pk: String,
     pub canister_id: String,
@@ -39,16 +37,4 @@ impl Transaction {
             state,
         }
     }
-}
-
-impl Storable for Transaction {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }
