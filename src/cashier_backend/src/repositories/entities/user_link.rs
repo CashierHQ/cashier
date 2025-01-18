@@ -1,12 +1,10 @@
-use std::borrow::Cow;
-
-use candid::{CandidType, Decode, Encode};
-use ic_stable_structures::Storable;
-use serde::{Deserialize, Serialize};
+use candid::CandidType;
+use cashier_essentials::storable;
 
 pub const KEY_PATTERN: &str = "user#{}#link#{}";
 
-#[derive(Clone, Debug, Default, CandidType, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, CandidType)]
+#[storable]
 pub struct UserLink {
     pub pk: String,
     pub created_at: u64,
@@ -30,17 +28,4 @@ impl UserLink {
             created_at: ts,
         }
     }
-}
-
-impl Storable for UserLink {
-    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(candid::Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        candid::Decode!(bytes.as_ref(), Self).unwrap()
-    }
-
-    const BOUND: ic_stable_structures::storable::Bound =
-        ic_stable_structures::storable::Bound::Unbounded;
 }
