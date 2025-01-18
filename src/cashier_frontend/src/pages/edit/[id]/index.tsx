@@ -12,12 +12,12 @@ import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
 import { Drawer } from "@/components/ui/drawer";
 import ConfirmationPopup, { ConfirmTransactionModel } from "@/components/confirmation-popup";
-import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
+import TransactionToast from "@/components/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { INTENT_STATE, LINK_STATE, LINK_TYPE, TRANSACTION_STATE } from "@/services/types/enum";
+import { INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import {
     CreateIntentInput,
     GetConsentMessageInput,
@@ -60,9 +60,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [intentCreate, setIntentCreate] = useState<IntentCreateModel>();
     const [transactionConfirmModel, setTransactionConfirmModel] =
         useState<ConfirmTransactionModel>();
-    const [shouldPoll, setShouldPoll] = useState(false);
-    const intervalRef = useRef<number | undefined>(undefined);
-
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { linkId } = useParams();
@@ -74,16 +71,12 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { data: updatedLinkDetail, refetch } = useQuery({
         queryKey: queryKeys.links.detail(linkId, identity).queryKey,
         queryFn: queryKeys.links.detail(linkId, identity).queryFn,
-        enabled: !!linkId,
+        enabled: !!linkId && !!identity,
     });
 
     useEffect(() => {
-        if (!linkId) return;
-        if (!identity) return;
-        const fetchData = async () => {
-            const linkObj = await new LinkService(identity).getLink(linkId);
-            const { link, intent_create } = linkObj;
-            console.log("🚀 ~ fetchData ~ linkObj:", linkObj);
+        if (updatedLinkDetail) {
+            const { link, intent_create } = updatedLinkDetail;
             if (link && link.state) {
                 const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
@@ -92,58 +85,16 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             }
             if (intent_create) {
                 setIntentCreate(intent_create);
-                if (intent_create?.state === INTENT_STATE.SUCCESS) {
-                    setPopupButton(t("continue"));
-                }
+                setTransactionConfirmModel(
+                    (prevModel) =>
+                        ({
+                            ...prevModel,
+                            transactions: updatedLinkDetail?.intent_create?.transactions,
+                        }) as ConfirmTransactionModel,
+                );
             }
-        };
-        try {
-            fetchData();
-        } catch (err) {
-            console.log("🚀 ~ useEffect ~ err:", err);
         }
-    }, [linkId, identity]);
 
-    useEffect(() => {
-        if (shouldPoll && updatedLinkDetail?.intent_create?.state === INTENT_STATE.PROCESSING) {
-            intervalRef.current = window.setInterval(() => {
-                refetch();
-            }, 1000);
-        } else {
-            if (intervalRef.current !== undefined) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = undefined;
-            }
-            setShouldPoll(false);
-        }
-        return () => {
-            if (intervalRef.current !== undefined) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = undefined;
-            }
-        };
-    }, [shouldPoll, updatedLinkDetail, refetch]);
-
-    useEffect(() => {
-        if (updatedLinkDetail?.intent_create?.transactions?.length) {
-            setIntentCreate(
-                (prev) =>
-                    ({
-                        ...prev,
-                        transactions: updatedLinkDetail?.intent_create?.transactions,
-                    }) as IntentCreateModel,
-            );
-            setTransactionConfirmModel(
-                (prevModel) =>
-                    ({
-                        ...prevModel,
-                        transactions: updatedLinkDetail?.intent_create?.transactions,
-                    }) as ConfirmTransactionModel,
-            );
-        }
-        if (updatedLinkDetail?.intent_create?.state !== INTENT_STATE.PROCESSING) {
-            setShouldPoll(false);
-        }
         if (updatedLinkDetail?.intent_create?.state === INTENT_STATE.SUCCESS) {
             setPopupButton(t("continue"));
             setDisabledConfirmButton(false);
@@ -293,7 +244,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleUpdateLinkToActive = async () => {
         console.log("ALL OF THE TRANS SUCCESS. CALL TO UPDATE LINK TO ACTIVE");
         setDisabledConfirmButton(true);
-        setPopupButton(t("transaction.processing"));
+        setPopupButton(t("processing"));
         const updateLinkParams: UpdateLinkParams = {
             linkId: linkId ?? "",
             linkModel: {
@@ -337,7 +288,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 console.log(
                     "Canister service call complete. Now re-fetch the link data to get the intent.",
                 );
-                setShouldPoll(true);
+                refetch();
             }
         }
     };

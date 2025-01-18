@@ -34,7 +34,6 @@ export function LinkVaultTestForm(props: TestFormProps) {
                 linkId,
                 tokenAddress,
             );
-            console.log("🚀 ~ handleSubmitForm ~ fetchedBalance:", fetchedBalance);
             if (fetchedBalance) {
                 const parsedAmount = await TokenUtilService.getHumanReadableAmount(
                     fetchedBalance,
