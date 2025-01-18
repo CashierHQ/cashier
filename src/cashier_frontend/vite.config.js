@@ -4,11 +4,17 @@ import { defineConfig } from "vite";
 import environment from "vite-plugin-environment";
 import dotenv from "dotenv";
 import tailwindcss from "tailwindcss";
-import path from "path";
-
-dotenv.config({ path: "../../.env" });
+import path, { resolve } from "path";
 
 export default defineConfig((mode) => {
+    const envFile = mode === "staging" ? ".env.staging" : ".env.local";
+    const envPath = resolve(__dirname, `../../${envFile}`);
+
+    // Load the environment variables from the determined .env file
+    dotenv.config({ path: envPath });
+
+    console.log("cashier backend ", process.env.CANISTER_ID_CASHIER_BACKEND);
+
     return {
         build: {
             emptyOutDir: true,

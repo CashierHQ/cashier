@@ -2,21 +2,20 @@
 
 ### Copy `.env.example` to `.env.local`
 
-````bash
+```bash
 cp .env.example .env.local
 ```
 
-### Deploy
+### Deploy local
 
 ```bash
-make deploy
-````
+make local
+```
 
 ### Run unit test
 
 ```bash
 make test
-
 ```
 
 ## Staging enviroment
