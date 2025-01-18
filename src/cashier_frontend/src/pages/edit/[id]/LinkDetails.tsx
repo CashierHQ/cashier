@@ -160,7 +160,7 @@ export default function LinkDetails({
                 assetList.map(async (asset) => {
                     const amountFetched = await canisterUtilService.checkAccountBalance(
                         asset.tokenAddress,
-                        identity,
+                        identity?.getPrincipal().toString(),
                     );
                     if (amountFetched !== null) {
                         const parsedAmount = await TokenUtilService.getHumanReadableAmount(
