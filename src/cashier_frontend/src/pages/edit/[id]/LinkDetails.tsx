@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { AssetSelectItem } from "@/components/asset-select";
 import { LINK_TYPE } from "@/services/types/enum";
-import { useAuth } from "@nfid/identitykit/react";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import {
     IC_EXPLORER_IMAGES_PATH,
     icExplorerService,
@@ -35,6 +35,9 @@ import { IconInput } from "@/components/icon-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { convertTokenAmountToNumber } from "@/utils";
+import CanisterUtilsService from "@/services/canisterUtils.service";
+import { TokenUtilService } from "@/services/tokenUtils.service";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const linkDetailsSchema = z.object({
     image: z.string(),
@@ -52,12 +55,12 @@ type InputSchema = z.infer<typeof linkDetailsSchema>;
 const ASSET_LIST: AssetSelectItem[] = [
     {
         name: "TK 1",
-        amount: 200,
+        amount: 0,
         tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
     },
     {
         name: "TK 2",
-        amount: 120,
+        amount: 0,
         tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
     },
 ];
@@ -69,12 +72,14 @@ export default function LinkDetails({
 }: ParitalFormProps<InputSchema, Partial<InputSchema>>) {
     const { t } = useTranslation();
     const { user: walletUser } = useAuth();
+    const identity = useIdentity();
 
     const walletAddress = walletUser ? walletUser.principal.toString() : "";
     const [currentImage, setCurrentImage] = useState<string>("");
-    const [assetList, setAssetList] = useState<AssetSelectItem[]>(ASSET_LIST);
+    const [assetList, setAssetList] = useState<AssetSelectItem[]>([]);
     const [openAssetList, setOpenAssetList] = useState<boolean>(false);
     const [selectedToken, setSelectedToken] = useState<AssetSelectItem>();
+    const [isLoading, setLoading] = useState(true);
 
     const form = useForm<InputSchema>({
         resolver: zodResolver(linkDetailsSchema),
@@ -133,7 +138,6 @@ export default function LinkDetails({
 
     const onSelectAsset = (value: string) => {
         const selectedToken = assetList.find((asset) => asset.tokenAddress === value);
-        console.log(selectedToken);
         if (selectedToken) {
             handleChange({ tokenAddress: selectedToken.tokenAddress });
             form.setValue("tokenAddress", selectedToken.tokenAddress);
@@ -151,7 +155,24 @@ export default function LinkDetails({
                 const assetList: AssetSelectItem[] = result.map((token) => {
                     return mapAPITokenModelToAssetSelectModel(token);
                 });
+                assetList.push(...ASSET_LIST);
+                const canisterUtilService = new CanisterUtilsService(identity);
+                assetList.map(async (asset) => {
+                    const amountFetched = await canisterUtilService.checkAccountBalance(
+                        asset.tokenAddress,
+                        identity,
+                    );
+                    if (amountFetched !== null) {
+                        const parsedAmount = await TokenUtilService.getHumanReadableAmount(
+                            amountFetched,
+                            asset.tokenAddress,
+                        );
+                        asset.amount = parsedAmount;
+                    }
+                });
+
                 setAssetList((prev) => [...prev, assetList].flat());
+                setLoading(false);
             }
         }
 
@@ -202,74 +223,92 @@ export default function LinkDetails({
         }
     };
 
+    const renderLoading = () => {
+        return Array.from({ length: 5 }).map((_, index) => (
+            <div className="flex items-center space-x-4 my-3" key={index}>
+                <Skeleton className="h-10 w-10 rounded-sm" />
+                <div className="space-y-2">
+                    <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                    <Skeleton className="h-3 w-[200px]" />
+                </div>
+            </div>
+        ));
+    };
+
     const renderTipLinkAssetForm = () => {
         return (
             <div className="w-full">
-                <Form {...form}>
-                    <form
-                        onSubmit={form.handleSubmit(handleSubmit)}
-                        className="space-y-8 mb-[100px]"
-                    >
-                        <FormField
-                            name="tokenAddress"
-                            control={form.control}
-                            render={() => (
-                                <FormItem>
-                                    <FormLabel>{t("create.asset")}</FormLabel>
-                                    <AssetButton
-                                        handleClick={() => setOpenAssetList(true)}
-                                        text="Choose Asset"
-                                        childrenNode={selectedAssetButtonInfo()}
-                                    />
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="amountNumber"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormControl>
-                                        <IconInput
-                                            isCurrencyInput={true}
-                                            currencySymbol={selectedToken?.name ?? ""}
-                                            {...field}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                const tokenDecimals = metadata?.decimals;
-                                                if (tokenDecimals) {
-                                                    form.setValue(
-                                                        "amount",
-                                                        BigInt(
-                                                            convertTokenAmountToNumber(
-                                                                Number(val),
-                                                                tokenDecimals,
-                                                            ),
-                                                        ),
-                                                    );
-                                                }
-                                                field.onChange(e);
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                {isLoading ? (
+                    renderLoading()
+                ) : (
+                    <>
+                        <Form {...form}>
+                            <form
+                                onSubmit={form.handleSubmit(handleSubmit)}
+                                className="space-y-8 mb-[100px]"
+                            >
+                                <FormField
+                                    name="tokenAddress"
+                                    control={form.control}
+                                    render={() => (
+                                        <FormItem>
+                                            <FormLabel>{t("create.asset")}</FormLabel>
+                                            <AssetButton
+                                                handleClick={() => setOpenAssetList(true)}
+                                                text="Choose Asset"
+                                                childrenNode={selectedAssetButtonInfo()}
+                                            />
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="amountNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <IconInput
+                                                    isCurrencyInput={true}
+                                                    currencySymbol={selectedToken?.name ?? ""}
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        const tokenDecimals = metadata?.decimals;
+                                                        if (tokenDecimals) {
+                                                            form.setValue(
+                                                                "amount",
+                                                                BigInt(
+                                                                    convertTokenAmountToNumber(
+                                                                        Number(val),
+                                                                        tokenDecimals,
+                                                                    ),
+                                                                ),
+                                                            );
+                                                        }
+                                                        field.onChange(e);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                        <FixedBottomButton type="submit" variant="default" size="lg">
-                            {t("continue")}
-                        </FixedBottomButton>
-                    </form>
-                </Form>
-                <AssetDrawer
-                    title="Select Asset"
-                    open={openAssetList}
-                    handleClose={() => setOpenAssetList(false)}
-                    handleChange={onSelectAsset}
-                    assetList={assetList}
-                />
+                                <FixedBottomButton type="submit" variant="default" size="lg">
+                                    {t("continue")}
+                                </FixedBottomButton>
+                            </form>
+                        </Form>
+                        <AssetDrawer
+                            title="Select Asset"
+                            open={openAssetList}
+                            handleClose={() => setOpenAssetList(false)}
+                            handleChange={onSelectAsset}
+                            assetList={assetList}
+                        />
+                    </>
+                )}
             </div>
         );
     };
