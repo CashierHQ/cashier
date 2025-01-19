@@ -25,7 +25,7 @@ use super::{
     validate::validate_balance_with_asset_info,
 };
 
-pub async fn create_create_link_intent(
+pub async fn create_type_create_link_intent(
     intent: CreateIntentInput,
 ) -> Result<CreateIntentConsentResponse, CanisterError> {
     let caller = ic_cdk::api::caller();

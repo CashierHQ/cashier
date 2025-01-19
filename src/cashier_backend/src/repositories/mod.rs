@@ -127,7 +127,6 @@ thread_local! {
             )
         );
 
-
 }
 
 pub fn get_upgrade_memory() -> Memory {
