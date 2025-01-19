@@ -44,22 +44,10 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
 
         //Merge all the fees and group by token
         const totalFees = allFeesFromAssetSending.concat(allFeesFromCashier);
-
         // Group by address and sum up the amounts
-        const feeMap = new Map<string, AssetModel>();
-        totalFees.forEach((fee) => {
-            if (fee) {
-                const existingFee = feeMap.get(fee.address);
-                if (existingFee) {
-                    existingFee.amount += fee.amount;
-                } else {
-                    feeMap.set(fee.address, { ...fee });
-                }
-            }
-        });
-
-        const groupedTotalFees = Array.from(feeMap.values());
+        const groupedTotalFees = groupFeesByAddress(totalFees);
         setTotalFees(groupedTotalFees);
+        console.log(groupFeesByAddress(networkFees));
     };
 
     // Get network fees from each asset sending and included them in total fees
@@ -90,7 +78,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     // Get network fees from cashier fee and included them in total fees
     const processFeesFromCashierFee = async (): Promise<(AssetModel | undefined)[]> => {
         let totalFees: (AssetModel | undefined)[] = [];
-        if (data?.feeModel.fee[0].address) {
+        if (data?.feeModel?.fee[0]?.address) {
             const cashierFeeTokenMetadata = await TokenUtilService.getTokenMetadata(
                 data?.feeModel.fee[0].address,
             );
@@ -108,6 +96,21 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
             }
         }
         return totalFees;
+    };
+
+    const groupFeesByAddress = (feeList: (AssetModel | undefined)[]): AssetModel[] => {
+        const feeMap = new Map<string, AssetModel>();
+        feeList.forEach((fee) => {
+            if (fee) {
+                const existingFee = feeMap.get(fee.address);
+                if (existingFee) {
+                    existingFee.amount += fee.amount;
+                } else {
+                    feeMap.set(fee.address, { ...fee });
+                }
+            }
+        });
+        return Array.from(feeMap.values());
     };
 
     useEffect(() => {
@@ -146,6 +149,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
 
     useEffect(() => {
         if (networkFees.length > 0 && totalFees.length > 0) {
+            setNetworkFees(groupFeesByAddress(networkFees));
             setLoading(false);
         }
     }, [networkFees, totalFees]);
