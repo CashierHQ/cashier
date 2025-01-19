@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import LinkTemplate, { linkTemplateSchema } from "./LinkTemplate";
 import LinkDetails, { linkDetailsSchema } from "./LinkDetails";
 import { useNavigate, useParams } from "react-router-dom";
@@ -68,15 +68,15 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const queryClient = useQueryClient();
     const { toastData, showToast, hideToast } = useToast();
     const { mutate, error: updateLinkError, mutateAsync } = useUpdateLink(queryClient, identity);
-    const { data: updatedLinkDetail, refetch } = useQuery({
+    const { data: linkData, refetch } = useQuery({
         queryKey: queryKeys.links.detail(linkId, identity).queryKey,
         queryFn: queryKeys.links.detail(linkId, identity).queryFn,
         enabled: !!linkId && !!identity,
     });
 
     useEffect(() => {
-        if (updatedLinkDetail) {
-            const { link, intent_create } = updatedLinkDetail;
+        if (linkData) {
+            const { link, intent_create } = linkData;
             if (link && link.state) {
                 const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
@@ -89,21 +89,21 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     (prevModel) =>
                         ({
                             ...prevModel,
-                            transactions: updatedLinkDetail?.intent_create?.transactions,
+                            transactions: linkData?.intent_create?.transactions,
                         }) as ConfirmTransactionModel,
                 );
             }
         }
 
-        if (updatedLinkDetail?.intent_create?.state === INTENT_STATE.SUCCESS) {
+        if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
             setPopupButton(t("continue"));
             setDisabledConfirmButton(false);
         }
-        if (updatedLinkDetail?.intent_create?.state === INTENT_STATE.FAIL) {
+        if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
             setPopupButton(t("Retry"));
             setDisabledConfirmButton(false);
         }
-    }, [updatedLinkDetail]);
+    }, [linkData]);
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
@@ -222,7 +222,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     ) => {
         if (!identity) return;
         if (!transactions || transactions.length === 0) {
-            console.log("THERE IS NO TRANSACTION --> RETURN");
             return;
         }
         try {
@@ -242,7 +241,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleUpdateLinkToActive = async () => {
-        console.log("ALL OF THE TRANS SUCCESS. CALL TO UPDATE LINK TO ACTIVE");
         setDisabledConfirmButton(true);
         setPopupButton(t("processing"));
         const updateLinkParams: UpdateLinkParams = {
@@ -252,7 +250,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             },
             isContinue: true,
         };
-        console.log(updateLinkParams);
         await mutateAsync(updateLinkParams);
         navigate(`/details/${linkId}`);
     };
@@ -297,7 +294,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleConfirmTransactions = async () => {
         if (!linkId && !intentCreate?.id) return;
         try {
-            if (updatedLinkDetail?.intent_create?.state === INTENT_STATE.SUCCESS) {
+            if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
                 await handleUpdateLinkToActive();
             } else {
                 await startTransaction();

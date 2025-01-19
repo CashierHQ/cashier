@@ -111,12 +111,12 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     };
 
     useEffect(() => {
-        const fetchNetworkFees = async () => {
+        const processFees = async () => {
             if (data && !networkFees.length && !totalFees.length) {
                 await processAllTheFees();
             }
         };
-        fetchNetworkFees();
+        processFees();
     }, [data]);
 
     const renderNetworkFees = () => {

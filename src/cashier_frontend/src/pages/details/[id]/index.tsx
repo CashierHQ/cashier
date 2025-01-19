@@ -32,7 +32,6 @@ export default function DetailPage() {
     };
 
     const renderSkeletonLoading = () => {
-        console.log("render loading...");
         return Array.from({ length: 5 }).map((_, index) => (
             <div className="flex items-center space-x-4 my-3" key={index}>
                 <Skeleton className="h-10 w-10 rounded-sm" />
