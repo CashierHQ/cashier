@@ -23,7 +23,6 @@ export type Response<T, E> =
       };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
-    console.log("response", response);
     if ("ok" in response) {
         return response.ok;
     } else if ("Ok" in response) {

@@ -1,40 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     Agent,
-    bufFromBufLike,
+    blsVerify,
     CallRequest,
     Cbor,
     Certificate,
-    v3ResponseBody,
-    blsVerify,
-    lookupResultToBuffer,
-    UpdateCallRejectedError,
     defaultStrategy,
+    lookupResultToBuffer,
     pollForResponse,
+    UpdateCallRejectedError,
     v2ResponseBody,
+    v3ResponseBody,
 } from "@dfinity/agent";
 import { AgentError } from "@dfinity/agent/lib/cjs/errors";
 import { Principal } from "@dfinity/principal";
-import { fromBase64 } from "@nfid/identitykit";
-import { Buffer } from "buffer";
-export interface CallCanisterRequest {
-    canisterId: string;
-    calledMethodName: string;
-    parameters: string;
-    agent: Agent;
-}
-
-export interface CallCanisterResponse {
-    contentMap: string;
-    certificate: string;
-}
-
-export interface CallCanisterRequest {
-    canisterId: string;
-    calledMethodName: string;
-    parameters: string;
-    agent: Agent;
-}
+import { fromBase64, toBase64 } from "@nfid/identitykit";
+import {
+    CallCanisterRequest,
+    CallCanisterResponse,
+} from "../services/types/callCanister.service.types";
+import { bufFromBufLike } from "@dfinity/candid";
 
 export class CallCanisterService {
     public async call(request: CallCanisterRequest): Promise<CallCanisterResponse> {
@@ -45,13 +30,15 @@ export class CallCanisterService {
                 request.agent,
                 fromBase64(request.parameters),
             );
-            const certificate: string = Buffer.from(response.certificate).toString("base64");
+            const certificate: string = toBase64(response.certificate);
             const cborContentMap = Cbor.encode(response.contentMap);
-            const contentMap: string = Buffer.from(cborContentMap).toString("base64");
+            const contentMap: string = toBase64(cborContentMap);
+            const reply = response.reply ? toBase64(response.reply) : undefined;
 
             return {
                 certificate,
                 contentMap,
+                reply,
             };
         } catch (error) {
             console.error("The canister call cannot be executed:", error);
@@ -69,7 +56,11 @@ export class CallCanisterService {
         methodName: string,
         agent: Agent,
         arg: ArrayBuffer,
-    ): Promise<{ certificate: Uint8Array; contentMap: CallRequest | undefined }> {
+    ): Promise<{
+        certificate: Uint8Array;
+        contentMap: CallRequest | undefined;
+        reply: ArrayBuffer | undefined;
+    }> {
         const cid = Principal.from(canisterId);
 
         if (agent.rootKey == null)
@@ -82,6 +73,7 @@ export class CallCanisterService {
         });
 
         let certificate: Certificate | undefined;
+        let reply: ArrayBuffer | undefined;
 
         if (response.body && (response.body as v3ResponseBody).certificate) {
             const cert = (response.body as v3ResponseBody).certificate;
@@ -93,8 +85,12 @@ export class CallCanisterService {
             });
             const path = [new TextEncoder().encode("request_status"), requestId];
             const status = new TextDecoder().decode(
-                lookupResultToBuffer(certificate.lookup([...(path as unknown as any), "status"])),
+                lookupResultToBuffer(certificate.lookup([...path, "status"])),
             );
+
+            reply = lookupResultToBuffer(certificate.lookup([...path, "reply"]));
+
+            console.log("status", status);
 
             switch (status) {
                 case "replied":
@@ -102,17 +98,13 @@ export class CallCanisterService {
                 case "rejected": {
                     // Find rejection details in the certificate
                     const rejectCode = new Uint8Array(
-                        lookupResultToBuffer(
-                            certificate.lookup([...(path as unknown as any), "reject_code"]),
-                        )!,
+                        lookupResultToBuffer(certificate.lookup([...path, "reject_code"]))!,
                     )[0];
                     const rejectMessage = new TextDecoder().decode(
-                        lookupResultToBuffer(
-                            certificate.lookup([...(path as unknown as any), "reject_message"]),
-                        )!,
+                        lookupResultToBuffer(certificate.lookup([...path, "reject_message"]))!,
                     );
                     const error_code_buf = lookupResultToBuffer(
-                        certificate.lookup([...(path as unknown as any), "error_code"]),
+                        certificate.lookup([...path, "error_code"]),
                     );
                     const error_code = error_code_buf
                         ? new TextDecoder().decode(error_code_buf)
@@ -148,13 +140,18 @@ export class CallCanisterService {
             // Contains the certificate and the reply from the boundary node
             const response = await pollForResponse(agent, cid, requestId, pollStrategy, blsVerify);
             certificate = response.certificate;
+            reply = response.reply;
         }
 
         return {
             contentMap: requestDetails,
+
             certificate: new Uint8Array(Cbor.encode((certificate as any).cert)),
+            reply,
         };
     }
+
+    public async getReply() {}
 }
 
 export const callCanisterService = new CallCanisterService();

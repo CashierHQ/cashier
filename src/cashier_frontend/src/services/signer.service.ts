@@ -1,6 +1,7 @@
 import { Agent, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { CallCanisterResponse, callCanisterService } from "./callCanister.service";
+import { CallCanisterResponse } from "../services/types/callCanister.service.types";
+import { callCanisterService } from "./callCanister.service";
 
 /* Define types */
 export interface ICRCXRequest {

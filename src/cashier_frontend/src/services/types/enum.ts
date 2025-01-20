@@ -22,6 +22,14 @@ export enum TRANSACTION_STATE {
     TIMEOUT = "Transaction_state_timeout",
 }
 
+export enum INTENT_STATE {
+    CREATED = "Intent_state_created",
+    PROCESSING = "Intent_state_processing",
+    SUCCESS = "Intent_state_success",
+    FAIL = "Intent_state_fail",
+    TIMEOUT = "Intent_state_timeout",
+}
+
 export enum LINK_ASSET_TYPE {
     CASHIER_FEE = "CashierFee",
     ASSET_ADDED = "Asset",
