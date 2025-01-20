@@ -46,7 +46,7 @@ export function LinkVaultTestForm(props: TestFormProps) {
         }
     };
     return (
-        <Card className="w-[350px]">
+        <Card className="w-[400px]">
             <CardHeader>
                 <CardTitle>Link Vault</CardTitle>
                 <CardDescription>Test link vault balance with deposit assets</CardDescription>
