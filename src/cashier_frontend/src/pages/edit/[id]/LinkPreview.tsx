@@ -3,6 +3,7 @@ import LinkCard from "@/components/link-card";
 import { ParitalFormProps } from "@/components/multi-step-form";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
+import { useTranslation } from "react-i18next";
 
 interface LinkData {
     title: string;
@@ -16,6 +17,8 @@ export default function LinkPreview({
     isDisabled = false,
     linkType,
 }: ParitalFormProps<object, LinkData>) {
+    const { t } = useTranslation();
+
     if (linkType === LINK_TYPE.TIP_LINK) {
         return (
             <div className="w-full flex flex-col">
@@ -26,7 +29,7 @@ export default function LinkPreview({
                     title={defaultValues.title as string}
                 />
                 <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
-                    Create
+                    {isDisabled ? t("processing") : t("create.create")}
                 </FixedBottomButton>
             </div>
         );
@@ -41,7 +44,7 @@ export default function LinkPreview({
                 title={defaultValues.title as string}
             />
             <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
-                Create
+                {isDisabled ? t("processing") : t("create.create")}
             </FixedBottomButton>
         </div>
     );
