@@ -7,17 +7,17 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentity } from "@nfid/identitykit/react";
 import LinkService from "@/services/link.service";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
 import { Drawer } from "@/components/ui/drawer";
 import ConfirmationPopup, { ConfirmTransactionModel } from "@/components/confirmation-popup";
-import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
+import TransactionToast from "@/components/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { LINK_STATE, LINK_TYPE, TRANSACTION_STATE } from "@/services/types/enum";
+import { INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import {
     CreateIntentInput,
     GetConsentMessageInput,
@@ -29,6 +29,7 @@ import { Identity } from "@dfinity/agent";
 import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 import useToast from "@/hooks/useToast";
 import { getCashierError } from "@/services/errorProcess.service";
+import { queryKeys } from "@/lib/queryKeys";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -53,14 +54,12 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [isDisabled, setDisabled] = useState(false);
     const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
-    //const [toastData, setToastData] = useState<TransactionToastProps | null>(null);
     const [isRendering, setRendering] = useState(true);
     const [disabledConfirmButton, setDisabledConfirmButton] = useState(false);
     const [popupButton, setPopupButton] = useState("");
-    const [actionCreate, setActionCreate] = useState<IntentCreateModel>();
+    const [intentCreate, setIntentCreate] = useState<IntentCreateModel>();
     const [transactionConfirmModel, setTransactionConfirmModel] =
         useState<ConfirmTransactionModel>();
-
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { linkId } = useParams();
@@ -68,15 +67,16 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const responsive = useResponsive();
     const queryClient = useQueryClient();
     const { toastData, showToast, hideToast } = useToast();
-    const { mutate, error: updateLinkError } = useUpdateLink(queryClient, identity);
+    const { mutate, error: updateLinkError, mutateAsync } = useUpdateLink(queryClient, identity);
+    const { data: linkData, refetch } = useQuery({
+        queryKey: queryKeys.links.detail(linkId, identity).queryKey,
+        queryFn: queryKeys.links.detail(linkId, identity).queryFn,
+        enabled: !!linkId && !!identity,
+    });
 
     useEffect(() => {
-        if (!linkId) return;
-        if (!identity) return;
-        const fetchData = async () => {
-            const linkObj = await new LinkService(identity).getLink(linkId);
-            const { link, intent_create } = linkObj;
-            console.log("🚀 ~ fetchData ~ linkObj:", linkObj);
+        if (linkData) {
+            const { link, intent_create } = linkData;
             if (link && link.state) {
                 const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
                 setFormData(link);
@@ -84,15 +84,26 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 setCurrentStep(step >= 0 ? step : 0);
             }
             if (intent_create) {
-                setActionCreate(intent_create);
+                setIntentCreate(intent_create);
+                setTransactionConfirmModel(
+                    (prevModel) =>
+                        ({
+                            ...prevModel,
+                            transactions: linkData?.intent_create?.transactions,
+                        }) as ConfirmTransactionModel,
+                );
             }
-        };
-        try {
-            fetchData();
-        } catch (err) {
-            console.log("🚀 ~ useEffect ~ err:", err);
         }
-    }, [linkId, identity]);
+
+        if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
+            setPopupButton(t("continue"));
+            setDisabledConfirmButton(false);
+        }
+        if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
+            setPopupButton(t("Retry"));
+            setDisabledConfirmButton(false);
+        }
+    }, [linkData]);
 
     const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
         if (!linkId) return;
@@ -134,7 +145,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 },
                 isContinue: true,
             };
-            console.log(updateLinkParams);
             mutate(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
@@ -142,6 +152,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
+    // User click "Create" button
     const handleSubmit = async () => {
         if (!linkId) return;
         const validationResult = true;
@@ -159,13 +170,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         link_id: linkId ?? "",
                         intent_type: "Create",
                         params: [],
-                        intent_id: actionCreate?.id ?? "",
+                        intent_id: intentCreate?.id ?? "",
                     };
 
-                    const consent = actionCreate
+                    const consent = intentCreate
                         ? await linkService.getConsentMessage(intentCreateConsentInput)
                         : await linkService.createAction(createActionInput).then((result) => {
-                              setActionCreate(result.intent);
+                              setIntentCreate(result.intent);
                               return result.consent;
                           });
 
@@ -173,13 +184,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         const transactionConfirmObj: ConfirmTransactionModel = {
                             linkName: formData.title ?? "",
                             feeModel: consent,
-                            transactions: actionCreate?.transactions,
+                            transactions: intentCreate?.transactions,
                         };
                         setTransactionConfirmModel(transactionConfirmObj);
                         setOpenConfirmationPopup(true);
                     }
                 };
-                if (actionCreate || createActionInput) {
+                if (intentCreate || createActionInput) {
                     await handleCreateAction();
                 }
             } else {
@@ -211,7 +222,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     ) => {
         if (!identity) return;
         if (!transactions || transactions.length === 0) {
-            console.log("THERE IS NO TRANSACTION --> RETURN");
             return;
         }
         try {
@@ -220,7 +230,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 return subTrans.map((tx) => toCanisterCallRequest(tx));
             });
             const res = await signerService.icrcxExecute(icrcxRequests);
-            console.log("🚀 ~ LinkPage ~ res:", res);
+            return res;
         } catch (err) {
             console.log(err);
         }
@@ -230,36 +240,64 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         setFormData({ ...formData, ...values });
     };
 
-    const handleConfirmTransactions = async () => {
+    const handleUpdateLinkToActive = async () => {
         setDisabledConfirmButton(true);
-        setPopupButton(t("transaction.confirm_popup.inprogress_button") as string);
-        if (!linkId && !actionCreate?.id) return;
-        try {
-            const intentService = new IntentService(identity);
-            const confirmItenResult = await intentService.confirmIntent(
-                linkId ?? "",
-                actionCreate?.id ?? "",
-            );
-            console.log("🚀 ~ handleConfirmTransactions ~ confirmItenResult:", confirmItenResult);
-            if (confirmItenResult?.transactions) {
-                // Change transaction status to processing
-                setActionCreate(
-                    (prev) =>
-                        ({
-                            ...prev,
-                            transactions: confirmItenResult?.transactions,
-                        }) as IntentCreateModel,
-                );
-                setTransactionConfirmModel(
-                    (prevModel) =>
-                        ({
-                            ...prevModel,
-                            transactions: confirmItenResult?.transactions,
-                        }) as ConfirmTransactionModel,
-                );
+        setPopupButton(t("processing"));
+        const updateLinkParams: UpdateLinkParams = {
+            linkId: linkId ?? "",
+            linkModel: {
+                ...formData,
+            },
+            isContinue: true,
+        };
+        await mutateAsync(updateLinkParams);
+        navigate(`/details/${linkId}`);
+    };
 
-                console.log("Call canister transfer");
-                await callExecute(actionCreate?.transactions, identity);
+    const startTransaction = async () => {
+        setDisabledConfirmButton(true);
+        setPopupButton(t("transaction.confirm_popup.inprogress_button"));
+        const intentService = new IntentService(identity);
+        const confirmItenResult = await intentService.confirmIntent(
+            linkId ?? "",
+            intentCreate?.id ?? "",
+        );
+        if (confirmItenResult?.transactions) {
+            // Change transaction status to processing
+            setIntentCreate(
+                (prev) =>
+                    ({
+                        ...prev,
+                        transactions: confirmItenResult?.transactions,
+                    }) as IntentCreateModel,
+            );
+            setTransactionConfirmModel(
+                (prevModel) =>
+                    ({
+                        ...prevModel,
+                        transactions: confirmItenResult?.transactions,
+                    }) as ConfirmTransactionModel,
+            );
+
+            console.log("Call canister transfer");
+            const result = await callExecute(intentCreate?.transactions, identity);
+            if (result) {
+                console.log(
+                    "Canister service call complete. Now re-fetch the link data to get the intent.",
+                );
+                refetch();
+            }
+        }
+    };
+
+    // Handle submit action in confirm transaction dialog
+    const handleConfirmTransactions = async () => {
+        if (!linkId && !intentCreate?.id) return;
+        try {
+            if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
+                await handleUpdateLinkToActive();
+            } else {
+                await startTransaction();
             }
         } catch (err) {
             console.log(err);
@@ -304,7 +342,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     handleChange={handleChange}
                     handleBackStep={handleBackstep}
                     isDisabled={isDisabled}
-                    actionCreate={actionCreate}
+                    actionCreate={intentCreate}
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}

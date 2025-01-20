@@ -28,6 +28,7 @@
     "submit": "Submit",
     "cashier": "Cashier",
     "login": "Login",
+    "processing": "Processing...",
     "home": {
         "guide": {
             "header": "Cashier links",
