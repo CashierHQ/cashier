@@ -23,6 +23,9 @@ type CarouselContextProps = {
     scrollNext: () => void;
     canScrollPrev: boolean;
     canScrollNext: boolean;
+    scrollTo: (index: number) => void;
+    selectedIndex: number;
+    scrollSnaps: number[];
 } & CarouselProps;
 
 const CarouselContext = React.createContext<CarouselContextProps | null>(null);
@@ -50,15 +53,24 @@ const Carousel = React.forwardRef<
     );
     const [canScrollPrev, setCanScrollPrev] = React.useState(false);
     const [canScrollNext, setCanScrollNext] = React.useState(false);
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
+    const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
 
     const onSelect = React.useCallback((api: CarouselApi) => {
-        if (!api) {
-            return;
-        }
+        if (!api) return;
 
+        setSelectedIndex(api.selectedScrollSnap());
+        setScrollSnaps(api.scrollSnapList());
         setCanScrollPrev(api.canScrollPrev());
         setCanScrollNext(api.canScrollNext());
     }, []);
+
+    const scrollTo = React.useCallback(
+        (index: number) => {
+            api?.scrollTo(index);
+        },
+        [api],
+    );
 
     const scrollPrev = React.useCallback(() => {
         api?.scrollPrev();
@@ -114,6 +126,9 @@ const Carousel = React.forwardRef<
                 scrollNext,
                 canScrollPrev,
                 canScrollNext,
+                scrollTo,
+                selectedIndex,
+                scrollSnaps,
             }}
         >
             <div
@@ -127,6 +142,7 @@ const Carousel = React.forwardRef<
                 <CarouselNext />
                 <CarouselPrevious />
                 {children}
+                <CarouselDots />
             </div>
         </CarouselContext.Provider>
     );
@@ -230,6 +246,42 @@ const CarouselNext = React.forwardRef<HTMLButtonElement, React.ComponentProps<ty
     },
 );
 CarouselNext.displayName = "CarouselNext";
+
+const DotButton = React.forwardRef<
+    HTMLButtonElement,
+    React.ButtonHTMLAttributes<HTMLButtonElement> & { isActive: boolean }
+>(({ isActive, className, ...props }, ref) => {
+    return (
+        <button
+            ref={ref}
+            className={cn(
+                "h-2 w-2 rounded-full mx-1",
+                isActive ? "bg-green" : "bg-white",
+                className,
+            )}
+            {...props}
+        />
+    );
+});
+DotButton.displayName = "DotButton";
+
+const CarouselDots = () => {
+    const { scrollTo, selectedIndex, scrollSnaps } = useCarousel();
+
+    return (
+        <div className="flex justify-center items-center">
+            <div className="flex justify-center items-center mt-4 bg-white/50 p-2 rounded-full w-fit gap-2">
+                {scrollSnaps.map((_, index) => (
+                    <DotButton
+                        key={index}
+                        isActive={index === selectedIndex}
+                        onClick={() => scrollTo(index)}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+};
 
 export {
     type CarouselApi,

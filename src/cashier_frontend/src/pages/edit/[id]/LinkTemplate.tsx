@@ -81,6 +81,7 @@ export default function LinkTemplate({
     const [api, setApi] = React.useState<CarouselApi>();
     const [current, setCurrent] = React.useState(0);
     //const [count, setCount] = React.useState(0);
+
     const form = useForm<z.infer<typeof linkTemplateSchema>>({
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
