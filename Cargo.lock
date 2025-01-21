@@ -110,6 +110,7 @@ name = "cashier-essentials"
 version = "0.1.0"
 dependencies = [
  "cashier-macros",
+ "cashier-types",
  "ic-stable-structures",
  "serde",
  "serde_cbor",
@@ -123,6 +124,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.96",
+]
+
+[[package]]
+name = "cashier-types"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
 ]
 
 [[package]]
