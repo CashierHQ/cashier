@@ -6,6 +6,7 @@ include = ['src', 'Cargo.toml']
 
 [dependencies]
 cashier-macros = { path = "../cashier-macros" }
+cashier-types = { path = "../cashier-types" }
 serde_json = {workspace = true}
 ic-stable-structures = {workspace = true}
 serde = { workspace = true, features = ['derive'] }
