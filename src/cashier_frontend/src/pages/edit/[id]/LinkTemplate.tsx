@@ -141,7 +141,7 @@ export default function LinkTemplate({
                         )}
                     />
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
-                    <div className="flex flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3 my-3 h-[52vh] xl:h-[50vh] 2xl:h-[60vh]">
+                    <div className="flex flex-col items-center  bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3 my-3 h-[100%] xl:h-[50vh] 2xl:h-[60vh]">
                         <Carousel className="items-center" setApi={setApi}>
                             <CarouselContent>
                                 {templates.map((template, index) => (
