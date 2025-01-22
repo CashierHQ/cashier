@@ -40,6 +40,24 @@ class CanisterUtilsService {
         return data;
     }
 
+    async transferTo(receiverAddress: string, tokenAddress: string, amount: number) {
+        const ledgerCanister = IcrcLedgerCanister.create({
+            agent: this.agent,
+            canisterId: Principal.fromText(tokenAddress),
+        });
+        await ledgerCanister.transfer({
+            to: {
+                owner: Principal.fromText(receiverAddress),
+                subaccount: [],
+            },
+            amount: BigInt(amount),
+            fee: undefined,
+            memo: undefined,
+            from_subaccount: undefined,
+            created_at_time: undefined,
+        });
+    }
+
     private toSubaccount(id: string): Subaccount {
         const uuidBytes = uuidParse(id);
         // DO NOT CHANGE THE ORDER OF THE BYTES

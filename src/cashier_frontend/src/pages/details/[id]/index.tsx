@@ -4,20 +4,22 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
-import { useIdentityKit } from "@nfid/identitykit/react";
+import { useIdentity, useIdentityKit } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import LinkService from "@/services/link.service";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import QRCode from "react-qr-code";
 import { LinkModel } from "@/services/types/link.service.types";
 import { Skeleton } from "@/components/ui/skeleton";
+import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
     const { linkId } = useParams();
-    const { identity } = useIdentityKit();
+    const identity = useIdentity();
     const { toast } = useToast();
     const navigate = useNavigate();
+    const { metadata } = useTokenMetadata(linkData?.link.tokenAddress);
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -117,7 +119,7 @@ export default function DetailPage() {
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
                                             <TableCell className="text-right px-5">
-                                                Proof of attendance NFT
+                                                {metadata ? metadata.name : "N/A"}
                                             </TableCell>
                                         </TableRow>
                                         <TableRow>
