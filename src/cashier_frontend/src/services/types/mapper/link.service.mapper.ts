@@ -90,7 +90,7 @@ export const generateMockAction = (): ActionModel => {
                 transactions: [
                     {
                         id: "2",
-                        wallet: Wallet,
+                        wallet: WALLET.WALLET,
                         protocol: IC_TRANSACTION_PROTOCAL.ICRC2_APPROVE,
                         from: {
                             address:
