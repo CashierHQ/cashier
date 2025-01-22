@@ -29,7 +29,7 @@ export const generateMockAction = (): ActionModel => {
         intents: [
             {
                 id: "1111",
-                task: TASK.TRANSFER,
+                task: TASK.TRANSFER_TO_LINK_VAULT,
                 chain: CHAIN.IC,
                 state: INTENT_STATE.CREATED,
                 from: {
@@ -71,7 +71,7 @@ export const generateMockAction = (): ActionModel => {
             },
             {
                 id: "222",
-                task: TASK.TRANSFER,
+                task: TASK.TRANSFER_TO_LINK_TRESURY,
                 chain: CHAIN.IC,
                 state: INTENT_STATE.SUCCESS,
                 from: {
