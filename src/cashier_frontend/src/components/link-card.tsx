@@ -29,13 +29,13 @@ export default function LinkCard({
     };
 
     return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col justify-center items-center">
             <div className="text-md md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
                 {renderHeaderTitle()}
             </div>
             <div
                 id="phone-frame"
-                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-10 md:max-h-[350px] "
+                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-10 aspect-[9/16] max-w-[220px]"
             >
                 <div
                     id="phone-notch-section"
@@ -44,12 +44,12 @@ export default function LinkCard({
                 <div className="w-full flex justify-center items-center mt-3 md:mt-1 2xl:mt-3">
                     <img src="./logo.svg" alt="Cashier logo" className="w-[60px] 2xl:w-[100px]" />
                 </div>
-                <div className="flex flex-col items-center justify-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 md:h-[300px] w-[100%]">
+                <div className="flex flex-col flex-grow items-center justify-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 md:h-[300px] w-[100%]">
                     <div className="overflow-hidden">
                         <img
                             src={src}
                             alt="Link template"
-                            className="w-[200px] md:w-[60px] xl:w-[60px] 2xl:w-[80px]"
+                            className="w-[200px] md:w-[60px] xl:w-[60px] 2xl:w-[80px] object-fit"
                         />
                     </div>
 
