@@ -59,9 +59,9 @@ const ASSET_LIST: AssetSelectItem[] = [
         tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
     },
     {
-        name: "TK 2",
+        name: "CUTE",
         amount: 0,
-        tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
+        tokenAddress: "k64dn-7aaaa-aaaam-qcdaq-cai",
     },
 ];
 
