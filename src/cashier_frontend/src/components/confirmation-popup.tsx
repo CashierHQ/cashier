@@ -9,10 +9,13 @@ import { mapFeeModelToAssetModel } from "@/services/types/mapper/intent.service.
 import { LINK_ASSET_TYPE } from "@/services/types/enum";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { Skeleton } from "./ui/skeleton";
+import { ActionModel } from "@/services/types/refractor.action.service.types";
 
+/*TODO: Update this model to accept "linkData" and "action" */
 export type ConfirmTransactionModel = {
     linkName: string;
     feeModel: CreateIntentConsentModel;
+    action: ActionModel;
     transactions?: TransactionModel[][];
 };
 
@@ -24,6 +27,7 @@ interface ConfirmationPopupProps {
     buttonText: string;
 }
 
+/*TODO: The confirmation popup should receive "data" include "linkData" and "action" to display conent on the UI */
 const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     data,
     handleClose,
@@ -47,7 +51,6 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
         // Group by address and sum up the amounts
         const groupedTotalFees = groupFeesByAddress(totalFees);
         setTotalFees(groupedTotalFees);
-        console.log(groupFeesByAddress(networkFees));
     };
 
     // Get network fees from each asset sending and included them in total fees
