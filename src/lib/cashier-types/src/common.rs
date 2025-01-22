@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub enum Chain {
@@ -7,10 +8,20 @@ pub enum Chain {
 }
 
 impl Chain {
-    pub fn from_str(s: &str) -> Self {
-        match s {
-            "IC" => Chain::IC,
-            _ => Chain::IC,
+    pub fn to_str(&self) -> &str {
+        match self {
+            Chain::IC => "IC",
+        }
+    }
+}
+
+impl FromStr for Chain {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Chain, Self::Err> {
+        match input {
+            "IC" => Ok(Chain::IC),
+            _ => Err(()),
         }
     }
 }
