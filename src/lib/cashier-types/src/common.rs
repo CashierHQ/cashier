@@ -7,6 +7,12 @@ pub enum Chain {
     IC,
 }
 
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct Asset {
+    address: String,
+    chain: Chain,
+}
+
 impl Chain {
     pub fn to_str(&self) -> &str {
         match self {

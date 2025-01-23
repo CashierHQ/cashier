@@ -1,9 +1,8 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 use crate::common::Chain;
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssetInfo {
     pub address: String,
     pub chain: Chain,

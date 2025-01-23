@@ -4,5 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+cashier-macros = { path = "../cashier-macros" }
+
+serde_json = {workspace = true}
+ic-stable-structures = {workspace = true}
 serde = { workspace = true, features = ['derive'] }
-candid = {workspace = true}
+serde_cbor = { workspace = true }
+candid = { workspace = true }

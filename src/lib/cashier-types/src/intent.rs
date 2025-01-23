@@ -1,31 +1,63 @@
-use candid::CandidType;
+use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::common::{Chain, Wallet};
+use crate::{
+    common::{Chain, Wallet},
+    Asset,
+};
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Debug, Clone)]
+#[storable]
 pub struct Intent {
     pub id: String,
+    pub state: IntentState,
+    pub created_at: u64,
+    pub dependency: Vec<String>,
     pub task: IntentTask,
+    pub r#type: IntentType,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum IntentState {
+    Created,
+    Processing,
+    Success,
+    Fail,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum IntentType {
+    Transfer(TransferIntent),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransferIntent {
     pub chain: Chain,
     pub from: Wallet,
     pub to: Wallet,
-    pub asset: String,
+    pub asset: Asset,
     pub amount: u64,
-    pub state: IntentState,
-    pub dependency: Vec<String>, // Array of intent IDs
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IntentTask {
-    Transfer,
+    TransferWalletToTreasury,
+    TransferWalletToLink,
+}
+
+#[derive(Debug, Clone)]
+#[storable]
+pub struct IntentTransaction {
+    pub intent_id: String,
+    pub transaction_id: String,
 }
 
 impl IntentTask {
     pub fn to_str(&self) -> &str {
         match self {
-            IntentTask::Transfer => "Transfer",
+            IntentTask::TransferWalletToTreasury => "transfer_wallet_to_treasury",
+            IntentTask::TransferWalletToLink => "transfer_wallet_to_link",
         }
     }
 }
@@ -35,18 +67,11 @@ impl FromStr for IntentTask {
 
     fn from_str(input: &str) -> Result<IntentTask, Self::Err> {
         match input {
-            "Transfer" => Ok(IntentTask::Transfer),
+            "transfer_wallet_to_treasury" => Ok(IntentTask::TransferWalletToTreasury),
+            "transfer_wallet_to_link" => Ok(IntentTask::TransferWalletToLink),
             _ => Err(()),
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub enum IntentState {
-    Created,
-    Processing,
-    Success,
-    Fail,
 }
 
 impl IntentState {

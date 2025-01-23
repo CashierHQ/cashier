@@ -1,10 +1,11 @@
-use candid::CandidType;
+use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 use crate::asset_info::AssetInfo;
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Debug, Clone)]
+#[storable]
 pub struct Link {
     pub id: String,
     pub state: LinkState,
@@ -14,15 +15,21 @@ pub struct Link {
     pub asset_info: Option<Vec<AssetInfo>>,
     pub template: Option<Template>,
     pub creator: Option<String>,
-    pub create_at: Option<u64>,
-    pub link_image_url: Option<String>,
-    pub nft_image: Option<String>,
+    pub create_at: u64,
+    pub metadata: Option<HashMap<String, String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum LinkType {
     NftCreateAndAirdrop,
     TipLink,
+}
+
+#[derive(Debug, Clone)]
+#[storable]
+pub struct LinkAction {
+    pub link_id: String,
+    pub action_id: String,
 }
 
 impl LinkType {
@@ -46,7 +53,7 @@ impl FromStr for LinkType {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum LinkState {
     ChooseLinkType,
     AddAssets,
@@ -82,7 +89,7 @@ impl FromStr for LinkState {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Template {
     Left,
     Right,

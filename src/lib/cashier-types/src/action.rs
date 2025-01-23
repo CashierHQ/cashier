@@ -1,11 +1,20 @@
+use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
+#[storable]
 pub struct Action {
     pub id: String,
-    pub action_type: String,
+    pub r#type: ActionType,
     pub state: ActionState,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ActionType {
+    CreateLink,
+    Withdraw,
+    Claim,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -14,6 +23,14 @@ pub enum ActionState {
     Processing,
     Success,
     Fail,
+}
+
+#[derive(Debug, Clone)]
+#[storable]
+pub struct ActionIntent {
+    pub action_id: String,
+    pub intent_id: String,
+    pub created_at: u64,
 }
 
 impl ActionState {

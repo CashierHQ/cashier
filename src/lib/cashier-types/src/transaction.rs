@@ -1,20 +1,33 @@
+use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::common::Wallet;
+use crate::{common::Wallet, Asset};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
+#[storable]
 pub struct Transaction {
     pub id: String,
+    pub created_at: u64,
+    pub state: TransactionState,
+    pub r#type: TransactionType,
+    pub dependency: Vec<String>,
+    pub grouping: String,
     pub wallet: TransactionWallet,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum TransactionType {
+    IcTransaction(IcTransaction),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IcTransaction {
     pub protocol: TransactionProtocol,
     pub from: Wallet,
     pub to: Wallet,
-    pub asset: String,
+    pub asset: Asset,
     pub amount: u64,
-    pub state: TransactionState,
-    pub dependency: Vec<String>, // Array of intent IDs
-    pub grouping: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
