@@ -85,6 +85,7 @@ export const queryKeys = createQueryKeyStore({
                     (metadata) => metadata.canisterId === tokenAddress,
                 );
                 if (existingMetadata) {
+                    console.log("Returned existing metadata");
                     return existingMetadata;
                 }
 
