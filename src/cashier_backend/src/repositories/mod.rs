@@ -3,16 +3,18 @@ use std::cell::RefCell;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
-pub mod entities;
-pub mod intent_store;
-pub mod intent_transaction_store;
-pub mod link_intent_store;
-pub mod link_store;
-pub mod transaction_store;
-pub mod user_intent_store;
-pub mod user_link_store;
-pub mod user_store;
-pub mod user_wallet_store;
+pub mod action;
+pub mod action_intent;
+pub mod base_repository;
+pub mod intent;
+pub mod intent_transaction;
+pub mod link;
+pub mod link_action;
+pub mod transaction;
+pub mod user;
+pub mod user_action;
+pub mod user_link;
+pub mod user_wallet;
 
 const UPGRADES: MemoryId = MemoryId::new(0);
 

@@ -30,6 +30,7 @@ pub enum LinkType {
 pub struct LinkAction {
     pub link_id: String,
     pub action_id: String,
+    pub action_type: String,
 }
 
 impl LinkType {

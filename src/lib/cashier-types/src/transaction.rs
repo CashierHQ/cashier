@@ -10,10 +10,10 @@ pub struct Transaction {
     pub id: String,
     pub created_at: u64,
     pub state: TransactionState,
-    pub r#type: TransactionType,
     pub dependency: Vec<String>,
     pub grouping: String,
     pub wallet: TransactionWallet,
+    pub r#type: TransactionType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

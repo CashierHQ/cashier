@@ -16,8 +16,8 @@ pub type UserLinkKey = (UserKey, LinkKey);
 
 pub type UserActionKey = (UserKey, ActionKey);
 
-pub type LinkActionKey = (LinkKey, ActionKey);
+pub type LinkActionKey = (LinkKey, ActionType, ActionKey);
 
-pub type ActionIntentKey = (ActionKey, ActionType, IntentKey);
+pub type ActionIntentKey = (ActionKey, IntentKey);
 
 pub type IntentTransactionKey = (TransactionKey, IntentKey);
