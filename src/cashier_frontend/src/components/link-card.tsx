@@ -35,7 +35,7 @@ export default function LinkCard({
             </div>
             <div
                 id="phone-frame"
-                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-10 aspect-[9/16] max-w-[220px]"
+                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-10 aspect-[9/16] w-[50%] md:w-[40%]"
             >
                 <div
                     id="phone-notch-section"

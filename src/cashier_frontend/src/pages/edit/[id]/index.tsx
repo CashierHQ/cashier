@@ -333,7 +333,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             )}
             id="edit_multistepform_wrapper"
         >
-            <div className="w-11/12 flex-grow sm:max-w-[400px] md:max-w-[100%]">
+            <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
                 <MultiStepForm
                     initialStep={currentStep}
                     formData={formData}
