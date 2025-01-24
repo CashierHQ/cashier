@@ -73,10 +73,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     });
 
     useEffect(() => {
-        console.log(linkData);
-    }, [linkData]);
-
-    useEffect(() => {
         if (linkData) {
             const { link, intent_create, action } = linkData;
 
@@ -283,11 +279,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         setPopupButton(t("transaction.confirm_popup.inprogress_button"));
         const intentService = new IntentService(identity);
 
-        console.log(linkId, linkData?.action?.intents[0].id);
         const confirmItemResult = await intentService.confirmIntent(
             linkId ?? "",
-            //intentCreate?.id ?? "",
-            linkData?.action?.intents[0].id ?? "",
+            intentCreate?.id ?? "",
         );
 
         if (confirmItemResult?.transactions) {
@@ -327,18 +321,18 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const handleConfirmTransactions = async () => {
         if (!linkId && !intentCreate?.id) return;
 
-        console.log("Call confirm");
-        try {
-            if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
-                await handleUpdateLinkToActive();
-            } else if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
-                handleRetryTransactions();
-            } else {
-                await startTransaction();
-            }
-        } catch (err) {
-            console.error(err);
-        }
+        // console.log("Call confirm");
+        // try {
+        //     if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
+        //         await handleUpdateLinkToActive();
+        //     } else if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
+        //         handleRetryTransactions();
+        //     } else {
+        //         await startTransaction();
+        //     }
+        // } catch (err) {
+        //     console.error(err);
+        // }
     };
 
     const handleBackstep = async () => {

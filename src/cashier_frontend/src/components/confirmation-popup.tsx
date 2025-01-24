@@ -154,6 +154,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 assets={mainIntents?.map((intent) =>
                     mapIntentModelToAssetModel(intent, data?.transactions),
                 )}
+                state={mainIntents![0].state}
             />
         );
     };
@@ -163,6 +164,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
             <TransactionItem
                 title={translate("transaction.confirm_popup.cashier_fee_label")}
                 assets={[mapIntentModelToAssetModel(cashierFeeIntents![0], data?.transactions)]}
+                state={cashierFeeIntents![0].state}
             />
         );
     };
@@ -191,13 +193,6 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
             ));
         }
     };
-
-    // useEffect(() => {
-    //     if (networkFees.length > 0 || totalFees.length > 0) {
-    //         //setNetworkFees(groupFeesByAddress(networkFees));
-    //         setLoading(false);
-    //     }
-    // }, [networkFees, totalFees]);
 
     return (
         <DrawerContent className="max-w-[400px] mx-auto p-3">

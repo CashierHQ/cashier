@@ -6,7 +6,7 @@ import { FC, useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IoMdCheckmark } from "react-icons/io";
 import { TransactionModel } from "@/services/types/intent.service.types";
-import { TRANSACTION_STATE } from "@/services/types/enum";
+import { INTENT_STATE, TRANSACTION_STATE } from "@/services/types/enum";
 
 export type AssetModel = {
     address: string;
@@ -49,15 +49,15 @@ const TransactionItem: FC<TransactionItemProps> = ({
 
     const renderTransactionState = (transactionState?: string) => {
         switch (transactionState) {
-            case TRANSACTION_STATE.SUCCESS:
+            case INTENT_STATE.SUCCESS:
                 return <IoMdCheckmark color="green" size={22} />;
-            case TRANSACTION_STATE.FAIL:
-            case TRANSACTION_STATE.TIMEOUT:
+            case INTENT_STATE.FAIL:
+            case INTENT_STATE.TIMEOUT:
                 return <IoMdClose color="red" size={22} />;
-            case TRANSACTION_STATE.PROCESSING:
+            case INTENT_STATE.PROCESSING:
                 return <img src="/loading.gif" width={22} />;
             default:
-                return <IoMdCheckmark color="green" size={22} className="opacity-0 hidden" />;
+                return <IoMdCheckmark color="green" size={22} className="opacity-0" />;
         }
     };
 
@@ -76,7 +76,7 @@ const TransactionItem: FC<TransactionItemProps> = ({
     return (
         <div id="confirmation-transaction" className="flex justify-between my-2">
             <div className="flex">
-                {renderTransactionState(assets?.[0]?.transaction?.state)}
+                {renderTransactionState(state)}
                 <div id="transaction-title" className="ml-3 text-right">
                     {title}
                 </div>

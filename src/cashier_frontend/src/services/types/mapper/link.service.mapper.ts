@@ -31,7 +31,7 @@ export const generateMockAction = (): ActionModel => {
                 id: "1111",
                 task: TASK.TRANSFER_WALLET_TO_LINK,
                 chain: CHAIN.IC,
-                state: INTENT_STATE.CREATED,
+                state: INTENT_STATE.SUCCESS,
                 from: {
                     address: "36nrw-cqcch-ea3si-53d3r-d4bep-vcvpf-jcuq7-dgaxh-bk3ss-4plti-5qe",
                     chain: CHAIN.IC,
