@@ -23,22 +23,29 @@ interface TransactionItemProps {
     isLoading?: boolean;
 }
 
-const TransactionItem: FC<TransactionItemProps> = (props) => {
+const TransactionItem: FC<TransactionItemProps> = ({
+    title,
+    assets,
+    state,
+    isNetWorkFee,
+    isLoading,
+}) => {
     const [tokenSymbol, setTokenSymbol] = useState<string>("");
     const [displayAmount, setDisplayAmount] = useState<number>(0);
     const { data: tokenData, isLoading: isLoadingMetadata } = useTokenMetadataQuery(
-        props?.assets?.[0]?.address,
+        assets?.[0]?.address,
     );
 
     useEffect(() => {
-        if (tokenData && props.assets?.[0]) {
-            const amount = props.assets?.[0]?.amount;
+        if (tokenData && assets?.[0]) {
+            const amount = assets?.[0]?.amount;
+
             setDisplayAmount(
                 convertDecimalBigIntToNumber(amount ?? BigInt(0), tokenData.metadata.decimals),
             );
             setTokenSymbol(tokenData.metadata.symbol ?? "");
         }
-    }, [tokenData, props.assets, props.isNetWorkFee]);
+    }, [tokenData, assets, isNetWorkFee]);
 
     const renderTransactionState = (transactionState?: string) => {
         switch (transactionState) {
@@ -54,26 +61,28 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
         }
     };
 
-    const assetItem = () => (
-        <div className="flex">
-            {`${displayAmount} ${tokenSymbol}`}
-            <Avatar className="w-7 h-7 ml-3">
-                <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${props?.assets?.[0]?.address}`} />
-                <AvatarFallback>{tokenData?.metadata?.symbol}</AvatarFallback>
-            </Avatar>
-        </div>
-    );
+    const assetItem = () => {
+        return (
+            <div className="flex">
+                {`${displayAmount} ${tokenSymbol}`}
+                <Avatar className="w-7 h-7 ml-3">
+                    <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${assets?.[0]?.address}`} />
+                    <AvatarFallback>{tokenData?.metadata?.symbol}</AvatarFallback>
+                </Avatar>
+            </div>
+        );
+    };
 
     return (
         <div id="confirmation-transaction" className="flex justify-between my-2">
             <div className="flex">
-                {renderTransactionState(props.assets?.[0]?.transaction?.state)}
+                {renderTransactionState(assets?.[0]?.transaction?.state)}
                 <div id="transaction-title" className="ml-3 text-right">
-                    {props.title}
+                    {title}
                 </div>
             </div>
             <div>
-                {props.isLoading || isLoadingMetadata ? (
+                {isLoading || isLoadingMetadata ? (
                     <img src="/loading.gif" width={22} />
                 ) : (
                     assetItem()

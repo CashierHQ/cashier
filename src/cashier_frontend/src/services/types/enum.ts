@@ -64,8 +64,9 @@ export enum CHAIN {
 }
 
 export enum TASK {
-    TRANSFER_TO_LINK_VAULT = "TransferToLinkVault",
-    TRANSFER_TO_LINK_TRESURY = "TransferToLinkTresury",
+    TRANSFER_WALLET_TO_TREASURY = "transfer_wallet_to_treasury",
+    TRANSFER_WALLET_TO_LINK = "transfer_wallet_to_link",
+    TRANSFER_LINK_TO_WALLET = "transfer_link_to_wallet",
 }
 
 export enum ACTION_TYPE {
