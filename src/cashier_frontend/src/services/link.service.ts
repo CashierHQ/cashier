@@ -89,21 +89,9 @@ class LinkService {
         return false;
     }
 
-    /* TODO: This createAction should return ActionModel */
-    async createAction(input: CreateIntentInput): Promise<ActionModel> {
-        const action = generateMockAction();
-        const response = parseResultResponse(await this.actor.create_intent(input));
-        return action;
-    }
-
-    /*TODO: Consider to remove this function, in case we do not need anymore*/
-    async getConsentMessage(input: GetConsentMessageInput): Promise<CreateIntentConsentModel> {
-        const response = parseResultResponse(await this.actor.get_consent_message(input));
-        return {
-            fee: response.fee,
-            receive: response.receive.map((receive) => mapReceiveModel(receive)),
-            send: response.send,
-        };
+    async createAction(): Promise<ActionModel> {
+        //const response = parseResultResponse(await this.actor.create_intent(input));
+        return generateMockAction();
     }
 }
 

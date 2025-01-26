@@ -1,6 +1,7 @@
 import { AssetModel } from "@/components/transaction-item";
 import { Receive } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { FeeModel, ReceiveModel, TransactionModel } from "../intent.service.types";
+import { IntentModel } from "@/services/types/refractor.intent.service.types";
 
 export const mapReceiveModel = (fee: Receive): ReceiveModel => {
     return {
@@ -40,5 +41,20 @@ export const toCanisterCallRequest = (tx: TransactionModel) => {
         canisterId: tx.canister_id,
         method: tx.method,
         arg: tx.arg,
+    };
+};
+
+export const mapIntentModelToAssetModel = (
+    intent: IntentModel | undefined,
+    transactions: TransactionModel[][] | undefined,
+) => {
+    if (!intent) {
+        return undefined;
+    }
+    return {
+        address: intent.asset.address,
+        amount: intent.amount,
+        chain: intent.asset.chain,
+        transaction: getTransactionMapWithTheFeeModel(intent.asset.address, transactions),
     };
 };

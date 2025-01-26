@@ -29,9 +29,9 @@ export const generateMockAction = (): ActionModel => {
         intents: [
             {
                 id: "1111",
-                task: TASK.TRANSFER_TO_LINK_VAULT,
+                task: TASK.TRANSFER_WALLET_TO_LINK,
                 chain: CHAIN.IC,
-                state: INTENT_STATE.CREATED,
+                state: INTENT_STATE.SUCCESS,
                 from: {
                     address: "36nrw-cqcch-ea3si-53d3r-d4bep-vcvpf-jcuq7-dgaxh-bk3ss-4plti-5qe",
                     chain: CHAIN.IC,
@@ -71,7 +71,7 @@ export const generateMockAction = (): ActionModel => {
             },
             {
                 id: "222",
-                task: TASK.TRANSFER_TO_LINK_TRESURY,
+                task: TASK.TRANSFER_WALLET_TO_TREASURY,
                 chain: CHAIN.IC,
                 state: INTENT_STATE.SUCCESS,
                 from: {
@@ -83,8 +83,8 @@ export const generateMockAction = (): ActionModel => {
                     chain: CHAIN.IC,
                 },
                 asset: {
-                    address: "",
-                    chain: "",
+                    address: "x5qut-viaaa-aaaar-qajda-cai",
+                    chain: "IC",
                 },
                 amount: 1000000n,
                 transactions: [
@@ -197,7 +197,6 @@ export const MapLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
 export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkModel> => {
     const { intent, link } = linkObj;
     return {
-        /*TODO: Temporarily mock the return data for Action*/
         action: generateMockAction(),
         intent_create: fromNullable(intent),
         link: {

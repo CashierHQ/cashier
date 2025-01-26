@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { Button } from "./ui/button";
 import TransactionItem, { AssetModel } from "./transaction-item";
 import { IoIosClose } from "react-icons/io";
 import { useTranslation } from "react-i18next";
-import { CreateIntentConsentModel, TransactionModel } from "@/services/types/intent.service.types";
-import { mapFeeModelToAssetModel } from "@/services/types/mapper/intent.service.mapper";
-import { LINK_ASSET_TYPE } from "@/services/types/enum";
+import { TransactionModel } from "@/services/types/intent.service.types";
+import { mapIntentModelToAssetModel } from "@/services/types/mapper/intent.service.mapper";
+import { TASK } from "@/services/types/enum";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { Skeleton } from "./ui/skeleton";
 import { ActionModel } from "@/services/types/refractor.action.service.types";
+import { LinkModel } from "@/services/types/link.service.types";
 
-/*TODO: Update this model to accept "linkData" and "action" */
 export type ConfirmTransactionModel = {
     linkName: string;
-    feeModel: CreateIntentConsentModel;
+    linkData: LinkModel;
     action: ActionModel;
     transactions?: TransactionModel[][];
 };
@@ -27,7 +27,6 @@ interface ConfirmationPopupProps {
     buttonText: string;
 }
 
-/*TODO: The confirmation popup should receive "data" include "linkData" and "action" to display conent on the UI */
 const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     data,
     handleClose,
@@ -39,6 +38,18 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     const [networkFees, setNetworkFees] = useState<AssetModel[]>([]);
     const [totalFees, setTotalFees] = useState<(AssetModel | undefined)[]>([]);
     const [isLoading, setLoading] = useState<boolean>(true);
+
+    const mainIntents = useMemo(() => {
+        return data?.action.intents.filter(
+            (intent) => intent.task === TASK.TRANSFER_WALLET_TO_LINK,
+        );
+    }, [data?.action.intents]);
+
+    const cashierFeeIntents = useMemo(() => {
+        return data?.action.intents.filter(
+            (intent) => intent.task === TASK.TRANSFER_WALLET_TO_TREASURY,
+        );
+    }, [data?.action.intents]);
 
     const processAllTheFees = async () => {
         // Network fee from sending assets
@@ -55,54 +66,63 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
 
     // Get network fees from each asset sending and included them in total fees
     const processFeesFromAssetSending = async (): Promise<(AssetModel | undefined)[]> => {
-        let totalFees: (AssetModel | undefined)[] = [];
-        if (data?.feeModel?.send?.length) {
-            for (let i = 0; i < data?.feeModel.send.length; i++) {
-                const tokenMetadata = await TokenUtilService.getTokenMetadata(
-                    data?.feeModel.send[i].address,
-                );
-                if (tokenMetadata) {
-                    const networkFeeFromSendAsset: AssetModel = {
-                        address: data?.feeModel.send[i].address,
-                        amount: tokenMetadata.fee,
-                        chain: data?.feeModel.send[i].chain,
-                    };
-                    totalFees = totalFees.concat([
-                        mapFeeModelToAssetModel(data?.feeModel.send[i], undefined),
-                        networkFeeFromSendAsset,
-                    ]);
-                    setNetworkFees((prevFees) => [...prevFees, networkFeeFromSendAsset]);
-                }
-            }
+        if (!mainIntents) return [];
+
+        const totalFees: AssetModel[] = [];
+
+        for (const intent of mainIntents) {
+            const tokenMetadata = await TokenUtilService.getTokenMetadata(intent.asset.address);
+
+            if (!tokenMetadata) continue;
+
+            const networkFeeFromSendAsset: AssetModel = {
+                address: intent.asset.address,
+                amount: tokenMetadata.fee,
+                chain: intent.asset.chain,
+            };
+
+            setNetworkFees((prevFees) => [...prevFees, networkFeeFromSendAsset]);
+
+            totalFees.concat([
+                mapIntentModelToAssetModel(intent, undefined)!,
+                networkFeeFromSendAsset,
+            ]);
         }
+
         return totalFees;
     };
 
     // Get network fees from cashier fee and included them in total fees
     const processFeesFromCashierFee = async (): Promise<(AssetModel | undefined)[]> => {
-        let totalFees: (AssetModel | undefined)[] = [];
-        if (data?.feeModel?.fee[0]?.address) {
-            const cashierFeeTokenMetadata = await TokenUtilService.getTokenMetadata(
-                data?.feeModel.fee[0].address,
-            );
-            if (cashierFeeTokenMetadata) {
-                const networkFeeFromCashierFee: AssetModel = {
-                    address: data?.feeModel.fee[0].address,
-                    amount: cashierFeeTokenMetadata.fee,
-                    chain: data?.feeModel.fee[0].chain,
-                };
-                totalFees = totalFees.concat([
-                    mapFeeModelToAssetModel(data?.feeModel.fee[0], undefined),
-                    networkFeeFromCashierFee,
-                ]);
-                setNetworkFees((prevFees) => [...prevFees, networkFeeFromCashierFee]);
-            }
+        if (!cashierFeeIntents) return [];
+
+        const totalFees: (AssetModel | undefined)[] = [];
+
+        for (const intent of cashierFeeIntents) {
+            const tokenMetadata = await TokenUtilService.getTokenMetadata(intent.asset.address);
+
+            if (!tokenMetadata) continue;
+
+            const networkFeeFromSendAsset: AssetModel = {
+                address: intent.asset.address,
+                amount: intent.amount,
+                chain: intent.asset.chain,
+            };
+
+            setNetworkFees((prevFees) => [...prevFees, networkFeeFromSendAsset]);
+
+            totalFees.concat([
+                mapIntentModelToAssetModel(intent, undefined)!,
+                networkFeeFromSendAsset,
+            ]);
         }
+
         return totalFees;
     };
 
     const groupFeesByAddress = (feeList: (AssetModel | undefined)[]): AssetModel[] => {
         const feeMap = new Map<string, AssetModel>();
+
         feeList.forEach((fee) => {
             if (fee) {
                 const existingFee = feeMap.get(fee.address);
@@ -113,6 +133,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 }
             }
         });
+
         return Array.from(feeMap.values());
     };
 
@@ -120,10 +141,33 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
         const processFees = async () => {
             if (data && !networkFees.length && !totalFees.length) {
                 await processAllTheFees();
+                setLoading(false);
             }
         };
         processFees();
     }, [data]);
+
+    const renderMainAssets = () => {
+        return (
+            <TransactionItem
+                title="Asset to add to link"
+                assets={mainIntents?.map((intent) =>
+                    mapIntentModelToAssetModel(intent, data?.transactions),
+                )}
+                state={mainIntents![0].state}
+            />
+        );
+    };
+
+    const renderCashierFees = () => {
+        return (
+            <TransactionItem
+                title={translate("transaction.confirm_popup.cashier_fee_label")}
+                assets={[mapIntentModelToAssetModel(cashierFeeIntents![0], data?.transactions)]}
+                state={cashierFeeIntents![0].state}
+            />
+        );
+    };
 
     const renderNetworkFees = () => {
         if (networkFees.length > 0) {
@@ -149,13 +193,6 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
             ));
         }
     };
-
-    useEffect(() => {
-        if (networkFees.length > 0 && totalFees.length > 0) {
-            setNetworkFees(groupFeesByAddress(networkFees));
-            setLoading(false);
-        }
-    }, [networkFees, totalFees]);
 
     return (
         <DrawerContent className="max-w-[400px] mx-auto p-3">
@@ -201,25 +238,10 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                             style={{ maxHeight: "200px", overflowY: "auto" }}
                         >
                             {/* ---- LINK ASSET ---  */}
-                            <TransactionItem
-                                title="Asset to add to link"
-                                assets={data?.feeModel.send.map((asset) =>
-                                    mapFeeModelToAssetModel(asset, data?.transactions),
-                                )}
-                            />
+                            {renderMainAssets()}
                             <div className="mt-1">
                                 {/* ---- CASHIER FEES ---  */}
-                                <TransactionItem
-                                    title={translate("transaction.confirm_popup.cashier_fee_label")}
-                                    assets={[
-                                        mapFeeModelToAssetModel(
-                                            data?.feeModel.fee.find(
-                                                (f) => f.type === LINK_ASSET_TYPE.CASHIER_FEE,
-                                            ),
-                                            data?.transactions,
-                                        ),
-                                    ]}
-                                />
+                                {renderCashierFees()}
                                 {/* ---- NETWORK FEES ---  */}
                                 {renderNetworkFees()}
                             </div>
