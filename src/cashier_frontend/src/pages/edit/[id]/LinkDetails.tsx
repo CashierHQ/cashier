@@ -202,6 +202,32 @@ export default function LinkDetails({
         return userTokenList;
     }
 
+    const onSubmit = form.handleSubmit((data) => {
+        const { tokenAddress, amountNumber } = data;
+        const relevantAsset = assetList.find((asset) => asset.tokenAddress === tokenAddress);
+        const amountInWallet = relevantAsset?.amount;
+
+        if (amountInWallet === undefined) {
+            form.setError("amountNumber", {
+                type: "manual",
+                message: "Unable to validate balance",
+            });
+
+            return;
+        }
+
+        if (amountNumber > amountInWallet) {
+            form.setError("amountNumber", {
+                type: "manual",
+                message: "Your balance is not enough",
+            });
+
+            return;
+        }
+
+        handleSubmit(data);
+    });
+
     const selectedAssetButtonInfo = (): React.ReactNode => {
         if (selectedToken) {
             return (
@@ -243,10 +269,7 @@ export default function LinkDetails({
                 ) : (
                     <>
                         <Form {...form}>
-                            <form
-                                onSubmit={form.handleSubmit(handleSubmit)}
-                                className="space-y-8 mb-[100px]"
-                            >
+                            <form onSubmit={onSubmit} className="space-y-8 mb-[100px]">
                                 <FormField
                                     name="tokenAddress"
                                     control={form.control}
