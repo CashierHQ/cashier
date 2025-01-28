@@ -1,3 +1,4 @@
+use candid::CandidType;
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -14,6 +15,7 @@ pub struct Intent {
     pub state: IntentState,
     pub created_at: u64,
     pub dependency: Vec<String>,
+    pub chain: Chain,
     pub task: IntentTask,
     pub r#type: IntentType,
 }
@@ -26,16 +28,25 @@ pub enum IntentState {
     Fail,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
 pub enum IntentType {
     Transfer(TransferIntent),
+    TransferFrom(TransferFromIntent),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
 pub struct TransferIntent {
-    pub chain: Chain,
     pub from: Wallet,
     pub to: Wallet,
+    pub asset: Asset,
+    pub amount: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+pub struct TransferFromIntent {
+    pub from: Wallet,
+    pub to: Wallet,
+    pub spender: Wallet,
     pub asset: Asset,
     pub amount: u64,
 }
@@ -60,6 +71,10 @@ impl IntentTask {
             IntentTask::TransferWalletToLink => "transfer_wallet_to_link",
         }
     }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
+    }
 }
 
 impl FromStr for IntentTask {
@@ -82,6 +97,10 @@ impl IntentState {
             IntentState::Success => "Intent_state_success",
             IntentState::Fail => "Intent_state_fail",
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
     }
 }
 

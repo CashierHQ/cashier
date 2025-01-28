@@ -14,7 +14,7 @@ pub struct Link {
     pub link_type: Option<LinkType>,
     pub asset_info: Option<Vec<AssetInfo>>,
     pub template: Option<Template>,
-    pub creator: Option<String>,
+    pub creator: String,
     pub create_at: u64,
     pub metadata: Option<HashMap<String, String>>,
 }
@@ -40,6 +40,10 @@ impl LinkType {
             LinkType::TipLink => "TipLink",
         }
     }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
+    }
 }
 
 impl FromStr for LinkType {
@@ -54,7 +58,7 @@ impl FromStr for LinkType {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum LinkState {
     ChooseLinkType,
     AddAssets,
@@ -72,6 +76,10 @@ impl LinkState {
             LinkState::Active => "Link_state_active",
             LinkState::Inactive => "Link_state_inactive",
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
     }
 }
 
@@ -104,6 +112,10 @@ impl Template {
             Template::Right => "Right",
             Template::Central => "Central",
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
     }
 }
 

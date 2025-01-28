@@ -10,22 +10,50 @@ pub struct Transaction {
     pub id: String,
     pub created_at: u64,
     pub state: TransactionState,
-    pub dependency: Vec<String>,
-    pub grouping: String,
+    pub dependency: Option<Vec<String>>,
+    pub grouping: Option<String>,
     pub wallet: TransactionWallet,
-    pub r#type: TransactionType,
+    pub protocol: Protocol,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum TransactionType {
-    IcTransaction(IcTransaction),
+pub enum Protocol {
+    IC(IcTransaction),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct IcTransaction {
-    pub protocol: TransactionProtocol,
+pub enum IcTransaction {
+    Icrc1Transfer(Icrc1Transfer),
+    Icrc2Approve(Icrc2Approve),
+    Icrc2TransferFrom(Icrc2TransferFrom),
+    // pub protocol: TransactionProtocol,
+    // pub from: Wallet,
+    // pub to: Wallet,
+    // pub asset: Asset,
+    // pub amount: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Icrc1Transfer {
     pub from: Wallet,
     pub to: Wallet,
+    pub asset: Asset,
+    pub amount: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Icrc2Approve {
+    pub from: Wallet,
+    pub spender: Wallet,
+    pub asset: Asset,
+    pub amount: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Icrc2TransferFrom {
+    pub from: Wallet,
+    pub to: Wallet,
+    pub spender: Wallet,
     pub asset: Asset,
     pub amount: u64,
 }
@@ -42,6 +70,10 @@ impl TransactionWallet {
             TransactionWallet::Canister => "Canister",
             TransactionWallet::User => "User",
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
     }
 }
 
@@ -71,6 +103,10 @@ impl TransactionProtocol {
             TransactionProtocol::Icrc2Approve => "Icrc2Approve",
             TransactionProtocol::Icrc2TransferFrom => "Icrc2TransferFrom",
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
     }
 }
 
@@ -105,6 +141,10 @@ impl TransactionState {
             TransactionState::Fail => "Transaction_state_fail",
             TransactionState::Timeout => "Transaction_state_timeout",
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
     }
 }
 

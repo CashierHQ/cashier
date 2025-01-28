@@ -8,7 +8,7 @@ pub struct User {
     pub email: Option<String>,
 }
 
-#[derive(Clone, Debug, Default, CandidType)]
+#[derive(Clone, Debug, Default, CandidType, PartialEq)]
 #[storable]
 pub struct UserWallet {
     pub user_id: String,

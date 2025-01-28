@@ -2,15 +2,15 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
 pub enum Chain {
     IC,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Asset {
-    address: String,
-    chain: Chain,
+    pub address: String,
+    pub chain: Chain,
 }
 
 impl Chain {
@@ -18,6 +18,10 @@ impl Chain {
         match self {
             Chain::IC => "IC",
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
     }
 }
 

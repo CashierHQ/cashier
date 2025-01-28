@@ -6,7 +6,7 @@ pub type LinkKey = String;
 
 pub type ActionKey = String;
 
-pub type ActionType = String;
+pub type ActionTypeKey = String;
 
 pub type IntentKey = String;
 
@@ -16,7 +16,7 @@ pub type UserLinkKey = (UserKey, LinkKey);
 
 pub type UserActionKey = (UserKey, ActionKey);
 
-pub type LinkActionKey = (LinkKey, ActionType, ActionKey);
+pub type LinkActionKey = (LinkKey, ActionTypeKey, ActionKey);
 
 pub type ActionIntentKey = (ActionKey, IntentKey);
 

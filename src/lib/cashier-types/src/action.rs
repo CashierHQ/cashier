@@ -8,6 +8,7 @@ pub struct Action {
     pub id: String,
     pub r#type: ActionType,
     pub state: ActionState,
+    pub creator: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -33,6 +34,33 @@ pub struct ActionIntent {
     pub created_at: u64,
 }
 
+impl ActionType {
+    pub fn to_str(&self) -> &str {
+        match self {
+            ActionType::Claim => "Claim",
+            ActionType::CreateLink => "CreateLink",
+            ActionType::Withdraw => "Withdraw",
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
+    }
+}
+
+impl FromStr for ActionType {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<ActionType, Self::Err> {
+        match input {
+            "Claim" => Ok(ActionType::Claim),
+            "CreateLink" => Ok(ActionType::CreateLink),
+            "Withdraw" => Ok(ActionType::Withdraw),
+            _ => Err(()),
+        }
+    }
+}
+
 impl ActionState {
     pub fn to_str(&self) -> &str {
         match self {
@@ -41,6 +69,10 @@ impl ActionState {
             ActionState::Success => "Action_state_success",
             ActionState::Fail => "Action_state_fail",
         }
+    }
+
+    pub fn to_string(&self) -> String {
+        self.to_str().to_string()
     }
 }
 
