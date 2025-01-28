@@ -1,8 +1,11 @@
+use std::str::FromStr;
+
+use cashier_types::{ActionType, LinkType};
 use ic_cdk::{query, update};
 
 use crate::{
     core::{
-        guard::is_not_anonymous, link_type::LinkType, GetLinkOptions, GetLinkResp, PaginateResult,
+        guard::is_not_anonymous, ActionDto, GetLinkOptions, GetLinkResp, LinkDto, PaginateResult,
         UpdateLinkInput,
     },
     error,
@@ -10,17 +13,17 @@ use crate::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link},
     },
-    types::{api::PaginateInput, error::CanisterError, link::Link},
+    types::{api::PaginateInput, error::CanisterError},
 };
 
 use super::types::CreateLinkInput;
 
 #[query(guard = "is_not_anonymous")]
-async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<Link>, String> {
+async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
     let caller = ic_cdk::api::caller();
 
     match services::link::get_links_by_principal(caller.to_text(), input.unwrap_or_default()) {
-        Ok(links) => Ok(links),
+        Ok(links) => return Ok(links.map(|link| return LinkDto::from(link))),
         Err(e) => {
             return {
                 error!("Failed to get links: {}", e);
@@ -32,7 +35,65 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<Link>,
 
 #[query]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
-    services::link::get_link_by_id(id, options)
+    let caller = ic_cdk::api::caller();
+
+    let is_valid_creator = is_link_creator(caller.to_text(), &id);
+
+    let action_type: Option<ActionType> = match options {
+        Some(options) => match ActionType::from_str(&options.action_type) {
+            Ok(link_type) => match link_type {
+                ActionType::CreateLink => Some(link_type),
+                ActionType::Withdraw => Some(link_type),
+                ActionType::Claim => return Err("Invalid action type".to_string()),
+            },
+            Err(_) => {
+                return Err("Invalid action type".to_string());
+            }
+        },
+        None => None,
+    };
+
+    let link = services::link::get_link_by_id(id.clone())?;
+
+    // if not link creator doesn't allow get create link and withdraw action
+    let action = match action_type {
+        Some(action_type) => match action_type {
+            ActionType::CreateLink => {
+                if is_valid_creator {
+                    Some(action_type)
+                } else {
+                    None
+                }
+            }
+            ActionType::Withdraw => {
+                if is_valid_creator {
+                    Some(action_type)
+                } else {
+                    None
+                }
+            }
+            ActionType::Claim => None,
+        },
+        None => None,
+    };
+
+    let action = match action {
+        Some(action_type) => services::link::get_link_action(id, action_type.to_string()),
+        None => None,
+    };
+
+    let action_dto = match action {
+        Some(action) => {
+            let intents = services::action::get_intents_by_action_id(action.id.clone());
+            Some(ActionDto::from(action, intents))
+        }
+        None => None,
+    };
+
+    return Ok(GetLinkResp {
+        link: LinkDto::from(link),
+        action: action_dto,
+    });
 }
 
 #[update(guard = "is_not_anonymous")]
@@ -50,7 +111,7 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
 }
 
 #[update(guard = "is_not_anonymous")]
-async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
+async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
     match input.validate() {
         Ok(_) => (),
         Err(e) => return Err(CanisterError::HandleApiError(e)),
@@ -59,7 +120,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
     let creator = ic_cdk::api::caller();
 
     // get link type
-    let rsp = match services::link::get_link_by_id(input.id.clone(), None) {
+    let link = match services::link::get_link_by_id(input.id.clone()) {
         Ok(rsp) => rsp,
         Err(e) => {
             error!("Failed to get link: {:#?}", e);
@@ -76,7 +137,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
         }
     }
 
-    let link_type = rsp.link.get("link_type");
+    let link_type = link.link_type.clone();
 
     if link_type.is_none() {
         return Err(CanisterError::HandleApiError(
@@ -85,23 +146,23 @@ async fn update_link(input: UpdateLinkInput) -> Result<Link, CanisterError> {
     }
 
     let link_type_str = link_type.unwrap();
-    match LinkType::from_string(&link_type_str) {
-        Ok(LinkType::NftCreateAndAirdrop) => match handle_update_link(input, rsp.link).await {
-            Ok(link) => Ok(link),
+    match link_type_str {
+        LinkType::NftCreateAndAirdrop => match handle_update_link(input, link).await {
+            Ok(l) => Ok(LinkDto::from(l)),
             Err(e) => {
                 error!("Failed to update link: {:#?}", e);
                 Err(e)
             }
         },
-        Ok(LinkType::TipLink) => match handle_update_link(input, rsp.link).await {
-            Ok(link) => Ok(link),
+        LinkType::TipLink => match handle_update_link(input, link).await {
+            Ok(l) => Ok(LinkDto::from(l)),
             Err(e) => {
                 error!("Failed to update link: {:#?}", e);
                 Err(e)
             }
         },
 
-        Err(_) => Err(CanisterError::HandleApiError(
+        _ => Err(CanisterError::HandleApiError(
             "Invalid link type".to_string(),
         )),
     }

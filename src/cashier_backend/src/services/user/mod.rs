@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::{
     error,
-    repositories::{user_store, user_wallet_store},
+    repositories::{user, user_wallet},
     types::user::User,
 };
 
@@ -20,8 +20,8 @@ pub fn create_new() -> Result<User, String> {
 
     let user = User::new(id_str.clone(), None, caller.to_string());
 
-    user_store::create(user.to_persistence());
-    user_wallet_store::create(caller.to_string(), id_str.clone());
+    user::create(user.to_persistence());
+    user_wallet::create(caller.to_string(), id_str.clone());
 
     // ignore if failed
     match create_example_link(id_str.clone()) {
@@ -36,12 +36,12 @@ pub fn create_new() -> Result<User, String> {
 
 pub fn get() -> Option<User> {
     let caller = ic_cdk::api::caller();
-    let user_id = match user_wallet_store::get(&caller.to_string()) {
+    let user_id = match user_wallet::get(&caller.to_string()) {
         Some(user_id) => user_id,
         None => return None,
     };
 
-    let user = user_store::get(user_id);
+    let user = user::get(user_id);
 
     match user {
         Some(user) => Some(User::from_persistence(user)),
@@ -51,5 +51,5 @@ pub fn get() -> Option<User> {
 
 pub fn is_existed() -> bool {
     let caller = ic_cdk::api::caller();
-    user_wallet_store::get(&caller.to_string()).is_some()
+    user_wallet::get(&caller.to_string()).is_some()
 }

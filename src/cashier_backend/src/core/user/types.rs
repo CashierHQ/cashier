@@ -7,9 +7,3 @@ pub struct User {
     pub email: Option<String>,
     pub wallet: String,
 }
-
-impl User {
-    pub fn new(id: String, email: Option<String>, wallet: String) -> Self {
-        Self { id, email, wallet }
-    }
-}

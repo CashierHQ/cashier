@@ -1,14 +1,14 @@
+use std::{collections::HashMap, str::FromStr};
+
 use candid::{CandidType, Principal};
+use cashier_types::{Action, Chain, Intent, IntentType, LinkType, Template};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    core::{link_type::LinkType, template::Template, AssetInfo, Link, LinkDetailUpdate},
-    types::icrcx_transaction::IcrcxRequests,
-};
+// Structs and Enums
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateLinkInput {
-    pub link_type: LinkType,
+    pub link_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -18,6 +18,200 @@ pub struct LinkDetailUpdateAssetInfoInput {
     pub total_amount: u64,
     pub amount_per_claim: u64,
 }
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct LinkDetailUpdateInput {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub link_image_url: Option<String>,
+    pub nft_image: Option<String>,
+    pub asset_info: Option<Vec<LinkDetailUpdateAssetInfoInput>>,
+    pub template: Option<String>,
+    pub link_type: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct LinkDetailUpdate {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub nft_image: Option<String>,
+    pub link_image_url: Option<String>,
+    pub asset_info: Option<Vec<AssetInfoDto>>,
+    pub template: Option<String>,
+    pub link_type: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
+pub enum LinkStateMachineAction {
+    Continue,
+    Back,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub enum LinkStateMachineActionParams {
+    Update(LinkDetailUpdateInput),
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct UpdateLinkInput {
+    pub id: String,
+    pub action: String,
+    pub params: Option<LinkStateMachineActionParams>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct GetLinkOptions {
+    pub action_type: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct LinkDto {
+    pub id: String,
+    pub state: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub link_type: Option<String>,
+    pub asset_info: Option<Vec<AssetInfoDto>>,
+    pub template: Option<String>,
+    pub creator: String,
+    pub create_at: u64,
+    pub metadata: Option<HashMap<String, String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+pub struct AssetInfoDto {
+    pub address: String,
+    pub chain: String,
+    pub current_amount: u64,
+    pub total_amount: u64,
+    pub amount_per_claim: u64,
+    pub total_claim: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct ActionDto {
+    pub id: String,
+    pub r#type: String,
+    pub state: String,
+    pub creator: String,
+    pub intents: Vec<IntentDto>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct IntentDto {
+    pub id: String,
+    pub state: String,
+    pub created_at: u64,
+    pub chain: String,
+    pub task: String,
+    pub r#type: IntentType,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct GetLinkResp {
+    pub link: LinkDto,
+    pub action: Option<ActionDto>,
+}
+
+impl ActionDto {
+    pub fn from(action: Action, intents: Vec<Intent>) -> Self {
+        ActionDto {
+            id: action.id,
+            r#type: action.r#type.to_string(),
+            state: action.state.to_string(),
+            creator: action.creator,
+            intents: intents
+                .into_iter()
+                .map(|intent| IntentDto::from(intent))
+                .collect(),
+        }
+    }
+}
+
+impl From<cashier_types::Intent> for IntentDto {
+    fn from(intent: cashier_types::Intent) -> Self {
+        IntentDto {
+            id: intent.id,
+            state: intent.state.to_string(),
+            created_at: intent.created_at,
+            chain: intent.chain.to_string(),
+            task: intent.task.to_string(),
+            r#type: intent.r#type,
+        }
+    }
+}
+
+impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
+    fn from(input: LinkDetailUpdateAssetInfoInput) -> Self {
+        let chain = match Chain::from_str(input.chain.as_str()) {
+            Ok(chain) => chain,
+            Err(_) => Chain::IC,
+        };
+
+        cashier_types::AssetInfo {
+            address: input.address,
+            chain,
+            total_amount: input.total_amount,
+            amount_per_claim: input.amount_per_claim,
+            // start with 0
+            total_claim: 0,
+            // start with 0
+            current_amount: 0,
+        }
+    }
+}
+
+impl From<&cashier_types::AssetInfo> for AssetInfoDto {
+    fn from(input: &cashier_types::AssetInfo) -> Self {
+        let chain = input.chain.to_string();
+
+        AssetInfoDto {
+            address: input.address.clone(),
+            chain,
+            current_amount: input.total_amount, // Set current_amount to total_amount
+            total_amount: input.total_amount,
+            amount_per_claim: input.amount_per_claim,
+            total_claim: input.total_claim,
+        }
+    }
+}
+
+impl From<cashier_types::Link> for LinkDto {
+    fn from(link: cashier_types::Link) -> Self {
+        let asset_info = match link.asset_info {
+            Some(asset_info) => {
+                let asset_info_vec = asset_info
+                    .iter()
+                    .map(|asset| AssetInfoDto::from(asset))
+                    .collect();
+
+                Some(asset_info_vec)
+            }
+            None => None,
+        };
+
+        let link_type_str = if let Some(link_type) = link.link_type {
+            Some(link_type.to_string())
+        } else {
+            None
+        };
+
+        LinkDto {
+            id: link.id,
+            state: link.state.to_string(),
+            title: link.title,
+            description: link.description,
+            link_type: link_type_str,
+            asset_info,
+            template: link.template.map(|t| t.to_string()),
+            creator: link.creator,
+            create_at: link.create_at,
+            metadata: link.metadata,
+        }
+    }
+}
+
+// Implementations
 
 impl LinkDetailUpdateAssetInfoInput {
     pub fn validate(&self) -> Result<(), String> {
@@ -34,38 +228,29 @@ impl LinkDetailUpdateAssetInfoInput {
     }
 }
 
-impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfo {
+impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
     fn from(input: &LinkDetailUpdateAssetInfoInput) -> Self {
-        AssetInfo {
+        let chain = input.chain.to_string();
+
+        AssetInfoDto {
             address: input.address.clone(),
-            chain: input.chain.clone(),
+            chain,
             current_amount: input.total_amount, // Set current_amount to total_amount
             total_amount: input.total_amount,
             amount_per_claim: input.amount_per_claim,
-            total_claim: 0, // Set total_claim to 0
+            total_claim: 0,
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct LinkDetailUpdateInput {
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub link_image_url: Option<String>,
-    pub nft_image: Option<String>,
-    pub asset_info: Option<Vec<LinkDetailUpdateAssetInfoInput>>,
-    pub template: Option<String>,
-    pub link_type: Option<String>,
 }
 
 impl LinkDetailUpdateInput {
     pub fn validate(&self) -> Result<(), String> {
         if let Some(template) = &self.template {
-            Template::from_string(template).map_err(|e| format!("Invalid template: {}", e))?;
+            Template::from_str(template).map_err(|_| format!("Invalid template: "))?;
         }
 
         if let Some(link_type) = &self.link_type {
-            LinkType::from_string(link_type).map_err(|e| format!("Invalid link type: {}", e))?;
+            LinkType::from_str(link_type).map_err(|_| format!("Invalid link type "))?;
         }
 
         if let Some(asset_info) = &self.asset_info {
@@ -76,60 +261,6 @@ impl LinkDetailUpdateInput {
 
         Ok(())
     }
-}
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct UpdateLinkParams {
-    pub params: Option<LinkDetailUpdateInput>,
-}
-
-impl UpdateLinkParams {
-    // This method is used to validate the input of UpdateLinkParams
-    pub fn to_link_detail_update(&self) -> LinkDetailUpdate {
-        match &self.params {
-            Some(params) => {
-                let template = match &params.template {
-                    Some(template) => Some(Template::from_string(template.as_str()).unwrap()),
-                    None => None,
-                };
-                let asset_info = match &params.asset_info {
-                    Some(asset_info) => {
-                        let mut asset_info_vec = Vec::new();
-                        for asset_info_input in asset_info {
-                            asset_info_vec.push(AssetInfo::from(asset_info_input));
-                        }
-                        Some(asset_info_vec)
-                    }
-                    None => None,
-                };
-                LinkDetailUpdate {
-                    title: params.title.clone(),
-                    description: params.description.clone(),
-                    link_image_url: params.link_image_url.clone(),
-                    nft_image: params.nft_image.clone(),
-                    asset_info,
-                    template,
-                    state: None,
-                    link_type: params.link_type.clone(),
-                }
-            }
-            None => LinkDetailUpdate {
-                title: None,
-                description: None,
-                link_image_url: None,
-                nft_image: None,
-                asset_info: None,
-                template: None,
-                state: None,
-                link_type: None,
-            },
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
-pub enum LinkStateMachineAction {
-    Continue,
-    Back,
 }
 
 impl LinkStateMachineAction {
@@ -149,18 +280,6 @@ impl LinkStateMachineAction {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub enum LinkStateMachineActionParams {
-    Update(UpdateLinkParams),
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct UpdateLinkInput {
-    pub id: String,
-    pub action: String,
-    pub params: Option<LinkStateMachineActionParams>,
-}
-
 impl UpdateLinkInput {
     pub fn validate(&self) -> Result<(), String> {
         match LinkStateMachineAction::from_string(self.action.as_str()) {
@@ -171,37 +290,60 @@ impl UpdateLinkInput {
         match &self.params {
             Some(params) => match params {
                 LinkStateMachineActionParams::Update(params) => match params {
-                    UpdateLinkParams { params } => match params {
-                        Some(params) => match params.validate() {
-                            Ok(_) => Ok(()),
-                            Err(e) => Err(e),
-                        },
-                        None => Ok(()),
-                    },
+                    LinkDetailUpdateInput {
+                        title,
+                        description,
+                        link_image_url,
+                        nft_image,
+                        asset_info,
+                        template,
+                        link_type,
+                    } => {
+                        if let Some(template) = template {
+                            Template::from_str(template)
+                                .map_err(|_| format!("Invalid template: "))?;
+                        }
+
+                        if let Some(link_type) = link_type {
+                            LinkType::from_str(link_type)
+                                .map_err(|_| format!("Invalid link type "))?;
+                        }
+
+                        if let Some(asset_info) = asset_info {
+                            for asset_info_input in asset_info {
+                                asset_info_input.validate()?;
+                            }
+                        }
+
+                        if let Some(title) = title {
+                            if title.is_empty() {
+                                return Err("Title should not be empty".to_string());
+                            }
+                        }
+
+                        if let Some(description) = description {
+                            if description.is_empty() {
+                                return Err("Description should not be empty".to_string());
+                            }
+                        }
+
+                        if let Some(link_image_url) = link_image_url {
+                            if link_image_url.is_empty() {
+                                return Err("Link image URL should not be empty".to_string());
+                            }
+                        }
+
+                        if let Some(nft_image) = nft_image {
+                            if nft_image.is_empty() {
+                                return Err("NFT image should not be empty".to_string());
+                            }
+                        }
+
+                        Ok(())
+                    }
                 },
             },
             None => Ok(()),
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct GetLinkOptions {
-    pub intent_type: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct GetLinkResp {
-    pub link: Link,
-    pub intent: Option<IntentResp>,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct IntentResp {
-    pub id: String,
-    pub creator_id: String,
-    pub link_id: String,
-    pub state: String,
-    pub intent_type: String,
-    pub transactions: IcrcxRequests,
 }

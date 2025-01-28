@@ -25,30 +25,4 @@ impl LinkIntent {
             created_at,
         }
     }
-
-    pub fn to_persistence(&self) -> crate::repositories::entities::link_intent::LinkIntent {
-        let type_str = self.intent_type.to_string();
-
-        crate::repositories::entities::link_intent::LinkIntent::new(
-            self.link_id.clone(),
-            type_str,
-            self.intent_id.clone(),
-            self.created_at,
-        )
-    }
-
-    pub fn from_persistence(
-        link_intent: crate::repositories::entities::link_intent::LinkIntent,
-    ) -> LinkIntent {
-        let (link_id, intent_type_str, intent_id) = link_intent.split_pk();
-
-        let intent_type = IntentType::from_string(&intent_type_str).unwrap();
-
-        LinkIntent {
-            link_id,
-            intent_type,
-            intent_id,
-            created_at: link_intent.created_at,
-        }
-    }
 }

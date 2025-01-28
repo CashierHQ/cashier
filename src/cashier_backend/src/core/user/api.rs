@@ -1,6 +1,8 @@
 use ic_cdk::{query, update};
 
-use crate::{core::guard::is_not_anonymous, services, types::user::User};
+use crate::{core::guard::is_not_anonymous, services};
+
+use super::types::User;
 
 #[update(guard = "is_not_anonymous")]
 fn create_user() -> Result<User, String> {
