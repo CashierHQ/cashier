@@ -6,9 +6,12 @@ import { IoIosClose } from "react-icons/io";
 import { useTranslation } from "react-i18next";
 import { CreateIntentConsentModel, TransactionModel } from "@/services/types/intent.service.types";
 import { mapFeeModelToAssetModel } from "@/services/types/mapper/intent.service.mapper";
-import { LINK_ASSET_TYPE } from "@/services/types/enum";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { Skeleton } from "./ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
+import { ArrowUpDown, Info } from "lucide-react";
+import { convertDecimalBigIntToNumber } from "@/utils";
 
 export type ConfirmTransactionModel = {
     linkName: string;
@@ -34,6 +37,9 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     const { t: translate } = useTranslation();
     const [networkFees, setNetworkFees] = useState<AssetModel[]>([]);
     const [totalFees, setTotalFees] = useState<(AssetModel | undefined)[]>([]);
+    const [totalFeesDisplayAmount, setTotalFeesDisplayAmount] = useState<(number | undefined)[]>(
+        [],
+    );
     const [isLoading, setLoading] = useState<boolean>(true);
 
     const processAllTheFees = async () => {
@@ -47,7 +53,10 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
         // Group by address and sum up the amounts
         const groupedTotalFees = groupFeesByAddress(totalFees);
         setTotalFees(groupedTotalFees);
-        console.log(groupFeesByAddress(networkFees));
+        console.log(groupedTotalFees);
+
+        const groupedFeesDisplayAmount = await processTotalFeesDisplayAmount(groupedTotalFees);
+        setTotalFeesDisplayAmount(groupedFeesDisplayAmount);
     };
 
     // Get network fees from each asset sending and included them in total fees
@@ -100,6 +109,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
 
     const groupFeesByAddress = (feeList: (AssetModel | undefined)[]): AssetModel[] => {
         const feeMap = new Map<string, AssetModel>();
+
         feeList.forEach((fee) => {
             if (fee) {
                 const existingFee = feeMap.get(fee.address);
@@ -110,7 +120,24 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 }
             }
         });
+
         return Array.from(feeMap.values());
+    };
+
+    const processTotalFeesDisplayAmount = async (fees: AssetModel[]) => {
+        const feesDecimals = await Promise.all(
+            fees.map(async (fee) => {
+                const metadata = await TokenUtilService.getTokenMetadata(fee.address);
+
+                if (!metadata) {
+                    return 0;
+                }
+
+                return convertDecimalBigIntToNumber(fee.amount, metadata.decimals);
+            }),
+        );
+
+        return feesDecimals;
     };
 
     useEffect(() => {
@@ -122,29 +149,53 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
         processFees();
     }, [data]);
 
-    const renderNetworkFees = () => {
-        if (networkFees.length > 0) {
-            return networkFees?.map((fee, index) => (
-                <TransactionItem
-                    key={`networkfee-${index}`}
-                    title={translate("transaction.confirm_popup.network_fee_label")}
-                    assets={[fee]}
-                    isNetWorkFee={true}
-                />
-            ));
-        }
+    const renderAssets = () => {
+        const assets = data?.feeModel.send ?? [];
+        const transactions = data?.transactions;
+
+        return (
+            <div className="flex flex-col gap-3 border-solid border-inherit border-2 rounded-lg p-4 overflow-y-auto max-h-[200px]">
+                {assets.map((asset, index) => (
+                    <TransactionItem
+                        key={`asset-${index}`}
+                        title={translate("transaction.confirm_popup.asset_label")}
+                        asset={mapFeeModelToAssetModel(asset, transactions)}
+                    />
+                ))}
+            </div>
+        );
     };
 
-    const renderTotalFees = () => {
-        if (networkFees.length > 0) {
-            return totalFees?.map((fee, index) => (
-                <TransactionItem
-                    key={`totalfee-${index}`}
-                    title={translate("transaction.confirm_popup.total_fee_label")}
-                    assets={[fee]}
-                />
-            ));
+    const renderFees = () => {
+        const cashierFee = data?.feeModel.fee[0];
+        const displayAmount = totalFeesDisplayAmount[0];
+
+        if (!cashierFee || !displayAmount) {
+            return null;
         }
+
+        return (
+            <div className="flex flex-col gap-3 rounded-lg p-4 bg-lightgreen">
+                <TransactionItem
+                    title={translate("transaction.confirm_popup.link_creation_fee_label")}
+                    asset={mapFeeModelToAssetModel(cashierFee, undefined)}
+                />
+
+                <hr className="border border-white" />
+
+                <div className="flex justify-between text-lg">
+                    <h4>{translate("transaction.confirm_popup.total_cashier_fees_label")}</h4>
+
+                    <div className="flex items-center">
+                        {`${displayAmount} ICP`}
+                        <Avatar className="w-7 h-7 ml-3">
+                            <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${cashierFee?.address}`} />
+                            <AvatarFallback>ICP</AvatarFallback>
+                        </Avatar>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     useEffect(() => {
@@ -168,6 +219,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                     />
                 </DrawerTitle>
             </DrawerHeader>
+
             {isLoading ? (
                 Array.from({ length: 5 }).map((_, index) => (
                     <div className="flex items-center space-x-4 my-3" key={index}>
@@ -180,56 +232,54 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                 ))
             ) : (
                 <>
-                    <div id="confirmation-popup-section-receive" className="my-3">
-                        <div className="font-medium ml-2">
+                    <section id="confirmation-popup-section-receive" className="my-3">
+                        <h2 className="font-medium ml-2">
                             {translate("transaction.confirm_popup.receive_label")}
-                        </div>
-                        <div className="flex justify-between border-solid border-inherit border-2 rounded-lg p-2">
-                            <div className="ml-3">Cashier Link</div>
-                            <div>{data?.linkName}</div>
-                        </div>
-                    </div>
-                    <div id="confirmation-popup-section-send" className="my-3">
-                        <div className="font-medium ml-2">
-                            {translate("transaction.confirm_popup.send_label")}
-                        </div>
-                        <div
-                            className="border-solid border-inherit border-2 rounded-lg p-2 divide-y divide-inherit"
-                            style={{ maxHeight: "200px", overflowY: "auto" }}
-                        >
-                            {/* ---- LINK ASSET ---  */}
-                            <TransactionItem
-                                title="Asset to add to link"
-                                assets={data?.feeModel.send.map((asset) =>
-                                    mapFeeModelToAssetModel(asset, data?.transactions),
-                                )}
-                            />
-                            <div className="mt-1">
-                                {/* ---- CASHIER FEES ---  */}
-                                <TransactionItem
-                                    title={translate("transaction.confirm_popup.cashier_fee_label")}
-                                    assets={[
-                                        mapFeeModelToAssetModel(
-                                            data?.feeModel.fee.find(
-                                                (f) => f.type === LINK_ASSET_TYPE.CASHIER_FEE,
-                                            ),
-                                            data?.transactions,
-                                        ),
-                                    ]}
+                        </h2>
+
+                        <div className="flex justify-between border-solid border-inherit border-2 rounded-lg p-4">
+                            <div className="flex">
+                                <img
+                                    src="./smallLogo.svg"
+                                    alt="Cashier logo"
+                                    className="max-w-[20px]"
                                 />
-                                {/* ---- NETWORK FEES ---  */}
-                                {renderNetworkFees()}
+                                <h3 className="ml-3">Cashier Link</h3>
+                            </div>
+
+                            <span>{data?.linkName}</span>
+                        </div>
+                    </section>
+
+                    <section id="confirmation-popup-section-send" className="my-3">
+                        <div className="flex justify-between">
+                            <div className="flex items-center">
+                                <h2 className="font-medium ml-2">
+                                    {translate("transaction.confirm_popup.send_label")}
+                                </h2>
+
+                                <Info className="text-destructive ml-1.5" size={16} />
+                            </div>
+
+                            <div className="flex text-destructive">
+                                USD
+                                <button onClick={() => console.log("info click")}>
+                                    <ArrowUpDown className="ml-1" size={16} />
+                                </button>
                             </div>
                         </div>
-                    </div>
-                    <div id="confirmation-popup-section-total" className="mb-3">
-                        {/* ---- TOTAL FEES ---  */}
-                        {renderTotalFees()}
-                    </div>
 
-                    <div id="confirmation-popup-section-legal-text" className="mb-3">
-                        <div>{translate("transaction.confirm_popup.legal_text")}</div>
-                    </div>
+                        {renderAssets()}
+                    </section>
+
+                    <section id="confirmation-popup-section-total" className="mb-3">
+                        {renderFees()}
+                    </section>
+
+                    <section id="confirmation-popup-section-legal-text" className="mb-3">
+                        <p>{translate("transaction.confirm_popup.legal_text")}</p>
+                    </section>
+
                     <Button disabled={disabled} onClick={handleConfirm}>
                         {buttonText}
                     </Button>

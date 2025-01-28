@@ -2,11 +2,12 @@ import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FC, useEffect, useState } from "react";
+import { FC, useMemo } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IoMdCheckmark } from "react-icons/io";
 import { TransactionModel } from "@/services/types/intent.service.types";
 import { TRANSACTION_STATE } from "@/services/types/enum";
+import { useTranslation } from "react-i18next";
 
 export type AssetModel = {
     address: string;
@@ -17,30 +18,36 @@ export type AssetModel = {
 
 interface TransactionItemProps {
     title: string;
-    assets: (AssetModel | undefined)[] | undefined;
-    state?: string;
-    isNetWorkFee?: boolean;
+    asset: AssetModel | undefined;
     isLoading?: boolean;
+    withNetworkFee?: boolean;
 }
 
-const TransactionItem: FC<TransactionItemProps> = (props) => {
-    const [tokenSymbol, setTokenSymbol] = useState<string>("");
-    const [displayAmount, setDisplayAmount] = useState<number>(0);
-    const { data: tokenData, isLoading: isLoadingMetadata } = useTokenMetadataQuery(
-        props?.assets?.[0]?.address,
-    );
+const TransactionItem: FC<TransactionItemProps> = ({ title, asset, isLoading }) => {
+    const { t } = useTranslation();
 
-    useEffect(() => {
-        if (tokenData && props.assets?.[0]) {
-            const amount = props.assets?.[0]?.amount;
-            setDisplayAmount(
-                convertDecimalBigIntToNumber(amount ?? BigInt(0), tokenData.metadata.decimals),
-            );
-            setTokenSymbol(tokenData.metadata.symbol ?? "");
+    const { data: tokenData, isLoading: isLoadingMetadata } = useTokenMetadataQuery(asset?.address);
+
+    const tokenSymbol = tokenData?.metadata.symbol;
+
+    const [displayAmount, displayNetworkFee] = useMemo(() => {
+        if (asset && tokenData) {
+            const decimals = tokenData.metadata.decimals;
+            const amount = asset.amount;
+            const fee = tokenData.metadata.fee;
+
+            return [
+                convertDecimalBigIntToNumber(amount, decimals),
+                convertDecimalBigIntToNumber(fee, decimals),
+            ];
+        } else {
+            return [0, 0];
         }
-    }, [tokenData, props.assets, props.isNetWorkFee]);
+    }, [asset, tokenData]);
 
-    const renderTransactionState = (transactionState?: string) => {
+    const renderTransactionState = () => {
+        const transactionState = asset?.transaction?.state;
+
         switch (transactionState) {
             case TRANSACTION_STATE.SUCCESS:
                 return <IoMdCheckmark color="green" size={22} />;
@@ -54,30 +61,57 @@ const TransactionItem: FC<TransactionItemProps> = (props) => {
         }
     };
 
-    const assetItem = () => (
-        <div className="flex">
-            {`${displayAmount} ${tokenSymbol}`}
-            <Avatar className="w-7 h-7 ml-3">
-                <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${props?.assets?.[0]?.address}`} />
-                <AvatarFallback>{tokenData?.metadata?.symbol}</AvatarFallback>
-            </Avatar>
-        </div>
-    );
+    const renderAsset = () => {
+        return (
+            <div className="flex justify-between items-center text-md leading-tight">
+                <h5 id="transaction-title" className="ml-1.5 text-right">
+                    {title}
+                </h5>
 
-    return (
-        <div id="confirmation-transaction" className="flex justify-between my-2">
-            <div className="flex">
-                {renderTransactionState(props.assets?.[0]?.transaction?.state)}
-                <div id="transaction-title" className="ml-3 text-right">
-                    {props.title}
+                <div>
+                    {isLoading || isLoadingMetadata ? (
+                        <img src="/loading.gif" width={22} />
+                    ) : (
+                        <div className="flex items-center">
+                            {`${displayAmount} ${tokenSymbol}`}
+                            <Avatar className="w-7 h-7 ml-3">
+                                <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${asset?.address}`} />
+                                <AvatarFallback>{tokenSymbol}</AvatarFallback>
+                            </Avatar>
+                        </div>
+                    )}
                 </div>
             </div>
-            <div>
-                {props.isLoading || isLoadingMetadata ? (
-                    <img src="/loading.gif" width={22} />
-                ) : (
-                    assetItem()
-                )}
+        );
+    };
+
+    const renderNetworkFee = () => {
+        return (
+            <div className="flex justify-between text-xs leading-tight">
+                <h6 id="transaction-title" className="ml-1.5 text-right">
+                    {t("transaction.confirm_popup.network_fee_label")}
+                </h6>
+
+                <div className="flex">
+                    {isLoading || isLoadingMetadata ? (
+                        <img src="/loading.gif" width={22} />
+                    ) : (
+                        <div className="flex">
+                            + {displayNetworkFee} {tokenSymbol}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div id="confirmation-transaction" className="flex items-center">
+            <div>{renderTransactionState()}</div>
+
+            <div className="flex flex-col w-full">
+                {renderAsset()}
+                {renderNetworkFee()}
             </div>
         </div>
     );
