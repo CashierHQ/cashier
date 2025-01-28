@@ -47,14 +47,8 @@ export default function ClaimPage() {
         console.log("Claiming");
     };
 
-    /* TODO: Remove after grant submit */
     const handleClaimClick = () => {
-        setToastData({
-            open: true,
-            title: "Under development",
-            description: "We are developing the claiming feature. It'll be available soon.",
-            variant: "error",
-        });
+        setIsClaiming(true);
     };
 
     if (isClaiming)
