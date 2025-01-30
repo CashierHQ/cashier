@@ -46,11 +46,11 @@ export const toCanisterCallRequest = (tx: TransactionModel) => {
 
 export const mapIntentModelToAssetModel = (
     intent: IntentModel | undefined,
-    transactions: TransactionModel[][] | undefined,
-) => {
+): AssetModel | undefined => {
     if (!intent) {
         return undefined;
     }
+
     return {
         address: intent.asset.address,
         amount: intent.amount,

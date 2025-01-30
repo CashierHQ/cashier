@@ -49,6 +49,7 @@
         "confirm_popup": {
             "title": "Confirm transaction",
             "receive_label": "You will receive",
+            "cashier_link_label": "Cashier link",
             "send_label": "You will send",
             "asset_label": "Asset to add to link",
             "cashier_fee_label": "Cashier fee",

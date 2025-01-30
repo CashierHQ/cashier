@@ -1,5 +1,5 @@
 import { TASK, CHAIN, INTENT_STATE } from "./enum";
-import { TransactionModel } from "./refractor.transaction.service.types";
+import { RefactoredTransactionModel } from "./refractor.transaction.service.types";
 
 export type AssetModel = {
     address: string;
@@ -20,5 +20,5 @@ export type IntentModel = {
     to: WalletModel;
     asset: AssetModel;
     amount: bigint;
-    transactions: TransactionModel[];
+    transactions: RefactoredTransactionModel[];
 };

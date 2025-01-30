@@ -5,35 +5,28 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FC, useMemo } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IoMdCheckmark } from "react-icons/io";
-import { TransactionModel } from "@/services/types/intent.service.types";
-import { INTENT_STATE, TRANSACTION_STATE } from "@/services/types/enum";
+import { INTENT_STATE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
-
-export type AssetModel = {
-    address: string;
-    amount: bigint;
-    chain: string;
-    transaction?: TransactionModel;
-};
+import { IntentModel } from "@/services/types/refractor.intent.service.types";
 
 interface TransactionItemProps {
     title: string;
-    asset: AssetModel | undefined;
+    intent: IntentModel;
     isLoading?: boolean;
-    withNetworkFee?: boolean;
 }
 
-const TransactionItem: FC<TransactionItemProps> = ({ title, asset, isLoading }) => {
+const TransactionItem: FC<TransactionItemProps> = ({ title, intent, isLoading }) => {
     const { t } = useTranslation();
-
-    const { data: tokenData, isLoading: isLoadingMetadata } = useTokenMetadataQuery(asset?.address);
+    const { data: tokenData, isLoading: isLoadingMetadata } = useTokenMetadataQuery(
+        intent.asset.address,
+    );
 
     const tokenSymbol = tokenData?.metadata.symbol;
 
     const [displayAmount, displayNetworkFee] = useMemo(() => {
-        if (asset && tokenData) {
+        if (tokenData) {
             const decimals = tokenData.metadata.decimals;
-            const amount = asset.amount;
+            const amount = intent.amount;
             const fee = tokenData.metadata.fee;
 
             return [
@@ -43,12 +36,10 @@ const TransactionItem: FC<TransactionItemProps> = ({ title, asset, isLoading }) 
         } else {
             return [0, 0];
         }
-    }, [asset, tokenData]);
+    }, [tokenData]);
 
     const renderTransactionState = () => {
-        const transactionState = asset?.transaction?.state;
-
-        switch (transactionState) {
+        switch (intent.state) {
             case INTENT_STATE.SUCCESS:
                 return <IoMdCheckmark color="green" size={22} />;
             case INTENT_STATE.FAIL:
@@ -75,7 +66,9 @@ const TransactionItem: FC<TransactionItemProps> = ({ title, asset, isLoading }) 
                         <div className="flex items-center">
                             {`${displayAmount} ${tokenSymbol}`}
                             <Avatar className="w-7 h-7 ml-3">
-                                <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${asset?.address}`} />
+                                <AvatarImage
+                                    src={`${IC_EXPLORER_IMAGES_PATH}${intent.asset.address}`}
+                                />
                                 <AvatarFallback>{tokenSymbol}</AvatarFallback>
                             </Avatar>
                         </div>
