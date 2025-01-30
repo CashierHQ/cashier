@@ -11,8 +11,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
 import { Drawer } from "@/components/ui/drawer";
-import ConfirmationPopup, { ConfirmTransactionModel } from "@/components/confirmation-popup";
-import TransactionToast from "@/components/transaction-toast";
+import ConfirmationPopup, {
+    ConfirmTransactionModel,
+} from "@/components/confirmation-popup/confirmation-popup";
+import TransactionToast from "@/components/transaction/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { getReponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";

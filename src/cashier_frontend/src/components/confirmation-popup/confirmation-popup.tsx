@@ -1,23 +1,23 @@
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { IoIosClose } from "react-icons/io";
+import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import { TransactionModel } from "@/services/types/intent.service.types";
-import { TASK } from "@/services/types/enum";
-import { IntentHelperService } from "@/services/fee.service";
 import { ActionModel } from "@/services/types/refractor.action.service.types";
 import { LinkModel } from "@/services/types/link.service.types";
 import { ConfirmationPopupSkeleton } from "@/components/confirmation-popup/confirmation-popup-skeleton";
 import { ConfirmationPopupAssetsSection } from "@/components/confirmation-popup/confirmation-popup-assets-section";
 import { ConfirmationPopupFeesSection } from "@/components/confirmation-popup/confirmation-popup-fees-section";
 import { ConfirmationPopupLegalSection } from "@/components/confirmation-popup/confirmation-popup-legal-section";
-import { ConfirmationPopupYouWillRecieveSection } from "./confirmation-popup-you-will-resieve-section";
+import { TASK } from "@/services/types/enum";
+import { Link, Wifi } from "lucide-react";
 
 export type ConfirmTransactionModel = {
     linkName?: string;
     linkData: LinkModel;
-    action: ActionModel;
+    action?: ActionModel;
     transactions?: TransactionModel[][];
 };
 
@@ -36,69 +36,142 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
     disabled,
     buttonText,
 }) => {
-    const { t: translate } = useTranslation();
+    const { t } = useTranslation();
     const [isLoading, setLoading] = useState<boolean>(true);
+    const [isInfo, setIsInfo] = useState<boolean>(true);
 
     const primaryIntents =
         useMemo(() => {
             return (
-                data?.action.intents.filter(
+                data?.action?.intents.filter(
                     (intent) => intent.task === TASK.TRANSFER_WALLET_TO_LINK,
                 ) ?? []
             );
-        }, [data?.action.intents]) ?? [];
+        }, [data?.action?.intents]) ?? [];
 
     const cashierFeeIntents = useMemo(() => {
         return (
-            data?.action.intents.filter(
+            data?.action?.intents.filter(
                 (intent) => intent.task === TASK.TRANSFER_WALLET_TO_TREASURY,
             ) ?? []
         );
-    }, [data?.action.intents]);
+    }, [data?.action?.intents]);
 
-    // useEffect(() => {
-    //     const initState = async () => {
-    //         const totalCashierFee = await IntentHelperService.calculateTotal(cashierTransferAssets);
-    //         setTotalCashierFee(totalCashierFee);
-    //         setLoading(false);
-    //     };
+    useEffect(() => {
+        const initState = async () => {
+            //const totalCashierFee = await IntentHelperService.calculateTotal(cashierTransferAssets);
+            //setTotalCashierFee(totalCashierFee);
+            setLoading(false);
+        };
 
-    //     initState();
-    // }, []);
+        initState();
+    }, []);
 
-    return (
-        <DrawerContent className="max-w-[400px] mx-auto p-3">
-            <DrawerHeader>
-                <DrawerTitle className="flex justify-center">
-                    <div className="text-center w-[100%]">
-                        {translate("transaction.confirm_popup.title")}
-                    </div>
-                    <IoIosClose
-                        onClick={handleClose}
-                        className="ml-auto cursor-pointer"
-                        size={32}
-                    />
-                </DrawerTitle>
-            </DrawerHeader>
-
-            {isLoading ? (
-                <ConfirmationPopupSkeleton />
-            ) : (
+    const renderDrawerContent = () => {
+        if (isLoading) {
+            return (
                 <>
-                    <ConfirmationPopupYouWillRecieveSection linkName={data?.linkName} />
+                    <DrawerHeader>
+                        <DrawerTitle className="flex justify-center">
+                            <div className="text-center w-[100%]">
+                                {t("transaction.confirm_popup.title")}
+                            </div>
+                            <IoIosClose
+                                onClick={handleClose}
+                                className="ml-auto cursor-pointer"
+                                size={32}
+                            />
+                        </DrawerTitle>
+                    </DrawerHeader>
 
-                    <ConfirmationPopupAssetsSection intents={primaryIntents} />
+                    <ConfirmationPopupSkeleton />
+                </>
+            );
+        }
 
-                    <ConfirmationPopupFeesSection intents={cashierFeeIntents} />
+        if (isInfo) {
+            return (
+                <>
+                    <DrawerHeader>
+                        <DrawerTitle className="flex justify-center items-center">
+                            <ChevronLeftIcon
+                                onClick={() => setIsInfo(false)}
+                                className="ml-auto cursor-pointer w-[32px] h-[32px]"
+                            />
 
-                    <ConfirmationPopupLegalSection />
+                            <div className="text-center w-[100%]">
+                                {t("transaction.confirm_popup.info.title")}
+                            </div>
+                            <IoIosClose
+                                onClick={handleClose}
+                                className="ml-auto cursor-pointer"
+                                size={32}
+                            />
+                        </DrawerTitle>
+                    </DrawerHeader>
 
-                    <Button disabled={disabled} onClick={handleConfirm}>
-                        {buttonText}
+                    <div className="px-4 pb-4 mt-2">
+                        <h4 className="font-bold mt-5 flex flex-row">
+                            <Link className="text-green mr-1" />
+                            {t("transaction.confirm_popup.info.cashier_fee_header")}
+                        </h4>
+                        <p className="mt-0.5">
+                            {t("transaction.confirm_popup.info.cashier_fee_text")}
+                        </p>
+
+                        <h4 className="font-bold mt-5 flex flex-row">
+                            <Wifi className="text-green mr-1" />
+                            {t("transaction.confirm_popup.info.network_fee_header")}
+                        </h4>
+                        <div className="flex flex-col gap-2 mt-0.5">
+                            {t("transaction.confirm_popup.info.network_fee_text", {
+                                returnObjects: true,
+                            }).map((p, index) => (
+                                <p key={index}>{p}</p>
+                            ))}
+                        </div>
+                    </div>
+
+                    <Button disabled={disabled} onClick={handleConfirm} className="mt-6">
+                        {t("transaction.confirm_popup.info.button_text")}
                     </Button>
                 </>
-            )}
-        </DrawerContent>
+            );
+        }
+
+        return (
+            <>
+                <DrawerHeader>
+                    <DrawerTitle className="flex justify-center items-center">
+                        <div className="text-center w-[100%]">
+                            {t("transaction.confirm_popup.title")}
+                        </div>
+                        <IoIosClose
+                            onClick={handleClose}
+                            className="ml-auto cursor-pointer"
+                            size={32}
+                        />
+                    </DrawerTitle>
+                </DrawerHeader>
+
+                <ConfirmationPopupAssetsSection
+                    intents={primaryIntents}
+                    onInfoClick={() => setIsInfo(true)}
+                />
+
+                <ConfirmationPopupFeesSection intents={cashierFeeIntents} />
+
+                <ConfirmationPopupLegalSection />
+
+                <Button disabled={disabled} onClick={handleConfirm}>
+                    {buttonText}
+                </Button>
+            </>
+        );
+    };
+
+    return (
+        <DrawerContent className="max-w-[400px] mx-auto p-3">{renderDrawerContent()}</DrawerContent>
     );
 };
 
