@@ -70,7 +70,7 @@ export default function MultiStepForm<V1 extends object, V2 extends object>({
     };
 
     return (
-        <div className="w-full flex flex-col items-center">
+        <div className="w-full flex flex-col flex-grow items-center">
             <div className="w-full flex items-center justify-center mb-3 relative">
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {partialForms[currentStep].props.name}
