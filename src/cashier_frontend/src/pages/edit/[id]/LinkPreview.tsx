@@ -22,7 +22,7 @@ export default function LinkPreview({
 
     if (linkType === LINK_TYPE.TIP_LINK) {
         return (
-            <div className="w-full flex flex-col">
+            <div className="w-full flex flex-col flex-grow">
                 <LinkCard
                     label="Tip"
                     src="/icpLogo.png"
@@ -40,7 +40,7 @@ export default function LinkPreview({
     }
 
     return (
-        <div className="w-full flex flex-col">
+        <div className="w-full flex flex-col flex-grow">
             <LinkCard
                 label="Claim"
                 src={defaultValues.image as string}
