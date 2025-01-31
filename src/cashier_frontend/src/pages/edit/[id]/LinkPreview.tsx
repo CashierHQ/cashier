@@ -1,3 +1,4 @@
+import { ConfirmationPopupFeesSection } from "@/components/confirmation-popup/confirmation-popup-fees-section";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import LinkCard from "@/components/link-card";
 import { ParitalFormProps } from "@/components/multi-step-form";
@@ -28,6 +29,9 @@ export default function LinkPreview({
                     message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP}
                     title={defaultValues.title as string}
                 />
+
+                <ConfirmationPopupFeesSection intents={[]} />
+
                 <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
                     {isDisabled ? t("processing") : t("create.create")}
                 </FixedBottomButton>
@@ -43,6 +47,9 @@ export default function LinkPreview({
                 message={defaultValues.description as string}
                 title={defaultValues.title as string}
             />
+
+            <ConfirmationPopupFeesSection intents={[]} />
+
             <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
                 {isDisabled ? t("processing") : t("create.create")}
             </FixedBottomButton>
