@@ -124,10 +124,12 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                             {t("transaction.confirm_popup.info.network_fee_header")}
                         </h4>
                         <div className="flex flex-col gap-2 mt-0.5">
-                            {t("transaction.confirm_popup.info.network_fee_text", {
-                                returnObjects: true,
-                            }).map((p, index) => (
-                                <p key={index}>{p}</p>
+                            {(
+                                t("transaction.confirm_popup.info.network_fee_text", {
+                                    returnObjects: true,
+                                }) as string[]
+                            ).map((paragraph, index) => (
+                                <p key={index}>{paragraph}</p>
                             ))}
                         </div>
                     </div>
