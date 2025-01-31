@@ -112,7 +112,7 @@ export default function LinkTemplate({
     }, [current]);
 
     return (
-        <div className="w-full flex flex-col">
+        <div className="w-full flex flex-col flex-grow overflow-hidden">
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
@@ -123,6 +123,7 @@ export default function LinkTemplate({
                             });
                         }
                     }}
+                    className="flex flex-col flex-grow"
                 >
                     <FormField
                         control={form.control}
@@ -140,8 +141,10 @@ export default function LinkTemplate({
                             </FormItem>
                         )}
                     />
+
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
-                    <div className="flex flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3 my-3 h-[52vh] xl:h-[50vh] 2xl:h-[60vh]">
+
+                    <div className="flex flex-grow flex-col justify-center items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
                         <Carousel className="items-center" setApi={setApi}>
                             <CarouselContent>
                                 {templates.map((template, index) => (
