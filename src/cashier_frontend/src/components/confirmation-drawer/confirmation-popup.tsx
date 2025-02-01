@@ -123,7 +123,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                             <Wifi className="text-green mr-1" />
                             {t("transaction.confirm_popup.info.network_fee_header")}
                         </h4>
-                        <div className="flex flex-col gap-2 mt-0.5">
+                        {/* <div className="flex flex-col gap-2 mt-0.5">
                             {(
                                 t("transaction.confirm_popup.info.network_fee_text", {
                                     returnObjects: true,
@@ -131,7 +131,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
                             ).map((paragraph, index) => (
                                 <p key={index}>{paragraph}</p>
                             ))}
-                        </div>
+                        </div> */}
                     </div>
 
                     <Button disabled={disabled} onClick={handleConfirm} className="mt-6">

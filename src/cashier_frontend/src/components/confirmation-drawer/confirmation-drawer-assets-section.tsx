@@ -34,15 +34,16 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 </button>
             </div>
 
-            <div className="flex flex-col gap-3 border-solid border-inherit border-2 rounded-lg p-4 overflow-y-auto max-h-[200px]">
+            <ol className="flex flex-col gap-3 border-solid border-inherit border-2 rounded-lg mt-3 p-4 overflow-y-auto max-h-[200px]">
                 {intents.map((intent) => (
-                    <TransactionItem
-                        key={`asset-${intent.id}`}
-                        title={t("transaction.confirm_popup.asset_label")}
-                        intent={intent}
-                    />
+                    <li key={intent.id}>
+                        <TransactionItem
+                            title={t("transaction.confirm_popup.asset_label")}
+                            intent={intent}
+                        />
+                    </li>
                 ))}
-            </div>
+            </ol>
         </section>
     );
 };
