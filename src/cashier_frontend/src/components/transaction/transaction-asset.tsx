@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
+import { Spinner } from "../ui/spinner";
 
 type TransactionAssetProps = {
     title: string;
@@ -25,7 +26,7 @@ export const TransactionAsset: FC<TransactionAssetProps> = ({
 
             <div>
                 {isLoading ? (
-                    <img src="/loading.gif" width={22} />
+                    <Spinner width={22} />
                 ) : (
                     <div className="flex items-center">
                         {`${displayAmount} ${symbol}`}
