@@ -1,9 +1,17 @@
-import { ConfirmationPopupFeesSection } from "@/components/confirmation-popup/confirmation-popup-fees-section";
+import {
+    ConfirmationDrawer,
+    ConfirmTransactionModel,
+} from "@/components/confirmation-drawer/confirmation-drawer";
+import { useCashierFeeIntents } from "@/components/confirmation-drawer/confirmation-drawer.hooks";
+import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import LinkCard from "@/components/link-card";
-import { ParitalFormProps } from "@/components/multi-step-form";
+import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-preview-cashier-fee-section";
+import { PartialFormProps } from "@/components/multi-step-form";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
+
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface LinkData {
@@ -12,47 +20,74 @@ interface LinkData {
     description: string;
 }
 
+interface LinkPreviewProps extends PartialFormProps<object, LinkData> {
+    data: ConfirmTransactionModel | undefined;
+    onConfirm: () => void;
+}
+
 export default function LinkPreview({
     defaultValues,
     handleSubmit,
+    onConfirm,
     isDisabled = false,
     linkType,
-}: ParitalFormProps<object, LinkData>) {
+    data,
+}: LinkPreviewProps) {
     const { t } = useTranslation();
+    const [showInfo, setShowInfo] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const cashierFeeIntents = useCashierFeeIntents(data?.action?.intents);
 
-    if (linkType === LINK_TYPE.TIP_LINK) {
-        return (
-            <div className="w-full flex flex-col flex-grow">
+    const renderLinkCard = () => {
+        if (linkType === LINK_TYPE.TIP_LINK) {
+            return (
                 <LinkCard
                     label="Tip"
                     src="/icpLogo.png"
                     message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP}
                     title={defaultValues.title as string}
                 />
+            );
+        }
 
-                <ConfirmationPopupFeesSection intents={[]} />
-
-                <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
-                    {isDisabled ? t("processing") : t("create.create")}
-                </FixedBottomButton>
-            </div>
-        );
-    }
-
-    return (
-        <div className="w-full flex flex-col flex-grow">
+        return (
             <LinkCard
                 label="Claim"
                 src={defaultValues.image as string}
                 message={defaultValues.description as string}
                 title={defaultValues.title as string}
             />
+        );
+    };
 
-            <ConfirmationPopupFeesSection intents={[]} />
+    return (
+        <div className="w-full flex flex-col flex-grow">
+            {renderLinkCard()}
 
-            <FixedBottomButton disabled={isDisabled} onClick={handleSubmit}>
+            <LinkPreviewCashierFeeSection
+                intents={cashierFeeIntents}
+                onInfoClick={() => setShowInfo(true)}
+            />
+
+            <FixedBottomButton
+                disabled={isDisabled}
+                onClick={() => {
+                    setShowConfirmation(true);
+                    handleSubmit({});
+                }}
+            >
                 {isDisabled ? t("processing") : t("create.create")}
             </FixedBottomButton>
+
+            <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
+
+            <ConfirmationDrawer
+                data={data}
+                open={showConfirmation && !showInfo}
+                onClose={() => setShowConfirmation(false)}
+                onConfirm={onConfirm}
+                onInfoClick={() => setShowInfo(true)}
+            />
         </div>
     );
 }
