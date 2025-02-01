@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { Textarea } from "@/components/ui/textarea";
-import { ParitalFormProps } from "@/components/multi-step-form";
+import { PartialFormProps } from "@/components/multi-step-form";
 import { FileInput } from "@/components/file-input";
 import { NumberInput } from "@/components/number-input";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
@@ -25,7 +25,7 @@ import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import {
     IC_EXPLORER_IMAGES_PATH,
     icExplorerService,
-    initializeDefautGetUserTokenRequest,
+    initializeDefaultGetUserTokenRequest,
     mapAPITokenModelToAssetSelectModel,
     UserToken,
 } from "@/services/icExplorer.service";
@@ -69,7 +69,7 @@ export default function LinkDetails({
     defaultValues = {},
     handleSubmit,
     handleChange,
-}: ParitalFormProps<InputSchema, Partial<InputSchema>>) {
+}: PartialFormProps<InputSchema, Partial<InputSchema>>) {
     const { t } = useTranslation();
     const { user: walletUser } = useAuth();
     const identity = useIdentity();
@@ -196,7 +196,7 @@ export default function LinkDetails({
     }, [assetList]);
 
     async function getUserToken(): Promise<UserToken[]> {
-        const request = initializeDefautGetUserTokenRequest(walletAddress);
+        const request = initializeDefaultGetUserTokenRequest(walletAddress);
         const response = await icExplorerService.getUserTokens(request);
         const userTokenList = response.data.list as UserToken[];
         return userTokenList;
