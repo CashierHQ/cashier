@@ -171,15 +171,11 @@ export default function HomePage() {
                 </div>
             );
         } else {
-            return Array.from({ length: 5 }).map((_, index) => (
-                <div className="flex items-center space-x-4 my-3" key={index}>
-                    <Skeleton className="h-10 w-10 rounded-sm" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                        <Skeleton className="h-3 w-[200px]" />
-                    </div>
-                </div>
-            ));
+            return (
+                <>
+                    <p className="text-sm text-gray-500 mt-3">There is no links yet.</p>
+                </>
+            );
         }
     };
 

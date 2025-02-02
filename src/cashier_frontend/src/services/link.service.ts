@@ -60,11 +60,10 @@ class LinkService {
 
     async getLink(linkId: string) {
         const response = parseResultResponse(
-            /* Do we need to pass the intent_type? */
             await this.actor.get_link(linkId, [
-                {
-                    action_type: "Create",
-                },
+                // {
+                //     action_type: "Create",
+                // },
             ]),
         );
         const result = await MapLinkDetailModel(response);
@@ -87,7 +86,7 @@ class LinkService {
     }
 
     async createAction(): Promise<ActionModel> {
-        //const response = parseResultResponse(await this.actor.create_intent(input));
+        //const response = parseResultResponse(await this.actor.create_action(input));
         return generateMockAction();
     }
 }

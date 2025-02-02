@@ -27,6 +27,7 @@ import useToast from "@/hooks/useToast";
 import { getCashierError } from "@/services/errorProcess.service";
 import { queryKeys } from "@/lib/queryKeys";
 import { ActionModel } from "@/services/types/refractor.action.service.types";
+import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -150,6 +151,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 ...formData,
                 title: values.title,
                 linkType: values.linkType,
+                description: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
             },
             isContinue: true,
         };
