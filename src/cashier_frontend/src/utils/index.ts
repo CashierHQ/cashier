@@ -131,7 +131,7 @@ export const formatDateString = (dateString: string): string => {
     }
 };
 
-export const getReponsiveClassname = (
+export const getResponsiveClassname = (
     responsive: MediaQuery,
     responsiveObject: UIResponsiveType | undefined,
 ): string | undefined => {
