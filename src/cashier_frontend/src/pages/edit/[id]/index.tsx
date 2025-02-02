@@ -284,33 +284,34 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             intentCreate?.id ?? "",
         );
 
-        if (confirmItemResult?.transactions) {
-            // Change transaction status to processing
-            setIntentCreate(
-                (prev) =>
-                    ({
-                        ...prev,
-                        transactions: confirmItemResult?.transactions,
-                    }) as IntentCreateModel,
-            );
+        // TODO: Temporary comment out these lines and will update later
+        // if (confirmItemResult?.transactions) {
+        //     // Change transaction status to processing
+        //     setIntentCreate(
+        //         (prev) =>
+        //             ({
+        //                 ...prev,
+        //                 transactions: confirmItemResult?.transactions,
+        //             }) as IntentCreateModel,
+        //     );
 
-            setTransactionConfirmModel(
-                (prevModel) =>
-                    ({
-                        ...prevModel,
-                        transactions: confirmItemResult?.transactions,
-                    }) as ConfirmTransactionModel,
-            );
+        //     setTransactionConfirmModel(
+        //         (prevModel) =>
+        //             ({
+        //                 ...prevModel,
+        //                 transactions: confirmItemResult?.transactions,
+        //             }) as ConfirmTransactionModel,
+        //     );
 
-            console.log("Call canister transfer");
-            const result = await callExecute(intentCreate?.transactions, identity);
-            if (result) {
-                console.log(
-                    "Canister service call complete. Now re-fetch the link data to get the intent.",
-                );
-                refetch();
-            }
-        }
+        //     console.log("Call canister transfer");
+        //     const result = await callExecute(intentCreate?.transactions, identity);
+        //     if (result) {
+        //         console.log(
+        //             "Canister service call complete. Now re-fetch the link data to get the intent.",
+        //         );
+        //         refetch();
+        //     }
+        // }
     };
 
     const handleRetryTransactions = () => {

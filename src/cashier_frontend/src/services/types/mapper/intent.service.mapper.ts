@@ -1,17 +1,16 @@
 import { AssetModel } from "@/components/transaction-item";
-import { Receive } from "../../../../../declarations/cashier_backend/cashier_backend.did";
-import { FeeModel, ReceiveModel, TransactionModel } from "../intent.service.types";
+import { FeeModel, TransactionModel } from "../intent.service.types";
 import { IntentModel } from "@/services/types/refractor.intent.service.types";
 
-export const mapReceiveModel = (fee: Receive): ReceiveModel => {
-    return {
-        assetAddress: fee.asset_address,
-        assetAmount: fee.asset_amount,
-        chain: fee.chain,
-        name: fee.name,
-        type: fee.type,
-    };
-};
+// export const mapReceiveModel = (fee: Receive): ReceiveModel => {
+//     return {
+//         assetAddress: fee.asset_address,
+//         assetAmount: fee.asset_amount,
+//         chain: fee.chain,
+//         name: fee.name,
+//         type: fee.type,
+//     };
+// };
 
 // Mapping between FeeModel -> AssetModel
 export const mapFeeModelToAssetModel = (

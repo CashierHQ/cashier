@@ -2,10 +2,9 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
-    CreateIntentInput,
+    CreateActionInput,
     CreateLinkInput,
-    GetConsentMessageInput,
-    Link,
+    LinkDto,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
@@ -17,8 +16,6 @@ import {
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
 } from "./types/mapper/link.service.mapper";
-import { CreateIntentConsentModel } from "./types/intent.service.types";
-import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
 import { ActionModel } from "./types/refractor.action.service.types";
 
 interface ReponseLinksModel {
@@ -51,7 +48,7 @@ class LinkService {
         };
 
         responseModel.data = response.data
-            ? response.data.map((link: Link) => {
+            ? response.data.map((link: LinkDto) => {
                   return {
                       link: MapLinkToLinkDetailModel(link),
                       action_create: undefined,
@@ -66,7 +63,7 @@ class LinkService {
             /* Do we need to pass the intent_type? */
             await this.actor.get_link(linkId, [
                 {
-                    intent_type: "Create",
+                    action_type: "Create",
                 },
             ]),
         );
