@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use crate::{repositories::link_store, types::link::link_state::LinkState};
+use crate::{repositories::link, types::link::link_state::LinkState};
 
 use super::ext::{
     cashier_nft::mint_nft,
@@ -8,7 +8,7 @@ use super::ext::{
 };
 
 pub async fn claim_nft(id: String, _caller: Principal) -> Result<(), String> {
-    let link = link_store::get(&id);
+    let link = link::get(&id);
 
     if link.is_none() {
         return Err("Link not found".to_string());

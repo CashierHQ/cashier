@@ -19,7 +19,7 @@ pub struct Link {
     pub metadata: Option<HashMap<String, String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum LinkType {
     NftCreateAndAirdrop,
     TipLink,

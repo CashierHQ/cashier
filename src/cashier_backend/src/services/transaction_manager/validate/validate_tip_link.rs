@@ -1,11 +1,11 @@
 use candid::{Nat, Principal};
+use cashier_types::Link;
 use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
     constant::ICP_CANISTER_ID,
     info,
     services::transaction_manager::fee::Fee,
-    types::link::Link,
     utils::{
         helper::to_subaccount,
         icrc::{allowance, balance_of},

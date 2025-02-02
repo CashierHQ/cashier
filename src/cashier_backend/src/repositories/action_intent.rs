@@ -15,6 +15,20 @@ pub fn create(action_intent: ActionIntent) {
     });
 }
 
+pub fn batch_create(action_intents: Vec<ActionIntent>) {
+    ACTION_INTENT_STORE.with_borrow_mut(|store| {
+        for action_intent in action_intents {
+            store.insert(
+                (
+                    action_intent.action_id.clone(),
+                    action_intent.intent_id.clone(),
+                ),
+                action_intent,
+            );
+        }
+    });
+}
+
 pub fn get(action_intent_key: &ActionIntentKey) -> Option<ActionIntent> {
     ACTION_INTENT_STORE.with_borrow(|store| store.get(action_intent_key).clone())
 }

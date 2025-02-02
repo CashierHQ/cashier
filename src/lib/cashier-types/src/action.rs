@@ -31,7 +31,6 @@ pub enum ActionState {
 pub struct ActionIntent {
     pub action_id: String,
     pub intent_id: String,
-    pub created_at: u64,
 }
 
 impl ActionType {

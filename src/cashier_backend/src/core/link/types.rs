@@ -1,8 +1,10 @@
 use std::{collections::HashMap, str::FromStr};
 
 use candid::{CandidType, Principal};
-use cashier_types::{Action, Chain, Intent, IntentType, LinkType, Template};
+use cashier_types::{Chain, IntentType, LinkType, Template};
 use serde::{Deserialize, Serialize};
+
+use crate::core::action::types::ActionDto;
 
 // Structs and Enums
 
@@ -89,15 +91,6 @@ pub struct AssetInfoDto {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct ActionDto {
-    pub id: String,
-    pub r#type: String,
-    pub state: String,
-    pub creator: String,
-    pub intents: Vec<IntentDto>,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct IntentDto {
     pub id: String,
     pub state: String,
@@ -111,21 +104,6 @@ pub struct IntentDto {
 pub struct GetLinkResp {
     pub link: LinkDto,
     pub action: Option<ActionDto>,
-}
-
-impl ActionDto {
-    pub fn from(action: Action, intents: Vec<Intent>) -> Self {
-        ActionDto {
-            id: action.id,
-            r#type: action.r#type.to_string(),
-            state: action.state.to_string(),
-            creator: action.creator,
-            intents: intents
-                .into_iter()
-                .map(|intent| IntentDto::from(intent))
-                .collect(),
-        }
-    }
 }
 
 impl From<cashier_types::Intent> for IntentDto {

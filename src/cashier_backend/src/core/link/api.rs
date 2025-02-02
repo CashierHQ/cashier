@@ -5,8 +5,8 @@ use ic_cdk::{query, update};
 
 use crate::{
     core::{
-        guard::is_not_anonymous, ActionDto, GetLinkOptions, GetLinkResp, LinkDto, PaginateResult,
-        UpdateLinkInput,
+        action::types::ActionDto, guard::is_not_anonymous, GetLinkOptions, GetLinkResp, LinkDto,
+        PaginateResult, UpdateLinkInput,
     },
     error,
     services::{

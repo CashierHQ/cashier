@@ -5,9 +5,9 @@ use ic_cdk_timers::set_timer;
 
 use crate::{
     constant::TX_TIMEOUT,
-    core::{intent::types::ConfirmIntentInput, link::types::IntentResp},
+    core::{action::types::ConfirmActionInput, link::types::IntentResp},
     info,
-    repositories::{intent_store, link_store, user_wallet_store},
+    repositories::{intent, link, user_wallet},
     services::{link::is_link_creator, transaction_manager::update::timeout_intent},
     types::intent::{IntentState, IntentType},
 };
@@ -16,17 +16,17 @@ use super::{
     get::get_intent_resp, update::set_processing_intent, validate::validate_balance_with_asset_info,
 };
 
-pub async fn confirm_intent(input: ConfirmIntentInput) -> Result<IntentResp, String> {
+pub async fn confirm_intent(input: ConfirmActionInput) -> Result<IntentResp, String> {
     // validate
-    let link = link_store::get(&input.link_id)
-        .ok_or_else(|| "[confirm_intent] Link not found".to_string())?;
+    let link =
+        link::get(&input.link_id).ok_or_else(|| "[confirm_intent] Link not found".to_string())?;
 
-    let intent = intent_store::get(&input.intent_id)
+    let intent = intent::get(&input.intent_id)
         .ok_or_else(|| "[confirm_intent] Intent not found".to_string())?;
 
     let caller = ic_cdk::api::caller();
 
-    let user_id = match user_wallet_store::get(&caller.to_text()) {
+    let user_id = match user_wallet::get(&caller.to_text()) {
         Some(id) => id,
         None => return Err("[confirm_intent] User not found".to_string()),
     };
