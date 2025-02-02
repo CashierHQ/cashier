@@ -1,4 +1,12 @@
-type AssetInfo = record {
+type ActionDto = record {
+  id : text;
+  creator : text;
+  intents : vec IntentDto;
+  "type" : text;
+  state : text;
+};
+type AssetDto = record { chain : text; address : text };
+type AssetInfoDto = record {
   total_amount : nat64;
   chain : text;
   current_amount : nat64;
@@ -6,7 +14,6 @@ type AssetInfo = record {
   total_claim : nat64;
   amount_per_claim : nat64;
 };
-type CanisterCallResponse = record { certificate : text; content_map : text };
 type CanisterError = variant {
   HandleLogicError : text;
   ValidationErrors : text;
@@ -14,39 +21,16 @@ type CanisterError = variant {
   HandleApiError : text;
 };
 type ClaimIntentParams = record { address : opt text };
-type ConfirmIntentInput = record { link_id : text; intent_id : text };
-type CreateIntentConsent = record {
-  fee : vec Fee;
-  receive : vec Receive;
-  send : vec Fee;
-};
-type CreateIntentConsentResponse = record {
-  consents : CreateIntentConsent;
-  intent : IntentResp;
-};
-type CreateIntentInput = record {
+type ConfirmActionInput = record { link_id : text; intent_id : text };
+type CreateActionInput = record {
   link_id : text;
-  intent_type : text;
+  action_type : text;
   params : opt CreateIntentParams;
 };
 type CreateIntentParams = variant { Claim : ClaimIntentParams };
-type CreateLinkInput = record { link_type : LinkType };
-type ErrorDetail = record { code : int32; message : text };
-type ErrorResponse = record { error : ErrorDetail };
-type Fee = record {
-  chain : text;
-  "type" : text;
-  address : text;
-  amount : nat64;
-};
-type GetConsentMessageInput = record {
-  link_id : text;
-  intent_type : text;
-  params : opt CreateIntentParams;
-  intent_id : text;
-};
-type GetLinkOptions = record { intent_type : text };
-type GetLinkResp = record { link : Link; intent : opt IntentResp };
+type CreateLinkInput = record { link_type : text };
+type GetLinkOptions = record { action_type : text };
+type GetLinkResp = record { action : opt ActionDto; link : LinkDto };
 type Icrc21ConsentInfo = record {
   metadata : Icrc21ConsentMessageMetadata;
   consent_message : Icrc21ConsentMessage;
@@ -82,30 +66,14 @@ type Icrc21ErrorInfo = record { description : text };
 type Icrc21LineDisplayPage = record { lines : vec text };
 type Icrc21SupportedStandard = record { url : text; name : text };
 type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
-type IcrcXResponseItem = variant {
-  Error : ErrorResponse;
-  Success : SuccessResponse;
-};
-type IntentResp = record {
+type IntentDto = record {
   id : text;
-  link_id : text;
-  creator_id : text;
+  chain : text;
+  task : text;
+  "type" : text;
+  created_at : nat64;
+  type_metadata : vec record { text; TypeMetdataValue };
   state : text;
-  transactions : vec vec Transaction;
-  intent_type : text;
-};
-type Link = record {
-  id : text;
-  title : opt text;
-  creator : opt text;
-  asset_info : opt vec AssetInfo;
-  link_type : opt text;
-  create_at : opt nat64;
-  description : opt text;
-  link_image_url : opt text;
-  state : opt text;
-  template : opt text;
-  nft_image : opt text;
 };
 type LinkDetailUpdateAssetInfoInput = record {
   total_amount : nat64;
@@ -122,12 +90,23 @@ type LinkDetailUpdateInput = record {
   template : opt text;
   nft_image : opt text;
 };
-type LinkStateMachineActionParams = variant { Update : UpdateLinkParams };
-type LinkType = variant { TipLink; NftCreateAndAirdrop };
+type LinkDto = record {
+  id : text;
+  title : opt text;
+  creator : text;
+  asset_info : opt vec AssetInfoDto;
+  link_type : opt text;
+  metadata : opt vec record { text; text };
+  create_at : nat64;
+  description : opt text;
+  state : text;
+  template : opt text;
+};
+type LinkStateMachineActionParams = variant { Update : LinkDetailUpdateInput };
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
   metadata : PaginateResultMetadata;
-  data : vec Link;
+  data : vec LinkDto;
 };
 type PaginateResultMetadata = record {
   is_next : bool;
@@ -136,61 +115,44 @@ type PaginateResultMetadata = record {
   offset : nat64;
   limit : nat64;
 };
-type Receive = record {
-  asset_address : opt text;
-  chain : text;
-  name : text;
-  "type" : text;
-  asset_amount : opt nat64;
+type Result = variant { Ok : ActionDto; Err : text };
+type Result_1 = variant { Ok : ActionDto; Err : CanisterError };
+type Result_2 = variant { Ok : text; Err : CanisterError };
+type Result_3 = variant { Ok : UserDto; Err : text };
+type Result_4 = variant { Ok : GetLinkResp; Err : text };
+type Result_5 = variant { Ok : PaginateResult; Err : text };
+type Result_6 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
+type Result_7 = variant { Ok : LinkDto; Err : CanisterError };
+type TypeMetdataValue = variant {
+  U64 : nat64;
+  String : text;
+  Asset : AssetDto;
+  Wallet : AssetDto;
 };
-type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : IntentResp; Err : text };
-type Result_2 = variant {
-  Ok : CreateIntentConsentResponse;
-  Err : CanisterError;
-};
-type Result_3 = variant { Ok : text; Err : CanisterError };
-type Result_4 = variant { Ok : User; Err : text };
-type Result_5 = variant { Ok : CreateIntentConsent; Err : CanisterError };
-type Result_6 = variant { Ok : GetLinkResp; Err : text };
-type Result_7 = variant { Ok : PaginateResult; Err : text };
-type Result_8 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
-type Result_9 = variant { Ok : Link; Err : CanisterError };
-type SuccessResponse = record { result : CanisterCallResponse };
-type Transaction = record {
-  id : text;
-  arg : text;
-  method : text;
-  canister_id : text;
-  state : text;
-};
-type UpdateIntentInput = record {
+type UpdateActionInput = record {
   link_id : text;
-  icrcx_responses : opt vec vec IcrcXResponseItem;
   intent_id : text;
+  icrc112_responses : opt vec text;
 };
 type UpdateLinkInput = record {
   id : text;
   action : text;
   params : opt LinkStateMachineActionParams;
 };
-type UpdateLinkParams = record { params : opt LinkDetailUpdateInput };
-type User = record { id : text; email : opt text; wallet : text };
+type UserDto = record { id : text; email : opt text; wallet : text };
 service : () -> {
-  claim_nft : (text, opt text) -> (Result);
-  confirm_intent : (ConfirmIntentInput) -> (Result_1);
-  create_intent : (CreateIntentInput) -> (Result_2);
-  create_link : (CreateLinkInput) -> (Result_3);
-  create_user : () -> (Result_4);
-  get_consent_message : (GetConsentMessageInput) -> (Result_5) query;
-  get_link : (text, opt GetLinkOptions) -> (Result_6) query;
-  get_links : (opt PaginateInput) -> (Result_7) query;
-  get_user : () -> (Result_4) query;
+  confirm_action : (ConfirmActionInput) -> (Result);
+  create_action : (CreateActionInput) -> (Result_1);
+  create_link : (CreateLinkInput) -> (Result_2);
+  create_user : () -> (Result_3);
+  get_link : (text, opt GetLinkOptions) -> (Result_4) query;
+  get_links : (opt PaginateInput) -> (Result_5) query;
+  get_user : () -> (Result_3) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
   icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
-      Result_8,
+      Result_6,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
-  update_intent : (UpdateIntentInput) -> (Result_1);
-  update_link : (UpdateLinkInput) -> (Result_9);
+  update_action : (UpdateActionInput) -> (Result);
+  update_link : (UpdateLinkInput) -> (Result_7);
 }
