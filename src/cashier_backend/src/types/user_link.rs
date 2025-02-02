@@ -16,21 +16,4 @@ impl UserLink {
             created_at,
         }
     }
-
-    pub fn from_persistence(record: crate::repositories::entities::user_link::UserLink) -> Self {
-        let (user_id, link_id) = record.split_pk();
-        Self {
-            link_id,
-            creator_id: user_id,
-            created_at: record.created_at,
-        }
-    }
-
-    pub fn to_persistence(&self) -> crate::repositories::entities::user_link::UserLink {
-        crate::repositories::entities::user_link::UserLink::new(
-            self.creator_id.clone(),
-            self.link_id.clone(),
-            self.created_at,
-        )
-    }
 }

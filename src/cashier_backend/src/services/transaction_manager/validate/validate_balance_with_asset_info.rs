@@ -1,7 +1,8 @@
 use candid::Principal;
+use cashier_types::Link;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::{types::link::Link, utils::icrc::balance_of};
+use crate::utils::icrc::balance_of;
 
 pub async fn validate_balance_with_asset_info(link: Link, user: Principal) -> Result<(), String> {
     let asset_info = link
