@@ -9,18 +9,18 @@ pub fn create(link_action: LinkAction) {
             link_action.action_type.clone(),
             link_action.action_id.clone(),
         );
-        store.insert(id, link_action);
+        store.insert(id.into(), link_action);
     });
 }
 
-pub fn get(id: &LinkActionKey) -> Option<LinkAction> {
-    LINK_ACTION_STORE.with_borrow(|store| store.get(id))
+pub fn get(id: LinkActionKey) -> Option<LinkAction> {
+    LINK_ACTION_STORE.with_borrow(|store| store.get(&id.into()))
 }
 
 pub fn get_by_link_action(link_id: LinkKey, action_type: ActionTypeKey) -> Vec<LinkAction> {
     LINK_ACTION_STORE.with_borrow(|store| {
         let key: LinkActionKey = (link_id, action_type, "".to_string());
 
-        store.get_range(key, None)
+        store.get_range(key.into(), None)
     })
 }
