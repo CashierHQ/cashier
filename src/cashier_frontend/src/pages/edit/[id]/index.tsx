@@ -79,6 +79,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             }
 
             if (action) {
+                console.log("added link action", action);
                 setLinkAction(action);
             }
 
@@ -374,6 +375,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         render={(props) => (
                             <LinkPreview
                                 {...props}
+                                action={linkAction}
                                 data={transactionConfirmModel}
                                 onConfirm={handleConfirmTransactions}
                             />

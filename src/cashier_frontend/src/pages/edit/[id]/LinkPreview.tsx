@@ -10,6 +10,7 @@ import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-pre
 import { PartialFormProps } from "@/components/multi-step-form";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
+import { ActionModel } from "@/services/types/refractor.action.service.types";
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,7 @@ interface LinkData {
 }
 
 interface LinkPreviewProps extends PartialFormProps<object, LinkData> {
+    action: ActionModel | undefined;
     data: ConfirmTransactionModel | undefined;
     onConfirm: () => void;
 }
@@ -31,12 +33,14 @@ export default function LinkPreview({
     onConfirm,
     isDisabled = false,
     linkType,
+    action,
     data,
 }: LinkPreviewProps) {
     const { t } = useTranslation();
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
-    const cashierFeeIntents = useCashierFeeIntents(data?.action?.intents);
+
+    const cashierFeeIntents = useCashierFeeIntents(action?.intents);
 
     const renderLinkCard = () => {
         if (linkType === LINK_TYPE.TIP_LINK) {

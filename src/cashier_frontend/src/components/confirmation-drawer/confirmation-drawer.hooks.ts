@@ -13,6 +13,12 @@ export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
 
 export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
     const cashierFeeIntents = useMemo(() => {
+        console.log(
+            "recalc cashier fees",
+            intents,
+            intents?.filter((intent) => intent.task === TASK.TRANSFER_WALLET_TO_TREASURY),
+        );
+
         return intents?.filter((intent) => intent.task === TASK.TRANSFER_WALLET_TO_TREASURY) ?? [];
     }, [intents]);
 
