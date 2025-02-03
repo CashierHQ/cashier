@@ -15,6 +15,7 @@ export default function LinkCard({
 }) {
     /* TODO: Remove after we have all the flows for templates */
     const comingSoonLabel = header?.includes("(Coming soon)") ? "Coming soon" : "";
+
     const renderHeaderTitle = () => {
         if (comingSoonLabel.length > 0) {
             return (
@@ -29,7 +30,7 @@ export default function LinkCard({
     };
 
     return (
-        <div className="flex flex-col justify-center items-center">
+        <div className="flex flex-col justify-center items-center flex-grow">
             <div className="text-md md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
                 {renderHeaderTitle()}
             </div>

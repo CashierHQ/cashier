@@ -2,7 +2,7 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
-    CreateActionInput,
+    // CreateActionInput,
     CreateLinkInput,
     LinkDto,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
@@ -16,6 +16,8 @@ import {
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
 } from "./types/mapper/link.service.mapper";
+// import { CreateIntentConsentModel } from "./types/intent.service.types";
+// import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
 import { ActionModel } from "./types/refractor.action.service.types";
 
 interface ReponseLinksModel {
@@ -60,6 +62,7 @@ class LinkService {
 
     async getLink(linkId: string) {
         const response = parseResultResponse(
+            /* Do we need to pass the intent_type? */
             await this.actor.get_link(linkId, [
                 // {
                 //     action_type: "Create",
@@ -86,7 +89,7 @@ class LinkService {
     }
 
     async createAction(): Promise<ActionModel> {
-        //const response = parseResultResponse(await this.actor.create_action(input));
+        //const response = parseResultResponse(await this.actor.create_intent(input));
         return generateMockAction();
     }
 }

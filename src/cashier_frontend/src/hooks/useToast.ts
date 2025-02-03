@@ -1,4 +1,4 @@
-import { TransactionToastProps } from "@/components/transaction-toast";
+import { TransactionToastProps } from "@/components/transaction/transaction-toast";
 import { useState, useCallback } from "react";
 
 const useToast = () => {
