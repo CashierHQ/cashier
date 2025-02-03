@@ -11,3 +11,4 @@ syn = "2.0.96"
 
 [lib]
 proc-macro = true
+ic-stable-structures = {workspace = true}

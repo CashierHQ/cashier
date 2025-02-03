@@ -85,26 +85,4 @@ impl Intent {
             tx_map: tx_maps,
         }
     }
-
-    pub fn to_persistence(&self) -> crate::repositories::entities::intent::Intent {
-        crate::repositories::entities::intent::Intent::new(
-            self.id.clone(),
-            self.state.clone().to_string(),
-            self.intent_type.clone().to_string(),
-            self.link_id.clone(),
-            self.creator_id.clone(),
-            self.tx_map.clone(),
-        )
-    }
-
-    pub fn from_persistence(intent: crate::repositories::entities::intent::Intent) -> Self {
-        Self {
-            id: intent.pk.split('#').last().unwrap().to_string(),
-            creator_id: intent.creator_id,
-            link_id: intent.link_id,
-            state: intent.state,
-            intent_type: intent.intent_type,
-            tx_map: intent.tx_map,
-        }
-    }
 }

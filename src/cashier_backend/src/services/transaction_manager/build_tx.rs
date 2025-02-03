@@ -1,18 +1,14 @@
 use candid::Nat;
+use cashier_types::Transaction;
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
 use uuid::Uuid;
 
-use crate::{
-    constant::ICP_CANISTER_ID,
-    types::{consent_messsage::ConsentType, link::link_type::LinkType, transaction::Transaction},
-    utils::helper::to_memo,
-};
+use crate::{constant::ICP_CANISTER_ID, utils::helper::to_memo};
 
 use super::fee::Fee;
 
 pub struct BuildTxResp {
     pub transaction: Transaction,
-    pub consent: ConsentType,
 }
 
 pub fn build_transfer_cashier_fee(link_type: &LinkType) -> BuildTxResp {

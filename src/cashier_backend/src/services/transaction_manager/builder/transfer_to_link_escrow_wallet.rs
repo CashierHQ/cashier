@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     services::transaction_manager::build_tx::BuildTxResp,
-    types::{consent_messsage::ConsentType, transaction::Transaction},
+    types::consent_messsage::ConsentType,
     utils::helper::{to_memo, to_subaccount},
 };
 

@@ -1,9 +1,6 @@
 // Import generated types for your canister
 import {
-    ConfirmIntentInput,
-    CreateIntentInput,
     CreateLinkInput,
-    GetConsentMessageInput,
     UpdateLinkInput,
     type _SERVICE,
 } from "../../declarations/cashier_backend/cashier_backend.did";
@@ -97,9 +94,7 @@ describe("Link", () => {
 
     it("should create link success", async () => {
         const input: CreateLinkInput = {
-            link_type: {
-                TipLink: null,
-            },
+            link_type: "TipLink",
         };
 
         const createLinkRes = await actor.create_link(input);

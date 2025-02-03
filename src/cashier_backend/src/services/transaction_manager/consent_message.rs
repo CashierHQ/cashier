@@ -1,6 +1,6 @@
 use crate::{
-    core::intent::types::{CreateIntentConsent, GetConsentMessageInput},
-    repositories::link_store,
+    core::action::types::{CreateIntentConsent, GetConsentMessageInput},
+    repositories::link,
     types::{error::CanisterError, intent::IntentType},
 };
 
@@ -9,7 +9,7 @@ use super::assemble_intent::assemble_create_trasaction;
 pub fn get_consent_message(
     input: GetConsentMessageInput,
 ) -> Result<CreateIntentConsent, CanisterError> {
-    let link = link_store::get(&input.link_id);
+    let link = link::get(&input.link_id);
     match link {
         Some(_) => {}
         None => {

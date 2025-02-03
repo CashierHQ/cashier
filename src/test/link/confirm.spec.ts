@@ -1,9 +1,8 @@
 // Import generated types for your canister
 import {
-    ConfirmIntentInput,
-    CreateIntentInput,
+    CreateActionInput,
     CreateLinkInput,
-    GetConsentMessageInput,
+    GetLinkOptions,
     UpdateLinkInput,
     type _SERVICE,
 } from "../../declarations/cashier_backend/cashier_backend.did";
@@ -11,8 +10,6 @@ import { getIdentity } from "../utils/wallet";
 import { ActorSubclass } from "@dfinity/agent";
 import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { ActorManager } from "../utils/service";
-import SignerService from "../helper/signer.service";
-import { mapTransactionToICRCXRequest } from "../utils/mapper";
 
 // Define the path to your canister's WASM file
 // export const WASM_PATH = resolve(
@@ -52,7 +49,7 @@ describe("Link", () => {
 
     let linkId: string;
     let userId: string;
-    let createLinkIntentId: string;
+    let createLinkActionId: string;
 
     // The `beforeEach` hook runs before each test.
     //
@@ -85,6 +82,8 @@ describe("Link", () => {
         } else {
             userId = user.Ok.id;
         }
+
+        console.log("userId", userId);
     });
 
     // The `afterEach` hook runs after each test.
@@ -98,9 +97,7 @@ describe("Link", () => {
 
     it("should create link success", async () => {
         const input: CreateLinkInput = {
-            link_type: {
-                TipLink: null,
-            },
+            link_type: "TipLink",
         };
 
         const createLinkRes = await actor.create_link(input);
@@ -110,7 +107,7 @@ describe("Link", () => {
 
         // Assert
         expect(createLinkRes).toHaveProperty("Ok");
-        expect(res.link.state).toEqual(["Link_state_choose_link_type"]);
+        expect(res.link.state).toEqual("Link_state_choose_link_type");
     });
 
     it("should transition from choose tempalte to add asset success", async () => {
@@ -120,17 +117,13 @@ describe("Link", () => {
             params: [
                 {
                     Update: {
-                        params: [
-                            {
-                                title: [testPayload.title],
-                                asset_info: [],
-                                description: [],
-                                template: [],
-                                link_image_url: [],
-                                nft_image: [],
-                                link_type: [testPayload.link_type],
-                            },
-                        ],
+                        title: [testPayload.title],
+                        asset_info: [],
+                        description: [],
+                        template: [],
+                        link_image_url: [],
+                        nft_image: [],
+                        link_type: [testPayload.link_type],
                     },
                 },
             ],
@@ -142,7 +135,7 @@ describe("Link", () => {
         expect(linkUpdated.id).toEqual(linkId);
         expect(linkUpdated.title).toEqual([testPayload.title]);
         expect(linkUpdated.link_type).toEqual([testPayload.link_type]);
-        expect(linkUpdated.state).toEqual(["Link_state_add_assets"]);
+        expect(linkUpdated.state).toEqual("Link_state_add_assets");
     });
 
     it("should transition from add asset to create link", async () => {
@@ -152,26 +145,22 @@ describe("Link", () => {
             params: [
                 {
                     Update: {
-                        params: [
-                            {
-                                title: [],
-                                asset_info: [
-                                    [
-                                        {
-                                            chain: assetInfoTest.chain,
-                                            address: assetInfoTest.address,
-                                            amount_per_claim: assetInfoTest.amount_per_claim,
-                                            total_amount: assetInfoTest.total_amount,
-                                        },
-                                    ],
-                                ],
-                                description: [],
-                                template: [],
-                                link_image_url: [],
-                                nft_image: [],
-                                link_type: [],
-                            },
+                        title: [],
+                        asset_info: [
+                            [
+                                {
+                                    chain: assetInfoTest.chain,
+                                    address: assetInfoTest.address,
+                                    amount_per_claim: assetInfoTest.amount_per_claim,
+                                    total_amount: assetInfoTest.total_amount,
+                                },
+                            ],
                         ],
+                        description: [],
+                        template: [],
+                        link_image_url: [],
+                        nft_image: [],
+                        link_type: [],
                     },
                 },
             ],
@@ -182,71 +171,37 @@ describe("Link", () => {
 
         expect(linkUpdated.id).toEqual(linkId);
         expect(linkUpdated.asset_info).toHaveLength(1);
-        expect(linkUpdated.state).toEqual(["Link_state_create_link"]);
+        expect(linkUpdated.state).toEqual("Link_state_create_link");
     });
 
-    it("should create intent success", async () => {
-        const input: CreateIntentInput = {
+    it("should create action CreateLink success", async () => {
+        const input: CreateActionInput = {
             link_id: linkId,
-            intent_type: "Create",
+            action_type: "CreateLink",
             params: [],
         };
 
-        const createIntentRes = await actor.create_intent(input);
+        const createIntentRes = await actor.create_action(input);
         const res = parseResultResponse(createIntentRes);
-        createLinkIntentId = res.intent.id;
+        createLinkActionId = res.id;
 
-        expect(res.consents.fee).toHaveLength(1);
-        expect(res.consents.send).toHaveLength(1);
-        expect(res.consents.receive).toHaveLength(1);
-        expect(res.intent.creator_id).toEqual(userId);
-        expect(res.intent.link_id).toEqual(linkId);
-        expect(res.intent.intent_type).toEqual("Create");
-        expect(res.intent.state).toEqual("Intent_state_created");
-    });
-    it("should get consent message success", async () => {
-        const input: GetConsentMessageInput = {
-            link_id: linkId,
-            intent_type: "Create",
-            params: [],
-            intent_id: createLinkIntentId,
-        };
+        console.log("createLinkActionId", createLinkActionId);
 
-        const createIntentRes = await actor.get_consent_message(input);
-        const res = parseResultResponse(createIntentRes);
-
-        expect(res.fee).toHaveLength(1);
-        expect(res.send).toHaveLength(1);
-        expect(res.receive).toHaveLength(1);
+        expect(res.creator).toEqual(userId);
+        expect(res.intents).toHaveLength(2);
     });
 
-    it("should confirm the intent and validate based on the intent", async () => {
-        const input: ConfirmIntentInput = {
-            link_id: linkId,
-            intent_id: createLinkIntentId,
+    it("should get action success", async () => {
+        const input: GetLinkOptions = {
+            action_type: "CreateLink",
         };
 
-        const createLinkRes = await actor.confirm_intent(input);
-        const res = parseResultResponse(createLinkRes);
-        const transactions = res.transactions;
-
-        const httpAgent = await actorManager.getHttpAgent();
-
-        const signerService = new SignerService(httpAgent);
-
-        const icrxRequests = transactions.map((subArray) => {
-            return subArray.map((transaction) => {
-                return mapTransactionToICRCXRequest(transaction);
-            });
-        });
-
-        const icrcRes = await signerService.icrcxExecute(icrxRequests);
+        const getActionRes = await actor.get_link(linkId, [input]);
+        const res = parseResultResponse(getActionRes);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        console.log("icrcRes", safeParseJSON(icrcRes as any));
+        console.log("getActionRes", safeParseJSON(res as any));
 
-        expect(res).not.toBeNull();
+        expect(res.link).toEqual(createLinkActionId);
     });
-
-    it("should execute transaction success", async () => {});
 });

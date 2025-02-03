@@ -1,16 +1,15 @@
-use std::{future::Future, pin::Pin};
+use std::{future::Future, pin::Pin, str::FromStr};
+
+use cashier_types::{AssetInfo, Chain, Link, LinkState, LinkType, Template};
 
 use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
-    repositories::link_store,
+    repositories::{self},
     services::{
-        link::validate_active_link::{is_intent_exist, is_valid_fields_before_active},
+        link::validate_active_link::{is_create_action_exist, is_valid_fields_before_active},
         transaction_manager::validate::validate_balance_with_asset_info,
     },
-    types::{
-        error::CanisterError,
-        link::{link_state::LinkState, Link},
-    },
+    types::error::CanisterError,
 }; // Import the logger macro
 
 type AsyncValidateFn =
@@ -18,7 +17,7 @@ type AsyncValidateFn =
 
 type AsyncExecuteFn = Box<
     dyn Fn(
-            String,
+            LinkState,
             Link,
             Option<LinkStateMachineActionParams>,
         ) -> Pin<Box<dyn Future<Output = Result<Link, String>> + Send>>
@@ -35,21 +34,71 @@ pub struct Transition {
 }
 
 fn transition_function(
-    state: String,
+    new_state: LinkState,
     mut link: Link,
     params: Option<LinkStateMachineActionParams>,
 ) -> Pin<Box<dyn Future<Output = Result<Link, String>> + Send>> {
     Box::pin(async move {
-        link.set("state", state);
+        link.state = new_state;
 
         if params.is_some() {
             match params.unwrap() {
-                LinkStateMachineActionParams::Update(params) => {
-                    link.update(params.to_link_detail_update());
+                LinkStateMachineActionParams::Update(input) => {
+                    if let Some(title) = input.title {
+                        link.title = Some(title);
+                    }
+                    if let Some(description) = input.description {
+                        link.description = Some(description);
+                    }
+                    if let Some(link_image_url) = input.link_image_url {
+                        link.metadata = Some(link.metadata.unwrap_or_default());
+                        link.metadata
+                            .as_mut()
+                            .unwrap()
+                            .insert("link_image_url".to_string(), link_image_url);
+                    }
+                    if let Some(nft_image) = input.nft_image {
+                        link.metadata = Some(link.metadata.unwrap_or_default());
+                        link.metadata
+                            .as_mut()
+                            .unwrap()
+                            .insert("nft_image".to_string(), nft_image);
+                    }
+                    if let Some(asset_info) = input.asset_info {
+                        link.asset_info = Some(
+                            asset_info
+                                .iter()
+                                .map(|a| {
+                                    let chain = match Chain::from_str(a.chain.as_str()) {
+                                        Ok(chain) => chain,
+                                        Err(_) => Chain::IC,
+                                    };
+
+                                    return AssetInfo {
+                                        address: a.address.clone(),
+                                        chain,
+                                        total_amount: a.total_amount,
+                                        amount_per_claim: a.amount_per_claim,
+                                        // start with 0
+                                        total_claim: 0,
+                                        // start with 0
+                                        current_amount: 0,
+                                    };
+                                })
+                                .collect(),
+                        );
+                    }
+                    if let Some(template) = input.template {
+                        link.template = Template::from_str(template.as_str()).ok();
+                    }
+                    if let Some(link_type) = input.link_type {
+                        link.link_type = LinkType::from_str(link_type.as_str()).ok();
+                    }
                 }
             }
         }
-        link_store::update(link.to_persistence());
+
+        repositories::link::update(link.clone());
 
         Ok(link)
     })
@@ -80,7 +129,7 @@ pub fn get_transitions() -> Vec<Transition> {
                 Box::pin(async move {
                     let caller = ic_cdk::api::caller();
                     validate_balance_with_asset_info(link.clone(), caller).await?;
-                    is_intent_exist(link.get("id").unwrap().as_str())?;
+                    is_create_action_exist(link.id.clone())?;
                     is_valid_fields_before_active(link.clone())?;
                     Ok(())
                 })
@@ -101,7 +150,7 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::AddAssets,
             validate: Some(Box::new(|link| {
                 Box::pin(async move {
-                    if is_intent_exist(link.get("id").unwrap().as_str()).is_ok() {
+                    if is_create_action_exist(link.id).is_ok() {
                         Err("Intent exists, cannot transition back".to_string())
                     } else {
                         Ok(())
@@ -116,7 +165,7 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::ChooseLinkType,
             validate: Some(Box::new(|link| {
                 Box::pin(async move {
-                    if is_intent_exist(link.get("id").unwrap().as_str()).is_ok() {
+                    if is_create_action_exist(link.id).is_ok() {
                         Err("Intent exists, cannot transition back".to_string())
                     } else {
                         Ok(())
@@ -134,20 +183,7 @@ pub async fn handle_update_link(
 ) -> Result<Link, CanisterError> {
     let transitions = get_transitions();
 
-    let current_state = match link_input.get("state") {
-        Some(state) => {
-            let state = state.as_str();
-            match LinkState::from_string(state) {
-                Ok(state) => state,
-                Err(e) => return Err(CanisterError::ValidationErrors(e)),
-            }
-        }
-        None => {
-            return Err(CanisterError::ValidationErrors(
-                "state is missing".to_string(),
-            ))
-        }
-    };
+    let current_state = link_input.state.clone();
 
     let state_machine_result = transitions.iter().find(|t| {
         let is_match_source = t.source == current_state;
@@ -169,7 +205,7 @@ pub async fn handle_update_link(
                 }
             }
 
-            let dest = transition.dest.to_string();
+            let dest = transition.dest.clone();
 
             match transition.execute.as_ref()(dest, link_input.clone(), input.params).await {
                 Ok(link) => {

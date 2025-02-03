@@ -28,5 +28,5 @@ icrc-ledger-types = {workspace = true}
 base64 = {workspace = true}
 rm = {workspace = true}
 ic-icrc-tx = {workspace = true}
-cashier-essentials = { path = "../lib/cashier-essentials" }
+cashier-types = { path = "../lib/cashier-types" }
 

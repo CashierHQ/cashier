@@ -49,21 +49,18 @@ impl SendType {
 
 pub enum FeeType {
     CashierFee,
-    NetworkFee,
 }
 
 impl FeeType {
     pub fn to_string(&self) -> String {
         match self {
             FeeType::CashierFee => "CashierFee".to_string(),
-            FeeType::NetworkFee => "NetworkFee".to_string(),
         }
     }
 
     pub fn from_string(fee_type: &str) -> Result<FeeType, String> {
         match fee_type {
             "CashierFee" => Ok(FeeType::CashierFee),
-            "NetworkFee" => Ok(FeeType::NetworkFee),
             _ => Err("Invalid fee type".to_string()),
         }
     }

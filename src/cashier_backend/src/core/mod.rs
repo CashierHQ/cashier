@@ -1,18 +1,16 @@
-use crate::core::intent::types::*;
+use crate::core::action::types::*;
 use crate::core::link::types::*;
+use crate::core::user::types::*;
 
+use crate::core::user::types::UserDto;
 use crate::types::api::*;
 use crate::types::error::*;
 use crate::types::icrc::*;
-use crate::types::intent::*;
-use crate::types::link::*;
-use crate::types::user::*;
 
-pub mod claim;
+pub mod action;
 pub mod guard;
 pub mod icrc;
 pub mod init_and_upgrade;
-pub mod intent;
 pub mod link;
 pub mod user;
 

@@ -1,9 +1,15 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use super::transaction::Transaction;
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct Icrc112Request {
+    pub id: String,
+    pub canister_id: String,
+    pub method: String,
+    pub arg: String,
+}
 
-pub type ParallelRequests = Vec<Transaction>;
+pub type ParallelRequests = Vec<Icrc112Request>;
 
 pub type SequenceRequest = Vec<ParallelRequests>;
 
