@@ -7,7 +7,7 @@ import { LINK_TYPE } from "@/services/types/enum";
  * - V1: type for handle submit
  * - V2: type for handle change
  */
-export interface ParitalFormProps<V1, V2> {
+export interface PartialFormProps<V1, V2> {
     handleSubmit: (values: V1) => void;
     handleChange: (value: V2) => void;
     isDisabled: boolean;
@@ -40,7 +40,7 @@ interface ItemProp<V1, V2> {
     isDisabled: boolean;
     name: string;
     linkType: LINK_TYPE;
-    render: (props: ParitalFormProps<V1, V2>) => ReactElement<ParitalFormProps<V1, V2>>;
+    render: (props: PartialFormProps<V1, V2>) => ReactElement<PartialFormProps<V1, V2>>;
 }
 
 /**

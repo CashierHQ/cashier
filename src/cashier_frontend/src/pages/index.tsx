@@ -21,7 +21,7 @@ import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import AppSidebar from "@/components/app-sidebar";
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import ConnectedWalletDropdownIcon from "@/components/connected-wallet-icon";
-import TransactionToast from "@/components/transaction-toast";
+import TransactionToast from "@/components/transaction/transaction-toast";
 import { AiOutlineExperiment } from "react-icons/ai";
 import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
