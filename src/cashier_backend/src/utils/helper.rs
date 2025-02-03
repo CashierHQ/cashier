@@ -2,6 +2,7 @@ use icrc_ledger_types::icrc1::{account::Subaccount, transfer::Memo};
 use serde_bytes::ByteBuf;
 use uuid::Uuid;
 
+// apply for link id only
 pub fn to_subaccount(id: String) -> Subaccount {
     let uuid = Uuid::parse_str(&id).expect("Invalid UUID format");
     let uuid_bytes = uuid.as_bytes();

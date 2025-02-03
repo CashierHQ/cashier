@@ -26,6 +26,7 @@ import useToast from "@/hooks/useToast";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/refractor.action.service.types";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
+import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -83,6 +84,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
             if (intent_create && action) {
                 setIntentCreate(intent_create);
+                setLinkAction(action);
                 setTransactionConfirmModel(
                     (prevModel) =>
                         ({
@@ -93,6 +95,19 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         }) as ConfirmTransactionModel,
                 );
             }
+        }
+
+        if (linkData?.intent_create?.state === INTENT_STATE.CREATED) {
+            setPopupButton(t("transaction.confirm_popup.confirm_button"));
+            setDisabledConfirmButton(false);
+        }
+
+        if (
+            linkData?.intent_create?.state === INTENT_STATE.PROCESSING ||
+            linkData?.intent_create?.state === INTENT_STATE.TIMEOUT
+        ) {
+            setPopupButton(t("transaction.confirm_popup.inprogress_button"));
+            setDisabledConfirmButton(true);
         }
 
         if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
@@ -128,6 +143,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 ...formData,
                 title: values.title,
                 linkType: values.linkType,
+                description: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
             },
             isContinue: true,
         };
@@ -258,33 +274,38 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             intentCreate?.id ?? "",
         );
 
-        if (confirmItemResult?.transactions) {
-            // Change transaction status to processing
-            setIntentCreate(
-                (prev) =>
-                    ({
-                        ...prev,
-                        transactions: confirmItemResult?.transactions,
-                    }) as IntentCreateModel,
-            );
+        // TODO: Temporary comment out these lines and will update later
+        // if (confirmItemResult?.transactions) {
+        //     // Change transaction status to processing
+        //     setIntentCreate(
+        //         (prev) =>
+        //             ({
+        //                 ...prev,
+        //                 transactions: confirmItemResult?.transactions,
+        //             }) as IntentCreateModel,
+        //     );
 
-            setTransactionConfirmModel(
-                (prevModel) =>
-                    ({
-                        ...prevModel,
-                        transactions: confirmItemResult?.transactions,
-                    }) as ConfirmTransactionModel,
-            );
+        //     setTransactionConfirmModel(
+        //         (prevModel) =>
+        //             ({
+        //                 ...prevModel,
+        //                 transactions: confirmItemResult?.transactions,
+        //             }) as ConfirmTransactionModel,
+        //     );
 
-            console.log("Call canister transfer");
-            const result = await callExecute(intentCreate?.transactions, identity);
-            if (result) {
-                console.log(
-                    "Canister service call complete. Now re-fetch the link data to get the intent.",
-                );
-                refetch();
-            }
-        }
+        //     console.log("Call canister transfer");
+        //     const result = await callExecute(intentCreate?.transactions, identity);
+        //     if (result) {
+        //         console.log(
+        //             "Canister service call complete. Now re-fetch the link data to get the intent.",
+        //         );
+        //         refetch();
+        //     }
+        // }
+    };
+
+    const handleRetryTransactions = () => {
+        console.log("Retry");
     };
 
     const handleRetryTransactions = () => {

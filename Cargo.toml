@@ -1,8 +1,8 @@
 [workspace]
 members = [
     "src/cashier_backend", 
-    "src/lib/cashier-essentials",
-    "src/lib/cashier-macros"
+    "src/lib/cashier-macros",
+    "src/lib/cashier-types"
 ]
 resolver = "2"
 

@@ -62,6 +62,8 @@ describe("User", () => {
         // Act
         const user = await actor.get_user();
 
+        console.log(user);
+
         // Assert
         expect(user).toEqual({ Err: "User not found" });
     });
@@ -81,9 +83,7 @@ describe("User", () => {
 
     it("should create link success", async () => {
         const input: CreateLinkInput = {
-            link_type: {
-                TipLink: null,
-            },
+            link_type: "TipLink",
         };
 
         const createLinkRes = await actor.create_link(input);

@@ -17,7 +17,7 @@ import { PartialFormProps } from "@/components/multi-step-form";
 import { FileInput } from "@/components/file-input";
 import { NumberInput } from "@/components/number-input";
 import { DECREASE, INCREASE } from "@/constants/otherConst";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { AssetSelectItem } from "@/components/asset-select";
 import { LINK_TYPE } from "@/services/types/enum";
@@ -80,6 +80,7 @@ export default function LinkDetails({
     const [openAssetList, setOpenAssetList] = useState<boolean>(false);
     const [selectedToken, setSelectedToken] = useState<AssetSelectItem>();
     const [isLoading, setLoading] = useState(true);
+    const [isLoadingBalance, setIsLoadingBalance] = useState(true);
 
     const form = useForm<InputSchema>({
         resolver: zodResolver(linkDetailsSchema),
@@ -147,6 +148,34 @@ export default function LinkDetails({
         }
     };
 
+    const fetchAssetListAmounts = async (assetList: AssetSelectItem[]) => {
+        const canisterUtilService = new CanisterUtilsService(identity);
+
+        const assetListWithAmounts = await Promise.all(
+            assetList.map(async (asset) => {
+                const amountFetched = await canisterUtilService.checkAccountBalance(
+                    asset.tokenAddress,
+                    identity?.getPrincipal().toString(),
+                );
+
+                if (amountFetched === null) {
+                    return asset;
+                }
+
+                const parsedAmount = await TokenUtilService.getHumanReadableAmount(
+                    amountFetched,
+                    asset.tokenAddress,
+                );
+
+                return {
+                    ...asset,
+                    amount: parsedAmount,
+                };
+            }),
+        );
+        return assetListWithAmounts;
+    };
+
     // Fetch user current assets
     useEffect(() => {
         async function fetchUserToken() {
@@ -155,23 +184,15 @@ export default function LinkDetails({
                 const assetList: AssetSelectItem[] = result.map((token) => {
                     return mapAPITokenModelToAssetSelectModel(token);
                 });
+
                 assetList.push(...ASSET_LIST);
-                const canisterUtilService = new CanisterUtilsService(identity);
-                assetList.map(async (asset) => {
-                    const amountFetched = await canisterUtilService.checkAccountBalance(
-                        asset.tokenAddress,
-                        identity?.getPrincipal().toString(),
-                    );
-                    if (amountFetched !== null) {
-                        const parsedAmount = await TokenUtilService.getHumanReadableAmount(
-                            amountFetched,
-                            asset.tokenAddress,
-                        );
-                        asset.amount = parsedAmount;
-                    }
+
+                fetchAssetListAmounts(assetList).then((assetListWithAmounts) => {
+                    setIsLoadingBalance(false);
+                    setAssetList(assetListWithAmounts);
                 });
 
-                setAssetList((prev) => [...prev, assetList].flat());
+                setAssetList((prev) => [...prev, ...assetList]);
                 setLoading(false);
             }
         }
@@ -186,6 +207,7 @@ export default function LinkDetails({
                 const selectedToken = assetList.find(
                     (asset) => asset.tokenAddress === defaultValues.tokenAddress,
                 );
+
                 if (selectedToken) {
                     onSelectAsset(selectedToken.tokenAddress);
                 }
@@ -202,6 +224,32 @@ export default function LinkDetails({
         return userTokenList;
     }
 
+    const onSubmit = form.handleSubmit((data) => {
+        const { tokenAddress, amountNumber } = data;
+        const relevantAsset = assetList.find((asset) => asset.tokenAddress === tokenAddress);
+        const amountInWallet = relevantAsset?.amount;
+
+        if (amountInWallet === undefined) {
+            form.setError("amountNumber", {
+                type: "manual",
+                message: "Unable to validate balance",
+            });
+
+            return;
+        }
+
+        if (amountNumber > amountInWallet) {
+            form.setError("amountNumber", {
+                type: "manual",
+                message: "Your balance is not enough",
+            });
+
+            return;
+        }
+
+        handleSubmit(data);
+    });
+
     const selectedAssetButtonInfo = (): React.ReactNode => {
         if (selectedToken) {
             return (
@@ -214,13 +262,18 @@ export default function LinkDetails({
                     </Avatar>
                     <div id="asset-info" className="text-md text-left">
                         <div>{selectedToken.name}</div>
-                        <div>{`Balance ${selectedToken.amount} ${selectedToken.name}`}</div>
+                        <div>
+                            {isLoadingBalance ? (
+                                <Skeleton className="w-[130px] h-4 mt-1" />
+                            ) : (
+                                `Balance ${selectedToken.amount} ${selectedToken.name}`
+                            )}
+                        </div>
                     </div>
                 </div>
             );
-        } else {
-            return null;
         }
+        return null;
     };
 
     const renderLoading = () => {
@@ -243,10 +296,7 @@ export default function LinkDetails({
                 ) : (
                     <>
                         <Form {...form}>
-                            <form
-                                onSubmit={form.handleSubmit(handleSubmit)}
-                                className="space-y-8 mb-[100px]"
-                            >
+                            <form onSubmit={onSubmit} className="space-y-8 mb-[100px]">
                                 <FormField
                                     name="tokenAddress"
                                     control={form.control}
@@ -288,6 +338,7 @@ export default function LinkDetails({
                                                         }
                                                         field.onChange(e);
                                                     }}
+                                                    disabled={isLoadingBalance}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -306,6 +357,7 @@ export default function LinkDetails({
                             handleClose={() => setOpenAssetList(false)}
                             handleChange={onSelectAsset}
                             assetList={assetList}
+                            isLoadingBalance={isLoadingBalance}
                         />
                     </>
                 )}

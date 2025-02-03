@@ -4,18 +4,25 @@ import { NavigationMenu, NavigationMenuLink } from "@/components/ui/navigation-m
 import { AssetSelectItem } from "./asset-select";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AssetMenuProps {
     assetList: AssetSelectItem[];
     onSelect: (val: string) => void;
+    isLoadingBalance?: boolean;
 }
 
-const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect }) => {
+const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect, isLoadingBalance }) => {
     return (
         <NavigationMenu className="w-[100%] max-w-[100%] justify-start">
             <ul className="w-[100%]">
                 {assetList?.map((asset) => (
-                    <ListItem key={asset.tokenAddress} onSelected={onSelect} asset={asset} />
+                    <ListItem
+                        key={asset.tokenAddress}
+                        onSelected={onSelect}
+                        asset={asset}
+                        isLoadingBalance={isLoadingBalance}
+                    />
                 ))}
             </ul>
         </NavigationMenu>
@@ -25,9 +32,10 @@ const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect }) => {
 interface AssetItemProps {
     asset: AssetSelectItem;
     onSelected: (val: string) => void;
+    isLoadingBalance?: boolean;
 }
 
-const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
+const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalance }) => {
     return (
         <li>
             <NavigationMenuLink onSelect={() => onSelected(asset.tokenAddress)} asChild>
@@ -44,7 +52,13 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
                         <div id="asset-info" className="text-md text-left">
                             <div>{asset?.name}</div>
                         </div>
-                        <div className="ml-auto">{`${asset?.amount}`}</div>
+                        <div className="ml-auto">
+                            {isLoadingBalance ? (
+                                <Skeleton className="w-[130px] h-4" />
+                            ) : (
+                                `${asset?.amount}`
+                            )}
+                        </div>
                     </div>
                 </a>
             </NavigationMenuLink>

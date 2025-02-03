@@ -1,8 +1,8 @@
 import { convertNanoSecondsToDate } from "@/utils";
 import {
-    AssetInfo,
+    AssetInfoDto,
     GetLinkResp,
-    Link,
+    LinkDto,
     UpdateLinkInput,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { LinkDetailModel, LinkModel } from "../link.service.types";
@@ -148,19 +148,15 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
         params: [
             {
                 Update: {
-                    params: [
-                        {
-                            title: [linkDetailModel.title],
-                            asset_info: linkDetailModel.amount
-                                ? [Array<AssetInfo>(mapAssetInfo(linkDetailModel))]
-                                : [],
-                            description: [linkDetailModel.description],
-                            template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
-                            nft_image: [linkDetailModel.image],
-                            link_image_url: ["Test"],
-                            link_type: linkDetailModel.linkType ? [linkDetailModel.linkType] : [],
-                        },
-                    ],
+                    title: [linkDetailModel.title],
+                    asset_info: linkDetailModel.amount
+                        ? [Array<AssetInfoDto>(mapAssetInfo(linkDetailModel))]
+                        : [],
+                    description: [linkDetailModel.description],
+                    template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
+                    nft_image: [linkDetailModel.image],
+                    link_image_url: ["Test"],
+                    link_type: linkDetailModel.linkType ? [linkDetailModel.linkType] : [],
                 },
             },
         ],
@@ -168,18 +164,18 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
     return updateLinkInput;
 };
 
-export const MapLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
+export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
     return {
         id: link.id,
         title: fromNullable(link.title) ?? "",
         description: fromNullable(link.description) ?? "",
-        image: fromNullable(link.nft_image) ?? "",
+        image: "",
         linkType: fromNullable(link.link_type),
-        state: fromNullable(link.state),
+        state: link.state,
         template: fromNullable(link.template),
-        creator: fromNullable(link.creator),
-        create_at: fromNullable(link.create_at)
-            ? convertNanoSecondsToDate(fromDefinedNullable(link.create_at))
+        creator: link.creator,
+        create_at: link.create_at
+            ? convertNanoSecondsToDate(link.create_at)
             : new Date("2000-10-01"),
         amountNumber: fromNullable(link.asset_info)
             ? Number(fromDefinedNullable(link.asset_info)[0].total_amount)
@@ -195,21 +191,20 @@ export const MapLinkToLinkDetailModel = (link: Link): LinkDetailModel => {
 
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkModel> => {
-    const { intent, link } = linkObj;
+    const { link } = linkObj;
     return {
         action: generateMockAction(),
-        intent_create: fromNullable(intent),
         link: {
             id: link.id,
             title: fromNullable(link.title) ?? "",
             description: fromNullable(link.description) ?? "",
-            image: fromNullable(link.nft_image) ?? "",
+            image: "",
             linkType: fromNullable(link.link_type),
-            state: fromNullable(link.state),
+            state: link.state,
             template: fromNullable(link.template),
-            creator: fromNullable(link.creator),
-            create_at: fromNullable(link.create_at)
-                ? convertNanoSecondsToDate(fromDefinedNullable(link.create_at))
+            creator: link.creator,
+            create_at: link.create_at
+                ? convertNanoSecondsToDate(link.create_at)
                 : new Date("2000-10-01"),
             amountNumber: fromNullable(link.asset_info)
                 ? await TokenUtilService.getHumanReadableAmount(
@@ -230,7 +225,7 @@ export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkMode
 /* TODO: Remove testing flag later*/
 const IS_TEST_LOCAL_TOKEN = false;
 // May need to update in future, now received 'amount' as param, others are constants
-const mapAssetInfo = (linkDetailModel: LinkDetailModel): AssetInfo => {
+const mapAssetInfo = (linkDetailModel: LinkDetailModel): AssetInfoDto => {
     return {
         address: IS_TEST_LOCAL_TOKEN ? "x5qut-viaaa-aaaar-qajda-cai" : linkDetailModel.tokenAddress,
         chain: CHAIN.IC,

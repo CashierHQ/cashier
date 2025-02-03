@@ -1,16 +1,16 @@
-import { Receive } from "../../../../../declarations/cashier_backend/cashier_backend.did";
-import { FeeModel, ReceiveModel, TransactionModel } from "../intent.service.types";
-import { AssetModel } from "@/services/types/refractor.intent.service.types";
+import { AssetModel } from "@/components/transaction-item";
+import { FeeModel, TransactionModel } from "../intent.service.types";
+import { IntentModel } from "@/services/types/refractor.intent.service.types";
 
-export const mapReceiveModel = (fee: Receive): ReceiveModel => {
-    return {
-        assetAddress: fee.asset_address,
-        assetAmount: fee.asset_amount,
-        chain: fee.chain,
-        name: fee.name,
-        type: fee.type,
-    };
-};
+// export const mapReceiveModel = (fee: Receive): ReceiveModel => {
+//     return {
+//         assetAddress: fee.asset_address,
+//         assetAmount: fee.asset_amount,
+//         chain: fee.chain,
+//         name: fee.name,
+//         type: fee.type,
+//     };
+// };
 
 // Mapping between FeeModel -> AssetModel
 export const mapFeeModelToAssetModel = (
@@ -40,5 +40,20 @@ export const toCanisterCallRequest = (tx: TransactionModel) => {
         canisterId: tx.canister_id,
         method: tx.method,
         arg: tx.arg,
+    };
+};
+
+export const mapIntentModelToAssetModel = (
+    intent: IntentModel | undefined,
+    transactions: TransactionModel[][] | undefined,
+) => {
+    if (!intent) {
+        return undefined;
+    }
+    return {
+        address: intent.asset.address,
+        amount: intent.amount,
+        chain: intent.asset.chain,
+        transaction: getTransactionMapWithTheFeeModel(intent.asset.address, transactions),
     };
 };
