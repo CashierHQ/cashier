@@ -1,6 +1,5 @@
-import { AssetModel } from "@/components/transaction-item";
 import { FeeModel, TransactionModel } from "../intent.service.types";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { AssetModel, IntentModel } from "@/services/types/refractor.intent.service.types";
 
 // export const mapReceiveModel = (fee: Receive): ReceiveModel => {
 //     return {

@@ -2,7 +2,7 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
-    CreateActionInput,
+    // CreateActionInput,
     CreateLinkInput,
     LinkDto,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
@@ -16,8 +16,8 @@ import {
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
 } from "./types/mapper/link.service.mapper";
-import { CreateIntentConsentModel } from "./types/intent.service.types";
-import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
+// import { CreateIntentConsentModel } from "./types/intent.service.types";
+// import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
 import { ActionModel } from "./types/refractor.action.service.types";
 
 interface ReponseLinksModel {

@@ -64,7 +64,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { toastData, showToast, hideToast } = useToast();
 
     const queryClient = useQueryClient();
-    const { data: linkData, refetch } = useLinkDataQuery(linkId, identity);
+    const { data: linkData } = useLinkDataQuery(linkId, identity);
     const { mutate, error: updateLinkError, mutateAsync } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
@@ -95,19 +95,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         }) as ConfirmTransactionModel,
                 );
             }
-        }
-
-        if (linkData?.intent_create?.state === INTENT_STATE.CREATED) {
-            setPopupButton(t("transaction.confirm_popup.confirm_button"));
-            setDisabledConfirmButton(false);
-        }
-
-        if (
-            linkData?.intent_create?.state === INTENT_STATE.PROCESSING ||
-            linkData?.intent_create?.state === INTENT_STATE.TIMEOUT
-        ) {
-            setPopupButton(t("transaction.confirm_popup.inprogress_button"));
-            setDisabledConfirmButton(true);
         }
 
         if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
@@ -190,7 +177,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 action: action,
             };
             setTransactionConfirmModel(transactionConfirmObj);
-            setOpenConfirmationPopup(true);
         }
     };
 
@@ -302,10 +288,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         //         refetch();
         //     }
         // }
-    };
-
-    const handleRetryTransactions = () => {
-        console.log("Retry");
     };
 
     const handleRetryTransactions = () => {
