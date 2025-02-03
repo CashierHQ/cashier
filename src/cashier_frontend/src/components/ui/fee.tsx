@@ -12,7 +12,7 @@ export type FeeProps = {
 export const Fee: FC<FeeProps> = ({ title, amount, symbol, isLoading }) => {
     return (
         <div className="flex justify-between text-xs leading-tight">
-            <h6 id="transaction-title" className="ml-1.5 text-right">
+            <h6 id="transaction-title" className="text-right">
                 {title}
             </h6>
 

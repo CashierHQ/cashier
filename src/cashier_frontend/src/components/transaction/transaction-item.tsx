@@ -20,7 +20,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ title, intent, isLoa
 
     return (
         <div className="flex items-center">
-            <div>
+            <div className="mr-1.5">
                 <Status status={mapIntentsStateToStatus(intent.state)} />
             </div>
 
@@ -34,7 +34,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ title, intent, isLoa
                 />
 
                 <Fee
-                    title={t("transaction.item.fee.label")}
+                    title={t("transaction.confirm_popup.network_fee_label")}
                     isLoading={isLoading || isLoadingMetadata}
                     amount={feeAmount}
                     symbol={feeSymbol}
