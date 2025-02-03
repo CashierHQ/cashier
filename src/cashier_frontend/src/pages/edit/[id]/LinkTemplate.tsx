@@ -11,7 +11,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
-import { ParitalFormProps } from "@/components/multi-step-form";
+import { PartialFormProps } from "@/components/multi-step-form";
 import LinkCard from "@/components/link-card";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
@@ -76,7 +76,7 @@ export default function LinkTemplate({
     defaultValues = {},
     handleSubmit,
     handleChange,
-}: ParitalFormProps<LinkTemplateInput, Partial<LinkTemplateInput>>) {
+}: PartialFormProps<LinkTemplateInput, Partial<LinkTemplateInput>>) {
     const { t } = useTranslation();
     const [api, setApi] = React.useState<CarouselApi>();
     const [current, setCurrent] = React.useState(0);

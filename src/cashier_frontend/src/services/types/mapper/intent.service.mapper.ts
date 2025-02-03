@@ -1,6 +1,5 @@
-import { AssetModel } from "@/components/transaction-item";
 import { FeeModel, TransactionModel } from "../intent.service.types";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { AssetModel, IntentModel } from "@/services/types/refractor.intent.service.types";
 
 // export const mapReceiveModel = (fee: Receive): ReceiveModel => {
 //     return {
@@ -22,9 +21,9 @@ export const mapFeeModelToAssetModel = (
     }
     return {
         address: fee.address,
-        amount: fee.amount,
+        //amount: fee.amount,
         chain: fee.chain,
-        transaction: getTransactionMapWithTheFeeModel(fee.address, transactions),
+        //transaction: getTransactionMapWithTheFeeModel(fee.address, transactions),
     };
 };
 

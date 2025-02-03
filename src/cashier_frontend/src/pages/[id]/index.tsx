@@ -7,7 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
-import TransactionToast, { TransactionToastProps } from "@/components/transaction-toast";
+import TransactionToast, {
+    TransactionToastProps,
+} from "@/components/transaction/transaction-toast";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),

@@ -7,14 +7,13 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentity } from "@nfid/identitykit/react";
 import LinkService from "@/services/link.service";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
-import { Drawer } from "@/components/ui/drawer";
-import ConfirmationPopup, { ConfirmTransactionModel } from "@/components/confirmation-popup";
-import TransactionToast from "@/components/transaction-toast";
+import { ConfirmTransactionModel } from "@/components/confirmation-drawer/confirmation-drawer";
+import TransactionToast from "@/components/transaction/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { getReponsiveClassname } from "@/utils";
+import { getResponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
 import { INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
@@ -25,8 +24,8 @@ import { Identity } from "@dfinity/agent";
 import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 import useToast from "@/hooks/useToast";
 import { getCashierError } from "@/services/errorProcess.service";
-import { queryKeys } from "@/lib/queryKeys";
 import { ActionModel } from "@/services/types/refractor.action.service.types";
+import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 
 const STEP_LINK_STATE_ORDER = [
@@ -49,12 +48,10 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
         tokenAddress: "",
     });
+
     const [isDisabled, setDisabled] = useState(false);
-    const [openConfirmationPopup, setOpenConfirmationPopup] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
     const [isRendering, setRendering] = useState(true);
-    const [disabledConfirmButton, setDisabledConfirmButton] = useState(false);
-    const [popupButton, setPopupButton] = useState("");
     const [intentCreate, setIntentCreate] = useState<IntentCreateModel>();
     const [linkAction, setLinkAction] = useState<ActionModel>();
     const [transactionConfirmModel, setTransactionConfirmModel] =
@@ -64,14 +61,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { linkId } = useParams();
     const identity = useIdentity();
     const responsive = useResponsive();
-    const queryClient = useQueryClient();
     const { toastData, showToast, hideToast } = useToast();
+
+    const queryClient = useQueryClient();
+    const { data: linkData } = useLinkDataQuery(linkId, identity);
     const { mutate, error: updateLinkError, mutateAsync } = useUpdateLink(queryClient, identity);
-    const { data: linkData, refetch } = useQuery({
-        queryKey: queryKeys.links.detail(linkId, identity).queryKey,
-        queryFn: queryKeys.links.detail(linkId, identity).queryFn,
-        enabled: !!linkId && !!identity,
-    });
 
     useEffect(() => {
         if (linkData) {
@@ -82,6 +76,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 setFormData(link);
                 setRendering(false);
                 setCurrentStep(step >= 0 ? step : 0);
+            }
+
+            if (action) {
+                console.log("added link action", action);
+                setLinkAction(action);
             }
 
             if (intent_create && action) {
@@ -99,23 +98,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             }
         }
 
-        if (linkData?.intent_create?.state === INTENT_STATE.CREATED) {
-            setPopupButton(t("transaction.confirm_popup.confirm_button"));
-            setDisabledConfirmButton(false);
-        }
-
-        if (
-            linkData?.intent_create?.state === INTENT_STATE.PROCESSING ||
-            linkData?.intent_create?.state === INTENT_STATE.TIMEOUT
-        ) {
-            setPopupButton(t("transaction.confirm_popup.inprogress_button"));
-            setDisabledConfirmButton(true);
-        }
-
         if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
-            setPopupButton(t("continue"));
-            setDisabledConfirmButton(false);
-
             showToast(
                 t("transaction.confirm_popup.transaction_success"),
                 t("transaction.confirm_popup.transaction_success_message"),
@@ -124,9 +107,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
 
         if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
-            setPopupButton(t("Retry"));
-            setDisabledConfirmButton(false);
-
             showToast(
                 t("transaction.confirm_popup.transaction_failed"),
                 t("transaction.validation.transaction_failed_message"),
@@ -198,7 +178,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 action: action,
             };
             setTransactionConfirmModel(transactionConfirmObj);
-            setOpenConfirmationPopup(true);
         }
     };
 
@@ -263,8 +242,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleUpdateLinkToActive = async () => {
-        setDisabledConfirmButton(true);
-        setPopupButton(t("processing"));
         const updateLinkParams: UpdateLinkParams = {
             linkId: linkId ?? "",
             linkModel: {
@@ -277,8 +254,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const startTransaction = async () => {
-        setDisabledConfirmButton(true);
-        setPopupButton(t("transaction.confirm_popup.inprogress_button"));
         const intentService = new IntentService(identity);
 
         const confirmItemResult = await intentService.confirmIntent(
@@ -361,7 +336,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     return (
         <div
-            className={getReponsiveClassname(
+            className={getResponsiveClassname(
                 responsive,
                 responsiveMapper.find((o) => (o.htmlId = "edit_multistepform_wrapper")),
             )}
@@ -397,22 +372,17 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         handleSubmit={handleSubmit}
                         isDisabled={isDisabled}
                         linkType={formData.linkType as LINK_TYPE}
-                        render={(props) => <LinkPreview {...props} />}
+                        render={(props) => (
+                            <LinkPreview
+                                {...props}
+                                action={linkAction}
+                                data={transactionConfirmModel}
+                                onConfirm={handleConfirmTransactions}
+                            />
+                        )}
                     />
                 </MultiStepForm>
-                <Drawer open={openConfirmationPopup}>
-                    <ConfirmationPopup
-                        data={transactionConfirmModel}
-                        handleConfirm={handleConfirmTransactions}
-                        handleClose={() => setOpenConfirmationPopup(false)}
-                        disabled={disabledConfirmButton}
-                        buttonText={
-                            popupButton.length > 0
-                                ? popupButton
-                                : t("transaction.confirm_popup.confirm_button")
-                        }
-                    />
-                </Drawer>
+
                 <TransactionToast
                     open={toastData?.open ?? false}
                     onOpenChange={hideToast}

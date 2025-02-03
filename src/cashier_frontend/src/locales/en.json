@@ -29,6 +29,7 @@
     "cashier": "Cashier",
     "login": "Login",
     "processing": "Processing...",
+    "retry": "Retry",
     "home": {
         "guide": {
             "header": "Cashier links",
@@ -49,10 +50,14 @@
         "confirm_popup": {
             "title": "Confirm transaction",
             "receive_label": "You will receive",
+            "cashier_link_label": "Cashier link",
             "send_label": "You will send",
+            "asset_label": "Asset to add to link",
             "cashier_fee_label": "Cashier fee",
             "network_fee_label": "Network fee",
+            "link_creation_fee_label": "Link creation fee",
             "total_fee_label": "Total fee",
+            "total_cashier_fees_label": "Total Cashier fees",
             "confirm_button": "Confirm",
             "inprogress_button": "Transaction in progress...",
             "retry_button": "Retry",
@@ -60,7 +65,10 @@
             "transaction_failed_message": "Retry failed transaction",
             "transaction_success": "Transaction success",
             "transaction_success_message": "",
-            "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service"
+            "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
+            "info": {
+                "button_text": "Close"
+            }
         }
     },
     "common": {
@@ -68,5 +76,25 @@
         "commonErrorMessage": "There was a error while creating the link. Please try again later.",
         "creating": "Creating",
         "creatingLink": "The link is being created. Please wait for seconds."
+    },
+    "link": {
+        "preview": {
+            "fees": {
+                "label": "Cashier Fees",
+                "creationFee": "Link creation",
+                "totalFee": "Total Cashier fee"
+            }
+        }
+    },
+    "feeInfo": {
+        "title": "Info on fees",
+        "cashierFeeHeader": "Link creation fee",
+        "cashierFeeText": "Cashier charges a modest fee for creating links. The fees help us operate and improve Cashier.",
+        "networkFeeHeader": "Network fee",
+        "networkFeeText": [
+            "Network fees are charged by the blockchains, not by Cashier, as a payment to transfer assets on the blockchain. Cashier collects network fees to facilitate these transfer payments.",
+            "When an asset is sent to the link, network fee is charged. The amount may depends on the blockchain.",
+            "When an asset is received from the link, network fee is charged. Cashier preemptively collects these network fees from the link creator, so that the receiver does not have to pay a network fee to receive assets from the link."
+        ]
     }
 }

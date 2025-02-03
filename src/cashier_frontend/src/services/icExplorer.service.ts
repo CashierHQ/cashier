@@ -19,9 +19,9 @@ export interface UserToken {
     valueUSD: string;
 }
 
-export const initializeDefautGetUserTokenRequest = (princical: string): GetUserTokensRequest => {
+export const initializeDefaultGetUserTokenRequest = (principal: string): GetUserTokensRequest => {
     return {
-        principal: princical,
+        principal: principal,
         isDesc: true,
         page: 1,
         size: 100,
