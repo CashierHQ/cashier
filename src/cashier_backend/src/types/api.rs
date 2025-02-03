@@ -43,6 +43,16 @@ impl<T> PaginateResult<T> {
     pub fn new(data: Vec<T>, metadata: PaginateResultMetadata) -> Self {
         Self { data, metadata }
     }
+
+    pub fn map<U, F>(self, f: F) -> PaginateResult<U>
+    where
+        F: FnMut(T) -> U,
+    {
+        PaginateResult {
+            data: self.data.into_iter().map(f).collect(),
+            metadata: self.metadata,
+        }
+    }
 }
 
 impl<T> Default for PaginateResult<T> {

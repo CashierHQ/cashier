@@ -4,7 +4,7 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import { Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { QueryClient, useMutation, UseMutationResult } from "@tanstack/react-query";
-import { Link } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -15,7 +15,7 @@ export interface UpdateLinkParams {
 export const useUpdateLink = (
     queryClient: QueryClient,
     identity: Identity | PartialIdentity | undefined,
-): UseMutationResult<Link, Error, UpdateLinkParams, unknown> =>
+): UseMutationResult<LinkDto, Error, UpdateLinkParams, unknown> =>
     useMutation({
         mutationFn: (data: UpdateLinkParams) => {
             const linkService = new LinkService(identity);

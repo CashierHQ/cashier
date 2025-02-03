@@ -13,9 +13,9 @@ import { queryKeys } from "@/lib/queryKeys";
 import { useUpdateLink } from "@/hooks/linkHooks";
 import UserService from "@/services/user.service";
 import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
-import { User } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { UserDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { LINK_STATE } from "@/services/types/enum";
+import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { RiMenu2Line } from "react-icons/ri";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import AppSidebar from "@/components/app-sidebar";
@@ -30,7 +30,7 @@ export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
     const { connect, user: walletUser, disconnect } = useAuth();
-    const [newAppUser, setNewAppUser] = useState<User>();
+    const [newAppUser, setNewAppUser] = useState<UserDto>();
     const {
         data: appUser,
         isLoading: isUserLoading,
@@ -41,6 +41,7 @@ export default function HomePage() {
         retry: 1,
         enabled: !!identity,
     });
+
     const {
         data: linkData,
         isLoading: isLinksLoading,
@@ -78,7 +79,7 @@ export default function HomePage() {
             setDisableCreateButton(true);
             showToast(t("common.creating"), t("common.creatingLink"), "default");
             const response = await new LinkService(identity).createLink({
-                link_type: { TipLink: null },
+                link_type: LINK_TYPE.TIP_LINK,
             });
             navigate(`/edit/${response}`);
         } catch {
@@ -170,15 +171,11 @@ export default function HomePage() {
                 </div>
             );
         } else {
-            return Array.from({ length: 5 }).map((_, index) => (
-                <div className="flex items-center space-x-4 my-3" key={index}>
-                    <Skeleton className="h-10 w-10 rounded-sm" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                        <Skeleton className="h-3 w-[200px]" />
-                    </div>
-                </div>
-            ));
+            return (
+                <>
+                    <p className="text-sm text-gray-500 mt-3">There is no links yet.</p>
+                </>
+            );
         }
     };
 

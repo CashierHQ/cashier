@@ -3,8 +3,7 @@ use icrc_ledger_types::{icrc1::account::Account, icrc2::approve::ApproveArgs};
 use uuid::Uuid;
 
 use crate::{
-    services::transaction_manager::build_tx::BuildTxResp,
-    types::{consent_messsage::ConsentType, transaction::Transaction},
+    services::transaction_manager::build_tx::BuildTxResp, types::consent_messsage::ConsentType,
 };
 
 use super::TransactionBuilder;

@@ -1,21 +1,8 @@
 use uuid::Uuid;
 
-use crate::types::{
-    consent_messsage::ConsentType,
-    intent_transaction::IntentTransaction,
-    link::{link_type::LinkType, Link},
-    transaction::Transaction,
-};
+use crate::types::{intent_transaction::IntentTransaction, link::Link, transaction::Transaction};
 
 use super::assemble;
-
-#[derive(Debug)]
-pub struct AssembleTransactionResp {
-    pub transactions: Vec<Transaction>,
-    pub intent_transactions: Vec<IntentTransaction>,
-    pub consent_messages: Vec<ConsentType>,
-    pub tx_map: Vec<Vec<String>>,
-}
 
 //TODO: optimize it if there is too much transaction
 // for now tip link only 3 transactions

@@ -72,9 +72,9 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "candid"
-version = "0.10.12"
+version = "0.10.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51e129c4051c57daf943586e01ef72faae48b04a8f692d5f646febf17a264c38"
+checksum = "a253bab4a9be502c82332b60cbeee6202ad0692834efeec95fae9f29db33d692"
 dependencies = [
  "anyhow",
  "binread",
@@ -106,17 +106,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cashier-essentials"
-version = "0.1.0"
-dependencies = [
- "cashier-macros",
- "ic-stable-structures",
- "serde",
- "serde_cbor",
- "serde_json",
-]
-
-[[package]]
 name = "cashier-macros"
 version = "0.1.0"
 dependencies = [
@@ -126,12 +115,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "cashier-types"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "cashier-macros",
+ "ic-stable-structures",
+ "icrc-ledger-types",
+ "serde",
+ "serde_cbor",
+ "serde_json",
+]
+
+[[package]]
 name = "cashier_backend"
 version = "0.1.0"
 dependencies = [
  "base64",
  "candid",
- "cashier-essentials",
+ "cashier-types",
  "getrandom",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
@@ -770,9 +772,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.135"
+version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b0d7ba2887406110130a978386c4e1befb98c674b4fba677954e4db976630d9"
+checksum = "930cfb6e6abf99298aaad7d29abbef7a9999a9a8806a40088f55f0dcec03146b"
 dependencies = [
  "itoa",
  "memchr",
@@ -961,9 +963,9 @@ checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
 
 [[package]]
 name = "uuid"
-version = "1.12.0"
+version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "744018581f9a3454a9e15beb8a33b017183f1e7c0cd170232a2d1453b23a51c4"
+checksum = "b3758f5e68192bb96cc8f9b7e2c2cfdabb435499a28499a42f8f984092adad4b"
 dependencies = [
  "getrandom",
 ]

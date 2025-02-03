@@ -1,4 +1,5 @@
 import { IntentCreateModel } from "./intent.service.types";
+import { ActionModel } from "./refractor.action.service.types";
 
 export enum State {
     New = "New",
@@ -17,13 +18,6 @@ export enum Template {
 export enum Chain {
     IC = "IC",
 }
-
-export type ActionModel = {
-    arg: string;
-    method: string;
-    canister_id: string;
-    label: string;
-};
 
 export type AssetInfoModel = {
     chain: string;
@@ -65,6 +59,7 @@ export type LinkDetailModel = {
 
 export type LinkModel = {
     link: LinkDetailModel;
+    action?: ActionModel;
     intent_create?: IntentCreateModel;
 };
 

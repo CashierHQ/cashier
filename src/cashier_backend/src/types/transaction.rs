@@ -59,29 +59,6 @@ impl Transaction {
         }
     }
 
-    pub fn to_persistence(&self) -> crate::repositories::entities::transaction::Transaction {
-        crate::repositories::entities::transaction::Transaction::new(
-            self.id.clone(),
-            self.canister_id.clone(),
-            self.method.clone(),
-            self.arg.clone(),
-            self.state.clone(),
-        )
-    }
-
-    pub fn from_persistence(
-        transaction: crate::repositories::entities::transaction::Transaction,
-    ) -> Self {
-        let id = crate::repositories::entities::transaction::Transaction::split_pk(&transaction.pk);
-        Self {
-            id,
-            canister_id: transaction.canister_id,
-            method: transaction.method,
-            arg: transaction.arg,
-            state: transaction.state,
-        }
-    }
-
     pub fn create_and_airdrop_nft_default(id: String) -> Self {
         Self {
             id,

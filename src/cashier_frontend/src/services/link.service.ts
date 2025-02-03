@@ -2,22 +2,21 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
-    CreateIntentInput,
+    CreateActionInput,
     CreateLinkInput,
-    GetConsentMessageInput,
-    Link,
+    LinkDto,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
+    generateMockAction,
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
 } from "./types/mapper/link.service.mapper";
-import { IntentCreateModel, CreateIntentConsentModel } from "./types/intent.service.types";
-import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
+import { ActionModel } from "./types/refractor.action.service.types";
 
 interface ReponseLinksModel {
     data: LinkModel[];
@@ -49,7 +48,7 @@ class LinkService {
         };
 
         responseModel.data = response.data
-            ? response.data.map((link: Link) => {
+            ? response.data.map((link: LinkDto) => {
                   return {
                       link: MapLinkToLinkDetailModel(link),
                       action_create: undefined,
@@ -62,9 +61,9 @@ class LinkService {
     async getLink(linkId: string) {
         const response = parseResultResponse(
             await this.actor.get_link(linkId, [
-                {
-                    intent_type: "Create",
-                },
+                // {
+                //     action_type: "Create",
+                // },
             ]),
         );
         const result = await MapLinkDetailModel(response);
@@ -86,27 +85,9 @@ class LinkService {
         return false;
     }
 
-    async createAction(
-        input: CreateIntentInput,
-    ): Promise<{ intent: IntentCreateModel; consent: CreateIntentConsentModel }> {
-        const response = parseResultResponse(await this.actor.create_intent(input));
-        return {
-            intent: response.intent as IntentCreateModel,
-            consent: {
-                fee: response.consents.fee,
-                receive: response.consents.receive.map((receive) => mapReceiveModel(receive)),
-                send: response.consents.send,
-            },
-        };
-    }
-
-    async getConsentMessage(input: GetConsentMessageInput): Promise<CreateIntentConsentModel> {
-        const response = parseResultResponse(await this.actor.get_consent_message(input));
-        return {
-            fee: response.fee,
-            receive: response.receive.map((receive) => mapReceiveModel(receive)),
-            send: response.send,
-        };
+    async createAction(): Promise<ActionModel> {
+        //const response = parseResultResponse(await this.actor.create_action(input));
+        return generateMockAction();
     }
 }
 

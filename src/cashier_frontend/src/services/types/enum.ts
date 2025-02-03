@@ -62,3 +62,26 @@ export enum LINK_TYPE {
 export enum CHAIN {
     IC = "IC",
 }
+
+export enum TASK {
+    TRANSFER_WALLET_TO_TREASURY = "transfer_wallet_to_treasury",
+    TRANSFER_WALLET_TO_LINK = "transfer_wallet_to_link",
+    TRANSFER_LINK_TO_WALLET = "transfer_link_to_wallet",
+}
+
+export enum ACTION_TYPE {
+    CREATE_LINK = "CreateLink",
+    WITHDRAW_LINK = "WitHDrawLink",
+    CLAIM_LINK = "ClaimLink",
+}
+
+export enum IC_TRANSACTION_PROTOCAL {
+    ICRC1_TRANSFER = "ICRC1Transfer",
+    ICRC2_TRANSFER = "ICRC2Transfer",
+    ICRC2_APPROVE = "ICRC2Approve",
+}
+
+export enum WALLET {
+    WALLET = "Wallet",
+    CANISTER = "Canister",
+}
