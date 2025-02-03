@@ -71,8 +71,8 @@ export enum TASK {
 
 export enum ACTION_TYPE {
     CREATE_LINK = "CreateLink",
-    WITHDRAW_LINK = "WitHDrawLink",
-    CLAIM_LINK = "ClaimLink",
+    WITHDRAW_LINK = "Withdraw",
+    CLAIM_LINK = "Claim",
 }
 
 export enum IC_TRANSACTION_PROTOCAL {

@@ -17,11 +17,17 @@ import {
     MapLinkToLinkDetailModel,
 } from "./types/mapper/link.service.mapper";
 import { ActionModel } from "./types/refractor.action.service.types";
+import { ACTION_TYPE } from "./types/enum";
 
 interface ReponseLinksModel {
     data: LinkModel[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadada: any;
+}
+
+interface CreateActionInputModel {
+    linkId: string;
+    actionType: string;
 }
 
 class LinkService {
@@ -61,9 +67,9 @@ class LinkService {
     async getLink(linkId: string) {
         const response = parseResultResponse(
             await this.actor.get_link(linkId, [
-                // {
-                //     action_type: "Create",
-                // },
+                {
+                    action_type: ACTION_TYPE.CREATE_LINK,
+                },
             ]),
         );
         const result = await MapLinkDetailModel(response);
@@ -85,8 +91,14 @@ class LinkService {
         return false;
     }
 
-    async createAction(): Promise<ActionModel> {
-        //const response = parseResultResponse(await this.actor.create_action(input));
+    async createAction(input: CreateActionInputModel): Promise<ActionModel> {
+        const createActionInput: CreateActionInput = {
+            link_id: input.linkId,
+            action_type: input.actionType,
+            params: [],
+        };
+        const response = parseResultResponse(await this.actor.create_action(createActionInput));
+        console.log("🚀 ~ LinkService ~ createAction ~ response:", response);
         return generateMockAction();
     }
 }
