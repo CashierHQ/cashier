@@ -305,18 +305,6 @@ impl UpdateLinkInput {
                             }
                         }
 
-                        if let Some(link_image_url) = link_image_url {
-                            if link_image_url.is_empty() {
-                                return Err("Link image URL should not be empty".to_string());
-                            }
-                        }
-
-                        if let Some(nft_image) = nft_image {
-                            if nft_image.is_empty() {
-                                return Err("NFT image should not be empty".to_string());
-                            }
-                        }
-
                         Ok(())
                     }
                 },
