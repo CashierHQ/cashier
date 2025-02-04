@@ -1,3 +1,5 @@
+import { Phone } from "./ui/phone-frame";
+
 export default function LinkCard({
     src,
     header,
@@ -30,22 +32,19 @@ export default function LinkCard({
     };
 
     return (
-        <div className="flex flex-col justify-center items-center flex-grow">
+        <div className="flex flex-col flex-grow justify-center items-center">
             <div className="text-md md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
                 {renderHeaderTitle()}
             </div>
-            <div
-                id="phone-frame"
-                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-10 aspect-[9/16] w-[50%] md:w-[40%]"
-            >
-                <div
-                    id="phone-notch-section"
-                    className="flex w-3/5 h-3 md:h-1 2xl:h-5 bg-black items-center border-black border-8 rounded-b-2xl md:rounded-b-xl 2xl:rounded-b-2xl"
-                ></div>
+
+            <Phone.Frame className="h-[380px] sm:h-[420px] md:h-[320px] 2xl:h-[420px]">
+                <Phone.Notch />
+
                 <div className="w-full flex justify-center items-center mt-3 md:mt-1 2xl:mt-3">
                     <img src="./logo.svg" alt="Cashier logo" className="w-[60px] 2xl:w-[100px]" />
                 </div>
-                <div className="flex flex-col flex-grow items-center justify-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 md:h-[300px] w-[100%]">
+
+                <div className="flex flex-col flex-grow items-center justify-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 w-full">
                     <div className="overflow-hidden">
                         <img
                             src={src}
@@ -63,7 +62,7 @@ export default function LinkCard({
                         {label}
                     </div>
                 </div>
-            </div>
+            </Phone.Frame>
         </div>
     );
 }
