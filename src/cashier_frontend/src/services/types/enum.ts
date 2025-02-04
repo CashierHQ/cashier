@@ -30,6 +30,11 @@ export enum INTENT_STATE {
     TIMEOUT = "Intent_state_timeout",
 }
 
+export enum INTENT_TYPE {
+    TRANSFER_FROM = "TransferFrom",
+    TRANSFER = "Transfer",
+}
+
 export enum LINK_ASSET_TYPE {
     CASHIER_FEE = "CashierFee",
     ASSET_ADDED = "Asset",

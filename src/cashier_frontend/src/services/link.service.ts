@@ -20,6 +20,7 @@ import {
 // import { CreateIntentConsentModel } from "./types/intent.service.types";
 // import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
 import { ActionModel } from "./types/refractor.action.service.types";
+import { mapActionModel } from "./types/mapper/action.service.mapper";
 
 interface ReponseLinksModel {
     data: LinkModel[];
@@ -99,7 +100,8 @@ class LinkService {
             params: [],
         };
         const response = parseResultResponse(await this.actor.create_action(inputModel));
-        console.log("🚀 ~ LinkService ~ createAction ~ response:", response);
+        const action = mapActionModel(response);
+        console.log("🚀 ~ LinkService ~ createAction ~ action:", action);
         return generateMockAction();
     }
 }

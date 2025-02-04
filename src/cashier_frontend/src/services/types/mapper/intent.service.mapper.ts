@@ -1,16 +1,6 @@
 import { FeeModel, TransactionModel } from "../intent.service.types";
 import { AssetModel, IntentModel } from "@/services/types/refractor.intent.service.types";
 
-// export const mapReceiveModel = (fee: Receive): ReceiveModel => {
-//     return {
-//         assetAddress: fee.asset_address,
-//         assetAmount: fee.asset_amount,
-//         chain: fee.chain,
-//         name: fee.name,
-//         type: fee.type,
-//     };
-// };
-
 // Mapping between FeeModel -> AssetModel
 export const mapFeeModelToAssetModel = (
     fee: FeeModel | undefined,
