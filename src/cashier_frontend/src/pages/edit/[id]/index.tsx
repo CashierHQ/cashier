@@ -6,7 +6,7 @@ import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentity } from "@nfid/identitykit/react";
-import LinkService from "@/services/link.service";
+import LinkService, { CreateActionInputModel } from "@/services/link.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
@@ -164,7 +164,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleCreateAction = async (linkService: LinkService) => {
-        const action = await linkService.createAction();
+        const input: CreateActionInputModel = {
+            linkId: linkId ?? "",
+            actionType: ACTION_TYPE.CREATE_LINK,
+        };
+        const action = await linkService.createAction(input);
 
         if (action) {
             setLinkAction(action);

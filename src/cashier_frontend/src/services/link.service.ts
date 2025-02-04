@@ -2,6 +2,7 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
+    CreateActionInput,
     // CreateActionInput,
     CreateLinkInput,
     LinkDto,
@@ -24,6 +25,10 @@ interface ReponseLinksModel {
     data: LinkModel[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadada: any;
+}
+export interface CreateActionInputModel {
+    linkId: string;
+    actionType: string;
 }
 
 class LinkService {
@@ -87,8 +92,14 @@ class LinkService {
         return false;
     }
 
-    async createAction(): Promise<ActionModel> {
-        //const response = parseResultResponse(await this.actor.create_intent(input));
+    async createAction(input: CreateActionInputModel): Promise<ActionModel> {
+        const inputModel: CreateActionInput = {
+            link_id: input.linkId,
+            action_type: input.actionType,
+            params: [],
+        };
+        const response = parseResultResponse(await this.actor.create_action(inputModel));
+        console.log("🚀 ~ LinkService ~ createAction ~ response:", response);
         return generateMockAction();
     }
 }
