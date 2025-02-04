@@ -12,6 +12,7 @@ import QRCode from "react-qr-code";
 import { LinkModel } from "@/services/types/link.service.types";
 import { Skeleton } from "@/components/ui/skeleton";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
+import { ACTION_TYPE } from "@/services/types/enum";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -49,7 +50,7 @@ export default function DetailPage() {
         if (!linkId) return;
         if (!identity) return;
         const fetchData = async () => {
-            const link = await new LinkService(identity).getLink(linkId);
+            const link = await new LinkService(identity).getLink(linkId, ACTION_TYPE.WITHDRAW_LINK);
             setLinkData(link);
         };
         fetchData();

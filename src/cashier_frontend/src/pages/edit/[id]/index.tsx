@@ -16,7 +16,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getResponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
 import IntentService from "@/services/intent.service";
 import SignerService from "@/services/signer.service";
@@ -64,7 +64,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { toastData, showToast, hideToast } = useToast();
 
     const queryClient = useQueryClient();
-    const { data: linkData } = useLinkDataQuery(linkId, identity);
+    const { data: linkData } = useLinkDataQuery(linkId, ACTION_TYPE.CREATE_LINK, identity);
     const { mutate, error: updateLinkError, mutateAsync } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
