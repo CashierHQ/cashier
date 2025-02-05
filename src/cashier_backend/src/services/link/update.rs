@@ -128,7 +128,7 @@ pub fn get_transitions() -> Vec<Transition> {
             validate: Some(Box::new(|link: Link| {
                 Box::pin(async move {
                     let caller = ic_cdk::api::caller();
-                    validate_balance_with_asset_info(link.clone(), caller).await?;
+                    validate_balance_with_asset_info(&link.clone(), &caller).await?;
                     is_create_action_exist(link.id.clone())?;
                     is_valid_fields_before_active(link.clone())?;
                     Ok(())

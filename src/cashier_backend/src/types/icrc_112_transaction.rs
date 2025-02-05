@@ -3,17 +3,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Icrc112Request {
-    pub id: String,
     pub canister_id: String,
     pub method: String,
     pub arg: String,
+    pub nonce: Option<String>,
 }
 
 pub type ParallelRequests = Vec<Icrc112Request>;
 
 pub type SequenceRequest = Vec<ParallelRequests>;
 
-pub type IcrcxRequests = SequenceRequest;
+pub type Icrc112Requests = SequenceRequest;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CanisterCallResponse {

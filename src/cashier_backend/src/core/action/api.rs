@@ -4,23 +4,19 @@ use cashier_types::ActionType;
 use ic_cdk::update;
 
 use crate::{
-    core::{
-        action::types::ActionDto, guard::is_not_anonymous, CanisterError, ConfirmActionInput,
-        UpdateActionInput,
-    },
+    core::{action::types::ActionDto, guard::is_not_anonymous, CanisterError, ProcessActionInput},
     services::{self, link::is_link_creator},
 };
 
 use super::types::CreateActionInput;
 
-#[update(guard = "is_not_anonymous")]
 pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
     let caller = ic_cdk::api::caller();
 
-    let intent_type = ActionType::from_str(&input.action_type)
+    let action_type = ActionType::from_str(&input.action_type)
         .map_err(|_| CanisterError::ValidationErrors(format!("Invalid intent type ")))?;
 
-    match intent_type {
+    match action_type {
         ActionType::CreateLink => {
             if !is_link_creator(caller.to_text(), &input.link_id) {
                 return Err(CanisterError::ValidationErrors(
@@ -40,36 +36,24 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
 }
 
 #[update(guard = "is_not_anonymous")]
-pub async fn confirm_action(input: ConfirmActionInput) -> Result<ActionDto, String> {
-    Ok(ActionDto {
-        id: "id".to_string(),
-        r#type: ActionType::CreateLink.to_string(),
-        state: "state".to_string(),
-        creator: "creator".to_string(),
-        intents: vec![],
-    })
+pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
+    let caller: candid::Principal = ic_cdk::api::caller();
+
+    if input.action_id.is_empty() {
+        return create_action(CreateActionInput {
+            action_type: input.action_type.clone(),
+            link_id: input.link_id.clone(),
+            params: input.params.clone(),
+        })
+        .await;
+    } else {
+        // TODO: Call the process_action of the transaction_manager
+        return Err(CanisterError::ValidationErrors(
+            "not implemented".to_string(),
+        ));
+    }
 }
 
-#[update(guard = "is_not_anonymous")]
-pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, String> {
-    // let caller = ic_cdk::api::caller();
-
-    // let is_creator = services::transaction_manager::validate::is_action_creator(
-    //     caller.to_text(),
-    //     input.intent_id,
-    // )?;
-
-    // if !is_creator {
-    //     return Err("Caller is not the creator of the action".to_string());
-    // }
-
-    Ok(ActionDto {
-        id: "id".to_string(),
-        r#type: ActionType::CreateLink.to_string(),
-        state: "state".to_string(),
-        creator: "creator".to_string(),
-        intents: vec![],
-    })
-
-    // services::transaction_manager::update::update_transaction_and_roll_up(input).await
-}
+// pub async fn update_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
+//     services::transaction_manager::update::update_action(input).await
+// }

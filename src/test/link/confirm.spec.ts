@@ -1,14 +1,14 @@
 // Import generated types for your canister
 import {
-    CreateActionInput,
     CreateLinkInput,
     GetLinkOptions,
+    ProcessActionInput,
     UpdateLinkInput,
     type _SERVICE,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 import { getIdentity } from "../utils/wallet";
 import { ActorSubclass } from "@dfinity/agent";
-import { parseResultResponse, safeParseJSON } from "../utils/parser";
+import { parseResultResponse } from "../utils/parser";
 import { ActorManager } from "../utils/service";
 
 // Define the path to your canister's WASM file
@@ -119,9 +119,9 @@ describe("Link", () => {
                     Update: {
                         title: [testPayload.title],
                         asset_info: [],
-                        description: [],
-                        template: [],
-                        link_image_url: [],
+                        description: [testPayload.description],
+                        template: [testPayload.template],
+                        link_image_url: [testPayload.link_image_url],
                         nft_image: [],
                         link_type: [testPayload.link_type],
                     },
@@ -175,13 +175,14 @@ describe("Link", () => {
     });
 
     it("should create action CreateLink success", async () => {
-        const input: CreateActionInput = {
+        const input: ProcessActionInput = {
             link_id: linkId,
+            action_id: "",
             action_type: "CreateLink",
             params: [],
         };
 
-        const createIntentRes = await actor.create_action(input);
+        const createIntentRes = await actor.process_action(input);
         const res = parseResultResponse(createIntentRes);
         createLinkActionId = res.id;
 
@@ -199,9 +200,33 @@ describe("Link", () => {
         const getActionRes = await actor.get_link(linkId, [input]);
         const res = parseResultResponse(getActionRes);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        console.log("getActionRes", safeParseJSON(res as any));
+        console.log("getActionRes", res);
 
-        expect(res.link).toEqual(createLinkActionId);
+        expect(res.link.id).toEqual(linkId);
+        expect(res.action).toHaveLength(1);
+        expect(res.action[0]!.id).toEqual(createLinkActionId);
+    });
+
+    it("should confirm action success", async () => {
+        const input: UpdateLinkInput = {
+            id: linkId,
+            action: "Continue",
+            params: [],
+        };
+
+        const updateLinkRes = await actor.update_link(input);
+        const linkUpdated = parseResultResponse(updateLinkRes);
+
+        const getLinkInput: GetLinkOptions = {
+            action_type: "CreateLink",
+        };
+
+        const getActionRes = await actor.get_link(linkId, [getLinkInput]);
+        const res = parseResultResponse(getActionRes);
+
+        console.log("getActionRes", res);
+
+        expect(linkUpdated.id).toEqual(linkId);
+        expect(linkUpdated.state).toEqual("Link_state_active");
     });
 });

@@ -18,13 +18,14 @@ use super::{
     validate::validate_balance_with_asset_info,
 };
 
+// TODO: handle the params for the action incase claim action
 pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
     let caller = ic_cdk::api::caller();
     let link = link::get(&input.link_id)
         .ok_or_else(|| CanisterError::ValidationErrors("Link not found".to_string()))?;
 
     // Validate the user's balance
-    match validate_balance_with_asset_info(link.clone(), caller).await {
+    match validate_balance_with_asset_info(&link.clone(), &caller).await {
         Ok(_) => (),
         Err(e) => return Err(CanisterError::ValidationErrors(e)),
     }
@@ -35,7 +36,7 @@ pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, C
 
     // Parse the intent type
     let action_type = ActionType::from_str(&input.action_type)
-        .map_err(|e| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
+        .map_err(|_| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
 
     let action = Action {
         id: Uuid::new_v4().to_string(),

@@ -18,7 +18,7 @@ pub enum ActionType {
     Claim,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum ActionState {
     Created,
     Processing,

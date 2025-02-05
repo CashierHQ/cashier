@@ -1,4 +1,5 @@
 use cashier_macros::storable;
+use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -26,11 +27,6 @@ pub enum IcTransaction {
     Icrc1Transfer(Icrc1Transfer),
     Icrc2Approve(Icrc2Approve),
     Icrc2TransferFrom(Icrc2TransferFrom),
-    // pub protocol: TransactionProtocol,
-    // pub from: Wallet,
-    // pub to: Wallet,
-    // pub asset: Asset,
-    // pub amount: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +35,8 @@ pub struct Icrc1Transfer {
     pub to: Wallet,
     pub asset: Asset,
     pub amount: u64,
+    pub memo: Option<Memo>,
+    pub ts: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,6 +54,8 @@ pub struct Icrc2TransferFrom {
     pub spender: Wallet,
     pub asset: Asset,
     pub amount: u64,
+    pub memo: Option<Memo>,
+    pub ts: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

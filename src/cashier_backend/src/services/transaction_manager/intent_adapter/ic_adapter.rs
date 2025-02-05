@@ -34,6 +34,9 @@ impl IcAdapter {
             to: transfer_intent.to,
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
+            ts: Some(ts),
+            //TODO: update memo
+            memo: None,
         };
 
         let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
@@ -80,6 +83,9 @@ impl IcAdapter {
             spender: transfer_intent.spender,
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
+            ts: Some(ts),
+            //TODO: update memo
+            memo: None,
         };
         let ic_transfer_from_tx = IcTransaction::Icrc2TransferFrom(icrc2_transfer_from);
         let transfer_from_tx = Transaction {
