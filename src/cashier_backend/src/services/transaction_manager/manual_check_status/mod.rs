@@ -9,6 +9,14 @@ pub async fn manual_check_status(tx_id: String) -> Result<TransactionState, Stri
     let transaction = repositories::transaction::get(&tx_id)
         .ok_or_else(|| "Transaction not found".to_string())?;
 
+    let ts = ic_cdk::api::time();
+
+    if let Some(timeout) = transaction.timeout {
+        if timeout <= ts {
+            return Ok(TransactionState::Fail);
+        }
+    }
+
     match transaction.protocol {
         Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer_info)) => {
             let is_valid =

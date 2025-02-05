@@ -1,5 +1,5 @@
 use cashier_macros::storable;
-use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
+use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -15,6 +15,7 @@ pub struct Transaction {
     pub grouping: Option<String>,
     pub wallet: TransactionWallet,
     pub protocol: Protocol,
+    pub timeout: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -129,7 +130,6 @@ pub enum TransactionState {
     Processing,
     Success,
     Fail,
-    Timeout,
 }
 
 impl TransactionState {
@@ -139,7 +139,6 @@ impl TransactionState {
             TransactionState::Processing => "Transaction_state_processing",
             TransactionState::Success => "Transaction_state_success",
             TransactionState::Fail => "Transaction_state_fail",
-            TransactionState::Timeout => "Transaction_state_timeout",
         }
     }
 
@@ -157,7 +156,6 @@ impl FromStr for TransactionState {
             "Transaction_state_processing" => Ok(TransactionState::Processing),
             "Transaction_state_success" => Ok(TransactionState::Success),
             "Transaction_state_fail" => Ok(TransactionState::Fail),
-            "Transaction_state_timeout" => Ok(TransactionState::Timeout),
             _ => Err(()),
         }
     }
