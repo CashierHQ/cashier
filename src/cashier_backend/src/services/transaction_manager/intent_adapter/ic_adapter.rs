@@ -34,6 +34,9 @@ impl IcAdapter {
             to: transfer_intent.to,
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
+            ts: Some(ts),
+            //TODO: update memo
+            memo: None,
         };
 
         let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
@@ -46,6 +49,7 @@ impl IcAdapter {
             grouping: None,
             wallet: TransactionWallet::User,
             protocol: Protocol::IC(ic_transaction),
+            timeout: None,
         };
 
         Ok(vec![transaction])
@@ -72,6 +76,7 @@ impl IcAdapter {
             grouping: None,
             wallet: TransactionWallet::User,
             protocol: Protocol::IC(ic_approve_tx),
+            timeout: None,
         };
 
         let icrc2_transfer_from = Icrc2TransferFrom {
@@ -80,6 +85,9 @@ impl IcAdapter {
             spender: transfer_intent.spender,
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
+            ts: Some(ts),
+            //TODO: update memo
+            memo: None,
         };
         let ic_transfer_from_tx = IcTransaction::Icrc2TransferFrom(icrc2_transfer_from);
         let transfer_from_tx = Transaction {
@@ -90,6 +98,7 @@ impl IcAdapter {
             grouping: None,
             wallet: TransactionWallet::User,
             protocol: Protocol::IC(ic_transfer_from_tx),
+            timeout: None,
         };
 
         Ok(vec![approve_tx, transfer_from_tx])

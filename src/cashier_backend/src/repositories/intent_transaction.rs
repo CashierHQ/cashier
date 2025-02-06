@@ -1,6 +1,6 @@
 use cashier_types::{IntentTransaction, IntentTransactionKey};
 
-use super::INTENT_TRANSACTION_STORE;
+use super::{base_repository::Store, INTENT_TRANSACTION_STORE};
 
 pub fn create(intent_transaction: IntentTransaction) -> IntentTransaction {
     INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
@@ -38,4 +38,11 @@ pub fn batch_create(intent_transactions: Vec<IntentTransaction>) {
 pub fn get(intent_id: String, transaction_id: String) -> Option<IntentTransaction> {
     let id: IntentTransactionKey = (intent_id, transaction_id);
     INTENT_TRANSACTION_STORE.with_borrow(|store| store.get(&id.into()).clone())
+}
+
+pub fn get_by_intent_id(intent_id: String) -> Vec<IntentTransaction> {
+    INTENT_TRANSACTION_STORE.with_borrow(|store| {
+        let key = (intent_id, "".to_string());
+        store.get_range(key.into(), None)
+    })
 }

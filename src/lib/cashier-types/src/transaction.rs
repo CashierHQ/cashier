@@ -1,4 +1,5 @@
 use cashier_macros::storable;
+use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -14,6 +15,7 @@ pub struct Transaction {
     pub grouping: Option<String>,
     pub wallet: TransactionWallet,
     pub protocol: Protocol,
+    pub timeout: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,11 +28,6 @@ pub enum IcTransaction {
     Icrc1Transfer(Icrc1Transfer),
     Icrc2Approve(Icrc2Approve),
     Icrc2TransferFrom(Icrc2TransferFrom),
-    // pub protocol: TransactionProtocol,
-    // pub from: Wallet,
-    // pub to: Wallet,
-    // pub asset: Asset,
-    // pub amount: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +36,8 @@ pub struct Icrc1Transfer {
     pub to: Wallet,
     pub asset: Asset,
     pub amount: u64,
+    pub memo: Option<Memo>,
+    pub ts: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,6 +55,8 @@ pub struct Icrc2TransferFrom {
     pub spender: Wallet,
     pub asset: Asset,
     pub amount: u64,
+    pub memo: Option<Memo>,
+    pub ts: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -129,7 +130,6 @@ pub enum TransactionState {
     Processing,
     Success,
     Fail,
-    Timeout,
 }
 
 impl TransactionState {
@@ -139,7 +139,6 @@ impl TransactionState {
             TransactionState::Processing => "Transaction_state_processing",
             TransactionState::Success => "Transaction_state_success",
             TransactionState::Fail => "Transaction_state_fail",
-            TransactionState::Timeout => "Transaction_state_timeout",
         }
     }
 
@@ -157,7 +156,6 @@ impl FromStr for TransactionState {
             "Transaction_state_processing" => Ok(TransactionState::Processing),
             "Transaction_state_success" => Ok(TransactionState::Success),
             "Transaction_state_fail" => Ok(TransactionState::Fail),
-            "Transaction_state_timeout" => Ok(TransactionState::Timeout),
             _ => Err(()),
         }
     }

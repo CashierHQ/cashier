@@ -1,12 +1,13 @@
 use cashier_types::{ActionType, Link};
 
-use crate::repositories::link_action;
+use crate::{info, repositories::link_action};
 
 fn is_missing_or_empty(field: Option<&String>) -> bool {
     field.map_or(true, |s| s.is_empty())
 }
 
 pub fn is_valid_fields_before_active(link: Link) -> Result<bool, String> {
+    info!("Validating link fields before active {:#?}", link);
     if link.id.is_empty() {
         return Err("id is empty".to_string());
     }
