@@ -8,29 +8,44 @@ pub fn create(intent_transaction: IntentTransaction) -> IntentTransaction {
             intent_transaction.intent_id.clone(),
             intent_transaction.transaction_id.clone(),
         );
+
+        let reverse_key = (
+            intent_transaction.transaction_id.clone(),
+            intent_transaction.intent_id.clone(),
+        );
+
         store.insert(key.into(), intent_transaction.clone());
+        store.insert(reverse_key.into(), intent_transaction.clone());
         intent_transaction
     })
 }
 
 pub fn batch_create(intent_transactions: Vec<IntentTransaction>) {
     INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
-        let key_values: Vec<(cashier_types::IntentTransactionKey, IntentTransaction)> =
-            intent_transactions
-                .into_iter()
-                .map(|intent_transaction| {
-                    (
-                        (
-                            intent_transaction.intent_id.clone(),
-                            intent_transaction.transaction_id.clone(),
-                        ),
-                        intent_transaction,
-                    )
-                })
-                .collect();
+        let key_values: Vec<(
+            (cashier_types::IntentTransactionKey, IntentTransaction),
+            (cashier_types::IntentTransactionKey, IntentTransaction),
+        )> = intent_transactions
+            .into_iter()
+            .map(|intent_transaction| {
+                let key = (
+                    intent_transaction.intent_id.clone(),
+                    intent_transaction.transaction_id.clone(),
+                );
+                let reverse_key = (
+                    intent_transaction.transaction_id.clone(),
+                    intent_transaction.intent_id.clone(),
+                );
+                (
+                    (key, intent_transaction.clone()),
+                    (reverse_key, intent_transaction),
+                )
+            })
+            .collect();
 
-        for (key, value) in key_values {
+        for ((key, value), (reverse_key, reverse_value)) in key_values {
             store.insert(key.into(), value);
+            store.insert(reverse_key.into(), reverse_value);
         }
     });
 }
@@ -43,6 +58,13 @@ pub fn get(intent_id: String, transaction_id: String) -> Option<IntentTransactio
 pub fn get_by_intent_id(intent_id: String) -> Vec<IntentTransaction> {
     INTENT_TRANSACTION_STORE.with_borrow(|store| {
         let key = (intent_id, "".to_string());
+        store.get_range(key.into(), None)
+    })
+}
+
+pub fn get_by_transaction_id(transaction_id: String) -> Vec<IntentTransaction> {
+    INTENT_TRANSACTION_STORE.with_borrow(|store| {
+        let key = (transaction_id, "".to_string());
         store.get_range(key.into(), None)
     })
 }

@@ -18,15 +18,15 @@ pub type IntentKey = String;
 
 pub type TransactionKey = String;
 
-pub type UserLinkKey = (UserKey, LinkKey);
+pub type UserLinkKey = (String, String);
 
-pub type UserActionKey = (UserKey, ActionKey);
+pub type UserActionKey = (String, String);
 
-pub type LinkActionKey = (LinkKey, ActionTypeKey, ActionKey);
+pub type LinkActionKey = (String, String, String);
 
-pub type ActionIntentKey = (ActionKey, IntentKey);
+pub type ActionIntentKey = (String, String);
 
-pub type IntentTransactionKey = (TransactionKey, IntentKey);
+pub type IntentTransactionKey = (String, String);
 
 #[derive(Deserialize, Serialize, CandidType, Clone, Ord, Eq, PartialEq, PartialOrd)]
 pub struct StorableUserLinkKey(UserLinkKey);

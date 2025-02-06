@@ -124,7 +124,7 @@ impl FromStr for TransactionProtocol {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum TransactionState {
     Created,
     Processing,

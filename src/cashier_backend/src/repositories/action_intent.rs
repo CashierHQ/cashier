@@ -10,7 +10,14 @@ pub fn create(action_intent: ActionIntent) {
             action_intent.intent_id.clone(),
         )
             .into();
-        store.insert(key, action_intent);
+
+        let reverse_key: StorableActionIntentKey = (
+            action_intent.intent_id.clone(),
+            action_intent.action_id.clone(),
+        )
+            .into();
+        store.insert(key, action_intent.clone());
+        store.insert(reverse_key, action_intent);
     });
 }
 
@@ -22,7 +29,15 @@ pub fn batch_create(action_intents: Vec<ActionIntent>) {
                 action_intent.intent_id.clone(),
             )
                 .into();
-            store.insert(key, action_intent);
+
+            let reverse_key: StorableActionIntentKey = (
+                action_intent.intent_id.clone(),
+                action_intent.action_id.clone(),
+            )
+                .into();
+
+            store.insert(key, action_intent.clone());
+            store.insert(reverse_key, action_intent);
         }
     });
 }
@@ -34,6 +49,13 @@ pub fn get(action_intent_key: ActionIntentKey) -> Option<ActionIntent> {
 pub fn get_by_action_id(action_id: String) -> Vec<ActionIntent> {
     ACTION_INTENT_STORE.with_borrow(|store| {
         let key = (action_id, "".to_string());
+        store.get_range(key.into(), None)
+    })
+}
+
+pub fn get_by_intent_id(intent_id: String) -> Vec<ActionIntent> {
+    ACTION_INTENT_STORE.with_borrow(|store| {
+        let key = (intent_id, "".to_string());
         store.get_range(key.into(), None)
     })
 }

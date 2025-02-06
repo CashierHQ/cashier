@@ -20,7 +20,7 @@ pub struct Intent {
     pub r#type: IntentType,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum IntentState {
     Created,
     Processing,
