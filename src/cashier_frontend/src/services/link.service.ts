@@ -2,10 +2,9 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
-    CreateActionInput,
-    // CreateActionInput,
     CreateLinkInput,
     LinkDto,
+    ProcessActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
@@ -94,12 +93,13 @@ class LinkService {
     }
 
     async createAction(input: CreateActionInputModel): Promise<ActionModel> {
-        const inputModel: CreateActionInput = {
+        const inputModel: ProcessActionInput = {
+            action_id: "",
             link_id: input.linkId,
             action_type: input.actionType,
             params: [],
         };
-        const response = parseResultResponse(await this.actor.create_action(inputModel));
+        const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         console.log("🚀 ~ LinkService ~ createAction ~ action:", action);
         return generateMockAction();

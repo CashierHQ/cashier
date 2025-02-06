@@ -14,7 +14,7 @@ class IntentService {
     }
 
     async confirmIntent(link_id: string, intent_id: string) {
-        return parseResultResponse(await this.actor.confirm_action({ link_id, intent_id }));
+        console.log("Not implemented yet");
     }
 }
 
