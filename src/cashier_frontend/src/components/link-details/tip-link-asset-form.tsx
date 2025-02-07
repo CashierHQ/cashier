@@ -39,9 +39,6 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
     const { isLoadingAssets, isLoadingBalance, assets } = useAssets();
 
     const form = useTipLinkAssetForm(assets, {
-        assetNumber: 0,
-        usdNumber: 0,
-        amount: BigInt(0),
         tokenAddress: defaultValues.tokenAddress ?? "",
     });
 

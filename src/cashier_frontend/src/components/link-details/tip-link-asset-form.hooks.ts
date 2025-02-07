@@ -3,7 +3,7 @@ import { ConversionRates, UsdConversionService } from "@/services/usdConversion.
 import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@nfid/identitykit/react";
-import { useForm, UseFormReturn } from "react-hook-form";
+import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useEffect, useMemo, useState } from "react";
 import { AssetSelectItem } from "@/components/asset-select";
@@ -70,7 +70,7 @@ export type TipLinkAssetFormSchema = z.infer<ReturnType<typeof tipLinkAssetFormS
 
 export function useTipLinkAssetForm(
     assets: AssetSelectItem[],
-    defaultValues?: TipLinkAssetFormSchema,
+    defaultValues?: DefaultValues<TipLinkAssetFormSchema>,
 ) {
     const form = useForm({
         resolver: zodResolver(tipLinkAssetFormSchema(assets)),
@@ -168,6 +168,21 @@ const ASSET_LIST: AssetSelectItem[] = [
         amount: 0,
         tokenAddress: "k64dn-7aaaa-aaaam-qcdaq-cai",
     },
+    {
+        name: "ICP",
+        amount: 0,
+        tokenAddress: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+    },
+    {
+        name: "BOB",
+        amount: 0,
+        tokenAddress: "7pail-xaaaa-aaaas-aabmq-cai",
+    },
+    {
+        name: "ckETH",
+        amount: 0,
+        tokenAddress: "ss2fx-dyaaa-aaaar-qacoq-cai",
+    },
 ];
 
 export function useAssets() {
@@ -211,7 +226,9 @@ export function useAssets() {
         async function fetchUserTokens() {
             if (walletAddress) {
                 const isProd = import.meta.env.MODE === "production";
-                const assets = isProd ? await getProdTokens() : await getDevTokens();
+                const devAssets = isProd ? [] : await getDevTokens();
+                const prodAssets = await getProdTokens();
+                const assets = [...devAssets, ...prodAssets];
 
                 fetchAssetListAmounts(assets).then((assetListWithAmounts) => {
                     setIsLoadingBalance(false);

@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { ArrowUpDown } from "lucide-react";
 import { FC } from "react";
 
@@ -10,23 +11,32 @@ type UsdSwitchProps = {
 };
 
 export const UsdSwitch: FC<UsdSwitchProps> = ({ isUsd, onToggle, amount, symbol, amountUsd }) => {
+    const canConvert = amount !== undefined && amountUsd !== undefined;
+
+    const renderMessage = () => {
+        if (!canConvert) {
+            return "No price available";
+        }
+
+        if (isUsd) {
+            return `${amount?.toFixed(3)} ${symbol}`;
+        } else {
+            return `${amountUsd?.toFixed(3)} USD`;
+        }
+    };
+
     return (
         <button
             type="button"
-            className="flex text-destructive items-center"
-            onClick={() => onToggle(!isUsd)}
+            className={cn("flex  items-center", {
+                "text-destructive": canConvert,
+                "text-muted-foreground": !canConvert,
+            })}
+            onClick={() => canConvert && onToggle(!isUsd)}
         >
-            <span className="text-sm leading-none">
-                {isUsd ? (
-                    <>
-                        {amount?.toFixed(3)} {symbol}
-                    </>
-                ) : (
-                    <>{amountUsd?.toFixed(3)} USD</>
-                )}
-            </span>
+            <span className="text-sm leading-none">{renderMessage()}</span>
 
-            <ArrowUpDown className="ml-1" size={16} />
+            {canConvert && <ArrowUpDown className="ml-1" size={16} />}
         </button>
     );
 };
