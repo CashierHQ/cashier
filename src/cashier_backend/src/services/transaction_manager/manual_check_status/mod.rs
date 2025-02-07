@@ -5,7 +5,7 @@ use crate::repositories;
 mod validate_allowance;
 mod validate_balance_transfer;
 
-pub async fn manual_check_status(tx_id: String) -> Result<TransactionState, String> {
+pub async fn manual_check_status(tx_id: String) -> Result<Option<TransactionState>, String> {
     let transaction = repositories::transaction::get(&tx_id)
         .ok_or_else(|| "Transaction not found".to_string())?;
 
@@ -13,7 +13,7 @@ pub async fn manual_check_status(tx_id: String) -> Result<TransactionState, Stri
 
     if let Some(timeout) = transaction.timeout {
         if timeout <= ts {
-            return Ok(TransactionState::Fail);
+            return Ok(Some(TransactionState::Fail));
         }
     }
 
@@ -23,9 +23,9 @@ pub async fn manual_check_status(tx_id: String) -> Result<TransactionState, Stri
                 validate_balance_transfer::validate_balance_transfer(&icrc1_transfer_info).await?;
 
             if is_valid {
-                return Ok(TransactionState::Success);
+                return Ok(Some(TransactionState::Success));
             } else {
-                return Ok(TransactionState::Fail);
+                return Ok(Some(TransactionState::Fail));
             }
         }
         Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from_info)) => {
@@ -33,15 +33,11 @@ pub async fn manual_check_status(tx_id: String) -> Result<TransactionState, Stri
                 validate_allowance::validate_allowance(&icrc2_transfer_from_info).await?;
 
             if is_valid {
-                return Ok(TransactionState::Success);
+                return Ok(Some(TransactionState::Success));
             } else {
-                return Ok(TransactionState::Fail);
+                return Ok(Some(TransactionState::Fail));
             }
         }
-        _ => {
-            return Err(
-                "Manual check status is not implemented for this transaction protocol".to_string(),
-            )
-        }
+        _ => return Ok(None),
     }
 }

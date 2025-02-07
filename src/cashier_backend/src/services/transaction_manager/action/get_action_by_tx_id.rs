@@ -2,11 +2,7 @@ use std::collections::HashMap;
 
 use crate::repositories;
 
-pub struct ActionResp {
-    pub action: cashier_types::Action,
-    pub intents: Vec<cashier_types::Intent>,
-    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
-}
+use super::ActionResp;
 
 pub fn get_action_by_tx_id(tx_id: String) -> Result<ActionResp, String> {
     let get_intent_tx_res = repositories::intent_transaction::get_by_transaction_id(tx_id);

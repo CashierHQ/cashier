@@ -37,8 +37,6 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
 
 #[update(guard = "is_not_anonymous")]
 pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
-    let caller: candid::Principal = ic_cdk::api::caller();
-
     if input.action_id.is_empty() {
         return create_action(CreateActionInput {
             action_type: input.action_type.clone(),
