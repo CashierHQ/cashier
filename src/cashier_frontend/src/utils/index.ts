@@ -23,12 +23,12 @@ export type Response<T, E> =
       };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
-    console.log(
-        "🚀 ~ response:",
-        JSON.stringify(response, (key, value) =>
-            typeof value === "bigint" ? value.toString() : value,
-        ),
-    );
+    // console.log(
+    //     "🚀 ~ response:",
+    //     JSON.stringify(response, (key, value) =>
+    //         typeof value === "bigint" ? value.toString() : value,
+    //     ),
+    // );
     if ("ok" in response) {
         return response.ok;
     } else if ("Ok" in response) {

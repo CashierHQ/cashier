@@ -12,23 +12,24 @@ export const mapActionModel = (actionDTO: ActionDto): ActionModel => {
     return {
         id: actionDTO.id,
         creator: actionDTO.creator,
-        type:
-            actionDTO.type in ACTION_TYPE
-                ? (actionDTO.type as ACTION_TYPE)
-                : ACTION_TYPE.CREATE_LINK,
+        type: Object.values(ACTION_TYPE).includes(actionDTO.type as ACTION_TYPE)
+            ? (actionDTO.type as ACTION_TYPE)
+            : ACTION_TYPE.CREATE_LINK,
         intents: actionDTO.intents.map((intent) => ({
             id: intent.id,
-            chain: intent.chain in CHAIN ? (intent.chain as CHAIN) : CHAIN.IC,
-            task: intent.task in TASK ? (intent.task as TASK) : TASK.TRANSFER_WALLET_TO_LINK,
-            type:
-                intent.type in INTENT_TYPE
-                    ? (intent.type as INTENT_TYPE)
-                    : INTENT_TYPE.TRANSFER_FROM,
+            chain: Object.values(CHAIN).includes(intent.chain as CHAIN)
+                ? (intent.chain as CHAIN)
+                : CHAIN.IC,
+            task: Object.values(TASK).includes(intent.task as TASK)
+                ? (intent.task as TASK)
+                : TASK.TRANSFER_WALLET_TO_LINK,
+            type: Object.values(INTENT_TYPE).includes(intent.type as INTENT_TYPE)
+                ? (intent.type as INTENT_TYPE)
+                : INTENT_TYPE.TRANSFER_FROM,
             created_at: intent.created_at,
-            state:
-                intent.state in INTENT_STATE
-                    ? (intent.state as INTENT_STATE)
-                    : INTENT_STATE.CREATED,
+            state: Object.values(INTENT_STATE).includes(intent.state as INTENT_STATE)
+                ? (intent.state as INTENT_STATE)
+                : INTENT_STATE.CREATED,
             from: mapMetadataToWalletModel(intent.type_metadata, intent.type, "from"),
             to: mapMetadataToWalletModel(intent.type_metadata, intent.type, "to"),
             asset: mapMetadataToAssetModel(intent.type_metadata, intent.type, "asset"),
@@ -42,11 +43,11 @@ const mapMetadataToWalletModel = (
     intentType: string,
     propName: string,
 ): WalletModel => {
-    if (intentType in INTENT_TYPE) {
+    if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
         const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
         return {
-            chain: (item?.[1] as { Wallet: AssetDto })?.Wallet?.chain ?? "",
-            address: (item?.[1] as { Wallet: AssetDto })?.Wallet?.address ?? "",
+            chain: (item?.[1] as { Wallet: AssetDto })?.Wallet?.chain ?? "Not found",
+            address: (item?.[1] as { Wallet: AssetDto })?.Wallet?.address ?? "Not found",
         };
     } else {
         return {
@@ -61,11 +62,11 @@ const mapMetadataToAssetModel = (
     intentType: string,
     propName: string,
 ): AssetModel => {
-    if (intentType in INTENT_TYPE) {
+    if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
         const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
         return {
-            chain: (item?.[1] as { Asset: AssetDto })?.Asset?.chain ?? "",
-            address: (item?.[1] as { Asset: AssetDto })?.Asset?.address ?? "",
+            chain: (item?.[1] as { Asset: AssetDto })?.Asset?.chain ?? "Not found",
+            address: (item?.[1] as { Asset: AssetDto })?.Asset?.address ?? "Not found",
         };
     } else {
         return {
@@ -80,10 +81,10 @@ const mapMetadataToAmount = (
     intentType: string,
     propName: string,
 ): bigint => {
-    if (intentType in INTENT_TYPE) {
+    if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
         const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
         return (item?.[1] as { U64: bigint })?.U64?.valueOf() ?? BigInt(0);
     } else {
-        return BigInt(0);
+        return BigInt(1);
     }
 };
