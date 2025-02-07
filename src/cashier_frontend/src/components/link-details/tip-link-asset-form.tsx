@@ -113,6 +113,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                                     handleSetAmount(isUsd, e.target.value)
                                                 }
                                                 disabled={isLoadingBalance}
+                                                className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                             />
                                         </FormControl>
                                         <FormMessage />
