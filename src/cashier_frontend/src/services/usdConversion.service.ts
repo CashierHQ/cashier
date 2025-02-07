@@ -75,14 +75,14 @@ export class IcExplorerUsdConversionService implements IUsdConversionService {
     }
 
     public async _getTokens(principal: string): Promise<IcExplorerTokenListResponseItem[]> {
-        const { data } = await this.client.post<IcExplorerTokenListResponse>("/holder/user", {
+        const response = await this.client.post<IcExplorerTokenListResponse>("/holder/user", {
             page: 1,
             size: 100,
             isDesc: false,
             principal,
         });
 
-        return data.data.list;
+        return response.data.list;
     }
 
     public async _getToken(
@@ -171,11 +171,9 @@ export class DevIcExplorerUsdConversionService implements IUsdConversionService 
     }
 
     public async getConversionRates(_: string, address: string): Promise<ConversionRates> {
-        console.log("fetching conversion rates for", address);
         const token = await this._getToken(address);
 
         if (!token) {
-            console.log("no token data");
             return {
                 tokenToUsd: undefined,
                 usdToToken: undefined,
@@ -187,8 +185,6 @@ export class DevIcExplorerUsdConversionService implements IUsdConversionService 
         const tokenToUsd = tokenUsdAmount / tokenAmount;
         const usdToToken = 1 / tokenToUsd;
 
-        console.log("found rates for", token.symbol);
-        console.log("1 token = ", tokenToUsd, "$");
         return {
             tokenToUsd,
             usdToToken,

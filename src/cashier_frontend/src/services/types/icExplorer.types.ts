@@ -12,16 +12,12 @@ export type IcExplorerTokenListResponseItem = {
 };
 
 export type IcExplorerTokenListResponse = {
-    statusCode: number;
-    message: string;
-    data: {
-        pageNum: number;
-        pageSize: number;
-        size: number;
-        pages: number;
-        total: number;
-        list: IcExplorerTokenListResponseItem[];
-    };
+    pageNum: number;
+    pageSize: number;
+    size: number;
+    pages: number;
+    total: number;
+    list: IcExplorerTokenListResponseItem[];
 };
 
 export type IcExplorerHolderResponseItem = {
