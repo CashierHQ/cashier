@@ -1,5 +1,7 @@
-import axios from "axios";
+import { AxiosInstance } from "axios";
 import {
+    IcExplorerHolderResponse,
+    IcExplorerHolderResponseItem,
     IcExplorerTokenListResponse,
     IcExplorerTokenListResponseItem,
 } from "./types/icExplorer.types";
@@ -17,13 +19,9 @@ export interface IUsdConversionService {
 }
 
 export class IcExplorerUsdConversionService implements IUsdConversionService {
-    private pageSize: number;
-    private pageNumber: number;
-    private client: ReturnType<typeof axios.create>;
+    private client: AxiosInstance;
 
     constructor() {
-        this.pageSize = 100;
-        this.pageNumber = 1;
         this.client = icExplorerAxiosClient;
     }
 
@@ -78,8 +76,8 @@ export class IcExplorerUsdConversionService implements IUsdConversionService {
 
     public async _getTokens(principal: string): Promise<IcExplorerTokenListResponseItem[]> {
         const { data } = await this.client.post<IcExplorerTokenListResponse>("/holder/user", {
-            page: this.pageNumber,
-            size: this.pageSize,
+            page: 1,
+            size: 100,
             isDesc: false,
             principal,
         });
@@ -141,7 +139,75 @@ export class MockUsdConversionService implements IUsdConversionService {
     }
 }
 
+export class DevIcExplorerUsdConversionService implements IUsdConversionService {
+    private client: AxiosInstance;
+
+    constructor() {
+        this.client = icExplorerAxiosClient;
+    }
+
+    public async usdToToken(
+        principal: string,
+        address: string,
+        amount: number,
+    ): Promise<number | undefined> {
+        const { usdToToken: rate } = await this.getConversionRates(principal, address);
+
+        if (rate === undefined) {
+            return undefined;
+        }
+
+        return amount * rate;
+    }
+
+    public async tokenToUsd(principal: string, address: string, amount: number) {
+        const { tokenToUsd: rate } = await this.getConversionRates(principal, address);
+
+        if (rate === undefined) {
+            return undefined;
+        }
+
+        return amount * rate;
+    }
+
+    public async getConversionRates(_: string, address: string): Promise<ConversionRates> {
+        console.log("fetching conversion rates for", address);
+        const token = await this._getToken(address);
+
+        if (!token) {
+            console.log("no token data");
+            return {
+                tokenToUsd: undefined,
+                usdToToken: undefined,
+            };
+        }
+
+        const tokenAmount = parseFloat(token.amount);
+        const tokenUsdAmount = parseFloat(token.valueUSD);
+        const tokenToUsd = tokenUsdAmount / tokenAmount;
+        const usdToToken = 1 / tokenToUsd;
+
+        console.log("found rates for", token.symbol);
+        console.log("1 token = ", tokenToUsd, "$");
+        return {
+            tokenToUsd,
+            usdToToken,
+        };
+    }
+
+    private async _getToken(ledgerId: string): Promise<IcExplorerHolderResponseItem | undefined> {
+        const response = await this.client.post<IcExplorerHolderResponse>("/holder/token", {
+            page: 1,
+            size: 1,
+            isDesc: false,
+            ledgerId,
+        });
+
+        return response.data.list[0];
+    }
+}
+
 export const UsdConversionService: IUsdConversionService =
     import.meta.env.MODE === "production"
         ? new IcExplorerUsdConversionService()
-        : new MockUsdConversionService();
+        : new DevIcExplorerUsdConversionService();
