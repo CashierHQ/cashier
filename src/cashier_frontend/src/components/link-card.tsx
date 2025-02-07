@@ -37,7 +37,7 @@ export default function LinkCard({
                 {renderHeaderTitle()}
             </div>
 
-            <Phone.Frame className="h-[380px] sm:h-[420px] md:h-[320px] 2xl:h-[420px]">
+            <Phone.Frame className="min-h-[300px] lg:min-h-[250px] max-h-[50dvh] lg:min-w-[calc(250px*(9/16))] max-w-[calc(50dvh*(9/16))] lg:max-w-[calc(35dvh*(9/16))]">
                 <Phone.Notch />
 
                 <div className="w-full flex justify-center items-center mt-3 md:mt-1 2xl:mt-3">
