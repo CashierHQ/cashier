@@ -19,10 +19,10 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({ isUsd, onToggle, amount, symbol,
             <span className="text-sm leading-none">
                 {isUsd ? (
                     <>
-                        {amount} {symbol}
+                        {amount?.toFixed(3)} {symbol}
                     </>
                 ) : (
-                    <>{amountUsd} USD</>
+                    <>{amountUsd?.toFixed(3)} USD</>
                 )}
             </span>
 
