@@ -11,7 +11,6 @@ import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
-    generateMockAction,
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
@@ -102,7 +101,7 @@ class LinkService {
         const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         console.log("🚀 ~ LinkService ~ createAction ~ action:", action);
-        return generateMockAction();
+        return action;
     }
 }
 

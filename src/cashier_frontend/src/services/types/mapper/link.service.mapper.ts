@@ -48,6 +48,7 @@ export const generateMockAction = (): ActionModel => {
                     chain: CHAIN.IC,
                 },
                 amount: 250000000n,
+                createdAt: new Date(),
             },
             {
                 id: "222",
@@ -68,6 +69,7 @@ export const generateMockAction = (): ActionModel => {
                     chain: "IC",
                 },
                 amount: 1000000n,
+                createdAt: new Date(),
             },
         ],
     };
