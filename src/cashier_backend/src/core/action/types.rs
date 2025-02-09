@@ -4,11 +4,20 @@ use candid::CandidType;
 use cashier_types::Intent;
 use serde::{Deserialize, Serialize};
 
+use crate::types::icrc_112_transaction::Icrc112Requests;
+
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
     pub action_type: String,
     pub params: Option<HashMap<String, String>>,
     pub link_id: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct UpdateActionInput {
+    pub link_id: String,
+    pub action_id: String,
+    pub external: bool,
 }
 
 // #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -54,7 +63,7 @@ pub struct ActionDto {
     pub state: String,
     pub creator: String,
     pub intents: Vec<IntentDto>,
-    pub icrc_112_requests: Option<Vec<String>>,
+    pub icrc_112_requests: Option<Icrc112Requests>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -109,6 +118,7 @@ impl ActionDto {
         action: cashier_types::Action,
         intents: Vec<Intent>,
         intent_hashmap: HashMap<String, Vec<cashier_types::Transaction>>,
+        icrc_112_requests: Option<Icrc112Requests>,
     ) -> Self {
         let intents_dto = intents
             .into_iter()
@@ -124,7 +134,7 @@ impl ActionDto {
             state: action.state.to_string(),
             creator: action.creator,
             intents: intents_dto,
-            icrc_112_requests: None,
+            icrc_112_requests,
         }
     }
 }

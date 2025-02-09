@@ -1,4 +1,4 @@
-use crate::repositories::ACTION_INTENT_STORE;
+use crate::{info, repositories::ACTION_INTENT_STORE};
 use cashier_types::{ActionIntent, ActionIntentKey, StorableActionIntentKey};
 
 use super::base_repository::Store;
@@ -48,15 +48,25 @@ pub fn get(action_intent_key: ActionIntentKey) -> Option<ActionIntent> {
 
 pub fn get_by_action_id(action_id: String) -> Vec<ActionIntent> {
     ACTION_INTENT_STORE.with_borrow(|store| {
-        let key = (action_id, "".to_string());
-        store.get_range(key.into(), None)
+        let key = (action_id.clone(), "".to_string());
+        store
+            .get_range(key.into(), None)
+            .iter()
+            // .filter(|tx| return tx.action_id.clone() == action_id)
+            .map(|v| v.clone())
+            .collect()
     })
 }
 
 pub fn get_by_intent_id(intent_id: String) -> Vec<ActionIntent> {
     ACTION_INTENT_STORE.with_borrow(|store| {
-        let key = (intent_id, "".to_string());
-        store.get_range(key.into(), None)
+        let key = (intent_id.clone(), "".to_string());
+        store
+            .get_range(key.into(), None)
+            .iter()
+            // .filter(|tx| return tx.intent_id.clone() == intent_id)
+            .map(|v| v.clone())
+            .collect()
     })
 }
 

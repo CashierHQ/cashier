@@ -7,7 +7,6 @@ fn is_missing_or_empty(field: Option<&String>) -> bool {
 }
 
 pub fn is_valid_fields_before_active(link: Link) -> Result<bool, String> {
-    info!("Validating link fields before active {:#?}", link);
     if link.id.is_empty() {
         return Err("id is empty".to_string());
     }

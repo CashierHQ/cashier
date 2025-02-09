@@ -1,14 +1,12 @@
 use std::str::FromStr;
 
 use candid::{Nat, Principal};
-use cashier_types::Icrc2TransferFrom;
+use cashier_types::Icrc2Approve;
 use icrc_ledger_types::icrc1::account::Account;
 
 use crate::utils::icrc::allowance;
 
-pub async fn validate_allowance(
-    icrc2_transfer_from_info: &Icrc2TransferFrom,
-) -> Result<bool, String> {
+pub async fn validate_allowance(icrc2_transfer_from_info: &Icrc2Approve) -> Result<bool, String> {
     let from_wallet_account = Account::from_str(&icrc2_transfer_from_info.from.address)
         .map_err(|e| format!("Error parsing from_wallet_account: {}", e))?;
 

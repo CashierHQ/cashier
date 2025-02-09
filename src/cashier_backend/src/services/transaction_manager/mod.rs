@@ -12,6 +12,6 @@ pub mod intent_adapter;
 pub mod action;
 pub mod execute_action;
 pub mod manual_check_status;
-pub mod process_action;
-pub mod update_tx_state;
+pub mod transaction;
+pub mod update_action;
 pub mod validate;

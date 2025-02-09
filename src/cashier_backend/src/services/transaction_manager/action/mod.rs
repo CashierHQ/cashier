@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use crate::repositories;
+use crate::{info, repositories};
 
+#[derive(Debug, Clone)]
 pub struct ActionResp {
     pub action: cashier_types::Action,
     pub intents: Vec<cashier_types::Intent>,
@@ -16,6 +17,8 @@ pub fn get(action_id: String) -> Option<ActionResp> {
     }
 
     let action_intents = repositories::action_intent::get_by_action_id(action_id.clone());
+
+    info!("action_intents {:#?}", action_intents);
 
     let intent_ids = action_intents
         .iter()

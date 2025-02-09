@@ -2,6 +2,7 @@
 import {
     CreateLinkInput,
     GetLinkOptions,
+    IntentDto,
     ProcessActionInput,
     UpdateLinkInput,
     type _SERVICE,
@@ -182,14 +183,22 @@ describe("Link", () => {
             params: [],
         };
 
-        const createIntentRes = await actor.process_action(input);
-        const res = parseResultResponse(createIntentRes);
-        createLinkActionId = res.id;
+        const createActionRes = await actor.process_action(input);
+        const link = await actor.get_link(linkId, []);
+        const linkRes = parseResultResponse(link);
+        const actionRes = parseResultResponse(createActionRes);
+        createLinkActionId = actionRes.id;
 
-        console.log("createLinkActionId", createLinkActionId);
+        console.log("createLinkActionId", actionRes);
 
-        expect(res.creator).toEqual(userId);
-        expect(res.intents).toHaveLength(2);
+        expect(actionRes.creator).toEqual(userId);
+        expect(actionRes.intents).toHaveLength(2);
+        expect(linkRes.link.state).toEqual("Link_state_create_link");
+
+        // Check the state of all intents
+        actionRes.intents.forEach((intent: IntentDto) => {
+            expect(intent.state).toEqual("Intent_state_created");
+        });
     });
 
     it("should get action success", async () => {
@@ -208,25 +217,18 @@ describe("Link", () => {
     });
 
     it("should confirm action success", async () => {
-        const input: UpdateLinkInput = {
-            id: linkId,
-            action: "Continue",
+        const input: ProcessActionInput = {
+            link_id: linkId,
+            action_id: createLinkActionId,
+            action_type: "CreateLink",
             params: [],
         };
 
-        const updateLinkRes = await actor.update_link(input);
-        const linkUpdated = parseResultResponse(updateLinkRes);
+        const confirmRes = await actor.process_action(input);
+        const actionDto = parseResultResponse(confirmRes);
 
-        const getLinkInput: GetLinkOptions = {
-            action_type: "CreateLink",
-        };
+        console.log("dto", actionDto);
 
-        const getActionRes = await actor.get_link(linkId, [getLinkInput]);
-        const res = parseResultResponse(getActionRes);
-
-        console.log("getActionRes", res);
-
-        expect(linkUpdated.id).toEqual(linkId);
-        expect(linkUpdated.state).toEqual("Link_state_active");
+        expect(actionDto.id).toEqual(createLinkActionId);
     });
 });

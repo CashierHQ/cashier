@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     core::action::types::{ActionDto, CreateActionInput},
+    info,
     repositories::{self, link, user_wallet},
     types::error::CanisterError,
 };
@@ -84,6 +85,10 @@ pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, C
         intent_tx_hashmap.insert(intent.id.clone(), transactions);
     }
 
+    info!("action {:#?}", action);
+    info!("intents {:#?}", intents);
+    info!("intent_tx_hashmap {:#?}", intent_tx_hashmap);
+
     let _ = store_records(
         link_action,
         action.clone(),
@@ -133,6 +138,12 @@ fn store_records(
         action_id: action.id.clone(),
     };
 
+    info!("Creating action: {:#?}", action);
+    info!("Creating action_intents: {:#?}", action_intents);
+    info!("Creating intents: {:#?}", intents);
+    info!("Creating intent_transactions: {:#?}", intent_transactions);
+    info!("Creating transactions: {:#?}", transactions);
+
     repositories::link_action::create(link_action);
     repositories::user_action::create(user_action);
     repositories::action::create(action);
@@ -140,13 +151,6 @@ fn store_records(
     repositories::intent::batch_create(intents);
     repositories::intent_transaction::batch_create(intent_transactions);
     repositories::transaction::batch_create(transactions);
-
-    // Store all records
-    // let _ = intent::create(new_intent.to_persistence());
-    // let _ = transaction::batch_create(transactions_persistence);
-    // let _ = intent_transaction::batch_create(intent_transactions_persistence);
-    // let _ = link_intent_store::create(new_link_intent.to_persistence());
-    // let _ = user_action::create(user_intent.to_persistence());
 
     Ok(())
 }

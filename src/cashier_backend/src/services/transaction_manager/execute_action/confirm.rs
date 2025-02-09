@@ -66,7 +66,7 @@ impl ConfirmHandler {
 
         let get_resp = get_resp.unwrap();
 
-        let flatten_tx = get_resp.transactions.values().flatten().collect::<Vec<_>>();
+        // let flatten_tx = get_resp.transactions.values().flatten().collect::<Vec<_>>();
 
         return Err("Not implemented".to_string());
     }
