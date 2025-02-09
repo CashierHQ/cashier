@@ -6,20 +6,11 @@ import {
     UpdateLinkInput,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { LinkDetailModel, LinkModel } from "../link.service.types";
-import {
-    ACTION_TYPE,
-    CHAIN,
-    IC_TRANSACTION_PROTOCAL,
-    INTENT_STATE,
-    INTENT_TYPE,
-    TASK,
-    TEMPLATE,
-    TRANSACTION_STATE,
-    WALLET,
-} from "../enum";
+import { ACTION_TYPE, CHAIN, INTENT_STATE, INTENT_TYPE, TASK, TEMPLATE } from "../enum";
 import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { ActionModel } from "../refractor.action.service.types";
+import { mapActionModel } from "./action.service.mapper";
 
 const IS_USE_DEFAULT_LINK_TEMPLATE = true;
 
@@ -130,9 +121,9 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
 
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkModel> => {
-    const { link } = linkObj;
+    const { link, action } = linkObj;
     return {
-        action: generateMockAction(),
+        action: action.length > 0 ? mapActionModel(action[0]) : undefined,
         link: {
             id: link.id,
             title: fromNullable(link.title) ?? "",
