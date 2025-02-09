@@ -18,8 +18,6 @@ pub fn get(action_id: String) -> Option<ActionResp> {
 
     let action_intents = repositories::action_intent::get_by_action_id(action_id.clone());
 
-    info!("action_intents {:#?}", action_intents);
-
     let intent_ids = action_intents
         .iter()
         .map(|action_intent| action_intent.intent_id.clone())

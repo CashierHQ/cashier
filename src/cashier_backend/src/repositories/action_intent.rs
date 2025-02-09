@@ -1,81 +1,64 @@
-use crate::{info, repositories::ACTION_INTENT_STORE};
-use cashier_types::{ActionIntent, ActionIntentKey, StorableActionIntentKey};
+use crate::repositories::ACTION_INTENT_STORE;
+use cashier_types::{ActionIntent, ActionIntentKey};
 
 use super::base_repository::Store;
 
 pub fn create(action_intent: ActionIntent) {
     ACTION_INTENT_STORE.with_borrow_mut(|store| {
-        let key: StorableActionIntentKey = (
-            action_intent.action_id.clone(),
-            action_intent.intent_id.clone(),
-        )
-            .into();
+        let key: ActionIntentKey = ActionIntentKey {
+            action_id: action_intent.action_id.clone(),
+            intent_id: action_intent.intent_id.clone(),
+        };
 
-        let reverse_key: StorableActionIntentKey = (
-            action_intent.intent_id.clone(),
-            action_intent.action_id.clone(),
-        )
-            .into();
-        store.insert(key, action_intent.clone());
-        store.insert(reverse_key, action_intent);
+        store.insert(key.to_str(), action_intent.clone());
+        store.insert(key.to_str_reverse(), action_intent.clone());
     });
 }
 
 pub fn batch_create(action_intents: Vec<ActionIntent>) {
     ACTION_INTENT_STORE.with_borrow_mut(|store| {
         for action_intent in action_intents {
-            let key: StorableActionIntentKey = (
-                action_intent.action_id.clone(),
-                action_intent.intent_id.clone(),
-            )
-                .into();
+            let key: ActionIntentKey = ActionIntentKey {
+                action_id: action_intent.action_id.clone(),
+                intent_id: action_intent.intent_id.clone(),
+            };
 
-            let reverse_key: StorableActionIntentKey = (
-                action_intent.intent_id.clone(),
-                action_intent.action_id.clone(),
-            )
-                .into();
-
-            store.insert(key, action_intent.clone());
-            store.insert(reverse_key, action_intent);
+            store.insert(key.to_str(), action_intent.clone());
+            store.insert(key.to_str_reverse(), action_intent.clone());
         }
     });
 }
 
 pub fn get(action_intent_key: ActionIntentKey) -> Option<ActionIntent> {
-    ACTION_INTENT_STORE.with_borrow(|store| store.get(&action_intent_key.into()).clone())
+    ACTION_INTENT_STORE.with_borrow(|store| store.get(&action_intent_key.to_str()).clone())
 }
 
 pub fn get_by_action_id(action_id: String) -> Vec<ActionIntent> {
     ACTION_INTENT_STORE.with_borrow(|store| {
-        let key = (action_id.clone(), "".to_string());
-        store
-            .get_range(key.into(), None)
-            .iter()
-            // .filter(|tx| return tx.action_id.clone() == action_id)
-            .map(|v| v.clone())
-            .collect()
+        let key = ActionIntentKey {
+            action_id: action_id.clone(),
+            intent_id: "".to_string(),
+        };
+        store.get_range(key.to_str(), None)
     })
 }
 
 pub fn get_by_intent_id(intent_id: String) -> Vec<ActionIntent> {
     ACTION_INTENT_STORE.with_borrow(|store| {
-        let key = (intent_id.clone(), "".to_string());
-        store
-            .get_range(key.into(), None)
-            .iter()
-            // .filter(|tx| return tx.intent_id.clone() == intent_id)
-            .map(|v| v.clone())
-            .collect()
+        let key = ActionIntentKey {
+            action_id: "".to_string(),
+            intent_id: intent_id.clone(),
+        };
+        store.get_range(key.to_str_reverse(), None)
     })
 }
 
 pub fn update(action_intent: ActionIntent) {
     ACTION_INTENT_STORE.with_borrow_mut(|store| {
-        let key = (
-            action_intent.action_id.clone(),
-            action_intent.intent_id.clone(),
-        );
-        store.insert(key.into(), action_intent);
+        let key = ActionIntentKey {
+            action_id: action_intent.action_id.clone(),
+            intent_id: action_intent.intent_id.clone(),
+        };
+        store.insert(key.to_str(), action_intent);
     });
 }
