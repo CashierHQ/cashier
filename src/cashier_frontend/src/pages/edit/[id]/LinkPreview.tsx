@@ -4,10 +4,10 @@ import {
 } from "@/components/confirmation-drawer/confirmation-drawer";
 import { useCashierFeeIntents } from "@/components/confirmation-drawer/confirmation-drawer.hooks";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
-import { FixedBottomButton } from "@/components/fix-bottom-button";
 import LinkCard from "@/components/link-card";
 import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-preview-cashier-fee-section";
 import { PartialFormProps } from "@/components/multi-step-form";
+import { Button } from "@/components/ui/button";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
 import { ActionModel } from "@/services/types/refractor.action.service.types";
@@ -73,15 +73,16 @@ export default function LinkPreview({
                 onInfoClick={() => setShowInfo(true)}
             />
 
-            <FixedBottomButton
+            <Button
                 disabled={isDisabled}
                 onClick={() => {
                     setShowConfirmation(true);
                     handleSubmit({});
                 }}
+                className="my-3"
             >
                 {isDisabled ? t("processing") : t("create.create")}
-            </FixedBottomButton>
+            </Button>
 
             <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 

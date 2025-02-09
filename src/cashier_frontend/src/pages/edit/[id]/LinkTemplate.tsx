@@ -14,7 +14,6 @@ import { useTranslation } from "react-i18next";
 import { PartialFormProps } from "@/components/multi-step-form";
 import LinkCard from "@/components/link-card";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
-import { FixedBottomButton } from "@/components/fix-bottom-button";
 import {
     Carousel,
     CarouselContent,
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/carousel";
 import React, { useEffect } from "react";
 import { LINK_TYPE } from "@/services/types/enum";
+import { Button } from "@/components/ui/button";
 
 export const linkTemplateSchema = z.object({
     title: z.string().min(5),
@@ -141,9 +141,7 @@ export default function LinkTemplate({
                             </FormItem>
                         )}
                     />
-
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
-
                     <div className="flex flex-grow flex-col justify-center items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
                         <Carousel className="items-center" setApi={setApi}>
                             <CarouselContent>
@@ -162,7 +160,9 @@ export default function LinkTemplate({
                         </Carousel>
                     </div>
 
-                    <FixedBottomButton type="submit">{t("continue")}</FixedBottomButton>
+                    <Button type="submit" className="my-3">
+                        {t("continue")}
+                    </Button>
                 </form>
             </Form>
         </div>
