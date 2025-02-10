@@ -18,7 +18,7 @@ pub enum ActionType {
     Claim,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum ActionState {
     Created,
     Processing,
@@ -26,7 +26,7 @@ pub enum ActionState {
     Fail,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 #[storable]
 pub struct ActionIntent {
     pub action_id: String,

@@ -10,6 +10,7 @@ import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import TransactionToast, {
     TransactionToastProps,
 } from "@/components/transaction/transaction-toast";
+import { ACTION_TYPE } from "@/services/types/enum";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -33,7 +34,7 @@ export default function ClaimPage() {
     useEffect(() => {
         if (!linkId) return;
         const fetchData = async () => {
-            const linkObj = await new LinkService().getLink(linkId);
+            const linkObj = await new LinkService().getLink(linkId, ACTION_TYPE.CLAIM_LINK);
             const link = linkObj.link;
             setFormData(link);
             form.setValue("token", link.title);

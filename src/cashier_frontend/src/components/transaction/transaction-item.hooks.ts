@@ -1,5 +1,5 @@
 import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { useEffect, useState } from "react";
 

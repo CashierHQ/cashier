@@ -10,7 +10,7 @@ import { PartialFormProps } from "@/components/multi-step-form";
 import { Button } from "@/components/ui/button";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
-import { ActionModel } from "@/services/types/refractor.action.service.types";
+import { ActionModel } from "@/services/types/action.service.types";
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";

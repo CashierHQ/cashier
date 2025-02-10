@@ -1,6 +1,6 @@
 import { TransactionModel } from "@/services/types/intent.service.types";
 import { LinkModel } from "@/services/types/link.service.types";
-import { ActionModel } from "@/services/types/refractor.action.service.types";
+import { ActionModel } from "@/services/types/action.service.types";
 import { FC } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";

@@ -1,5 +1,6 @@
 type ActionDto = record {
   id : text;
+  icrc_112_requests : opt vec vec Icrc112Request;
   creator : text;
   intents : vec IntentDto;
   "type" : text;
@@ -20,17 +21,15 @@ type CanisterError = variant {
   AnonymousCall;
   HandleApiError : text;
 };
-type ClaimIntentParams = record { address : opt text };
-type ConfirmActionInput = record { link_id : text; intent_id : text };
-type CreateActionInput = record {
-  link_id : text;
-  action_type : text;
-  params : opt CreateIntentParams;
-};
-type CreateIntentParams = variant { Claim : ClaimIntentParams };
 type CreateLinkInput = record { link_type : text };
 type GetLinkOptions = record { action_type : text };
 type GetLinkResp = record { action : opt ActionDto; link : LinkDto };
+type Icrc112Request = record {
+  arg : text;
+  method : text;
+  canister_id : text;
+  nonce : opt text;
+};
 type Icrc21ConsentInfo = record {
   metadata : Icrc21ConsentMessageMetadata;
   consent_message : Icrc21ConsentMessage;
@@ -115,14 +114,19 @@ type PaginateResultMetadata = record {
   offset : nat64;
   limit : nat64;
 };
-type Result = variant { Ok : ActionDto; Err : text };
-type Result_1 = variant { Ok : ActionDto; Err : CanisterError };
-type Result_2 = variant { Ok : text; Err : CanisterError };
-type Result_3 = variant { Ok : UserDto; Err : text };
-type Result_4 = variant { Ok : GetLinkResp; Err : text };
-type Result_5 = variant { Ok : PaginateResult; Err : text };
-type Result_6 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
-type Result_7 = variant { Ok : LinkDto; Err : CanisterError };
+type ProcessActionInput = record {
+  action_id : text;
+  link_id : text;
+  action_type : text;
+  params : opt vec record { text; text };
+};
+type Result = variant { Ok : text; Err : CanisterError };
+type Result_1 = variant { Ok : UserDto; Err : text };
+type Result_2 = variant { Ok : GetLinkResp; Err : text };
+type Result_3 = variant { Ok : PaginateResult; Err : text };
+type Result_4 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
+type Result_5 = variant { Ok : ActionDto; Err : CanisterError };
+type Result_6 = variant { Ok : LinkDto; Err : CanisterError };
 type TypeMetdataValue = variant {
   U64 : nat64;
   String : text;
@@ -130,9 +134,9 @@ type TypeMetdataValue = variant {
   Wallet : AssetDto;
 };
 type UpdateActionInput = record {
+  action_id : text;
   link_id : text;
-  intent_id : text;
-  icrc112_responses : opt vec text;
+  external : bool;
 };
 type UpdateLinkInput = record {
   id : text;
@@ -141,18 +145,17 @@ type UpdateLinkInput = record {
 };
 type UserDto = record { id : text; email : opt text; wallet : text };
 service : () -> {
-  confirm_action : (ConfirmActionInput) -> (Result);
-  create_action : (CreateActionInput) -> (Result_1);
-  create_link : (CreateLinkInput) -> (Result_2);
-  create_user : () -> (Result_3);
-  get_link : (text, opt GetLinkOptions) -> (Result_4) query;
-  get_links : (opt PaginateInput) -> (Result_5) query;
-  get_user : () -> (Result_3) query;
+  create_link : (CreateLinkInput) -> (Result);
+  create_user : () -> (Result_1);
+  get_link : (text, opt GetLinkOptions) -> (Result_2) query;
+  get_links : (opt PaginateInput) -> (Result_3) query;
+  get_user : () -> (Result_1) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
   icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
-      Result_6,
+      Result_4,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
-  update_action : (UpdateActionInput) -> (Result);
-  update_link : (UpdateLinkInput) -> (Result_7);
+  process_action : (ProcessActionInput) -> (Result_5);
+  update_action : (UpdateActionInput) -> (Result_5);
+  update_link : (UpdateLinkInput) -> (Result_6);
 }

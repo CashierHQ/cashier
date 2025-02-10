@@ -1,5 +1,5 @@
 import { INTENT_STATE, TASK } from "@/services/types/enum";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -13,12 +13,6 @@ export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
 
 export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
     const cashierFeeIntents = useMemo(() => {
-        console.log(
-            "recalc cashier fees",
-            intents,
-            intents?.filter((intent) => intent.task === TASK.TRANSFER_WALLET_TO_TREASURY),
-        );
-
         return intents?.filter((intent) => intent.task === TASK.TRANSFER_WALLET_TO_TREASURY) ?? [];
     }, [intents]);
 
