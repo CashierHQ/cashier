@@ -43,7 +43,6 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
     });
 
     const selectedAsset = useSelectedAsset(assets, form);
-
     const handleSetAmount = useHandleSetAmount(form);
     const handleSetTokenAddress = useHandleSetTokenAddress(form, () => setShowAssetDrawer(false));
 

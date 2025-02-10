@@ -71,8 +71,8 @@ export type TipLinkAssetFormSchema = z.infer<ReturnType<typeof tipLinkAssetFormS
 export function useTipLinkAssetForm(
     assets: AssetSelectItem[],
     defaultValues?: DefaultValues<TipLinkAssetFormSchema>,
-) {
-    const form = useForm({
+): UseFormReturn<TipLinkAssetFormSchema> {
+    const form = useForm<TipLinkAssetFormSchema>({
         resolver: zodResolver(tipLinkAssetFormSchema(assets)),
         defaultValues: defaultValues,
     });
