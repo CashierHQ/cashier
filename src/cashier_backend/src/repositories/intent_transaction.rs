@@ -43,7 +43,14 @@ pub fn get_by_intent_id(intent_id: String) -> Vec<IntentTransaction> {
             intent_id: intent_id.clone(),
             transaction_id: "".to_string(),
         };
-        store.get_range(key.to_str(), None)
+
+        let prefix = key.to_str();
+
+        store
+            .range(prefix.clone()..)
+            .filter(|(key, _)| key.starts_with(&prefix))
+            .map(|(_, value)| value.clone())
+            .collect()
     })
 }
 
@@ -53,6 +60,13 @@ pub fn get_by_transaction_id(transaction_id: String) -> Vec<IntentTransaction> {
             intent_id: "".to_string(),
             transaction_id: transaction_id.clone(),
         };
-        store.get_range(key.to_str_reverse(), None)
+
+        let prefix = key.to_str_reverse();
+
+        store
+            .range(prefix.clone()..)
+            .filter(|(key, _)| key.starts_with(&prefix))
+            .map(|(_, value)| value.clone())
+            .collect()
     })
 }

@@ -138,12 +138,6 @@ fn store_records(
         action_id: action.id.clone(),
     };
 
-    info!("Creating action: {:#?}", action);
-    info!("Creating action_intents: {:#?}", action_intents);
-    info!("Creating intents: {:#?}", intents);
-    info!("Creating intent_transactions: {:#?}", intent_transactions);
-    info!("Creating transactions: {:#?}", transactions);
-
     repositories::link_action::create(link_action);
     repositories::user_action::create(user_action);
     repositories::action::create(action);

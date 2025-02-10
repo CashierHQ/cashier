@@ -26,7 +26,7 @@ pub enum ActionState {
     Fail,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 #[storable]
 pub struct ActionIntent {
     pub action_id: String,

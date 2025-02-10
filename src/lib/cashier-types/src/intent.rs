@@ -57,7 +57,7 @@ pub enum IntentTask {
     TransferWalletToLink,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 #[storable]
 pub struct IntentTransaction {
     pub intent_id: String,

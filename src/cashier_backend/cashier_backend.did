@@ -1,6 +1,6 @@
 type ActionDto = record {
   id : text;
-  icrc_112_requests : opt vec text;
+  icrc_112_requests : opt vec vec Icrc112Request;
   creator : text;
   intents : vec IntentDto;
   "type" : text;
@@ -24,6 +24,12 @@ type CanisterError = variant {
 type CreateLinkInput = record { link_type : text };
 type GetLinkOptions = record { action_type : text };
 type GetLinkResp = record { action : opt ActionDto; link : LinkDto };
+type Icrc112Request = record {
+  arg : text;
+  method : text;
+  canister_id : text;
+  nonce : opt text;
+};
 type Icrc21ConsentInfo = record {
   metadata : Icrc21ConsentMessageMetadata;
   consent_message : Icrc21ConsentMessage;
@@ -127,6 +133,11 @@ type TypeMetdataValue = variant {
   Asset : AssetDto;
   Wallet : AssetDto;
 };
+type UpdateActionInput = record {
+  action_id : text;
+  link_id : text;
+  external : bool;
+};
 type UpdateLinkInput = record {
   id : text;
   action : text;
@@ -145,5 +156,6 @@ service : () -> {
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   process_action : (ProcessActionInput) -> (Result_5);
+  update_action : (UpdateActionInput) -> (Result_5);
   update_link : (UpdateLinkInput) -> (Result_6);
 }

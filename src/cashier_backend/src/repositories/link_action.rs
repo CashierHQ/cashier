@@ -1,8 +1,6 @@
-use std::clone;
-
 use cashier_types::{keys::ActionTypeKey, LinkAction, LinkActionKey, LinkKey};
 
-use super::{base_repository::Store, LINK_ACTION_STORE};
+use super::LINK_ACTION_STORE;
 
 pub fn create(link_action: LinkAction) {
     LINK_ACTION_STORE.with_borrow_mut(|store| {
@@ -27,6 +25,14 @@ pub fn get_by_link_action(link_id: LinkKey, action_type: ActionTypeKey) -> Vec<L
             action_id: "".to_string(),
         };
 
-        store.get_range(key.to_str(), None)
+        let prefix = key.to_str().clone();
+
+        let actions: Vec<_> = store
+            .range(prefix.clone()..)
+            .filter(|(key, _)| key.starts_with(&prefix))
+            .map(|(_, value)| value.clone())
+            .collect();
+
+        actions
     })
 }

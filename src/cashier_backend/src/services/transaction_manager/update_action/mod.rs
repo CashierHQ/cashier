@@ -32,6 +32,8 @@ pub async fn update_action(
 
     let request = update_action_with_args(args).await?;
 
+    info!("update_action request: {:?}", request);
+
     let resp = super::action::get(action_id).unwrap();
 
     Ok(ActionDto::build(
@@ -93,6 +95,8 @@ async fn update_action_with_args(
         })
         .collect::<Vec<&Transaction>>();
 
+    info!("eligible_txs: {:?}", eligible_txs);
+
     // for tx in eligible_txs.clone() {
     //     let has_dep = has_dependency::has_dependency(tx, &tx_map);
     // }
@@ -101,16 +105,18 @@ async fn update_action_with_args(
     let icrc_112_requests: Icrc112Requests =
         transaction::icrc_112::create(args.link_id, args.action_id, &eligible_txs);
 
+    info!("icrc_112_requests: {:?}", icrc_112_requests);
+
     //Step #4 Actually execute the tx that is elibile
     // for client tx set to processing
     // TODO: implement this
     // for backend tx execute the tx
     for tx in eligible_txs {
-        execute_tx::execute_tx(&mut tx.clone());
+        execute_tx::execute_tx(&mut tx.clone())?;
     }
 
     //call HasDependency for each tx and if returns false, the tx is eligible to be executed
-    if icrc_112_requests.len() > 0 {
+    if icrc_112_requests.len() == 0 {
         return Ok(None);
     }
     return Ok(Some(icrc_112_requests));

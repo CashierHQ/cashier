@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::repositories::ACTION_INTENT_STORE;
 use cashier_types::{ActionIntent, ActionIntentKey};
 
@@ -39,7 +41,16 @@ pub fn get_by_action_id(action_id: String) -> Vec<ActionIntent> {
             action_id: action_id.clone(),
             intent_id: "".to_string(),
         };
-        store.get_range(key.to_str(), None)
+
+        let prefix = key.to_str().clone();
+
+        let action_intents = store
+            .range(prefix.clone()..)
+            .filter(|(key, _)| key.starts_with(&prefix))
+            .map(|(_, value)| value.clone())
+            .collect();
+
+        return action_intents;
     })
 }
 
@@ -49,10 +60,16 @@ pub fn get_by_intent_id(intent_id: String) -> Vec<ActionIntent> {
             action_id: "".to_string(),
             intent_id: intent_id.clone(),
         };
-        store.get_range(key.to_str_reverse(), None)
+
+        let prefix = key.to_str_reverse();
+
+        store
+            .range(prefix.clone()..)
+            .filter(|(key, _)| key.starts_with(&prefix))
+            .map(|(_, value)| value.clone())
+            .collect()
     })
 }
-
 pub fn update(action_intent: ActionIntent) {
     ACTION_INTENT_STORE.with_borrow_mut(|store| {
         let key = ActionIntentKey {
