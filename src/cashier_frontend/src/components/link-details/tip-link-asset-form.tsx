@@ -40,6 +40,9 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
 
     const form = useTipLinkAssetForm(assets, {
         tokenAddress: defaultValues.tokenAddress ?? "",
+        amount: BigInt(0),
+        assetNumber: 0,
+        usdNumber: undefined,
     });
 
     const selectedAsset = useSelectedAsset(assets, form);

@@ -8,14 +8,10 @@ import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useEffect, useMemo, useState } from "react";
 import { AssetSelectItem } from "@/components/asset-select";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import {
-    icExplorerService,
-    initializeDefaultGetUserTokenRequest,
-    mapAPITokenModelToAssetSelectModel,
-    UserToken,
-} from "@/services/icExplorer.service";
+import { mapAPITokenModelToAssetSelectModel } from "@/services/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import * as z from "zod";
+import { TokenProviderService } from "@/services/tokenProvider";
 
 export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
     return z
@@ -157,34 +153,6 @@ export function useUsdConversionRates(asset: string | undefined) {
     return rates;
 }
 
-const ASSET_LIST: AssetSelectItem[] = [
-    {
-        name: "TK 1",
-        amount: 0,
-        tokenAddress: "x5qut-viaaa-aaaar-qajda-cai",
-    },
-    {
-        name: "CUTE",
-        amount: 0,
-        tokenAddress: "k64dn-7aaaa-aaaam-qcdaq-cai",
-    },
-    {
-        name: "ICP",
-        amount: 0,
-        tokenAddress: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-    },
-    {
-        name: "BOB",
-        amount: 0,
-        tokenAddress: "7pail-xaaaa-aaaas-aabmq-cai",
-    },
-    {
-        name: "ckETH",
-        amount: 0,
-        tokenAddress: "ss2fx-dyaaa-aaaar-qacoq-cai",
-    },
-];
-
 export function useAssets() {
     const identity = useIdentity();
     const walletAddress = useWalletAddress();
@@ -225,14 +193,12 @@ export function useAssets() {
     useEffect(() => {
         async function fetchUserTokens() {
             if (walletAddress) {
-                const isProd = import.meta.env.MODE === "production";
-                const devAssets = isProd ? [] : await getDevTokens();
-                const prodAssets = await getProdTokens();
-                const assets = [...devAssets, ...prodAssets];
+                const tokens = await TokenProviderService.getUserTokens(walletAddress);
+                const assets = tokens.map(mapAPITokenModelToAssetSelectModel);
 
-                fetchAssetListAmounts(assets).then((assetListWithAmounts) => {
+                fetchAssetListAmounts(assets).then((assetsWithAmounts) => {
                     setIsLoadingBalance(false);
-                    setAssets(assetListWithAmounts);
+                    setAssets(assetsWithAmounts);
                 });
 
                 setAssets(assets);
@@ -240,26 +206,8 @@ export function useAssets() {
             }
         }
 
-        // TODO: move image logic to nft-asset-form.tsx
-        //setCurrentImage(form.getValues("image"));
         fetchUserTokens();
     }, [walletAddress]);
-
-    async function getProdTokens(): Promise<AssetSelectItem[]> {
-        const request = initializeDefaultGetUserTokenRequest(walletAddress);
-        const response = await icExplorerService.getUserTokens(request);
-        const userTokenList = response.data.list as UserToken[];
-
-        const assetList: AssetSelectItem[] = userTokenList.map((token) => {
-            return mapAPITokenModelToAssetSelectModel(token);
-        });
-
-        return assetList;
-    }
-
-    async function getDevTokens(): Promise<AssetSelectItem[]> {
-        return [...ASSET_LIST];
-    }
 
     return {
         isLoadingAssets,
