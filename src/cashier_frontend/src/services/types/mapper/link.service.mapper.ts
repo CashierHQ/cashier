@@ -9,7 +9,7 @@ import { LinkDetailModel, LinkModel } from "../link.service.types";
 import { ACTION_TYPE, CHAIN, INTENT_STATE, INTENT_TYPE, TASK, TEMPLATE } from "../enum";
 import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import { ActionModel } from "../refractor.action.service.types";
+import { ActionModel } from "../action.service.types";
 import { mapActionModel } from "./action.service.mapper";
 
 const IS_USE_DEFAULT_LINK_TEMPLATE = true;
@@ -123,7 +123,7 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
 export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkModel> => {
     const { link, action } = linkObj;
     return {
-        action: action.length > 0 ? mapActionModel(action[0]) : undefined,
+        action: action?.length > 0 ? mapActionModel(action[0]) : undefined,
         link: {
             id: link.id,
             title: fromNullable(link.title) ?? "",

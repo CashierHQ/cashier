@@ -15,9 +15,7 @@ import {
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
 } from "./types/mapper/link.service.mapper";
-// import { CreateIntentConsentModel } from "./types/intent.service.types";
-// import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
-import { ActionModel } from "./types/refractor.action.service.types";
+import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 
 interface ReponseLinksModel {
@@ -100,7 +98,6 @@ class LinkService {
         };
         const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
-        console.log("🚀 ~ LinkService ~ createAction ~ action:", action);
         return action;
     }
 }

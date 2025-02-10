@@ -6,7 +6,7 @@ import {
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { CHAIN, INTENT_STATE, INTENT_TYPE, TASK } from "../enum";
 import { TransactionModel } from "../intent.service.types";
-import { AssetModel, IntentModel, WalletModel } from "../refractor.intent.service.types";
+import { AssetModel, IntentModel, WalletModel } from "../intent.service.types";
 
 enum METADATA_PROP_NAMES {
     FROM = "from",

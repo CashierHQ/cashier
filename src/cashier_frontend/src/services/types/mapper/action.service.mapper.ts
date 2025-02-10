@@ -1,6 +1,6 @@
 import { ActionDto } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { ACTION_TYPE } from "../enum";
-import { ActionModel } from "../refractor.action.service.types";
+import { ActionModel } from "../action.service.types";
 import { mapIntentDtoToIntentModel } from "./intent.service.mapper";
 
 // Map Action from back-end to front-end model
