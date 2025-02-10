@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ArrowUpDown } from "lucide-react";
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 type UsdSwitchProps = {
     amount: number | undefined;
@@ -11,11 +12,12 @@ type UsdSwitchProps = {
 };
 
 export const UsdSwitch: FC<UsdSwitchProps> = ({ isUsd, onToggle, amount, symbol, amountUsd }) => {
+    const { t } = useTranslation();
     const canConvert = amount !== undefined && amountUsd !== undefined;
 
     const renderMessage = () => {
         if (!canConvert) {
-            return "No price available";
+            return t("transaction.usd_conversion.no_price_available");
         }
 
         if (isUsd) {

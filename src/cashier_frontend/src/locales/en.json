@@ -47,6 +47,9 @@
         "create_intent": {
             "action_failed": "Creating link failed."
         },
+        "usd_conversion": {
+            "no_price_available": "No price available"
+        },
         "confirm_popup": {
             "title": "Confirm transaction",
             "receive_label": "You will receive",

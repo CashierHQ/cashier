@@ -28,15 +28,13 @@ export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
                 .nullable(),
         })
         .superRefine((val, ctx) => {
-            if (val.usdNumber === null) {
+            if (val.assetNumber === null) {
                 ctx.addIssue({
                     code: "custom",
                     message: "Must input number",
                     path: ["usdNumber"],
                 });
-            }
 
-            if (val.assetNumber === null) {
                 ctx.addIssue({
                     code: "custom",
                     message: "Must input number",

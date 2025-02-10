@@ -49,6 +49,8 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
     const handleSetAmount = useHandleSetAmount(form);
     const handleSetTokenAddress = useHandleSetTokenAddress(form, () => setShowAssetDrawer(false));
 
+    console.log(form.formState.errors);
+
     return (
         <div className="w-full">
             {isLoadingAssets ? (
@@ -57,7 +59,9 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                 <>
                     <Form {...form}>
                         <form
-                            onSubmit={form.handleSubmit(onSubmit)}
+                            onSubmit={form.handleSubmit((data) => {
+                                onSubmit(data);
+                            })}
                             className="space-y-8 mb-[100px]"
                         >
                             <FormField
@@ -98,6 +102,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                         <FormControl>
                                             <IconInput
                                                 type="number"
+                                                step="any"
                                                 isCurrencyInput={true}
                                                 currencySymbol={
                                                     isUsd ? "USD" : (selectedAsset?.name ?? "")
