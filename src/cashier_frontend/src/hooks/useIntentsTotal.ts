@@ -1,5 +1,5 @@
 import { IntentHelperService } from "@/services/fee.service";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
 
 export const useIntentsTotal = (intents: IntentModel[]) => {

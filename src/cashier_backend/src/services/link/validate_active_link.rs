@@ -1,6 +1,6 @@
 use cashier_types::{ActionType, Link};
 
-use crate::repositories::link_action;
+use crate::{info, repositories::link_action};
 
 fn is_missing_or_empty(field: Option<&String>) -> bool {
     field.map_or(true, |s| s.is_empty())

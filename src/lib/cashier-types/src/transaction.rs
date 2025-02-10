@@ -1,4 +1,5 @@
 use cashier_macros::storable;
+use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -11,9 +12,10 @@ pub struct Transaction {
     pub created_at: u64,
     pub state: TransactionState,
     pub dependency: Option<Vec<String>>,
-    pub grouping: Option<String>,
-    pub wallet: TransactionWallet,
+    pub group: Option<String>,
+    pub from_call_type: FromCallType,
     pub protocol: Protocol,
+    pub start_ts: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,11 +28,6 @@ pub enum IcTransaction {
     Icrc1Transfer(Icrc1Transfer),
     Icrc2Approve(Icrc2Approve),
     Icrc2TransferFrom(Icrc2TransferFrom),
-    // pub protocol: TransactionProtocol,
-    // pub from: Wallet,
-    // pub to: Wallet,
-    // pub asset: Asset,
-    // pub amount: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +36,8 @@ pub struct Icrc1Transfer {
     pub to: Wallet,
     pub asset: Asset,
     pub amount: u64,
+    pub memo: Option<Memo>,
+    pub ts: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,19 +55,24 @@ pub struct Icrc2TransferFrom {
     pub spender: Wallet,
     pub asset: Asset,
     pub amount: u64,
+    pub memo: Option<Memo>,
+    pub ts: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum TransactionWallet {
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum FromCallType {
     Canister,
-    User,
+    Wallet,
 }
 
-impl TransactionWallet {
+impl FromCallType {
     pub fn to_str(&self) -> &str {
         match self {
-            TransactionWallet::Canister => "Canister",
-            TransactionWallet::User => "User",
+            FromCallType::Canister => "Canister",
+            FromCallType::Wallet => {
+                "Wallet
+            "
+            }
         }
     }
 
@@ -77,19 +81,19 @@ impl TransactionWallet {
     }
 }
 
-impl FromStr for TransactionWallet {
+impl FromStr for FromCallType {
     type Err = ();
 
-    fn from_str(input: &str) -> Result<TransactionWallet, Self::Err> {
+    fn from_str(input: &str) -> Result<FromCallType, Self::Err> {
         match input {
-            "Canister" => Ok(TransactionWallet::Canister),
-            "User" => Ok(TransactionWallet::User),
+            "Canister" => Ok(FromCallType::Canister),
+            "Wallet" => Ok(FromCallType::Wallet),
             _ => Err(()),
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TransactionProtocol {
     Irrc1Transfer,
     Icrc2Approve,
@@ -123,13 +127,12 @@ impl FromStr for TransactionProtocol {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum TransactionState {
     Created,
     Processing,
     Success,
     Fail,
-    Timeout,
 }
 
 impl TransactionState {
@@ -139,7 +142,6 @@ impl TransactionState {
             TransactionState::Processing => "Transaction_state_processing",
             TransactionState::Success => "Transaction_state_success",
             TransactionState::Fail => "Transaction_state_fail",
-            TransactionState::Timeout => "Transaction_state_timeout",
         }
     }
 
@@ -157,7 +159,6 @@ impl FromStr for TransactionState {
             "Transaction_state_processing" => Ok(TransactionState::Processing),
             "Transaction_state_success" => Ok(TransactionState::Success),
             "Transaction_state_fail" => Ok(TransactionState::Fail),
-            "Transaction_state_timeout" => Ok(TransactionState::Timeout),
             _ => Err(()),
         }
     }

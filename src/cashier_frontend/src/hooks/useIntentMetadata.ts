@@ -1,4 +1,4 @@
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
 import useTokenMetadataQuery from "./useTokenMetadataQuery";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";

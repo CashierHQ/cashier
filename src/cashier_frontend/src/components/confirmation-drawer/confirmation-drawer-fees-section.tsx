@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TransactionItem } from "@/components/transaction/transaction-item";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IntentHelperService } from "@/services/fee.service";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";

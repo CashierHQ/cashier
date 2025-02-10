@@ -6,7 +6,7 @@ import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentity } from "@nfid/identitykit/react";
-import LinkService from "@/services/link.service";
+import LinkService, { CreateActionInputModel } from "@/services/link.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
@@ -16,7 +16,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getResponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
 import IntentService from "@/services/intent.service";
 import SignerService from "@/services/signer.service";
@@ -24,7 +24,7 @@ import { Identity } from "@dfinity/agent";
 import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 import useToast from "@/hooks/useToast";
 import { getCashierError } from "@/services/errorProcess.service";
-import { ActionModel } from "@/services/types/refractor.action.service.types";
+import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 
@@ -64,7 +64,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const { toastData, showToast, hideToast } = useToast();
 
     const queryClient = useQueryClient();
-    const { data: linkData } = useLinkDataQuery(linkId, identity);
+    const { data: linkData } = useLinkDataQuery(linkId, ACTION_TYPE.CREATE_LINK, identity);
     const { mutate, error: updateLinkError, mutateAsync } = useUpdateLink(queryClient, identity);
 
     useEffect(() => {
@@ -79,7 +79,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             }
 
             if (action) {
-                console.log("added link action", action);
+                console.log("🚀 ~ useEffect ~ action:", action);
                 setLinkAction(action);
             }
 
@@ -164,7 +164,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleCreateAction = async (linkService: LinkService) => {
-        const action = await linkService.createAction();
+        const input: CreateActionInputModel = {
+            linkId: linkId ?? "",
+            actionType: ACTION_TYPE.CREATE_LINK,
+        };
+        const action = await linkService.createAction(input);
 
         if (action) {
             setLinkAction(action);

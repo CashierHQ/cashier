@@ -54,14 +54,18 @@ export const queryKeys = createQueryKeyStore({
                 return groupedLinkList;
             },
         }),
-        detail: (linkId: string | undefined, identity: Identity | PartialIdentity | undefined) => ({
+        detail: (
+            linkId: string | undefined,
+            actionType: string,
+            identity: Identity | PartialIdentity | undefined,
+        ) => ({
             queryKey: [QUERY_KEYS.LINKS, linkId],
             queryFn: async () => {
                 if (!linkId) throw new Error("Link ID is required");
 
                 try {
                     const linkService = new LinkService(identity);
-                    const linkDetail = await linkService.getLink(linkId);
+                    const linkDetail = await linkService.getLink(linkId, actionType);
                     return linkDetail;
                 } catch (error) {
                     console.log("🚀 ~ queryFn: ~ error:", error);

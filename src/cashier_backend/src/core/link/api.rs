@@ -5,8 +5,12 @@ use ic_cdk::{query, update};
 
 use crate::{
     core::{
-        action::types::ActionDto, guard::is_not_anonymous, GetLinkOptions, GetLinkResp, LinkDto,
-        PaginateResult, UpdateLinkInput,
+        action::{
+            api::create_action,
+            types::{ActionDto, CreateActionInput, ProcessActionInput},
+        },
+        guard::is_not_anonymous,
+        GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
     error,
     services::{
@@ -165,5 +169,25 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
         _ => Err(CanisterError::HandleApiError(
             "Invalid link type".to_string(),
         )),
+    }
+}
+
+#[update(guard = "is_not_anonymous")]
+pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
+    if input.action_id.is_empty() {
+        return create_action(CreateActionInput {
+            action_type: input.action_type.clone(),
+            link_id: input.link_id.clone(),
+            params: input.params.clone(),
+        })
+        .await;
+    } else {
+        let action_id = input.action_id.clone();
+        let link_id = input.link_id.clone();
+        let external = false;
+
+        services::transaction_manager::update_action::update_action(action_id, link_id, external)
+            .await
+            .map_err(|e| CanisterError::HandleApiError(e))
     }
 }

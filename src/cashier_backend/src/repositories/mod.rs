@@ -60,7 +60,7 @@ thread_local! {
     );
 
     pub static USER_LINK_STORE: RefCell<StableBTreeMap<
-        cashier_types::StorableUserLinkKey,
+        String,
         cashier_types::UserLink,
         Memory
     >> = RefCell::new(
@@ -70,7 +70,7 @@ thread_local! {
     );
 
     pub static USER_ACTION_STORE: RefCell<StableBTreeMap<
-        cashier_types::StorableUserActionKey,
+        String,
         cashier_types::UserAction,
         Memory
     >> = RefCell::new(
@@ -90,7 +90,7 @@ thread_local! {
     );
 
     pub static LINK_ACTION_STORE: RefCell<StableBTreeMap<
-        cashier_types::StorableLinkActionKey,
+        String,
         cashier_types::LinkAction,
         Memory
     >> = RefCell::new(
@@ -110,7 +110,7 @@ thread_local! {
     );
 
     pub static ACTION_INTENT_STORE: RefCell<StableBTreeMap<
-        cashier_types::StorableActionIntentKey,
+        String,
         cashier_types::ActionIntent,
         Memory
     >> = RefCell::new(
@@ -120,7 +120,7 @@ thread_local! {
     );
 
     pub static INTENT_STORE: RefCell<StableBTreeMap<
-        cashier_types::IntentKey,
+        String,
         cashier_types::Intent,
         Memory
     >> = RefCell::new(
@@ -130,7 +130,7 @@ thread_local! {
     );
 
     pub static INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
-        cashier_types::StorableIntentTransactionKey,
+        String,
         cashier_types::IntentTransaction,
         Memory
     >> = RefCell::new(

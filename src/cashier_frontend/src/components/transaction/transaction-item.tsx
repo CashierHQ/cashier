@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 import { Status } from "@/components/ui/status";
 import { mapIntentsStateToStatus } from "@/utils/map/status.map";
 import { Fee } from "@/components/ui/fee";

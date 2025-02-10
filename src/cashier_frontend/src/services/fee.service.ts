@@ -1,7 +1,7 @@
 import { FeeModel } from "@/services/types/intent.service.types";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { convertDecimalBigIntToNumber } from "@/utils";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 
 export type Transfer = {
     intent: IntentModel;

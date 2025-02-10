@@ -1,6 +1,6 @@
 import { NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
 import { useIntentsTotal } from "@/hooks/useIntentsTotal";
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
 

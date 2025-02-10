@@ -1,7 +1,5 @@
 use crate::core::action::types::*;
 use crate::core::link::types::*;
-use crate::core::user::types::*;
-
 use crate::core::user::types::UserDto;
 use crate::types::api::*;
 use crate::types::error::*;

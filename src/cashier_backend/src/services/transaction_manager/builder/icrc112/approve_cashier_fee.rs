@@ -1,22 +1,18 @@
 use candid::Nat;
 use icrc_ledger_types::{icrc1::account::Account, icrc2::approve::ApproveArgs};
-use uuid::Uuid;
 
-use crate::{
-    services::transaction_manager::build_tx::BuildTxResp, types::consent_messsage::ConsentType,
-};
+use crate::types::icrc_112_transaction::Icrc112Request;
 
 use super::TransactionBuilder;
 
 pub struct ApproveCashierFeeBuilder {
     pub token_address: String,
     pub fee_amount: u64,
+    pub tx_id: String,
 }
 
 impl TransactionBuilder for ApproveCashierFeeBuilder {
-    fn build(&self) -> BuildTxResp {
-        let id: Uuid = Uuid::new_v4();
-
+    fn build(&self) -> Icrc112Request {
         let spender = Account {
             owner: ic_cdk::id(),
             subaccount: None,
@@ -29,22 +25,19 @@ impl TransactionBuilder for ApproveCashierFeeBuilder {
             expected_allowance: None,
             expires_at: None,
             fee: None,
+            // TODO: update memo
             memo: None,
             created_at_time: None,
         };
 
-        let transaction =
-            Transaction::build_icrc_approve(id.to_string(), self.token_address.clone(), arg);
+        let canister_call =
+            ic_icrc_tx::builder::icrc2::build_icrc2_approve(self.token_address.clone(), arg);
 
-        let consent = ConsentType::build_send_app_fee_consent(
-            crate::types::chain::Chain::IC,
-            self.fee_amount,
-            self.token_address.clone(),
-        );
-
-        BuildTxResp {
-            transaction,
-            consent,
-        }
+        return Icrc112Request {
+            canister_id: canister_call.canister_id,
+            method: canister_call.method,
+            arg: canister_call.arg,
+            nonce: Some(self.tx_id.clone()),
+        };
     }
 }

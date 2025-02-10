@@ -1,4 +1,4 @@
-import { IntentModel } from "@/services/types/refractor.intent.service.types";
+import { IntentModel } from "@/services/types/intent.service.types";
 import { FC } from "react";
 import { Spinner } from "../ui/spinner";
 import { Asset } from "../ui/asset";

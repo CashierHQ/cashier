@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     core::action::types::{ActionDto, CreateActionInput},
+    info,
     repositories::{self, link, user_wallet},
     types::error::CanisterError,
 };
@@ -18,13 +19,14 @@ use super::{
     validate::validate_balance_with_asset_info,
 };
 
+// TODO: handle the params for the action incase claim action
 pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
     let caller = ic_cdk::api::caller();
     let link = link::get(&input.link_id)
         .ok_or_else(|| CanisterError::ValidationErrors("Link not found".to_string()))?;
 
     // Validate the user's balance
-    match validate_balance_with_asset_info(link.clone(), caller).await {
+    match validate_balance_with_asset_info(&link.clone(), &caller).await {
         Ok(_) => (),
         Err(e) => return Err(CanisterError::ValidationErrors(e)),
     }
@@ -35,7 +37,7 @@ pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, C
 
     // Parse the intent type
     let action_type = ActionType::from_str(&input.action_type)
-        .map_err(|e| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
+        .map_err(|_| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
 
     let action = Action {
         id: Uuid::new_v4().to_string(),
@@ -82,6 +84,10 @@ pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, C
 
         intent_tx_hashmap.insert(intent.id.clone(), transactions);
     }
+
+    info!("action {:#?}", action);
+    info!("intents {:#?}", intents);
+    info!("intent_tx_hashmap {:#?}", intent_tx_hashmap);
 
     let _ = store_records(
         link_action,
@@ -139,13 +145,6 @@ fn store_records(
     repositories::intent::batch_create(intents);
     repositories::intent_transaction::batch_create(intent_transactions);
     repositories::transaction::batch_create(transactions);
-
-    // Store all records
-    // let _ = intent::create(new_intent.to_persistence());
-    // let _ = transaction::batch_create(transactions_persistence);
-    // let _ = intent_transaction::batch_create(intent_transactions_persistence);
-    // let _ = link_intent_store::create(new_link_intent.to_persistence());
-    // let _ = user_action::create(user_intent.to_persistence());
 
     Ok(())
 }

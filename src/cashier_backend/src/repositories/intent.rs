@@ -22,7 +22,7 @@ pub fn get(id: String) -> Option<Intent> {
     INTENT_STORE.with_borrow(|store| store.get(&id).clone())
 }
 
-pub fn get_batch(ids: Vec<String>) -> Vec<Intent> {
+pub fn batch_get(ids: Vec<String>) -> Vec<Intent> {
     INTENT_STORE.with_borrow(|store| store.batch_get(ids))
 }
 

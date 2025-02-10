@@ -1,12 +1,7 @@
 use candid::Nat;
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
-use uuid::Uuid;
 
-use crate::{
-    services::transaction_manager::build_tx::BuildTxResp,
-    types::consent_messsage::ConsentType,
-    utils::helper::{to_memo, to_subaccount},
-};
+use crate::{types::icrc_112_transaction::Icrc112Request, utils::helper::to_subaccount};
 
 use super::TransactionBuilder;
 
@@ -14,12 +9,11 @@ pub struct TransferToLinkEscrowWalletBuilder {
     pub link_id: String,
     pub token_address: String,
     pub transfer_amount: u64,
+    pub tx_id: String,
 }
 
 impl TransactionBuilder for TransferToLinkEscrowWalletBuilder {
-    fn build(&self) -> BuildTxResp {
-        let id: Uuid = Uuid::new_v4();
-
+    fn build(&self) -> Icrc112Request {
         let account = Account {
             owner: ic_cdk::id(),
             subaccount: Some(to_subaccount(self.link_id.clone())),
@@ -28,24 +22,21 @@ impl TransactionBuilder for TransferToLinkEscrowWalletBuilder {
         let arg = TransferArg {
             to: account,
             amount: Nat::from(self.transfer_amount),
-            memo: Some(to_memo(id.to_string())),
+            // TODO: update memo
+            memo: None,
             fee: None,
             created_at_time: None,
             from_subaccount: None,
         };
 
-        let consent = ConsentType::build_send_consent(
-            crate::types::chain::Chain::IC,
-            self.transfer_amount,
-            self.token_address.clone(),
-        );
+        let canister_call =
+            ic_icrc_tx::builder::icrc1::build_icrc1_transfer(self.token_address.clone(), arg);
 
-        let transaction =
-            Transaction::build_icrc_transfer(id.to_string(), self.token_address.clone(), arg);
-
-        BuildTxResp {
-            transaction,
-            consent,
-        }
+        return Icrc112Request {
+            canister_id: canister_call.canister_id,
+            method: canister_call.method,
+            arg: canister_call.arg,
+            nonce: Some(self.tx_id.clone()),
+        };
     }
 }

@@ -1,6 +1,6 @@
 use cashier_types::{
-    Chain, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent, IntentTask,
-    IntentType, Protocol, Transaction, TransactionState, TransactionWallet, TransferFromIntent,
+    Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
+    IntentTask, IntentType, Protocol, Transaction, TransactionState, TransferFromIntent,
     TransferIntent,
 };
 use uuid::Uuid;
@@ -34,6 +34,9 @@ impl IcAdapter {
             to: transfer_intent.to,
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
+            ts: Some(ts),
+            //TODO: update memo
+            memo: None,
         };
 
         let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
@@ -43,9 +46,10 @@ impl IcAdapter {
             created_at: ts,
             state: TransactionState::Created,
             dependency: None,
-            grouping: None,
-            wallet: TransactionWallet::User,
             protocol: Protocol::IC(ic_transaction),
+            group: None,
+            from_call_type: FromCallType::Wallet,
+            start_ts: None,
         };
 
         Ok(vec![transaction])
@@ -69,9 +73,11 @@ impl IcAdapter {
             created_at: ts,
             state: TransactionState::Created,
             dependency: None,
-            grouping: None,
-            wallet: TransactionWallet::User,
+
             protocol: Protocol::IC(ic_approve_tx),
+            group: None,
+            from_call_type: FromCallType::Wallet,
+            start_ts: None,
         };
 
         let icrc2_transfer_from = Icrc2TransferFrom {
@@ -80,6 +86,9 @@ impl IcAdapter {
             spender: transfer_intent.spender,
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
+            ts: Some(ts),
+            //TODO: update memo
+            memo: None,
         };
         let ic_transfer_from_tx = IcTransaction::Icrc2TransferFrom(icrc2_transfer_from);
         let transfer_from_tx = Transaction {
@@ -87,9 +96,10 @@ impl IcAdapter {
             created_at: ts,
             state: TransactionState::Created,
             dependency: Some(vec![approve_tx.id.clone()]),
-            grouping: None,
-            wallet: TransactionWallet::User,
             protocol: Protocol::IC(ic_transfer_from_tx),
+            group: None,
+            from_call_type: FromCallType::Wallet,
+            start_ts: None,
         };
 
         Ok(vec![approve_tx, transfer_from_tx])

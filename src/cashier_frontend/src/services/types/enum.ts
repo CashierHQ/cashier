@@ -30,6 +30,11 @@ export enum INTENT_STATE {
     TIMEOUT = "Intent_state_timeout",
 }
 
+export enum INTENT_TYPE {
+    TRANSFER_FROM = "TransferFrom",
+    TRANSFER = "Transfer",
+}
+
 export enum LINK_ASSET_TYPE {
     CASHIER_FEE = "CashierFee",
     ASSET_ADDED = "Asset",
@@ -71,8 +76,8 @@ export enum TASK {
 
 export enum ACTION_TYPE {
     CREATE_LINK = "CreateLink",
-    WITHDRAW_LINK = "WitHDrawLink",
-    CLAIM_LINK = "ClaimLink",
+    WITHDRAW_LINK = "Withdraw",
+    CLAIM_LINK = "Claim",
 }
 
 export enum IC_TRANSACTION_PROTOCAL {

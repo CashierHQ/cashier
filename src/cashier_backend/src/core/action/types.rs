@@ -4,27 +4,34 @@ use candid::CandidType;
 use cashier_types::Intent;
 use serde::{Deserialize, Serialize};
 
-use crate::types::consent_messsage::{Fee, Receive, Send};
+use crate::types::icrc_112_transaction::Icrc112Requests;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
     pub action_type: String,
-    pub params: Option<CreateIntentParams>,
+    pub params: Option<HashMap<String, String>>,
     pub link_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct UpdateActionInput {
     pub link_id: String,
-    pub intent_id: String,
-    pub icrc112_responses: Option<Vec<String>>,
+    pub action_id: String,
+    pub external: bool,
 }
 
+// #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+// pub struct UpdateActionInput {
+//     pub link_id: String,
+//     pub action_id: String,
+// }
+
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct CreateIntentConsent {
-    pub receive: Vec<Receive>,
-    pub send: Vec<Send>,
-    pub fee: Vec<Fee>,
+pub struct ProcessActionInput {
+    pub link_id: String,
+    pub action_type: String,
+    pub action_id: String,
+    pub params: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -34,13 +41,13 @@ pub struct ClaimIntentParams {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 
-pub enum CreateIntentParams {
+pub enum CreateActionParams {
     Claim(ClaimIntentParams),
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ConfirmActionInput {
-    pub intent_id: String,
+    pub action_id: String,
     pub link_id: String,
 }
 
@@ -56,6 +63,7 @@ pub struct ActionDto {
     pub state: String,
     pub creator: String,
     pub intents: Vec<IntentDto>,
+    pub icrc_112_requests: Option<Icrc112Requests>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -102,6 +110,7 @@ impl ActionDto {
             state: action.state.to_string(),
             creator: action.creator,
             intents: intents_dto,
+            icrc_112_requests: None,
         }
     }
 
@@ -109,6 +118,7 @@ impl ActionDto {
         action: cashier_types::Action,
         intents: Vec<Intent>,
         intent_hashmap: HashMap<String, Vec<cashier_types::Transaction>>,
+        icrc_112_requests: Option<Icrc112Requests>,
     ) -> Self {
         let intents_dto = intents
             .into_iter()
@@ -124,6 +134,7 @@ impl ActionDto {
             state: action.state.to_string(),
             creator: action.creator,
             intents: intents_dto,
+            icrc_112_requests,
         }
     }
 }

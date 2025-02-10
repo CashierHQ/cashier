@@ -1,5 +1,5 @@
 import { IC_TRANSACTION_PROTOCAL, TRANSACTION_STATE, WALLET } from "./enum";
-import { AssetModel, WalletModel } from "./refractor.intent.service.types";
+import { AssetModel, WalletModel } from "./intent.service.types";
 
 export type TransactionModel = {
     id: string;
