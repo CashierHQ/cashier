@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use ic_stable_structures::{
     memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap, Storable,
 };
@@ -5,7 +7,7 @@ use ic_stable_structures::{
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 pub trait Store<K, V> {
-    fn get_range(&self, start: K, end: Option<K>) -> Vec<V>;
+    fn get_range1(&self, start: K, end: Option<K>) -> Vec<V>;
     fn batch_get(&self, keys: Vec<K>) -> Vec<V>;
     fn batch_create(&mut self, values: Vec<(K, V)>);
     fn is_exist(&self, key: &K) -> bool;
@@ -16,11 +18,10 @@ where
     K: Ord + Clone + Storable,
     V: Clone + Storable,
 {
-    fn get_range(&self, start: K, end: Option<K>) -> Vec<V> {
-        if end.is_none() {
-            return self.range(start..).map(|(_, v)| v).collect();
-        } else {
-            self.range(start..end.unwrap()).map(|(_, v)| v).collect()
+    fn get_range1(&self, start: K, end: Option<K>) -> Vec<V> {
+        match end {
+            Some(end) => self.range(start..end).map(|(_, v)| v).collect(),
+            None => self.range(start..).map(|(_, v)| v).collect(),
         }
     }
 

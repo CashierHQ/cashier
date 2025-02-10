@@ -1,6 +1,6 @@
 use cashier_types::{
-    Chain, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent, IntentTask,
-    IntentType, Protocol, Transaction, TransactionState, TransactionWallet, TransferFromIntent,
+    Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
+    IntentTask, IntentType, Protocol, Transaction, TransactionState, TransferFromIntent,
     TransferIntent,
 };
 use uuid::Uuid;
@@ -46,10 +46,10 @@ impl IcAdapter {
             created_at: ts,
             state: TransactionState::Created,
             dependency: None,
-            grouping: None,
-            wallet: TransactionWallet::User,
             protocol: Protocol::IC(ic_transaction),
-            timeout: None,
+            group: None,
+            from_call_type: FromCallType::Wallet,
+            start_ts: None,
         };
 
         Ok(vec![transaction])
@@ -73,10 +73,11 @@ impl IcAdapter {
             created_at: ts,
             state: TransactionState::Created,
             dependency: None,
-            grouping: None,
-            wallet: TransactionWallet::User,
+
             protocol: Protocol::IC(ic_approve_tx),
-            timeout: None,
+            group: None,
+            from_call_type: FromCallType::Wallet,
+            start_ts: None,
         };
 
         let icrc2_transfer_from = Icrc2TransferFrom {
@@ -95,10 +96,10 @@ impl IcAdapter {
             created_at: ts,
             state: TransactionState::Created,
             dependency: Some(vec![approve_tx.id.clone()]),
-            grouping: None,
-            wallet: TransactionWallet::User,
             protocol: Protocol::IC(ic_transfer_from_tx),
-            timeout: None,
+            group: None,
+            from_call_type: FromCallType::Wallet,
+            start_ts: None,
         };
 
         Ok(vec![approve_tx, transfer_from_tx])

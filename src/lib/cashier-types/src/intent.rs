@@ -20,7 +20,7 @@ pub struct Intent {
     pub r#type: IntentType,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum IntentState {
     Created,
     Processing,
@@ -57,7 +57,7 @@ pub enum IntentTask {
     TransferWalletToLink,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 #[storable]
 pub struct IntentTransaction {
     pub intent_id: String,

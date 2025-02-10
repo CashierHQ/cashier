@@ -3,12 +3,13 @@ use std::str::FromStr;
 use cashier_types::ActionType;
 use ic_cdk::update;
 
+use crate::core::guard::is_not_anonymous;
 use crate::{
-    core::{action::types::ActionDto, guard::is_not_anonymous, CanisterError, ProcessActionInput},
+    core::{action::types::ActionDto, CanisterError},
     services::{self, link::is_link_creator},
 };
 
-use super::types::CreateActionInput;
+use super::types::{CreateActionInput, UpdateActionInput};
 
 pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
     let caller = ic_cdk::api::caller();
@@ -36,22 +37,14 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
 }
 
 #[update(guard = "is_not_anonymous")]
-pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
-    let caller: candid::Principal = ic_cdk::api::caller();
-
-    if input.action_id.is_empty() {
-        return create_action(CreateActionInput {
-            action_type: input.action_type.clone(),
-            link_id: input.link_id.clone(),
-            params: input.params.clone(),
-        })
-        .await;
-    } else {
-        // TODO: Call the process_action of the transaction_manager
-        return Err(CanisterError::ValidationErrors(
-            "not implemented".to_string(),
-        ));
-    }
+pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
+    services::transaction_manager::update_action::update_action(
+        input.action_id,
+        input.link_id,
+        input.external,
+    )
+    .await
+    .map_err(|e| CanisterError::HandleLogicError(format!("Failed to update action: {}", e)))
 }
 
 // pub async fn update_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {

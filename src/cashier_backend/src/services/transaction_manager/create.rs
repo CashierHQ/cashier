@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     core::action::types::{ActionDto, CreateActionInput},
+    info,
     repositories::{self, link, user_wallet},
     types::error::CanisterError,
 };
@@ -84,6 +85,10 @@ pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, C
         intent_tx_hashmap.insert(intent.id.clone(), transactions);
     }
 
+    info!("action {:#?}", action);
+    info!("intents {:#?}", intents);
+    info!("intent_tx_hashmap {:#?}", intent_tx_hashmap);
+
     let _ = store_records(
         link_action,
         action.clone(),
@@ -140,13 +145,6 @@ fn store_records(
     repositories::intent::batch_create(intents);
     repositories::intent_transaction::batch_create(intent_transactions);
     repositories::transaction::batch_create(transactions);
-
-    // Store all records
-    // let _ = intent::create(new_intent.to_persistence());
-    // let _ = transaction::batch_create(transactions_persistence);
-    // let _ = intent_transaction::batch_create(intent_transactions_persistence);
-    // let _ = link_intent_store::create(new_link_intent.to_persistence());
-    // let _ = user_action::create(user_intent.to_persistence());
 
     Ok(())
 }

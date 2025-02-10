@@ -1,17 +1,15 @@
 use std::collections::HashMap;
 
-use cashier_types::{Action, Intent, Transaction};
+use crate::{info, repositories};
 
-use crate::repositories;
-
-pub struct GetResponse {
-    pub action: Action,
-    pub intents: Vec<Intent>,
-    // store by intent_id for easy lookup
-    pub transactions: HashMap<String, Vec<Transaction>>,
+#[derive(Debug, Clone)]
+pub struct ActionResp {
+    pub action: cashier_types::Action,
+    pub intents: Vec<cashier_types::Intent>,
+    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
 }
 
-pub fn get(action_id: String) -> Option<GetResponse> {
+pub fn get(action_id: String) -> Option<ActionResp> {
     let action = repositories::action::get(action_id.clone());
 
     if action.is_none() {
@@ -43,11 +41,13 @@ pub fn get(action_id: String) -> Option<GetResponse> {
         transactions_hashmap.insert(intent.id.clone(), transactions);
     }
 
-    return Some(GetResponse {
+    return Some(ActionResp {
         action: action.unwrap(),
         intents,
-        transactions: transactions_hashmap,
+        intent_txs: transactions_hashmap,
     });
 }
 
+pub mod flatten_tx_hashmap;
+pub mod get_action_by_tx_id;
 pub mod roll_up_state;
