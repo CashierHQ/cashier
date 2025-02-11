@@ -22,7 +22,7 @@ export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
 export const useConfirmButtonState = (intentState: string | undefined) => {
     const { t } = useTranslation();
 
-    const mapIntentStateToButtonText = () => {
+    const mapActionStateToButtonText = () => {
         switch (intentState) {
             case ACTION_STATE.CREATED:
                 return t("transaction.confirm_popup.confirm_button");
@@ -37,7 +37,7 @@ export const useConfirmButtonState = (intentState: string | undefined) => {
         }
     };
 
-    const mapIntentStateToButtonDisabled = () => {
+    const mapActionStateToButtonDisabled = () => {
         switch (intentState) {
             case ACTION_STATE.CREATED:
             case ACTION_STATE.SUCCESS:
@@ -51,7 +51,7 @@ export const useConfirmButtonState = (intentState: string | undefined) => {
     };
 
     return {
-        disabled: mapIntentStateToButtonDisabled(),
-        text: mapIntentStateToButtonText(),
+        disabled: mapActionStateToButtonDisabled(),
+        text: mapActionStateToButtonText(),
     };
 };

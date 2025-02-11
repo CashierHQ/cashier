@@ -56,22 +56,21 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     return (
         <Drawer open={open}>
             <DrawerContent className="max-w-[400px] mx-auto p-3">
+                <DrawerHeader>
+                    <DrawerTitle className="flex justify-center items-center">
+                        <div className="text-center w-[100%]">
+                            {t("transaction.confirm_popup.title")}
+                        </div>
+
+                        <IoIosClose
+                            onClick={onClose}
+                            className="ml-auto cursor-pointer"
+                            size={32}
+                        />
+                    </DrawerTitle>
+                </DrawerHeader>
                 {data ? (
                     <>
-                        <DrawerHeader>
-                            <DrawerTitle className="flex justify-center items-center">
-                                <div className="text-center w-[100%]">
-                                    {t("transaction.confirm_popup.title")}
-                                </div>
-
-                                <IoIosClose
-                                    onClick={onClose}
-                                    className="ml-auto cursor-pointer"
-                                    size={32}
-                                />
-                            </DrawerTitle>
-                        </DrawerHeader>
-
                         <ConfirmationPopupAssetsSection
                             intents={primaryIntents}
                             onInfoClick={onInfoClick}
