@@ -10,7 +10,7 @@ import { TokenUtilService } from "@/services/tokenUtils.service";
 import { mapAPITokenModelToAssetSelectModel } from "@/services/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import * as z from "zod";
-import { TokenProviderService } from "@/services/tokenProvider";
+import { TokenProviderService } from "@/services/tokenProviderService";
 import { useWalletAddress } from "@/hooks/useWalletAddress";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 

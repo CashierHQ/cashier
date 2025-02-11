@@ -11,6 +11,7 @@ import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
+    generateMockAction,
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
@@ -90,15 +91,19 @@ class LinkService {
     }
 
     async createAction(input: CreateActionInputModel): Promise<ActionModel> {
-        const inputModel: ProcessActionInput = {
-            action_id: "",
-            link_id: input.linkId,
-            action_type: input.actionType,
-            params: [],
-        };
-        const response = parseResultResponse(await this.actor.process_action(inputModel));
-        const action = mapActionModel(response);
-        return action;
+        // const inputModel: ProcessActionInput = {
+        //     action_id: "",
+        //     link_id: input.linkId,
+        //     action_type: input.actionType,
+        //     params: [],
+        // };
+        // const response = parseResultResponse(await this.actor.process_action(inputModel));
+        // const action = mapActionModel(response);
+        // console.log("created action", action);
+        // return action;
+
+        // INFO: use mock action to see usd conversion in action. Doesn't work with backend address;
+        return generateMockAction();
     }
 }
 
