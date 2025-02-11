@@ -14,6 +14,7 @@ import {
     useConfirmButtonState,
     usePrimaryIntents,
 } from "./confirmation-drawer.hooks";
+import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 
 export type ConfirmTransactionModel = {
     linkName?: string;
@@ -40,37 +41,42 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const { t } = useTranslation();
     const primaryIntents = usePrimaryIntents(data?.action?.intents);
     const cashierFeeIntents = useCashierFeeIntents(data?.action?.intents);
-    const { disabled, text } = useConfirmButtonState(data?.linkData.intent_create?.state);
-
+    const { disabled, text } = useConfirmButtonState(data?.action?.state);
     return (
         <Drawer open={open}>
             <DrawerContent className="max-w-[400px] mx-auto p-3">
-                <DrawerHeader>
-                    <DrawerTitle className="flex justify-center items-center">
-                        <div className="text-center w-[100%]">
-                            {t("transaction.confirm_popup.title")}
-                        </div>
+                {data ? (
+                    <>
+                        <DrawerHeader>
+                            <DrawerTitle className="flex justify-center items-center">
+                                <div className="text-center w-[100%]">
+                                    {t("transaction.confirm_popup.title")}
+                                </div>
 
-                        <IoIosClose
-                            onClick={onClose}
-                            className="ml-auto cursor-pointer"
-                            size={32}
+                                <IoIosClose
+                                    onClick={onClose}
+                                    className="ml-auto cursor-pointer"
+                                    size={32}
+                                />
+                            </DrawerTitle>
+                        </DrawerHeader>
+
+                        <ConfirmationPopupAssetsSection
+                            intents={primaryIntents}
+                            onInfoClick={onInfoClick}
                         />
-                    </DrawerTitle>
-                </DrawerHeader>
 
-                <ConfirmationPopupAssetsSection
-                    intents={primaryIntents}
-                    onInfoClick={onInfoClick}
-                />
+                        <ConfirmationPopupFeesSection intents={cashierFeeIntents} />
 
-                <ConfirmationPopupFeesSection intents={cashierFeeIntents} />
+                        <ConfirmationPopupLegalSection />
 
-                <ConfirmationPopupLegalSection />
-
-                <Button disabled={disabled} onClick={onConfirm}>
-                    {text}
-                </Button>
+                        <Button disabled={disabled} onClick={onConfirm}>
+                            {text}
+                        </Button>
+                    </>
+                ) : (
+                    <ConfirmationPopupSkeleton />
+                )}
             </DrawerContent>
         </Drawer>
     );

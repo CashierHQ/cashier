@@ -69,7 +69,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     useEffect(() => {
         if (linkData) {
-            const { link, intent_create, action } = linkData;
+            const { link, action } = linkData;
 
             if (link && link.state) {
                 const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
@@ -79,12 +79,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             }
 
             if (action) {
-                console.log("🚀 ~ useEffect ~ action:", action);
-                setLinkAction(action);
-            }
-
-            if (intent_create && action) {
-                setIntentCreate(intent_create);
                 setLinkAction(action);
                 setTransactionConfirmModel(
                     (prevModel) =>
@@ -164,33 +158,38 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleCreateAction = async (linkService: LinkService) => {
-        const input: CreateActionInputModel = {
-            linkId: linkId ?? "",
-            actionType: ACTION_TYPE.CREATE_LINK,
-        };
-        const action = await linkService.createAction(input);
-
-        if (action) {
-            setLinkAction(action);
-        }
-
-        if (action) {
+        if (linkAction) {
             const transactionConfirmObj: ConfirmTransactionModel = {
                 linkName: formData.title ?? "",
                 linkData: linkData!,
                 transactions: intentCreate?.transactions,
-                action: action,
+                action: linkAction,
             };
             setTransactionConfirmModel(transactionConfirmObj);
+        } else {
+            const input: CreateActionInputModel = {
+                linkId: linkId ?? "",
+                actionType: ACTION_TYPE.CREATE_LINK,
+            };
+            const action = await linkService.processAction(input);
+
+            if (action) {
+                setLinkAction(action);
+                const transactionConfirmObj: ConfirmTransactionModel = {
+                    linkName: formData.title ?? "",
+                    linkData: linkData!,
+                    transactions: intentCreate?.transactions,
+                    action: action,
+                };
+                setTransactionConfirmModel(transactionConfirmObj);
+            }
         }
     };
 
     // User click "Create" button
     const handleSubmit = async () => {
         if (!linkId) return;
-
         const validationResult = true;
-
         try {
             if (validationResult) {
                 const linkService = new LinkService(identity);
@@ -258,12 +257,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const startTransaction = async () => {
-        const intentService = new IntentService(identity);
-
-        const confirmItemResult = await intentService.confirmIntent(
-            linkId ?? "",
-            intentCreate?.id ?? "",
-        );
+        const input: CreateActionInputModel = {
+            linkId: linkId ?? "",
+            actionType: ACTION_TYPE.CREATE_LINK,
+            actionId: linkAction?.id,
+        };
+        const linkService = new LinkService(identity);
+        const action = await linkService.processAction(input);
+        console.log("🚀 ~ startTransaction ~ action:", action);
 
         // TODO: Temporary comment out these lines and will update later
         // if (confirmItemResult?.transactions) {
@@ -275,7 +276,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         //                 transactions: confirmItemResult?.transactions,
         //             }) as IntentCreateModel,
         //     );
-
         //     setTransactionConfirmModel(
         //         (prevModel) =>
         //             ({
@@ -283,7 +283,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         //                 transactions: confirmItemResult?.transactions,
         //             }) as ConfirmTransactionModel,
         //     );
-
         //     console.log("Call canister transfer");
         //     const result = await callExecute(intentCreate?.transactions, identity);
         //     if (result) {
@@ -300,21 +299,20 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     // Handle submit action in confirm transaction dialog
-    const handleConfirmTransactions = async () => {
+    const handleAction = async () => {
         if (!linkId && !intentCreate?.id) return;
-
-        // console.log("Call confirm");
-        // try {
-        //     if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
-        //         await handleUpdateLinkToActive();
-        //     } else if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
-        //         handleRetryTransactions();
-        //     } else {
-        //         await startTransaction();
-        //     }
-        // } catch (err) {
-        //     console.error(err);
-        // }
+        try {
+            if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
+                await handleUpdateLinkToActive();
+            } else if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
+                handleRetryTransactions();
+            } else {
+                console.log("Confirm action");
+                await startTransaction();
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const handleBackstep = async () => {
@@ -355,7 +353,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     handleChange={handleChange}
                     handleBackStep={handleBackstep}
                     isDisabled={isDisabled}
-                    actionCreate={intentCreate}
+                    action={linkAction}
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}
@@ -381,7 +379,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                                 {...props}
                                 action={linkAction}
                                 data={transactionConfirmModel}
-                                onConfirm={handleConfirmTransactions}
+                                onConfirm={handleAction}
                             />
                         )}
                     />

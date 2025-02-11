@@ -26,6 +26,7 @@ interface ReponseLinksModel {
 export interface CreateActionInputModel {
     linkId: string;
     actionType: string;
+    actionId?: string;
 }
 
 class LinkService {
@@ -89,9 +90,9 @@ class LinkService {
         return false;
     }
 
-    async createAction(input: CreateActionInputModel): Promise<ActionModel> {
+    async processAction(input: CreateActionInputModel): Promise<ActionModel> {
         const inputModel: ProcessActionInput = {
-            action_id: "",
+            action_id: input.actionId ?? "",
             link_id: input.linkId,
             action_type: input.actionType,
             params: [],

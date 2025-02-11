@@ -1,4 +1,4 @@
-import { INTENT_STATE, TASK } from "@/services/types/enum";
+import { ACTION_STATE, INTENT_STATE, TASK } from "@/services/types/enum";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,14 +24,13 @@ export const useConfirmButtonState = (intentState: string | undefined) => {
 
     const mapIntentStateToButtonText = () => {
         switch (intentState) {
-            case INTENT_STATE.CREATED:
+            case ACTION_STATE.CREATED:
                 return t("transaction.confirm_popup.confirm_button");
-            case INTENT_STATE.PROCESSING:
-            case INTENT_STATE.TIMEOUT:
+            case ACTION_STATE.PROCESSING:
                 return t("transaction.confirm_popup.inprogress_button");
-            case INTENT_STATE.FAIL:
+            case ACTION_STATE.FAIL:
                 return t("retry");
-            case INTENT_STATE.SUCCESS:
+            case ACTION_STATE.SUCCESS:
                 return t("continue");
             default:
                 return t("transaction.confirm_popup.confirm_button");
@@ -40,12 +39,11 @@ export const useConfirmButtonState = (intentState: string | undefined) => {
 
     const mapIntentStateToButtonDisabled = () => {
         switch (intentState) {
-            case INTENT_STATE.CREATED:
-            case INTENT_STATE.SUCCESS:
-            case INTENT_STATE.FAIL:
+            case ACTION_STATE.CREATED:
+            case ACTION_STATE.SUCCESS:
+            case ACTION_STATE.FAIL:
                 return false;
-            case INTENT_STATE.PROCESSING:
-            case INTENT_STATE.TIMEOUT:
+            case ACTION_STATE.PROCESSING:
                 return true;
             default:
                 return true;
