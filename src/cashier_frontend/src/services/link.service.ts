@@ -5,6 +5,7 @@ import {
     CreateLinkInput,
     LinkDto,
     ProcessActionInput,
+    UpdateActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
@@ -27,6 +28,12 @@ export interface CreateActionInputModel {
     linkId: string;
     actionType: string;
     actionId?: string;
+}
+
+export interface UpdateActionInputModel {
+    actionId: string;
+    linkId: string;
+    external: boolean;
 }
 
 class LinkService {
@@ -100,6 +107,18 @@ class LinkService {
         const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         return action;
+    }
+
+    async updateAction(inputModel: UpdateActionInputModel) {
+        const input: UpdateActionInput = {
+            action_id: inputModel.actionId,
+            link_id: inputModel.linkId,
+            external: inputModel.external ?? true,
+        };
+        const response = parseResultResponse(await this.actor.update_action(input));
+        const action = mapActionModel(response);
+        return action;
+        return response;
     }
 }
 

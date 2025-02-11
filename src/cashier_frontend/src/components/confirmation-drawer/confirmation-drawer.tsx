@@ -1,7 +1,7 @@
 import { TransactionModel } from "@/services/types/intent.service.types";
 import { LinkModel } from "@/services/types/link.service.types";
 import { ActionModel } from "@/services/types/action.service.types";
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
@@ -42,6 +42,17 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const primaryIntents = usePrimaryIntents(data?.action?.intents);
     const cashierFeeIntents = useCashierFeeIntents(data?.action?.intents);
     const { disabled, text } = useConfirmButtonState(data?.action?.state);
+    const [isDisabled, setIsDisabled] = useState(disabled);
+
+    const onClickSubmit = () => {
+        setIsDisabled(true);
+        onConfirm();
+    };
+
+    useEffect(() => {
+        setIsDisabled(disabled);
+    }, [disabled]);
+
     return (
         <Drawer open={open}>
             <DrawerContent className="max-w-[400px] mx-auto p-3">
@@ -70,7 +81,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
                         <ConfirmationPopupLegalSection />
 
-                        <Button disabled={disabled} onClick={onConfirm}>
+                        <Button disabled={isDisabled} onClick={onClickSubmit}>
                             {text}
                         </Button>
                     </>

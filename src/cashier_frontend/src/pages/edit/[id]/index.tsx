@@ -6,7 +6,10 @@ import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentity } from "@nfid/identitykit/react";
-import LinkService, { CreateActionInputModel } from "@/services/link.service";
+import LinkService, {
+    CreateActionInputModel,
+    UpdateActionInputModel,
+} from "@/services/link.service";
 import { useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
@@ -264,34 +267,28 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         };
         const linkService = new LinkService(identity);
         const action = await linkService.processAction(input);
-        console.log("🚀 ~ startTransaction ~ action:", action);
-
-        // TODO: Temporary comment out these lines and will update later
-        // if (confirmItemResult?.transactions) {
-        //     // Change transaction status to processing
-        //     setIntentCreate(
-        //         (prev) =>
-        //             ({
-        //                 ...prev,
-        //                 transactions: confirmItemResult?.transactions,
-        //             }) as IntentCreateModel,
-        //     );
-        //     setTransactionConfirmModel(
-        //         (prevModel) =>
-        //             ({
-        //                 ...prevModel,
-        //                 transactions: confirmItemResult?.transactions,
-        //             }) as ConfirmTransactionModel,
-        //     );
-        //     console.log("Call canister transfer");
-        //     const result = await callExecute(intentCreate?.transactions, identity);
-        //     if (result) {
-        //         console.log(
-        //             "Canister service call complete. Now re-fetch the link data to get the intent.",
-        //         );
-        //         refetch();
-        //     }
-        // }
+        console.log("🚀 ~ Action response after calling process_action ~ action:", action);
+        if (action) {
+            setLinkAction(action);
+            const transactionConfirmObj: ConfirmTransactionModel = {
+                linkName: formData.title ?? "",
+                linkData: linkData!,
+                transactions: intentCreate?.transactions,
+                action: action,
+            };
+            setTransactionConfirmModel(transactionConfirmObj);
+        }
+        setTimeout(async () => {
+            console.log("Calling update action");
+            const inputModel: UpdateActionInputModel = {
+                actionId: action.id,
+                linkId: linkId ?? "",
+                external: true,
+            };
+            const linkService = new LinkService(identity);
+            const actionRes = await linkService.updateAction(inputModel);
+            console.log("🚀 ~ setTimeout ~ actionRes:", actionRes);
+        }, 18000);
     };
 
     const handleRetryTransactions = () => {
