@@ -19,7 +19,13 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getResponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { ACTION_TYPE, INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import {
+    ACTION_STATE,
+    ACTION_TYPE,
+    INTENT_STATE,
+    LINK_STATE,
+    LINK_TYPE,
+} from "@/services/types/enum";
 import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
 import IntentService from "@/services/intent.service";
 import SignerService from "@/services/signer.service";
@@ -246,6 +252,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleUpdateLinkToActive = async () => {
+        console.log("Update link to active");
         const updateLinkParams: UpdateLinkParams = {
             linkId: linkId ?? "",
             linkModel: {
@@ -291,8 +298,18 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             };
             const linkService = new LinkService(identity);
             const actionRes = await linkService.updateAction(inputModel);
+            if (actionRes) {
+                setLinkAction(actionRes);
+                const transactionConfirmObj: ConfirmTransactionModel = {
+                    linkName: formData.title ?? "",
+                    linkData: linkData!,
+                    transactions: intentCreate?.transactions,
+                    action: actionRes,
+                };
+                setTransactionConfirmModel(transactionConfirmObj);
+            }
             console.log("🚀 ~ setTimeout ~ actionRes:", actionRes);
-        }, 18000);
+        }, 15000);
     };
 
     const handleRetryTransactions = () => {
@@ -301,11 +318,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     // Handle submit action in confirm transaction dialog
     const handleAction = async () => {
-        if (!linkId && !intentCreate?.id) return;
+        if (!linkId) return;
         try {
-            if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
+            if (linkAction?.state === ACTION_STATE.SUCCESS) {
                 await handleUpdateLinkToActive();
-            } else if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
+            } else if (linkAction?.state === ACTION_STATE.FAIL) {
                 handleRetryTransactions();
             } else {
                 console.log("Confirm action");

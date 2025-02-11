@@ -118,7 +118,6 @@ class LinkService {
         const response = parseResultResponse(await this.actor.update_action(input));
         const action = mapActionModel(response);
         return action;
-        return response;
     }
 }
 
