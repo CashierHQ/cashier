@@ -30,6 +30,7 @@ import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
+import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -224,7 +225,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const callExecute = async (
-        transactions: TransactionModel[][] | undefined,
+        transactions: Icrc112RequestModel[][] | undefined,
         identity: Identity | undefined,
     ) => {
         if (!identity) return;
@@ -233,10 +234,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
         try {
             const signerService = new SignerService(identity);
-            const icrcxRequests = transactions.map((subTrans) => {
-                return subTrans.map((tx) => toCanisterCallRequest(tx));
-            });
-            const res = await signerService.icrcxExecute(icrcxRequests);
+            const res = await signerService.icrcxExecute(transactions);
             return res;
         } catch (err) {
             console.log(err);
@@ -278,6 +276,12 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             };
             setTransactionConfirmModel(transactionConfirmObj);
         }
+
+        // Calling execute after process_action
+        // const icrc112ExecuteRes = await callExecute(action.icrc112Requests, identity);
+        // console.log("🚀 ~ startTransaction ~ icrc112ExecuteRes:", icrc112ExecuteRes);
+
+        // TODO: Remove after demo
         setTimeout(async () => {
             console.log("Calling update action");
             const inputModel: UpdateActionInputModel = {
