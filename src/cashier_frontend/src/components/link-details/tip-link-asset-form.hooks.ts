@@ -1,8 +1,7 @@
 import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
-import { ConversionRates, UsdConversionService } from "@/services/usdConversion.service";
+import { UsdConversionService } from "@/services/usdConversionService";
 import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@nfid/identitykit/react";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useEffect, useMemo, useState } from "react";
@@ -12,6 +11,8 @@ import { mapAPITokenModelToAssetSelectModel } from "@/services/icExplorer.servic
 import { useIdentity } from "@nfid/identitykit/react";
 import * as z from "zod";
 import { TokenProviderService } from "@/services/tokenProvider";
+import { useWalletAddress } from "@/hooks/useWalletAddress";
+import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 
 export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
     return z
@@ -34,7 +35,6 @@ export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
                     message: "Must input number",
                     path: ["usdNumber"],
                 });
-
                 ctx.addIssue({
                     code: "custom",
                     message: "Must input number",
@@ -50,7 +50,6 @@ export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
                     message: "Your balance is not enough",
                     path: ["assetNumber"],
                 });
-
                 ctx.addIssue({
                     code: "custom",
                     message: "Your balance is not enough",
@@ -89,9 +88,11 @@ export function useTipLinkAssetForm(
 }
 
 export function useHandleSetAmount(form: UseFormReturn<TipLinkAssetFormSchema>) {
-    const conversionRates = useUsdConversionRates(form.getValues("tokenAddress"));
+    const { data: conversionRates } = useConversionRatesQuery(form.getValues("tokenAddress"));
 
     const handleSetAmount = (isUsd: boolean, value: string) => {
+        if (!conversionRates) return;
+
         const parsedValue = parseFloat(value);
         const factor = isUsd ? conversionRates.usdToToken : conversionRates.tokenToUsd;
         const primary = isUsd ? "usdNumber" : "assetNumber";
@@ -134,21 +135,6 @@ export function useHandleSetTokenAddress(
     };
 
     return handleSetTokenAddress;
-}
-
-export function useUsdConversionRates(asset: string | undefined) {
-    const walletAddress = useWalletAddress();
-
-    const [rates, setRates] = useState<ConversionRates>({
-        usdToToken: undefined,
-        tokenToUsd: undefined,
-    });
-
-    useEffect(() => {
-        UsdConversionService.getConversionRates(walletAddress, asset ?? "").then(setRates);
-    }, [walletAddress, asset]);
-
-    return rates;
 }
 
 export function useAssets() {
@@ -233,9 +219,4 @@ export function useSelectedAsset(
     }, [assets, tokenAddress]);
 
     return selectedAsset;
-}
-
-export function useWalletAddress() {
-    const { user } = useAuth();
-    return user ? user.principal.toText() : "";
 }
