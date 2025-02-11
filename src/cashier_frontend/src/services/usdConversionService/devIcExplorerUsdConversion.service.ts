@@ -38,8 +38,6 @@ export class DevIcExplorerUsdConversionService implements IUsdConversionService 
     public async getConversionRates(_: string, address: string): Promise<ConversionRates> {
         const token = await this._getToken(address);
 
-        console.log("conversion for token", token?.symbol);
-
         if (!token) {
             return {
                 tokenToUsd: undefined,
