@@ -4,7 +4,7 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::utils::icrc::balance_of;
 
-pub async fn validate_balance_with_asset_info(link: Link, user: Principal) -> Result<(), String> {
+pub async fn validate_balance_with_asset_info(link: &Link, user: &Principal) -> Result<(), String> {
     let asset_info = link
         .asset_info
         .clone()
@@ -15,7 +15,7 @@ pub async fn validate_balance_with_asset_info(link: Link, user: Principal) -> Re
             .map_err(|e| format!("Error converting token address to principal: {:?}", e))?;
 
         let account = Account {
-            owner: user,
+            owner: *user,
             subaccount: None,
         };
 

@@ -1,7 +1,7 @@
 import { TransactionModel } from "@/services/types/intent.service.types";
 import { LinkModel } from "@/services/types/link.service.types";
-import { ActionModel } from "@/services/types/refractor.action.service.types";
 import { FC, useState } from "react";
+import { ActionModel } from "@/services/types/action.service.types";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";

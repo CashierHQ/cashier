@@ -1,47 +1,41 @@
 use std::time::Duration;
 
+use cashier_types::{action, ActionState};
 use ic_cdk::spawn;
 use ic_cdk_timers::set_timer;
 
 use crate::{
     constant::TX_TIMEOUT,
-    core::{action::types::ConfirmActionInput, link::types::IntentResp},
+    core::action::types::{ActionDto, ConfirmActionInput},
     info,
-    repositories::{intent, link, user_wallet},
-    services::{link::is_link_creator, transaction_manager::update::timeout_intent},
-    types::intent::{IntentState, IntentType},
+    repositories::{self, link, user_wallet},
+    services::link::is_link_creator,
 };
 
-use super::{
-    get::get_intent_resp, update::set_processing_intent, validate::validate_balance_with_asset_info,
-};
+use super::validate::validate_balance_with_asset_info;
 
-pub async fn confirm_intent(input: ConfirmActionInput) -> Result<IntentResp, String> {
+pub async fn confirm_action(input: ConfirmActionInput) -> Result<ActionDto, String> {
     // validate
     let link =
         link::get(&input.link_id).ok_or_else(|| "[confirm_intent] Link not found".to_string())?;
 
-    let intent = intent::get(&input.intent_id)
-        .ok_or_else(|| "[confirm_intent] Intent not found".to_string())?;
+    let action = repositories::action::get(input.action_id)
+        .ok_or_else(|| "[confirm_intent] Action not found".to_string())?;
 
     let caller = ic_cdk::api::caller();
 
-    let user_id = match user_wallet::get(&caller.to_text()) {
+    let user_wallet = match user_wallet::get(&caller.to_text()) {
         Some(id) => id,
         None => return Err("[confirm_intent] User not found".to_string()),
     };
 
-    if intent.creator_id != user_id {
-        return Err("[confirm_intent] Caller is not intent creator".to_string());
+    if action.creator != user_wallet.user_id {
+        return Err("[confirm_intent] Caller is not action creator".to_string());
     }
 
-    if intent.state != IntentState::Created.to_string() {
+    if action.state != ActionState::Created {
         return Err("[confirm_intent] Intent state is not Created".to_string());
     }
-
-    let intent_type = IntentType::from_string(&intent.intent_type)?;
-
-    let general_link = crate::types::link::Link::from_persistence(link);
 
     match intent_type {
         IntentType::Create => {
@@ -59,18 +53,18 @@ pub async fn confirm_intent(input: ConfirmActionInput) -> Result<IntentResp, Str
             validate_balance_with_asset_info(general_link.clone(), caller).await?;
 
             // set all to processing
-            set_processing_intent(input.intent_id.clone())?;
+            set_processing_intent(input.action_id.clone())?;
 
             let timeout = TX_TIMEOUT;
             let timeout_sec = timeout.parse::<u64>().unwrap_or(120);
 
-            info!("Set timer for intent {} {}", input.intent_id, timeout_sec);
+            info!("Set timer for intent {} {}", input.action_id, timeout_sec);
 
-            let id = input.intent_id.clone();
+            let id = input.action_id.clone();
 
             set_timer(Duration::from_secs(timeout_sec), move || {
                 spawn(async move {
-                    let _ = timeout_intent(&input.intent_id.clone());
+                    let _ = timeout_intent(&input.action_id.clone());
                 });
             });
 

@@ -10,5 +10,5 @@ pub fn get_intents_by_action_id(action_id: String) -> Vec<Intent> {
         .map(|action_intent| action_intent.intent_id.clone())
         .collect();
 
-    repositories::intent::get_batch(intent_ids)
+    repositories::intent::batch_get(intent_ids)
 }

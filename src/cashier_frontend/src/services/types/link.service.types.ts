@@ -1,5 +1,5 @@
 import { IntentCreateModel } from "./intent.service.types";
-import { ActionModel } from "./refractor.action.service.types";
+import { ActionModel } from "./action.service.types";
 
 export enum State {
     New = "New",

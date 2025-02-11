@@ -2,28 +2,30 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
-    // CreateActionInput,
     CreateLinkInput,
     LinkDto,
+    ProcessActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
-    generateMockAction,
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
 } from "./types/mapper/link.service.mapper";
-// import { CreateIntentConsentModel } from "./types/intent.service.types";
-// import { mapReceiveModel } from "./types/mapper/intent.service.mapper";
-import { ActionModel } from "./types/refractor.action.service.types";
+import { ActionModel } from "./types/action.service.types";
+import { mapActionModel } from "./types/mapper/action.service.mapper";
 
 interface ReponseLinksModel {
     data: LinkModel[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadada: any;
+}
+export interface CreateActionInputModel {
+    linkId: string;
+    actionType: string;
 }
 
 class LinkService {
@@ -60,13 +62,12 @@ class LinkService {
         return responseModel;
     }
 
-    async getLink(linkId: string) {
+    async getLink(linkId: string, actionType: string) {
         const response = parseResultResponse(
-            /* Do we need to pass the intent_type? */
             await this.actor.get_link(linkId, [
-                // {
-                //     action_type: "Create",
-                // },
+                {
+                    action_type: actionType,
+                },
             ]),
         );
         const result = await MapLinkDetailModel(response);
@@ -88,9 +89,16 @@ class LinkService {
         return false;
     }
 
-    async createAction(): Promise<ActionModel> {
-        //const response = parseResultResponse(await this.actor.create_intent(input));
-        return generateMockAction();
+    async createAction(input: CreateActionInputModel): Promise<ActionModel> {
+        const inputModel: ProcessActionInput = {
+            action_id: "",
+            link_id: input.linkId,
+            action_type: input.actionType,
+            params: [],
+        };
+        const response = parseResultResponse(await this.actor.process_action(inputModel));
+        const action = mapActionModel(response);
+        return action;
     }
 }
 
