@@ -62,8 +62,7 @@ export const generateMockAction = (): ActionModel => {
                             chain: "IC",
                         },
                         asset: {
-                            //address: "x5qut-viaaa-aaaar-qajda-cai", // private ICP address
-                            address: "ryjl3-tyaaa-aaaaa-aaaba-cai", // public ICP address
+                            address: "x5qut-viaaa-aaaar-qajda-cai",
                             chain: "IC",
                         },
                         amount: 250000000n,
@@ -85,7 +84,8 @@ export const generateMockAction = (): ActionModel => {
                     chain: CHAIN.IC,
                 },
                 asset: {
-                    address: "x5qut-viaaa-aaaar-qajda-cai",
+                    //address: "x5qut-viaaa-aaaar-qajda-cai", // private ICP address
+                    address: "ryjl3-tyaaa-aaaaa-aaaba-cai", // public ICP address
                     chain: "IC",
                 },
                 amount: 1000000n,

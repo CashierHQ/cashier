@@ -1,7 +1,7 @@
 import { TransactionModel } from "@/services/types/intent.service.types";
 import { LinkModel } from "@/services/types/link.service.types";
 import { ActionModel } from "@/services/types/refractor.action.service.types";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
@@ -41,6 +41,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const primaryIntents = usePrimaryIntents(data?.action?.intents);
     const cashierFeeIntents = useCashierFeeIntents(data?.action?.intents);
     const { disabled, text } = useConfirmButtonState(data?.linkData.intent_create?.state);
+    const [isUsd, setIsUsd] = useState(false);
 
     return (
         <Drawer open={open}>
@@ -62,9 +63,11 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 <ConfirmationPopupAssetsSection
                     intents={primaryIntents}
                     onInfoClick={onInfoClick}
+                    isUsd={isUsd}
+                    onUsdClick={() => setIsUsd((old) => !old)}
                 />
 
-                <ConfirmationPopupFeesSection intents={cashierFeeIntents} />
+                <ConfirmationPopupFeesSection intents={cashierFeeIntents} isUsd={isUsd} />
 
                 <ConfirmationPopupLegalSection />
 

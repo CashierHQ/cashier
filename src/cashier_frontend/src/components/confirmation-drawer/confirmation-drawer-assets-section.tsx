@@ -6,13 +6,15 @@ import { IntentModel } from "@/services/types/refractor.intent.service.types";
 
 type ConfirmationPopupAssetsSectionProps = {
     intents: IntentModel[];
-    onUsdClick?: () => void;
     onInfoClick?: () => void;
+    isUsd?: boolean;
+    onUsdClick?: () => void;
 };
 
 export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
     intents,
     onInfoClick,
+    isUsd,
     onUsdClick,
 }) => {
     const { t } = useTranslation();
@@ -40,6 +42,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                         <TransactionItem
                             title={t("transaction.confirm_popup.asset_label")}
                             intent={intent}
+                            isUsd={isUsd}
                         />
                     </li>
                 ))}
