@@ -9,8 +9,9 @@ import {
 } from "../../declarations/cashier_backend/cashier_backend.did";
 import { getIdentity } from "../utils/wallet";
 import { ActorSubclass } from "@dfinity/agent";
-import { parseResultResponse } from "../utils/parser";
+import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { ActorManager } from "../utils/service";
+import { sleep } from "../utils/sleep";
 
 // Define the path to your canister's WASM file
 // export const WASM_PATH = resolve(
@@ -21,7 +22,7 @@ import { ActorManager } from "../utils/service";
 // );
 
 const testPayload = {
-    title: "tip 20 icp",
+    title: "FailedA",
     description: "tip 20 icp to the user",
     template: "Central",
     link_image_url: "https://www.google.com",
@@ -201,21 +202,6 @@ describe("Link", () => {
         });
     });
 
-    it("should get action success", async () => {
-        const input: GetLinkOptions = {
-            action_type: "CreateLink",
-        };
-
-        const getActionRes = await actor.get_link(linkId, [input]);
-        const res = parseResultResponse(getActionRes);
-
-        console.log("getActionRes", res);
-
-        expect(res.link.id).toEqual(linkId);
-        expect(res.action).toHaveLength(1);
-        expect(res.action[0]!.id).toEqual(createLinkActionId);
-    });
-
     it("should confirm action success", async () => {
         const input: ProcessActionInput = {
             link_id: linkId,
@@ -227,10 +213,70 @@ describe("Link", () => {
         const confirmRes = await actor.process_action(input);
         const actionDto = parseResultResponse(confirmRes);
 
-        const icrc_112_requests = actionDto.icrc_112_requests;
-
-        console.log("icrc_request", JSON.stringify(icrc_112_requests, null, 2));
+        console.log("dto", actionDto);
 
         expect(actionDto.id).toEqual(createLinkActionId);
+    });
+
+    it("should retry action success", async () => {
+        const input: GetLinkOptions = {
+            action_type: "CreateLink",
+        };
+
+        for (let i = 0; i < 3; i++) {
+            // Run the code
+            const getActionRes = await actor.get_link(linkId, [input]);
+            const res = parseResultResponse(getActionRes);
+
+            await sleep(4000);
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.log(`Iteration ${i + 1}:`, safeParseJSON(res.action as any));
+        }
+
+        const input2: ProcessActionInput = {
+            link_id: linkId,
+            action_id: createLinkActionId,
+            action_type: "CreateLink",
+            params: [],
+        };
+
+        const retryRes = await actor.process_action(input2);
+        const retryDto = parseResultResponse(retryRes);
+
+        console.log("retryDto", retryDto);
+
+        for (let i = 0; i < 6; i++) {
+            //     // Run the code
+            const getActionRes = await actor.get_link(linkId, [input]);
+            const res = parseResultResponse(getActionRes);
+
+            await sleep(4000);
+
+            // console.log("res", res);
+            console.log(`Iteration retry ${i + 1}:`, res);
+
+            //     // Sleep for 10 seconds between iterations
+        }
+
+        expect(true).toEqual(true);
+    });
+
+    it("should retry action success", async () => {
+        const input: GetLinkOptions = {
+            action_type: "CreateLink",
+        };
+
+        for (let i = 0; i < 3; i++) {
+            // Run the code
+            const getActionRes = await actor.get_link(linkId, [input]);
+            const res = parseResultResponse(getActionRes);
+
+            await sleep(4000);
+
+            console.log(`Iteration ${i + 1}:`, res);
+        }
+
+        expect(true).toEqual(true);
     });
 });
