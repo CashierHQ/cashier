@@ -49,8 +49,6 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
     const handleSetAmount = useHandleSetAmount(form);
     const handleSetTokenAddress = useHandleSetTokenAddress(form, () => setShowAssetDrawer(false));
 
-    console.log(form.formState.errors);
-
     return (
         <div className="w-full">
             {isLoadingAssets ? (

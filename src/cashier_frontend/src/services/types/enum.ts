@@ -30,6 +30,13 @@ export enum INTENT_STATE {
     TIMEOUT = "Intent_state_timeout",
 }
 
+export enum ACTION_STATE {
+    CREATED = "Action_state_created",
+    PROCESSING = "Action_state_processing",
+    SUCCESS = "Action_state_success",
+    FAIL = "Action_state_fail",
+}
+
 export enum INTENT_TYPE {
     TRANSFER_FROM = "TransferFrom",
     TRANSFER = "Transfer",

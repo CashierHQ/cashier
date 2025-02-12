@@ -35,7 +35,6 @@ export function UserWalletTestForm(props: TestFormProps) {
                 walletAddress,
             );
             if (fetchedBalance) {
-                console.log("🚀 ~ handleSubmitForm ~ fetchedBalance:", fetchedBalance);
                 const parsedAmount = await TokenUtilService.getHumanReadableAmount(
                     fetchedBalance,
                     canisterId,
