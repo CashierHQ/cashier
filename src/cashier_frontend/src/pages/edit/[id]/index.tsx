@@ -234,17 +234,19 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         transactions: Icrc112RequestModel[][] | undefined,
         identity: Identity | undefined,
     ) => {
-        if (!identity) return;
-        if (!transactions || transactions.length === 0) {
-            return;
-        }
-        try {
-            const signerService = new SignerService(identity);
-            const res = await signerService.icrcxExecute(transactions);
-            return res;
-        } catch (err) {
-            console.log(err);
-        }
+        //TOODO: Remove after demo
+        console.log("CALLING MOCK EXECUTE ICRC-112");
+        // if (!identity) return;
+        // if (!transactions || transactions.length === 0) {
+        //     return;
+        // }
+        // try {
+        //     const signerService = new SignerService(identity);
+        //     const res = await signerService.icrcxExecute(transactions);
+        //     return res;
+        // } catch (err) {
+        //     console.log(err);
+        // }
     };
 
     const handleChange = (values: Partial<LinkDetailModel>) => {
@@ -252,7 +254,6 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const handleUpdateLinkToActive = async () => {
-        console.log("Update link to active");
         const updateLinkParams: UpdateLinkParams = {
             linkId: linkId ?? "",
             linkModel: {
@@ -285,12 +286,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
 
         // Calling execute after process_action
-        // const icrc112ExecuteRes = await callExecute(action.icrc112Requests, identity);
-        // console.log("🚀 ~ startTransaction ~ icrc112ExecuteRes:", icrc112ExecuteRes);
+        const icrc112ExecuteRes = await callExecute(action.icrc112Requests, identity);
 
         // TODO: Remove after demo
         setTimeout(async () => {
-            console.log("Calling update action");
+            console.log("CALLING UPDATE ACTION");
             const inputModel: UpdateActionInputModel = {
                 actionId: action.id,
                 linkId: linkId ?? "",
@@ -308,12 +308,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 };
                 setTransactionConfirmModel(transactionConfirmObj);
             }
-            console.log("🚀 ~ setTimeout ~ actionRes:", actionRes);
+            console.log("🚀 ~ Response as Action from update_action: ", actionRes);
         }, 15000);
-    };
-
-    const handleRetryTransactions = () => {
-        console.log("Retry");
     };
 
     // Handle submit action in confirm transaction dialog
@@ -321,11 +317,11 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) return;
         try {
             if (linkAction?.state === ACTION_STATE.SUCCESS) {
+                console.log("CLICKED SUBMIT BUTTON");
+                console.log("UPDATING LINK TO ACTIVE STATE...");
                 await handleUpdateLinkToActive();
-            } else if (linkAction?.state === ACTION_STATE.FAIL) {
-                handleRetryTransactions();
             } else {
-                console.log("Confirm action");
+                console.log("CLICKED SUBMIT BUTTON");
                 await startTransaction();
             }
         } catch (err) {
