@@ -77,11 +77,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         <ConfirmationPopupAssetsSection
                             intents={primaryIntents}
                             onInfoClick={onInfoClick}
-                        />
-
-                        <ConfirmationPopupAssetsSection
-                            intents={primaryIntents}
-                            onInfoClick={onInfoClick}
                             isUsd={isUsd}
                             onUsdClick={() => setIsUsd((old) => !old)}
                         />
