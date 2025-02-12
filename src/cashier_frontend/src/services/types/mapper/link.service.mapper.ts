@@ -6,67 +6,12 @@ import {
     UpdateLinkInput,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { LinkDetailModel, LinkModel } from "../link.service.types";
-import { ACTION_TYPE, CHAIN, INTENT_STATE, INTENT_TYPE, TASK, TEMPLATE } from "../enum";
+import { CHAIN, TEMPLATE } from "../enum";
 import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import { ActionModel } from "../action.service.types";
 import { mapActionModel } from "./action.service.mapper";
 
 const IS_USE_DEFAULT_LINK_TEMPLATE = true;
-
-export const generateMockAction = (): ActionModel => {
-    return {
-        id: "test111",
-        type: ACTION_TYPE.CREATE_LINK,
-        creator: "",
-        intents: [
-            {
-                id: "1111",
-                task: TASK.TRANSFER_WALLET_TO_LINK,
-                type: INTENT_TYPE.TRANSFER_FROM,
-                chain: CHAIN.IC,
-                state: INTENT_STATE.PROCESSING,
-                from: {
-                    address: "36nrw-cqcch-ea3si-53d3r-d4bep-vcvpf-jcuq7-dgaxh-bk3ss-4plti-5qe",
-                    chain: CHAIN.IC,
-                },
-                to: {
-                    address: "rdpcv-vctd4-hb7ni-cy5sq-kroai-ultcg-2dh2j-gqaxj-tczxw-reyry-2qe",
-                    chain: CHAIN.IC,
-                },
-                asset: {
-                    //address: "x5qut-viaaa-aaaar-qajda-cai", // private ICP address
-                    address: "ryjl3-tyaaa-aaaaa-aaaba-cai", // public ICP address
-                    chain: CHAIN.IC,
-                },
-                amount: 250000000n,
-                createdAt: new Date(),
-            },
-            {
-                id: "222",
-                type: INTENT_TYPE.TRANSFER,
-                task: TASK.TRANSFER_WALLET_TO_TREASURY,
-                chain: CHAIN.IC,
-                state: INTENT_STATE.SUCCESS,
-                from: {
-                    address: "36nrw-cqcch-ea3si-53d3r-d4bep-vcvpf-jcuq7-dgaxh-bk3ss-4plti-5qe",
-                    chain: CHAIN.IC,
-                },
-                to: {
-                    address: "rdpcv-vctd4-hb7ni-cy5sq-kroai-ultcg-2dh2j-gqaxj-tczxw-reyry-2qe",
-                    chain: CHAIN.IC,
-                },
-                asset: {
-                    //address: "x5qut-viaaa-aaaar-qajda-cai", // private ICP address
-                    address: "ryjl3-tyaaa-aaaaa-aaaba-cai", // public ICP address
-                    chain: "IC",
-                },
-                amount: 1000000n,
-                createdAt: new Date(),
-            },
-        ],
-    };
-};
 
 // Map front-end 'Link' model to back-end model
 export const MapLinkDetailModelToUpdateLinkInputModel = (

@@ -5,13 +5,13 @@ import {
     CreateLinkInput,
     LinkDto,
     ProcessActionInput,
+    UpdateActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import { LinkDetailModel, LinkModel } from "./types/link.service.types";
 import {
-    generateMockAction,
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
@@ -27,6 +27,13 @@ interface ReponseLinksModel {
 export interface CreateActionInputModel {
     linkId: string;
     actionType: string;
+    actionId?: string;
+}
+
+export interface UpdateActionInputModel {
+    actionId: string;
+    linkId: string;
+    external: boolean;
 }
 
 class LinkService {
@@ -90,20 +97,27 @@ class LinkService {
         return false;
     }
 
-    async createAction(input: CreateActionInputModel): Promise<ActionModel> {
-        // const inputModel: ProcessActionInput = {
-        //     action_id: "",
-        //     link_id: input.linkId,
-        //     action_type: input.actionType,
-        //     params: [],
-        // };
-        // const response = parseResultResponse(await this.actor.process_action(inputModel));
-        // const action = mapActionModel(response);
-        // console.log("created action", action);
-        // return action;
+    async processAction(input: CreateActionInputModel): Promise<ActionModel> {
+        const inputModel: ProcessActionInput = {
+            action_id: input.actionId ?? "",
+            link_id: input.linkId,
+            action_type: input.actionType,
+            params: [],
+        };
+        const response = parseResultResponse(await this.actor.process_action(inputModel));
+        const action = mapActionModel(response);
+        return action;
+    }
 
-        // INFO: use mock action to see usd conversion in action. Doesn't work with backend address;
-        return generateMockAction();
+    async updateAction(inputModel: UpdateActionInputModel) {
+        const input: UpdateActionInput = {
+            action_id: inputModel.actionId,
+            link_id: inputModel.linkId,
+            external: inputModel.external ?? true,
+        };
+        const response = parseResultResponse(await this.actor.update_action(input));
+        const action = mapActionModel(response);
+        return action;
     }
 }
 
