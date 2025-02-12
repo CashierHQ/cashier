@@ -5,14 +5,12 @@ use crate::constant::TX_TIMEOUT;
 mod validate_allowance;
 mod validate_balance_transfer;
 
-pub async fn manual_check_status(
-    transaction: &Transaction,
-) -> Result<Option<TransactionState>, String> {
+pub async fn manual_check_status(transaction: &Transaction) -> Result<TransactionState, String> {
     let ts = ic_cdk::api::time();
 
     // If the transaction is created, it means it never ran, so no need to check status
-    if transaction.state == TransactionState::Created {
-        return Ok(Some(TransactionState::Created));
+    if transaction.state != TransactionState::Processing {
+        return Ok(transaction.state.clone());
     }
 
     // Check if the transaction has timed out
@@ -20,11 +18,11 @@ pub async fn manual_check_status(
         // if timout is less than or equal to the current time, the transaction has timed out
         let tx_timeout = TX_TIMEOUT.parse::<u64>().unwrap();
         if start_ts - ts >= tx_timeout {
-            return Ok(Some(TransactionState::Fail));
+            return Ok(TransactionState::Fail);
         }
 
         if transaction.from_call_type == FromCallType::Wallet {
-            return Ok(Some(transaction.state.clone()));
+            return Ok(transaction.state.clone());
         }
     }
 
@@ -35,9 +33,9 @@ pub async fn manual_check_status(
                 validate_balance_transfer::validate_balance_transfer(&icrc1_transfer_info).await?;
 
             if is_valid {
-                return Ok(Some(TransactionState::Success));
+                return Ok(TransactionState::Success);
             } else {
-                return Ok(Some(TransactionState::Fail));
+                return Ok(TransactionState::Fail);
             }
         }
         // Check allowance for Icrc2Approve
@@ -45,15 +43,14 @@ pub async fn manual_check_status(
             let is_valid = validate_allowance::validate_allowance(&icrc2_approve_info).await?;
 
             if is_valid {
-                return Ok(Some(TransactionState::Success));
+                return Ok(TransactionState::Success);
             } else {
-                return Ok(Some(TransactionState::Fail));
+                return Ok(TransactionState::Fail);
             }
         }
         // Canister call, so no need to check
         Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => {
-            return Ok(Some(transaction.state.clone()));
-        }
-        _ => return Ok(None),
+            return Ok(transaction.state.clone());
+        } // _ => return Err("Invalid protocol".to_string()),
     }
 }
