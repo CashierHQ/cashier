@@ -67,7 +67,8 @@
             "transaction_failed": "Transaction failed",
             "transaction_failed_message": "Retry failed transaction",
             "transaction_success": "Transaction success",
-            "transaction_success_message": "",
+            "transaction_success_message": "Continue to active link",
+            "processing": "Processing...",
             "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
             "info": {
                 "button_text": "Close"

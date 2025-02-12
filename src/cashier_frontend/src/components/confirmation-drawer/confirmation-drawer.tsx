@@ -1,7 +1,7 @@
 import { TransactionModel } from "@/services/types/intent.service.types";
 import { LinkModel } from "@/services/types/link.service.types";
 import { ActionModel } from "@/services/types/action.service.types";
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
@@ -14,6 +14,7 @@ import {
     useConfirmButtonState,
     usePrimaryIntents,
 } from "./confirmation-drawer.hooks";
+import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 
 export type ConfirmTransactionModel = {
     linkName?: string;
@@ -40,7 +41,20 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const { t } = useTranslation();
     const primaryIntents = usePrimaryIntents(data?.action?.intents);
     const cashierFeeIntents = useCashierFeeIntents(data?.action?.intents);
-    const { disabled, text } = useConfirmButtonState(data?.linkData.intent_create?.state);
+    const { disabled, text } = useConfirmButtonState(data?.action?.state);
+    const [isDisabled, setIsDisabled] = useState(disabled);
+    const [buttonText, setButtonText] = useState(text);
+
+    const onClickSubmit = () => {
+        setIsDisabled(true);
+        setButtonText(t("transaction.confirm_popup.processing"));
+        onConfirm();
+    };
+
+    useEffect(() => {
+        setIsDisabled(disabled);
+        setButtonText(text);
+    }, [disabled, text]);
 
     return (
         <Drawer open={open}>
@@ -58,19 +72,24 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         />
                     </DrawerTitle>
                 </DrawerHeader>
+                {data ? (
+                    <>
+                        <ConfirmationPopupAssetsSection
+                            intents={primaryIntents}
+                            onInfoClick={onInfoClick}
+                        />
 
-                <ConfirmationPopupAssetsSection
-                    intents={primaryIntents}
-                    onInfoClick={onInfoClick}
-                />
+                        <ConfirmationPopupFeesSection intents={cashierFeeIntents} />
 
-                <ConfirmationPopupFeesSection intents={cashierFeeIntents} />
+                        <ConfirmationPopupLegalSection />
 
-                <ConfirmationPopupLegalSection />
-
-                <Button disabled={disabled} onClick={onConfirm}>
-                    {text}
-                </Button>
+                        <Button disabled={isDisabled} onClick={onClickSubmit}>
+                            {buttonText}
+                        </Button>
+                    </>
+                ) : (
+                    <ConfirmationPopupSkeleton />
+                )}
             </DrawerContent>
         </Drawer>
     );

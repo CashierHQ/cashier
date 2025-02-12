@@ -15,7 +15,9 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
     onInfoClick,
 }) => {
     const { t } = useTranslation();
-
+    if (intents.length === 0) {
+        return null;
+    }
     return (
         <>
             <div className="flex justify-between items-center">

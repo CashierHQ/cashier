@@ -11,3 +11,10 @@ export type TransactionModel = {
     amount: bigint;
     state: TRANSACTION_STATE;
 };
+
+export type Icrc112RequestModel = {
+    arg: string;
+    method: string;
+    canisterId: string;
+    nonce?: string;
+};
