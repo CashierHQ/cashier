@@ -1,7 +1,7 @@
 import { Children, ReactElement, ReactNode, useState } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { IntentCreateModel } from "@/services/types/intent.service.types";
 import { LINK_TYPE } from "@/services/types/enum";
+import { ActionModel } from "@/services/types/action.service.types";
 
 /**
  * - V1: type for handle submit
@@ -28,7 +28,7 @@ interface MultiStepFormProps<V1 extends object, V2 extends object> {
     handleBack?: () => void;
     handleChange: (value: V2) => void;
     isDisabled: boolean;
-    actionCreate: IntentCreateModel | undefined;
+    action: ActionModel | undefined;
 }
 
 /**
@@ -55,13 +55,13 @@ export default function MultiStepForm<V1 extends object, V2 extends object>({
     handleBack,
     handleChange,
     isDisabled,
-    actionCreate,
+    action,
 }: MultiStepFormProps<V1, V2>) {
     const partialForms = Children.toArray(children) as ReactElement<ItemProp<V1, V2>>[];
     const [currentStep, setCurrentStep] = useState(initialStep);
 
     const handleClickBack = async () => {
-        if ((!currentStep || actionCreate) && handleBack) {
+        if ((!currentStep || action) && handleBack) {
             handleBack();
         } else {
             await handleBackStep();

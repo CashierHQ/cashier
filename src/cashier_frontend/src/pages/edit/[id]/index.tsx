@@ -14,7 +14,13 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getResponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import { ACTION_TYPE, INTENT_STATE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import {
+    ACTION_STATE,
+    ACTION_TYPE,
+    INTENT_STATE,
+    LINK_STATE,
+    LINK_TYPE,
+} from "@/services/types/enum";
 import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
 import IntentService from "@/services/intent.service";
 import SignerService from "@/services/signer.service";
@@ -27,6 +33,7 @@ import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LinkModel, useEditLinkStore } from "@/stores/editLinkStore";
 import { Spinner } from "@/components/ui/spinner";
+import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -69,7 +76,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
     useEffect(() => {
         if (linkData) {
-            const { link, intent_create, action } = linkData;
+            const { link, action } = linkData;
 
             if (link && link.state) {
                 store.setLink(link as LinkModel);
@@ -160,17 +167,39 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
-    const handleCreateAction = async () => {
-        const action = await createAction({ linkId: linkId ?? "" });
-        setLinkAction(action);
+    const handleCreateAction = async (linkService: LinkService) => {
+        if (linkAction) {
+            const transactionConfirmObj: ConfirmTransactionModel = {
+                linkName: formData.title ?? "",
+                linkData: linkData!,
+                transactions: intentCreate?.transactions,
+                action: linkAction,
+            };
+            setTransactionConfirmModel(transactionConfirmObj);
+        } else {
+            const input: CreateActionInputModel = {
+                linkId: linkId ?? "",
+                actionType: ACTION_TYPE.CREATE_LINK,
+            };
+            const action = await linkService.processAction(input);
+
+            if (action) {
+                setLinkAction(action);
+                const transactionConfirmObj: ConfirmTransactionModel = {
+                    linkName: formData.title ?? "",
+                    linkData: linkData!,
+                    transactions: intentCreate?.transactions,
+                    action: action,
+                };
+                setTransactionConfirmModel(transactionConfirmObj);
+            }
+        }
     };
 
     // User click "Create" button
     const handleSubmit = async () => {
         if (!linkId) return;
-
         const validationResult = true;
-
         try {
             if (validationResult) {
                 setDisabled(true);
@@ -200,19 +229,18 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const callExecute = async (
-        transactions: TransactionModel[][] | undefined,
+        transactions: Icrc112RequestModel[][] | undefined,
         identity: Identity | undefined,
     ) => {
+        //TOODO: Remove after demo
+        console.log("CALLING MOCK EXECUTE ICRC-112");
         if (!identity) return;
         if (!transactions || transactions.length === 0) {
             return;
         }
         try {
             const signerService = new SignerService(identity);
-            const icrcxRequests = transactions.map((subTrans) => {
-                return subTrans.map((tx) => toCanisterCallRequest(tx));
-            });
-            const res = await signerService.icrcxExecute(icrcxRequests);
+            const res = await signerService.icrcxExecute(transactions);
             return res;
         } catch (err) {
             console.log(err);
@@ -228,6 +256,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             linkId: linkId ?? "",
             linkModel: {
                 ...formData,
+                description: "none",
             },
             isContinue: true,
         };
@@ -236,63 +265,88 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     };
 
     const startTransaction = async () => {
-        const intentService = new IntentService(identity);
+        const input: CreateActionInputModel = {
+            linkId: linkId ?? "",
+            actionType: ACTION_TYPE.CREATE_LINK,
+            actionId: linkAction?.id,
+        };
+        const linkService = new LinkService(identity);
+        const action = await linkService.processAction(input);
+        console.log("🚀 ~ Action response after calling process_action ~ action:", action);
+        if (action) {
+            setLinkAction(action);
+            const transactionConfirmObj: ConfirmTransactionModel = {
+                linkName: formData.title ?? "",
+                linkData: linkData!,
+                transactions: intentCreate?.transactions,
+                action: action,
+            };
+            setTransactionConfirmModel(transactionConfirmObj);
+        }
 
-        const confirmItemResult = await intentService.confirmIntent(
-            linkId ?? "",
-            intentCreate?.id ?? "",
-        );
+        // Calling execute after process_action
+        //const icrc112ExecuteRes = await callExecute(action.icrc112Requests, identity);
+        //console.log("MOCK RESPONSE FROM EXECUTING ICRC-112: ", icrc112ExecuteRes);
 
-        // TODO: Temporary comment out these lines and will update later
-        // if (confirmItemResult?.transactions) {
-        //     // Change transaction status to processing
-        //     setIntentCreate(
-        //         (prev) =>
-        //             ({
-        //                 ...prev,
-        //                 transactions: confirmItemResult?.transactions,
-        //             }) as IntentCreateModel,
-        //     );
-
-        //     setTransactionConfirmModel(
-        //         (prevModel) =>
-        //             ({
-        //                 ...prevModel,
-        //                 transactions: confirmItemResult?.transactions,
-        //             }) as ConfirmTransactionModel,
-        //     );
-
-        //     console.log("Call canister transfer");
-        //     const result = await callExecute(intentCreate?.transactions, identity);
-        //     if (result) {
-        //         console.log(
-        //             "Canister service call complete. Now re-fetch the link data to get the intent.",
-        //         );
-        //         refetch();
-        //     }
-        // }
-    };
-
-    const handleRetryTransactions = () => {
-        console.log("Retry");
+        // TODO: Remove after demo
+        setTimeout(async () => {
+            console.log("CALLING UPDATE ACTION");
+            const inputModel: UpdateActionInputModel = {
+                actionId: action.id,
+                linkId: linkId ?? "",
+                external: true,
+            };
+            const linkService = new LinkService(identity);
+            const actionRes = await linkService.updateAction(inputModel);
+            if (actionRes) {
+                setLinkAction(actionRes);
+                const transactionConfirmObj: ConfirmTransactionModel = {
+                    linkName: formData.title ?? "",
+                    linkData: linkData!,
+                    transactions: intentCreate?.transactions,
+                    action: actionRes,
+                };
+                setTransactionConfirmModel(transactionConfirmObj);
+                if (
+                    actionRes.state === ACTION_STATE.SUCCESS ||
+                    actionRes.state === ACTION_STATE.FAIL
+                ) {
+                    const toastData = {
+                        title:
+                            actionRes.state === ACTION_STATE.SUCCESS
+                                ? t("transaction.confirm_popup.transaction_success")
+                                : t("transaction.confirm_popup.transaction_failed"),
+                        description:
+                            actionRes.state === ACTION_STATE.SUCCESS
+                                ? t("transaction.confirm_popup.transaction_success_message")
+                                : t("transaction.confirm_popup.transaction_failed_message"),
+                        variant:
+                            actionRes.state === ACTION_STATE.SUCCESS
+                                ? ("default" as const)
+                                : ("error" as const),
+                    };
+                    showToast(toastData.title, toastData.description, toastData.variant);
+                }
+            }
+            console.log("🚀 ~ Response as Action from update_action: ", actionRes);
+        }, 15000);
     };
 
     // Handle submit action in confirm transaction dialog
-    const handleConfirmTransactions = async () => {
-        if (!linkId && !intentCreate?.id) return;
-
-        // console.log("Call confirm");
-        // try {
-        //     if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
-        //         await handleUpdateLinkToActive();
-        //     } else if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
-        //         handleRetryTransactions();
-        //     } else {
-        //         await startTransaction();
-        //     }
-        // } catch (err) {
-        //     console.error(err);
-        // }
+    const handleAction = async () => {
+        if (!linkId) return;
+        try {
+            if (linkAction?.state === ACTION_STATE.SUCCESS) {
+                console.log("CLICKED SUBMIT BUTTON");
+                console.log("UPDATING LINK TO ACTIVE STATE...");
+                await handleUpdateLinkToActive();
+            } else {
+                console.log("CLICKED SUBMIT BUTTON");
+                await startTransaction();
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const handleBackstep = async () => {
@@ -339,7 +393,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     handleChange={handleChange}
                     handleBackStep={handleBackstep}
                     isDisabled={isDisabled}
-                    actionCreate={intentCreate}
+                    action={linkAction}
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}
@@ -365,7 +419,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                                 {...props}
                                 action={linkAction}
                                 data={transactionConfirmModel}
-                                onConfirm={handleConfirmTransactions}
+                                onConfirm={handleAction}
                             />
                         )}
                     />
