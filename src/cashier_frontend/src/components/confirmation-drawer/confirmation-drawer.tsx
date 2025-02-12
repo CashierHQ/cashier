@@ -43,15 +43,18 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const cashierFeeIntents = useCashierFeeIntents(data?.action?.intents);
     const { disabled, text } = useConfirmButtonState(data?.action?.state);
     const [isDisabled, setIsDisabled] = useState(disabled);
+    const [buttonText, setButtonText] = useState(text);
 
     const onClickSubmit = () => {
         setIsDisabled(true);
+        setButtonText(t("transaction.confirm_popup.processing"));
         onConfirm();
     };
 
     useEffect(() => {
         setIsDisabled(disabled);
-    }, [disabled]);
+        setButtonText(text);
+    }, [disabled, text]);
 
     return (
         <Drawer open={open}>
@@ -81,7 +84,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         <ConfirmationPopupLegalSection />
 
                         <Button disabled={isDisabled} onClick={onClickSubmit}>
-                            {text}
+                            {buttonText}
                         </Button>
                     </>
                 ) : (
