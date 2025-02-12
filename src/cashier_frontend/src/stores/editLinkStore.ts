@@ -3,7 +3,7 @@ import { LINK_TYPE } from "@/services/types/enum";
 import { State, Template } from "@/services/types/link.service.types";
 import { create } from "zustand";
 
-export type TipLinkData = {
+export type TipLinkModel = {
     id: string;
     title: string;
     description: string;
@@ -15,24 +15,27 @@ export type TipLinkData = {
     tokenAddress: string;
 };
 
-export type LinkData = TipLinkData; // TODO: add other types
+export type LinkModel = TipLinkModel; // TODO: add other types
 
 export interface LinkCreateStoreData {
-    data: LinkData | undefined;
+    link: LinkModel | undefined;
     action: ActionModel | undefined;
 
-    setData(data: LinkData): void;
-    createAction(): void;
-    processAction(): void;
+    setLink(data: LinkModel): void;
+    setAction(action: ActionModel): void;
 }
 
-export const useEditLinkStore = create((set) => ({
-    data: undefined,
+export const useEditLinkStore = create<LinkCreateStoreData>((set) => ({
+    link: undefined,
     action: undefined,
 
-    setData: (data: LinkData) => {
+    setLink: (link: LinkModel) => {
         set({
-            data,
+            link,
         });
+    },
+
+    setAction: (action: ActionModel) => {
+        set({ action });
     },
 }));

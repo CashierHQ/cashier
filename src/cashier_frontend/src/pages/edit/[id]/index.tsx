@@ -6,10 +6,8 @@ import MultiStepForm from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useIdentity } from "@nfid/identitykit/react";
-import LinkService, { CreateActionInputModel } from "@/services/link.service";
-import { useQueryClient } from "@tanstack/react-query";
 import { UpdateLinkParams, useCreateAction, useUpdateLink } from "@/hooks/linkHooks";
-import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
+import { LinkDetailModel, State } from "@/services/types/link.service.types";
 import { ConfirmTransactionModel } from "@/components/confirmation-drawer/confirmation-drawer";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useResponsive } from "@/hooks/responsive-hook";
@@ -27,12 +25,18 @@ import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
+import { LinkModel, useEditLinkStore } from "@/stores/editLinkStore";
+import { Spinner } from "@/components/ui/spinner";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
     LINK_STATE.ADD_ASSET,
     LINK_STATE.CREATE_LINK,
 ];
+
+function getLinkCreationStep(state: string) {
+    return STEP_LINK_STATE_ORDER.findIndex((x) => x === state) ?? 0;
+}
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
     const { t } = useTranslation();
@@ -42,58 +46,43 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const responsive = useResponsive();
     const { toastData, showToast, hideToast } = useToast();
 
-    const [formData, setFormData] = useState<LinkDetailModel>({
-        id: "",
-        title: "",
-        image: "",
-        description: "",
-        state: "",
-        template: Template.Central,
-        create_at: new Date(),
-        amount: BigInt(0),
-        amountNumber: 0,
-        linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
-        tokenAddress: "",
-    });
+    const store = useEditLinkStore();
 
     const [isDisabled, setDisabled] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
-    const [isRendering, setRendering] = useState(true);
 
     const [intentCreate, setIntentCreate] = useState<IntentCreateModel>();
     const [linkAction, setLinkAction] = useState<ActionModel>();
     const [transactionConfirmModel, setTransactionConfirmModel] =
         useState<ConfirmTransactionModel>();
 
-    const queryClient = useQueryClient();
-    const { data: linkData } = useLinkDataQuery(linkId, ACTION_TYPE.CREATE_LINK, identity);
+    const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(
+        linkId,
+        ACTION_TYPE.CREATE_LINK,
+        identity,
+    );
 
-    const {
-        mutate: updateLink,
-        error: updateLinkError,
-        mutateAsync: updateLinkAsync,
-    } = useUpdateLink(queryClient, identity);
-    const { mutateAsync: createAction } = useCreateAction(queryClient, identity);
+    const { mutateAsync: updateLink, error: updateLinkError } = useUpdateLink();
+    const { mutateAsync: createAction } = useCreateAction();
+
+    useEffect(() => {}, []);
 
     useEffect(() => {
         if (linkData) {
             const { link, intent_create, action } = linkData;
 
             if (link && link.state) {
-                const step = STEP_LINK_STATE_ORDER.findIndex((x) => x === link.state);
-                setFormData(link);
-                setRendering(false);
-                setCurrentStep(step >= 0 ? step : 0);
+                store.setLink(link as LinkModel);
+                setCurrentStep(getLinkCreationStep(link.state));
             }
 
             if (action) {
-                console.log("🚀 ~ useEffect ~ action:", action);
-                setLinkAction(action);
+                //console.log("🚀 ~ useEffect ~ action:", action);
+                store.setAction(action);
             }
 
             if (intent_create && action) {
                 setIntentCreate(intent_create);
-                setLinkAction(action);
                 setTransactionConfirmModel(
                     (prevModel) =>
                         ({
@@ -325,7 +314,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
-    if (isRendering) return null;
+    if (isLoadingLinkData) {
+        return (
+            <div className="w-full f-svh">
+                <Spinner width={64} />
+            </div>
+        );
+    }
 
     return (
         <div
@@ -348,7 +343,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 >
                     <MultiStepForm.Item
                         name={t("create.linkTemplate")}
-                        linkType={formData.linkType as LINK_TYPE}
+                        linkType={store.link!.linkType}
                         handleSubmit={handleSubmitLinkTemplate}
                         isDisabled={isDisabled}
                         render={(props) => <LinkTemplate {...props} />}
@@ -357,14 +352,14 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                         name={t("create.linkDetails")}
                         handleSubmit={handleSubmitLinkDetails}
                         isDisabled={isDisabled}
-                        linkType={formData.linkType as LINK_TYPE}
+                        linkType={store.link!.linkType}
                         render={(props) => <LinkDetails {...props} />}
                     />
                     <MultiStepForm.Item
                         name={t("create.linkPreview")}
                         handleSubmit={handleSubmit}
                         isDisabled={isDisabled}
-                        linkType={formData.linkType as LINK_TYPE}
+                        linkType={store.link!.linkType}
                         render={(props) => (
                             <LinkPreview
                                 {...props}

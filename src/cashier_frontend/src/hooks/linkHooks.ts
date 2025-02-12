@@ -1,11 +1,10 @@
 import { queryKeys } from "@/lib/queryKeys";
 import LinkService from "@/services/link.service";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { Identity } from "@dfinity/agent";
-import { PartialIdentity } from "@dfinity/identity";
-import { QueryClient, useMutation, UseMutationResult } from "@tanstack/react-query";
+import { useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
 import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { ACTION_TYPE } from "@/services/types/enum";
+import { useIdentity } from "@nfid/identitykit/react";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -13,11 +12,11 @@ export interface UpdateLinkParams {
     isContinue: boolean;
 }
 
-export const useUpdateLink = (
-    queryClient: QueryClient,
-    identity: Identity | PartialIdentity | undefined,
-): UseMutationResult<LinkDto, Error, UpdateLinkParams, unknown> =>
-    useMutation({
+export const useUpdateLink = (): UseMutationResult<LinkDto, Error, UpdateLinkParams, unknown> => {
+    const identity = useIdentity();
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
         mutationFn: (data: UpdateLinkParams) => {
             const linkService = new LinkService(identity);
             return linkService.updateLink(data.linkId, data.linkModel, data.isContinue);
@@ -30,19 +29,21 @@ export const useUpdateLink = (
         },
     });
 
-export interface CreateActionParams {
-    linkId: string;
-}
+    return mutation;
+};
 
-export function useCreateAction(
-    queryClient: QueryClient,
-    identity: Identity | PartialIdentity | undefined,
-) {
-    return useMutation({
-        mutationFn: (data: CreateActionParams) => {
+export function useCreateAction() {
+    const identity = useIdentity();
+
+    const mutation = useMutation({
+        mutationFn: (linkId: string) => {
             const linkService = new LinkService(identity);
 
-            return linkService.createAction({ ...data, actionType: ACTION_TYPE.CREATE_LINK });
+            return linkService.createAction({ linkId, actionType: ACTION_TYPE.CREATE_LINK });
         },
     });
+
+    return mutation;
 }
+
+export function useProcessAction() {}
