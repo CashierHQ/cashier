@@ -287,8 +287,8 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
 
         // Calling execute after process_action
-        const icrc112ExecuteRes = await callExecute(action.icrc112Requests, identity);
-        console.log("MOCK RESPONSE FROM EXECUTING ICRC-112: ", icrc112ExecuteRes);
+        //const icrc112ExecuteRes = await callExecute(action.icrc112Requests, identity);
+        //console.log("MOCK RESPONSE FROM EXECUTING ICRC-112: ", icrc112ExecuteRes);
 
         // TODO: Remove after demo
         setTimeout(async () => {
@@ -309,21 +309,26 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                     action: actionRes,
                 };
                 setTransactionConfirmModel(transactionConfirmObj);
-                const toastData = {
-                    title:
-                        actionRes.state === ACTION_STATE.SUCCESS
-                            ? t("transaction.confirm_popup.transaction_success")
-                            : t("transaction.confirm_popup.transaction_failed"),
-                    description:
-                        actionRes.state === ACTION_STATE.SUCCESS
-                            ? t("transaction.confirm_popup.transaction_success_message")
-                            : t("transaction.confirm_popup.transaction_failed_message"),
-                    variant:
-                        actionRes.state === ACTION_STATE.SUCCESS
-                            ? ("default" as const)
-                            : ("error" as const),
-                };
-                showToast(toastData.title, toastData.description, toastData.variant);
+                if (
+                    actionRes.state === ACTION_STATE.SUCCESS ||
+                    actionRes.state === ACTION_STATE.FAIL
+                ) {
+                    const toastData = {
+                        title:
+                            actionRes.state === ACTION_STATE.SUCCESS
+                                ? t("transaction.confirm_popup.transaction_success")
+                                : t("transaction.confirm_popup.transaction_failed"),
+                        description:
+                            actionRes.state === ACTION_STATE.SUCCESS
+                                ? t("transaction.confirm_popup.transaction_success_message")
+                                : t("transaction.confirm_popup.transaction_failed_message"),
+                        variant:
+                            actionRes.state === ACTION_STATE.SUCCESS
+                                ? ("default" as const)
+                                : ("error" as const),
+                    };
+                    showToast(toastData.title, toastData.description, toastData.variant);
+                }
             }
             console.log("🚀 ~ Response as Action from update_action: ", actionRes);
         }, 15000);
