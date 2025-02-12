@@ -5,6 +5,7 @@ import { Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { QueryClient, useMutation, UseMutationResult } from "@tanstack/react-query";
 import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { ACTION_TYPE } from "@/services/types/enum";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -28,3 +29,20 @@ export const useUpdateLink = (
             throw err;
         },
     });
+
+export interface CreateActionParams {
+    linkId: string;
+}
+
+export function useCreateAction(
+    queryClient: QueryClient,
+    identity: Identity | PartialIdentity | undefined,
+) {
+    return useMutation({
+        mutationFn: (data: CreateActionParams) => {
+            const linkService = new LinkService(identity);
+
+            return linkService.createAction({ ...data, actionType: ACTION_TYPE.CREATE_LINK });
+        },
+    });
+}

@@ -8,7 +8,7 @@ import LinkPreview from "./LinkPreview";
 import { useIdentity } from "@nfid/identitykit/react";
 import LinkService, { CreateActionInputModel } from "@/services/link.service";
 import { useQueryClient } from "@tanstack/react-query";
-import { UpdateLinkParams, useUpdateLink } from "@/hooks/linkHooks";
+import { UpdateLinkParams, useCreateAction, useUpdateLink } from "@/hooks/linkHooks";
 import { LinkDetailModel, State, Template } from "@/services/types/link.service.types";
 import { ConfirmTransactionModel } from "@/components/confirmation-drawer/confirmation-drawer";
 import TransactionToast from "@/components/transaction/transaction-toast";
@@ -35,6 +35,13 @@ const STEP_LINK_STATE_ORDER = [
 ];
 
 export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { linkId } = useParams();
+    const identity = useIdentity();
+    const responsive = useResponsive();
+    const { toastData, showToast, hideToast } = useToast();
+
     const [formData, setFormData] = useState<LinkDetailModel>({
         id: "",
         title: "",
@@ -52,20 +59,21 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const [isDisabled, setDisabled] = useState(false);
     const [currentStep, setCurrentStep] = useState<number>(initialStep);
     const [isRendering, setRendering] = useState(true);
+
     const [intentCreate, setIntentCreate] = useState<IntentCreateModel>();
     const [linkAction, setLinkAction] = useState<ActionModel>();
     const [transactionConfirmModel, setTransactionConfirmModel] =
         useState<ConfirmTransactionModel>();
-    const { t } = useTranslation();
-    const navigate = useNavigate();
-    const { linkId } = useParams();
-    const identity = useIdentity();
-    const responsive = useResponsive();
-    const { toastData, showToast, hideToast } = useToast();
 
     const queryClient = useQueryClient();
     const { data: linkData } = useLinkDataQuery(linkId, ACTION_TYPE.CREATE_LINK, identity);
-    const { mutate, error: updateLinkError, mutateAsync } = useUpdateLink(queryClient, identity);
+
+    const {
+        mutate: updateLink,
+        error: updateLinkError,
+        mutateAsync: updateLinkAsync,
+    } = useUpdateLink(queryClient, identity);
+    const { mutateAsync: createAction } = useCreateAction(queryClient, identity);
 
     useEffect(() => {
         if (linkData) {
@@ -135,7 +143,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             },
             isContinue: true,
         };
-        mutate(updateLinkParams);
+        updateLink(updateLinkParams);
         if (updateLinkError) {
             throw updateLinkError;
         }
@@ -156,33 +164,16 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 },
                 isContinue: true,
             };
-            mutate(updateLinkParams);
+            updateLink(updateLinkParams);
             setFormData({ ...formData, ...values });
         } catch (error) {
             console.log("🚀 ~ handleSubmitLinkDetails ~ error:", error);
         }
     };
 
-    const handleCreateAction = async (linkService: LinkService) => {
-        const input: CreateActionInputModel = {
-            linkId: linkId ?? "",
-            actionType: ACTION_TYPE.CREATE_LINK,
-        };
-        const action = await linkService.createAction(input);
-
-        if (action) {
-            setLinkAction(action);
-        }
-
-        if (action) {
-            const transactionConfirmObj: ConfirmTransactionModel = {
-                linkName: formData.title ?? "",
-                linkData: linkData!,
-                transactions: intentCreate?.transactions,
-                action: action,
-            };
-            setTransactionConfirmModel(transactionConfirmObj);
-        }
+    const handleCreateAction = async () => {
+        const action = await createAction({ linkId: linkId ?? "" });
+        setLinkAction(action);
     };
 
     // User click "Create" button
@@ -193,11 +184,9 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
 
         try {
             if (validationResult) {
-                const linkService = new LinkService(identity);
-
                 setDisabled(true);
 
-                await handleCreateAction(linkService);
+                await handleCreateAction();
             } else {
                 showToast(
                     t("transaction.validation.action_failed"),
@@ -253,7 +242,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             },
             isContinue: true,
         };
-        await mutateAsync(updateLinkParams);
+        await updateLinkAsync(updateLinkParams);
         navigate(`/details/${linkId}`);
     };
 
@@ -330,7 +319,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 isContinue: false,
             };
 
-            mutate(updateLinkParams);
+            updateLink(updateLinkParams);
         } catch (err) {
             console.log(err);
         }
