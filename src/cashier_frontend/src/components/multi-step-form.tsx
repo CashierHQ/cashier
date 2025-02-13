@@ -1,7 +1,7 @@
 import { Children, ReactElement, ReactNode, useState } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { LINK_TYPE } from "@/services/types/enum";
-import { ActionModel } from "@/services/types/action.service.types";
+import { cn } from "@/lib/utils";
 
 /**
  * - V1: type for handle submit
@@ -19,16 +19,9 @@ export interface PartialFormProps<V1, V2> {
  * - V1: type for handle submit
  * - V2: type for handle change
  */
-interface MultiStepFormProps<V1 extends object, V2 extends object> {
+interface MultiStepFormProps {
     initialStep: number;
-    formData: V2;
     children: ReactNode;
-    handleSubmit: (values: V1) => void;
-    handleBackStep: () => Promise<void>;
-    handleBack?: () => void;
-    handleChange: (value: V2) => void;
-    isDisabled: boolean;
-    action: ActionModel | undefined;
 }
 
 /**
@@ -47,16 +40,7 @@ interface ItemProp<V1, V2> {
  * - V1: type for handle submit
  * - V2: type for handle change
  */
-export default function MultiStepForm<V1 extends object, V2 extends object>({
-    initialStep = 0,
-    formData,
-    handleBackStep,
-    children,
-    handleBack,
-    handleChange,
-    isDisabled,
-    action,
-}: MultiStepFormProps<V1, V2>) {
+export default function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps) {
     const partialForms = Children.toArray(children) as ReactElement<ItemProp<V1, V2>>[];
     const [currentStep, setCurrentStep] = useState(initialStep);
 
@@ -86,7 +70,10 @@ export default function MultiStepForm<V1 extends object, V2 extends object>({
                 {partialForms.map((_, index) => (
                     <div
                         key={index}
-                        className={`h-[4px] rounded-full mx-[2px] ${index <= currentStep ? "bg-green" : "bg-lightgreen"}`}
+                        className={cn("h-[4px] rounded-full mx-[2px]", {
+                            "bg-green": index <= currentStep,
+                            "bg-lightgreen": index > currentStep,
+                        })}
                         style={{ width: `${100 / partialForms.length}%` }}
                     ></div>
                 ))}
@@ -116,6 +103,10 @@ export default function MultiStepForm<V1 extends object, V2 extends object>({
     );
 }
 
+const Header = () => {
+    return null;
+};
+
 const Item = <V1, V2>({ handleSubmit, render, isDisabled, linkType }: ItemProp<V1, V2>) => {
     return (
         <>
@@ -130,4 +121,5 @@ const Item = <V1, V2>({ handleSubmit, render, isDisabled, linkType }: ItemProp<V
     );
 };
 
+MultiStepForm.Header = Header;
 MultiStepForm.Item = Item;

@@ -29,7 +29,7 @@ export const linkTemplateSchema = z.object({
     linkType: z.string(),
 });
 
-type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
+export type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
 const TEMPLATE_ORDER = [LINK_TYPE.TIP_LINK, LINK_TYPE.AIRDROP, LINK_TYPE.TOKEN_BASKET];
 
 interface TEMPLATE {

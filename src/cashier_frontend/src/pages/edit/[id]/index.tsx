@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import LinkTemplate, { linkTemplateSchema } from "./LinkTemplate";
+import LinkTemplate, { LinkTemplateInput, linkTemplateSchema } from "./LinkTemplate";
 import LinkDetails, { linkDetailsSchema } from "./LinkDetails";
 import { useNavigate, useParams } from "react-router-dom";
 import MultiStepForm from "@/components/multi-step-form";
@@ -14,13 +14,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { getResponsiveClassname } from "@/utils";
 import { responsiveMapper } from "./index_responsive";
 import { z } from "zod";
-import {
-    ACTION_STATE,
-    ACTION_TYPE,
-    INTENT_STATE,
-    LINK_STATE,
-    LINK_TYPE,
-} from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
 import IntentService from "@/services/intent.service";
 import SignerService from "@/services/signer.service";
@@ -53,74 +47,42 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
     const responsive = useResponsive();
     const { toastData, showToast, hideToast } = useToast();
 
-    const store = useEditLinkStore();
+    const { link, setLink, action, setAction } = useEditLinkStore();
 
-    const [isDisabled, setDisabled] = useState(false);
-    const [currentStep, setCurrentStep] = useState<number>(initialStep);
-
-    const [intentCreate, setIntentCreate] = useState<IntentCreateModel>();
-    const [linkAction, setLinkAction] = useState<ActionModel>();
-    const [transactionConfirmModel, setTransactionConfirmModel] =
-        useState<ConfirmTransactionModel>();
-
-    const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(
-        linkId,
-        ACTION_TYPE.CREATE_LINK,
-        identity,
-    );
-
+    const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(linkId);
     const { mutateAsync: updateLink, error: updateLinkError } = useUpdateLink();
     const { mutateAsync: createAction } = useCreateAction();
 
-    useEffect(() => {}, []);
-
     useEffect(() => {
         if (linkData) {
-            const { link, action } = linkData;
-
-            if (link && link.state) {
-                store.setLink(link as LinkModel);
-                setCurrentStep(getLinkCreationStep(link.state));
-            }
-
-            if (action) {
-                //console.log("🚀 ~ useEffect ~ action:", action);
-                store.setAction(action);
-            }
-
-            if (intent_create && action) {
-                setIntentCreate(intent_create);
-                setTransactionConfirmModel(
-                    (prevModel) =>
-                        ({
-                            ...prevModel,
-                            linkData: linkData,
-                            action: linkAction,
-                            transactions: linkData?.intent_create?.transactions,
-                        }) as ConfirmTransactionModel,
-                );
-            }
-        }
-
-        if (linkData?.intent_create?.state === INTENT_STATE.SUCCESS) {
-            showToast(
-                t("transaction.confirm_popup.transaction_success"),
-                t("transaction.confirm_popup.transaction_success_message"),
-                "default",
-            );
-        }
-
-        if (linkData?.intent_create?.state === INTENT_STATE.FAIL) {
-            showToast(
-                t("transaction.confirm_popup.transaction_failed"),
-                t("transaction.validation.transaction_failed_message"),
-                "error",
-            );
+            setLink(linkData.link as LinkModel);
+            setAction(linkData.action);
         }
     }, [linkData]);
 
-    const handleSubmitLinkTemplate = async (values: z.infer<typeof linkTemplateSchema>) => {
+    useEffect(() => {
+        if (linkData) {
+            if (linkData.action?.state === ACTION_STATE.SUCCESS) {
+                showToast(
+                    t("transaction.confirm_popup.transaction_success"),
+                    t("transaction.confirm_popup.transaction_success_message"),
+                    "default",
+                );
+            }
+
+            if (linkData.action?.state === ACTION_STATE.FAIL) {
+                showToast(
+                    t("transaction.confirm_popup.transaction_failed"),
+                    t("transaction.validation.transaction_failed_message"),
+                    "error",
+                );
+            }
+        }
+    }, [linkData]);
+
+    const handleSubmitLinkTemplate = async (values: LinkTemplateInput) => {
         if (!linkId) return;
+
         if (values.linkType !== LINK_TYPE.TIP_LINK) {
             showToast(
                 "Unsupported link type",
@@ -129,6 +91,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             );
             throw new Error();
         }
+
         const updateLinkParams: UpdateLinkParams = {
             linkId: linkId,
             linkModel: {
@@ -139,21 +102,20 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
             },
             isContinue: true,
         };
+
         updateLink(updateLinkParams);
-        if (updateLinkError) {
-            throw updateLinkError;
-        }
-        setFormData({ ...formData, ...values });
+        setLink({ ...link, ...values });
     };
 
     const handleSubmitLinkDetails = async (values: z.infer<typeof linkDetailsSchema>) => {
         if (!linkId) return;
+
         try {
-            formData.state = State.PendingPreview;
+            link!.state = State.PendingPreview;
             const updateLinkParams: UpdateLinkParams = {
                 linkId: linkId,
                 linkModel: {
-                    ...formData,
+                    ...link,
                     ...values,
                     amount: values.amount,
                     description: "test",
@@ -161,7 +123,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
                 isContinue: true,
             };
             updateLink(updateLinkParams);
-            setFormData({ ...formData, ...values });
+            setLink({ ...link, ...values });
         } catch (error) {
             console.log("🚀 ~ handleSubmitLinkDetails ~ error:", error);
         }
@@ -353,16 +315,13 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         if (!linkId) {
             return;
         }
-        try {
-            const updateLinkParams: UpdateLinkParams = {
-                linkId: linkId,
-                linkModel: {
-                    ...formData,
-                },
-                isContinue: false,
-            };
 
-            updateLink(updateLinkParams);
+        try {
+            updateLink({
+                linkId,
+                linkModel: store.link!,
+                isContinue: false,
+            });
         } catch (err) {
             console.log(err);
         }

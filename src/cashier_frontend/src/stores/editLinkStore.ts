@@ -1,3 +1,4 @@
+import { ConfirmTransactionModel } from "@/components/confirmation-drawer/confirmation-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LINK_TYPE } from "@/services/types/enum";
 import { State, Template } from "@/services/types/link.service.types";
@@ -21,21 +22,15 @@ export interface LinkCreateStoreData {
     link: LinkModel | undefined;
     action: ActionModel | undefined;
 
-    setLink(data: LinkModel): void;
-    setAction(action: ActionModel): void;
+    setLink(data: LinkModel | undefined): void;
+    setAction(action: ActionModel | undefined): void;
 }
 
 export const useEditLinkStore = create<LinkCreateStoreData>((set) => ({
     link: undefined,
     action: undefined,
+    confirmTransaction: undefined,
 
-    setLink: (link: LinkModel) => {
-        set({
-            link,
-        });
-    },
-
-    setAction: (action: ActionModel) => {
-        set({ action });
-    },
+    setLink: (link) => set({ link }),
+    setAction: (action) => set({ action }),
 }));
