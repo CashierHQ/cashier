@@ -5,9 +5,9 @@
     },
     "name": "cashier",
     "scripts": {
-        "prebuild": "dfx generate cashier_backend",
+        "prebuild": "dfx generate cashier_backend && bash scripts/compress_build_wasm.sh",
         "build": "npm run build --workspaces --if-present",
-        "pretest": "npm run prebuild --workspaces --if-present",
+        "pretest": "npm run prebuild",
         "prestart": "dfx generate cashier_backend",
         "start": "npm start --workspaces --if-present",
         "build:backend": "make build-wasm && make build-did && dfx generate cashier_backend",
@@ -28,7 +28,7 @@
     "devDependencies": {
         "@hadronous/pic": "^0.11.0",
         "@types/jest": "^29.5.14",
-        "@types/node": "^22.7.5",
+        "@types/node": "^22.13.2",
         "dotenv": "^16.4.5",
         "eslint": "^9.16.0",
         "eslint-plugin-react": "^7.37.2",
@@ -38,6 +38,7 @@
         "prettier": "3.3.3",
         "ts-jest": "^29.2.5",
         "ts-node": "^10.9.2",
+        "txs": "^1.0.0",
         "typescript-eslint": "^8.18.0"
     },
     "dependencies": {
