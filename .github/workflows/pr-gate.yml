@@ -13,7 +13,7 @@ jobs:
     backend_tests:
         runs-on: ubuntu-latest
         environment: staging
-        if: contains(github.event.pull_request.changed_files, 'cashier_backend/')
+        if: contains(github.event.pull_request.changed_files, 'src/cashier_backend/')
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -32,13 +32,16 @@ jobs:
             - name: Install project dependencies
               run: npm install
 
+            - name: Run setup test
+              run: npm run setup:test
+
             - name: Run unit tests backend
               run: npm run test
 
     frontend_build:
         runs-on: ubuntu-latest
         environment: staging
-        if: contains(github.event.pull_request.changed_files, 'cashier_frontend/')
+        if: contains(github.event.pull_request.changed_files, 'src/cashier_frontend/')
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
