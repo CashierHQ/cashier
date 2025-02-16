@@ -2,6 +2,7 @@
 
 build-wasm:
 	@cargo build --release --target wasm32-unknown-unknown --package cashier_backend
+	@cargo build --release --target wasm32-unknown-unknown --package icp_ledger_canister
 
 build-did:
 	@candid-extractor target/wasm32-unknown-unknown/release/cashier_backend.wasm > src/cashier_backend/cashier_backend.did

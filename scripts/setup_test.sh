@@ -6,6 +6,7 @@
 mkdir -p artifacts
 
 # Compress the backend wasm file
+rustup target add wasm32-unknown-unknown
 make build-wasm
 gzip -c target/wasm32-unknown-unknown/release/cashier_backend.wasm > artifacts/cashier_backend.wasm.gz
 
