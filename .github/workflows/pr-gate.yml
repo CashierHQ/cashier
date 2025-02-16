@@ -40,9 +40,6 @@ jobs:
             - name: Install project dependencies
               run: npm install
 
-            - name: Setup test environment
-              run: npm run setup:test
-
             - name: Cache Rust dependencies
               uses: actions/cache@v4
               with:
@@ -52,6 +49,9 @@ jobs:
                   key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
                   restore-keys: |
                       ${{ runner.os }}-cargo-
+
+            - name: Setup test environment
+              run: npm run setup:test
 
             - name: Run unit tests backend
               run: npm run test
