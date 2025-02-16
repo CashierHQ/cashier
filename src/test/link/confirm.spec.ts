@@ -213,6 +213,10 @@ describe("Link", () => {
         const confirmRes = await actor.process_action(input);
         const actionDto = parseResultResponse(confirmRes);
 
+        const icrc_112_requests = actionDto.icrc_112_requests;
+
+        console.log("icrc_request", JSON.stringify(icrc_112_requests, null, 2));
+
         expect(actionDto.id).toEqual(createLinkActionId);
         expect(actionDto.state).toEqual("Action_state_processing");
 

@@ -32,6 +32,8 @@ pub async fn update_action(
 
     let resp = super::action::get(action_id).unwrap();
 
+    info!("update_action: {:#?}", resp);
+
     Ok(ActionDto::build(
         resp.action,
         resp.intents,
@@ -85,8 +87,6 @@ async fn update_action_with_args(
                 eligible = false;
             }
 
-            info!("Checking {} tx: {:#?}", eligible, tx);
-
             eligible
         })
         .collect::<Vec<&Transaction>>();
@@ -102,7 +102,6 @@ async fn update_action_with_args(
     //Step #4 Actually execute the tx that is elibile
     // for client tx set to processing
     for tx in eligible_txs.clone() {
-        info!("Executing tx: {:?}", tx);
         execute_tx::execute_tx(&mut tx.clone())?;
     }
 

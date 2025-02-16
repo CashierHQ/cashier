@@ -1,4 +1,4 @@
-import { ACTION_STATE, INTENT_STATE, TASK } from "@/services/types/enum";
+import { ACTION_STATE, TASK } from "@/services/types/enum";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";

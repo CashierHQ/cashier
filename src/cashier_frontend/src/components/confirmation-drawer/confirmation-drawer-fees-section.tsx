@@ -6,15 +6,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IntentHelperService } from "@/services/fee.service";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
+import { convert } from "@/utils/helpers/convert";
+import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
+    isUsd?: boolean;
 };
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
+    isUsd,
 }) => {
     const { t } = useTranslation();
+    const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
+        intents[0]?.asset.address,
+    );
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
 
     useEffect(() => {
@@ -35,6 +42,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                             key={intent.id}
                             title={t("transaction.confirm_popup.link_creation_fee_label")}
                             intent={intent}
+                            isUsd={isUsd}
                         />
                     );
                 })}
@@ -45,6 +53,10 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     <h4>{t("transaction.confirm_popup.total_cashier_fees_label")}</h4>
 
                     <div className="flex items-center">
+                        {isUsd &&
+                            !isLoadingConversionRates &&
+                            conversionRates!.tokenToUsd !== undefined &&
+                            `($${convert(totalCashierFee, conversionRates!.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
                         {totalCashierFee} {NETWORK_FEE_DEFAULT_SYMBOL}
                         <Avatar className="w-7 h-7 ml-3">
                             <AvatarImage
