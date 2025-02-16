@@ -1,4 +1,5 @@
 import LinkService from "@/services/link.service";
+import { UsdConversionService } from "@/services/usdConversionService";
 import UserService from "@/services/user.service";
 import { groupLinkListByDate } from "@/utils";
 import { Identity } from "@dfinity/agent";
@@ -121,6 +122,20 @@ export const queryKeys = createQueryKeyStore({
                     localStorage.getItem(METADATA_LIST_KEY) || "[]",
                 );
                 return metadataList;
+            },
+        }),
+        conversionRates: (wallet: string | undefined, asset: string | undefined) => ({
+            queryKey: [QUERY_KEYS.TOKENS, "conversionRates", wallet, asset],
+            queryFn: async () => {
+                if (!wallet) throw new Error("Wallet address is required");
+                if (!asset) throw new Error("Token address is required");
+
+                const conversionRates = await UsdConversionService.getConversionRates(
+                    wallet,
+                    asset,
+                );
+
+                return conversionRates;
             },
         }),
     },
