@@ -13,3 +13,9 @@ curl -o artifacts/token_canister.wasm.gz https://download.dfinity.systems/ic/d4c
 
 # Download token did file
 curl -o artifacts/token.did https://raw.githubusercontent.com/dfinity/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/rs/rosetta-api/icp_ledger/ledger.did
+
+make g
+
+# Delete did file avoid eslint error
+rm -f src/declarations/cashier_backend/cashier_backend.did
+rm -f src/declarations/icp_ledger_canister/icp_ledger_canister.did
