@@ -43,6 +43,13 @@ impl Icrc112RequestsBuilder {
         self.requests.len() - 1 // Return the index of the newly added group
     }
 
+    pub fn add_to_first_group(&mut self, request: Icrc112Request) {
+        if self.requests.is_empty() {
+            self.requests.push(vec![]);
+        }
+        self.requests[0].push(request);
+    }
+
     pub fn add_request_to_group(
         &mut self,
         group_index: usize,

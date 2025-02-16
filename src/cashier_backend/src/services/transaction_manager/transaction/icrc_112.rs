@@ -28,7 +28,7 @@ pub fn create(
 
                 let request = builder.build();
 
-                parallel_index = icrc_112_requests_builer.add_one_request(request);
+                icrc_112_requests_builer.add_to_first_group(request);
             }
             Protocol::IC(IcTransaction::Icrc2Approve(tx_approve)) => {
                 let builder = ApproveCashierFeeBuilder {
@@ -39,7 +39,7 @@ pub fn create(
 
                 let request = builder.build();
 
-                let _ = icrc_112_requests_builer.add_request_to_group(parallel_index, request);
+                icrc_112_requests_builer.add_to_first_group(request);
             }
             _ => {}
         }
