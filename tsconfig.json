@@ -2,8 +2,8 @@
     "compilerOptions": {
         // enable latest features
         "lib": ["ESNext"],
-        "target": "es2020",
-        "module": "es2020",
+        "target": "ESNext",
+        "module": "ESNext",
         "moduleDetection": "force",
         "allowJs": true, // allow importing `.js` from `.ts`
         "types": ["jest", "node"],
@@ -25,6 +25,6 @@
         "useUnknownInCatchVariables": true,
         "noPropertyAccessFromIndexSignature": true
     },
-    "include": ["./src/**/*.ts", "./global-setup.ts", "./global-teardown.ts", "./types.d.ts"],
-    "references": [{ "path": "./tsconfig.node.json" }]
+    "include": ["./src/**/*.ts", "./global-setup.ts", "./global-teardown.ts", "./types.d.ts"]
+    // "references": [{ "path": "./tsconfig.node.json" }]
 }

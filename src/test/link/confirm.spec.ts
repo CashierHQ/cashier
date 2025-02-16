@@ -1,114 +1,103 @@
-// Import generated types for your canister
 import {
     CreateLinkInput,
-    GetLinkOptions,
+    UserDto,
     IntentDto,
     ProcessActionInput,
     UpdateLinkInput,
     type _SERVICE,
+    GetLinkOptions,
 } from "../../declarations/cashier_backend/cashier_backend.did";
-import { getIdentity } from "../utils/wallet";
-import { ActorSubclass } from "@dfinity/agent";
+
+import { idlFactory } from "../../declarations/cashier_backend/index";
+import { resolve } from "path";
+import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../utils/parser";
-import { ActorManager } from "../utils/service";
+import { AirdropHelper } from "../utils/airdrop-helper";
 
-// Define the path to your canister's WASM file
-// export const WASM_PATH = resolve(
-//     "target",
-//     "wasm32-unknown-unknown",
-//     "release",
-//     "cashier_backend.wasm",
-// );
+export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-const testPayload = {
-    title: "tip 20 icp",
-    description: "tip 20 icp to the user",
-    template: "Central",
-    link_image_url: "https://www.google.com",
-    link_type: "TipLink",
-};
-
-const assetInfoTest = {
-    chain: "IC",
-    address: "x5qut-viaaa-aaaar-qajda-cai",
-    amount_per_claim: BigInt(100),
-    total_amount: BigInt(100),
-};
-
-// The `describe` function is used to group tests together
-// and is completely optional.
 describe("Link", () => {
-    // Define variables to hold our PocketIC instance, canister ID,
-    // and an actor to interact with our canister.
-    // let pic: PocketIc;
-    // let canisterId: Principal;
-    let actor: ActorSubclass<_SERVICE>;
+    let pic: PocketIc;
+    let actor: Actor<_SERVICE>;
 
-    const identity1 = getIdentity("user1");
-
-    let actorManager: ActorManager;
+    const alice = createIdentity("superSecretAlicePassword");
+    let user: UserDto;
 
     let linkId: string;
-    let userId: string;
     let createLinkActionId: string;
 
-    // The `beforeEach` hook runs before each test.
-    //
-    // This can be replaced with a `beforeAll` hook to persist canister
-    // state between tests.
+    let airdropHelper: AirdropHelper;
+
+    const testPayload = {
+        title: "tip 20 icp",
+        description: "tip 20 icp to the user",
+        template: "Central",
+        link_image_url: "https://www.google.com",
+        link_type: "TipLink",
+    };
+
+    const assetInfoTest = {
+        chain: "IC",
+        address: "x5qut-viaaa-aaaar-qajda-cai",
+        amount_per_claim: BigInt(100),
+        total_amount: BigInt(100),
+    };
+
     beforeAll(async () => {
-        // create a new PocketIC instance
-        // pic = await PocketIc.create(process.env.PIC_URL);
+        pic = await PocketIc.create(process.env.PIC_URL);
+        const currentTime = new Date(1734434601000);
 
-        // // Setup the canister and actor
-        // const fixture = await pic.setupCanister<_SERVICE>({
-        //     idlFactory,
-        //     wasm: WASM_PATH,
-        // });
+        await pic.setTime(currentTime.getTime());
+        await pic.tick(1);
 
-        // Save the actor and canister ID for use in tests
-        actorManager = new ActorManager({
-            canisterId: "jjio5-5aaaa-aaaam-adhaq-cai",
-            identity: identity1,
+        const fixture = await pic.setupCanister<_SERVICE>({
+            idlFactory,
+            wasm: WASM_PATH,
         });
 
-        actor = await actorManager.initBackendActor();
+        actor = fixture.actor;
 
-        const user = await actor.get_user();
+        actor.setIdentity(alice);
 
-        if ("Err" in user) {
-            const createdUser = await actor.create_user();
-            const res = parseResultResponse(createdUser);
-            userId = res.id;
-        } else {
-            userId = user.Ok.id;
-        }
+        // init seed for RNG
+        await pic.advanceTime(5 * 60 * 1000);
+        await pic.tick(50);
 
-        console.log("userId", userId);
+        // create user snd airdrop
+        const create_user_res = await actor.create_user();
+        user = parseResultResponse(create_user_res);
+
+        airdropHelper = new AirdropHelper(pic);
+        await airdropHelper.setupCanister();
+
+        await airdropHelper.airdrop(BigInt(1_0000_0000_0000), alice.getPrincipal());
+
+        await pic.advanceTime(5 * 60 * 1000);
+        await pic.tick(50);
     });
 
-    // The `afterEach` hook runs after each test.
-    //
-    // This should be replaced with an `afterAll` hook if you use
-    // a `beforeAll` hook instead of a `beforeEach` hook.
-    // afterEach(async () => {
-    //     // tear down the PocketIC instance
-    //     await pic.tearDown();
-    // });
+    afterAll(async () => {
+        await pic.tearDown();
+    });
 
-    it("should create link success", async () => {
-        const input: CreateLinkInput = {
-            link_type: "TipLink",
-        };
+    beforeEach(async () => {
+        await pic.advanceTime(5 * 60 * 1000);
+        await pic.tick(50);
+    });
 
-        const createLinkRes = await actor.create_link(input);
-        linkId = parseResultResponse(createLinkRes);
-        const getLinkRes = await actor.get_link(linkId, []);
-        const res = parseResultResponse(getLinkRes);
+    describe("With Alice", () => {
+        it("should create link success", async () => {
+            const input: CreateLinkInput = {
+                link_type: "TipLink",
+            };
 
-        // Assert
-        expect(createLinkRes).toHaveProperty("Ok");
-        expect(res.link.state).toEqual("Link_state_choose_link_type");
+            const createLinkRes = await actor.create_link(input);
+            const res = parseResultResponse(createLinkRes);
+
+            linkId = res;
+
+            expect(createLinkRes).toHaveProperty("Ok");
+        });
     });
 
     it("should transition from choose tempalte to add asset success", async () => {
@@ -187,11 +176,10 @@ describe("Link", () => {
         const link = await actor.get_link(linkId, []);
         const linkRes = parseResultResponse(link);
         const actionRes = parseResultResponse(createActionRes);
+
         createLinkActionId = actionRes.id;
 
-        console.log("createLinkActionId", actionRes);
-
-        expect(actionRes.creator).toEqual(userId);
+        expect(actionRes.creator).toEqual(user.id);
         expect(actionRes.intents).toHaveLength(2);
         expect(linkRes.link.state).toEqual("Link_state_create_link");
 
@@ -208,8 +196,6 @@ describe("Link", () => {
 
         const getActionRes = await actor.get_link(linkId, [input]);
         const res = parseResultResponse(getActionRes);
-
-        console.log("getActionRes", res);
 
         expect(res.link.id).toEqual(linkId);
         expect(res.action).toHaveLength(1);
@@ -232,5 +218,11 @@ describe("Link", () => {
         console.log("icrc_request", JSON.stringify(icrc_112_requests, null, 2));
 
         expect(actionDto.id).toEqual(createLinkActionId);
+        expect(actionDto.state).toEqual("Action_state_processing");
+
+        actionDto.intents.forEach((intent: IntentDto) => {
+            expect(intent.state).toEqual("Intent_state_processing");
+        });
     });
 });
+//

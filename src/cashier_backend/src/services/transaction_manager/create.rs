@@ -8,7 +8,6 @@ use uuid::Uuid;
 
 use crate::{
     core::action::types::{ActionDto, CreateActionInput},
-    info,
     repositories::{self, link, user_wallet},
     types::error::CanisterError,
 };
@@ -84,10 +83,6 @@ pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, C
 
         intent_tx_hashmap.insert(intent.id.clone(), transactions);
     }
-
-    info!("action {:#?}", action);
-    info!("intents {:#?}", intents);
-    info!("intent_tx_hashmap {:#?}", intent_tx_hashmap);
 
     let _ = store_records(
         link_action,

@@ -91,8 +91,6 @@ async fn update_action_with_args(
         })
         .collect::<Vec<&Transaction>>();
 
-    info!("eligible_txs: {:#?}", eligible_txs);
-
     // for tx in eligible_txs.clone() {
     //     let has_dep = has_dependency::has_dependency(tx, &tx_map);
     // }
