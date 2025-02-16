@@ -185,6 +185,16 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
         let link_id = input.link_id.clone();
         let external = false;
 
+        if !services::link::is_link_exist(action_id.clone()) {
+            return Err(CanisterError::HandleApiError("Link not found".to_string()));
+        }
+
+        if !services::action::is_action_exist(action_id.clone()) {
+            return Err(CanisterError::HandleApiError(
+                "Action not found".to_string(),
+            ));
+        }
+
         services::transaction_manager::update_action::update_action(action_id, link_id, external)
             .await
             .map_err(|e| CanisterError::HandleApiError(e))

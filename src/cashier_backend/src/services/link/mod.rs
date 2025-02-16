@@ -8,7 +8,7 @@ pub mod validate_active_link;
 
 use crate::{
     core::link::types::CreateLinkInput,
-    repositories::{action, link, link_action, user_link, user_wallet},
+    repositories::{self, action, link, link_action, user_link, user_wallet},
     types::api::{PaginateInput, PaginateResult},
     warn,
 };
@@ -127,4 +127,8 @@ pub fn is_link_creator(caller: String, link_id: &String) -> bool {
             return creator == user_wallet.user_id;
         }
     };
+}
+
+pub fn is_link_exist(link_id: String) -> bool {
+    repositories::link::get(&link_id).is_some()
 }

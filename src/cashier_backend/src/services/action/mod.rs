@@ -12,3 +12,7 @@ pub fn get_intents_by_action_id(action_id: String) -> Vec<Intent> {
 
     repositories::intent::batch_get(intent_ids)
 }
+
+pub fn is_action_exist(action_id: String) -> bool {
+    repositories::action::get(action_id).is_some()
+}
