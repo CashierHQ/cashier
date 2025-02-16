@@ -40,10 +40,21 @@ jobs:
             - name: Install project dependencies
               run: npm install
 
+            - name: Setup test environment
+              run: npm run setup:test
+
+            - name: Cache Rust dependencies
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo
+                      target
+                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-cargo-
+
             - name: Run unit tests backend
-              run: |
-                  npm run setup:test
-                  npm run test
+              run: npm run test
 
     frontend_build:
         runs-on: ubuntu-latest
