@@ -16,7 +16,7 @@ pub fn roll_up_state(tx_id: String) -> Result<(), String> {
     roll_up_intent_status(&mut intents, &intent_txs)?;
     roll_up_action_status(&mut action, &intents)?;
 
-    for intent in intents {
+    for intent in intents.clone() {
         repositories::intent::update(intent.clone());
     }
 

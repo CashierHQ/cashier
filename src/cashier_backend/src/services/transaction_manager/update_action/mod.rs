@@ -1,9 +1,6 @@
 use cashier_types::{FromCallType, Transaction, TransactionState};
 
-use crate::{
-    core::action::types::ActionDto, info, repositories,
-    types::icrc_112_transaction::Icrc112Requests,
-};
+use crate::{core::action::types::ActionDto, info, types::icrc_112_transaction::Icrc112Requests};
 
 use super::{
     action::{self, flatten_tx_hashmap::flatten_tx_hashmap},
@@ -13,6 +10,7 @@ use super::{
 
 pub mod execute_tx;
 
+#[derive(Debug, Clone)]
 pub struct UpdateActionArgs {
     pub action_id: String,
     pub link_id: String,
@@ -32,9 +30,9 @@ pub async fn update_action(
 
     let request = update_action_with_args(args).await?;
 
-    info!("update_action request: {:?}", request);
-
     let resp = super::action::get(action_id).unwrap();
+
+    info!("update_action: {:#?}", resp);
 
     Ok(ActionDto::build(
         resp.action,
@@ -57,12 +55,10 @@ async fn update_action_with_args(
     // update status to whaterver is returned by the manual check
     for mut tx in txs.clone() {
         let new_state = manual_check_status(&tx).await?;
-        if new_state.is_some() {
-            if tx.state == new_state.clone().unwrap() {
-                continue;
-            }
-            update_tx_state(&mut tx, new_state.unwrap())?;
+        if tx.state == new_state.clone() {
+            continue;
         }
+        update_tx_state(&mut tx, new_state)?;
     }
 
     // If external = false, do not run step 2,3,4 for from_call_type == wallet
@@ -79,23 +75,23 @@ async fn update_action_with_args(
         .filter(|tx| {
             let mut eligible = true;
 
-            // success txs - ignores
-            // processing txs - ignores
-            if tx.state == TransactionState::Success || tx.state == TransactionState::Processing {
-                eligible = false;
-            }
-
             if args.external {
                 if tx.from_call_type == FromCallType::Wallet {
                     eligible = false;
                 }
             }
 
+            // success txs - ignores
+            // processing txs - ignores
+            if tx.state == TransactionState::Success || tx.state == TransactionState::Processing {
+                eligible = false;
+            }
+
             eligible
         })
         .collect::<Vec<&Transaction>>();
 
-    info!("eligible_txs: {:?}", eligible_txs);
+    info!("eligible_txs: {:#?}", eligible_txs);
 
     // for tx in eligible_txs.clone() {
     //     let has_dep = has_dependency::has_dependency(tx, &tx_map);
@@ -103,19 +99,17 @@ async fn update_action_with_args(
 
     // Step #3 Construct executable tx for the tx that are eligible to execute
     let icrc_112_requests: Icrc112Requests =
-        transaction::icrc_112::create(args.link_id, args.action_id, &eligible_txs);
-
-    info!("icrc_112_requests: {:?}", icrc_112_requests);
+        transaction::icrc_112::create(args.link_id.clone(), args.action_id.clone(), &eligible_txs);
 
     //Step #4 Actually execute the tx that is elibile
     // for client tx set to processing
-    // TODO: implement this
-    // for backend tx execute the tx
-    for tx in eligible_txs {
+    for tx in eligible_txs.clone() {
         execute_tx::execute_tx(&mut tx.clone())?;
     }
 
-    //call HasDependency for each tx and if returns false, the tx is eligible to be executed
+    // TODO: implement this
+    // for backend tx execute the tx
+
     if icrc_112_requests.len() == 0 {
         return Ok(None);
     }
