@@ -15,7 +15,6 @@ pub fn create(
     client_txs: &Vec<&Transaction>,
 ) -> Icrc112Requests {
     let mut icrc_112_requests_builer = Icrc112RequestsBuilder::new();
-    let mut parallel_index = 0;
     for tx in client_txs {
         match &tx.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
