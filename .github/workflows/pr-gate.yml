@@ -32,11 +32,10 @@ jobs:
             - name: Install project dependencies
               run: npm install
 
-            - name: Run setup test
-              run: npm run setup:test
-
             - name: Run unit tests backend
-              run: npm run test
+              run: |
+                  npm run setup:test
+                  npm run test
 
     frontend_build:
         runs-on: ubuntu-latest
