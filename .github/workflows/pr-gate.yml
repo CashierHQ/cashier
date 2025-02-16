@@ -10,10 +10,10 @@ on:
             - main
 
 jobs:
-    pr_build:
+    backend_tests:
         runs-on: ubuntu-latest
         environment: staging
-
+        if: contains(github.event.pull_request.changed_files, 'cashier_backend/')
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -30,9 +30,34 @@ jobs:
               run: dfx --version
 
             - name: Install project dependencies
-              run: npm install --force
+              run: npm install
 
-            - name: Build project
+            - name: Run unit tests backend
+              run: npm run test
+
+    frontend_build:
+        runs-on: ubuntu-latest
+        environment: staging
+        if: contains(github.event.pull_request.changed_files, 'cashier_frontend/')
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Install dfx
+              uses: dfinity/setup-dfx@main
+
+            - name: Confirm successful installation
+              run: dfx --version
+
+            - name: Install project dependencies
+              run: npm install
+
+            - name: Build frontend
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
               run: |
