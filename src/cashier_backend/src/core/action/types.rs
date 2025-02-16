@@ -117,13 +117,13 @@ impl ActionDto {
     pub fn build(
         action: cashier_types::Action,
         intents: Vec<Intent>,
-        intent_hashmap: HashMap<String, Vec<cashier_types::Transaction>>,
+        _intent_hashmap: HashMap<String, Vec<cashier_types::Transaction>>,
         icrc_112_requests: Option<Icrc112Requests>,
     ) -> Self {
         let intents_dto = intents
             .into_iter()
             .map(|intent| {
-                let transactions = intent_hashmap.get(&intent.id).unwrap();
+                // let transactions = intent_hashmap.get(&intent.id).unwrap();
                 IntentDto::from(intent)
             })
             .collect();

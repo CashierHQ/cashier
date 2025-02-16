@@ -18,19 +18,19 @@ pub struct Transaction {
     pub start_ts: Option<u64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Protocol {
     IC(IcTransaction),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum IcTransaction {
     Icrc1Transfer(Icrc1Transfer),
     Icrc2Approve(Icrc2Approve),
     Icrc2TransferFrom(Icrc2TransferFrom),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Icrc1Transfer {
     pub from: Wallet,
     pub to: Wallet,
@@ -40,7 +40,7 @@ pub struct Icrc1Transfer {
     pub ts: Option<u64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Icrc2Approve {
     pub from: Wallet,
     pub spender: Wallet,
@@ -48,7 +48,7 @@ pub struct Icrc2Approve {
     pub amount: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Icrc2TransferFrom {
     pub from: Wallet,
     pub to: Wallet,

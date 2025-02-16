@@ -165,10 +165,9 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
                 Err(e)
             }
         },
-
-        _ => Err(CanisterError::HandleApiError(
-            "Invalid link type".to_string(),
-        )),
+        // _ => Err(CanisterError::HandleApiError(
+        //     "Invalid link type".to_string(),
+        // )),
     }
 }
 

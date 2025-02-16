@@ -1,6 +1,6 @@
 use cashier_types::{IntentTransaction, IntentTransactionKey};
 
-use super::{base_repository::Store, INTENT_TRANSACTION_STORE};
+use super::INTENT_TRANSACTION_STORE;
 
 pub fn create(intent_transaction: IntentTransaction) -> IntentTransaction {
     INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
