@@ -4,7 +4,7 @@ import LinkService, {
     UpdateActionInputModel,
 } from "@/services/link.service";
 import { LinkDetailModel, State } from "@/services/types/link.service.types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { QueryClient, useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_STATE, ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { MapLinkToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
@@ -14,6 +14,9 @@ import { useEffect } from "react";
 import { ShowToastFn } from "./useToast";
 import { TFunction } from "i18next";
 import { ActionModel } from "@/services/types/action.service.types";
+import { Identity } from "@dfinity/agent";
+import { PartialIdentity } from "@dfinity/identity";
+import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -21,7 +24,27 @@ export interface UpdateLinkParams {
     isContinue: boolean;
 }
 
-export const useUpdateLink = () => {
+export function useUpdateLink(
+    queryClient: QueryClient,
+    identity: Identity | PartialIdentity | undefined,
+): UseMutationResult<LinkDto, Error, UpdateLinkParams, unknown> {
+    const mutation = useMutation({
+        mutationFn: (data: UpdateLinkParams) => {
+            const linkService = new LinkService(identity);
+            return linkService.updateLink(data.linkId, data.linkModel, data.isContinue);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.links.list(identity).queryKey });
+        },
+        onError: (err) => {
+            throw err;
+        },
+    });
+
+    return mutation;
+}
+
+export function useUpdateLinkSelfContained() {
     const identity = useIdentity();
     const queryClient = useQueryClient();
 
@@ -43,7 +66,7 @@ export const useUpdateLink = () => {
     });
 
     return mutation;
-};
+}
 
 export function useSetLinkTemplate() {
     const identity = useIdentity();

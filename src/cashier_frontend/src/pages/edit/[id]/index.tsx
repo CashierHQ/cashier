@@ -5,7 +5,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
-import { useUpdateLink } from "@/hooks/linkHooks";
+import { useUpdateLinkSelfContained } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { LINK_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
@@ -34,7 +34,7 @@ export default function LinkPage() {
     const { link, setLink, setAction } = useCreateLinkStore();
 
     const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(linkId);
-    const { mutateAsync: updateLink } = useUpdateLink();
+    const { mutateAsync: updateLink } = useUpdateLinkSelfContained();
 
     useEffect(() => {
         if (linkData) {
