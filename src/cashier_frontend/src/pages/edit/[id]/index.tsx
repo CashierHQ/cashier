@@ -26,9 +26,8 @@ import {
     LINK_STATE,
     LINK_TYPE,
 } from "@/services/types/enum";
-import { IntentCreateModel, TransactionModel } from "@/services/types/intent.service.types";
-import IntentService from "@/services/intent.service";
-import SignerService from "@/services/signer.service";
+import { IntentCreateModel } from "@/services/types/intent.service.types";
+import SignerService from "@/services/signerService/signer.service";
 import { Identity } from "@dfinity/agent";
 import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 import useToast from "@/hooks/useToast";
@@ -242,7 +241,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
         try {
             const signerService = new SignerService(identity);
-            const res = await signerService.icrcxExecute(transactions);
+            const res = await signerService.icrc112Execute(transactions);
             return res;
         } catch (err) {
             console.log(err);
