@@ -21,9 +21,7 @@ const STEP_LINK_STATE_ORDER = [
 ];
 
 function getInitialStep(state: string | undefined) {
-    const index = STEP_LINK_STATE_ORDER.findIndex((x) => x === state);
-
-    return index;
+    return STEP_LINK_STATE_ORDER.findIndex((x) => x === state);
 }
 
 export default function LinkPage() {
