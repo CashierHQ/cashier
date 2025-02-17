@@ -22,6 +22,7 @@ import { LINK_TYPE } from "@/services/types/enum";
 import { useSetLinkTemplate } from "@/hooks/linkHooks";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import useToast from "@/hooks/useToast";
+import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
@@ -30,6 +31,7 @@ function isLinkTypeSupported(linkType: LINK_TYPE) {
 export default function LinkTemplate() {
     const { t } = useTranslation();
     const { showToast } = useToast();
+    const { nextStep } = useMultiStepFormContext();
 
     const { link, setLink, updateLink } = useCreateLinkStore();
     const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
@@ -49,8 +51,6 @@ export default function LinkTemplate() {
     };
 
     const handleSubmit = form.handleSubmit(async (data) => {
-        console.log("template submit");
-
         if (isLinkTypeSupported(data.linkType as LINK_TYPE)) {
             const updatedLink = await setLinkTemplate({
                 link: link!,
@@ -62,6 +62,7 @@ export default function LinkTemplate() {
             });
 
             setLink(updatedLink);
+            nextStep();
         } else {
             showUnsupportedLinkTypeToast();
         }

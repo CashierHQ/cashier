@@ -3,39 +3,46 @@ import { createContext, ReactNode, useCallback, useContext, useState } from "rea
 
 export interface MultiStepFormContext {
     step: number;
-    steps: number;
+    setStep: (step: number) => void;
     nextStep: () => void;
     prevStep: () => void;
 
-    name(step: number): string;
-    register(name: string): number;
+    steps: number;
+    setSteps: (steps: number) => void;
+
+    stepName: string;
+    setStepName: (name: string) => void;
 }
 
 const MultiStepFormContext = createContext<MultiStepFormContext | null>(null);
 
 export interface MultiStepFormContextProviderProps {
-    steps?: number;
     initialStep?: number;
     children?: ReactNode;
 }
 
 export function MultiStepFormProvider({
-    steps = 0,
     initialStep = 0,
     children,
 }: MultiStepFormContextProviderProps) {
     const [step, setStep] = useState(initialStep);
+    const [steps, setSteps] = useState(0);
+    const [stepName, setStepName] = useState("");
 
-    const nextStep = useCallback(() => setStep((old) => clamp(old + 1, 0, steps - 1)), [step]);
-    const prevStep = useCallback(() => setStep((old) => clamp(old - 1, 0, steps - 1)), [step]);
+    const nextStep = useCallback(() => setStep((old) => clamp(old + 1, 0, steps - 1)), [steps]);
+    const prevStep = useCallback(() => setStep((old) => clamp(old - 1, 0, steps - 1)), [steps]);
 
     return (
         <MultiStepFormContext.Provider
             value={{
                 step,
-                steps,
+                setStep,
                 nextStep,
                 prevStep,
+                steps,
+                setSteps,
+                stepName,
+                setStepName,
             }}
         >
             {children}

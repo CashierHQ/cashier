@@ -44,7 +44,6 @@ export default function LinkPreview() {
     const handleCreateAction = async () => {
         const updatedAction = await createAction({
             linkId: link!.id,
-            actionId: action!.id,
         });
 
         setAction(updatedAction);
@@ -58,6 +57,7 @@ export default function LinkPreview() {
         try {
             if (validationResult) {
                 await handleCreateAction();
+                setShowConfirmation(true);
             } else {
                 showInvalidActionToast();
             }

@@ -1,53 +1,39 @@
-import { Children, cloneElement, ReactElement, ReactNode, useEffect, useState } from "react";
+import { Children, ReactElement, ReactNode, useEffect } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
-import { MultiStepFormProvider } from "@/contexts/multistep-form-context";
+import { MultiStepFormProvider, useMultiStepFormContext } from "@/contexts/multistep-form-context";
+import { useNavigate } from "react-router-dom";
 
 interface MultiStepFormProps {
     initialStep: number;
     children: ReactNode;
 }
 
-export default function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps) {
-    const [currentStep, setCurrentStep] = useState(initialStep);
-
-    const header = Children.toArray(children).find(
-        (child) => (child as ReactElement).type === MultiStepForm.Header,
-    ) as ReactElement<HeaderProps>;
-
-    const items = Children.toArray(children).filter(
-        (child) => (child as ReactElement).type === MultiStepForm.Item,
-    ) as ReactElement<ItemProps>[];
-
+export function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps) {
     return (
-        <div className="w-full flex flex-col flex-grow items-center">
-            <MultiStepFormProvider>
-                {header &&
-                    cloneElement(header, {
-                        steps: items.length,
-                        currentStep: currentStep,
-                        stepName: items[currentStep]?.props.name,
-                        onClickBack: () => setCurrentStep((old) => (old <= 0 ? 0 : old - 1)),
-                    })}
-                {items[currentStep]}
-            </MultiStepFormProvider>
-        </div>
+        <MultiStepFormProvider initialStep={initialStep}>
+            <div className="w-full flex flex-col flex-grow items-center">{children}</div>
+        </MultiStepFormProvider>
     );
 }
 
-interface HeaderProps {
-    stepName?: string;
-    steps?: number;
-    currentStep?: number;
+interface MultiStepFormHeaderProps {
     onClickBack?: () => void;
 }
 
-const Header = ({
-    steps = 1,
-    currentStep = 0,
-    stepName = "",
-    onClickBack = () => {},
-}: HeaderProps) => {
+export function MultiStepFormHeader({ onClickBack = () => {} }: MultiStepFormHeaderProps) {
+    const navigate = useNavigate();
+    const { step: currentStep, steps, stepName, prevStep } = useMultiStepFormContext();
+
+    const handleClickBack = () => {
+        if (currentStep !== 0) {
+            onClickBack();
+            prevStep();
+        } else {
+            navigate("/");
+        }
+    };
+
     return (
         <div className="w-full">
             <div className="w-full flex items-center justify-center mb-3 relative">
@@ -56,13 +42,14 @@ const Header = ({
                 </h4>
                 <button
                     className="absolute left-1 cursor-pointer text-[1.5rem]"
-                    onClick={onClickBack}
+                    onClick={handleClickBack}
                 >
                     <ChevronLeftIcon width={25} height={25} />
                 </button>
             </div>
+
             <div className="flex w-full mb-3">
-                {[1, 2, 3].map((_, index) => (
+                {new Array(steps).fill(0).map((_, index) => (
                     <div
                         key={index}
                         className={cn("h-[4px] rounded-full mx-[2px]", {
@@ -75,18 +62,35 @@ const Header = ({
             </div>
         </div>
     );
-};
+}
 
-interface ItemProps {
+interface MultiStepFormItemsProps {
+    children?: ReactNode;
+}
+
+export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
+    const { step, setSteps, setStepName } = useMultiStepFormContext();
+
+    const stepsList = Children.toArray(children) as ReactElement<MultiStepFormItemProps>[];
+    const stepComponent = stepsList[step];
+
+    useEffect(() => {
+        setSteps(stepsList.length);
+        setStepName(stepComponent.props.name);
+    }, [step, children]);
+
+    return stepComponent;
+}
+
+interface MultiStepFormItemProps {
     name: string;
     children: ReactNode;
 }
 
-const Item = ({ children }: ItemProps) => {
-    useEffect(() => {});
-
+export function MultiStepFormItem({ children }: MultiStepFormItemProps) {
     return children;
-};
+}
 
-MultiStepForm.Header = Header;
-MultiStepForm.Item = Item;
+MultiStepForm.Header = MultiStepFormHeader;
+MultiStepForm.Items = MultiStepFormItems;
+MultiStepForm.Item = MultiStepFormItem;

@@ -2,12 +2,11 @@ import { useEffect } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
 import { Navigate, useParams } from "react-router-dom";
-import MultiStepForm from "@/components/multi-step-form";
+import { MultiStepForm } from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useUpdateLink } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
@@ -21,8 +20,10 @@ const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CREATE_LINK,
 ];
 
-function getInitialStep(state: string) {
-    return STEP_LINK_STATE_ORDER.findIndex((x) => x === state) ?? 0;
+function getInitialStep(state: string | undefined) {
+    const index = STEP_LINK_STATE_ORDER.findIndex((x) => x === state);
+
+    return index;
 }
 
 export default function LinkPage() {
@@ -54,9 +55,9 @@ export default function LinkPage() {
         return <Navigate to={"/"} />;
     }
 
-    if (isLoadingLinkData) {
+    if (isLoadingLinkData || getInitialStep(link?.state) < 0) {
         return (
-            <div className="flex flex-col justify-center items-center w-full f-svh">
+            <div className="flex flex-col justify-center items-center w-full h-svh">
                 <Spinner width={64} />
             </div>
         );
@@ -70,20 +71,22 @@ export default function LinkPage() {
             )}
         >
             <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
-                <MultiStepForm initialStep={0}>
+                <MultiStepForm initialStep={getInitialStep(link?.state)}>
                     <MultiStepForm.Header onClickBack={handleBackstep} />
 
-                    <MultiStepForm.Item name={t("create.linkTemplate")}>
-                        <LinkTemplate />
-                    </MultiStepForm.Item>
+                    <MultiStepForm.Items>
+                        <MultiStepForm.Item name={t("create.linkTemplate")}>
+                            <LinkTemplate />
+                        </MultiStepForm.Item>
 
-                    <MultiStepForm.Item name={t("create.linkDetails")}>
-                        <LinkDetails />
-                    </MultiStepForm.Item>
+                        <MultiStepForm.Item name={t("create.linkDetails")}>
+                            <LinkDetails />
+                        </MultiStepForm.Item>
 
-                    <MultiStepForm.Item name={t("create.linkPreview")}>
-                        <LinkPreview />
-                    </MultiStepForm.Item>
+                        <MultiStepForm.Item name={t("create.linkPreview")}>
+                            <LinkPreview />
+                        </MultiStepForm.Item>
+                    </MultiStepForm.Items>
                 </MultiStepForm>
 
                 <TransactionToast

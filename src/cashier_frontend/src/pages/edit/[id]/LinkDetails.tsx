@@ -4,8 +4,10 @@ import { TipLinkAssetForm } from "@/components/link-details/tip-link-asset-form"
 import { TipLinkAssetFormSchema } from "@/components/link-details/tip-link-asset-form.hooks";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { useSetTipLinkDetails } from "@/hooks/linkHooks";
+import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 
 export default function LinkDetails() {
+    const { nextStep } = useMultiStepFormContext();
     const { link, setLink } = useCreateLinkStore();
     const { mutateAsync: setTipLinkDetails } = useSetTipLinkDetails();
 
@@ -15,6 +17,7 @@ export default function LinkDetails() {
             patch: data,
         });
         setLink(updatedLink);
+        nextStep();
     };
 
     const render = () => {

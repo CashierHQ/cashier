@@ -6,7 +6,7 @@ import LinkService, {
 import { LinkDetailModel, State } from "@/services/types/link.service.types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
-import { ACTION_STATE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { MapLinkToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
 import SignerService from "@/services/signer.service";
 import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
@@ -163,12 +163,12 @@ export function useCreateAction() {
     const identity = useIdentity();
 
     const mutation = useMutation({
-        mutationFn: (vars: { linkId: string; actionId: string }) => {
+        mutationFn: (vars: { linkId: string }) => {
             const linkService = new LinkService(identity);
 
-            return linkService.updateAction({
+            return linkService.processAction({
                 ...vars,
-                external: true,
+                actionType: ACTION_TYPE.CREATE_LINK,
             });
         },
     });
