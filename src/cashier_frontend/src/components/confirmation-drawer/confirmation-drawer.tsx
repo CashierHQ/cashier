@@ -1,7 +1,4 @@
-import { TransactionModel } from "@/services/types/intent.service.types";
-import { LinkModel } from "@/services/types/link.service.types";
-import { ActionModel } from "@/services/types/action.service.types";
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
@@ -15,46 +12,63 @@ import {
     usePrimaryIntents,
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
-
-export type ConfirmTransactionModel = {
-    linkName?: string;
-    linkData: LinkModel;
-    action?: ActionModel;
-    transactions?: TransactionModel[][];
-};
+import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { ACTION_STATE } from "@/services/types/enum";
+import { useNavigate } from "react-router-dom";
+import { useCreateAction, useIcrcxExecute, useSetLinkActive } from "@/hooks/linkHooks";
 
 interface ConfirmationDrawerProps {
-    data: ConfirmTransactionModel | undefined;
     open: boolean;
     onClose: () => void;
-    onConfirm: () => void;
     onInfoClick: () => void;
 }
 
-export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
-    data,
-    open,
-    onClose,
-    onConfirm,
-    onInfoClick,
-}) => {
+export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose, onInfoClick }) => {
+    const navigate = useNavigate();
     const { t } = useTranslation();
-    const primaryIntents = usePrimaryIntents(data?.action?.intents);
-    const cashierFeeIntents = useCashierFeeIntents(data?.action?.intents);
-    const { disabled, text } = useConfirmButtonState(data?.action?.state);
-    const [isDisabled, setIsDisabled] = useState(disabled);
-    const [buttonText, setButtonText] = useState(text);
+    const { link, setLink, action, setAction } = useCreateLinkStore();
 
-    const onClickSubmit = () => {
-        setIsDisabled(true);
-        setButtonText(t("transaction.confirm_popup.processing"));
-        onConfirm();
+    const { mutateAsync: setLinkActive } = useSetLinkActive();
+    const { mutateAsync: createAction } = useCreateAction();
+    const { mutateAsync: icrcxExecute } = useIcrcxExecute();
+
+    const primaryIntents = usePrimaryIntents(action?.intents);
+    const cashierFeeIntents = useCashierFeeIntents(action?.intents);
+
+    const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
+        action?.state,
+        t,
+    );
+
+    const handleSetLinkToActive = async () => {
+        const activeLink = await setLinkActive({ link: link! });
+        setLink(activeLink);
+
+        navigate(`/details/${link!.id}`);
     };
 
-    useEffect(() => {
-        setIsDisabled(disabled);
-        setButtonText(text);
-    }, [disabled, text]);
+    const startTransaction = async () => {
+        const createdAction = await createAction({ linkId: link!.id, actionId: action!.id });
+
+        setAction(createdAction);
+
+        await icrcxExecute(action!.icrc112Requests);
+    };
+
+    const onClickSubmit = async () => {
+        const isTxSuccess = action?.state === ACTION_STATE.SUCCESS;
+
+        setIsDisabled(true);
+        setButtonText(t("transaction.confirm_popup.processing"));
+
+        if (isTxSuccess) {
+            await handleSetLinkToActive();
+        } else {
+            await startTransaction();
+        }
+
+        setIsDisabled(false);
+    };
 
     return (
         <Drawer open={open}>
@@ -72,7 +86,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         />
                     </DrawerTitle>
                 </DrawerHeader>
-                {data ? (
+                {action ? (
                     <>
                         <ConfirmationPopupAssetsSection
                             intents={primaryIntents}

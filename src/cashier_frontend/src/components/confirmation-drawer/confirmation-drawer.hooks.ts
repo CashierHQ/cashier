@@ -1,7 +1,7 @@
-import { ACTION_STATE, INTENT_STATE, TASK } from "@/services/types/enum";
+import { ACTION_STATE, TASK } from "@/services/types/enum";
 import { IntentModel } from "@/services/types/intent.service.types";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { TFunction } from "i18next";
+import { useEffect, useMemo, useState } from "react";
 
 export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
     const primaryIntents = useMemo(() => {
@@ -19,11 +19,12 @@ export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
     return cashierFeeIntents;
 };
 
-export const useConfirmButtonState = (intentState: string | undefined) => {
-    const { t } = useTranslation();
+export const useConfirmButtonState = (actionState: string | undefined, t: TFunction) => {
+    const [isDisabled, setIsDisabled] = useState(false);
+    const [buttonText, setButtonText] = useState("");
 
     const mapActionStateToButtonText = () => {
-        switch (intentState) {
+        switch (actionState) {
             case ACTION_STATE.CREATED:
                 return t("transaction.confirm_popup.confirm_button");
             case ACTION_STATE.PROCESSING:
@@ -38,7 +39,7 @@ export const useConfirmButtonState = (intentState: string | undefined) => {
     };
 
     const mapActionStateToButtonDisabled = () => {
-        switch (intentState) {
+        switch (actionState) {
             case ACTION_STATE.CREATED:
             case ACTION_STATE.SUCCESS:
             case ACTION_STATE.FAIL:
@@ -50,8 +51,15 @@ export const useConfirmButtonState = (intentState: string | undefined) => {
         }
     };
 
+    useEffect(() => {
+        setButtonText(mapActionStateToButtonText());
+        setIsDisabled(mapActionStateToButtonDisabled());
+    }, [actionState]);
+
     return {
-        disabled: mapActionStateToButtonDisabled(),
-        text: mapActionStateToButtonText(),
+        isDisabled,
+        setIsDisabled,
+        buttonText,
+        setButtonText,
     };
 };
