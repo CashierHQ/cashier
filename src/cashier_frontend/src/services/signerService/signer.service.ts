@@ -1,6 +1,7 @@
 import { Agent, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { Icrc112Requests, Icrc112Response, ICRC112Service } from "./icrc112.service";
+import { callCanisterService } from "./callCanister.service";
 class SignerService {
     private agent: Agent;
 
@@ -9,7 +10,11 @@ class SignerService {
     }
 
     async callIcrc112(input: Icrc112Requests): Promise<Icrc112Response> {
-        const response = await ICRC112Service.icrc112Execute(input, this.agent);
+        const icrc112Service = new ICRC112Service({
+            agent: this.agent,
+            callCanisterService: callCanisterService,
+        });
+        const response = await icrc112Service.icrc112Execute(input);
         return response;
     }
 }
