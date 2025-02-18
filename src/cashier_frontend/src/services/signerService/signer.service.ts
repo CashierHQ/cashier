@@ -45,6 +45,13 @@ interface ErrorResponse {
     };
 }
 
+interface CanisterValidation {
+    canisterId: string;
+    method: string;
+}
+
+const SUPPORTED_PARSED_METHODS = ["icrc1_transfer", "icrc2_approve", "icrc7_transfer"];
+
 type Icrc112ResponseItem = SuccessResponse | ErrorResponse;
 
 export interface Icrc112Response {
@@ -76,30 +83,60 @@ class SignerService {
         const finalResponse: Icrc112Response = { responses: [] };
 
         for (let i = 0; i < arg.params.requests.length; i++) {
-            const paralellRequests = arg.params.requests[i];
-            const responsesFromBatchCall = await this.callBatchICRC112Requests(paralellRequests);
+            const parallelRequests = arg.params.requests[i];
+            const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
 
             //Process each response from batch call and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
-            const icrc112ResponseItems: Icrc112ResponseItem[] =
-                this.processResponse(responsesFromBatchCall);
+            const icrc112ResponseItems: Icrc112ResponseItem[] = this.processResponse(
+                parallelResponses,
+                parallelRequests,
+            );
+
             finalResponse.responses.push(icrc112ResponseItems);
         }
         return finalResponse;
     }
 
-    private processResponse(response: Array<Icrc112ResponseItem>): Icrc112ResponseItem[] {
+    private processResponse(
+        response: Array<Icrc112ResponseItem>,
+        parallelRequest: ParallelRequests,
+        canisterValidation?: CanisterValidation,
+    ): Icrc112ResponseItem[] {
         const responses: Icrc112ResponseItem[] = [];
-        response.forEach((response) => {
-            if ("result" in response) {
-                responses.push({ result: response.result });
+        response.forEach((response, index) => {
+            // If no response received
+            if (!response) {
+                responses.push({
+                    error: {
+                        code: 1000,
+                        message: "No response from canister",
+                    },
+                });
+                return;
+            }
+
+            // Start ICRC-114
+            //TODO: Complete ICRC-114 with canister validation after refinement
+            if (canisterValidation) {
+                // Check method name to decide parse response in wallet or validate canister
+                if (SUPPORTED_PARSED_METHODS.includes(parallelRequest[index].method)) {
+                    console.log("Parse response inside wallet, then process parsed response");
+                } else {
+                    console.log("Validate response by validate canister");
+                }
+                // End ICRC-114
             } else {
-                responses.push({ error: response.error });
+                if ("result" in response) {
+                    responses.push({ result: response.result });
+                } else {
+                    responses.push({ error: response.error });
+                }
             }
         });
         return responses;
     }
 
-    private async callBatchICRC112Requests(
+    private async parallelExecuteIcrcRequests(
         requests: ParallelRequests,
     ): Promise<Array<Icrc112ResponseItem>> {
         const process_tasks: Promise<CallCanisterResponse>[] = [];
