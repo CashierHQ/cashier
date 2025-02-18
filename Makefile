@@ -11,6 +11,7 @@ test:
 
 g: 
 	@dfx generate cashier_backend
+	@dfx generate icp_ledger_canister
 
 predeploy:
 	make build-wasm
@@ -19,7 +20,6 @@ predeploy:
 build: 
 	make build-wasm
 	make build-did
-	make g
 
 deploy:
 	@bash scripts/deploy.sh
@@ -30,3 +30,4 @@ local-setup:
 local:
 	make local-setup
 	@bash scripts/deploy.sh --skip
+	make g

@@ -4,7 +4,8 @@
             "candid": "src/cashier_backend/cashier_backend.did",
             "package": "cashier_backend",
             "type": "rust",
-            "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai"
+            "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai",
+            "gzip": true
         },
         "cashier_frontend": {
             "source": ["src/cashier_frontend/dist"],

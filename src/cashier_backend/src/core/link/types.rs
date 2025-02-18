@@ -271,8 +271,8 @@ impl UpdateLinkInput {
                     LinkDetailUpdateInput {
                         title,
                         description,
-                        link_image_url,
-                        nft_image,
+                        link_image_url: _,
+                        nft_image: _,
                         asset_info,
                         template,
                         link_type,

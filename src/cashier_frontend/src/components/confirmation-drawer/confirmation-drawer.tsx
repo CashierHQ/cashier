@@ -1,11 +1,10 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-section";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
-import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import {
     useCashierFeeIntents,
     useConfirmButtonState,
@@ -27,6 +26,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { link, setLink, action, setAction } = useCreateLinkStore();
+
+    const [isUsd, setIsUsd] = useState(false);
 
     const { mutateAsync: setLinkActive } = useSetLinkActive();
     const { mutateAsync: createAction } = useCreateAction();
@@ -91,11 +92,11 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
                         <ConfirmationPopupAssetsSection
                             intents={primaryIntents}
                             onInfoClick={onInfoClick}
+                            isUsd={isUsd}
+                            onUsdClick={() => setIsUsd((old) => !old)}
                         />
 
-                        <ConfirmationPopupFeesSection intents={cashierFeeIntents} />
-
-                        <ConfirmationPopupLegalSection />
+                        <ConfirmationPopupFeesSection intents={cashierFeeIntents} isUsd={isUsd} />
 
                         <Button disabled={isDisabled} onClick={onClickSubmit}>
                             {buttonText}

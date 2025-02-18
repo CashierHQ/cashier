@@ -33,12 +33,21 @@ impl Icrc112RequestsBuilder {
         Self { requests: vec![] }
     }
 
-    pub fn add_parallel_requests(&mut self, requests: ParallelRequests) {
+    pub fn add_parallel_requests(&mut self, requests: ParallelRequests) -> usize {
         self.requests.push(requests);
+        self.requests.len() - 1 // Return the index of the newly added group
     }
 
-    pub fn add_one_request(&mut self, request: Icrc112Request) {
+    pub fn add_one_request(&mut self, request: Icrc112Request) -> usize {
         self.requests.push(vec![request]);
+        self.requests.len() - 1 // Return the index of the newly added group
+    }
+
+    pub fn add_to_first_group(&mut self, request: Icrc112Request) {
+        if self.requests.is_empty() {
+            self.requests.push(vec![]);
+        }
+        self.requests[0].push(request);
     }
 
     pub fn add_request_to_group(

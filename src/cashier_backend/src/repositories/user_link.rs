@@ -36,8 +36,13 @@ pub fn get_links_by_user_id(user_id: String, paginate: PaginateInput) -> Paginat
             user_id: user_id.clone(),
             link_id: "".to_string(),
         };
-        let start = user_link_key.to_str();
-        let all_links: Vec<UserLink> = store.range(start..).map(|(_, link)| link.clone()).collect();
+
+        let prefix = user_link_key.to_str();
+        let all_links: Vec<UserLink> = store
+            .range(prefix.to_string()..)
+            .take_while(|(key, _)| key.starts_with(&prefix))
+            .map(|(_, link)| link.clone())
+            .collect();
 
         let total = all_links.len();
         let offset = paginate.offset;

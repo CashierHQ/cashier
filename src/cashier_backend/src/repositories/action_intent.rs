@@ -1,9 +1,5 @@
-use std::collections::HashSet;
-
 use crate::repositories::ACTION_INTENT_STORE;
 use cashier_types::{ActionIntent, ActionIntentKey};
-
-use super::base_repository::Store;
 
 pub fn create(action_intent: ActionIntent) {
     ACTION_INTENT_STORE.with_borrow_mut(|store| {
