@@ -241,7 +241,7 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
         try {
             const signerService = new SignerService(identity);
-            const res = await signerService.icrc112Execute(transactions);
+            const res = await signerService.callIcrc112(transactions);
             return res;
         } catch (err) {
             console.log(err);
