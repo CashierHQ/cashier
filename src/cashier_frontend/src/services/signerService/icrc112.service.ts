@@ -90,10 +90,8 @@ export class ICRC112Service {
             const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
 
             //Process each response from batch call and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
-            const icrc112ResponseItems: Icrc112ResponseItem[] = this.processResponse(
-                parallelResponses,
-                parallelRequests,
-            );
+            const icrc112ResponseItems: Icrc112ResponseItem[] =
+                this.processResponse(parallelResponses);
             //End parallel execution
 
             finalResponse.responses.push(icrc112ResponseItems);
@@ -108,7 +106,6 @@ export class ICRC112Service {
 
     private processResponse(
         response: Array<Icrc112ResponseItem>,
-        parallelRequest: ParallelRequests,
         canisterValidation?: CanisterValidation,
     ): Icrc112ResponseItem[] {
         const responses: Icrc112ResponseItem[] = [];
@@ -158,7 +155,7 @@ export class ICRC112Service {
         for (let i = 0; i < rowRequestLength; i++) {
             rowResponse.push({
                 error: {
-                    code: 10001,
+                    code: 1001,
                     message: "Not processed due to batch request failure",
                 },
             });
