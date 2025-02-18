@@ -93,7 +93,7 @@ export function useSetLinkTemplate() {
             queryClient.invalidateQueries({ queryKey: queryKeys.links.list(identity).queryKey });
         },
         onError: (e, vars) => {
-            console.log("error setting link template", vars.link, vars.patch);
+            console.error("error setting link template", vars.link, vars.patch);
         },
     });
 

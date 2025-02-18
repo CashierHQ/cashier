@@ -48,11 +48,11 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
     };
 
     const startTransaction = async () => {
-        const createdAction = await createAction({ linkId: link!.id, actionId: action!.id });
+        const createdAction = await createAction({ linkId: link!.id });
 
         setAction(createdAction);
 
-        await icrcxExecute(action!.icrc112Requests);
+        await icrcxExecute(createdAction!.icrc112Requests);
     };
 
     const onClickSubmit = async () => {

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
@@ -13,6 +13,8 @@ import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { useIdentity } from "@nfid/identitykit/react";
+import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -25,13 +27,16 @@ function getInitialStep(state: string | undefined) {
 }
 
 export default function LinkPage() {
+    const navigate = useNavigate();
+    const identity = useIdentity();
+
     const { t } = useTranslation();
     const { linkId } = useParams();
     const { toastData, hideToast } = useToast();
 
-    const { link, setLink, setAction } = useCreateLinkStore();
+    const { link, setLink, action, setAction } = useCreateLinkStore();
 
-    const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(linkId);
+    const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(linkId);
     const { mutateAsync: updateLink } = useUpdateLinkSelfContained();
 
     useEffect(() => {
@@ -41,19 +46,24 @@ export default function LinkPage() {
         }
     }, [linkData]);
 
-    const handleBackstep = async () => {
-        await updateLink({
-            linkId: linkId!,
-            linkModel: link!,
-            isContinue: false,
-        });
+    const handleBackstep = async (context: MultiStepFormContext) => {
+        if (context.step === 0 || action) {
+            navigate("/");
+        } else {
+            updateLink({
+                linkId: linkId!,
+                linkModel: link!,
+                isContinue: false,
+            });
+            context.prevStep();
+        }
     };
 
-    if (!linkId) {
+    if (!linkId || !identity) {
         return <Navigate to={"/"} />;
     }
 
-    if (isLoadingLinkData || getInitialStep(link?.state) < 0) {
+    if (isFetchingLinkData || getInitialStep(link?.state) < 0) {
         return (
             <div className="flex flex-col justify-center items-center w-full h-svh">
                 <Spinner width={64} />

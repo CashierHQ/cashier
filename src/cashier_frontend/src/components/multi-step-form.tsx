@@ -1,8 +1,11 @@
 import { Children, ReactElement, ReactNode, useEffect } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
-import { MultiStepFormProvider, useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { useNavigate } from "react-router-dom";
+import {
+    MultiStepFormContext,
+    MultiStepFormProvider,
+    useMultiStepFormContext,
+} from "@/contexts/multistep-form-context";
 
 interface MultiStepFormProps {
     initialStep: number;
@@ -18,45 +21,35 @@ export function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps)
 }
 
 interface MultiStepFormHeaderProps {
-    onClickBack?: () => void;
+    onClickBack?: (context: MultiStepFormContext) => void;
 }
 
 export function MultiStepFormHeader({ onClickBack = () => {} }: MultiStepFormHeaderProps) {
-    const navigate = useNavigate();
-    const { step: currentStep, steps, stepName, prevStep } = useMultiStepFormContext();
-
-    const handleClickBack = () => {
-        if (currentStep !== 0) {
-            onClickBack();
-            prevStep();
-        } else {
-            navigate("/");
-        }
-    };
+    const context = useMultiStepFormContext();
 
     return (
         <div className="w-full">
             <div className="w-full flex items-center justify-center mb-3 relative">
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
-                    {stepName}
+                    {context.stepName}
                 </h4>
                 <button
                     className="absolute left-1 cursor-pointer text-[1.5rem]"
-                    onClick={handleClickBack}
+                    onClick={() => onClickBack(context)}
                 >
                     <ChevronLeftIcon width={25} height={25} />
                 </button>
             </div>
 
             <div className="flex w-full mb-3">
-                {new Array(steps).fill(0).map((_, index) => (
+                {new Array(context.steps).fill(0).map((_, index) => (
                     <div
                         key={index}
                         className={cn("h-[4px] rounded-full mx-[2px]", {
-                            "bg-green": index <= currentStep,
-                            "bg-lightgreen": index > currentStep,
+                            "bg-green": index <= context.step,
+                            "bg-lightgreen": index > context.step,
                         })}
-                        style={{ width: `${100 / steps}%` }}
+                        style={{ width: `${100 / context.steps}%` }}
                     />
                 ))}
             </div>
