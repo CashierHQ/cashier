@@ -27,15 +27,15 @@ import {
     LINK_TYPE,
 } from "@/services/types/enum";
 import { IntentCreateModel } from "@/services/types/intent.service.types";
-import SignerService from "@/services/signerService/signer.service";
-import { Identity } from "@dfinity/agent";
-import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
+//import SignerService from "@/services/signerService/signer.service";
+//import { Identity } from "@dfinity/agent";
+//import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 import useToast from "@/hooks/useToast";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
-import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
+//import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -229,24 +229,24 @@ export default function LinkPage({ initialStep = 0 }: { initialStep?: number }) 
         }
     };
 
-    const callExecute = async (
-        transactions: Icrc112RequestModel[][] | undefined,
-        identity: Identity | undefined,
-    ) => {
-        //TOODO: Remove after demo
-        console.log("CALLING MOCK EXECUTE ICRC-112");
-        if (!identity) return;
-        if (!transactions || transactions.length === 0) {
-            return;
-        }
-        try {
-            const signerService = new SignerService(identity);
-            const res = await signerService.callIcrc112(transactions);
-            return res;
-        } catch (err) {
-            console.log(err);
-        }
-    };
+    // const callExecute = async (
+    //     transactions: Icrc112RequestModel[][] | undefined,
+    //     identity: Identity | undefined,
+    // ) => {
+    //     //TOODO: Remove after demo
+    //     console.log("CALLING MOCK EXECUTE ICRC-112");
+    //     if (!identity) return;
+    //     if (!transactions || transactions.length === 0) {
+    //         return;
+    //     }
+    //     try {
+    //         const signerService = new SignerService(identity);
+    //         const res = await signerService.callIcrc112(transactions);
+    //         return res;
+    //     } catch (err) {
+    //         console.log(err);
+    //     }
+    // };
 
     const handleChange = (values: Partial<LinkDetailModel>) => {
         setFormData({ ...formData, ...values });
