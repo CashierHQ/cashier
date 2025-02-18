@@ -14,9 +14,7 @@ import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { Spinner } from "@/components/ui/spinner";
 import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepFormContext } from "@/contexts/multistep-form-context";
-import { getResponsiveClassname } from "@/utils";
-import { useResponsive } from "@/hooks/responsive-hook";
-import { responsiveMapper } from "./index_responsive";
+import { cn } from "@/lib/utils";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -31,7 +29,6 @@ function getInitialStep(state: string | undefined) {
 export default function LinkPage() {
     const navigate = useNavigate();
     const identity = useIdentity();
-    const responsive = useResponsive();
 
     const { t } = useTranslation();
     const { linkId } = useParams();
@@ -76,11 +73,10 @@ export default function LinkPage() {
 
     return (
         <div
-            className={getResponsiveClassname(
-                responsive,
-                responsiveMapper.find((o) => (o.htmlId = "edit_multistepform_wrapper")),
+            className={cn(
+                "w-screen h-dvh max-h-dvh flex flex-col items-center py-3",
+                "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
             )}
-            id="edit_multistepform_wrapper"
         >
             <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
                 <MultiStepForm initialStep={getInitialStep(link?.state)}>
