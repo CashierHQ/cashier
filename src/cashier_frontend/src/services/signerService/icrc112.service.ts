@@ -32,11 +32,11 @@ export interface CallCanisterRequest {
     };
 }
 
-interface SuccessResponse {
+export interface SuccessResponse {
     result: CallCanisterResponse;
 }
 
-interface ErrorResponse {
+export interface ErrorResponse {
     error: {
         code: number;
         message: string;
