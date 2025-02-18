@@ -7,7 +7,7 @@ export interface ICRC112Request {
     canisterId: string;
     method: string;
     arg: string;
-    nonce?: string;
+    nonce?: Uint32Array;
 }
 
 export type ParallelRequests = Array<ICRC112Request>;
