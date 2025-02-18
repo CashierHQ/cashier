@@ -192,6 +192,7 @@ export function useCreateAction() {
             return linkService.processAction({
                 ...vars,
                 actionType: ACTION_TYPE.CREATE_LINK,
+                actionId: undefined,
             });
         },
     });

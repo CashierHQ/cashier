@@ -12,9 +12,16 @@ import {
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { ACTION_STATE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
 import { useNavigate } from "react-router-dom";
-import { useCreateAction, useIcrcxExecute, useSetLinkActive } from "@/hooks/linkHooks";
+import {
+    useProcessAction,
+    //useIcrcxExecute,
+    useSetLinkActive,
+    useUpdateAction,
+} from "@/hooks/linkHooks";
+import useToast from "@/hooks/useToast";
+import { ActionModel } from "@/services/types/action.service.types";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -24,14 +31,17 @@ interface ConfirmationDrawerProps {
 
 export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose, onInfoClick }) => {
     const navigate = useNavigate();
+
     const { t } = useTranslation();
+    const { showToast } = useToast();
     const { link, setLink, action, setAction } = useCreateLinkStore();
 
     const [isUsd, setIsUsd] = useState(false);
 
     const { mutateAsync: setLinkActive } = useSetLinkActive();
-    const { mutateAsync: createAction } = useCreateAction();
-    const { mutateAsync: icrcxExecute } = useIcrcxExecute();
+    const { mutateAsync: processAction } = useProcessAction();
+    const { mutateAsync: updateAction } = useUpdateAction();
+    //const { mutateAsync: icrcxExecute } = useIcrcxExecute();
 
     const primaryIntents = usePrimaryIntents(action?.intents);
     const cashierFeeIntents = useCashierFeeIntents(action?.intents);
@@ -41,6 +51,26 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
         t,
     );
 
+    const showActionResultToast = (action: ActionModel) => {
+        if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
+            const toastData = {
+                title:
+                    action.state === ACTION_STATE.SUCCESS
+                        ? t("transaction.confirm_popup.transaction_success")
+                        : t("transaction.confirm_popup.transaction_failed"),
+                description:
+                    action.state === ACTION_STATE.SUCCESS
+                        ? t("transaction.confirm_popup.transaction_success_message")
+                        : t("transaction.confirm_popup.transaction_failed_message"),
+                variant:
+                    action.state === ACTION_STATE.SUCCESS
+                        ? ("default" as const)
+                        : ("error" as const),
+            };
+            showToast(toastData.title, toastData.description, toastData.variant);
+        }
+    };
+
     const handleSetLinkToActive = async () => {
         const activeLink = await setLinkActive({ link: link! });
         setLink(activeLink);
@@ -49,11 +79,28 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
     };
 
     const startTransaction = async () => {
-        const createdAction = await createAction({ linkId: link!.id });
+        const firstUpdatedAction = await processAction({
+            linkId: link!.id,
+            actionType: ACTION_TYPE.CREATE_LINK,
+            actionId: action!.id,
+        });
+        setAction(firstUpdatedAction);
 
-        setAction(createdAction);
+        //await icrcxExecute(firstUpdatedAction!.icrc112Requests);
 
-        await icrcxExecute(createdAction!.icrc112Requests);
+        // TODO: Remove after demo
+        setTimeout(async () => {
+            const secondUpdatedAction = await updateAction({
+                actionId: action!.id,
+                linkId: link!.id,
+                external: true,
+            });
+
+            if (secondUpdatedAction) {
+                setAction(secondUpdatedAction);
+                showActionResultToast(secondUpdatedAction);
+            }
+        }, 15000);
     };
 
     const onClickSubmit = async () => {
