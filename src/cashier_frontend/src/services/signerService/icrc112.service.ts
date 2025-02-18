@@ -1,6 +1,6 @@
 import { Agent } from "@dfinity/agent";
 import { CallCanisterResponse } from "../types/callCanister.service.types";
-import { callCanisterService } from "./callCanister.service";
+import { CallCanisterService } from "./callCanister.service";
 
 /* Define types */
 export interface ICRC112Request {
@@ -58,17 +58,27 @@ export interface Icrc112Response {
 }
 
 export class ICRC112Service {
-    static async icrc112Execute(input: Icrc112Requests, agent: Agent): Promise<Icrc112Response> {
+    private callCanisterService: CallCanisterService;
+    private agent: Agent;
+
+    constructor({
+        callCanisterService,
+        agent,
+    }: {
+        callCanisterService: CallCanisterService;
+        agent: Agent;
+    }) {
+        this.callCanisterService = callCanisterService;
+        this.agent = agent;
+    }
+
+    public async icrc112Execute(input: Icrc112Requests): Promise<Icrc112Response> {
         const arg = {
             jsonrpc: "2.0",
             method: this.getMethod(),
             params: {
-                sender: (await agent.getPrincipal()).toString(),
+                sender: (await this.agent.getPrincipal()).toString(),
                 requests: input,
-                validation: {
-                    canisterId: "canisterId",
-                    method: "validate",
-                },
             },
         };
 
@@ -76,10 +86,7 @@ export class ICRC112Service {
 
         for (let i = 0; i < arg.params.requests.length; i++) {
             const parallelRequests = arg.params.requests[i];
-            const parallelResponses = await this.parallelExecuteIcrcRequests(
-                parallelRequests,
-                agent,
-            );
+            const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
 
             //Process each response from batch call and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
             const icrc112ResponseItems: Icrc112ResponseItem[] = this.processResponse(
@@ -92,7 +99,7 @@ export class ICRC112Service {
         return finalResponse;
     }
 
-    private static processResponse(
+    private processResponse(
         response: Array<Icrc112ResponseItem>,
         parallelRequest: ParallelRequests,
         canisterValidation?: CanisterValidation,
@@ -131,19 +138,18 @@ export class ICRC112Service {
         return responses;
     }
 
-    private static async parallelExecuteIcrcRequests(
+    private async parallelExecuteIcrcRequests(
         requests: ParallelRequests,
-        agent: Agent,
     ): Promise<Array<Icrc112ResponseItem>> {
         const process_tasks: Promise<CallCanisterResponse>[] = [];
         const responses: Array<Icrc112ResponseItem> = [];
 
         requests.forEach((request) => {
-            const task = callCanisterService.call({
+            const task = this.callCanisterService.call({
                 canisterId: request.canisterId,
                 calledMethodName: request.method,
                 parameters: request.arg,
-                agent: agent,
+                agent: this.agent,
             });
             process_tasks.push(task);
         });
@@ -163,10 +169,12 @@ export class ICRC112Service {
                 });
             }
         });
+
+        console.log("responses", responses);
         return responses;
     }
 
-    private static getMethod(): string {
+    public getMethod(): string {
         return "icrc_112_batch_call_canister";
     }
 }
