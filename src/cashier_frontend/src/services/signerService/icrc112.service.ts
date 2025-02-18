@@ -85,6 +85,7 @@ export class ICRC112Service {
         const finalResponse: Icrc112Response = { responses: [] };
 
         for (let i = 0; i < arg.params.requests.length; i++) {
+            //Start parallel execution
             const parallelRequests = arg.params.requests[i];
             const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
 
@@ -93,8 +94,14 @@ export class ICRC112Service {
                 parallelResponses,
                 parallelRequests,
             );
+            //End parallel execution
 
             finalResponse.responses.push(icrc112ResponseItems);
+
+            if (icrc112ResponseItems.some((response) => "error" in response)) {
+                this.handleBatchFailure(finalResponse, arg.params.requests, i);
+                break;
+            }
         }
         return finalResponse;
     }
@@ -105,7 +112,7 @@ export class ICRC112Service {
         canisterValidation?: CanisterValidation,
     ): Icrc112ResponseItem[] {
         const responses: Icrc112ResponseItem[] = [];
-        response.forEach((response, index) => {
+        response.forEach((response) => {
             // If no response received
             if (!response) {
                 responses.push({
@@ -118,14 +125,8 @@ export class ICRC112Service {
             }
 
             // Start ICRC-114
-            //TODO: Complete ICRC-114 with canister validation after refinement
             if (canisterValidation) {
-                // Check method name to decide parse response in wallet or validate canister
-                if (SUPPORTED_PARSED_METHODS.includes(parallelRequest[index].method)) {
-                    console.log("Parse response inside wallet, then process parsed response");
-                } else {
-                    console.log("Validate response by validate canister");
-                }
+                //TODO: Complete ICRC-114 with canister validation
                 // End ICRC-114
             } else {
                 if ("result" in response) {
@@ -136,6 +137,33 @@ export class ICRC112Service {
             }
         });
         return responses;
+    }
+
+    private handleBatchFailure(
+        finalResponse: Icrc112Response,
+        requests: SequenceRequest,
+        failedIndex: number,
+    ): void {
+        for (let i = failedIndex + 1; i < requests.length; i++) {
+            const nonExecuteParallelRequestRow = requests[i];
+            const rowResponse: Icrc112ResponseItem[] = this.assignNonExecuteRequestToErrorResult(
+                nonExecuteParallelRequestRow.length,
+            );
+            finalResponse.responses.push(rowResponse);
+        }
+    }
+
+    private assignNonExecuteRequestToErrorResult(rowRequestLength: number): Icrc112ResponseItem[] {
+        const rowResponse: Icrc112ResponseItem[] = [];
+        for (let i = 0; i < rowRequestLength; i++) {
+            rowResponse.push({
+                error: {
+                    code: 10001,
+                    message: "Not processed due to batch request failure",
+                },
+            });
+        }
+        return rowResponse;
     }
 
     private async parallelExecuteIcrcRequests(
