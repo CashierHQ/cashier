@@ -2,7 +2,6 @@ import { IntentModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
 import useTokenMetadataQuery from "./useTokenMetadataQuery";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
-import { NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
 import { convertDecimalBigIntToNumber } from "@/utils";
 
 export const useIntentMetadata = (intent: IntentModel) => {
@@ -31,8 +30,8 @@ export const useIntentMetadata = (intent: IntentModel) => {
         assetSymbol: metadata?.symbol,
         assetSrc: `${IC_EXPLORER_IMAGES_PATH}${intent.asset.address}`,
         feeAmount,
-        feeSymbol: NETWORK_FEE_DEFAULT_SYMBOL,
-        feeIconSrc: undefined,
+        feeSymbol: metadata?.symbol,
+        feeIconSrc: `${IC_EXPLORER_IMAGES_PATH}${intent.asset.address}`,
         isLoadingMetadata,
     };
 };
