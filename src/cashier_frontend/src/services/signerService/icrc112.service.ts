@@ -96,6 +96,8 @@ export class ICRC112Service {
 
             finalResponse.responses.push(icrc112ResponseItems);
 
+            // If there are any error responses in the current row,
+            // then break and assign non-execute requests to error result
             if (icrc112ResponseItems.some((response) => "error" in response)) {
                 for (let newIndex = i + 1; newIndex < arg.params.requests.length; newIndex++) {
                     const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
