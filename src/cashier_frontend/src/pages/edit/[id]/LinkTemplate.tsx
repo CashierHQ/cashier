@@ -1,7 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import {
     Form,
     FormControl,
@@ -11,120 +8,66 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
-import { PartialFormProps } from "@/components/multi-step-form";
 import LinkCard from "@/components/link-card";
-import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    type CarouselApi,
-} from "@/components/ui/carousel";
-import React, { useEffect } from "react";
-import { LINK_TYPE } from "@/services/types/enum";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
+import {
+    useBindFormAndCarousel,
+    useCarousel,
+    useLinkTemplateForm,
+} from "@/components/link-template/link-template.hooks";
+import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { LINK_TEMPLATES } from "@/constants/linkTemplates";
+import { LINK_TYPE } from "@/services/types/enum";
+import { useSetLinkTemplate } from "@/hooks/linkHooks";
+import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
+import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 
-export const linkTemplateSchema = z.object({
-    title: z.string().min(5),
-    linkType: z.string(),
-});
-
-type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
-const TEMPLATE_ORDER = [LINK_TYPE.TIP_LINK, LINK_TYPE.AIRDROP, LINK_TYPE.TOKEN_BASKET];
-
-interface TEMPLATE {
-    label: string;
-    header: string;
-    message: string;
-    title: string;
-    src: string;
+function isLinkTypeSupported(linkType: LINK_TYPE) {
+    return linkType === LINK_TYPE.TIP_LINK;
 }
 
-interface TEMPLATE {
-    label: string;
-    header: string;
-    message: string;
-    title: string;
-    src: string;
+export interface LinkTemplateProps {
+    onSelectUnsupportedLinkType?: () => void;
 }
-
-const templates: TEMPLATE[] = [
-    {
-        label: "Claim",
-        header: "Tip",
-        src: "/icpLogo.png",
-        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
-        title: "Tipping crypto",
-    },
-    {
-        label: "Claim",
-        header: "Airdrop (Coming soon)",
-        src: "/chatToken.png",
-        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
-        title: "Airdrop",
-    },
-    {
-        label: "Claim",
-        header: "Token basket (Coming soon)",
-        src: "/tokenBasket.png",
-        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
-        title: "Token basket",
-    },
-];
 
 export default function LinkTemplate({
-    defaultValues = {},
-    handleSubmit,
-    handleChange,
-}: PartialFormProps<LinkTemplateInput, Partial<LinkTemplateInput>>) {
+    onSelectUnsupportedLinkType = () => {},
+}: LinkTemplateProps) {
     const { t } = useTranslation();
-    const [api, setApi] = React.useState<CarouselApi>();
-    const [current, setCurrent] = React.useState(0);
-    //const [count, setCount] = React.useState(0);
+    const { nextStep } = useMultiStepFormContext();
 
-    const form = useForm<z.infer<typeof linkTemplateSchema>>({
-        resolver: zodResolver(linkTemplateSchema),
-        defaultValues: {
-            title: "",
-            linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
-            ...defaultValues,
-        },
-    });
+    const { link, setLink, updateLink } = useCreateLinkStore();
+    const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
 
-    useEffect(() => {
-        if (!api) {
-            return;
+    const carousel = useCarousel();
+
+    const form = useLinkTemplateForm();
+
+    useBindFormAndCarousel(form, carousel, updateLink);
+
+    const handleSubmit = form.handleSubmit(async (data) => {
+        if (isLinkTypeSupported(data.linkType as LINK_TYPE)) {
+            const updatedLink = await setLinkTemplate({
+                link: link!,
+                patch: {
+                    title: data.title,
+                    description: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
+                    linkType: data.linkType as LINK_TYPE,
+                },
+            });
+
+            setLink(updatedLink);
+            nextStep();
+        } else {
+            onSelectUnsupportedLinkType();
         }
-
-        //setCount(api.scrollSnapList().length);
-        setCurrent(api.selectedScrollSnap());
-
-        api.on("select", () => {
-            setCurrent(api.selectedScrollSnap());
-        });
-    }, [api]);
-
-    useEffect(() => {
-        handleChange({
-            linkType: TEMPLATE_ORDER[current],
-        });
-        form.setValue("linkType", TEMPLATE_ORDER[current]);
-    }, [current]);
+    });
 
     return (
         <div className="w-full flex flex-col flex-grow overflow-hidden">
             <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit(handleSubmit)}
-                    onChange={(e: React.ChangeEvent<HTMLFormElement>) => {
-                        if (e.target.name == "title") {
-                            handleChange({
-                                title: e.target.value,
-                            });
-                        }
-                    }}
-                    className="flex flex-col flex-grow"
-                >
+                <form onSubmit={handleSubmit} className="flex flex-col flex-grow">
                     <FormField
                         control={form.control}
                         name="title"
@@ -141,11 +84,13 @@ export default function LinkTemplate({
                             </FormItem>
                         )}
                     />
+
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
+
                     <div className="flex flex-grow flex-col justify-center items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
-                        <Carousel className="items-center" setApi={setApi}>
+                        <Carousel className="items-center" setApi={carousel.setApi}>
                             <CarouselContent>
-                                {templates.map((template, index) => (
+                                {LINK_TEMPLATES.map((template, index) => (
                                     <CarouselItem key={`template-${index}`}>
                                         <LinkCard
                                             label={template.label}

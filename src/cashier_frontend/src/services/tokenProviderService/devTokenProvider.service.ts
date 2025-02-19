@@ -37,6 +37,13 @@ const ASSET_LIST: UserToken[] = [
         accountId: "",
         valueUSD: "",
     },
+    {
+        symbol: "DOGMI",
+        amount: "0",
+        ledgerId: "np5km-uyaaa-aaaaq-aadrq-cai",
+        accountId: "",
+        valueUSD: "",
+    },
 ];
 
 export class DevTokenProviderService implements ITokenProviderService {

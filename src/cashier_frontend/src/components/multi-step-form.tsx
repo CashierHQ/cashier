@@ -1,133 +1,89 @@
-import { Children, ReactElement, ReactNode, useState } from "react";
+import { Children, ReactElement, ReactNode, useEffect } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { LINK_TYPE } from "@/services/types/enum";
-import { ActionModel } from "@/services/types/action.service.types";
+import { cn } from "@/lib/utils";
+import {
+    MultiStepFormContext,
+    MultiStepFormProvider,
+    useMultiStepFormContext,
+} from "@/contexts/multistep-form-context";
 
-/**
- * - V1: type for handle submit
- * - V2: type for handle change
- */
-export interface PartialFormProps<V1, V2> {
-    handleSubmit: (values: V1) => void;
-    handleChange: (value: V2) => void;
-    isDisabled: boolean;
-    defaultValues: Partial<V2>;
-    linkType: LINK_TYPE;
-}
-
-/**
- * - V1: type for handle submit
- * - V2: type for handle change
- */
-interface MultiStepFormProps<V1 extends object, V2 extends object> {
+interface MultiStepFormProps {
     initialStep: number;
-    formData: V2;
     children: ReactNode;
-    handleSubmit: (values: V1) => void;
-    handleBackStep: () => Promise<void>;
-    handleBack?: () => void;
-    handleChange: (value: V2) => void;
-    isDisabled: boolean;
-    action: ActionModel | undefined;
 }
 
-/**
- * - V1: type for handle submit
- * - V2: type for handle change
- */
-interface ItemProp<V1, V2> {
-    handleSubmit: (values: V1) => Promise<void>;
-    isDisabled: boolean;
-    name: string;
-    linkType: LINK_TYPE;
-    render: (props: PartialFormProps<V1, V2>) => ReactElement<PartialFormProps<V1, V2>>;
+export function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps) {
+    return (
+        <MultiStepFormProvider initialStep={initialStep}>
+            <div className="w-full flex flex-col flex-grow items-center">{children}</div>
+        </MultiStepFormProvider>
+    );
 }
 
-/**
- * - V1: type for handle submit
- * - V2: type for handle change
- */
-export default function MultiStepForm<V1 extends object, V2 extends object>({
-    initialStep = 0,
-    formData,
-    handleBackStep,
-    children,
-    handleBack,
-    handleChange,
-    isDisabled,
-    action,
-}: MultiStepFormProps<V1, V2>) {
-    const partialForms = Children.toArray(children) as ReactElement<ItemProp<V1, V2>>[];
-    const [currentStep, setCurrentStep] = useState(initialStep);
+interface MultiStepFormHeaderProps {
+    onClickBack?: (context: MultiStepFormContext) => void;
+}
 
-    const handleClickBack = async () => {
-        if ((!currentStep || action) && handleBack) {
-            handleBack();
-        } else {
-            await handleBackStep();
-            setCurrentStep(currentStep - 1);
-        }
-    };
+export function MultiStepFormHeader({ onClickBack = () => {} }: MultiStepFormHeaderProps) {
+    const context = useMultiStepFormContext();
 
     return (
-        <div className="w-full flex flex-col flex-grow items-center">
+        <div className="w-full">
             <div className="w-full flex items-center justify-center mb-3 relative">
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
-                    {partialForms[currentStep].props.name}
+                    {context.stepName}
                 </h4>
-                <div
+                <button
                     className="absolute left-1 cursor-pointer text-[1.5rem]"
-                    onClick={handleClickBack}
+                    onClick={() => onClickBack(context)}
                 >
                     <ChevronLeftIcon width={25} height={25} />
-                </div>
+                </button>
             </div>
+
             <div className="flex w-full mb-3">
-                {partialForms.map((_, index) => (
+                {new Array(context.steps).fill(0).map((_, index) => (
                     <div
                         key={index}
-                        className={`h-[4px] rounded-full mx-[2px] ${index <= currentStep ? "bg-green" : "bg-lightgreen"}`}
-                        style={{ width: `${100 / partialForms.length}%` }}
-                    ></div>
+                        className={cn("h-[4px] rounded-full mx-[2px]", {
+                            "bg-green": index <= context.step,
+                            "bg-lightgreen": index > context.step,
+                        })}
+                        style={{ width: `${100 / context.steps}%` }}
+                    />
                 ))}
             </div>
-            {Children.map(partialForms, (partialForm, index) => {
-                if (currentStep == index) {
-                    return partialForm.props.render({
-                        defaultValues: formData,
-                        handleChange: handleChange,
-                        handleSubmit: async (values: V1) => {
-                            try {
-                                await partialForm.props.handleSubmit(values);
-                                if (index != partialForms.length - 1) {
-                                    setCurrentStep(index + 1);
-                                }
-                            } catch (err) {
-                                console.log(err);
-                            }
-                        },
-                        isDisabled: isDisabled,
-                        linkType: partialForm.props.linkType,
-                    });
-                }
-                return null;
-            })}
         </div>
     );
 }
 
-const Item = <V1, V2>({ handleSubmit, render, isDisabled, linkType }: ItemProp<V1, V2>) => {
-    return (
-        <>
-            {render({
-                defaultValues: {} as V2,
-                handleChange: () => {},
-                handleSubmit: handleSubmit,
-                isDisabled: isDisabled,
-                linkType: linkType,
-            })}
-        </>
-    );
-};
+interface MultiStepFormItemsProps {
+    children?: ReactNode;
+}
 
-MultiStepForm.Item = Item;
+export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
+    const { step, setSteps, setStepName } = useMultiStepFormContext();
+
+    const stepsList = Children.toArray(children) as ReactElement<MultiStepFormItemProps>[];
+    const stepComponent = stepsList[step];
+
+    useEffect(() => {
+        setSteps(stepsList.length);
+        setStepName(stepComponent.props.name);
+    }, [step, children]);
+
+    return stepComponent;
+}
+
+interface MultiStepFormItemProps {
+    name: string;
+    children: ReactNode;
+}
+
+export function MultiStepFormItem({ children }: MultiStepFormItemProps) {
+    return children;
+}
+
+MultiStepForm.Header = MultiStepFormHeader;
+MultiStepForm.Items = MultiStepFormItems;
+MultiStepForm.Item = MultiStepFormItem;
