@@ -2,13 +2,23 @@ use cashier_types::User;
 
 use super::USER_STORE;
 
-pub fn create(user: User) {
-    USER_STORE.with_borrow_mut(|store| {
-        let id = user.id.clone();
-        store.insert(id, user);
-    });
+pub struct UserRepository {}
+
+impl UserRepository {
+    pub fn create(&self, user: User) {
+        USER_STORE.with_borrow_mut(|store| {
+            let id = user.id.clone();
+            store.insert(id, user);
+        });
+    }
+
+    pub fn get(&self, id: &String) -> Option<User> {
+        USER_STORE.with_borrow(|store| store.get(id))
+    }
 }
 
-pub fn get(id: String) -> Option<User> {
-    USER_STORE.with_borrow(|store| store.get(&id))
+impl Default for UserRepository {
+    fn default() -> Self {
+        UserRepository {}
+    }
 }
