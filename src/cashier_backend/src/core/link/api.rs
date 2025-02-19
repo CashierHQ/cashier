@@ -12,7 +12,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error,
+    error, info,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link},
@@ -150,6 +150,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
     }
 
     let link_type_str = link_type.unwrap();
+    info!("link update: {:#?}", link);
     match link_type_str {
         LinkType::NftCreateAndAirdrop => match handle_update_link(input, link).await {
             Ok(l) => Ok(LinkDto::from(l)),
@@ -185,14 +186,8 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
         let link_id = input.link_id.clone();
         let external = false;
 
-        if !services::link::is_link_exist(action_id.clone()) {
+        if services::link::is_link_exist(action_id.clone()) {
             return Err(CanisterError::HandleApiError("Link not found".to_string()));
-        }
-
-        if !services::action::is_action_exist(action_id.clone()) {
-            return Err(CanisterError::HandleApiError(
-                "Action not found".to_string(),
-            ));
         }
 
         services::transaction_manager::update_action::update_action(action_id, link_id, external)
