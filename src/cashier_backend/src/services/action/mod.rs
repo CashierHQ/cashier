@@ -3,16 +3,19 @@ use cashier_types::Intent;
 use crate::repositories;
 
 pub fn get_intents_by_action_id(action_id: String) -> Vec<Intent> {
-    let action_intents = repositories::action_intent::get_by_action_id(action_id);
+    let action_intent_reposiroty = repositories::action_intent::ActionIntentRepository {};
+    let intent_repository = repositories::intent::IntentRepository {};
+    let action_intents = action_intent_reposiroty.get_by_action_id(action_id);
 
     let intent_ids = action_intents
         .iter()
         .map(|action_intent| action_intent.intent_id.clone())
         .collect();
 
-    repositories::intent::batch_get(intent_ids)
+    intent_repository.batch_get(intent_ids)
 }
 
 pub fn is_action_exist(action_id: String) -> bool {
-    repositories::action::get(action_id).is_some()
+    let action_repository = repositories::action::ActionRepository {};
+    action_repository.get(action_id).is_some()
 }
