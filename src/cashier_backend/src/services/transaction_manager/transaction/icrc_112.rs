@@ -15,6 +15,7 @@ pub fn create(
     client_txs: &Vec<&Transaction>,
 ) -> Icrc112Requests {
     let mut icrc_112_requests_builer = Icrc112RequestsBuilder::new();
+    let mut parallel_index = 0;
     for tx in client_txs {
         match &tx.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
@@ -27,7 +28,7 @@ pub fn create(
 
                 let request = builder.build();
 
-                icrc_112_requests_builer.add_one_request(request);
+                icrc_112_requests_builer.add_to_first_group(request);
             }
             Protocol::IC(IcTransaction::Icrc2Approve(tx_approve)) => {
                 let builder = ApproveCashierFeeBuilder {
@@ -38,7 +39,7 @@ pub fn create(
 
                 let request = builder.build();
 
-                icrc_112_requests_builer.add_one_request(request);
+                icrc_112_requests_builer.add_to_first_group(request);
             }
             _ => {}
         }
