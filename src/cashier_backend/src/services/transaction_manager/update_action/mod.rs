@@ -1,6 +1,6 @@
 use cashier_types::{FromCallType, Transaction, TransactionState};
 
-use crate::{core::action::types::ActionDto, info, types::icrc_112_transaction::Icrc112Requests};
+use crate::{core::action::types::ActionDto, types::icrc_112_transaction::Icrc112Requests};
 
 use super::{
     action::{self, flatten_tx_hashmap::flatten_tx_hashmap},
@@ -31,8 +31,6 @@ pub async fn update_action(
     let request = update_action_with_args(args).await?;
 
     let resp = super::action::get(action_id).unwrap();
-
-    info!("update_action: {:#?}", resp);
 
     Ok(ActionDto::build(
         resp.action,
