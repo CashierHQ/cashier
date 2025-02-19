@@ -19,10 +19,10 @@ import {
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 
-interface ReponseLinksModel {
+interface ResponseLinksModel {
     data: LinkModel[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadada: any;
+    metadata: any;
 }
 export interface CreateActionInputModel {
     linkId: string;
@@ -54,9 +54,10 @@ class LinkService {
                 },
             ]),
         );
-        const responseModel: ReponseLinksModel = {
+
+        const responseModel: ResponseLinksModel = {
             data: [],
-            metadada: response.metadata,
+            metadata: response.metadata,
         };
 
         responseModel.data = response.data
@@ -67,6 +68,7 @@ class LinkService {
                   };
               })
             : [];
+
         return responseModel;
     }
 

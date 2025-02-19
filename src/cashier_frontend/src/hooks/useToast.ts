@@ -31,4 +31,7 @@ const useToast = () => {
     return { toastData, showToast, hideToast };
 };
 
+export type UseToastReturn = ReturnType<typeof useToast>;
+export type ShowToastFn = UseToastReturn["showToast"];
+
 export default useToast;
