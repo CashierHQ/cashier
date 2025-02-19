@@ -52,6 +52,7 @@ export const useConfirmButtonState = (actionState: string | undefined, t: TFunct
     };
 
     useEffect(() => {
+        console.log("action state changed to", actionState);
         setButtonText(mapActionStateToButtonText());
         setIsDisabled(mapActionStateToButtonDisabled());
     }, [actionState]);

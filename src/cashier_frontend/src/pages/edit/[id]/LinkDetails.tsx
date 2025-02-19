@@ -14,8 +14,12 @@ export default function LinkDetails() {
     const handleSubmitTipLinkDetails = async (data: TipLinkAssetFormSchema) => {
         const updatedLink = await setTipLinkDetails({
             link: link!,
-            patch: data,
+            patch: {
+                amount: data.amount,
+                tokenAddress: data.tokenAddress,
+            },
         });
+
         setLink(updatedLink);
         nextStep();
     };

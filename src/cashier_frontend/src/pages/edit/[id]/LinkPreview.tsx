@@ -11,12 +11,21 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { useCreateAction } from "@/hooks/linkHooks";
-import useToast from "@/hooks/useToast";
-import { getCashierError, isCashierError } from "@/services/errorProcess.service";
+import { isCashierError } from "@/services/errorProcess.service";
+import { ActionModel } from "@/services/types/action.service.types";
 
-export default function LinkPreview() {
+export interface LinkPreviewProps {
+    onInvalidActon?: () => void;
+    onCashierError?: (error: Error) => void;
+    onActionResult?: (action: ActionModel) => void;
+}
+
+export default function LinkPreview({
+    onInvalidActon = () => {},
+    onCashierError = () => {},
+    onActionResult,
+}: LinkPreviewProps) {
     const { t } = useTranslation();
-    const { showToast } = useToast();
 
     const { link, action, setAction } = useCreateLinkStore();
 
@@ -26,20 +35,6 @@ export default function LinkPreview() {
 
     const cashierFeeIntents = useCashierFeeIntents(action?.intents);
     const { mutateAsync: createAction } = useCreateAction();
-
-    const showInvalidActionToast = () => {
-        showToast(
-            t("transaction.validation.action_failed"),
-            t("transaction.validation.action_failed_message"),
-            "error",
-        );
-    };
-
-    const showCashierErrorToast = (error: Error) => {
-        const cahierError = getCashierError(error);
-
-        showToast(t("transaction.create_intent.action_failed"), cahierError.message, "error");
-    };
 
     const handleCreateAction = async () => {
         const updatedAction = await createAction({
@@ -56,14 +51,17 @@ export default function LinkPreview() {
 
         try {
             if (validationResult) {
-                await handleCreateAction();
+                if (!action) {
+                    await handleCreateAction();
+                }
+
                 setShowConfirmation(true);
             } else {
-                showInvalidActionToast();
+                onInvalidActon();
             }
         } catch (error) {
             if (isCashierError(error)) {
-                showCashierErrorToast(error);
+                onCashierError(error);
             }
 
             console.log("🚀 ~ handleSubmit ~ error:", error);
@@ -115,6 +113,7 @@ export default function LinkPreview() {
                 open={showConfirmation && !showInfo}
                 onClose={() => setShowConfirmation(false)}
                 onInfoClick={() => setShowInfo(true)}
+                onActionResult={onActionResult}
             />
         </div>
     );

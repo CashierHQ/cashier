@@ -20,20 +20,24 @@ import {
     useSetLinkActive,
     useUpdateAction,
 } from "@/hooks/linkHooks";
-import useToast from "@/hooks/useToast";
 import { ActionModel } from "@/services/types/action.service.types";
 
 interface ConfirmationDrawerProps {
     open: boolean;
-    onClose: () => void;
-    onInfoClick: () => void;
+    onClose?: () => void;
+    onInfoClick?: () => void;
+    onActionResult?: (action: ActionModel) => void;
 }
 
-export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose, onInfoClick }) => {
+export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
+    open,
+    onClose = () => {},
+    onInfoClick = () => {},
+    onActionResult = () => {},
+}) => {
     const navigate = useNavigate();
 
     const { t } = useTranslation();
-    const { showToast } = useToast();
     const { link, setLink, action, setAction } = useCreateLinkStore();
 
     const [isUsd, setIsUsd] = useState(false);
@@ -50,26 +54,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
         action?.state,
         t,
     );
-
-    const showActionResultToast = (action: ActionModel) => {
-        if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
-            const toastData = {
-                title:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? t("transaction.confirm_popup.transaction_success")
-                        : t("transaction.confirm_popup.transaction_failed"),
-                description:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? t("transaction.confirm_popup.transaction_success_message")
-                        : t("transaction.confirm_popup.transaction_failed_message"),
-                variant:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? ("default" as const)
-                        : ("error" as const),
-            };
-            showToast(toastData.title, toastData.description, toastData.variant);
-        }
-    };
 
     const handleSetLinkToActive = async () => {
         const activeLink = await setLinkActive({ link: link! });
@@ -98,7 +82,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
 
             if (secondUpdatedAction) {
                 setAction(secondUpdatedAction);
-                showActionResultToast(secondUpdatedAction);
+                onActionResult(secondUpdatedAction);
             }
         }, 15000);
     };
@@ -114,8 +98,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
         } else {
             await startTransaction();
         }
-
-        setIsDisabled(false);
     };
 
     return (
@@ -134,6 +116,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({ open, onClose,
                         />
                     </DrawerTitle>
                 </DrawerHeader>
+
                 {action ? (
                     <>
                         <ConfirmationPopupAssetsSection
