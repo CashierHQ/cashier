@@ -97,7 +97,14 @@ export class ICRC112Service {
             finalResponse.responses.push(icrc112ResponseItems);
 
             if (icrc112ResponseItems.some((response) => "error" in response)) {
-                this.handleBatchFailure(finalResponse, arg.params.requests, i);
+                for (let newIndex = i + 1; newIndex < arg.params.requests.length; newIndex++) {
+                    const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
+                    const rowResponse: Icrc112ResponseItem[] =
+                        this.assignNonExecuteRequestToErrorResult(
+                            nonExecuteParallelRequestRow.length,
+                        );
+                    finalResponse.responses.push(rowResponse);
+                }
                 break;
             }
         }
@@ -110,17 +117,6 @@ export class ICRC112Service {
     ): Icrc112ResponseItem[] {
         const responses: Icrc112ResponseItem[] = [];
         response.forEach((response) => {
-            // If no response received
-            if (!response) {
-                responses.push({
-                    error: {
-                        code: 1000,
-                        message: "No response from canister",
-                    },
-                });
-                return;
-            }
-
             // Start ICRC-114
             if (canisterValidation) {
                 //TODO: Complete ICRC-114 with canister validation
@@ -134,20 +130,6 @@ export class ICRC112Service {
             }
         });
         return responses;
-    }
-
-    private handleBatchFailure(
-        finalResponse: Icrc112Response,
-        requests: SequenceRequest,
-        failedIndex: number,
-    ): void {
-        for (let i = failedIndex + 1; i < requests.length; i++) {
-            const nonExecuteParallelRequestRow = requests[i];
-            const rowResponse: Icrc112ResponseItem[] = this.assignNonExecuteRequestToErrorResult(
-                nonExecuteParallelRequestRow.length,
-            );
-            finalResponse.responses.push(rowResponse);
-        }
     }
 
     private assignNonExecuteRequestToErrorResult(rowRequestLength: number): Icrc112ResponseItem[] {
@@ -194,8 +176,6 @@ export class ICRC112Service {
                 });
             }
         });
-
-        console.log("responses", responses);
         return responses;
     }
 
