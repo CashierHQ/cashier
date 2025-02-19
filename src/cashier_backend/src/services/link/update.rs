@@ -150,8 +150,9 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::AddAssets,
             validate: Some(Box::new(|link| {
                 Box::pin(async move {
-                    if is_create_action_exist(link.id).is_ok() {
-                        Err("Intent exists, cannot transition back".to_string())
+                    let is_exist = is_create_action_exist(link.id.clone())?;
+                    if is_exist {
+                        Err("Action exists, cannot transition back".to_string())
                     } else {
                         Ok(())
                     }
@@ -165,8 +166,9 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::ChooseLinkType,
             validate: Some(Box::new(|link| {
                 Box::pin(async move {
-                    if is_create_action_exist(link.id).is_ok() {
-                        Err("Intent exists, cannot transition back".to_string())
+                    let is_exist = is_create_action_exist(link.id.clone())?;
+                    if is_exist {
+                        Err("Action exists, cannot transition back".to_string())
                     } else {
                         Ok(())
                     }

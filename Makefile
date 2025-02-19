@@ -7,6 +7,8 @@ build-did:
 	@candid-extractor target/wasm32-unknown-unknown/release/cashier_backend.wasm > src/cashier_backend/cashier_backend.did
 
 test:
+	make build-wasm
+	bash scripts/compress_build_wasm.sh
 	@npm run test
 
 g: 
