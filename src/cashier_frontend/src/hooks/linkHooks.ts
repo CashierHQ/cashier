@@ -77,7 +77,6 @@ export function useSetLinkTemplate() {
             link: LinkDetailModel;
             patch: { title: string; linkType: LINK_TYPE; description: string };
         }) => {
-            console.log("called setTipLinkTemplate");
             const linkService = new LinkService(identity);
 
             const linkData = {
@@ -110,7 +109,6 @@ export function useSetTipLinkDetails() {
             link: LinkDetailModel;
             patch: { amount: bigint; tokenAddress: string };
         }) => {
-            console.log("called setTipLinkDetails");
             const linkService = new LinkService(identity);
 
             const linkData = {
