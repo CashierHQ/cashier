@@ -17,6 +17,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { SequenceRequest } from "@/services/signerService/icrc112.service";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -214,7 +215,7 @@ export function useIcrcxExecute() {
 
             const signerService = new SignerService(identity);
 
-            return signerService.callIcrc112(transactions);
+            return signerService.callIcrc112(transactions as unknown as SequenceRequest);
         },
     });
 
