@@ -26,7 +26,7 @@ import {
 import { useTipLinkAssetForm } from "./tip-link-asset-form.hooks";
 
 type TipLinkAssetFormProps = {
-    defaultValues: DefaultValues<TipLinkAssetFormSchema>;
+    defaultValues?: DefaultValues<TipLinkAssetFormSchema>;
     onSubmit: SubmitHandler<TipLinkAssetFormSchema>;
 };
 
@@ -39,7 +39,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
     const { isLoadingAssets, isLoadingBalance, assets } = useAssets();
 
     const form = useTipLinkAssetForm(assets, {
-        tokenAddress: defaultValues.tokenAddress ?? "",
+        tokenAddress: defaultValues?.tokenAddress ?? "",
         amount: BigInt(0),
         assetNumber: 0,
         usdNumber: undefined,
