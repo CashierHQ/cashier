@@ -1,4 +1,3 @@
-import { fromNullable } from "@dfinity/utils";
 import { Icrc112Request } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { Icrc112RequestModel } from "../transaction.service.types";
 
@@ -7,6 +6,5 @@ export const mapICRC112Request = (dto: Icrc112Request): Icrc112RequestModel => {
         arg: dto.arg,
         method: dto.method,
         canisterId: dto.canister_id,
-        nonce: fromNullable(dto.nonce),
     };
 };
