@@ -1,69 +1,72 @@
-import type { JsonArray, JsonObject, JsonValue } from "@dfinity/candid";
+import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
+import { type Channel, type Connection, type Transport } from "@slide-computer/signer";
+import { AuthClientChannel } from "./channel";
+import { AuthClientConnection } from "./connection";
 
-export type JsonRPC = {
-    jsonrpc: "2.0";
-};
-
-export type JsonError = {
-    code: number;
-    message: string;
-    data?: JsonValue;
-};
-
-export type JsonRequest<
-    Method = string,
-    Params extends JsonObject | JsonArray = JsonObject | JsonArray,
-> = JsonRPC & {
-    id?: string | number; // Optional, not required for one way messages
-    method: Method;
-    params?: Params; // Arguments by either name or position
-};
-
-export type JsonResponse<Result extends JsonValue = JsonValue> = JsonRPC & {
-    id: string | number;
-} & ({ result: Result } | { error: JsonError });
-
-export type JsonResponseResult<T extends JsonResponse> = T extends {
-    result: infer S;
-}
-    ? S
-    : never;
-
-export interface Connection {
-    connected: boolean;
-
-    addEventListener(event: "disconnect", listener: () => void): () => void;
-
-    connect(): Promise<void>;
-
-    disconnect(): Promise<void>;
+export class AuthClientTransportError extends Error {
+    constructor(message: string) {
+        super(message);
+        Object.setPrototypeOf(this, AuthClientTransportError.prototype);
+    }
 }
 
-export interface Channel {
-    closed: boolean;
+type AuthClientCreateOptions = Parameters<typeof AuthClient.create>[0];
 
-    addEventListener(event: "close", listener: () => void): () => void;
-
-    addEventListener(event: "response", listener: (response: JsonResponse) => void): () => void;
-
-    send(requests: JsonRequest): Promise<void>;
-
-    close(): Promise<void>;
+export interface AuthClientTransportOptions {
+    /**
+     * Options used to create AuthClient instance
+     */
+    authClientCreateOptions?: AuthClientCreateOptions;
+    /**
+     * Options used to log in with AuthClient instance
+     */
+    authClientLoginOptions?: AuthClientLoginOptions;
+    /**
+     * Auth Client disconnect monitoring interval in ms
+     * @default 3000
+     */
+    authClientDisconnectMonitoringInterval?: number;
 }
 
-export interface Transport {
-    connection?: Connection;
+export class AuthClientTransport implements Transport {
+    static #isInternalConstructing: boolean = false;
 
-    establishChannel(): Promise<Channel>;
+    readonly #connection: Connection;
+    readonly #authClient: AuthClient;
+
+    private constructor(authClient: AuthClient, connection: Connection) {
+        const throwError = !AuthClientTransport.#isInternalConstructing;
+        AuthClientTransport.#isInternalConstructing = false;
+        if (throwError) {
+            throw new AuthClientTransportError("AuthClientTransport is not constructable");
+        }
+        this.#authClient = authClient;
+        this.#connection = connection;
+    }
+
+    get connection(): Connection {
+        return this.#connection;
+    }
+
+    static async create(options: AuthClientTransportOptions): Promise<AuthClientTransport> {
+        const authClient = await AuthClient.create(options.authClientCreateOptions);
+        const connection = new AuthClientConnection({
+            authClient,
+            authClientLoginOptions: options.authClientLoginOptions,
+            authClientDisconnectMonitoringInterval: options.authClientDisconnectMonitoringInterval,
+        });
+
+        AuthClientTransport.#isInternalConstructing = true;
+        return new AuthClientTransport(authClient, connection);
+    }
+
+    async establishChannel(): Promise<Channel> {
+        if (!this.#connection.connected) {
+            throw new AuthClientTransportError("AuthClientTransport is not connected");
+        }
+        return new AuthClientChannel({
+            authClient: this.#authClient,
+            connection: this.#connection,
+        });
+    }
 }
-
-export const isJsonRpcMessage = (message: unknown): message is JsonRPC =>
-    typeof message === "object" && !!message && "jsonrpc" in message && message.jsonrpc === "2.0";
-
-export const isJsonRpcRequest = (message: unknown): message is JsonRequest =>
-    isJsonRpcMessage(message) && "method" in message && typeof message.method === "string";
-
-export const isJsonRpcResponse = (message: unknown): message is JsonResponse =>
-    isJsonRpcMessage(message) &&
-    "id" in message &&
-    (typeof message.id === "string" || typeof message.id === "number");

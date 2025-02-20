@@ -1,7 +1,5 @@
-import { Principal } from "@dfinity/principal";
 import type { JsonValue } from "@dfinity/candid";
-import type { Channel, JsonError, JsonRequest, JsonResponse, Transport } from "./transport";
-import { fromBase64, toBase64 } from "@nfid/identitykit";
+import { Channel, JsonError, JsonRequest, JsonResponse, Transport } from "@slide-computer/signer";
 
 export class SignerError extends Error {
     public code: number;
@@ -22,18 +20,18 @@ const wrapTransportError = (error: unknown) =>
         message: error instanceof Error ? error.message : "Network error",
     });
 
-const unwrapResponse = <T extends JsonValue>(response: JsonResponse<T>): T => {
-    if ("error" in response) {
-        throw new SignerError(response.error);
-    }
-    if ("result" in response) {
-        return response.result;
-    }
-    throw new SignerError({
-        code: 4000,
-        message: "Invalid response",
-    });
-};
+// const unwrapResponse = <T extends JsonValue>(response: JsonResponse<T>): T => {
+//     if ("error" in response) {
+//         throw new SignerError(response.error);
+//     }
+//     if ("result" in response) {
+//         return response.result;
+//     }
+//     throw new SignerError({
+//         code: 4000,
+//         message: "Invalid response",
+//     });
+// };
 
 export interface SignerOptions<T extends Transport> {
     /**
@@ -166,7 +164,7 @@ export class Signer<T extends Transport = Transport> {
                 // Throw error if channel is closed before response is received
                 reject(
                     new SignerError({
-                        code: NETWORK_ERROR,
+                        code: 4000,
                         message: "Channel was closed before a response was received",
                     }),
                 );
@@ -183,26 +181,26 @@ export class Signer<T extends Transport = Transport> {
         });
     }
 
-    async callCanister(params: {
-        canisterId: Principal;
-        sender: Principal;
-        method: string;
-        arg: ArrayBuffer;
-    }): Promise<{ contentMap: ArrayBuffer; certificate: ArrayBuffer }> {
-        const response = await this.sendRequest<CallCanisterRequest, CallCanisterResponse>({
-            id: this.#options.crypto.randomUUID(),
-            jsonrpc: "2.0",
-            method: "icrc49_call_canister",
-            params: {
-                canisterId: params.canisterId.toText(),
-                sender: params.sender.toText(),
-                method: params.method,
-                arg: toBase64(params.arg),
-            },
-        });
-        const result = unwrapResponse(response);
-        const contentMap = fromBase64(result.contentMap);
-        const certificate = fromBase64(result.certificate);
-        return { contentMap, certificate };
-    }
+    // async callCanister(params: {
+    //     canisterId: Principal;
+    //     sender: Principal;
+    //     method: string;
+    //     arg: ArrayBuffer;
+    // }): Promise<{ contentMap: ArrayBuffer; certificate: ArrayBuffer }> {
+    //     const response = await this.sendRequest<CallCanisterRequest, CallCanisterResponse>({
+    //         id: this.#options.crypto.randomUUID(),
+    //         jsonrpc: "2.0",
+    //         method: "icrc49_call_canister",
+    //         params: {
+    //             canisterId: params.canisterId.toText(),
+    //             sender: params.sender.toText(),
+    //             method: params.method,
+    //             arg: toBase64(params.arg),
+    //         },
+    //     });
+    //     const result = unwrapResponse(response);
+    //     const contentMap = fromBase64(result.contentMap);
+    //     const certificate = fromBase64(result.certificate);
+    //     return { contentMap, certificate };
+    // }
 }
