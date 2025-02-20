@@ -1,9 +1,15 @@
 use super::{base_repository::Store, TRANSACTION_STORE};
 use cashier_types::{Transaction, TransactionKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct TransactionRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl TransactionRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     pub fn create(&self, transaction: Transaction) -> Transaction {
         let id: TransactionKey = transaction.id.clone();
         TRANSACTION_STORE.with_borrow_mut(|store| {
@@ -47,10 +53,10 @@ impl TransactionRepository {
     pub fn get(&self, id: &TransactionKey) -> Option<Transaction> {
         TRANSACTION_STORE.with_borrow(|store| store.get(id).clone())
     }
-}
 
-impl Default for TransactionRepository {
-    fn default() -> Self {
-        TransactionRepository {}
+    pub fn delete(&self, id: &TransactionKey) {
+        TRANSACTION_STORE.with_borrow_mut(|store| {
+            store.remove(id);
+        });
     }
 }

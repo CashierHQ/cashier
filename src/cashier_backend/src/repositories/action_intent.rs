@@ -1,9 +1,15 @@
 use crate::repositories::ACTION_INTENT_STORE;
 use cashier_types::{ActionIntent, ActionIntentKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct ActionIntentRepository {}
+#[cfg_attr(test, faux::methods)]
 
 impl ActionIntentRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     pub fn create(&self, action_intent: ActionIntent) {
         ACTION_INTENT_STORE.with_borrow_mut(|store| {
             let key: ActionIntentKey = ActionIntentKey {
@@ -78,11 +84,5 @@ impl ActionIntentRepository {
             };
             store.insert(key.to_str(), action_intent);
         });
-    }
-}
-
-impl Default for ActionIntentRepository {
-    fn default() -> Self {
-        ActionIntentRepository {}
     }
 }

@@ -1,9 +1,15 @@
 use super::{base_repository::Store, INTENT_STORE};
 use cashier_types::Intent;
 
+#[cfg_attr(test, faux::create)]
 pub struct IntentRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl IntentRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     pub fn create(&self, intent: Intent) {
         INTENT_STORE.with_borrow_mut(|store| {
             let id = intent.id.clone();
@@ -34,10 +40,10 @@ impl IntentRepository {
             store.insert(id, intent);
         });
     }
-}
 
-impl Default for IntentRepository {
-    fn default() -> Self {
-        IntentRepository {}
+    pub fn delete(&self, id: &String) {
+        INTENT_STORE.with_borrow_mut(|store| {
+            store.remove(id);
+        });
     }
 }

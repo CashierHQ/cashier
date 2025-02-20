@@ -2,9 +2,15 @@ use super::USER_LINK_STORE;
 use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
 use cashier_types::{UserLink, UserLinkKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct UserLinkRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl UserLinkRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     pub fn create(&self, user_link: UserLink) {
         USER_LINK_STORE.with_borrow_mut(|store| {
             let id: UserLinkKey = UserLinkKey {
@@ -69,11 +75,5 @@ impl UserLinkRepository {
                 },
             }
         })
-    }
-}
-
-impl Default for UserLinkRepository {
-    fn default() -> Self {
-        UserLinkRepository {}
     }
 }

@@ -1,9 +1,15 @@
 use super::INTENT_TRANSACTION_STORE;
 use cashier_types::{IntentTransaction, IntentTransactionKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct IntentTransactionRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl IntentTransactionRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     pub fn create(&self, intent_transaction: IntentTransaction) -> IntentTransaction {
         INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
             let key = IntentTransactionKey {
@@ -71,11 +77,5 @@ impl IntentTransactionRepository {
                 .map(|(_, value)| value.clone())
                 .collect()
         })
-    }
-}
-
-impl Default for IntentTransactionRepository {
-    fn default() -> Self {
-        IntentTransactionRepository {}
     }
 }

@@ -1,9 +1,15 @@
 use super::{base_repository::Store, LINK_STORE};
 use cashier_types::{Link, LinkKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct LinkRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl LinkRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     pub fn create(&self, link: Link) {
         LINK_STORE.with_borrow_mut(|store| {
             let id: LinkKey = link.id.clone();
@@ -34,10 +40,10 @@ impl LinkRepository {
             store.insert(id, link);
         });
     }
-}
 
-impl Default for LinkRepository {
-    fn default() -> Self {
-        LinkRepository {}
+    pub fn delete(&self, id: &LinkKey) {
+        LINK_STORE.with_borrow_mut(|store| {
+            store.remove(id);
+        });
     }
 }

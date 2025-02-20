@@ -1,9 +1,15 @@
 use super::LINK_ACTION_STORE;
 use cashier_types::{keys::ActionTypeKey, LinkAction, LinkActionKey, LinkKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct LinkActionRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl LinkActionRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     pub fn create(&self, link_action: LinkAction) {
         LINK_ACTION_STORE.with_borrow_mut(|store| {
             let id: LinkActionKey = LinkActionKey {
@@ -42,10 +48,10 @@ impl LinkActionRepository {
             actions
         })
     }
-}
 
-impl Default for LinkActionRepository {
-    fn default() -> Self {
-        LinkActionRepository {}
+    pub fn delete(&self, id: LinkActionKey) {
+        LINK_ACTION_STORE.with_borrow_mut(|store| {
+            store.remove(&id.to_str());
+        });
     }
 }
