@@ -12,7 +12,7 @@ pub fn update_tx_state(tx: &mut Transaction, state: TransactionState) -> Result<
 
     tx.state = state;
 
-    let tx_repository = repositories::transaction::TransactionRepository {};
+    let tx_repository = repositories::transaction::TransactionRepository::new();
 
     tx_repository.update(tx.clone());
 

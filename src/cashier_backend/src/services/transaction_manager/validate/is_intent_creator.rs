@@ -1,8 +1,8 @@
 use crate::repositories::{action, user_wallet};
 
 pub fn is_action_creator(caller: String, action_id: String) -> Result<bool, String> {
-    let user_wallet_repositories = user_wallet::UserWalletRepository {};
-    let action_repository = action::ActionRepository {};
+    let user_wallet_repositories = user_wallet::UserWalletRepository::new();
+    let action_repository = action::ActionRepository::new();
     let user_wallet = match user_wallet_repositories.get(&caller) {
         Some(user_id) => user_id,
         None => {

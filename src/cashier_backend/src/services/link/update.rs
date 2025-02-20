@@ -98,7 +98,7 @@ fn transition_function(
             }
         }
 
-        let link_repository = repositories::link::LinkRepository {};
+        let link_repository = repositories::link::LinkRepository::new();
         link_repository.update(link.clone());
 
         Ok(link)

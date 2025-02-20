@@ -30,7 +30,7 @@ pub fn is_valid_fields_before_active(link: Link) -> Result<bool, String> {
 }
 
 pub fn is_create_action_exist(link_id: String) -> Result<bool, String> {
-    let link_action_repository = link_action::LinkActionRepository {};
+    let link_action_repository = link_action::LinkActionRepository::new();
     let link_intent_create =
         link_action_repository.get_by_link_action(link_id, ActionType::CreateLink.to_string());
 
