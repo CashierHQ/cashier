@@ -26,16 +26,17 @@ pub fn is_valid_fields_before_active(link: Link) -> Result<bool, String> {
         return Err("template is missing".to_string());
     }
 
-    return Ok(true);
+    Ok(true)
 }
 
 pub fn is_create_action_exist(link_id: String) -> Result<bool, String> {
+    let link_action_repository = link_action::LinkActionRepository::new();
     let link_intent_create =
-        link_action::get_by_link_action(link_id, ActionType::CreateLink.to_string());
+        link_action_repository.get_by_link_action(link_id, ActionType::CreateLink.to_string());
 
-    if link_intent_create.len() == 0 {
+    if link_intent_create.is_empty() {
         return Ok(false);
-    };
+    }
 
     Ok(true)
 }

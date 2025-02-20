@@ -29,4 +29,8 @@ base64 = {workspace = true}
 rm = {workspace = true}
 ic-icrc-tx = {workspace = true}
 cashier-types = { path = "../lib/cashier-types" }
+fake = { workspace = true}
+
+[dev-dependencies]
+faux = "0.1.12"
 
