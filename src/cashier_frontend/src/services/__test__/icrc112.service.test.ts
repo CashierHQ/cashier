@@ -173,6 +173,7 @@ describe("ICRC-112 service", () => {
 
         expect(errorResponse2).toHaveProperty("error");
         expect(errorResponse2.error.message).toEqual(mockErrorMessage);
+        expect(errorResponse2.error.code).toEqual(1000);
     });
 
     describe("execute icrc112 requests with 1001 non execute error response", () => {
