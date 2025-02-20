@@ -4,8 +4,6 @@ import { Icrc112Requests, Icrc112Response, ICRC112Service } from "./icrc112.serv
 import { callCanisterService } from "./callCanister.service";
 import { Signer } from "./signer";
 import { AuthClientTransport } from "./transport";
-import { AuthClientConnection } from "./connection";
-import { AuthClient } from "@dfinity/auth-client";
 import { JsonRequest } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
 

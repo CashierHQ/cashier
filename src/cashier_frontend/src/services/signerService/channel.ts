@@ -13,7 +13,10 @@ import {
 } from "@slide-computer/signer";
 import { AuthClientTransportError } from "./transport";
 import { scopes, supportedStandards } from "./constants";
-import { DelegationChain, type DelegationIdentity } from "@dfinity/identity";
+import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
+import { HttpAgent } from "@dfinity/agent";
+import { callCanisterService } from "./callCanister.service";
+import { Icrc112Response, ICRC112Service, JsonICRC112Request } from "./icrc112.service";
 
 export interface AuthClientChannelOptions {
     /**
@@ -24,6 +27,12 @@ export interface AuthClientChannelOptions {
      * AuthClientTransport connection, used to close channel once connection is closed
      */
     connection: Connection;
+
+    /**
+     * Optional, used to make canister calls
+     * @default uses {@link HttpAgent} by default
+     */
+    agent?: HttpAgent;
 }
 
 export class AuthClientChannel implements Channel {
@@ -33,7 +42,10 @@ export class AuthClientChannel implements Channel {
     #responseListeners = new Set<(response: JsonResponse) => void>();
 
     constructor(options: AuthClientChannelOptions) {
-        this.#options = options;
+        this.#options = {
+            ...options,
+            agent: options.agent ?? HttpAgent.createSync(),
+        };
         this.#options.connection.addEventListener("disconnect", () => (this.#closed = true));
     }
 
@@ -155,6 +167,24 @@ export class AuthClientChannel implements Channel {
                             }),
                         ),
                     },
+                };
+            case "icrc112_execute":
+                const icrc112Request = request as JsonICRC112Request;
+                const icrc112Service = new ICRC112Service({
+                    agent: this.#options.agent,
+                    callCanisterService: callCanisterService,
+                });
+
+                let responseIcrc112: Icrc112Response = { responses: [] };
+                if (icrc112Request.params?.requests) {
+                    responseIcrc112 = await icrc112Service.icrc112Execute(
+                        icrc112Request.params.requests,
+                    );
+                }
+                return {
+                    id,
+                    jsonrpc: "2.0",
+                    result: JSON.parse(JSON.stringify(responseIcrc112)),
                 };
             default:
                 return {

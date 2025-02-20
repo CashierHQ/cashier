@@ -2,6 +2,7 @@ import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { type Channel, type Connection, type Transport } from "@slide-computer/signer";
 import { AuthClientChannel } from "./channel";
 import { AuthClientConnection } from "./connection";
+import { HttpAgent } from "@dfinity/agent";
 
 export class AuthClientTransportError extends Error {
     constructor(message: string) {
@@ -26,6 +27,11 @@ export interface AuthClientTransportOptions {
      * @default 3000
      */
     authClientDisconnectMonitoringInterval?: number;
+    /**
+     * Optional, used to make canister calls
+     * @default uses {@link HttpAgent} by default
+     */
+    agent?: HttpAgent;
 }
 
 export class AuthClientTransport implements Transport {
@@ -33,8 +39,9 @@ export class AuthClientTransport implements Transport {
 
     readonly #connection: Connection;
     readonly #authClient: AuthClient;
+    readonly #agent?: HttpAgent;
 
-    private constructor(authClient: AuthClient, connection: Connection) {
+    private constructor(authClient: AuthClient, connection: Connection, agent?: HttpAgent) {
         const throwError = !AuthClientTransport.#isInternalConstructing;
         AuthClientTransport.#isInternalConstructing = false;
         if (throwError) {
@@ -42,6 +49,7 @@ export class AuthClientTransport implements Transport {
         }
         this.#authClient = authClient;
         this.#connection = connection;
+        this.#agent = agent;
     }
 
     get connection(): Connection {
@@ -57,7 +65,7 @@ export class AuthClientTransport implements Transport {
         });
 
         AuthClientTransport.#isInternalConstructing = true;
-        return new AuthClientTransport(authClient, connection);
+        return new AuthClientTransport(authClient, connection, options.agent);
     }
 
     async establishChannel(): Promise<Channel> {
@@ -67,6 +75,7 @@ export class AuthClientTransport implements Transport {
         return new AuthClientChannel({
             authClient: this.#authClient,
             connection: this.#connection,
+            agent: this.#agent,
         });
     }
 }
