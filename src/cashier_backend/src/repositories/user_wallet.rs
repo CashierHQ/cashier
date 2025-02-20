@@ -1,12 +1,21 @@
 use super::USER_WALLET_STORE;
 use cashier_types::{UserWallet, UserWalletKey};
 
-pub fn create(wallet: UserWalletKey, user: UserWallet) {
-    USER_WALLET_STORE.with_borrow_mut(|store| {
-        store.insert(wallet, user);
-    });
-}
+#[cfg_attr(test, faux::create)]
+pub struct UserWalletRepository {}
 
-pub fn get(wallet: &UserWalletKey) -> Option<UserWallet> {
-    USER_WALLET_STORE.with_borrow(|store| store.get(wallet))
+#[cfg_attr(test, faux::methods)]
+impl UserWalletRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+    pub fn create(&self, wallet: UserWalletKey, user: UserWallet) {
+        USER_WALLET_STORE.with_borrow_mut(|store| {
+            store.insert(wallet, user);
+        });
+    }
+
+    pub fn get(&self, wallet: &UserWalletKey) -> Option<UserWallet> {
+        USER_WALLET_STORE.with_borrow(|store| store.get(wallet))
+    }
 }
