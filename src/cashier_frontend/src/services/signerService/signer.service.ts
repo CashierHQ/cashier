@@ -8,25 +8,13 @@ import { JsonRequest } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
 
 class SignerService {
-    private agent: Agent;
+    private agent: HttpAgent;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         this.agent = HttpAgent.createSync({ identity, host: "https://icp0.io" });
     }
 
     async callIcrc112(input: Icrc112Requests): Promise<Icrc112Response> {
-        const transport = await AuthClientTransport.create({});
-        const signer = new Signer({ transport });
-
-        const request: JsonRequest = {
-            jsonrpc: "2.0",
-            method: "icrc112_execute",
-            params: {
-                sender: (await this.agent.getPrincipal()).toString(),
-                requests: input as unknown as JsonObject,
-            },
-        };
-        signer.sendRequest(request);
         const icrc112Service = new ICRC112Service({
             agent: this.agent,
             callCanisterService: callCanisterService,
@@ -35,11 +23,14 @@ class SignerService {
         return response;
     }
 
-    async testSigner(input: Icrc112Requests) {
-        const transport = await AuthClientTransport.create({});
+    async executeIcrc112(input: Icrc112Requests) {
+        const transport = await AuthClientTransport.create({
+            agent: this.agent,
+        });
         const signer = new Signer({ transport });
 
         const request: JsonRequest = {
+            id: "1",
             jsonrpc: "2.0",
             method: "icrc112_execute",
             params: {
@@ -47,7 +38,8 @@ class SignerService {
                 requests: input as unknown as JsonObject,
             },
         };
-        signer.sendRequest(request);
+        const response = await signer.sendRequest(request);
+        console.log("🚀 ~ SignerService ~ executeIcrc112 ~ response:", response);
     }
 }
 

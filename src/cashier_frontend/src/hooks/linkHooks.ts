@@ -215,7 +215,7 @@ export function useIcrcxExecute() {
 
             const signerService = new SignerService(identity);
 
-            return signerService.callIcrc112(transactions as unknown as SequenceRequest);
+            return await signerService.executeIcrc112(transactions as unknown as SequenceRequest);
         },
     });
 
