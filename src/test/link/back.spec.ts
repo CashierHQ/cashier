@@ -1,11 +1,8 @@
 import {
     CreateLinkInput,
     UserDto,
-    IntentDto,
-    ProcessActionInput,
     UpdateLinkInput,
     type _SERVICE,
-    GetLinkOptions,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 
 import { idlFactory } from "../../declarations/cashier_backend/index";
@@ -16,7 +13,7 @@ import { AirdropHelper } from "../utils/airdrop-helper";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Link", () => {
+describe("Back", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
@@ -24,7 +21,7 @@ describe("Link", () => {
     let user: UserDto;
 
     let linkId: string;
-    let createLinkActionId: string;
+    // let createLinkActionId: string;
 
     let airdropHelper: AirdropHelper;
 
@@ -66,6 +63,8 @@ describe("Link", () => {
         // create user snd airdrop
         const create_user_res = await actor.create_user();
         user = parseResultResponse(create_user_res);
+
+        console.log("User created: ", user);
 
         airdropHelper = new AirdropHelper(pic);
         await airdropHelper.setupCanister();
@@ -164,67 +163,34 @@ describe("Link", () => {
         expect(linkUpdated.state).toEqual("Link_state_create_link");
     });
 
-    it("should create action CreateLink success", async () => {
-        const input: ProcessActionInput = {
-            link_id: linkId,
-            action_id: "",
-            action_type: "CreateLink",
+    it("should transition back create link to add asset", async () => {
+        const linkInput: UpdateLinkInput = {
+            id: linkId,
+            action: "Back",
             params: [],
         };
 
-        const createActionRes = await actor.process_action(input);
-        const link = await actor.get_link(linkId, []);
-        const linkRes = parseResultResponse(link);
-        const actionRes = parseResultResponse(createActionRes);
+        const updateLinkRes = await actor.update_link(linkInput);
+        const linkUpdated = parseResultResponse(updateLinkRes);
 
-        createLinkActionId = actionRes.id;
-
-        expect(actionRes.creator).toEqual(user.id);
-        expect(actionRes.intents).toHaveLength(2);
-        expect(linkRes.link.state).toEqual("Link_state_create_link");
-
-        // Check the state of all intents
-        actionRes.intents.forEach((intent: IntentDto) => {
-            expect(intent.state).toEqual("Intent_state_created");
-        });
+        expect(linkUpdated.id).toEqual(linkId);
+        expect(linkUpdated.asset_info).toHaveLength(1);
+        expect(linkUpdated.state).toEqual("Link_state_add_assets");
     });
 
-    it("should get action success", async () => {
-        const input: GetLinkOptions = {
-            action_type: "CreateLink",
-        };
-
-        const getActionRes = await actor.get_link(linkId, [input]);
-        const res = parseResultResponse(getActionRes);
-
-        expect(res.link.id).toEqual(linkId);
-        expect(res.action).toHaveLength(1);
-        expect(res.action[0]!.id).toEqual(createLinkActionId);
-    });
-
-    it("should confirm action success", async () => {
-        const input: ProcessActionInput = {
-            link_id: linkId,
-            action_id: createLinkActionId,
-            action_type: "CreateLink",
+    it("should transition back create link to add asset", async () => {
+        const linkInput: UpdateLinkInput = {
+            id: linkId,
+            action: "Back",
             params: [],
         };
 
-        console.log("input", JSON.stringify(input, null, 2));
+        const updateLinkRes = await actor.update_link(linkInput);
+        const linkUpdated = parseResultResponse(updateLinkRes);
 
-        const confirmRes = await actor.process_action(input);
-        const actionDto = parseResultResponse(confirmRes);
-
-        const icrc_112_requests = actionDto.icrc_112_requests;
-
-        console.log("icrc_request", JSON.stringify(icrc_112_requests, null, 2));
-
-        expect(actionDto.id).toEqual(createLinkActionId);
-        expect(actionDto.state).toEqual("Action_state_processing");
-
-        actionDto.intents.forEach((intent: IntentDto) => {
-            expect(intent.state).toEqual("Intent_state_processing");
-        });
+        expect(linkUpdated.id).toEqual(linkId);
+        expect(linkUpdated.asset_info).toHaveLength(1);
+        expect(linkUpdated.state).toEqual("Link_state_choose_link_type");
     });
 });
 //

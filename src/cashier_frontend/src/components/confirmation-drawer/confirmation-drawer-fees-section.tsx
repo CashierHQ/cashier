@@ -4,10 +4,9 @@ import { TransactionItem } from "@/components/transaction/transaction-item";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IntentHelperService } from "@/services/fee.service";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
-import { NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
 import { convert } from "@/utils/helpers/convert";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
+import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -19,6 +18,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     isUsd,
 }) => {
     const { t } = useTranslation();
+    const { assetSrc, assetSymbol } = useIntentMetadata(intents[0]);
     const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
         intents[0]?.asset.address,
     );
@@ -57,12 +57,10 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                             !isLoadingConversionRates &&
                             conversionRates!.tokenToUsd !== undefined &&
                             `($${convert(totalCashierFee, conversionRates!.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
-                        {totalCashierFee} {NETWORK_FEE_DEFAULT_SYMBOL}
+                        {totalCashierFee} {assetSymbol}
                         <Avatar className="w-7 h-7 ml-3">
-                            <AvatarImage
-                                src={`${IC_EXPLORER_IMAGES_PATH}${intents[0]?.asset.address}`}
-                            />
-                            <AvatarFallback>ICP</AvatarFallback>
+                            <AvatarImage src={assetSrc} />
+                            <AvatarFallback>{assetSymbol}</AvatarFallback>
                         </Avatar>
                     </div>
                 </div>

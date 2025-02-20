@@ -3,3 +3,7 @@ export const getCashierError = (error: Error): Error => {
         return new Error("Insufficient balance.");
     } else return error;
 };
+
+export const isCashierError = (error: unknown): error is Error => {
+    return error instanceof Error;
+};
