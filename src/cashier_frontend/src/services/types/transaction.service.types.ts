@@ -16,5 +16,5 @@ export type Icrc112RequestModel = {
     arg: string;
     method: string;
     canisterId: string;
-    nonce?: string;
+    nonce?: Uint32Array;
 };

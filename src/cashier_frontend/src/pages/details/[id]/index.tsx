@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
-import { useIdentity, useIdentityKit } from "@nfid/identitykit/react";
+import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import LinkService from "@/services/link.service";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
