@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { ChangeEvent, FC, useState } from "react";
 import { DefaultValues, SubmitHandler } from "react-hook-form";
 import {
     Form,
@@ -19,16 +19,20 @@ import { UsdSwitch } from "./usd-switch";
 import {
     useSelectedAsset,
     useAssets,
-    useHandleSetAmount,
-    useHandleSetTokenAddress,
     TipLinkAssetFormSchema,
+    useFormActions,
 } from "./tip-link-asset-form.hooks";
 import { useTipLinkAssetForm } from "./tip-link-asset-form.hooks";
+import { AmountActionButtons } from "./amount-action-buttons";
+import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 
 type TipLinkAssetFormProps = {
     defaultValues?: DefaultValues<TipLinkAssetFormSchema>;
     onSubmit: SubmitHandler<TipLinkAssetFormSchema>;
 };
+
+const USD_AMOUNT_PRESETS = [1, 2, 5, 10];
+const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 75, 100];
 
 export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultValues }) => {
     const { t } = useTranslation();
@@ -42,12 +46,76 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
         tokenAddress: defaultValues?.tokenAddress ?? "",
         amount: BigInt(0),
         assetNumber: 0,
-        usdNumber: undefined,
+        usdNumber: 0,
     });
 
     const selectedAsset = useSelectedAsset(assets, form);
-    const handleSetAmount = useHandleSetAmount(form);
-    const handleSetTokenAddress = useHandleSetTokenAddress(form, () => setShowAssetDrawer(false));
+    const { setUsdAmount, setTokenAmount, setTokenAddress } = useFormActions(form);
+
+    const { data: rates, isFetching: isFetchingConversionRates } = useConversionRatesQuery(
+        selectedAsset?.tokenAddress,
+    );
+
+    const createUsdAmountPresetData = (amount: number) => {
+        return {
+            content: `${amount} USD`,
+            action: () => setUsdAmount(amount),
+        };
+    };
+
+    const createPercentageAmountPresetData = (percentage: number) => {
+        const availableAmount = selectedAsset?.amount;
+        const factor = percentage / 100;
+
+        return {
+            content: `${percentage} %`,
+            action: () => {
+                if (availableAmount === undefined) {
+                    setTokenAmount(0);
+                } else {
+                    setTokenAmount(availableAmount * factor);
+                }
+            },
+        };
+    };
+
+    const handleAmountInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        const action = isUsd ? setUsdAmount : setTokenAmount;
+
+        action(value);
+    };
+
+    const handleSetTokenAddress = (address: string) => {
+        setTokenAddress(address);
+        setShowAssetDrawer(false);
+    };
+
+    const getAmountInputValue = () => {
+        const usdValue = form.getValues("usdNumber");
+        const tokenValue = form.getValues("assetNumber");
+        const value = isUsd ? usdValue : tokenValue;
+
+        return value ?? "";
+    };
+
+    const getAmountInputCurrencySymbol = () => {
+        const symbol = isUsd ? "USD" : selectedAsset?.name;
+
+        return symbol ?? "";
+    };
+
+    const getCurrencySwitchTokenAmount = () => {
+        if (!rates || !rates.canConvert) return undefined;
+
+        return form.getValues("assetNumber") ?? undefined;
+    };
+
+    const getCurrencySwitchUsdAmount = () => {
+        if (!rates || !rates.canConvert) return undefined;
+
+        return form.getValues("usdNumber") ?? undefined;
+    };
 
     return (
         <div className="w-full">
@@ -82,6 +150,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                     </FormItem>
                                 )}
                             />
+
                             <FormField
                                 control={form.control}
                                 name={isUsd ? "usdNumber" : "assetNumber"}
@@ -90,8 +159,8 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                         <div className="flex justify-between items-center">
                                             <FormLabel>{t("create.amount")}</FormLabel>
                                             <UsdSwitch
-                                                amount={form.getValues("assetNumber") ?? undefined}
-                                                amountUsd={form.getValues("usdNumber") ?? undefined}
+                                                amount={getCurrencySwitchTokenAmount()}
+                                                amountUsd={getCurrencySwitchUsdAmount()}
                                                 symbol={selectedAsset?.name ?? ""}
                                                 isUsd={isUsd}
                                                 onToggle={setIsUsd}
@@ -102,18 +171,10 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                                 type="number"
                                                 step="any"
                                                 isCurrencyInput={true}
-                                                currencySymbol={
-                                                    isUsd ? "USD" : (selectedAsset?.name ?? "")
-                                                }
+                                                currencySymbol={getAmountInputCurrencySymbol()}
                                                 {...field}
-                                                value={
-                                                    isUsd
-                                                        ? (form.getValues("usdNumber") ?? "")
-                                                        : (form.getValues("assetNumber") ?? "")
-                                                }
-                                                onChange={(e) =>
-                                                    handleSetAmount(isUsd, e.target.value)
-                                                }
+                                                value={getAmountInputValue()}
+                                                onChange={handleAmountInputChange}
                                                 disabled={isLoadingBalance}
                                                 className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                             />
@@ -122,6 +183,22 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                     </FormItem>
                                 )}
                             />
+
+                            {!isFetchingConversionRates && (
+                                <>
+                                    {rates?.canConvert ? (
+                                        <AmountActionButtons
+                                            data={USD_AMOUNT_PRESETS.map(createUsdAmountPresetData)}
+                                        />
+                                    ) : (
+                                        <AmountActionButtons
+                                            data={PERCENTAGE_AMOUNT_PRESETS.map(
+                                                createPercentageAmountPresetData,
+                                            )}
+                                        />
+                                    )}
+                                </>
+                            )}
 
                             <FixedBottomButton type="submit" variant="default" size="lg">
                                 {t("continue")}
@@ -133,7 +210,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                         title="Select Asset"
                         open={showAssetDrawer}
                         handleClose={() => setShowAssetDrawer(false)}
-                        handleChange={(address) => handleSetTokenAddress(isUsd, address)}
+                        handleChange={handleSetTokenAddress}
                         assetList={assets}
                         isLoadingBalance={isLoadingBalance}
                     />
