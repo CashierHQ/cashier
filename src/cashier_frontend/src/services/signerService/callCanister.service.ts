@@ -15,10 +15,7 @@ import {
 import { AgentError } from "@dfinity/agent/lib/cjs/errors";
 import { Principal } from "@dfinity/principal";
 import { fromBase64, toBase64 } from "@nfid/identitykit";
-import {
-    CallCanisterRequest,
-    CallCanisterResponse,
-} from "../services/types/callCanister.service.types";
+import { CallCanisterRequest, CallCanisterResponse } from "../types/callCanister.service.types";
 import { bufFromBufLike } from "@dfinity/candid";
 
 export class CallCanisterService {
