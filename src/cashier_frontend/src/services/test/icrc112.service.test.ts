@@ -52,11 +52,15 @@ describe("ICRC-112 service", () => {
                 {
                     canisterId: mockCanisterId,
                     method: "icrc1_transfer",
+                    nonce: "112",
+
                     arg: "abcxyz",
                 },
                 {
                     canisterId: mockCanisterId,
                     method: "icrc2_approve",
+                    nonce: "112",
+
                     arg: "abcxyz",
                 },
             ],
@@ -91,11 +95,14 @@ describe("ICRC-112 service", () => {
                 {
                     canisterId: mockCanisterId,
                     method: "icrc1_transfer",
+                    nonce: "112",
                     arg: "abcxyz",
                 },
                 {
                     canisterId: mockCanisterId,
                     method: "icrc2_approve",
+                    nonce: "112",
+
                     arg: "abcxyz",
                 },
             ],
@@ -124,11 +131,15 @@ describe("ICRC-112 service", () => {
                 {
                     canisterId: mockCanisterId,
                     method: "icrc1_transfer",
+                    nonce: "112",
+
                     arg: "abcxyz",
                 },
                 {
                     canisterId: mockCanisterId,
                     method: "icrc2_approve",
+                    nonce: "112",
+
                     arg: "abcxyz",
                 },
             ],
@@ -170,11 +181,15 @@ describe("ICRC-112 service", () => {
                 {
                     canisterId: mockCanisterId,
                     method: "icrc1_transfer",
+                    nonce: "112",
+
                     arg: "abcxyz",
                 },
                 {
                     canisterId: mockCanisterId,
                     method: "icrc2_approve",
+                    nonce: "112",
+
                     arg: "dfghh",
                 },
             ],
@@ -182,6 +197,8 @@ describe("ICRC-112 service", () => {
                 {
                     canisterId: mockCanisterId,
                     method: "icrc1_transfer",
+                    nonce: "112",
+
                     arg: "dfgdfg",
                 },
             ],
