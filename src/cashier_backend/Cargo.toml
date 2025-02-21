@@ -30,7 +30,8 @@ rm = {workspace = true}
 ic-icrc-tx = {workspace = true}
 cashier-types = { path = "../lib/cashier-types" }
 
-# faux = { version = "0.1.12", optional = true }
+[dev-dependencies]
+faux = { version = "0.1.12" }
 
 # [features]
 # test = ["faux"]

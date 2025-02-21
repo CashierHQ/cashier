@@ -1,6 +1,6 @@
 pub mod get_action_by_tx_id;
-pub mod roll_up_action_state;
-pub mod roll_up_intent_state;
+// pub mod roll_up_action_state;
+// pub mod roll_up_intent_state;
 pub mod roll_up_state;
 #[cfg(test)]
 mod tests {
@@ -561,7 +561,6 @@ mod tests {
         )
     }
 
-    #[cfg(feature = "test")]
     pub fn setup_repositories() -> (
         ActionRepository,
         IntentRepository,

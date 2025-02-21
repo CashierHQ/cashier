@@ -1,4 +1,4 @@
-#[cfg(feature = "test")]
+#[cfg(test)]
 mod tests {
     use crate::services::transaction_manager::{
         __tests__::action::{
@@ -9,7 +9,6 @@ mod tests {
     };
 
     use cashier_types::{ActionState, IntentState};
-    #[cfg(feature = "test")]
     use faux::when;
 
     #[test]
