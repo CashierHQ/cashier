@@ -12,8 +12,3 @@ serde = { workspace = true, features = ['derive'] }
 serde_cbor = { workspace = true }
 candid = { workspace = true }
 icrc-ledger-types  = { workspace = true }
-fake = { workspace = true}
-rand.workspace = true
-uuid = {workspace = true, features = ["v4"]}
-
-
