@@ -26,6 +26,7 @@ const generateMockICRC112Request = (
         canisterId: "testCanisterId",
         method: methodName,
         arg: `request${requestNum}_${mockResponseState}`,
+        nonce: `nonce${requestNum}`,
     };
 };
 
