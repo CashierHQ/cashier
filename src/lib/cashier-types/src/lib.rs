@@ -15,5 +15,3 @@ pub use keys::*;
 pub use link::*;
 pub use transaction::*;
 pub use user::*;
-
-pub mod tests;

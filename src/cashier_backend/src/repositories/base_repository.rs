@@ -5,6 +5,7 @@ use ic_stable_structures::{
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 pub trait Store<K, V> {
+    fn get_range1(&self, start: K, end: Option<K>) -> Vec<V>;
     fn batch_get(&self, keys: Vec<K>) -> Vec<V>;
     fn batch_create(&mut self, values: Vec<(K, V)>);
     fn is_exist(&self, key: &K) -> bool;
@@ -15,6 +16,13 @@ where
     K: Ord + Clone + Storable,
     V: Clone + Storable,
 {
+    fn get_range1(&self, start: K, end: Option<K>) -> Vec<V> {
+        match end {
+            Some(end) => self.range(start..end).map(|(_, v)| v).collect(),
+            None => self.range(start..).map(|(_, v)| v).collect(),
+        }
+    }
+
     fn batch_get(&self, keys: Vec<K>) -> Vec<V> {
         keys.into_iter().filter_map(|key| self.get(&key)).collect()
     }

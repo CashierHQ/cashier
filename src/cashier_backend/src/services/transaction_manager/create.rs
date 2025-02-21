@@ -21,9 +21,7 @@ use super::{
 // TODO: handle the params for the action incase claim action
 pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
     let caller = ic_cdk::api::caller();
-    let link_repository = repositories::link::LinkRepository::new();
-    let link = link_repository
-        .get(&input.link_id)
+    let link = link::get(&input.link_id)
         .ok_or_else(|| CanisterError::ValidationErrors("Link not found".to_string()))?;
 
     // Validate the user's balance
@@ -33,9 +31,7 @@ pub async fn create_link_action(input: CreateActionInput) -> Result<ActionDto, C
     }
 
     // Get the user ID from the user wallet store
-    let user_wallet_repository = user_wallet::UserWalletRepository::new();
-    let user_wallet = user_wallet_repository
-        .get(&caller.to_text())
+    let user_wallet = user_wallet::get(&caller.to_text())
         .ok_or_else(|| CanisterError::ValidationErrors("User wallet not found".to_string()))?;
 
     // Parse the intent type
@@ -137,22 +133,13 @@ fn store_records(
         action_id: action.id.clone(),
     };
 
-    let link_action_repository = repositories::link_action::LinkActionRepository::new();
-    let user_action_repository = repositories::user_action::UserActionRepository::new();
-    let action_repository = repositories::action::ActionRepository::new();
-    let action_intent_repository = repositories::action_intent::ActionIntentRepository::new();
-    let intent_repository = repositories::intent::IntentRepository::new();
-    let intent_transaction_repository =
-        repositories::intent_transaction::IntentTransactionRepository::new();
-    let transaction_repository = repositories::transaction::TransactionRepository::new();
-
-    link_action_repository.create(link_action);
-    user_action_repository.create(user_action);
-    action_repository.create(action);
-    action_intent_repository.batch_create(action_intents);
-    intent_repository.batch_create(intents);
-    intent_transaction_repository.batch_create(intent_transactions);
-    transaction_repository.batch_create(transactions);
+    repositories::link_action::create(link_action);
+    repositories::user_action::create(user_action);
+    repositories::action::create(action);
+    repositories::action_intent::batch_create(action_intents);
+    repositories::intent::batch_create(intents);
+    repositories::intent_transaction::batch_create(intent_transactions);
+    repositories::transaction::batch_create(transactions);
 
     Ok(())
 }
