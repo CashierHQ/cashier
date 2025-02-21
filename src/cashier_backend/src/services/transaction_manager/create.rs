@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     core::action::types::{ActionDto, CreateActionInput},
-    repositories::{self, user_wallet},
+    repositories::{self, link, user_wallet},
     types::error::CanisterError,
 };
 

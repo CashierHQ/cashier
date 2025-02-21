@@ -1,8 +1,10 @@
 use super::USER_ACTION_STORE;
 use cashier_types::{UserAction, UserActionKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct UserActionRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl UserActionRepository {
     pub fn new() -> Self {
         Self {}

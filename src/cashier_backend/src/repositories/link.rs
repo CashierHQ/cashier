@@ -1,8 +1,10 @@
 use super::{base_repository::Store, LINK_STORE};
 use cashier_types::{Link, LinkKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct LinkRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl LinkRepository {
     pub fn new() -> Self {
         Self {}

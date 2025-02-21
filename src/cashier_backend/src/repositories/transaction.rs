@@ -1,8 +1,10 @@
 use super::{base_repository::Store, TRANSACTION_STORE};
 use cashier_types::{Transaction, TransactionKey};
 
+#[cfg_attr(test, faux::create)]
 pub struct TransactionRepository {}
 
+#[cfg_attr(test, faux::methods)]
 impl TransactionRepository {
     pub fn new() -> Self {
         Self {}
