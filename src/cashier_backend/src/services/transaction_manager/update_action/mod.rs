@@ -1,11 +1,9 @@
 use cashier_types::{FromCallType, Transaction, TransactionState};
 
-use crate::{
-    core::action::types::ActionDto, services::transaction_manager::action::ActionService,
-    types::icrc_112_transaction::Icrc112Requests,
-};
+use crate::{core::action::types::ActionDto, types::icrc_112_transaction::Icrc112Requests};
 
 use super::{
+    action::{self, flatten_tx_hashmap::flatten_tx_hashmap},
     manual_check_status::manual_check_status,
     transaction::{self, update_tx_state::update_tx_state},
 };
@@ -32,9 +30,7 @@ pub async fn update_action(
 
     let request = update_action_with_args(args).await?;
 
-    let action_service = ActionService::new();
-
-    let resp = action_service.get(action_id).unwrap();
+    let resp = super::action::get(action_id).unwrap();
 
     Ok(ActionDto::build(
         resp.action,
@@ -48,14 +44,10 @@ async fn update_action_with_args(
     args: UpdateActionArgs,
 ) -> Result<Option<Icrc112Requests>, String> {
     //Step #1: manual status check
+    let action_resp = action::get(args.action_id.clone())
+        .ok_or_else(|| format!("action not found for action_id: {}", args.action_id.clone()))?;
 
-    let action_service = ActionService::new();
-
-    let action_resp = action_service
-        .get(args.action_id.clone())
-        .ok_or_else(|| "not found")?;
-
-    let txs = action_service.flatten_tx_hashmap(&action_resp.intent_txs);
+    let txs = flatten_tx_hashmap(&action_resp.intent_txs);
 
     // manually check the status of the tx of the action
     // update status to whaterver is returned by the manual check
@@ -71,8 +63,8 @@ async fn update_action_with_args(
     // get newest updated
 
     //Step #2 : Check which txs are eligible to execute - based on dependency
-    let all_txs = match action_service.get(args.action_id.clone()) {
-        Some(action) => action_service.flatten_tx_hashmap(&action.intent_txs),
+    let all_txs = match action::get(args.action_id.clone()) {
+        Some(action) => flatten_tx_hashmap(&action.intent_txs),
         None => vec![],
     };
 
