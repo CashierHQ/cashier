@@ -6,14 +6,14 @@ import { ClientTransport } from "./transport";
 import { JsonRequest, JsonResponse } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
 
-class SignerService {
+class CallSignerService {
     private agent: HttpAgent;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         this.agent = HttpAgent.createSync({ identity, host: "https://icp0.io" });
     }
 
-    async executeIcrc112(input: Icrc112Requests): Promise<Icrc112Response> {
+    async execute(input: Icrc112Requests): Promise<Icrc112Response> {
         const transport = await ClientTransport.create({
             agent: this.agent,
         });
@@ -22,24 +22,24 @@ class SignerService {
         const request: JsonRequest = {
             id: "1",
             jsonrpc: "2.0",
-            method: "icrc112_execute",
+            method: "icrc_112_batch_call_canisters",
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input as unknown as JsonObject,
             },
         };
         const response = await signer.sendRequest(request);
-        console.log("🚀 ~ SignerService ~ executeIcrc112 ~ response:", response);
-        return this.pareJsonResponseToIcrc112Response(response);
+        console.log("🚀 ~ CallSignerService ~ executeIcrc112 ~ response:", response);
+        return this.parseResponse(response);
     }
 
-    private pareJsonResponseToIcrc112Response = (jsonObj: JsonResponse): Icrc112Response => {
+    private parseResponse<T>(jsonObj: JsonResponse): T {
         if ("result" in jsonObj) {
-            return jsonObj.result as unknown as Icrc112Response;
+            return jsonObj.result as unknown as T;
         } else {
             throw new Error(`Error in response: ${JSON.stringify(jsonObj.error)}`);
         }
-    };
+    }
 }
 
-export default SignerService;
+export default CallSignerService;

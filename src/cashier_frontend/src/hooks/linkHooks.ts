@@ -8,7 +8,7 @@ import { QueryClient, useMutation, UseMutationResult, useQueryClient } from "@ta
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_STATE, ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { MapLinkToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
-import SignerService from "@/services/signerService/callSigner.service";
+import CallSignerService from "@/services/signerService/callSigner.service";
 import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
 import { useEffect } from "react";
 import { ShowToastFn } from "./useToast";
@@ -213,9 +213,9 @@ export function useIcrc112Execute() {
                 return;
             }
 
-            const signerService = new SignerService(identity);
+            const signerService = new CallSignerService(identity);
 
-            return await signerService.executeIcrc112(transactions as unknown as SequenceRequest);
+            return await signerService.execute(transactions as unknown as SequenceRequest);
         },
     });
 
