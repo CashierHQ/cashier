@@ -1,4 +1,13 @@
-export type ConversionRates = {
-    tokenToUsd: number | undefined;
-    usdToToken: number | undefined;
+export type ExistingConversionRate = {
+    canConvert: true;
+    tokenToUsd: number;
+    usdToToken: number;
 };
+
+export type NonExistingConversionRate = {
+    canConvert: false;
+    tokenToUsd: undefined;
+    usdToToken: undefined;
+};
+
+export type ConversionRates = ExistingConversionRate | NonExistingConversionRate;

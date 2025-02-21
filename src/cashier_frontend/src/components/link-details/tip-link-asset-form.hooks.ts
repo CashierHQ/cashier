@@ -1,10 +1,9 @@
 import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
-import { UsdConversionService } from "@/services/usdConversionService";
 import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import CanisterUtilsService from "@/services/canisterUtils.service";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AssetSelectItem } from "@/components/asset-select";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { mapAPITokenModelToAssetSelectModel } from "@/services/icExplorer.service";
@@ -70,71 +69,20 @@ export function useTipLinkAssetForm(
         defaultValues: defaultValues,
     });
 
-    const assetNumber = form.watch("assetNumber");
-    const tokenAddress = form.watch("tokenAddress");
+    const { data: tokenData } = useTokenMetadataQuery(form.getValues("tokenAddress"));
 
-    const { data } = useTokenMetadataQuery(tokenAddress);
+    const assetNumber = form.watch("assetNumber");
 
     // update amount after assetNumber change
     useEffect(() => {
-        if (assetNumber && data) {
-            const decimals = data?.metadata.decimals;
+        if (assetNumber && tokenData) {
+            const decimals = tokenData?.metadata.decimals;
 
             form.setValue("amount", BigInt(convertTokenAmountToNumber(assetNumber, decimals)));
         }
-    }, [assetNumber, data]);
+    }, [assetNumber, tokenData]);
 
     return form;
-}
-
-export function useHandleSetAmount(form: UseFormReturn<TipLinkAssetFormSchema>) {
-    const { data: conversionRates } = useConversionRatesQuery(form.getValues("tokenAddress"));
-
-    const handleSetAmount = (isUsd: boolean, value: string) => {
-        if (!conversionRates) return;
-
-        const parsedValue = parseFloat(value);
-        const factor = isUsd ? conversionRates.usdToToken : conversionRates.tokenToUsd;
-        const primary = isUsd ? "usdNumber" : "assetNumber";
-        const secondary = isUsd ? "assetNumber" : "usdNumber";
-
-        if (isNaN(parsedValue)) {
-            form.setValue(primary, null);
-            form.setValue(secondary, null);
-        } else {
-            form.setValue(primary, parsedValue);
-            form.setValue(secondary, factor ? parsedValue * factor : null);
-        }
-    };
-
-    return handleSetAmount;
-}
-
-export function useHandleSetTokenAddress(
-    form: UseFormReturn<TipLinkAssetFormSchema>,
-    then: () => void,
-) {
-    const walletAddress = useWalletAddress();
-
-    const handleSetTokenAddress = (isUsd: boolean, value: string) => {
-        UsdConversionService.getConversionRates(walletAddress, value).then((conversionRates) => {
-            form.setValue("tokenAddress", value);
-            form.clearErrors("amount");
-            form.clearErrors("assetNumber");
-            form.clearErrors("usdNumber");
-
-            const factor = isUsd ? conversionRates.usdToToken : conversionRates.tokenToUsd;
-            const primary = isUsd ? "usdNumber" : "assetNumber";
-            const secondary = isUsd ? "assetNumber" : "usdNumber";
-
-            const primaryValue = form.getValues(primary);
-            form.setValue(secondary, factor && primaryValue ? primaryValue * factor : null);
-
-            then();
-        });
-    };
-
-    return handleSetTokenAddress;
 }
 
 export function useAssets() {
@@ -219,4 +167,50 @@ export function useSelectedAsset(
     }, [assets, tokenAddress]);
 
     return selectedAsset;
+}
+
+export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
+    const tokenAddress = form.watch("tokenAddress");
+    const { data: rates } = useConversionRatesQuery(tokenAddress);
+
+    const setTokenAmount = useCallback(
+        (input: string | number) => {
+            const value = parseFloat(input.toString());
+            const isValidValue = !isNaN(value);
+            form.setValue("assetNumber", isValidValue ? value : null, { shouldTouch: true });
+
+            if (!rates || !rates.canConvert) return;
+
+            const convertedValue = value * rates.tokenToUsd;
+            form.setValue("usdNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
+        },
+        [rates],
+    );
+
+    const setUsdAmount = useCallback(
+        (input: string | number) => {
+            const value = parseFloat(input.toString());
+            const isValidValue = !isNaN(value);
+            form.setValue("usdNumber", isValidValue ? value : 0, { shouldTouch: true });
+
+            if (!rates || !rates.canConvert) return;
+
+            const convertedValue = value * rates.usdToToken;
+            form.setValue("assetNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
+        },
+        [rates],
+    );
+
+    const setTokenAddress = useCallback((address: string) => {
+        form.setValue("tokenAddress", address, { shouldTouch: true });
+        form.clearErrors("amount");
+        form.clearErrors("assetNumber");
+        form.clearErrors("usdNumber");
+    }, []);
+
+    return {
+        setTokenAmount,
+        setUsdAmount,
+        setTokenAddress,
+    };
 }

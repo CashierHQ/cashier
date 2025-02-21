@@ -40,6 +40,7 @@ export class DevIcExplorerUsdConversionService implements IUsdConversionService 
 
         if (!token) {
             return {
+                canConvert: false,
                 tokenToUsd: undefined,
                 usdToToken: undefined,
             };
@@ -51,6 +52,7 @@ export class DevIcExplorerUsdConversionService implements IUsdConversionService 
         const usdToToken = 1 / tokenToUsd;
 
         return {
+            canConvert: true,
             tokenToUsd,
             usdToToken,
         };

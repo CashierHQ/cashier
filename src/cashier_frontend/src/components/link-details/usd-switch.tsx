@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { ArrowUpDown } from "lucide-react";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,30 +14,25 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({ isUsd, onToggle, amount, symbol,
     const { t } = useTranslation();
     const canConvert = amount !== undefined && amountUsd !== undefined;
 
-    const renderMessage = () => {
-        if (!canConvert) {
-            return t("transaction.usd_conversion.no_price_available");
-        }
-
-        if (isUsd) {
-            return `${amount?.toFixed(3)} ${symbol}`;
-        } else {
-            return `${amountUsd?.toFixed(3)} USD`;
-        }
-    };
-
     return (
-        <button
-            type="button"
-            className={cn("flex  items-center", {
-                "text-destructive": canConvert,
-                "text-muted-foreground": !canConvert,
-            })}
-            onClick={() => canConvert && onToggle(!isUsd)}
-        >
-            <span className="text-sm leading-none">{renderMessage()}</span>
+        <>
+            {canConvert ? (
+                <button
+                    type="button"
+                    className="flex  items-center text-destructive"
+                    onClick={() => onToggle(!isUsd)}
+                >
+                    <span className="text-sm leading-none">
+                        {isUsd ? `${amount?.toFixed(3)} ${symbol}` : `${amountUsd?.toFixed(3)} USD`}
+                    </span>
 
-            {canConvert && <ArrowUpDown className="ml-1" size={16} />}
-        </button>
+                    <ArrowUpDown className="ml-1" size={16} />
+                </button>
+            ) : (
+                <span className="text-sm leading-none text-muted-foreground">
+                    {t("transaction.usd_conversion.no_price_available")}
+                </span>
+            )}
+        </>
     );
 };
