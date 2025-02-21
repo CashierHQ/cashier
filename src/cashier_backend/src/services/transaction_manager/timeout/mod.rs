@@ -1,8 +1,13 @@
+use candid::Principal;
 use cashier_types::Transaction;
 
 use crate::{
     constant::TX_TIMEOUT,
-    services::transaction_manager::{manual_check_status, transaction::update_tx_state},
+    services::{
+        runtime::RealIcEnvironment,
+        transaction_manager::{manual_check_status, transaction::update_tx_state},
+    },
+    utils::icrc::IcrcService,
 };
 
 pub async fn tx_timeout_task(tx: &mut Transaction) -> Result<(), String> {
@@ -17,7 +22,14 @@ pub async fn tx_timeout_task(tx: &mut Transaction) -> Result<(), String> {
     let tx_timeout: u64 = TX_TIMEOUT.parse().unwrap();
 
     if tx.start_ts.unwrap() + tx_timeout < current_ts {
-        let state = manual_check_status::manual_check_status(&tx).await?;
+        let icrc_service = IcrcService::new(Principal::from_text(tx.get_asset().address).unwrap());
+
+        let ic_env = RealIcEnvironment::new();
+
+        let manual_check_status_service =
+            manual_check_status::ManualCheckStatusService::new(icrc_service, ic_env);
+
+        let state = manual_check_status_service.execute(&tx).await?;
         update_tx_state::update_tx_state(tx, state)
     } else {
         return Err("Transaction is not timeout".to_string());

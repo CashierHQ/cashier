@@ -18,6 +18,20 @@ pub struct Transaction {
     pub start_ts: Option<u64>,
 }
 
+impl Transaction {
+    pub fn get_asset(&self) -> Asset {
+        match &self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
+                icrc1_transfer.asset.clone()
+            }
+            Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve)) => icrc2_approve.asset.clone(),
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
+                icrc2_transfer_from.asset.clone()
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Protocol {
     IC(IcTransaction),

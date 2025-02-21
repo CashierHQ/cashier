@@ -1,12 +1,15 @@
+use candid::Principal;
 use cashier_types::{FromCallType, Transaction, TransactionState};
 
 use crate::{
-    core::action::types::ActionDto, services::transaction_manager::action::ActionService,
+    core::action::types::ActionDto,
+    services::{runtime::RealIcEnvironment, transaction_manager::action::ActionService},
     types::icrc_112_transaction::Icrc112Requests,
+    utils::icrc::IcrcService,
 };
 
 use super::{
-    manual_check_status::manual_check_status,
+    manual_check_status,
     transaction::{self, update_tx_state::update_tx_state},
 };
 
@@ -60,7 +63,14 @@ async fn update_action_with_args(
     // manually check the status of the tx of the action
     // update status to whaterver is returned by the manual check
     for mut tx in txs.clone() {
-        let new_state = manual_check_status(&tx).await?;
+        let icrc_service = IcrcService::new(Principal::from_text(tx.get_asset().address).unwrap());
+
+        let ic_env = RealIcEnvironment::new();
+
+        let manual_check_status_service =
+            manual_check_status::ManualCheckStatusService::new(icrc_service, ic_env);
+
+        let new_state = manual_check_status_service.execute(&tx).await?;
         if tx.state == new_state.clone() {
             continue;
         }

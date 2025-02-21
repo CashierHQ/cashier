@@ -331,13 +331,22 @@ mod tests {
         let result = action_service.roll_up_state(selected_tx.id.clone());
 
         let action_resp = result.clone().unwrap();
-        println!("{:#?}", action_resp);
+        let mut intents_resp = action_resp.intents;
+        intents_resp.sort();
 
         assert_eq!(result.is_ok(), true);
         assert_eq!(action_resp.action.state, ActionState::Fail);
-        assert_eq!(action_resp.intents.len(), 2);
-        assert_eq!(action_resp.intents[0].state, IntentState::Fail);
-        assert_eq!(action_resp.intents[1].state, IntentState::Fail);
+        assert_eq!(intents_resp.len(), 2);
+
+        let fail_intent = intents_resp
+            .iter()
+            .find(|intent| intent.state == IntentState::Fail);
+        let processing_intent = intents_resp
+            .iter()
+            .find(|intent| intent.state == IntentState::Processing);
+
+        assert!(fail_intent.is_some());
+        assert!(processing_intent.is_some());
         // assert_eq!();
     }
 

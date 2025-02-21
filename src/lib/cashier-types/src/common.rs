@@ -2,12 +2,12 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Chain {
     IC,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct Asset {
     pub address: String,
     pub chain: Chain,
@@ -36,7 +36,7 @@ impl FromStr for Chain {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct Wallet {
     pub address: String,
     pub chain: Chain,
