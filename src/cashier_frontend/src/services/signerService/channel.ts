@@ -18,13 +18,13 @@ import { HttpAgent } from "@dfinity/agent";
 import { callCanisterService } from "./callCanister.service";
 import { Icrc112Response, ICRC112Service, JsonICRC112Request } from "./icrc112.service";
 
-export interface AuthClientChannelOptions {
+export interface ClientChannelOptions {
     /**
      * AuthClient instance from "@dfinity/auth-client"
      */
     authClient: AuthClient;
     /**
-     * AuthClientTransport connection, used to close channel once connection is closed
+     * ClientTransport connection, used to close channel once connection is closed
      */
     connection: Connection;
 
@@ -35,13 +35,13 @@ export interface AuthClientChannelOptions {
     agent?: HttpAgent;
 }
 
-export class AuthClientChannel implements Channel {
-    #options: Required<AuthClientChannelOptions>;
+export class ClientChannel implements Channel {
+    #options: Required<ClientChannelOptions>;
     #closed: boolean = false;
     #closeListeners = new Set<() => void>();
     #responseListeners = new Set<(response: JsonResponse) => void>();
 
-    constructor(options: AuthClientChannelOptions) {
+    constructor(options: ClientChannelOptions) {
         this.#options = {
             ...options,
             agent: options.agent ?? HttpAgent.createSync(),
@@ -84,7 +84,7 @@ export class AuthClientChannel implements Channel {
         }
 
         // Create response and call listeners
-        const response = await this.#createResponse({ id, ...request });
+        const response = await this.createResponse({ id, ...request });
         this.#responseListeners.forEach((listener) => listener(response));
     }
 
@@ -93,7 +93,7 @@ export class AuthClientChannel implements Channel {
         this.#closeListeners.forEach((listener) => listener());
     }
 
-    async #createResponse(
+    async createResponse(
         request: JsonRequest & { id: NonNullable<JsonRequest["id"]> },
     ): Promise<JsonResponse> {
         const id = request.id;

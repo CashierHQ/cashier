@@ -1,10 +1,9 @@
-import { Agent, HttpAgent, Identity } from "@dfinity/agent";
+import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { Icrc112Requests, Icrc112Response, ICRC112Service } from "./icrc112.service";
-import { callCanisterService } from "./callCanister.service";
+import { Icrc112Requests, Icrc112Response } from "./icrc112.service";
 import { Signer } from "./signer";
-import { AuthClientTransport } from "./transport";
-import { JsonRequest } from "@slide-computer/signer";
+import { ClientTransport } from "./transport";
+import { JsonRequest, JsonResponse } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
 
 class SignerService {
@@ -14,17 +13,8 @@ class SignerService {
         this.agent = HttpAgent.createSync({ identity, host: "https://icp0.io" });
     }
 
-    async callIcrc112(input: Icrc112Requests): Promise<Icrc112Response> {
-        const icrc112Service = new ICRC112Service({
-            agent: this.agent,
-            callCanisterService: callCanisterService,
-        });
-        const response = await icrc112Service.icrc112Execute(input);
-        return response;
-    }
-
-    async executeIcrc112(input: Icrc112Requests) {
-        const transport = await AuthClientTransport.create({
+    async executeIcrc112(input: Icrc112Requests): Promise<Icrc112Response> {
+        const transport = await ClientTransport.create({
             agent: this.agent,
         });
         const signer = new Signer({ transport });
@@ -40,7 +30,16 @@ class SignerService {
         };
         const response = await signer.sendRequest(request);
         console.log("🚀 ~ SignerService ~ executeIcrc112 ~ response:", response);
+        return this.pareJsonResponseToIcrc112Response(response);
     }
+
+    private pareJsonResponseToIcrc112Response = (jsonObj: JsonResponse): Icrc112Response => {
+        if ("result" in jsonObj) {
+            return jsonObj.result as unknown as Icrc112Response;
+        } else {
+            throw new Error(`Error in response: ${JSON.stringify(jsonObj.error)}`);
+        }
+    };
 }
 
 export default SignerService;

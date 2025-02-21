@@ -8,7 +8,7 @@ import { QueryClient, useMutation, UseMutationResult, useQueryClient } from "@ta
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_STATE, ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { MapLinkToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
-import SignerService from "@/services/signerService/signer.service";
+import SignerService from "@/services/signerService/callSigner.service";
 import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
 import { useEffect } from "react";
 import { ShowToastFn } from "./useToast";
@@ -201,7 +201,7 @@ export function useCreateAction() {
     return mutation;
 }
 
-export function useIcrcxExecute() {
+export function useIcrc112Execute() {
     const identity = useIdentity();
 
     const mutation = useMutation({

@@ -15,9 +15,8 @@ import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
 import { useNavigate } from "react-router-dom";
 import {
-    useIcrcxExecute,
+    useIcrc112Execute,
     useProcessAction,
-    //useIcrcxExecute,
     useSetLinkActive,
     useUpdateAction,
 } from "@/hooks/linkHooks";
@@ -46,7 +45,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const { mutateAsync: setLinkActive } = useSetLinkActive();
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
-    const { mutateAsync: icrcxExecute } = useIcrcxExecute();
+    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
 
     const primaryIntents = usePrimaryIntents(action?.intents);
     const cashierFeeIntents = useCashierFeeIntents(action?.intents);
@@ -71,7 +70,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         });
         setAction(firstUpdatedAction);
 
-        const response = await icrcxExecute(firstUpdatedAction!.icrc112Requests);
+        const response = await icrc112Execute(firstUpdatedAction!.icrc112Requests);
         console.log("🚀 ~ startTransaction ~ response:", response);
 
         // TODO: Remove after demo
