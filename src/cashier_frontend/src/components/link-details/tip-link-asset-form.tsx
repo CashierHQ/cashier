@@ -89,6 +89,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
     const handleSetTokenAddress = (address: string) => {
         setTokenAddress(address);
         setShowAssetDrawer(false);
+        setIsUsd(false);
     };
 
     const getAmountInputValue = () => {
@@ -179,26 +180,29 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                                 className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                             />
                                         </FormControl>
+
+                                        {!isFetchingConversionRates && (
+                                            <>
+                                                {rates?.canConvert ? (
+                                                    <AmountActionButtons
+                                                        data={USD_AMOUNT_PRESETS.map(
+                                                            createUsdAmountPresetData,
+                                                        )}
+                                                    />
+                                                ) : (
+                                                    <AmountActionButtons
+                                                        data={PERCENTAGE_AMOUNT_PRESETS.map(
+                                                            createPercentageAmountPresetData,
+                                                        )}
+                                                    />
+                                                )}
+                                            </>
+                                        )}
+
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
-
-                            {!isFetchingConversionRates && (
-                                <>
-                                    {rates?.canConvert ? (
-                                        <AmountActionButtons
-                                            data={USD_AMOUNT_PRESETS.map(createUsdAmountPresetData)}
-                                        />
-                                    ) : (
-                                        <AmountActionButtons
-                                            data={PERCENTAGE_AMOUNT_PRESETS.map(
-                                                createPercentageAmountPresetData,
-                                            )}
-                                        />
-                                    )}
-                                </>
-                            )}
 
                             <FixedBottomButton type="submit" variant="default" size="lg">
                                 {t("continue")}
