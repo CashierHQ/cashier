@@ -1,4 +1,3 @@
-#[cfg(feature = "test")]
 mod tests {
     use crate::services::transaction_manager::{
         __tests__::action::{generate_action_with_for_processing, setup_repositories},

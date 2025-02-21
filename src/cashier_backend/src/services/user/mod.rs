@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     core::user::types::UserDto,
-    repositories::{self, user, user_wallet},
+    repositories::{self},
 };
 
 pub fn create_new() -> Result<UserDto, String> {
