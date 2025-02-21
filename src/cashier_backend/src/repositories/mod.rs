@@ -34,7 +34,7 @@ const INTENT_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(10);
 
 const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(11);
 
-type Memory = VirtualMemory<DefaultMemoryImpl>;
+pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));

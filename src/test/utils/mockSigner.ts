@@ -12,7 +12,7 @@ export interface ICRC112Request {
     arg: string;
     method: string;
     canisterId: string;
-    nonce: [] | [string];
+    nonce?: [] | [string];
 }
 
 export type ParallelRequests = Array<ICRC112Request>;

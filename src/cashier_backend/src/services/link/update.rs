@@ -74,7 +74,7 @@ fn transition_function(
                                         Err(_) => Chain::IC,
                                     };
 
-                                    return AssetInfo {
+                                    AssetInfo {
                                         address: a.address.clone(),
                                         chain,
                                         total_amount: a.total_amount,
@@ -83,7 +83,7 @@ fn transition_function(
                                         total_claim: 0,
                                         // start with 0
                                         current_amount: 0,
-                                    };
+                                    }
                                 })
                                 .collect(),
                         );
@@ -98,7 +98,8 @@ fn transition_function(
             }
         }
 
-        repositories::link::update(link.clone());
+        let link_repository = repositories::link::LinkRepository::new();
+        link_repository.update(link.clone());
 
         Ok(link)
     })
@@ -210,10 +211,8 @@ pub async fn handle_update_link(
             let dest = transition.dest.clone();
 
             match transition.execute.as_ref()(dest, link_input.clone(), input.params).await {
-                Ok(link) => {
-                    return Ok(link);
-                }
-                Err(e) => return Err(CanisterError::ValidationErrors(e)),
+                Ok(link) => Ok(link),
+                Err(e) => Err(CanisterError::ValidationErrors(e)),
             }
         }
         None => Err(CanisterError::ValidationErrors(
