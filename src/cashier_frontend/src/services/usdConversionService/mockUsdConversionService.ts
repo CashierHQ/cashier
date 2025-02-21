@@ -39,6 +39,7 @@ export class MockUsdConversionService implements IUsdConversionService {
         const tokenToUsd = this.conversionMap[address] ?? 1;
 
         return {
+            canConvert: true,
             tokenToUsd,
             usdToToken: 1 / tokenToUsd,
         };
