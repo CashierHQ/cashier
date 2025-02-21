@@ -30,7 +30,7 @@ class CallSignerService {
         };
         const response = await signer.sendRequest(request);
         console.log("🚀 ~ CallSignerService ~ executeIcrc112 ~ response:", response);
-        return this.parseResponse(response);
+        return this.parseResponse<Icrc112Response>(response);
     }
 
     private parseResponse<T>(jsonObj: JsonResponse): T {
