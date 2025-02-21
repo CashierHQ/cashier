@@ -1,9 +1,7 @@
 use super::INTENT_TRANSACTION_STORE;
 use cashier_types::{IntentTransaction, IntentTransactionKey};
 
-
 pub struct IntentTransactionRepository {}
-
 
 impl IntentTransactionRepository {
     pub fn new() -> Self {

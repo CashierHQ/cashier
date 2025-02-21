@@ -1,9 +1,7 @@
 use super::USER_WALLET_STORE;
 use cashier_types::{UserWallet, UserWalletKey};
 
-
 pub struct UserWalletRepository {}
-
 
 impl UserWalletRepository {
     pub fn new() -> Self {

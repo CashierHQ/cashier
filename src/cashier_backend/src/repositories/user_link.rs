@@ -2,9 +2,7 @@ use super::USER_LINK_STORE;
 use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
 use cashier_types::{UserLink, UserLinkKey};
 
-
 pub struct UserLinkRepository {}
-
 
 impl UserLinkRepository {
     pub fn new() -> Self {

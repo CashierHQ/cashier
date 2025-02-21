@@ -1,9 +1,7 @@
 use super::{base_repository::Store, LINK_STORE};
 use cashier_types::{Link, LinkKey};
 
-
 pub struct LinkRepository {}
-
 
 impl LinkRepository {
     pub fn new() -> Self {

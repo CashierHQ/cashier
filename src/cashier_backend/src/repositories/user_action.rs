@@ -3,7 +3,6 @@ use cashier_types::{UserAction, UserActionKey};
 
 pub struct UserActionRepository {}
 
-
 impl UserActionRepository {
     pub fn new() -> Self {
         Self {}

@@ -3,9 +3,7 @@ use cashier_types::{Action, ActionKey};
 
 use super::base_repository::Store;
 
-
 pub struct ActionRepository {}
-
 
 impl ActionRepository {
     pub fn new() -> Self {

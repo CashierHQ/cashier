@@ -1,9 +1,7 @@
 use super::{base_repository::Store, INTENT_STORE};
 use cashier_types::Intent;
 
-
 pub struct IntentRepository {}
-
 
 impl IntentRepository {
     pub fn new() -> Self {

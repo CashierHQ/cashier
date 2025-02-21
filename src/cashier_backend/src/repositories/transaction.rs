@@ -1,9 +1,7 @@
 use super::{base_repository::Store, TRANSACTION_STORE};
 use cashier_types::{Transaction, TransactionKey};
 
-
 pub struct TransactionRepository {}
-
 
 impl TransactionRepository {
     pub fn new() -> Self {

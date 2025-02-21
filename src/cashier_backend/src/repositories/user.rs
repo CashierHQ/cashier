@@ -2,9 +2,7 @@ use cashier_types::User;
 
 use super::USER_STORE;
 
-
 pub struct UserRepository {}
-
 
 impl UserRepository {
     pub fn new() -> Self {
