@@ -3,7 +3,7 @@ import { AuthClientTransportError } from "./transport";
 import { DelegationIdentity, isDelegationValid } from "@dfinity/identity";
 import type { AuthClient, AuthClientLoginOptions } from "@dfinity/auth-client";
 
-interface AuthClientConnectionOptions {
+interface ClientConnectionOptions {
     /**
      * AuthClient instance from "@dfinity/auth-client"
      */
@@ -19,12 +19,12 @@ interface AuthClientConnectionOptions {
     authClientDisconnectMonitoringInterval?: number;
 }
 
-export class AuthClientConnection implements Connection {
-    #options: Required<AuthClientConnectionOptions>;
+export class ClientConnection implements Connection {
+    #options: Required<ClientConnectionOptions>;
     #disconnectListeners = new Set<() => void>();
     #disconnectMonitorInterval?: ReturnType<typeof setInterval>;
 
-    constructor(options: AuthClientConnectionOptions) {
+    constructor(options: ClientConnectionOptions) {
         this.#options = {
             authClientLoginOptions: {},
             authClientDisconnectMonitoringInterval: 3000,

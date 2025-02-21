@@ -1,7 +1,7 @@
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import { type Channel, type Connection, type Transport } from "@slide-computer/signer";
-import { AuthClientChannel } from "./channel";
-import { AuthClientConnection } from "./connection";
+import { ClientChannel } from "./channel";
+import { ClientConnection } from "./connection";
 import { HttpAgent } from "@dfinity/agent";
 
 export class AuthClientTransportError extends Error {
@@ -34,7 +34,7 @@ export interface AuthClientTransportOptions {
     agent?: HttpAgent;
 }
 
-export class AuthClientTransport implements Transport {
+export class ClientTransport implements Transport {
     static #isInternalConstructing: boolean = false;
 
     readonly #connection: Connection;
@@ -42,10 +42,10 @@ export class AuthClientTransport implements Transport {
     readonly #agent?: HttpAgent;
 
     private constructor(authClient: AuthClient, connection: Connection, agent?: HttpAgent) {
-        const throwError = !AuthClientTransport.#isInternalConstructing;
-        AuthClientTransport.#isInternalConstructing = false;
+        const throwError = !ClientTransport.#isInternalConstructing;
+        ClientTransport.#isInternalConstructing = false;
         if (throwError) {
-            throw new AuthClientTransportError("AuthClientTransport is not constructable");
+            throw new AuthClientTransportError("ClientTransport is not constructable");
         }
         this.#authClient = authClient;
         this.#connection = connection;
@@ -56,23 +56,23 @@ export class AuthClientTransport implements Transport {
         return this.#connection;
     }
 
-    static async create(options: AuthClientTransportOptions): Promise<AuthClientTransport> {
+    static async create(options: AuthClientTransportOptions): Promise<ClientTransport> {
         const authClient = await AuthClient.create(options.authClientCreateOptions);
-        const connection = new AuthClientConnection({
+        const connection = new ClientConnection({
             authClient,
             authClientLoginOptions: options.authClientLoginOptions,
             authClientDisconnectMonitoringInterval: options.authClientDisconnectMonitoringInterval,
         });
 
-        AuthClientTransport.#isInternalConstructing = true;
-        return new AuthClientTransport(authClient, connection, options.agent);
+        ClientTransport.#isInternalConstructing = true;
+        return new ClientTransport(authClient, connection, options.agent);
     }
 
     async establishChannel(): Promise<Channel> {
         if (!this.#connection.connected) {
-            throw new AuthClientTransportError("AuthClientTransport is not connected");
+            throw new AuthClientTransportError("ClientTransport is not connected");
         }
-        return new AuthClientChannel({
+        return new ClientChannel({
             authClient: this.#authClient,
             connection: this.#connection,
             agent: this.#agent,

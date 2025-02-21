@@ -9,6 +9,10 @@ export const supportedStandards: SupportedStandard[] = [
         name: "ICRC-34",
         url: "https://github.com/dfinity/ICRC/blob/main/ICRCs/ICRC-34/ICRC-34.md",
     },
+    {
+        name: "ICRC-112",
+        url: "https://github.com/dfinity/ICRC/blob/main/ICRCs/ICRC-34/ICRC-34.md",
+    },
 ];
 
 export const scopes: Array<{
