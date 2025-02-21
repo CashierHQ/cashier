@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{
     core::user::types::UserDto,
-    repositories::{self, user, user_wallet},
+    repositories::{self},
 };
 
 pub fn create_new() -> Result<UserDto, String> {
@@ -25,8 +25,11 @@ pub fn create_new() -> Result<UserDto, String> {
 
     let caller = ic_cdk::api::caller();
 
-    repositories::user::create(user.clone());
-    repositories::user_wallet::create(caller.to_text(), user_wallet);
+    let user_repository = repositories::user::UserRepository::new();
+    let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
+
+    user_repository.create(user.clone());
+    user_wallet_repository.create(caller.to_text(), user_wallet.clone());
 
     Ok(UserDto {
         id: id_str,
@@ -36,13 +39,16 @@ pub fn create_new() -> Result<UserDto, String> {
 }
 
 pub fn get() -> Option<UserDto> {
+    let user_repository = repositories::user::UserRepository::new();
+    let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
     let caller = ic_cdk::api::caller();
-    let user_wallet = match user_wallet::get(&caller.to_string()) {
+
+    let user_wallet = match user_wallet_repository.get(&caller.to_string()) {
         Some(user_id) => user_id,
         None => return None,
     };
 
-    let user = user::get(user_wallet.user_id);
+    let user = user_repository.get(&user_wallet.user_id);
 
     match user {
         Some(user) => Some(UserDto {
@@ -56,5 +62,6 @@ pub fn get() -> Option<UserDto> {
 
 pub fn is_existed() -> bool {
     let caller = ic_cdk::api::caller();
-    user_wallet::get(&caller.to_string()).is_some()
+    let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
+    user_wallet_repository.get(&caller.to_string()).is_some()
 }
