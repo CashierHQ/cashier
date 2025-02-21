@@ -2,7 +2,7 @@ import { Agent } from "@dfinity/agent";
 import { CallCanisterResponse } from "../types/callCanister.service.types";
 import { CallCanisterService } from "./callCanister.service";
 import { JsonRequest } from "@slide-computer/signer";
-import type { JsonObject, JsonValue } from "@dfinity/candid";
+import type { JsonObject } from "@dfinity/candid";
 
 /* Define types */
 export type JsonICRC112Request = JsonRequest<
@@ -17,7 +17,8 @@ export interface ICRC112Request extends JsonObject {
     canisterId: string;
     method: string;
     arg: string;
-    nonce: JsonValue;
+    // base64 bytes string
+    nonce: string;
 }
 
 export type ParallelRequests = Array<ICRC112Request>;
