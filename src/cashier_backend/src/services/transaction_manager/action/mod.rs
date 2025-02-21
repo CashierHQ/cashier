@@ -11,7 +11,6 @@ pub struct ActionResp {
     pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
 }
 
-#[cfg_attr(test, faux::create)]
 pub struct ActionService {
     action_repository: repositories::action::ActionRepository,
     intent_repository: repositories::intent::IntentRepository,
@@ -20,7 +19,6 @@ pub struct ActionService {
     intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl ActionService {
     pub fn new() -> Self {
         Self {

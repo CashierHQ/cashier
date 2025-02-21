@@ -1,10 +1,10 @@
 use super::{base_repository::Store, INTENT_STORE};
 use cashier_types::Intent;
 
-#[cfg_attr(test, faux::create)]
+
 pub struct IntentRepository {}
 
-#[cfg_attr(test, faux::methods)]
+
 impl IntentRepository {
     pub fn new() -> Self {
         Self {}

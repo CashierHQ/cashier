@@ -1,9 +1,7 @@
 use crate::repositories::ACTION_INTENT_STORE;
 use cashier_types::{ActionIntent, ActionIntentKey};
 
-#[cfg_attr(test, faux::create)]
 pub struct ActionIntentRepository {}
-#[cfg_attr(test, faux::methods)]
 
 impl ActionIntentRepository {
     pub fn new() -> Self {

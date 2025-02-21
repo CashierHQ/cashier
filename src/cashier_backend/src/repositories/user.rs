@@ -2,10 +2,10 @@ use cashier_types::User;
 
 use super::USER_STORE;
 
-#[cfg_attr(test, faux::create)]
+
 pub struct UserRepository {}
 
-#[cfg_attr(test, faux::methods)]
+
 impl UserRepository {
     pub fn new() -> Self {
         Self {}

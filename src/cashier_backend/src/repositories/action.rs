@@ -3,10 +3,10 @@ use cashier_types::{Action, ActionKey};
 
 use super::base_repository::Store;
 
-#[cfg_attr(test, faux::create)]
+
 pub struct ActionRepository {}
 
-#[cfg_attr(test, faux::methods)]
+
 impl ActionRepository {
     pub fn new() -> Self {
         Self {}
