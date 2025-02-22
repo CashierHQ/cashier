@@ -458,6 +458,10 @@ impl Service {
         Self(canister_id)
     }
 
+    pub fn get_canister_id(&self) -> &Principal {
+        &self.0
+    }
+
     pub async fn archives(&self) -> Result<(StdVec<ArchiveInfo>,)> {
         ic_cdk::call(self.0, "archives", ()).await
     }

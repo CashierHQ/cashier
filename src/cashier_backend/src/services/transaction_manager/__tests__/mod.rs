@@ -23,6 +23,8 @@ pub mod tests {
 
     use crate::services::runtime::{IcEnvironment, MockIcEnvironment};
 
+    pub const TX_TIMEOUT: u64 = 12000_000_000; // 1 minute in nanoseconds
+
     #[cfg(test)]
     pub fn generate_random_principal() -> Principal {
         let mut rng = rand::thread_rng();
@@ -53,9 +55,8 @@ pub mod tests {
     #[cfg(test)]
     pub fn generate_timestamp() -> u64 {
         let mut rng = rand::thread_rng();
-        rng.gen_range(1720154181..1740154204)
+        rng.gen_range(1720154181000000000..1740154204000000000)
     }
-
     #[cfg(test)]
     pub trait Dummy<T> {
         fn dummy<R: Rng>(rng: &mut R) -> T;
@@ -322,7 +323,35 @@ pub mod tests {
             group: None,
             from_call_type: FromCallType::dummy(&mut rng),
             protocol: Protocol::dummy(&mut rng),
-            start_ts: Some(generate_timestamp()),
+            start_ts: None,
+        }
+    }
+
+    pub fn create_dummy_tx_protocol(state: TransactionState, protocol_str: &str) -> Transaction {
+        let mut rng = rand::thread_rng();
+
+        let protocol = match protocol_str {
+            "icrc1_transfer" => {
+                Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer::dummy(&mut rng)))
+            }
+            "icrc2_approve" => {
+                Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve::dummy(&mut rng)))
+            }
+            "icrc2_transfer_from" => Protocol::IC(IcTransaction::Icrc2TransferFrom(
+                Icrc2TransferFrom::dummy(&mut rng),
+            )),
+            _ => Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer::dummy(&mut rng))),
+        };
+
+        Transaction {
+            id: Uuid::new_v4().to_string(),
+            created_at: generate_timestamp(),
+            state,
+            dependency: None,
+            group: None,
+            from_call_type: FromCallType::dummy(&mut rng),
+            protocol: protocol,
+            start_ts: None,
         }
     }
 
