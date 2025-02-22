@@ -23,7 +23,9 @@ pub mod tests {
 
     use crate::utils::runtime::IcEnvironment;
 
-    pub const TX_TIMEOUT: u64 = 12000_000_000; // 1 minute in nanoseconds
+    pub const TX_TIMEOUT: u64 = 120_000_000_000; // 1 minute in nanoseconds
+
+    pub const ONE_HOUR_IN_NANOSECONDS: u64 = 3600_000_000_000;
 
     #[cfg(test)]
     pub fn generate_random_principal() -> Principal {
@@ -421,6 +423,16 @@ pub mod tests {
         pub caller: Principal,
         pub canister_id: Principal,
         pub time: u64,
+    }
+
+    impl MockIcEnvironment {
+        pub fn new_with_time(ts: u64) -> Self {
+            Self {
+                caller: generate_random_principal(),
+                canister_id: generate_random_principal(),
+                time: ts,
+            }
+        }
     }
 
     #[async_trait]

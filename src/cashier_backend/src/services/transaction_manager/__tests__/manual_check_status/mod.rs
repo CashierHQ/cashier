@@ -11,7 +11,7 @@ mod tests {
             transaction_manager::{
                 __tests__::tests::{
                     create_dummy_transaction, create_dummy_tx_protocol, generate_random_principal,
-                    generate_timestamp, MockIcEnvironment, TX_TIMEOUT,
+                    generate_timestamp, MockIcEnvironment, ONE_HOUR_IN_NANOSECONDS, TX_TIMEOUT,
                 },
                 manual_check_status::ManualCheckStatusService,
             },
@@ -23,7 +23,7 @@ mod tests {
     //TS1: Transaction Status is NOT processing
     #[tokio::test]
     async fn test_execute_transaction_not_processing() {
-        let icrc_service = IcrcService::new();
+        let icrc_service = IcrcService::faux();
         let env = MockIcEnvironment {
             time: generate_timestamp(),
             caller: generate_random_principal(),
@@ -47,13 +47,37 @@ mod tests {
         assert_eq!(result3.unwrap(), TransactionState::Success);
     }
 
-    //TS2: ICRC1 Transfer with Correct Wallet Balance
+    //TS2: Transaction Status is processing , but it is not timeout
     #[tokio::test]
-    async fn shoudl_success_execute_icrc_1_transfer_with_correct_wallet_balance() {
-        let mut icrc_service = IcrcService::faux();
+    async fn test_execute_transaction_id_processing_but_it_is_not_timeout() {
+        let icrc_service = IcrcService::faux();
         let test_ts = generate_timestamp();
 
-        let env = MockIcEnvironment::new();
+        let runtime_ts = test_ts + ONE_HOUR_IN_NANOSECONDS;
+        let env = MockIcEnvironment::new_with_time(runtime_ts);
+
+        let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
+
+        let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc1_transfer");
+        tx1.created_at = test_ts;
+        // start ts should be earlier than runtime_ts to trigger test
+        let start_ts = runtime_ts - 6000_000_000;
+        tx1.start_ts = Some(start_ts);
+
+        let result1 = manual_check_service.execute(&tx1).await;
+
+        assert!(result1.is_ok());
+        assert_eq!(result1.unwrap(), TransactionState::Processing);
+    }
+
+    //TS3: ICRC1 Transfer with Correct Wallet Balance
+    #[tokio::test]
+    async fn should_success_execute_icrc_1_transfer_with_correct_wallet_balance() {
+        let mut icrc_service = IcrcService::faux();
+        let test_ts = generate_timestamp();
+        let runtime_ts = test_ts + ONE_HOUR_IN_NANOSECONDS;
+        let env = MockIcEnvironment::new_with_time(runtime_ts);
+
         let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc1_transfer");
         let icrc1_transfer_protocol = tx1
             .protocol
@@ -61,8 +85,9 @@ mod tests {
             .unwrap()
             .as_icrc1_transfer()
             .unwrap();
-        tx1.created_at = test_ts - TX_TIMEOUT;
-        let start_ts = tx1.created_at + TX_TIMEOUT;
+        tx1.created_at = test_ts;
+        // start ts should be earlier than runtime_ts to trigger test
+        let start_ts = runtime_ts - TX_TIMEOUT;
         tx1.start_ts = Some(start_ts);
         let to_wallet = icrc1_transfer_protocol.to.clone();
         let to_account = to_wallet.get_account().unwrap();
@@ -78,17 +103,14 @@ mod tests {
         assert_eq!(result.unwrap(), TransactionState::Success);
     }
 
-    //TS3: ICRC1 Transfer with Insufficient Wallet Balance
+    //TS4: ICRC1 Transfer with Insufficient Wallet Balance
     #[tokio::test]
-    async fn shoudl_fail_execute_icrc_1_transfer_with_insufficient_wallet_balance() {
+    async fn should_fail_execute_icrc_1_transfer_with_insufficient_wallet_balance() {
         let mut icrc_service = IcrcService::faux();
-        let test_ts = generate_timestamp();
+        let create_ts = generate_timestamp();
+        let runtime_ts = create_ts + ONE_HOUR_IN_NANOSECONDS;
+        let env = MockIcEnvironment::new_with_time(runtime_ts);
 
-        let env = MockIcEnvironment {
-            time: test_ts,
-            caller: generate_random_principal(),
-            canister_id: Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap(),
-        };
         let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc1_transfer");
         let icrc1_transfer_protocol = tx1
             .protocol
@@ -96,8 +118,8 @@ mod tests {
             .unwrap()
             .as_icrc1_transfer()
             .unwrap();
-        tx1.created_at = test_ts - TX_TIMEOUT;
-        let start_ts = tx1.created_at + TX_TIMEOUT;
+        tx1.created_at = create_ts;
+        let start_ts = runtime_ts - TX_TIMEOUT;
         tx1.start_ts = Some(start_ts);
         let to_wallet = icrc1_transfer_protocol.to.clone();
         let to_account = to_wallet.get_account().unwrap();
@@ -113,17 +135,14 @@ mod tests {
         assert_eq!(result.unwrap(), TransactionState::Fail);
     }
 
-    //TS4: Canister call rejected
+    //TS5: Canister check balance call rejected
     #[tokio::test]
-    async fn shoudl_fail_execute_if_canister_call_rejected() {
+    async fn should_fail_execute_if_balance_of_canister_call_rejected() {
         let mut icrc_service = IcrcService::faux();
-        let test_ts = generate_timestamp();
+        let create_ts = generate_timestamp();
+        let runtime_ts = create_ts + ONE_HOUR_IN_NANOSECONDS;
+        let env = MockIcEnvironment::new_with_time(runtime_ts);
 
-        let env = MockIcEnvironment {
-            time: test_ts,
-            caller: generate_random_principal(),
-            canister_id: Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap(),
-        };
         let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc1_transfer");
         let icrc1_transfer_protocol = tx1
             .protocol
@@ -131,8 +150,8 @@ mod tests {
             .unwrap()
             .as_icrc1_transfer()
             .unwrap();
-        tx1.created_at = test_ts - TX_TIMEOUT;
-        let start_ts = tx1.created_at + TX_TIMEOUT;
+        tx1.created_at = create_ts;
+        let start_ts = runtime_ts - TX_TIMEOUT;
         tx1.start_ts = Some(start_ts);
         let to_wallet = icrc1_transfer_protocol.to.clone();
         let to_account = to_wallet.get_account().unwrap();
@@ -148,8 +167,8 @@ mod tests {
             )));
 
         let mut tx2 = create_dummy_tx_protocol(TransactionState::Processing, "icrc1_transfer");
-        tx2.created_at = test_ts - TX_TIMEOUT;
-        let start_ts = tx2.created_at + TX_TIMEOUT;
+        tx2.created_at = create_ts;
+        let start_ts = runtime_ts - TX_TIMEOUT;
         tx2.start_ts = Some(start_ts);
         let icrc1_transfer_protocol_tx2 = tx2
             .protocol
@@ -176,17 +195,14 @@ mod tests {
         assert_eq!(result2.unwrap(), TransactionState::Fail);
     }
 
-    //TS5: ICRC2 Approve with Correct Allowance
+    //TS6: ICRC2 Approve with Correct Allowance
     #[tokio::test]
-    async fn shoudl_success_icrc2_approve_with_correct_allowance() {
+    async fn should_success_icrc2_approve_with_correct_allowance() {
         let mut icrc_service = IcrcService::faux();
-        let test_ts = generate_timestamp();
+        let create_ts = generate_timestamp();
+        let runtime_ts = create_ts + ONE_HOUR_IN_NANOSECONDS;
+        let env = MockIcEnvironment::new_with_time(runtime_ts);
 
-        let env = MockIcEnvironment {
-            time: test_ts,
-            caller: generate_random_principal(),
-            canister_id: Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap(),
-        };
         let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc2_approve");
         let icrc2_transfer_protocol = tx1
             .protocol
@@ -194,8 +210,8 @@ mod tests {
             .unwrap()
             .as_icrc2_approve()
             .unwrap();
-        tx1.created_at = test_ts - TX_TIMEOUT;
-        let start_ts = tx1.created_at + TX_TIMEOUT;
+        tx1.created_at = create_ts;
+        let start_ts = runtime_ts - TX_TIMEOUT;
         tx1.start_ts = Some(start_ts);
 
         let owner_fund_account = icrc2_transfer_protocol.from.get_account().unwrap();
@@ -221,17 +237,14 @@ mod tests {
         assert_eq!(result.unwrap(), TransactionState::Success);
     }
 
-    //TS6:  ICRC2 Approve with Incorrect Allowance
+    //TS7: ICRC2 Approve with Incorrect Allowance
     #[tokio::test]
-    async fn shoudl_fail_icrc2_approve_with_incorrect_allowance() {
+    async fn should_fail_icrc2_approve_with_incorrect_allowance() {
         let mut icrc_service = IcrcService::faux();
-        let test_ts = generate_timestamp();
+        let create_ts = generate_timestamp();
+        let runtime_ts = create_ts + ONE_HOUR_IN_NANOSECONDS;
+        let env = MockIcEnvironment::new_with_time(runtime_ts);
 
-        let env = MockIcEnvironment {
-            time: test_ts,
-            caller: generate_random_principal(),
-            canister_id: Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap(),
-        };
         let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc2_approve");
         let icrc2_transfer_protocol = tx1
             .protocol
@@ -239,8 +252,8 @@ mod tests {
             .unwrap()
             .as_icrc2_approve()
             .unwrap();
-        tx1.created_at = test_ts - TX_TIMEOUT;
-        let start_ts = tx1.created_at + TX_TIMEOUT;
+        tx1.created_at = create_ts;
+        let start_ts = runtime_ts - TX_TIMEOUT;
         tx1.start_ts = Some(start_ts);
 
         let owner_fund_account = icrc2_transfer_protocol.from.get_account().unwrap();
@@ -266,17 +279,14 @@ mod tests {
         assert_eq!(result.unwrap(), TransactionState::Fail);
     }
 
-    //TS7: Canister call rejected
+    //TS8: ICRC2 Approve with Canister Call Rejected
     #[tokio::test]
-    async fn shoudl_fail_icrc2_approve_with_error() {
+    async fn should_fail_icrc2_approve_with_error() {
         let mut icrc_service = IcrcService::faux();
-        let test_ts = generate_timestamp();
+        let create_ts = generate_timestamp();
+        let runtime_ts = create_ts + ONE_HOUR_IN_NANOSECONDS;
+        let env = MockIcEnvironment::new_with_time(runtime_ts);
 
-        let env = MockIcEnvironment {
-            time: test_ts,
-            caller: generate_random_principal(),
-            canister_id: Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap(),
-        };
         let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc2_approve");
         let icrc2_transfer_protocol = tx1
             .protocol
@@ -284,8 +294,8 @@ mod tests {
             .unwrap()
             .as_icrc2_approve()
             .unwrap();
-        tx1.created_at = test_ts - TX_TIMEOUT;
-        let start_ts = tx1.created_at + TX_TIMEOUT;
+        tx1.created_at = create_ts;
+        let start_ts = runtime_ts - TX_TIMEOUT;
         tx1.start_ts = Some(start_ts);
 
         let owner_fund_account1: icrc_ledger_types::icrc1::account::Account =
@@ -299,8 +309,8 @@ mod tests {
             .unwrap()
             .as_icrc2_approve()
             .unwrap();
-        tx2.created_at = test_ts - TX_TIMEOUT;
-        let start_ts = tx1.created_at + TX_TIMEOUT;
+        tx2.created_at = create_ts;
+        let start_ts = runtime_ts - TX_TIMEOUT;
         tx2.start_ts = Some(start_ts);
 
         let owner_fund_account2 = icrc2_transfer_protocol2.from.get_account().unwrap();

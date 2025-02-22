@@ -1,6 +1,7 @@
 use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
 
 use crate::{
+    constant::TX_TIMEOUT_NANOSECONDS,
     types::error::CanisterError,
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
@@ -17,7 +18,7 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
     pub fn new(icrc_service: IcrcService, ic_env: E) -> Self {
         Self {
             icrc_service,
-            ic_env,
+            ic_env: ic_env,
         }
     }
 
@@ -31,14 +32,27 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
         }
 
         // Check if the transaction has timed out
-        // TODO: rethink when it timeout
-        // if let Some(start_ts) = transaction.start_ts {
-        //     let tx_timeout = TX_TIMEOUT.parse::<u64>().unwrap();
-        //     if start_ts - ts >= tx_timeout {
-        //         return Ok(TransactionState::Fail);
-        //     }
-        // }
+        let is_timeout = match transaction.start_ts {
+            Some(start_ts) => {
+                let ts = self.ic_env.time();
+                let tx_timeout = TX_TIMEOUT_NANOSECONDS.parse::<u64>().unwrap();
 
+                println!(
+                    "ts: {}, start_ts: {}, tx_timeout: {}",
+                    ts, start_ts, tx_timeout
+                );
+
+                ts - start_ts >= tx_timeout
+            }
+            None => false,
+        };
+
+        // if not timeout do nothing
+        if !is_timeout {
+            return Ok(transaction.state.clone());
+        }
+
+        // if timeout check the condition
         match &transaction.protocol {
             // Check balance for Icrc1Transfer
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer_info)) => {

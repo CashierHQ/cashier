@@ -8,3 +8,8 @@ pub const TX_TIMEOUT: &str = match option_env!("TX_TIMEOUT") {
     Some(val) => val,
     None => "120",
 };
+
+pub const TX_TIMEOUT_NANOSECONDS: &str = match option_env!("TX_TIMEOUT_NANOSECONDS") {
+    Some(val) => val,
+    None => "120000000000",
+};
