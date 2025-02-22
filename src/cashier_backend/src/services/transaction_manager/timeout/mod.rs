@@ -3,11 +3,11 @@ use cashier_types::Transaction;
 
 use crate::{
     constant::TX_TIMEOUT,
-    services::{
-        runtime::RealIcEnvironment,
-        transaction_manager::{manual_check_status, transaction::update_tx_state},
+    services::transaction_manager::{manual_check_status, transaction::update_tx_state},
+    utils::{
+        icrc::IcrcService,
+        runtime::{IcEnvironment, RealIcEnvironment},
     },
-    utils::icrc::IcrcService,
 };
 
 pub async fn tx_timeout_task(tx: &mut Transaction) -> Result<(), String> {

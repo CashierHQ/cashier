@@ -21,7 +21,7 @@ pub mod tests {
     use rand::Rng;
     use uuid::Uuid;
 
-    use crate::services::runtime::{IcEnvironment, MockIcEnvironment};
+    use crate::utils::runtime::IcEnvironment;
 
     pub const TX_TIMEOUT: u64 = 12000_000_000; // 1 minute in nanoseconds
 
@@ -416,9 +416,22 @@ pub mod tests {
         map1
     }
 
-    #[cfg(test)]
+    #[derive(Clone)]
+    pub struct MockIcEnvironment {
+        pub caller: Principal,
+        pub canister_id: Principal,
+        pub time: u64,
+    }
+
     #[async_trait]
     impl IcEnvironment for MockIcEnvironment {
+        fn new() -> Self {
+            Self {
+                caller: generate_random_principal(),
+                canister_id: generate_random_principal(),
+                time: generate_timestamp(),
+            }
+        }
         fn caller(&self) -> Principal {
             self.caller
         }
@@ -428,5 +441,6 @@ pub mod tests {
         fn time(&self) -> u64 {
             self.time
         }
+        fn println(&self, _message: &str) {}
     }
 }

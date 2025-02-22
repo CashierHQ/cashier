@@ -1,7 +1,8 @@
 use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
 
 use crate::{
-    services::runtime::IcEnvironment, types::error::CanisterError, utils::icrc::IcrcService,
+    types::error::CanisterError,
+    utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
 
 mod validate_allowance;

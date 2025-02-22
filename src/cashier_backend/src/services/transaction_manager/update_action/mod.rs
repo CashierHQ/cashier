@@ -3,9 +3,12 @@ use cashier_types::{FromCallType, Transaction, TransactionState};
 
 use crate::{
     core::action::types::ActionDto,
-    services::{runtime::RealIcEnvironment, transaction_manager::action::ActionService},
+    services::transaction_manager::action::ActionService,
     types::{error::CanisterError, icrc_112_transaction::Icrc112Requests},
-    utils::icrc::IcrcService,
+    utils::{
+        icrc::IcrcService,
+        runtime::{IcEnvironment, RealIcEnvironment},
+    },
 };
 
 use super::{

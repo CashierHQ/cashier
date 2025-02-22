@@ -1,25 +1,23 @@
 #[cfg(test)]
 mod tests {
     use candid::{Nat, Principal};
-    use cashier_types::{TransactionState, Wallet};
+    use cashier_types::TransactionState;
     use faux::when;
     use ic_cdk::api::call::RejectionCode;
-    use icrc_ledger_types::icrc2::allowance;
 
     use crate::{
         services::{
             ext::icrc_token::Allowance,
-            runtime::MockIcEnvironment,
             transaction_manager::{
                 __tests__::tests::{
-                    create_dummy_transaction, create_dummy_tx_protocol, generate_amount,
-                    generate_random_principal, generate_timestamp, Dummy, TX_TIMEOUT,
+                    create_dummy_transaction, create_dummy_tx_protocol, generate_random_principal,
+                    generate_timestamp, MockIcEnvironment, TX_TIMEOUT,
                 },
                 manual_check_status::ManualCheckStatusService,
             },
         },
         types::error::{CanisterError, DisplayRejectionCode},
-        utils::icrc::IcrcService,
+        utils::{icrc::IcrcService, runtime::IcEnvironment},
     };
 
     //TS1: Transaction Status is NOT processing
@@ -55,11 +53,7 @@ mod tests {
         let mut icrc_service = IcrcService::faux();
         let test_ts = generate_timestamp();
 
-        let env = MockIcEnvironment {
-            time: test_ts,
-            caller: generate_random_principal(),
-            canister_id: Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap(),
-        };
+        let env = MockIcEnvironment::new();
         let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc1_transfer");
         let icrc1_transfer_protocol = tx1
             .protocol
