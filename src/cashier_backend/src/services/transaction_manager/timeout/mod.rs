@@ -1,4 +1,3 @@
-use candid::Principal;
 use cashier_types::Transaction;
 
 use crate::{
@@ -22,7 +21,7 @@ pub async fn tx_timeout_task(tx: &mut Transaction) -> Result<(), String> {
     let tx_timeout: u64 = TX_TIMEOUT.parse().unwrap();
 
     if tx.start_ts.unwrap() + tx_timeout < current_ts {
-        let icrc_service = IcrcService::new(Principal::from_text(tx.get_asset().address).unwrap());
+        let icrc_service = IcrcService::new();
 
         let ic_env = RealIcEnvironment::new();
 

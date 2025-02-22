@@ -1,4 +1,3 @@
-use candid::Principal;
 use cashier_types::{FromCallType, Transaction, TransactionState};
 
 use crate::{
@@ -66,7 +65,7 @@ async fn update_action_with_args(
     // manually check the status of the tx of the action
     // update status to whaterver is returned by the manual check
     for mut tx in txs.clone() {
-        let icrc_service = IcrcService::new(Principal::from_text(tx.get_asset().address).unwrap());
+        let icrc_service = IcrcService::new();
 
         let ic_env = RealIcEnvironment::new();
 

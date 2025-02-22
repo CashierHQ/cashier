@@ -23,7 +23,7 @@ mod tests {
     //TS1: Transaction Status is NOT processing
     #[tokio::test]
     async fn test_execute_transaction_not_processing() {
-        let icrc_service = IcrcService::new(Principal::anonymous());
+        let icrc_service = IcrcService::new();
         let env = MockIcEnvironment {
             time: generate_timestamp(),
             caller: generate_random_principal(),
@@ -66,7 +66,8 @@ mod tests {
         tx1.start_ts = Some(start_ts);
         let to_wallet = icrc1_transfer_protocol.to.clone();
         let to_account = to_wallet.get_account().unwrap();
-        when!(icrc_service.balance_of(to_account))
+        let asset = icrc1_transfer_protocol.asset.get_principal().unwrap();
+        when!(icrc_service.balance_of(asset, to_account))
             .once()
             .then_return(Ok(icrc1_transfer_protocol.amount));
 
@@ -100,7 +101,8 @@ mod tests {
         tx1.start_ts = Some(start_ts);
         let to_wallet = icrc1_transfer_protocol.to.clone();
         let to_account = to_wallet.get_account().unwrap();
-        when!(icrc_service.balance_of(to_account))
+        let asset = icrc1_transfer_protocol.asset.get_principal().unwrap();
+        when!(icrc_service.balance_of(asset, to_account))
             .once()
             .then_return(Ok(icrc1_transfer_protocol.amount - 1000));
 
@@ -134,8 +136,9 @@ mod tests {
         tx1.start_ts = Some(start_ts);
         let to_wallet = icrc1_transfer_protocol.to.clone();
         let to_account = to_wallet.get_account().unwrap();
+        let asset = icrc1_transfer_protocol.asset.get_principal().unwrap();
 
-        when!(icrc_service.balance_of(to_account))
+        when!(icrc_service.balance_of(asset, to_account))
             .once()
             .then_return(Err(CanisterError::CanisterCallError(
                 "icrc_1_balance_of".to_string(),
@@ -155,8 +158,9 @@ mod tests {
             .as_icrc1_transfer()
             .unwrap();
         let to_account_2 = icrc1_transfer_protocol_tx2.to.get_account().unwrap();
+        let asset2 = icrc1_transfer_protocol_tx2.asset.get_principal().unwrap();
 
-        when!(icrc_service.balance_of(to_account_2))
+        when!(icrc_service.balance_of(asset2, to_account_2))
             .once()
             .then_return(Err(CanisterError::UnknownError(
                 "Failed to get balance".to_string(),
@@ -204,7 +208,9 @@ mod tests {
             expires_at: None,
         };
 
-        when!(icrc_service.allowance(owner_fund_account, spender_fund_account))
+        let asset = icrc2_transfer_protocol.asset.get_principal().unwrap();
+
+        when!(icrc_service.allowance(asset, owner_fund_account, spender_fund_account))
             .once()
             .then_return(Ok(expected_allowance));
 
@@ -247,7 +253,9 @@ mod tests {
             expires_at: None,
         };
 
-        when!(icrc_service.allowance(owner_fund_account, spender_fund_account))
+        let asset = icrc2_transfer_protocol.asset.get_principal().unwrap();
+
+        when!(icrc_service.allowance(asset, owner_fund_account, spender_fund_account))
             .once()
             .then_return(Ok(expected_allowance));
 
@@ -285,7 +293,7 @@ mod tests {
         let spender_fund_account1 = icrc2_transfer_protocol.spender.get_account().unwrap();
 
         let mut tx2 = create_dummy_tx_protocol(TransactionState::Processing, "icrc2_approve");
-        let icrc2_transfer_protocol = tx2
+        let icrc2_transfer_protocol2 = tx2
             .protocol
             .as_ic_transaction()
             .unwrap()
@@ -295,10 +303,13 @@ mod tests {
         let start_ts = tx1.created_at + TX_TIMEOUT;
         tx2.start_ts = Some(start_ts);
 
-        let owner_fund_account2 = icrc2_transfer_protocol.from.get_account().unwrap();
-        let spender_fund_account2 = icrc2_transfer_protocol.spender.get_account().unwrap();
+        let owner_fund_account2 = icrc2_transfer_protocol2.from.get_account().unwrap();
+        let spender_fund_account2 = icrc2_transfer_protocol2.spender.get_account().unwrap();
 
-        when!(icrc_service.allowance(owner_fund_account1, spender_fund_account1))
+        let asset1 = icrc2_transfer_protocol.asset.get_principal().unwrap();
+        let asset2 = icrc2_transfer_protocol2.asset.get_principal().unwrap();
+
+        when!(icrc_service.allowance(asset1, owner_fund_account1, spender_fund_account1))
             .once()
             .then_return(Err(CanisterError::CanisterCallError(
                 "icrc_2_allowance".to_string(),
@@ -307,7 +318,7 @@ mod tests {
                 "Failed to get allowance".to_string(),
             )));
 
-        when!(icrc_service.allowance(owner_fund_account2, spender_fund_account2))
+        when!(icrc_service.allowance(asset2, owner_fund_account2, spender_fund_account2))
             .once()
             .then_return(Err(CanisterError::UnknownError(
                 "Failed to get allowance".to_string(),

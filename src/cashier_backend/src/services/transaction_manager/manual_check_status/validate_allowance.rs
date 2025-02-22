@@ -19,8 +19,13 @@ pub async fn validate_allowance(
 
     let allowance_amount = icrc2_transfer_from_info.amount;
 
+    let asset = icrc2_transfer_from_info
+        .asset
+        .get_principal()
+        .map_err(|e| CanisterError::ParsePrincipalError(e.to_string()))?;
+
     let allowance_fee = icrc_service
-        .allowance(from_wallet_account, spender_account)
+        .allowance(asset, from_wallet_account, spender_account)
         .await?;
 
     if allowance_fee.allowance < Nat::from(allowance_amount) {

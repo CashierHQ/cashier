@@ -19,14 +19,17 @@ pub async fn validate_balance_with_asset_info(link: &Link, user: &Principal) -> 
             subaccount: None,
         };
 
-        let icrc_service = IcrcService::new(token_pid.clone());
+        let icrc_service = IcrcService::new();
 
-        let balance = icrc_service.balance_of(account).await.map_err(|e| {
-            format!(
-                "Error getting balance for asset: {}, error: {:?}",
-                asset.address, e
-            )
-        })?;
+        let balance = icrc_service
+            .balance_of(token_pid, account)
+            .await
+            .map_err(|e| {
+                format!(
+                    "Error getting balance for asset: {}, error: {:?}",
+                    asset.address, e
+                )
+            })?;
         if balance <= asset.total_amount {
             return Err(format!(
                 "Insufficient balance for asset: {}, balance: {}, required: {} and fee try smaller amount",

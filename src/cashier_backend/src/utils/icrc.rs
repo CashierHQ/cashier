@@ -8,24 +8,20 @@ use crate::{
 };
 
 #[cfg_attr(test, faux::create)]
-pub struct IcrcService {
-    token_pid: Principal,
-}
+pub struct IcrcService {}
 
 #[cfg_attr(test, faux::methods)]
 impl IcrcService {
-    pub fn new(token_pid: Principal) -> Self {
-        Self { token_pid }
+    pub fn new() -> Self {
+        Self {}
     }
 
-    pub fn with_token_id(&self, token_id: Principal) -> Self {
-        Self {
-            token_pid: token_id,
-        }
-    }
-
-    pub async fn balance_of(&self, account: Account) -> Result<u64, CanisterError> {
-        let token_service = Service::new(self.token_pid);
+    pub async fn balance_of(
+        &self,
+        token_pid: Principal,
+        account: Account,
+    ) -> Result<u64, CanisterError> {
+        let token_service = Service::new(token_pid);
 
         let account: ExtAccount = ExtAccount {
             owner: account.owner,
@@ -47,10 +43,11 @@ impl IcrcService {
 
     pub async fn allowance(
         &self,
+        token_pid: Principal,
         account: Account,
         spender: Account,
     ) -> Result<Allowance, CanisterError> {
-        let token_service = Service::new(self.token_pid);
+        let token_service = Service::new(token_pid);
 
         let account: ExtAccount = ExtAccount {
             owner: account.owner,
