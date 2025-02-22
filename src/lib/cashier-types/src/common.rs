@@ -1,4 +1,5 @@
-use candid::CandidType;
+use candid::{types::principal::PrincipalError, CandidType, Principal};
+use icrc_ledger_types::icrc1::account::{Account, ICRC1TextReprError};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -11,6 +12,12 @@ pub enum Chain {
 pub struct Asset {
     pub address: String,
     pub chain: Chain,
+}
+
+impl Asset {
+    pub fn get_principal(&self) -> Result<Principal, PrincipalError> {
+        Principal::from_text(self.address.clone())
+    }
 }
 
 impl Chain {
@@ -40,4 +47,16 @@ impl FromStr for Chain {
 pub struct Wallet {
     pub address: String,
     pub chain: Chain,
+}
+
+impl Wallet {
+    // Account format
+    // owner: Principal
+    // subaccount: Option<Vec<u8>>
+    //
+    // String format: owner.subaccount
+    // if subaccount is None, owner.0000000000000000 // 32 zeros
+    pub fn get_account(&self) -> Result<Account, ICRC1TextReprError> {
+        Account::from_str(&self.address)
+    }
 }

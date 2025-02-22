@@ -29,7 +29,10 @@ pub async fn tx_timeout_task(tx: &mut Transaction) -> Result<(), String> {
         let manual_check_status_service =
             manual_check_status::ManualCheckStatusService::new(icrc_service, ic_env);
 
-        let state = manual_check_status_service.execute(&tx).await?;
+        let state = manual_check_status_service
+            .execute(&tx)
+            .await
+            .map_err(|e| format!("Error in manual check status: {:?}", e))?;
         update_tx_state::update_tx_state(tx, state)
     } else {
         return Err("Transaction is not timeout".to_string());

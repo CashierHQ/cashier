@@ -192,6 +192,5 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
 
         services::transaction_manager::update_action::update_action(action_id, link_id, external)
             .await
-            .map_err(|e| CanisterError::HandleApiError(e))
     }
 }

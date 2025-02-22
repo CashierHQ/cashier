@@ -66,7 +66,7 @@ pub async fn validate_allowance() -> Result<bool, String> {
     Ok(true)
 }
 
-pub async fn validate_tip_link(link: Link) -> Result<ValidateTipLinkResponse, String> {
+pub async fn validate_tip_link(link: Link) -> Result<ValidateTipLinkResponse, Canis> {
     let asset_info = link
         .asset_info
         .clone()

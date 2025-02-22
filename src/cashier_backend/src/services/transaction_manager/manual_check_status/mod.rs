@@ -1,6 +1,8 @@
-use cashier_types::{FromCallType, IcTransaction, Protocol, Transaction, TransactionState};
+use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
 
-use crate::{constant::TX_TIMEOUT, services::runtime::IcEnvironment, utils::icrc::IcrcService};
+use crate::{
+    services::runtime::IcEnvironment, types::error::CanisterError, utils::icrc::IcrcService,
+};
 
 mod validate_allowance;
 mod validate_balance_transfer;
@@ -18,26 +20,23 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
         }
     }
 
-    pub async fn execute(&self, transaction: &Transaction) -> Result<TransactionState, String> {
-        let ts = self.ic_env.time();
-
+    pub async fn execute(
+        &self,
+        transaction: &Transaction,
+    ) -> Result<TransactionState, CanisterError> {
         // If the transaction is created, it means it never ran, so no need to check status
         if transaction.state != TransactionState::Processing {
             return Ok(transaction.state.clone());
         }
 
         // Check if the transaction has timed out
-        if let Some(start_ts) = transaction.start_ts {
-            // if timout is less than or equal to the current time, the transaction has timed out
-            let tx_timeout = TX_TIMEOUT.parse::<u64>().unwrap();
-            if start_ts - ts >= tx_timeout {
-                return Ok(TransactionState::Fail);
-            }
-
-            if transaction.from_call_type == FromCallType::Wallet {
-                return Ok(transaction.state.clone());
-            }
-        }
+        // TODO: rethink when it timeout
+        // if let Some(start_ts) = transaction.start_ts {
+        //     let tx_timeout = TX_TIMEOUT.parse::<u64>().unwrap();
+        //     if start_ts - ts >= tx_timeout {
+        //         return Ok(TransactionState::Fail);
+        //     }
+        // }
 
         match &transaction.protocol {
             // Check balance for Icrc1Transfer
@@ -46,24 +45,34 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
                     &self.icrc_service,
                     &icrc1_transfer_info,
                 )
-                .await?;
+                .await;
 
-                if is_valid {
-                    return Ok(TransactionState::Success);
-                } else {
-                    return Ok(TransactionState::Fail);
+                match is_valid {
+                    Ok(valid) => {
+                        if valid {
+                            Ok(TransactionState::Success)
+                        } else {
+                            Ok(TransactionState::Fail)
+                        }
+                    }
+                    Err(_) => Ok(TransactionState::Fail),
                 }
             }
             // Check allowance for Icrc2Approve
             Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve_info)) => {
                 let is_valid =
                     validate_allowance::validate_allowance(&self.icrc_service, &icrc2_approve_info)
-                        .await?;
+                        .await;
 
-                if is_valid {
-                    return Ok(TransactionState::Success);
-                } else {
-                    return Ok(TransactionState::Fail);
+                match is_valid {
+                    Ok(valid) => {
+                        if valid {
+                            Ok(TransactionState::Success)
+                        } else {
+                            Ok(TransactionState::Fail)
+                        }
+                    }
+                    Err(_) => Ok(TransactionState::Fail),
                 }
             }
             // Canister call, so no need to check

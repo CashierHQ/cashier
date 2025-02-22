@@ -4,7 +4,7 @@ use cashier_types::{FromCallType, Transaction, TransactionState};
 use crate::{
     core::action::types::ActionDto,
     services::{runtime::RealIcEnvironment, transaction_manager::action::ActionService},
-    types::icrc_112_transaction::Icrc112Requests,
+    types::{error::CanisterError, icrc_112_transaction::Icrc112Requests},
     utils::icrc::IcrcService,
 };
 
@@ -26,7 +26,7 @@ pub async fn update_action(
     action_id: String,
     link_id: String,
     external: bool,
-) -> Result<ActionDto, String> {
+) -> Result<ActionDto, CanisterError> {
     let args = UpdateActionArgs {
         action_id: action_id.clone(),
         link_id,
@@ -49,14 +49,14 @@ pub async fn update_action(
 
 async fn update_action_with_args(
     args: UpdateActionArgs,
-) -> Result<Option<Icrc112Requests>, String> {
+) -> Result<Option<Icrc112Requests>, CanisterError> {
     //Step #1: manual status check
 
     let action_service = ActionService::new();
 
     let action_resp = action_service
         .get(args.action_id.clone())
-        .ok_or_else(|| "not found")?;
+        .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
 
     let txs = action_service.flatten_tx_hashmap(&action_resp.intent_txs);
 
@@ -74,7 +74,7 @@ async fn update_action_with_args(
         if tx.state == new_state.clone() {
             continue;
         }
-        update_tx_state(&mut tx, new_state)?;
+        update_tx_state(&mut tx, new_state).map_err(|e| CanisterError::UnknownError(e))?;
     }
 
     // If external = false, do not run step 2,3,4 for from_call_type == wallet
@@ -118,7 +118,7 @@ async fn update_action_with_args(
     //Step #4 Actually execute the tx that is elibile
     // for client tx set to processing
     for tx in eligible_txs.clone() {
-        execute_tx::execute_tx(&mut tx.clone())?;
+        execute_tx::execute_tx(&mut tx.clone()).map_err(|e| CanisterError::UnknownError(e))?;
     }
 
     // TODO: implement this

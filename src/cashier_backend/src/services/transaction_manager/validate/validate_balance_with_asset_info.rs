@@ -21,7 +21,12 @@ pub async fn validate_balance_with_asset_info(link: &Link, user: &Principal) -> 
 
         let icrc_service = IcrcService::new(token_pid.clone());
 
-        let balance = icrc_service.balance_of(account).await?;
+        let balance = icrc_service.balance_of(account).await.map_err(|e| {
+            format!(
+                "Error getting balance for asset: {}, error: {:?}",
+                asset.address, e
+            )
+        })?;
         if balance <= asset.total_amount {
             return Err(format!(
                 "Insufficient balance for asset: {}, balance: {}, required: {} and fee try smaller amount",
