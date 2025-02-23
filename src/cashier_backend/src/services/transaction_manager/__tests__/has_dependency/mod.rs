@@ -34,6 +34,7 @@ mod tests {
         let mut tx2 = create_dummy_transaction(TransactionState::Processing);
 
         let mut intent_txs = HashMap::new();
+        let ic_env = MockIcEnvironment::faux();
 
         tx1.dependency = None;
         tx1.group = Some("1".to_string());
@@ -71,6 +72,7 @@ mod tests {
                 transaction_service,
                 action_service,
                 manual_check_status_service,
+                ic_env,
             );
 
         let result = transaction_manager_service.has_dependency(tx1.id);
@@ -89,6 +91,8 @@ mod tests {
         let mut action_service = ActionService::faux();
         let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
             ManualCheckStatusService::faux();
+
+        let ic_env = MockIcEnvironment::faux();
 
         let action = create_dummy_action(ActionState::Processing);
         let intent1 = create_dummy_intent(IntentState::Processing);
@@ -131,6 +135,7 @@ mod tests {
                 transaction_service,
                 action_service,
                 manual_check_status_service,
+                ic_env,
             );
 
         let result = transaction_manager_service.has_dependency(tx_a.id);
@@ -146,6 +151,7 @@ mod tests {
         let action_service = ActionService::faux();
         let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
             ManualCheckStatusService::faux();
+        let ic_env = MockIcEnvironment::faux();
 
         let mut tx_a = create_dummy_transaction(TransactionState::Processing);
         let tx_b = create_dummy_transaction(TransactionState::Processing);
@@ -169,6 +175,7 @@ mod tests {
                 transaction_service,
                 action_service,
                 manual_check_status_service,
+                ic_env,
             );
 
         let result = transaction_manager_service.has_dependency(tx_a.id);

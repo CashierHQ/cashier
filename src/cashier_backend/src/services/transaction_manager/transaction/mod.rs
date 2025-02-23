@@ -1,33 +1,44 @@
 use cashier_types::{Transaction, TransactionState};
 
-use crate::{repositories::transaction::TransactionRepository, types::error::CanisterError};
+use crate::{
+    repositories::transaction::TransactionRepository, types::error::CanisterError,
+    utils::runtime::IcEnvironment,
+};
 
 use super::action::ActionService;
 
 pub mod has_dependency;
 pub mod icrc_112;
+
 // pub mod update_tx_state;
 
 #[cfg_attr(test, faux::create)]
-pub struct TransactionService {
+pub struct TransactionService<E: IcEnvironment + Clone> {
     transaction_repository: TransactionRepository,
     action_service: ActionService,
+    ic_env: E,
 }
 
 #[cfg_attr(test, faux::methods)]
-impl TransactionService {
+impl<E: IcEnvironment + Clone> TransactionService<E> {
     pub fn new(
         transaction_repository: TransactionRepository,
         action_service: ActionService,
+        ic_env: E,
     ) -> Self {
         Self {
             transaction_repository,
             action_service,
+            ic_env,
         }
     }
 
     pub fn get_instance() -> Self {
-        Self::new(TransactionRepository::new(), ActionService::get_instance())
+        Self::new(
+            TransactionRepository::new(),
+            ActionService::get_instance(),
+            IcEnvironment::new(),
+        )
     }
 
     pub fn update_tx_state(
@@ -40,6 +51,7 @@ impl TransactionService {
         }
 
         tx.state = state;
+        tx.start_ts = Some(self.ic_env.time());
 
         self.transaction_repository.update(tx.clone());
 

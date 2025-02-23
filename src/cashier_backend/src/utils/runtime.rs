@@ -1,3 +1,5 @@
+use std::{future::Future, time::Duration};
+
 use candid::Principal;
 
 pub trait IcEnvironment {
@@ -6,10 +8,15 @@ pub trait IcEnvironment {
     fn canister_id(&self) -> Principal;
     fn time(&self) -> u64;
     fn println(&self, message: &str);
+    fn spawn<F>(&self, future: F)
+    where
+        F: Future<Output = ()> + 'static;
+    fn set_timer(&self, delay: Duration, f: impl FnOnce() + 'static) -> TimerId;
     // Add other IC-specific methods as needed
 }
 
 use ic_cdk::api;
+use ic_cdk_timers::TimerId;
 
 #[derive(Clone)]
 pub struct RealIcEnvironment;
@@ -29,6 +36,16 @@ impl IcEnvironment for RealIcEnvironment {
     }
     fn println(&self, message: &str) {
         ic_cdk::println!("{}", message);
+    }
+    fn spawn<F>(&self, future: F)
+    where
+        F: Future<Output = ()> + 'static,
+    {
+        ic_cdk::spawn(future)
+    }
+
+    fn set_timer(&self, delay: Duration, f: impl FnOnce() + 'static) -> TimerId {
+        ic_cdk_timers::set_timer(delay, f)
     }
     // Implement other methods
 }

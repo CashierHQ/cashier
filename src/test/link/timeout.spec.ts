@@ -11,12 +11,12 @@ import {
 import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
-import { parseResultResponse } from "../utils/parser";
+import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { AirdropHelper } from "../utils/airdrop-helper";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Link", () => {
+describe("Timeout Link", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
@@ -219,6 +219,22 @@ describe("Link", () => {
         actionDto.intents.forEach((intent: IntentDto) => {
             expect(intent.state).toEqual("Intent_state_processing");
         });
+    });
+
+    it("Should timeout", async () => {
+        const input: GetLinkOptions = {
+            action_type: "CreateLink",
+        };
+
+        const getActionRes = await actor.get_link(linkId, [input]);
+        const res = parseResultResponse(getActionRes);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        console.log("res", safeParseJSON(res as any));
+
+        expect(res.link.id).toEqual(linkId);
+        expect(res.action).toHaveLength(1);
+        expect(res.action[0]!.id).toEqual(createLinkActionId);
     });
 });
 //

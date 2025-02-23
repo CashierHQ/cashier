@@ -1,12 +1,16 @@
+use std::time::Duration;
+
 use action::ActionService;
 use cashier_types::{FromCallType, Transaction, TransactionState};
 use manual_check_status::ManualCheckStatusService;
+use timeout::tx_timeout_task;
 use transaction::TransactionService;
 
 use crate::{
     core::action::types::ActionDto,
+    info,
     types::{error::CanisterError, icrc_112_transaction::Icrc112Requests},
-    utils::runtime::IcEnvironment,
+    utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
 pub mod action;
@@ -27,22 +31,25 @@ pub struct UpdateActionArgs {
     pub external: bool,
 }
 
-pub struct TransactionManagerService<E: IcEnvironment> {
-    transaction_service: TransactionService,
+pub struct TransactionManagerService<E: IcEnvironment + Clone> {
+    transaction_service: TransactionService<E>,
     action_service: ActionService,
     manual_check_status_service: ManualCheckStatusService<E>,
+    ic_env: E,
 }
 
-impl<E: IcEnvironment> TransactionManagerService<E> {
+impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
-        transaction_service: TransactionService,
+        transaction_service: TransactionService<E>,
         action_service: ActionService,
         manual_check_status_service: ManualCheckStatusService<E>,
+        ic_env: E,
     ) -> Self {
         Self {
             transaction_service,
             action_service,
             manual_check_status_service,
+            ic_env,
         }
     }
 
@@ -51,6 +58,7 @@ impl<E: IcEnvironment> TransactionManagerService<E> {
             TransactionService::get_instance(),
             ActionService::get_instance(),
             ManualCheckStatusService::get_instance(),
+            IcEnvironment::new(),
         )
     }
 
@@ -95,11 +103,6 @@ impl<E: IcEnvironment> TransactionManagerService<E> {
             is_all_tx_success
         };
 
-        println!(
-            "is_all_dependencies_success {}",
-            is_all_dependencies_success
-        );
-
         let action = self
             .action_service
             .get_action_by_tx_id(tx_id.clone())
@@ -123,8 +126,6 @@ impl<E: IcEnvironment> TransactionManagerService<E> {
             })
         };
 
-        println!("is_any_txs_has_dependency {}", is_any_txs_has_dependency);
-
         Ok(!is_all_dependencies_success && !is_any_txs_has_dependency)
     }
 
@@ -133,17 +134,25 @@ impl<E: IcEnvironment> TransactionManagerService<E> {
     }
 
     pub fn execute_tx(&self, tx: &mut Transaction) -> Result<(), String> {
-        self.spawn_tx_timeout_task()?;
+        self.spawn_tx_timeout_task(tx.id.clone())?;
         self.update_tx_state(tx, TransactionState::Processing)?;
 
         Ok(())
     }
 
-    pub fn spawn_tx_timeout_task(&self) -> Result<(), String> {
-        Ok(())
-    }
+    pub fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
+        let ic_env = self.ic_env.clone();
+        let tx_id = tx_id.clone();
 
-    pub fn tx_timeout_task(&self) -> Result<(), String> {
+        info!("Spawn tx timeout task for tx_id: {}", tx_id);
+
+        let _time_id = ic_env.set_timer(Duration::from_secs(120), move || {
+            let ic_env_in_future = RealIcEnvironment::new();
+
+            ic_env_in_future.spawn(async move {
+                let _ = tx_timeout_task(tx_id).await;
+            });
+        });
         Ok(())
     }
 

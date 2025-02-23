@@ -11,7 +11,7 @@ pub mod has_dependency;
 #[cfg(test)]
 pub mod tests {
 
-    use std::collections::HashMap;
+    use std::{collections::HashMap, future::Future, time::Duration};
 
     use async_trait::async_trait;
     use cashier_types::{
@@ -22,11 +22,12 @@ pub mod tests {
     };
 
     use candid::Principal;
+    use ic_cdk_timers::TimerId;
     #[cfg(test)]
     use rand::Rng;
     use uuid::Uuid;
 
-    use crate::{types::transaction_manager::ActionResp, utils::runtime::IcEnvironment};
+    use crate::utils::runtime::IcEnvironment;
 
     pub const TX_TIMEOUT: u64 = 120_000_000_000; // 1 minute in nanoseconds
 
@@ -430,6 +431,12 @@ pub mod tests {
         pub time: u64,
     }
 
+    impl Clone for MockIcEnvironment {
+        fn clone(&self) -> Self {
+            MockIcEnvironment::faux()
+        }
+    }
+
     #[faux::methods]
     impl MockIcEnvironment {
         pub fn new_with_time(ts: u64) -> Self {
@@ -461,5 +468,16 @@ pub mod tests {
             self.time
         }
         fn println(&self, _message: &str) {}
+
+        fn spawn<F>(&self, future: F)
+        where
+            F: Future<Output = ()> + 'static,
+        {
+            todo!()
+        }
+
+        fn set_timer(&self, delay: Duration, f: impl FnOnce() + 'static) -> TimerId {
+            todo!();
+        }
     }
 }

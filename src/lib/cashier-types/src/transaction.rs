@@ -30,6 +30,14 @@ impl Transaction {
             }
         }
     }
+
+    pub fn get_tx_type(&self) -> String {
+        match &self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(_)) => "Icrc1Transfer".to_string(),
+            Protocol::IC(IcTransaction::Icrc2Approve(_)) => "Icrc2Approve".to_string(),
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => "Icrc2TransferFrom".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
