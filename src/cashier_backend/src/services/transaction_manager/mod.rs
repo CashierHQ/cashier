@@ -18,7 +18,6 @@ pub mod intent_adapter;
 pub mod manual_check_status;
 pub mod timeout;
 pub mod transaction;
-pub mod update_action;
 pub mod validate;
 
 #[derive(Debug, Clone)]
