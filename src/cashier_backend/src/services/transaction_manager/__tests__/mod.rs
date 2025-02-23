@@ -6,6 +6,9 @@ pub mod manual_check_status;
 pub mod transaction;
 
 #[cfg(test)]
+pub mod has_dependency;
+
+#[cfg(test)]
 pub mod tests {
 
     use std::collections::HashMap;
@@ -23,7 +26,7 @@ pub mod tests {
     use rand::Rng;
     use uuid::Uuid;
 
-    use crate::utils::runtime::IcEnvironment;
+    use crate::{types::transaction_manager::ActionResp, utils::runtime::IcEnvironment};
 
     pub const TX_TIMEOUT: u64 = 120_000_000_000; // 1 minute in nanoseconds
 
@@ -420,13 +423,14 @@ pub mod tests {
         map1
     }
 
-    #[derive(Clone)]
+    #[faux::create]
     pub struct MockIcEnvironment {
         pub caller: Principal,
         pub canister_id: Principal,
         pub time: u64,
     }
 
+    #[faux::methods]
     impl MockIcEnvironment {
         pub fn new_with_time(ts: u64) -> Self {
             Self {
@@ -438,6 +442,7 @@ pub mod tests {
     }
 
     #[async_trait]
+    #[faux::methods]
     impl IcEnvironment for MockIcEnvironment {
         fn new() -> Self {
             Self {

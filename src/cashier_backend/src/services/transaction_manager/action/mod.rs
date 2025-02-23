@@ -2,14 +2,7 @@ use std::collections::HashMap;
 
 use cashier_types::{ActionState, IntentState, TransactionState};
 
-use crate::repositories;
-
-#[derive(Debug, Clone)]
-pub struct ActionResp {
-    pub action: cashier_types::Action,
-    pub intents: Vec<cashier_types::Intent>,
-    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
-}
+use crate::{repositories, types::transaction_manager::ActionResp};
 
 #[cfg_attr(test, faux::create)]
 pub struct ActionService {

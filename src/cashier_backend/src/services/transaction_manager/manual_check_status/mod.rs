@@ -9,11 +9,13 @@ use crate::{
 mod validate_allowance;
 mod validate_balance_transfer;
 
+#[cfg_attr(test, faux::create)]
 pub struct ManualCheckStatusService<E: IcEnvironment> {
     icrc_service: IcrcService,
     ic_env: E,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment> ManualCheckStatusService<E> {
     pub fn new(icrc_service: IcrcService, ic_env: E) -> Self {
         Self {

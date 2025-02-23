@@ -5,13 +5,16 @@ mod tests {
     use cashier_types::TransactionState;
     use faux::when;
 
-    use crate::services::transaction_manager::{
-        __tests__::{
-            action::setup_repositories,
-            tests::{create_dummy_action, create_dummy_intent, create_dummy_transaction},
+    use crate::{
+        services::transaction_manager::{
+            __tests__::{
+                action::setup_repositories,
+                tests::{create_dummy_action, create_dummy_intent, create_dummy_transaction},
+            },
+            action::ActionService,
+            transaction::TransactionService,
         },
-        action::{ActionResp, ActionService},
-        transaction::TransactionService,
+        types::transaction_manager::ActionResp,
     };
 
     // TS1: Update a single transaction to processing

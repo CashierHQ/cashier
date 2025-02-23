@@ -36,6 +36,9 @@ pub enum CanisterError {
 
     #[error("Unknown error: {0}")]
     UnknownError(String),
+
+    #[error("Invalid data: {0}")]
+    InvalidDataError(String),
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, Error)]

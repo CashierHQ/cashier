@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use candid::{Nat, Principal};
+    use candid::Nat;
     use cashier_types::TransactionState;
     use faux::when;
     use ic_cdk::api::call::RejectionCode;
@@ -10,25 +10,21 @@ mod tests {
             ext::icrc_token::Allowance,
             transaction_manager::{
                 __tests__::tests::{
-                    create_dummy_transaction, create_dummy_tx_protocol, generate_random_principal,
-                    generate_timestamp, MockIcEnvironment, ONE_HOUR_IN_NANOSECONDS, TX_TIMEOUT,
+                    create_dummy_transaction, create_dummy_tx_protocol, generate_timestamp,
+                    MockIcEnvironment, ONE_HOUR_IN_NANOSECONDS, TX_TIMEOUT,
                 },
                 manual_check_status::ManualCheckStatusService,
             },
         },
         types::error::{CanisterError, DisplayRejectionCode},
-        utils::icrc::IcrcService,
+        utils::{icrc::IcrcService, runtime::IcEnvironment},
     };
 
     //TS1: Transaction Status is NOT processing
     #[tokio::test]
     async fn test_execute_transaction_not_processing() {
         let icrc_service = IcrcService::faux();
-        let env = MockIcEnvironment {
-            time: generate_timestamp(),
-            caller: generate_random_principal(),
-            canister_id: Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap(),
-        };
+        let env = MockIcEnvironment::new();
         let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
 
         let tx1 = create_dummy_transaction(TransactionState::Created);
