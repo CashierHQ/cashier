@@ -22,7 +22,7 @@ pub struct ActionService {
 
 #[cfg_attr(test, faux::methods)]
 impl ActionService {
-    pub fn new() -> Self {
+    pub fn get_instance() -> Self {
         Self {
             action_repository: repositories::action::ActionRepository::new(),
             intent_repository: repositories::intent::IntentRepository::new(),
@@ -33,7 +33,7 @@ impl ActionService {
         }
     }
 
-    pub fn new_with_args(
+    pub fn new(
         action_repository: repositories::action::ActionRepository,
         intent_repository: repositories::intent::IntentRepository,
         action_intent_repository: repositories::action_intent::ActionIntentRepository,

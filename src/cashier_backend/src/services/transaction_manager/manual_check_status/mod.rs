@@ -22,6 +22,10 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
         }
     }
 
+    pub fn get_instance() -> Self {
+        Self::new(IcrcService::new(), IcEnvironment::new())
+    }
+
     pub async fn execute(
         &self,
         transaction: &Transaction,

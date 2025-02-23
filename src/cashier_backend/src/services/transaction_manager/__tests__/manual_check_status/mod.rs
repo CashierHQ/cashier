@@ -17,7 +17,7 @@ mod tests {
             },
         },
         types::error::{CanisterError, DisplayRejectionCode},
-        utils::{icrc::IcrcService, runtime::IcEnvironment},
+        utils::icrc::IcrcService,
     };
 
     //TS1: Transaction Status is NOT processing

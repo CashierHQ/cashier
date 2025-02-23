@@ -2,7 +2,7 @@ use cashier_types::Transaction;
 
 use crate::{
     constant::TX_TIMEOUT,
-    services::transaction_manager::{manual_check_status, transaction::update_tx_state},
+    services::transaction_manager::manual_check_status::ManualCheckStatusService,
     utils::{
         icrc::IcrcService,
         runtime::{IcEnvironment, RealIcEnvironment},
@@ -25,14 +25,14 @@ pub async fn tx_timeout_task(tx: &mut Transaction) -> Result<(), String> {
 
         let ic_env = RealIcEnvironment::new();
 
-        let manual_check_status_service =
-            manual_check_status::ManualCheckStatusService::new(icrc_service, ic_env);
+        let manual_check_status_service = ManualCheckStatusService::new(icrc_service, ic_env);
 
         let state = manual_check_status_service
             .execute(&tx)
             .await
             .map_err(|e| format!("Error in manual check status: {:?}", e))?;
-        update_tx_state::update_tx_state(tx, state)
+        // update_tx_state::update_tx_state(tx, state)
+        Ok(())
     } else {
         return Err("Transaction is not timeout".to_string());
     }

@@ -12,7 +12,7 @@ use crate::{
 
 use super::{
     manual_check_status,
-    transaction::{self, update_tx_state::update_tx_state},
+    transaction::{self},
 };
 
 pub mod execute_tx;
@@ -37,7 +37,7 @@ pub async fn update_action(
 
     let request = update_action_with_args(args).await?;
 
-    let action_service = ActionService::new();
+    let action_service = ActionService::get_instance();
 
     let resp = action_service.get(action_id).unwrap();
 
@@ -54,7 +54,7 @@ async fn update_action_with_args(
 ) -> Result<Option<Icrc112Requests>, CanisterError> {
     //Step #1: manual status check
 
-    let action_service = ActionService::new();
+    let action_service = ActionService::get_instance();
 
     let action_resp = action_service
         .get(args.action_id.clone())
@@ -76,7 +76,7 @@ async fn update_action_with_args(
         if tx.state == new_state.clone() {
             continue;
         }
-        update_tx_state(&mut tx, new_state).map_err(|e| CanisterError::UnknownError(e))?;
+        // update_tx_state(&mut tx, new_state).map_err(|e| CanisterError::UnknownError(e))?;
     }
 
     // If external = false, do not run step 2,3,4 for from_call_type == wallet

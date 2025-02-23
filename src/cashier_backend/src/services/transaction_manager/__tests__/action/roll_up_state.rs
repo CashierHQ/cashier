@@ -100,7 +100,7 @@ mod tests {
                 .then_return(Some(tx.clone()));
         }
 
-        let action_service = ActionService::new_with_args(
+        let action_service = ActionService::new(
             action_repository,
             intent_repository,
             action_intent_repository,
@@ -210,7 +210,7 @@ mod tests {
                 .then_return(Some(tx.clone()));
         }
 
-        let action_service = ActionService::new_with_args(
+        let action_service = ActionService::new(
             action_repository,
             intent_repository,
             action_intent_repository,
@@ -320,7 +320,7 @@ mod tests {
                 .then_return(Some(tx.clone()));
         }
 
-        let action_service = ActionService::new_with_args(
+        let action_service = ActionService::new(
             action_repository,
             intent_repository,
             action_intent_repository,
@@ -439,7 +439,7 @@ mod tests {
                 .then_return(Some(tx.clone()));
         }
 
-        let action_service = ActionService::new_with_args(
+        let action_service = ActionService::new(
             action_repository,
             intent_repository,
             action_intent_repository,

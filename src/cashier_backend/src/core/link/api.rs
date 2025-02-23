@@ -16,8 +16,10 @@ use crate::{
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link},
+        transaction_manager::{TransactionManagerService, UpdateActionArgs},
     },
     types::{api::PaginateInput, error::CanisterError},
+    utils::runtime::RealIcEnvironment,
 };
 
 use super::types::CreateLinkInput;
@@ -190,7 +192,15 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
             return Err(CanisterError::HandleApiError("Link not found".to_string()));
         }
 
-        services::transaction_manager::update_action::update_action(action_id, link_id, external)
-            .await
+        let transaction_manager: TransactionManagerService<RealIcEnvironment> =
+            TransactionManagerService::get_instance();
+
+        let args = UpdateActionArgs {
+            action_id: action_id.clone(),
+            link_id: link_id.clone(),
+            external,
+        };
+
+        transaction_manager.update_action(args).await
     }
 }
