@@ -1,3 +1,5 @@
+# Deployment
+
 ## Local enviroment
 
 ### Copy `.env.example` to `.env.local`
@@ -26,4 +28,9 @@ make test
 cp .env.example .env.staging
 ```
 
+### Deploy staging - only deployer can deploy
+
+```bash
+make deploy
+```
 ````
