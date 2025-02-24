@@ -6,7 +6,9 @@ export function WalletHeader() {
         <div className="flex justify-between items-center h-20 py-2.5 px-4">
             <Logo />
 
-            <X size={40} />
+            <button onClick={() => console.log("clicked close wallet")}>
+                <X size={40} />
+            </button>
         </div>
     );
 }
