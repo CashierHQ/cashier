@@ -9,11 +9,11 @@ export enum WalletTabs {
 
 export function WalletPageComponent() {
     return (
-        <div>
+        <>
             <WalletHeader />
             <WalletDetails />
 
-            <Tabs.Root>
+            <Tabs.Root defaultValue={WalletTabs.Tokens}>
                 <Tabs.List>
                     <Tabs.Trigger value={WalletTabs.Tokens}>Tokens</Tabs.Trigger>
                     <Tabs.Trigger value={WalletTabs.Nfts}>NFTs</Tabs.Trigger>
@@ -22,6 +22,6 @@ export function WalletPageComponent() {
                 <Tabs.Content value={WalletTabs.Tokens}>Tokens Content</Tabs.Content>
                 <Tabs.Content value={WalletTabs.Nfts}>NFT Content</Tabs.Content>
             </Tabs.Root>
-        </div>
+        </>
     );
 }
