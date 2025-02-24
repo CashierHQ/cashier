@@ -18,9 +18,31 @@ pub struct Transaction {
     pub start_ts: Option<u64>,
 }
 
+impl Transaction {
+    pub fn get_asset(&self) -> Asset {
+        match &self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
+                icrc1_transfer.asset.clone()
+            }
+            Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve)) => icrc2_approve.asset.clone(),
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
+                icrc2_transfer_from.asset.clone()
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Protocol {
     IC(IcTransaction),
+}
+
+impl Protocol {
+    pub fn as_ic_transaction(&self) -> Option<&IcTransaction> {
+        match self {
+            Protocol::IC(ic_transaction) => Some(ic_transaction),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -28,6 +50,29 @@ pub enum IcTransaction {
     Icrc1Transfer(Icrc1Transfer),
     Icrc2Approve(Icrc2Approve),
     Icrc2TransferFrom(Icrc2TransferFrom),
+}
+
+impl IcTransaction {
+    pub fn as_icrc1_transfer(&self) -> Option<&Icrc1Transfer> {
+        match self {
+            IcTransaction::Icrc1Transfer(icrc1_transfer) => Some(icrc1_transfer),
+            _ => None,
+        }
+    }
+
+    pub fn as_icrc2_approve(&self) -> Option<&Icrc2Approve> {
+        match self {
+            IcTransaction::Icrc2Approve(icrc2_approve) => Some(icrc2_approve),
+            _ => None,
+        }
+    }
+
+    pub fn as_icrc2_transfer_from(&self) -> Option<&Icrc2TransferFrom> {
+        match self {
+            IcTransaction::Icrc2TransferFrom(icrc2_transfer_from) => Some(icrc2_transfer_from),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
