@@ -4,6 +4,7 @@ import HomePage from "@/pages";
 import ClaimPage from "./pages/[id]";
 import DetailPage from "./pages/details/[id]";
 import { useResponsive } from "./hooks/responsive-hook";
+import { WalletPageComponent } from "./components/wallet-page/wallet-page";
 
 const router = createBrowserRouter([
     {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
     {
         path: "/details/:linkId",
         element: <DetailPage />,
+    },
+    {
+        path: "/test",
+        element: <WalletPageComponent />,
     },
 ]);
 export default function AppRouter() {
