@@ -100,5 +100,20 @@
             "When an asset is sent to the link, network fee is charged. The amount may depends on the blockchain.",
             "When an asset is received from the link, network fee is charged. Cashier preemptively collects these network fees from the link creator, so that the receiver does not have to pay a network fee to receive assets from the link."
         ]
+    },
+    "wallet": {
+        "details": {
+            "header": "Wallet Balance",
+            "send": "Send",
+            "receive": "Receive"
+        },
+        "tabs": {
+            "tokens": {
+                "header": "Tokens"
+            },
+            "nfts": {
+                "header": "NFTs"
+            }
+        }
     }
 }

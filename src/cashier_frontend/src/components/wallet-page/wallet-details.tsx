@@ -1,9 +1,14 @@
 import { ArrowDown, ArrowUp, Eye } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function WalletDetails() {
+    const { t } = useTranslation();
+
     return (
         <div className="flex flex-col items-center px-4 pt-6 pb-5">
-            <h1 className="text-center text-lg font-semibold leading-none">Wallet Balance</h1>
+            <h1 className="text-center text-lg font-semibold leading-none">
+                {t("wallet.details.header")}
+            </h1>
 
             <div className="flex items-center gap-2.5 mt-2.5">
                 <span className="text-[32px]">$4 321</span>
@@ -22,7 +27,7 @@ export function WalletDetails() {
                         <ArrowUp size={18} />
                     </div>
 
-                    <span className="text-xs mt-1">Send</span>
+                    <span className="text-xs mt-1">{t("wallet.details.send")}</span>
                 </button>
 
                 <button
@@ -33,7 +38,7 @@ export function WalletDetails() {
                         <ArrowDown size={18} />
                     </div>
 
-                    <span className="text-xs mt-1">Receive</span>
+                    <span className="text-xs mt-1">{t("wallet.details.receive")}</span>
                 </button>
             </div>
         </div>
