@@ -8,7 +8,7 @@ use crate::{
     Asset,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 #[storable]
 pub struct Intent {
     pub id: String,
@@ -20,7 +20,7 @@ pub struct Intent {
     pub r#type: IntentType,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentState {
     Created,
     Processing,
@@ -28,13 +28,13 @@ pub enum IntentState {
     Fail,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentType {
     Transfer(TransferIntent),
     TransferFrom(TransferFromIntent),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType, PartialEq, Eq, Ord, PartialOrd)]
 pub struct TransferIntent {
     pub from: Wallet,
     pub to: Wallet,
@@ -42,7 +42,7 @@ pub struct TransferIntent {
     pub amount: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType, PartialEq, Eq, Ord, PartialOrd)]
 pub struct TransferFromIntent {
     pub from: Wallet,
     pub to: Wallet,
@@ -51,7 +51,7 @@ pub struct TransferFromIntent {
     pub amount: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,

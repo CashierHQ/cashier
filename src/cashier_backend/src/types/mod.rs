@@ -1,11 +1,10 @@
 pub mod account;
 pub mod api;
-pub mod chain;
-pub mod consent_messsage;
 pub mod error;
 pub mod ext;
 pub mod icrc;
 pub mod icrc_112_transaction;
+pub mod transaction_manager;
 // pub mod intent;
 // pub mod intent_transaction;
 // pub mod link_intent;

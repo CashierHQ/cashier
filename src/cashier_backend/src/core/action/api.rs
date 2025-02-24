@@ -4,6 +4,8 @@ use cashier_types::ActionType;
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
+use crate::services::transaction_manager::{TransactionManagerService, UpdateActionArgs};
+use crate::utils::runtime::RealIcEnvironment;
 use crate::{
     core::{action::types::ActionDto, CanisterError},
     services::{self, link::is_link_creator},
@@ -38,15 +40,17 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
 
 #[update(guard = "is_not_anonymous")]
 pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
-    services::transaction_manager::update_action::update_action(
-        input.action_id,
-        input.link_id,
-        input.external,
-    )
-    .await
-    .map_err(|e| CanisterError::HandleLogicError(format!("Failed to update action: {}", e)))
-}
+    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
+        TransactionManagerService::get_instance();
 
-// pub async fn update_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
-//     services::transaction_manager::update::update_action(input).await
-// }
+    let args = UpdateActionArgs {
+        action_id: input.action_id.clone(),
+        link_id: input.link_id.clone(),
+        external: true,
+    };
+
+    transaction_manager
+        .update_action(args)
+        .await
+        .map_err(|e| CanisterError::HandleLogicError(format!("Failed to update action: {}", e)))
+}

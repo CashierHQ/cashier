@@ -2,7 +2,7 @@ use candid::Principal;
 use cashier_types::Link;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::utils::icrc::balance_of;
+use crate::utils::icrc::IcrcService;
 
 pub async fn validate_balance_with_asset_info(link: &Link, user: &Principal) -> Result<(), String> {
     let asset_info = link
@@ -19,7 +19,17 @@ pub async fn validate_balance_with_asset_info(link: &Link, user: &Principal) -> 
             subaccount: None,
         };
 
-        let balance = balance_of(token_pid, account).await?;
+        let icrc_service = IcrcService::new();
+
+        let balance = icrc_service
+            .balance_of(token_pid, account)
+            .await
+            .map_err(|e| {
+                format!(
+                    "Error getting balance for asset: {}, error: {:?}",
+                    asset.address, e
+                )
+            })?;
         if balance <= asset.total_amount {
             return Err(format!(
                 "Insufficient balance for asset: {}, balance: {}, required: {} and fee try smaller amount",

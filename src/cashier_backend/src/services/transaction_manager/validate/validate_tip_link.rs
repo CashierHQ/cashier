@@ -6,10 +6,7 @@ use crate::{
     constant::ICP_CANISTER_ID,
     info,
     services::transaction_manager::fee::Fee,
-    utils::{
-        helper::to_subaccount,
-        icrc::{allowance, balance_of},
-    },
+    utils::{helper::to_subaccount, icrc::IcrcService},
 };
 
 pub enum ValidateTipLinkResponse {
@@ -31,7 +28,9 @@ pub async fn validate_balance_transfer(link: &Link) -> Result<bool, String> {
         subaccount: Some(to_subaccount(link.id.clone())),
     };
 
-    let balance = balance_of(Principal::from_text(asset_address).unwrap(), account).await?;
+    let icrc_service = IcrcService::new(Principal::from_text(asset_address).unwrap());
+
+    let balance = icrc_service.balance_of(account).await?;
 
     info!("balance: {:?}", balance);
 
@@ -54,12 +53,9 @@ pub async fn validate_allowance() -> Result<bool, String> {
         subaccount: None,
     };
 
-    let allowance_fee = allowance(
-        Principal::from_text(ICP_CANISTER_ID).unwrap(),
-        create_account,
-        spender,
-    )
-    .await?;
+    let icrc_service = IcrcService::new(Principal::from_text(ICP_CANISTER_ID).unwrap());
+
+    let allowance_fee = icrc_service.allowance(create_account, spender).await?;
 
     info!("allowance_fee: {:?}", allowance_fee);
 
@@ -70,7 +66,7 @@ pub async fn validate_allowance() -> Result<bool, String> {
     Ok(true)
 }
 
-pub async fn validate_tip_link(link: Link) -> Result<ValidateTipLinkResponse, String> {
+pub async fn validate_tip_link(link: Link) -> Result<ValidateTipLinkResponse, Canis> {
     let asset_info = link
         .asset_info
         .clone()
@@ -84,7 +80,9 @@ pub async fn validate_tip_link(link: Link) -> Result<ValidateTipLinkResponse, St
         subaccount: Some(to_subaccount(link.id)),
     };
 
-    let balance = balance_of(Principal::from_text(asset_address).unwrap(), account).await?;
+    let icrc_service = IcrcService::new(Principal::from_text(asset_address).unwrap());
+
+    let balance = icrc_service.balance_of(account).await?;
 
     let creator = ic_cdk::api::caller();
     let create_account = Account {
@@ -97,12 +95,10 @@ pub async fn validate_tip_link(link: Link) -> Result<ValidateTipLinkResponse, St
         subaccount: None,
     };
 
-    let allowance_fee = allowance(
-        Principal::from_text(ICP_CANISTER_ID).unwrap(),
-        create_account,
-        spender,
-    )
-    .await?;
+    let allowance_fee = icrc_service
+        .with_token_id(Principal::from_text(ICP_CANISTER_ID).unwrap())
+        .allowance(create_account, spender)
+        .await?;
 
     if balance < total_amount {
         return Ok(ValidateTipLinkResponse::InsufficientBalance);
