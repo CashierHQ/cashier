@@ -39,7 +39,8 @@ const WalletTabsContent = React.forwardRef<
     <TabsPrimitive.Content
         ref={ref}
         className={cn(
-            "mt-2 ring-offset-background px-4",
+            "flex-grow flex-shrink overflow-y-auto",
+            "mt-4 ring-offset-background px-4",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             className,
         )}
