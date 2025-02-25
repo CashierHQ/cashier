@@ -4,6 +4,7 @@ use cashier_types::ActionType;
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
+use crate::info;
 use crate::services::transaction_manager::{TransactionManagerService, UpdateActionArgs};
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
@@ -48,6 +49,8 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
         link_id: input.link_id.clone(),
         external: true,
     };
+
+    info!("Updating action: {:#?}", args);
 
     transaction_manager
         .update_action(args)

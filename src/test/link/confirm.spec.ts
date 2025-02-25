@@ -338,10 +338,17 @@ describe("Link", () => {
         const getActionRes = await actor.get_link(linkId, [input]);
         const res = parseResultResponse(getActionRes);
 
+        const actionDto = res.action[0]!;
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         console.log("getActionRes", safeParseJSON(res as any));
 
         expect(res.link.id).toEqual(linkId);
+        expect(actionDto.state).toEqual("Action_state_success");
+
+        actionDto.intents.forEach((intent: IntentDto) => {
+            expect(intent.state).toEqual("Intent_state_success");
+        });
     });
 });
 //

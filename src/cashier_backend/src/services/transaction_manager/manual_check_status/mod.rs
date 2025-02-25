@@ -38,25 +38,20 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
         }
 
         // Check if the transaction has timed out
-        let is_timeout = match transaction.start_ts {
-            Some(start_ts) => {
-                let ts = self.ic_env.time();
-                let tx_timeout = get_tx_timeout_nano_seconds();
+        // let is_timeout = match transaction.start_ts {
+        //     Some(start_ts) => {
+        //         let ts = self.ic_env.time();
+        //         let tx_timeout = get_tx_timeout_nano_seconds();
 
-                println!(
-                    "ts: {}, start_ts: {}, tx_timeout: {}",
-                    ts, start_ts, tx_timeout
-                );
+        //         ts - start_ts >= tx_timeout
+        //     }
+        //     None => false,
+        // };
 
-                ts - start_ts >= tx_timeout
-            }
-            None => false,
-        };
-
-        // if not timeout do nothing
-        if !is_timeout {
-            return Ok(transaction.state.clone());
-        }
+        // //if not timeout do nothing
+        // if !is_timeout {
+        //     return Ok(transaction.state.clone());
+        // }
 
         // if timeout check the condition
         match &transaction.protocol {
