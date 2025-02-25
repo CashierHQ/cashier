@@ -1,26 +1,20 @@
 import * as Tabs from "./wallet-tabs";
 import { WalletDetails } from "./wallet-details";
-import { WalletHeader } from "./wallet-header";
 import { useTranslation } from "react-i18next";
 import { WalletTokensTab } from "./wallet-tokens-tab";
 import { WalletNftsTab } from "./wallet-nfts-tab";
-import { ManageTokensPage } from "../manage-tokens/manage-tokens-page";
 
 export enum WalletTab {
     Tokens = "Tokens",
     Nfts = "NFTs",
 }
 
-export function WalletPageComponent() {
+export function WalletPage() {
     const { t } = useTranslation();
 
     return (
-        <div className="flex flex-col h-dvh">
-            <WalletHeader />
-
-            <ManageTokensPage />
-
-            {/* <WalletDetails />
+        <>
+            <WalletDetails />
 
             <Tabs.Root
                 defaultValue={WalletTab.Tokens}
@@ -42,7 +36,7 @@ export function WalletPageComponent() {
                 <Tabs.Content value={WalletTab.Nfts}>
                     <WalletNftsTab />
                 </Tabs.Content>
-            </Tabs.Root> */}
-        </div>
+            </Tabs.Root>
+        </>
     );
 }

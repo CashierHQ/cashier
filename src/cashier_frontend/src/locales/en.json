@@ -30,6 +30,7 @@
     "login": "Login",
     "processing": "Processing...",
     "retry": "Retry",
+    "optional": "Optional",
     "home": {
         "guide": {
             "header": "Cashier links",
@@ -113,6 +114,35 @@
             },
             "nfts": {
                 "header": "NFTs"
+            }
+        }
+    },
+    "import": {
+        "header": "Import token",
+        "form": {
+            "message1": "Ledger and Index canister IDs are on the project's website.",
+            "message2": "The Index canister ID is optional, but without it, Cashier can't display transactions.",
+            "chain": {
+                "label": "Network",
+                "placeholder": "Select a network",
+                "error": {
+                    "required": "Network is required"
+                }
+            },
+            "ledgerCanisterId": {
+                "label": "Ledger Canister ID",
+                "placeholder": "_____-_____-_____-_____-cai",
+                "error": {
+                    "required": "Ledger Canister ID is required",
+                    "format": "Invalid Ledger Canister ID"
+                }
+            },
+            "indexCanisterId": {
+                "label": "Index Canister ID",
+                "placeholder": "_____-_____-_____-_____-cai",
+                "error": {
+                    "format": "Invalid Index Canister ID"
+                }
             }
         }
     }
