@@ -44,7 +44,7 @@ const LONG_MOCK_TOKEN_DATA = [
 export function WalletTokensTab() {
     return (
         <div className="flex flex-col gap-4">
-            {MOCK_TOKEN_DATA.map((props, index) => (
+            {LONG_MOCK_TOKEN_DATA.map((props, index) => (
                 <WalletToken key={index} {...props} />
             ))}
         </div>

@@ -3,6 +3,7 @@ import { WalletDetails } from "./wallet-details";
 import { WalletHeader } from "./wallet-header";
 import { useTranslation } from "react-i18next";
 import { WalletTokensTab } from "./wallet-tokens-tab";
+import { WalletNftsTab } from "./wallet-nfts-tab";
 
 export enum WalletTab {
     Tokens = "Tokens",
@@ -30,14 +31,13 @@ export function WalletPageComponent() {
                     </Tabs.Trigger>
                 </Tabs.List>
 
-                <Tabs.Content
-                    value={WalletTab.Tokens}
-                    className="flex-grow flex-shrink overflow-y-auto p-4"
-                >
+                <Tabs.Content value={WalletTab.Tokens}>
                     <WalletTokensTab />
                 </Tabs.Content>
 
-                <Tabs.Content value={WalletTab.Nfts}>NFT Content</Tabs.Content>
+                <Tabs.Content value={WalletTab.Nfts}>
+                    <WalletNftsTab />
+                </Tabs.Content>
             </Tabs.Root>
         </div>
     );

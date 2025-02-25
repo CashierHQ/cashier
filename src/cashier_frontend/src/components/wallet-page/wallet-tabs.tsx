@@ -40,7 +40,7 @@ const WalletTabsContent = React.forwardRef<
         ref={ref}
         className={cn(
             "flex-grow flex-shrink overflow-y-auto",
-            "mt-4 ring-offset-background px-4",
+            "p-4 ring-offset-background",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             className,
         )}
