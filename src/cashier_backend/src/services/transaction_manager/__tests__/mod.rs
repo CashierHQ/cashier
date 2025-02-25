@@ -29,7 +29,7 @@ pub mod tests {
 
     use crate::utils::runtime::IcEnvironment;
 
-    pub const TX_TIMEOUT: u64 = 120_000_000_000; // 1 minute in nanoseconds
+    pub const TX_TIMEOUT: u64 = 300_000_000_000; // 5 minute in nanoseconds
 
     pub const ONE_HOUR_IN_NANOSECONDS: u64 = 3600_000_000_000;
 

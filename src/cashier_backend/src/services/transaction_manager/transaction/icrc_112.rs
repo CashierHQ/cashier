@@ -13,9 +13,8 @@ pub fn create(
     link_id: String,
     action_id: String,
     client_txs: &Vec<&Transaction>,
-) -> Icrc112Requests {
+) -> Option<Icrc112Requests> {
     let mut icrc_112_requests_builer = Icrc112RequestsBuilder::new();
-    let mut parallel_index = 0;
     for tx in client_txs {
         match &tx.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
@@ -45,6 +44,10 @@ pub fn create(
         }
     }
 
+    if icrc_112_requests_builer.count_requests() == 0 {
+        return None;
+    }
+
     let builder = UpdateActionBuilder {
         link_id: link_id.clone(),
         action_id: action_id,
@@ -53,5 +56,5 @@ pub fn create(
     let request = builder.build();
     icrc_112_requests_builer.add_one_request(request);
 
-    icrc_112_requests_builer.build()
+    Some(icrc_112_requests_builer.build())
 }

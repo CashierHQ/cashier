@@ -25,13 +25,6 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
 
     let tx_timeout: u64 = get_tx_timeout_nano_seconds();
 
-    info!("type {:?}", tx.get_tx_type());
-
-    info!(
-        "Transaction start_ts: {:?}, current_ts: {:?}, tx_timeout: {:?}",
-        tx.start_ts, current_ts, tx_timeout
-    );
-
     if tx.start_ts.unwrap() + tx_timeout < current_ts {
         let icrc_service = IcrcService::new();
 

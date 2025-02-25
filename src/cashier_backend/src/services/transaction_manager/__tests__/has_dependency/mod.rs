@@ -15,6 +15,7 @@ mod tests {
                 create_dummy_action, create_dummy_intent, create_dummy_transaction,
                 MockIcEnvironment,
             },
+            execute_transaction::ExecuteTransactionService,
         },
         types::{error::CanisterError, transaction_manager::ActionResp},
     };
@@ -26,6 +27,7 @@ mod tests {
         let mut action_service = ActionService::faux();
         let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
             ManualCheckStatusService::faux();
+        let execute_transaction_service = ExecuteTransactionService::faux();
 
         let action = create_dummy_action(ActionState::Processing);
         let intent1 = create_dummy_intent(IntentState::Processing);
@@ -73,10 +75,11 @@ mod tests {
                 action_service,
                 manual_check_status_service,
                 ic_env,
+                execute_transaction_service,
             );
 
-        let result = transaction_manager_service.has_dependency(tx1.id);
-        let result2 = transaction_manager_service.has_dependency(tx2.id);
+        let result = transaction_manager_service.has_dependency(tx1.id).await;
+        let result2 = transaction_manager_service.has_dependency(tx2.id).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
@@ -91,6 +94,7 @@ mod tests {
         let mut action_service = ActionService::faux();
         let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
             ManualCheckStatusService::faux();
+        let execute_transaction_service = ExecuteTransactionService::faux();
 
         let ic_env = MockIcEnvironment::faux();
 
@@ -99,14 +103,20 @@ mod tests {
         let intent2 = create_dummy_intent(IntentState::Processing);
 
         let mut tx_a = create_dummy_transaction(TransactionState::Processing);
-        let tx_b = create_dummy_transaction(TransactionState::Processing);
-        let tx_c = create_dummy_transaction(TransactionState::Fail);
-        let tx_d = create_dummy_transaction(TransactionState::Success);
+        let mut tx_b = create_dummy_transaction(TransactionState::Processing);
+        tx_b.group = Some("1".to_string());
+        let mut tx_c = create_dummy_transaction(TransactionState::Fail);
+        tx_c.group = Some("1".to_string());
+        let mut tx_d = create_dummy_transaction(TransactionState::Success);
+        tx_d.group = Some("1".to_string());
 
         let mut intent_txs = HashMap::new();
 
-        tx_a.dependency = Some(vec![tx_b.id.clone(), tx_c.id.clone(), tx_d.id.clone()]);
-        tx_a.group = Some("1".to_string());
+        let list_tx_dependency = vec![tx_b.clone(), tx_c.clone(), tx_d.clone()];
+        let tx_a_dependency = vec![tx_b.id.clone(), tx_c.id.clone(), tx_d.id.clone()];
+
+        tx_a.dependency = Some(tx_a_dependency.clone());
+        tx_a.group = Some("2".to_string());
 
         intent_txs.insert(
             intent1.id.clone(),
@@ -130,28 +140,363 @@ mod tests {
                 intent_txs: intent_txs.clone(),
             }));
 
+        when!(transaction_service.batch_get(tx_a_dependency.clone()))
+            .then_return(Ok(list_tx_dependency));
+
         let transaction_manager_service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::new(
                 transaction_service,
                 action_service,
                 manual_check_status_service,
                 ic_env,
+                execute_transaction_service,
             );
 
-        let result = transaction_manager_service.has_dependency(tx_a.id);
+        let result = transaction_manager_service.has_dependency(tx_a.id).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
     }
 
-    //TS: Should throw error if tx A depends on a transaction that does not exist (invalid dependency)
+    //TS3: Should return false if all dependencies is success
     #[tokio::test]
-    async fn should_return_false_when_depedencies_success() {
+    async fn should_return_false_when_depedencies_all_success() {
+        let mut transaction_service = TransactionService::faux();
+        let mut action_service = ActionService::faux();
+        let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
+            ManualCheckStatusService::faux();
+        let execute_transaction_service = ExecuteTransactionService::faux();
+
+        let ic_env = MockIcEnvironment::faux();
+
+        let action = create_dummy_action(ActionState::Processing);
+        let intent1 = create_dummy_intent(IntentState::Processing);
+        let intent2 = create_dummy_intent(IntentState::Processing);
+
+        let mut tx_a = create_dummy_transaction(TransactionState::Processing);
+        let mut tx_b = create_dummy_transaction(TransactionState::Success);
+        tx_b.group = Some("1".to_string());
+        let mut tx_c = create_dummy_transaction(TransactionState::Success);
+        tx_c.group = Some("1".to_string());
+        let mut tx_d = create_dummy_transaction(TransactionState::Success);
+        tx_d.group = Some("1".to_string());
+
+        let mut intent_txs = HashMap::new();
+
+        let list_tx_dependency = vec![tx_b.clone(), tx_c.clone(), tx_d.clone()];
+        let tx_a_dependency = vec![tx_b.id.clone(), tx_c.id.clone(), tx_d.id.clone()];
+
+        tx_a.dependency = Some(tx_a_dependency.clone());
+        tx_a.group = Some("2".to_string());
+
+        intent_txs.insert(
+            intent1.id.clone(),
+            vec![tx_b.clone(), tx_c.clone(), tx_d.clone()],
+        );
+        intent_txs.insert(intent2.id.clone(), vec![tx_a.clone()]);
+
+        when!(transaction_service.get_tx_by_id(tx_a.id.clone()))
+            .once()
+            .then_return(Ok(tx_a.clone()));
+
+        when!(transaction_service.batch_get)
+            .once()
+            .then_return(Ok(vec![tx_b.clone(), tx_c.clone(), tx_d.clone()]));
+
+        when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
+            .once()
+            .then_return(Ok(ActionResp {
+                action: action.clone(),
+                intents: vec![intent1.clone(), intent2.clone()],
+                intent_txs: intent_txs.clone(),
+            }));
+
+        when!(transaction_service.batch_get(tx_a_dependency.clone()))
+            .then_return(Ok(list_tx_dependency));
+
+        let transaction_manager_service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::new(
+                transaction_service,
+                action_service,
+                manual_check_status_service,
+                ic_env,
+                execute_transaction_service,
+            );
+
+        let result = transaction_manager_service.has_dependency(tx_a.id).await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    //TS4: Should return false if all tx in group dont have dependencies
+    #[tokio::test]
+    async fn should_return_false_when_all_tx_in_group_dont_have_dependencies() {
+        let mut transaction_service = TransactionService::faux();
+        let mut action_service = ActionService::faux();
+        let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
+            ManualCheckStatusService::faux();
+
+        let execute_transaction_service = ExecuteTransactionService::faux();
+
+        let ic_env = MockIcEnvironment::faux();
+
+        let action = create_dummy_action(ActionState::Created);
+        let intent1 = create_dummy_intent(IntentState::Created);
+        let intent2 = create_dummy_intent(IntentState::Created);
+
+        let mut tx_a = create_dummy_transaction(TransactionState::Created);
+        let mut tx_b = create_dummy_transaction(TransactionState::Created);
+        tx_b.group = Some("1".to_string());
+        let mut tx_c = create_dummy_transaction(TransactionState::Created);
+        tx_c.group = Some("1".to_string());
+        let mut tx_d = create_dummy_transaction(TransactionState::Created);
+        tx_d.group = Some("1".to_string());
+        let mut intent_txs = HashMap::new();
+        tx_a.group = Some("1".to_string());
+
+        intent_txs.insert(
+            intent1.id.clone(),
+            vec![tx_b.clone(), tx_c.clone(), tx_d.clone()],
+        );
+        intent_txs.insert(intent2.id.clone(), vec![tx_a.clone()]);
+
+        when!(transaction_service.get_tx_by_id(tx_a.id.clone()))
+            .once()
+            .then_return(Ok(tx_a.clone()));
+
+        when!(transaction_service.batch_get)
+            .once()
+            .then_return(Ok(vec![tx_b.clone(), tx_c.clone(), tx_d.clone()]));
+
+        when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
+            .once()
+            .then_return(Ok(ActionResp {
+                action: action.clone(),
+                intents: vec![intent1.clone(), intent2.clone()],
+                intent_txs: intent_txs.clone(),
+            }));
+        when!(transaction_service.get_tx_by_id(tx_b.id.clone()))
+            .once()
+            .then_return(Ok(tx_b.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_c.id.clone()))
+            .once()
+            .then_return(Ok(tx_c.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_d.id.clone()))
+            .once()
+            .then_return(Ok(tx_d.clone()));
+
+        let transaction_manager_service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::new(
+                transaction_service,
+                action_service,
+                manual_check_status_service,
+                ic_env,
+                execute_transaction_service,
+            );
+
+        let result = transaction_manager_service.has_dependency(tx_a.id).await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    //TS5: Should return true if any tx in group have dependencies
+    #[tokio::test]
+    async fn should_return_false_when_if_any_tx_in_group_have_dependencies() {
+        let mut transaction_service = TransactionService::faux();
+        let mut action_service = ActionService::faux();
+        let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
+            ManualCheckStatusService::faux();
+        let execute_transaction_service = ExecuteTransactionService::faux();
+
+        let ic_env = MockIcEnvironment::faux();
+
+        let action = create_dummy_action(ActionState::Created);
+        let intent1 = create_dummy_intent(IntentState::Created);
+        let intent2 = create_dummy_intent(IntentState::Created);
+
+        let mut tx_a = create_dummy_transaction(TransactionState::Created);
+        let mut tx_b = create_dummy_transaction(TransactionState::Created);
+        let mut tx_c = create_dummy_transaction(TransactionState::Created);
+        tx_b.group = Some("2".to_string());
+        tx_c.group = Some("2".to_string());
+        tx_a.group = Some("2".to_string());
+
+        let mut tx_d = create_dummy_transaction(TransactionState::Success);
+        tx_d.group = Some("1".to_string());
+        let mut tx_e = create_dummy_transaction(TransactionState::Success);
+        tx_d.group = Some("1".to_string());
+
+        tx_b.dependency = Some(vec![tx_d.id.clone()]);
+        tx_c.dependency = Some(vec![tx_e.id.clone()]);
+
+        let mut intent_txs = HashMap::new();
+
+        intent_txs.insert(intent1.id.clone(), vec![tx_d.clone(), tx_e.clone()]);
+        intent_txs.insert(
+            intent2.id.clone(),
+            vec![tx_a.clone(), tx_b.clone(), tx_c.clone()],
+        );
+
+        when!(transaction_service.get_tx_by_id(tx_a.id.clone()))
+            .once()
+            .then_return(Ok(tx_a.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_b.id.clone()))
+            .once()
+            .then_return(Ok(tx_b.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_c.id.clone()))
+            .once()
+            .then_return(Ok(tx_c.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_d.id.clone()))
+            .once()
+            .then_return(Ok(tx_d.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_e.id.clone()))
+            .once()
+            .then_return(Ok(tx_e.clone()));
+
+        let b_dependency = tx_b.dependency.clone().unwrap();
+
+        when!(transaction_service.batch_get(b_dependency))
+            .once()
+            .then_return(Ok(vec![tx_d.clone()]));
+
+        let c_dependency = tx_c.dependency.clone().unwrap();
+
+        when!(transaction_service.batch_get(c_dependency))
+            .once()
+            .then_return(Ok(vec![tx_e.clone()]));
+
+        when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
+            .once()
+            .then_return(Ok(ActionResp {
+                action: action.clone(),
+                intents: vec![intent1.clone(), intent2.clone()],
+                intent_txs: intent_txs.clone(),
+            }));
+
+        let transaction_manager_service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::new(
+                transaction_service,
+                action_service,
+                manual_check_status_service,
+                ic_env,
+                execute_transaction_service,
+            );
+
+        let result = transaction_manager_service.has_dependency(tx_a.id).await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    //TS6: Should return false if any tx in group have dependencies but all success
+    #[tokio::test]
+    async fn should_return_true_when_if_any_tx_in_group_have_dependencies() {
+        let mut transaction_service = TransactionService::faux();
+        let mut action_service = ActionService::faux();
+        let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
+            ManualCheckStatusService::faux();
+        let execute_transaction_service = ExecuteTransactionService::faux();
+
+        let ic_env = MockIcEnvironment::faux();
+
+        let action = create_dummy_action(ActionState::Created);
+        let intent1 = create_dummy_intent(IntentState::Created);
+        let intent2 = create_dummy_intent(IntentState::Created);
+
+        let mut tx_a = create_dummy_transaction(TransactionState::Created);
+        let mut tx_b = create_dummy_transaction(TransactionState::Created);
+        let mut tx_c = create_dummy_transaction(TransactionState::Created);
+        tx_b.group = Some("2".to_string());
+        tx_c.group = Some("2".to_string());
+        tx_a.group = Some("2".to_string());
+
+        let mut tx_d = create_dummy_transaction(TransactionState::Success);
+        tx_d.group = Some("1".to_string());
+        let mut tx_e = create_dummy_transaction(TransactionState::Processing);
+        tx_d.group = Some("1".to_string());
+
+        tx_b.dependency = Some(vec![tx_d.id.clone()]);
+        tx_c.dependency = Some(vec![tx_e.id.clone()]);
+
+        let mut intent_txs = HashMap::new();
+
+        intent_txs.insert(intent1.id.clone(), vec![tx_d.clone(), tx_e.clone()]);
+        intent_txs.insert(
+            intent2.id.clone(),
+            vec![tx_a.clone(), tx_b.clone(), tx_c.clone()],
+        );
+
+        when!(transaction_service.get_tx_by_id(tx_a.id.clone()))
+            .once()
+            .then_return(Ok(tx_a.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_b.id.clone()))
+            .once()
+            .then_return(Ok(tx_b.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_c.id.clone()))
+            .once()
+            .then_return(Ok(tx_c.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_d.id.clone()))
+            .once()
+            .then_return(Ok(tx_d.clone()));
+
+        when!(transaction_service.get_tx_by_id(tx_e.id.clone()))
+            .once()
+            .then_return(Ok(tx_e.clone()));
+
+        let b_dependency = tx_b.dependency.clone().unwrap();
+
+        when!(transaction_service.batch_get(b_dependency))
+            .once()
+            .then_return(Ok(vec![tx_d.clone()]));
+
+        let c_dependency = tx_c.dependency.clone().unwrap();
+
+        when!(transaction_service.batch_get(c_dependency))
+            .once()
+            .then_return(Ok(vec![tx_e.clone()]));
+
+        when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
+            .once()
+            .then_return(Ok(ActionResp {
+                action: action.clone(),
+                intents: vec![intent1.clone(), intent2.clone()],
+                intent_txs: intent_txs.clone(),
+            }));
+
+        let transaction_manager_service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::new(
+                transaction_service,
+                action_service,
+                manual_check_status_service,
+                ic_env,
+                execute_transaction_service,
+            );
+
+        let result = transaction_manager_service.has_dependency(tx_a.id).await;
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
+    }
+    //TS7: Should throw error if tx A depends on a transaction that does not exist (invalid dependency)
+    #[tokio::test]
+    async fn should_return_false_when_all_depedencies_success() {
         let mut transaction_service = TransactionService::faux();
         let action_service = ActionService::faux();
         let manual_check_status_service: ManualCheckStatusService<MockIcEnvironment> =
             ManualCheckStatusService::faux();
         let ic_env = MockIcEnvironment::faux();
+        let execute_transaction_service = ExecuteTransactionService::faux();
 
         let mut tx_a = create_dummy_transaction(TransactionState::Processing);
         let tx_b = create_dummy_transaction(TransactionState::Processing);
@@ -176,9 +521,10 @@ mod tests {
                 action_service,
                 manual_check_status_service,
                 ic_env,
+                execute_transaction_service,
             );
 
-        let result = transaction_manager_service.has_dependency(tx_a.id);
+        let result = transaction_manager_service.has_dependency(tx_a.id).await;
 
         assert!(result.is_err());
     }
