@@ -47,6 +47,7 @@ export function WalletTokensTab() {
             {LONG_MOCK_TOKEN_DATA.map((props, index) => (
                 <WalletToken key={index} {...props} />
             ))}
+            <button className="mx-auto whitespace-nowrap text-green">+ Manage tokens</button>
         </div>
     );
 }
