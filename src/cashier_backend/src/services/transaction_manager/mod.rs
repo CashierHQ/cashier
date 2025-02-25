@@ -301,12 +301,12 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             Some(icrc_112_requests.unwrap())
         };
 
-        let action_resp = self.action_service.get(args.action_id.clone()).unwrap();
+        let get_resp = self.action_service.get(args.action_id.clone()).unwrap();
 
         Ok(ActionDto::build(
-            action_resp.action,
-            action_resp.intents,
-            action_resp.intent_txs,
+            get_resp.action,
+            get_resp.intents,
+            get_resp.intent_txs,
             request,
         ))
     }

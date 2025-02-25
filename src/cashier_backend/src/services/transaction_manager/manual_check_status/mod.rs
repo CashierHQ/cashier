@@ -1,7 +1,6 @@
 use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
 
 use crate::{
-    constant::get_tx_timeout_nano_seconds,
     types::error::CanisterError,
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
