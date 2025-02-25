@@ -46,7 +46,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
         tokenAddress: defaultValues?.tokenAddress ?? "",
         amount: BigInt(0),
         assetNumber: 0,
-        usdNumber: 0,
+        usdNumber: null,
     });
 
     const selectedAsset = useSelectedAsset(assets, form);
@@ -204,7 +204,12 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                 )}
                             />
 
-                            <FixedBottomButton type="submit" variant="default" size="lg">
+                            <FixedBottomButton
+                                type="submit"
+                                variant="default"
+                                size="lg"
+                                onClick={() => console.log(form.formState.errors)}
+                            >
                                 {t("continue")}
                             </FixedBottomButton>
                         </form>
