@@ -145,5 +145,11 @@
                 }
             }
         }
+    },
+    "review": {
+        "header": "Review",
+        "token": "Token",
+        "import": "Import",
+        "message": "Make sure you trust the token you are adding. If the token you are adding is controlled by a malicious party, they could try and scam you e.g., by making you believe you received a significant amount of tokens in order to trick you into sending them tokens in return or perform other undesired actions. Learn more about scams and security risks e.g. here."
     }
 }

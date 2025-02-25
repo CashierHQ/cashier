@@ -3,6 +3,7 @@ import { CHAIN } from "@/services/types/enum";
 import { ManageTokensToken } from "./manage-tokens-token";
 import { ManageTokensMissingTokenMessage } from "./manage-tokens-missing-token-message";
 
+// eslint-disable-next-line prefer-const
 let MOCK_TOKEN_DATA = [
     {
         name: "Bitcoin",
