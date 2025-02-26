@@ -1,6 +1,6 @@
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { CHAIN } from "@/services/types/enum";
-import { ManageTokensToken } from "./manage-tokens-token";
+import { ManageTokensToken } from "./token-card";
 
 const MOCK_TOKEN_DATA = [
     {

@@ -117,6 +117,13 @@
             }
         }
     },
+    "manage": {
+        "header": "Manage tokens",
+        "search": {
+            "placeholder": "Search a token"
+        },
+        "import": "Import token"
+    },
     "import": {
         "header": "Import token",
         "form": {

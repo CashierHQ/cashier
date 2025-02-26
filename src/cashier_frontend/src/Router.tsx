@@ -6,7 +6,7 @@ import ClaimPage from "./pages/[id]";
 import DetailPage from "./pages/details/[id]";
 import WalletLayout from "./pages/wallet/layout";
 import WalletPage from "./pages/wallet/page";
-import { ManageTokensPage } from "./components/manage-tokens/manage-tokens-page";
+import ManageTokensPage from "./pages/wallet/manage/page";
 import { ImportTokenPage } from "./components/import-token/import-token-page";
 import { TokenDetailsScreen } from "./components/token-details/token-details-screen";
 
