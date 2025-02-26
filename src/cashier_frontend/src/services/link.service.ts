@@ -50,7 +50,7 @@ class LinkService {
             await this.actor.get_links([
                 {
                     offset: BigInt(0),
-                    limit: BigInt(10),
+                    limit: BigInt(30),
                 },
             ]),
         );
