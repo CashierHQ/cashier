@@ -1,5 +1,5 @@
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
-import { WalletToken } from "./wallet-token";
+import { WalletToken } from "./token-card";
 import { Link } from "react-router-dom";
 
 const MOCK_TOKEN_DATA = [

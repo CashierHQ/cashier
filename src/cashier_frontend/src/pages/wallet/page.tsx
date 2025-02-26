@@ -1,7 +1,7 @@
-import { WalletHero } from "@/components/wallet-page/hero";
-import { WalletTabs } from "@/components/wallet-page/tabs";
+import { WalletHero } from "@/components/wallet/hero";
+import { WalletTabs } from "@/components/wallet/tabs";
 
-export function WalletPage() {
+export default function WalletPage() {
     return (
         <>
             <WalletHero />

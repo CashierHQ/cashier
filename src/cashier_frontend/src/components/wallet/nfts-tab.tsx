@@ -1,5 +1,5 @@
 import { generate } from "@/utils/helpers/array";
-import { WalletNftCard } from "./wallet-nft-card";
+import { WalletNftCard } from "./nft-card";
 
 const MOCK_NFT_DATA = generate(10, () => ({
     src: "https://fakeimg.pl/300x300",

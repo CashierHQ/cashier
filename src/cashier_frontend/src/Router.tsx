@@ -1,11 +1,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { useResponsive } from "./hooks/responsive-hook";
 import LinkPage from "./pages/edit/[id]";
 import HomePage from "@/pages";
 import ClaimPage from "./pages/[id]";
 import DetailPage from "./pages/details/[id]";
-import { useResponsive } from "./hooks/responsive-hook";
-import { WalletPage } from "./components/wallet-page/wallet-page";
-import { WalletLayout } from "./components/wallet-page/wallet-layout";
+import WalletLayout from "./pages/wallet/layout";
+import WalletPage from "./pages/wallet/page";
 import { ManageTokensPage } from "./components/manage-tokens/manage-tokens-page";
 import { ImportTokenPage } from "./components/import-token/import-token-page";
 import { TokenDetailsScreen } from "./components/token-details/token-details-screen";
