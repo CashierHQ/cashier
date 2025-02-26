@@ -28,13 +28,13 @@ export function TransactionItemBase({
 
                 <div className="flex flex-col justify-between">
                     <p className="text-sm leading-tight">{text}</p>
-                    <p className="text-[10px] leading-tight">{subtext}</p>
+                    <p className="text-[10px] leading-tight text-grey">{subtext}</p>
                 </div>
             </div>
 
             <div className="flex flex-col justify-between items-end">
                 <p className="leading-tight">{amount}</p>
-                <p className="text-[10px] leading-tight">{usdEquivalent}</p>
+                <p className="text-[10px] leading-tight text-grey">{usdEquivalent}</p>
             </div>
         </div>
     );

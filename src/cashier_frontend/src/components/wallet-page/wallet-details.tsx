@@ -1,19 +1,12 @@
-import { ArrowDown, ArrowUp, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { SendReceive } from "../ui/send-receive";
 
 export function WalletDetails() {
     const { t } = useTranslation();
 
     const handleEyeClick = () => {
         console.log("clicked eye icon");
-    };
-
-    const handleSendClick = () => {
-        console.log("click send");
-    };
-
-    const handleReceiveClick = () => {
-        console.log("click receive");
     };
 
     return (
@@ -33,23 +26,7 @@ export function WalletDetails() {
                 </button>
             </div>
 
-            <div className="flex gap-6 mt-4">
-                <button className="flex flex-col items-center w-14" onClick={handleSendClick}>
-                    <div className="bg-lightgreen rounded-full p-2.5">
-                        <ArrowUp size={18} />
-                    </div>
-
-                    <span className="text-xs mt-1">{t("wallet.details.send")}</span>
-                </button>
-
-                <button className="flex flex-col items-center w-14" onClick={handleReceiveClick}>
-                    <div className="bg-lightgreen rounded-full p-2.5">
-                        <ArrowDown size={18} />
-                    </div>
-
-                    <span className="text-xs mt-1">{t("wallet.details.receive")}</span>
-                </button>
-            </div>
+            <SendReceive />
         </div>
     );
 }
