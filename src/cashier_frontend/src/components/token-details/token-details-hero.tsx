@@ -1,3 +1,3 @@
 export function TokenDetailsHero() {
-    <div> Hero section</div>;
+    return <div> Hero section</div>;
 }
