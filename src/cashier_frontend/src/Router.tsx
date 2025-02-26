@@ -8,6 +8,7 @@ import { WalletPage } from "./components/wallet-page/wallet-page";
 import { WalletLayout } from "./components/wallet-page/wallet-layout";
 import { ManageTokensPage } from "./components/manage-tokens/manage-tokens-page";
 import { ImportTokenPage } from "./components/import-token/import-token-page";
+import { TokenDetailsScreen } from "./components/token-details/token-details-screen";
 
 const router = createBrowserRouter([
     {
@@ -44,7 +45,7 @@ const router = createBrowserRouter([
             },
             {
                 path: "details/:tokenId",
-                element: <div>Token details</div>,
+                element: <TokenDetailsScreen />,
             },
         ],
     },
