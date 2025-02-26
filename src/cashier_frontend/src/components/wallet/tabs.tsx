@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { WalletNftsTab } from "./nfts-tab";
 import { WalletTokensTab } from "./tokens-tab";
-import Tabs from "./wallet-tabs";
+import Tabs from "@/components/ui/tabs2";
 
 export enum WalletTab {
     Tokens = "Tokens",
