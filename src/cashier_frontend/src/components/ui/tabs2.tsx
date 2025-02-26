@@ -3,9 +3,9 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 
 import { cn } from "@/lib/utils";
 
-const WalletTabs = TabsPrimitive.Root;
+export const WalletTabs = TabsPrimitive.Root;
 
-const WalletTabsList = React.forwardRef<
+export const WalletTabsList = React.forwardRef<
     React.ElementRef<typeof TabsPrimitive.List>,
     React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => (
@@ -13,7 +13,7 @@ const WalletTabsList = React.forwardRef<
 ));
 WalletTabsList.displayName = TabsPrimitive.List.displayName;
 
-const WalletTabsTrigger = React.forwardRef<
+export const WalletTabsTrigger = React.forwardRef<
     React.ElementRef<typeof TabsPrimitive.Trigger>,
     React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
 >(({ className, ...props }, ref) => (
@@ -32,7 +32,7 @@ const WalletTabsTrigger = React.forwardRef<
 ));
 WalletTabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
-const WalletTabsContent = React.forwardRef<
+export const WalletTabsContent = React.forwardRef<
     React.ElementRef<typeof TabsPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
 >(({ className, ...props }, ref) => (
@@ -49,13 +49,9 @@ const WalletTabsContent = React.forwardRef<
 ));
 WalletTabsContent.displayName = TabsPrimitive.Content.displayName;
 
-export {
-    WalletTabs,
-    WalletTabs as Root,
-    WalletTabsList,
-    WalletTabsList as List,
-    WalletTabsTrigger,
-    WalletTabsTrigger as Trigger,
-    WalletTabsContent,
-    WalletTabsContent as Content,
+export default {
+    Root: WalletTabs,
+    List: WalletTabsList,
+    Trigger: WalletTabsTrigger,
+    Content: WalletTabsContent,
 };

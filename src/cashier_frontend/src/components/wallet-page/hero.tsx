@@ -2,7 +2,7 @@ import { Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
 
-export function WalletDetails() {
+export function WalletHero() {
     const { t } = useTranslation();
 
     const handleEyeClick = () => {

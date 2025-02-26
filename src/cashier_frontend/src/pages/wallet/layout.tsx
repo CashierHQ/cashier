@@ -1,5 +1,5 @@
+import { WalletHeader } from "@/components/wallet-page/header";
 import { Outlet, useNavigate } from "react-router-dom";
-import { WalletHeader } from "./wallet-header";
 
 export function WalletLayout() {
     const navigate = useNavigate();
