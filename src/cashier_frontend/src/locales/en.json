@@ -110,7 +110,8 @@
         },
         "tabs": {
             "tokens": {
-                "header": "Tokens"
+                "header": "Tokens",
+                "manage": "Manage tokens"
             },
             "nfts": {
                 "header": "NFTs"
@@ -122,7 +123,8 @@
         "search": {
             "placeholder": "Search a token"
         },
-        "import": "Import token"
+        "import": "Import token",
+        "missing": "Missing a token?"
     },
     "import": {
         "header": "Import token",
@@ -138,7 +140,6 @@
             },
             "ledgerCanisterId": {
                 "label": "Ledger Canister ID",
-                "placeholder": "_____-_____-_____-_____-cai",
                 "error": {
                     "required": "Ledger Canister ID is required",
                     "format": "Invalid Ledger Canister ID"
@@ -146,7 +147,6 @@
             },
             "indexCanisterId": {
                 "label": "Index Canister ID",
-                "placeholder": "_____-_____-_____-_____-cai",
                 "error": {
                     "format": "Invalid Index Canister ID"
                 }

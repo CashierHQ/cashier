@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
 import { Copy } from "lucide-react";
+import { mapChainToPrettyName } from "@/utils/map/chain.map";
+import { Chain } from "@/services/types/link.service.types";
 
 export function TokenDetailsHero() {
     const { t } = useTranslation();
@@ -24,7 +26,7 @@ export function TokenDetailsHero() {
 
                 <div className="flex justify-between gap-2">
                     <p className="font-medium">{t("history.hero.chain")}</p>
-                    <p className="text-sm text-grey">Internet Computer</p>
+                    <p className="text-sm text-grey">{mapChainToPrettyName(Chain.IC)}</p>
                 </div>
 
                 <div className="flex justify-between gap-2">

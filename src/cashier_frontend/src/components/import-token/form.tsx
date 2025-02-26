@@ -57,7 +57,7 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                                     <Input
                                         {...field}
                                         className="placeholder:text-grey pr-9"
-                                        placeholder={t("import.form.ledgerCanisterId.placeholder")}
+                                        placeholder={"_____-_____-_____-_____-cai"}
                                     />
                                     <Clipboard
                                         className="absolute top-1/2 -translate-y-1/2 right-3 stroke-green "
@@ -87,7 +87,7 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                                     <Input
                                         {...field}
                                         className="placeholder:text-grey pr-9"
-                                        placeholder={t("import.form.indexCanisterId.placeholder")}
+                                        placeholder={"_____-_____-_____-_____-cai"}
                                     />
                                     <Clipboard
                                         className="absolute top-1/2 -translate-y-1/2 right-3 stroke-green "

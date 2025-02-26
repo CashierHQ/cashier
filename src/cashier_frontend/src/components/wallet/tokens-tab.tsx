@@ -1,6 +1,7 @@
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { WalletToken } from "./token-card";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const MOCK_TOKEN_DATA = [
     {
@@ -33,6 +34,7 @@ const MOCK_TOKEN_DATA = [
     },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const LONG_MOCK_TOKEN_DATA = [
     ...MOCK_TOKEN_DATA,
     ...MOCK_TOKEN_DATA,
@@ -43,13 +45,15 @@ const LONG_MOCK_TOKEN_DATA = [
 ];
 
 export function WalletTokensTab() {
+    const { t } = useTranslation();
+
     return (
         <div className="flex flex-col gap-4">
-            {LONG_MOCK_TOKEN_DATA.map((props, index) => (
+            {MOCK_TOKEN_DATA.map((props, index) => (
                 <WalletToken key={index} {...props} />
             ))}
             <Link to={"/wallet/manage"} className="mx-auto whitespace-nowrap text-green">
-                + Manage tokens
+                + {t("wallet.tabs.tokens.manage")}
             </Link>
         </div>
     );

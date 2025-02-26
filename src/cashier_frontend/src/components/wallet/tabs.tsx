@@ -12,10 +12,7 @@ export function WalletTabs() {
     const { t } = useTranslation();
 
     return (
-        <Tabs.Root
-            defaultValue={WalletTab.Tokens}
-            className="flex flex-col flex-grow flex-shrink overflow-hidden"
-        >
+        <Tabs.Root defaultValue={WalletTab.Tokens} className="flex flex-col flex-grow">
             <Tabs.List>
                 <Tabs.Trigger value={WalletTab.Tokens}>
                     {t("wallet.tabs.tokens.header")}
