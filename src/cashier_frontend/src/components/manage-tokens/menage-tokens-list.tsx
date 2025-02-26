@@ -1,10 +1,8 @@
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { CHAIN } from "@/services/types/enum";
 import { ManageTokensToken } from "./manage-tokens-token";
-import { ManageTokensMissingTokenMessage } from "./manage-tokens-missing-token-message";
 
-// eslint-disable-next-line prefer-const
-let MOCK_TOKEN_DATA = [
+const MOCK_TOKEN_DATA = [
     {
         name: "Bitcoin",
         symbol: "ckBTC",
@@ -33,8 +31,6 @@ let MOCK_TOKEN_DATA = [
     },
 ];
 
-//MOCK_TOKEN_DATA = [];
-
 const LONG_MOCK_TOKEN_DATA = [
     ...MOCK_TOKEN_DATA,
     ...MOCK_TOKEN_DATA,
@@ -45,22 +41,13 @@ const LONG_MOCK_TOKEN_DATA = [
 ];
 
 export function ManageTokensList() {
-    const isNoTokens = MOCK_TOKEN_DATA.length === 0;
-
     return (
-        <div className="flex flex-col py-6">
-            <ul className="flex flex-col gap-4">
-                {isNoTokens ? (
-                    <ManageTokensMissingTokenMessage />
-                ) : (
-                    LONG_MOCK_TOKEN_DATA.map((props, index) => (
-                        <li key={index}>
-                            <ManageTokensToken {...props} />
-                        </li>
-                    ))
-                )}
-            </ul>
-            <p className="text-green font-medium mx-auto mt-4">+ Import token</p>
-        </div>
+        <ul className="flex flex-col gap-4">
+            {LONG_MOCK_TOKEN_DATA.map((props, index) => (
+                <li key={index}>
+                    <ManageTokensToken {...props} />
+                </li>
+            ))}
+        </ul>
     );
 }

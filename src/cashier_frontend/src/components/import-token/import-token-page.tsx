@@ -20,7 +20,7 @@ export function ImportTokenPage() {
         if (importData) {
             setImportData(undefined);
         } else {
-            navigate("..");
+            navigate(-1);
         }
     }
 

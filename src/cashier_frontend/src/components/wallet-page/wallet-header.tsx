@@ -1,16 +1,16 @@
 import { X } from "lucide-react";
 import { Logo } from "../ui/logo";
 
-export function WalletHeader() {
-    const handleCloseClick = () => {
-        console.log("clicked close wallet");
-    };
+interface WalletHeaderProps {
+    onClose?: () => void;
+}
 
+export function WalletHeader({ onClose = () => {} }: WalletHeaderProps) {
     return (
         <div className="flex justify-between items-center min-h-20 py-2.5 px-4">
             <Logo />
 
-            <button onClick={handleCloseClick}>
+            <button onClick={onClose}>
                 <X size={40} />
             </button>
         </div>

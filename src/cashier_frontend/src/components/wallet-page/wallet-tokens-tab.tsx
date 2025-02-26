@@ -1,5 +1,6 @@
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { WalletToken } from "./wallet-token";
+import { Link } from "react-router-dom";
 
 const MOCK_TOKEN_DATA = [
     {
@@ -47,7 +48,9 @@ export function WalletTokensTab() {
             {LONG_MOCK_TOKEN_DATA.map((props, index) => (
                 <WalletToken key={index} {...props} />
             ))}
-            <button className="mx-auto whitespace-nowrap text-green">+ Manage tokens</button>
+            <Link to={"/wallet/manage"} className="mx-auto whitespace-nowrap text-green">
+                + Manage tokens
+            </Link>
         </div>
     );
 }
