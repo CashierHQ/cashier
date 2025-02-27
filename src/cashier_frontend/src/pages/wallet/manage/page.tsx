@@ -14,7 +14,7 @@ export default function ManageTokensPage() {
     const isNoTokens = false;
 
     return (
-        <div className="h-full px-4 py-2">
+        <div className="flex-grow overflow-auto px-4 py-2">
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("manage.header")}</h1>
             </BackHeader>

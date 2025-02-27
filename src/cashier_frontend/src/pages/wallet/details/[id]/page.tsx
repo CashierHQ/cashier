@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { AssetAvatar } from "@/components/ui/asset-avatar";
 import { BackHeader } from "@/components/ui/back-header";
 import { TokenDetailsHero } from "@/components/token-details/hero";
-import { TransactionList } from "@/components/token-details/transaction-list";
+import { TransactionHistory } from "@/components/token-details/transaction-history";
 
 export default function TokenDetailsPage() {
     const navigate = useNavigate();
@@ -19,7 +19,7 @@ export default function TokenDetailsPage() {
 
             <hr className="my-4" />
 
-            <TransactionList />
+            <TransactionHistory />
         </div>
     );
 }

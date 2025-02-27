@@ -166,6 +166,11 @@
             "chain": "Network",
             "contract": "Contract"
         },
+        "list": {
+            "noData": "Transaction will appear here",
+            "cannotFind": "Cannot find?",
+            "checkExplorer": "Check explorer"
+        },
         "item": {
             "receive": "Received",
             "from": "From",

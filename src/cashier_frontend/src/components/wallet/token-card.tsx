@@ -1,5 +1,6 @@
 import { prettyNumber } from "@/utils/helpers/number";
 import { AssetAvatar } from "../ui/asset-avatar";
+import { useNavigate } from "react-router-dom";
 
 export interface WalletTokenProps {
     symbol: string;
@@ -16,8 +17,12 @@ export function WalletToken({
     availableAmount,
     availableUsdEquivalent,
 }: WalletTokenProps) {
+    const navigate = useNavigate();
+
+    const navigateToDetailsPage = () => navigate("/wallet/details/mock-details-page");
+
     return (
-        <div className="flex justify-between">
+        <article className="flex justify-between" onClick={navigateToDetailsPage}>
             <div className="flex flex-row items-center gap-2 ">
                 <AssetAvatar src={icon} symbol={symbol} className="w-9 h-9" />
 
@@ -41,6 +46,6 @@ export function WalletToken({
                     </span>
                 )}
             </div>
-        </div>
+        </article>
     );
 }

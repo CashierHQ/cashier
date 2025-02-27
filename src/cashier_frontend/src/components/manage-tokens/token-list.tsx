@@ -31,6 +31,7 @@ const MOCK_TOKEN_DATA = [
     },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const LONG_MOCK_TOKEN_DATA = [
     ...MOCK_TOKEN_DATA,
     ...MOCK_TOKEN_DATA,
@@ -43,7 +44,7 @@ const LONG_MOCK_TOKEN_DATA = [
 export function ManageTokensList() {
     return (
         <ul className="flex flex-col gap-4">
-            {LONG_MOCK_TOKEN_DATA.map((props, index) => (
+            {MOCK_TOKEN_DATA.map((props, index) => (
                 <li key={index}>
                     <ManageTokensToken {...props} />
                 </li>

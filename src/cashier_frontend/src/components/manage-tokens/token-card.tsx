@@ -11,7 +11,7 @@ export interface ManageTokensToken {
 
 export function ManageTokensToken({ name, symbol, src, chainSrc, chainSymbol }: ManageTokensToken) {
     return (
-        <div className="flex justify-between items-center">
+        <article className="flex justify-between items-center">
             <div className="flex gap-1.5 items-center">
                 <div className="relative">
                     <AssetAvatar src={src} symbol={symbol} className="w-[30px] h-[30px]" />
@@ -31,6 +31,6 @@ export function ManageTokensToken({ name, symbol, src, chainSrc, chainSymbol }: 
             <Switch.Root defaultChecked={true}>
                 <Switch.Thumb />
             </Switch.Root>
-        </div>
+        </article>
     );
 }
