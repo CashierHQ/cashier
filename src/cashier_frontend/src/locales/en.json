@@ -116,6 +116,10 @@
             "nfts": {
                 "header": "NFTs"
             }
+        },
+        "banner": {
+            "title": "NFT Coming soon!",
+            "text": "Included in Release 3"
         }
     },
     "manage": {
