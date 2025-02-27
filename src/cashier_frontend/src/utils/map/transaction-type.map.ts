@@ -1,7 +1,7 @@
 import {
     TransactionHistoryItemReceive,
     TransactionHistoryItemSend,
-} from "@/components/token-details/transaction-list";
+} from "@/components/ui/transaction-history";
 import { TransactionType } from "@/types/transaction-type";
 
 export const transactionItemComponentMap = {
