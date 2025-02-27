@@ -10,7 +10,7 @@ export default function TokenDetailsPage() {
     const goBack = () => navigate("/wallet");
 
     return (
-        <div className="h-full px-4 py-2">
+        <div className="h-full overflow-auto px-4 py-2">
             <BackHeader onBack={goBack}>
                 <AssetAvatar className="w-8 h-8" />
             </BackHeader>
