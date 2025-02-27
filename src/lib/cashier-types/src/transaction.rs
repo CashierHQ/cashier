@@ -13,7 +13,7 @@ pub struct Transaction {
     pub created_at: u64,
     pub state: TransactionState,
     pub dependency: Option<Vec<String>>,
-    pub group: Option<String>,
+    pub group: u16,
     pub from_call_type: FromCallType,
     pub protocol: Protocol,
     pub start_ts: Option<u64>,

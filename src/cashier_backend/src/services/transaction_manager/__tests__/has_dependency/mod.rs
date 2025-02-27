@@ -39,9 +39,9 @@ mod tests {
         let ic_env = MockIcEnvironment::faux();
 
         tx1.dependency = None;
-        tx1.group = Some("1".to_string());
+        tx1.group = 1;
         tx2.dependency = Some(vec![]);
-        tx2.group = Some("2".to_string());
+        tx2.group = 2;
 
         intent_txs.insert(intent1.id.clone(), vec![tx1.clone()]);
         intent_txs.insert(intent2.id.clone(), vec![tx2.clone()]);
@@ -104,11 +104,11 @@ mod tests {
 
         let mut tx_a = create_dummy_transaction(TransactionState::Processing);
         let mut tx_b = create_dummy_transaction(TransactionState::Processing);
-        tx_b.group = Some("1".to_string());
+        tx_b.group = 1;
         let mut tx_c = create_dummy_transaction(TransactionState::Fail);
-        tx_c.group = Some("1".to_string());
+        tx_c.group = 1;
         let mut tx_d = create_dummy_transaction(TransactionState::Success);
-        tx_d.group = Some("1".to_string());
+        tx_d.group = 1;
 
         let mut intent_txs = HashMap::new();
 
@@ -116,7 +116,7 @@ mod tests {
         let tx_a_dependency = vec![tx_b.id.clone(), tx_c.id.clone(), tx_d.id.clone()];
 
         tx_a.dependency = Some(tx_a_dependency.clone());
-        tx_a.group = Some("2".to_string());
+        tx_a.group = 2;
 
         intent_txs.insert(
             intent1.id.clone(),
@@ -175,11 +175,11 @@ mod tests {
 
         let mut tx_a = create_dummy_transaction(TransactionState::Processing);
         let mut tx_b = create_dummy_transaction(TransactionState::Success);
-        tx_b.group = Some("1".to_string());
+        tx_b.group = 1;
         let mut tx_c = create_dummy_transaction(TransactionState::Success);
-        tx_c.group = Some("1".to_string());
+        tx_c.group = 1;
         let mut tx_d = create_dummy_transaction(TransactionState::Success);
-        tx_d.group = Some("1".to_string());
+        tx_d.group = 1;
 
         let mut intent_txs = HashMap::new();
 
@@ -187,7 +187,7 @@ mod tests {
         let tx_a_dependency = vec![tx_b.id.clone(), tx_c.id.clone(), tx_d.id.clone()];
 
         tx_a.dependency = Some(tx_a_dependency.clone());
-        tx_a.group = Some("2".to_string());
+        tx_a.group = 2;
 
         intent_txs.insert(
             intent1.id.clone(),
@@ -247,13 +247,13 @@ mod tests {
 
         let mut tx_a = create_dummy_transaction(TransactionState::Created);
         let mut tx_b = create_dummy_transaction(TransactionState::Created);
-        tx_b.group = Some("1".to_string());
+        tx_b.group = 1;
         let mut tx_c = create_dummy_transaction(TransactionState::Created);
-        tx_c.group = Some("1".to_string());
+        tx_c.group = 1;
         let mut tx_d = create_dummy_transaction(TransactionState::Created);
-        tx_d.group = Some("1".to_string());
+        tx_d.group = 1;
         let mut intent_txs = HashMap::new();
-        tx_a.group = Some("1".to_string());
+        tx_a.group = 1;
 
         intent_txs.insert(
             intent1.id.clone(),
@@ -321,14 +321,14 @@ mod tests {
         let mut tx_a = create_dummy_transaction(TransactionState::Created);
         let mut tx_b = create_dummy_transaction(TransactionState::Created);
         let mut tx_c = create_dummy_transaction(TransactionState::Created);
-        tx_b.group = Some("2".to_string());
-        tx_c.group = Some("2".to_string());
-        tx_a.group = Some("2".to_string());
+        tx_b.group = 2;
+        tx_c.group = 2;
+        tx_a.group = 2;
 
         let mut tx_d = create_dummy_transaction(TransactionState::Success);
-        tx_d.group = Some("1".to_string());
+        tx_d.group = 1;
         let mut tx_e = create_dummy_transaction(TransactionState::Success);
-        tx_d.group = Some("1".to_string());
+        tx_d.group = 1;
 
         tx_b.dependency = Some(vec![tx_d.id.clone()]);
         tx_c.dependency = Some(vec![tx_e.id.clone()]);
@@ -414,14 +414,14 @@ mod tests {
         let mut tx_a = create_dummy_transaction(TransactionState::Created);
         let mut tx_b = create_dummy_transaction(TransactionState::Created);
         let mut tx_c = create_dummy_transaction(TransactionState::Created);
-        tx_b.group = Some("2".to_string());
-        tx_c.group = Some("2".to_string());
-        tx_a.group = Some("2".to_string());
+        tx_b.group = 2;
+        tx_c.group = 2;
+        tx_a.group = 2;
 
         let mut tx_d = create_dummy_transaction(TransactionState::Success);
-        tx_d.group = Some("1".to_string());
+        tx_d.group = 1;
         let mut tx_e = create_dummy_transaction(TransactionState::Processing);
-        tx_d.group = Some("1".to_string());
+        tx_e.group = 1;
 
         tx_b.dependency = Some(vec![tx_d.id.clone()]);
         tx_c.dependency = Some(vec![tx_e.id.clone()]);
