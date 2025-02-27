@@ -7,10 +7,7 @@ use crate::{
 
 use super::action::ActionService;
 
-pub mod has_dependency;
 pub mod icrc_112;
-
-// pub mod update_tx_state;
 
 #[cfg_attr(test, faux::create)]
 pub struct TransactionService<E: IcEnvironment + Clone> {
