@@ -8,7 +8,6 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
-use icrc_ledger_types::icrc3::transactions;
 
 use super::builder::icrc112::trigger_transaction::TriggerTransactionBuilder;
 use super::{

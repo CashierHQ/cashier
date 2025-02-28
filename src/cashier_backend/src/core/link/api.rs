@@ -16,9 +16,7 @@ use crate::{
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link},
-        transaction_manager::{
-            validate::validate_balance_with_asset_info, TransactionManagerService, UpdateActionArgs,
-        },
+        transaction_manager::{TransactionManagerService, UpdateActionArgs},
     },
     types::{api::PaginateInput, error::CanisterError},
     utils::runtime::RealIcEnvironment,
