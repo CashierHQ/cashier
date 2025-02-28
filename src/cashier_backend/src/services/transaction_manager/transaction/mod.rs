@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::services::transaction_manager::builder::icrc112::TransactionBuilder;
-use crate::types::icrc_112_transaction::{Icrc112Requests, Icrc112RequestsBuilder};
+use crate::types::icrc_112_transaction::Icrc112Requests;
 use crate::{
     repositories::transaction::TransactionRepository,
     types::{error::CanisterError, icrc_112_transaction::Icrc112Request},
@@ -89,72 +89,83 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
     }
 
     // TODO: handle the case icrc1 transfer execute by canister
+
     pub fn create_icrc_112(
         &self,
         action_id: String,
         link_id: String,
         transactions: &Vec<Transaction>,
     ) -> Option<Icrc112Requests> {
+        let tx_clone = transactions.clone();
+
         if transactions.is_empty() {
             return None;
         }
 
-        let mut icrc_112_requests_builder = Icrc112RequestsBuilder::new();
+        let mut icrc_112_requests: Vec<Vec<Icrc112Request>> = Vec::new();
+        let mut processed_tx_ids: HashSet<String> = HashSet::new();
 
-        let mut tx_group_hashmap: HashMap<u16, Vec<Transaction>> = HashMap::new();
+        // Topological sort for transactions
+        let mut in_degree: HashMap<String, usize> = HashMap::new();
+        let mut adj_list: HashMap<String, Vec<String>> = HashMap::new();
 
-        // group tx by group
-        for tx in transactions.iter() {
-            tx_group_hashmap
-                .entry(tx.group)
-                .or_insert(vec![])
-                .push(tx.clone());
+        for tx in &tx_clone {
+            in_degree.insert(tx.id.clone(), 0);
+            adj_list.insert(tx.id.clone(), Vec::new());
         }
 
-        // Collect and sort the keys
-        let mut sorted_keys: Vec<u16> = tx_group_hashmap.keys().cloned().collect();
-        sorted_keys.sort();
-
-        let mut current_group = 1;
-
-        // for each group add request to builder
-        // if tx has no dependency, add it to the current group
-        // if tx has dependency, add it to the next group
-        // increase group index after each group
-        for key in sorted_keys {
-            if let Some(mut txs) = tx_group_hashmap.remove(&key) {
-                // Separate transactions without dependencies and those with dependencies
-                let (no_deps, with_deps): (Vec<_>, Vec<_>) =
-                    txs.drain(..).partition(|tx| tx.dependency.is_none());
-
-                for tx in no_deps {
-                    let icrc_112_request =
-                        self.convert_tx_to_icrc_112_request(&action_id, link_id.clone(), &tx);
-
-                    icrc_112_requests_builder.add_request_to_group(
-                        current_group as usize,
-                        tx.id.clone(),
-                        icrc_112_request,
-                    );
+        for tx in &tx_clone {
+            if let Some(dependencies) = &tx.dependency {
+                for dep in dependencies {
+                    if let Some(deps) = adj_list.get_mut(dep) {
+                        deps.push(tx.id.clone());
+                    }
+                    *in_degree.entry(tx.id.clone()).or_insert(0) += 1;
                 }
-
-                for tx in with_deps {
-                    current_group += 1;
-                    let icrc_112_request =
-                        self.convert_tx_to_icrc_112_request(&action_id, link_id.clone(), &tx);
-
-                    icrc_112_requests_builder.add_request_to_group(
-                        current_group as usize,
-                        tx.id.clone(),
-                        icrc_112_request,
-                    );
-                }
-
-                current_group += 1;
             }
         }
 
-        Some(icrc_112_requests_builder.build())
+        let mut queue: VecDeque<String> = VecDeque::new();
+        for (tx_id, &degree) in &in_degree {
+            if degree == 0 {
+                queue.push_back(tx_id.clone());
+            }
+        }
+
+        while !queue.is_empty() {
+            let mut current_group: Vec<Icrc112Request> = Vec::new();
+            let mut next_queue: VecDeque<String> = VecDeque::new();
+
+            while let Some(tx_id) = queue.pop_front() {
+                if let Some(tx) = tx_clone.iter().find(|tx| tx.id == tx_id) {
+                    let icrc_112_request =
+                        self.convert_tx_to_icrc_112_request(&action_id, link_id.clone(), tx);
+
+                    current_group.push(icrc_112_request);
+
+                    processed_tx_ids.insert(tx.id.clone());
+                }
+
+                if let Some(deps) = adj_list.get(&tx_id) {
+                    for dep in deps {
+                        if let Some(degree) = in_degree.get_mut(dep) {
+                            *degree -= 1;
+                            if *degree == 0 {
+                                next_queue.push_back(dep.clone());
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !current_group.is_empty() {
+                icrc_112_requests.push(current_group);
+            }
+
+            queue = next_queue;
+        }
+
+        Some(icrc_112_requests)
     }
 
     pub fn convert_tx_to_icrc_112_request(

@@ -27,59 +27,6 @@ impl Icrc112RequestsExt for Icrc112Requests {
     }
 }
 
-pub struct Icrc112RequestsBuilder {
-    pub requests: HashMap<usize, Vec<Icrc112Request>>,
-    pub request_ids: HashMap<usize, Vec<String>>,
-}
-
-impl Icrc112RequestsBuilder {
-    pub fn new() -> Self {
-        Self {
-            requests: HashMap::new(),
-            request_ids: HashMap::new(),
-        }
-    }
-
-    pub fn count_requests(&self) -> usize {
-        self.requests.len()
-    }
-
-    pub fn add_request_to_group(
-        &mut self,
-        group_index: usize,
-        request_id: String,
-        icrc_112_request: Icrc112Request,
-    ) {
-        match self.request_ids.get_mut(&group_index) {
-            Some(group) => {
-                group.push(request_id);
-            }
-            None => {
-                self.request_ids.insert(group_index, vec![request_id]);
-            }
-        }
-
-        match self.requests.get_mut(&group_index) {
-            Some(group) => {
-                group.push(icrc_112_request);
-            }
-            None => {
-                self.requests.insert(group_index, vec![icrc_112_request]);
-            }
-        }
-    }
-
-    pub fn build(self) -> Icrc112Requests {
-        let mut sorted_requests: Vec<(usize, Vec<Icrc112Request>)> =
-            self.requests.into_iter().collect();
-        sorted_requests.sort_by_key(|&(key, _)| key);
-
-        sorted_requests
-            .into_iter()
-            .map(|(_, requests)| requests)
-            .collect()
-    }
-}
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CanisterCallResponse {
     pub content_map: String,

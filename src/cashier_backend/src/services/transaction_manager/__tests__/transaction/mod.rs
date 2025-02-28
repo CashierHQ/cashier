@@ -220,11 +220,15 @@ mod tests {
 
         assert!(icrc_112_requests.is_some());
         let requests = icrc_112_requests.unwrap();
-        assert_eq!(requests.len(), 3);
-        assert_eq!(requests[0][0].nonce, Some(tx_a.id));
-        assert_eq!(requests[0][1].nonce, Some(tx_b.id));
+
+        assert_eq!(requests.len(), 2);
+        let expected_ids = vec![tx_a.id.clone(), tx_b.id.clone(), tx_d.id.clone()];
+
+        for request in &requests[0] {
+            assert!(expected_ids.contains(&request.nonce.clone().unwrap()));
+        }
+
         assert_eq!(requests[1][0].nonce, Some(tx_c.id));
-        assert_eq!(requests[2][0].nonce, Some(tx_d.id));
     }
 
     // Should create ICRC 112 requests follow group order and dependencies
@@ -277,12 +281,17 @@ mod tests {
 
         assert!(icrc_112_requests.is_some());
         let requests = icrc_112_requests.unwrap();
-        assert_eq!(requests.len(), 4);
-        assert_eq!(requests[0][0].nonce, Some(tx_a.id));
-        assert_eq!(requests[0][1].nonce, Some(tx_b.id));
-        assert_eq!(requests[1][0].nonce, Some(tx_c.id));
-        assert_eq!(requests[2][0].nonce, Some(tx_d.id));
-        assert_eq!(requests[3][0].nonce, Some(tx_e.id));
+        assert_eq!(requests.len(), 2);
+        let expected_group_1_ids = vec![tx_a.id.clone(), tx_b.id.clone(), tx_d.id.clone()];
+        let expected_group_2_ids = vec![tx_c.id.clone(), tx_e.id.clone()];
+
+        for request in &requests[0] {
+            assert!(expected_group_1_ids.contains(&request.nonce.clone().unwrap()));
+        }
+
+        for request in &requests[1] {
+            assert!(expected_group_2_ids.contains(&request.nonce.clone().unwrap()));
+        }
     }
 
     // Should create ICRC 112 for Tip link success
@@ -358,13 +367,17 @@ mod tests {
         let requests = icrc_112_requests.unwrap();
 
         assert_eq!(requests.len(), 2);
-        assert_eq!(requests[0][0].nonce, Some(tx_a.id.clone()));
-        assert_eq!(requests[0][0].method, "icrc1_transfer".to_string());
-        assert_eq!(requests[0][0].canister_id, tx_a.get_asset().address);
-
-        assert_eq!(requests[0][1].nonce, Some(tx_b.id.clone()));
-        assert_eq!(requests[0][1].method, "icrc2_approve".to_string());
-        assert_eq!(requests[0][1].canister_id, tx_b.get_asset().address);
+        for request in &requests[0] {
+            if request.nonce == Some(tx_a.id.clone()) {
+                assert_eq!(request.method, "icrc1_transfer".to_string());
+                assert_eq!(request.canister_id, tx_a.get_asset().address);
+                assert_eq!(request.nonce, Some(tx_a.id.clone()));
+            } else if request.nonce == Some(tx_b.id.clone()) {
+                assert_eq!(request.method, "icrc2_approve".to_string());
+                assert_eq!(request.canister_id, tx_b.get_asset().address);
+                assert_eq!(request.nonce, Some(tx_b.id.clone()));
+            }
+        }
 
         assert_eq!(requests[1][0].nonce, Some(tx_c.id.clone()));
         assert_eq!(requests[1][0].method, "trigger_transaction".to_string());
@@ -513,16 +526,29 @@ mod tests {
         assert!(icrc_112_requests.is_some());
         let requests = icrc_112_requests.unwrap();
 
-        assert_eq!(requests.len(), 6);
-        assert_eq!(requests[0][0].nonce, Some(tx_a.id));
-        assert_eq!(requests[0][1].nonce, Some(tx_b.id));
-        assert_eq!(requests[0][2].nonce, Some(tx_c.id));
-        assert_eq!(requests[1][0].nonce, Some(tx_d.id));
-        assert_eq!(requests[2][0].nonce, Some(tx_e.id));
-        assert_eq!(requests[3][0].nonce, Some(tx_f.id));
-        assert_eq!(requests[4][0].nonce, Some(tx_g.id));
-        assert_eq!(requests[4][1].nonce, Some(tx_h.id));
-        assert_eq!(requests[5][0].nonce, Some(tx_i.id));
+        assert_eq!(requests.len(), 3);
+        let expected_group_1_ids = vec![
+            tx_a.id.clone(),
+            tx_b.id.clone(),
+            tx_c.id.clone(),
+            tx_d.id.clone(),
+            tx_g.id.clone(),
+            tx_h.id.clone(),
+        ];
+        let expected_group_2_ids = vec![tx_e.id.clone(), tx_f.id.clone()];
+        let expected_group_3_ids = vec![tx_i.id.clone()];
+
+        for request in &requests[0] {
+            assert!(expected_group_1_ids.contains(&request.nonce.clone().unwrap()));
+        }
+
+        for request in &requests[1] {
+            assert!(expected_group_2_ids.contains(&request.nonce.clone().unwrap()));
+        }
+
+        for request in &requests[2] {
+            assert!(expected_group_3_ids.contains(&request.nonce.clone().unwrap()));
+        }
     }
 
     #[test]
