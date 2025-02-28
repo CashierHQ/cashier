@@ -4,6 +4,7 @@ import { WalletTokensTab } from "./tokens-tab";
 import Tabs from "@/components/ui/tabs2";
 import { useState } from "react";
 import { Info } from "lucide-react";
+import { MOCK_TOKENS_LIST } from "@/constants/mock-data";
 
 export enum WalletTab {
     Tokens = "Tokens",
@@ -47,7 +48,7 @@ export function WalletTabs() {
                 </Tabs.List>
 
                 <Tabs.Content value={WalletTab.Tokens}>
-                    <WalletTokensTab />
+                    <WalletTokensTab tokens={MOCK_TOKENS_LIST} />
                 </Tabs.Content>
 
                 <Tabs.Content value={WalletTab.Nfts}>

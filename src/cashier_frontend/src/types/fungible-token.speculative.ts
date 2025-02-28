@@ -9,4 +9,5 @@ export type FungibleToken = {
     decimals: number;
     amount: number; // TODO: change to BigNumber,
     usdEquivalent: number | null;
+    usdConversionRate: number | null;
 };

@@ -1,8 +1,13 @@
-import { Eye } from "lucide-react";
+// import { Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
+import { prettyNumber } from "@/utils/helpers/number";
 
-export function WalletHero() {
+interface WalletHeroProps {
+    totalUsdEquivalent: number;
+}
+
+export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
     const { t } = useTranslation();
 
     return (
@@ -12,11 +17,14 @@ export function WalletHero() {
             </h1>
 
             <div className="relative mt-2.5">
-                <span className="text-[32px] font-semibold">$4 321</span>
+                <span className="text-[32px] font-semibold">
+                    ${prettyNumber(totalUsdEquivalent)}
+                </span>
 
-                <button className="absolute ml-2.5 top-1/2 -translate-y-1/2 rounded-full">
+                {/* TODO: future release */}
+                {/* <button className="absolute ml-2.5 top-1/2 -translate-y-1/2 rounded-full">
                     <Eye size={24} className="stroke-grey" />
-                </button>
+                </button> */}
             </div>
 
             <SendReceive />

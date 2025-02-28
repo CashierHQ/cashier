@@ -1,22 +1,13 @@
 import { prettyNumber } from "@/utils/helpers/number";
 import { AssetAvatar } from "../ui/asset-avatar";
 import { useNavigate } from "react-router-dom";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 export interface WalletTokenProps {
-    symbol: string;
-    icon?: string;
-    usdPerUnit?: number;
-    availableAmount: number;
-    availableUsdEquivalent?: number;
+    token: FungibleToken;
 }
 
-export function WalletToken({
-    symbol,
-    icon,
-    usdPerUnit,
-    availableAmount,
-    availableUsdEquivalent,
-}: WalletTokenProps) {
+export function WalletToken({ token }: WalletTokenProps) {
     const navigate = useNavigate();
 
     const navigateToDetailsPage = () => navigate("/wallet/details/mock-details-page");
@@ -24,25 +15,25 @@ export function WalletToken({
     return (
         <article className="flex justify-between" onClick={navigateToDetailsPage}>
             <div className="flex flex-row items-center gap-2 ">
-                <AssetAvatar src={icon} symbol={symbol} className="w-9 h-9" />
+                <AssetAvatar src={token.logo} symbol={token.symbol} className="w-9 h-9" />
 
                 <div className="flex flex-col gap-1.5">
-                    <span className="leading-4">{symbol}</span>
+                    <span className="leading-4">{token.symbol}</span>
 
-                    {usdPerUnit !== undefined && (
+                    {token.usdConversionRate !== null && (
                         <span className="text-grey text-xs leading-none">
-                            ${prettyNumber(usdPerUnit)}
+                            ${prettyNumber(token.usdConversionRate)}
                         </span>
                     )}
                 </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-                <span className="text-right leading-4">{prettyNumber(availableAmount)}</span>
+                <span className="text-right leading-4">{prettyNumber(token.amount)}</span>
 
-                {availableUsdEquivalent && (
+                {token.usdEquivalent !== null && (
                     <span className="text-grey text-right text-xs leading-none">
-                        ${prettyNumber(availableUsdEquivalent)}
+                        ${prettyNumber(token.usdEquivalent)}
                     </span>
                 )}
             </div>

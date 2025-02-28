@@ -4,7 +4,7 @@ import { WalletTabs } from "@/components/wallet/tabs";
 export default function WalletPage() {
     return (
         <div className="flex-grow overflow-auto">
-            <WalletHero />
+            <WalletHero totalUsdEquivalent={42_475.1} />
             <WalletTabs />
         </div>
     );

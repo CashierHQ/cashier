@@ -49,6 +49,7 @@ export const MOCK_TOKEN_DATA: FungibleToken = {
     decimals: 8,
     amount: 60,
     usdEquivalent: 65.33,
+    usdConversionRate: 1.0888,
 };
 
 export const MOCK_TOKENS_LIST: FungibleToken[] = [
@@ -61,6 +62,7 @@ export const MOCK_TOKENS_LIST: FungibleToken[] = [
         decimals: 8,
         amount: 0.5432,
         usdEquivalent: 51_961.31,
+        usdConversionRate: 96_216.2,
     },
     {
         address: "ss2fx-dyaaa-aaaar-qacoq-cai",
@@ -71,6 +73,7 @@ export const MOCK_TOKENS_LIST: FungibleToken[] = [
         decimals: 8,
         amount: 4.46,
         usdEquivalent: 15_986.77,
+        usdConversionRate: 3_584.4,
     },
     {
         address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
@@ -81,6 +84,7 @@ export const MOCK_TOKENS_LIST: FungibleToken[] = [
         decimals: 8,
         amount: 10,
         usdEquivalent: 110,
+        usdConversionRate: 11,
     },
     {
         address: "",
@@ -91,5 +95,6 @@ export const MOCK_TOKENS_LIST: FungibleToken[] = [
         decimals: 8,
         amount: 1,
         usdEquivalent: null,
+        usdConversionRate: null,
     },
 ];
