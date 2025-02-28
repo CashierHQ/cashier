@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -26,49 +28,56 @@ impl Icrc112RequestsExt for Icrc112Requests {
 }
 
 pub struct Icrc112RequestsBuilder {
-    pub requests: Icrc112Requests,
+    pub requests: HashMap<usize, Vec<Icrc112Request>>,
+    pub request_ids: HashMap<usize, Vec<String>>,
 }
+
 impl Icrc112RequestsBuilder {
     pub fn new() -> Self {
-        Self { requests: vec![] }
+        Self {
+            requests: HashMap::new(),
+            request_ids: HashMap::new(),
+        }
     }
 
     pub fn count_requests(&self) -> usize {
         self.requests.len()
     }
 
-    pub fn add_parallel_requests(&mut self, requests: ParallelRequests) -> usize {
-        self.requests.push(requests);
-        self.requests.len() - 1 // Return the index of the newly added group
-    }
-
-    pub fn add_one_request(&mut self, request: Icrc112Request) -> usize {
-        self.requests.push(vec![request]);
-        self.requests.len() - 1 // Return the index of the newly added group
-    }
-
-    pub fn add_to_first_group(&mut self, request: Icrc112Request) {
-        if self.requests.is_empty() {
-            self.requests.push(vec![]);
-        }
-        self.requests[0].push(request);
-    }
-
     pub fn add_request_to_group(
         &mut self,
         group_index: usize,
-        request: Icrc112Request,
-    ) -> Result<(), String> {
-        if group_index < self.requests.len() {
-            self.requests[group_index].push(request);
-            Ok(())
-        } else {
-            Err(format!("Group index {} out of bounds", group_index))
+        request_id: String,
+        icrc_112_request: Icrc112Request,
+    ) {
+        match self.request_ids.get_mut(&group_index) {
+            Some(group) => {
+                group.push(request_id);
+            }
+            None => {
+                self.request_ids.insert(group_index, vec![request_id]);
+            }
+        }
+
+        match self.requests.get_mut(&group_index) {
+            Some(group) => {
+                group.push(icrc_112_request);
+            }
+            None => {
+                self.requests.insert(group_index, vec![icrc_112_request]);
+            }
         }
     }
 
     pub fn build(self) -> Icrc112Requests {
-        self.requests
+        let mut sorted_requests: Vec<(usize, Vec<Icrc112Request>)> =
+            self.requests.into_iter().collect();
+        sorted_requests.sort_by_key(|&(key, _)| key);
+
+        sorted_requests
+            .into_iter()
+            .map(|(_, requests)| requests)
+            .collect()
     }
 }
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
