@@ -20,22 +20,20 @@ export function WalletToken({ token }: WalletTokenProps) {
                 <div className="flex flex-col gap-1.5">
                     <span className="leading-4">{token.symbol}</span>
 
-                    {token.usdConversionRate !== null && (
-                        <span className="text-grey text-xs leading-none">
-                            ${prettyNumber(token.usdConversionRate)}
-                        </span>
-                    )}
+                    <span className="text-grey text-xs leading-none">
+                        {token.usdConversionRate === null
+                            ? "-"
+                            : `$${prettyNumber(token.usdConversionRate)}`}
+                    </span>
                 </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
                 <span className="text-right leading-4">{prettyNumber(token.amount)}</span>
 
-                {token.usdEquivalent !== null && (
-                    <span className="text-grey text-right text-xs leading-none">
-                        ${prettyNumber(token.usdEquivalent)}
-                    </span>
-                )}
+                <span className="text-grey text-right text-xs leading-none">
+                    {token.usdEquivalent === null ? "-" : `$${prettyNumber(token.usdEquivalent)}`}
+                </span>
             </div>
         </article>
     );
