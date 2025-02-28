@@ -16,7 +16,9 @@ use crate::{
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link},
-        transaction_manager::{TransactionManagerService, UpdateActionArgs},
+        transaction_manager::{
+            validate::validate_balance_with_asset_info, TransactionManagerService, UpdateActionArgs,
+        },
     },
     types::{api::PaginateInput, error::CanisterError},
     utils::runtime::RealIcEnvironment,
@@ -187,9 +189,14 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
         let link_id = input.link_id.clone();
         let external = false;
 
-        if services::link::is_link_exist(action_id.clone()) {
-            return Err(CanisterError::HandleApiError("Link not found".to_string()));
-        }
+        let link = services::link::get_link_by_id(link_id.clone())
+            .map_err(|e| CanisterError::HandleApiError(format!("Failed to get link: {:#?}", e)))?;
+
+        let caller = ic_cdk::api::caller();
+
+        validate_balance_with_asset_info(&link.clone(), &caller)
+            .await
+            .map_err(|e| CanisterError::HandleApiError(e))?;
 
         let transaction_manager: TransactionManagerService<RealIcEnvironment> =
             TransactionManagerService::get_instance();
