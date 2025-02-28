@@ -364,7 +364,7 @@ mod tests {
 
         assert_eq!(requests[0][1].nonce, Some(tx_b.id.clone()));
         assert_eq!(requests[0][1].method, "icrc2_approve".to_string());
-        assert_eq!(requests[0][0].canister_id, tx_b.get_asset().address);
+        assert_eq!(requests[0][1].canister_id, tx_b.get_asset().address);
 
         assert_eq!(requests[1][0].nonce, Some(tx_c.id.clone()));
         assert_eq!(requests[1][0].method, "trigger_transaction".to_string());
