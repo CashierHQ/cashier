@@ -327,7 +327,7 @@ mod tests {
 
         let mut tx_d = create_dummy_transaction(TransactionState::Success);
         tx_d.group = 1;
-        let mut tx_e = create_dummy_transaction(TransactionState::Success);
+        let tx_e = create_dummy_transaction(TransactionState::Success);
         tx_d.group = 1;
 
         tx_b.dependency = Some(vec![tx_d.id.clone()]);

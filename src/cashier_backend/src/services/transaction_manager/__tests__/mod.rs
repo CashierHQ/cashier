@@ -13,7 +13,6 @@ pub mod tests {
 
     use std::{collections::HashMap, future::Future, time::Duration};
 
-    use async_trait::async_trait;
     use cashier_types::{
         Action, ActionIntent, ActionState, ActionType, Asset, Chain, FromCallType, IcTransaction,
         Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent, IntentState, IntentTask,
@@ -363,6 +362,81 @@ pub mod tests {
         }
     }
 
+    pub fn create_dummy_tx_protocol_for_tip_link(
+        state: TransactionState,
+        protocol_str: &str,
+        expected_sender: &Wallet,
+        expected_fee_walelt: &Wallet,
+        expected_spender: &Wallet,
+    ) -> Transaction {
+        let mut rng = rand::thread_rng();
+
+        let transfer_asset = Asset {
+            address: generate_token_address().to_text(),
+            chain: Chain::IC,
+        };
+
+        let fee_asset = Asset {
+            address: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai")
+                .unwrap()
+                .to_text(),
+            chain: Chain::IC,
+        };
+
+        let from_wallet = expected_sender;
+
+        let to_wallet = expected_spender;
+
+        let fee_wallet = expected_fee_walelt;
+
+        let spender_wallet = expected_spender;
+
+        let protocol = match protocol_str {
+            "icrc1_transfer" => {
+                let mut icrc1_transfer = Icrc1Transfer::dummy(&mut rng);
+                icrc1_transfer.asset = transfer_asset;
+                icrc1_transfer.from = from_wallet.clone();
+                icrc1_transfer.to = to_wallet.clone();
+                Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer))
+            }
+            "icrc2_approve" => {
+                let mut icrc2_approve = Icrc2Approve::dummy(&mut rng);
+                icrc2_approve.asset = fee_asset;
+                icrc2_approve.from = from_wallet.clone();
+                icrc2_approve.spender = spender_wallet.clone();
+                Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve))
+            }
+            "icrc2_transfer_from" => {
+                let mut icrc2_transfer_from = Icrc2TransferFrom::dummy(&mut rng);
+                icrc2_transfer_from.asset = fee_asset;
+                icrc2_transfer_from.from = from_wallet.clone();
+                icrc2_transfer_from.to = fee_wallet.clone();
+                icrc2_transfer_from.spender = spender_wallet.clone();
+
+                Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from))
+            }
+            _ => Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer::dummy(&mut rng))),
+        };
+
+        let from_call_type = match protocol_str {
+            "icrc1_transfer" => FromCallType::Wallet,
+            "icrc2_approve" => FromCallType::Wallet,
+            "icrc2_transfer_from" => FromCallType::Canister,
+            _ => FromCallType::Wallet,
+        };
+
+        Transaction {
+            id: Uuid::new_v4().to_string(),
+            created_at: generate_timestamp(),
+            state,
+            dependency: None,
+            group: 1,
+            from_call_type,
+            protocol: protocol,
+            start_ts: None,
+        }
+    }
+
     pub fn create_dummy_action(state: ActionState) -> Action {
         let mut rng = rand::thread_rng();
         Action {
@@ -427,7 +501,6 @@ pub mod tests {
     #[faux::create]
     pub struct MockIcEnvironment {
         pub caller: Principal,
-        pub canister_id: Principal,
         pub time: u64,
     }
 
@@ -442,27 +515,24 @@ pub mod tests {
         pub fn new_with_time(ts: u64) -> Self {
             Self {
                 caller: generate_random_principal(),
-                canister_id: generate_random_principal(),
                 time: ts,
             }
         }
     }
 
-    #[async_trait]
     #[faux::methods]
     impl IcEnvironment for MockIcEnvironment {
         fn new() -> Self {
             Self {
                 caller: generate_random_principal(),
-                canister_id: generate_random_principal(),
                 time: generate_timestamp(),
             }
         }
         fn caller(&self) -> Principal {
             self.caller
         }
-        fn canister_id(&self) -> Principal {
-            self.canister_id
+        fn id(&self) -> Principal {
+            Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap()
         }
         fn time(&self) -> u64 {
             self.time
