@@ -524,4 +524,29 @@ mod tests {
         assert_eq!(requests[4][1].nonce, Some(tx_h.id));
         assert_eq!(requests[5][0].nonce, Some(tx_i.id));
     }
+
+    #[test]
+    fn should_able_to_decode_arguments_back() {
+        let (_, _, _, transaction_repository, _) = setup_repositories();
+
+        let action_service = ActionService::faux();
+        let mut ic_env = MockIcEnvironment::faux();
+
+        let action = create_dummy_action(cashier_types::ActionState::Created);
+
+        let canister_id = Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap();
+        let link_id = Uuid::new_v4().to_string();
+
+        let txs = vec![];
+
+        when!(ic_env.id).then_return(canister_id);
+
+        let transaction_service =
+            TransactionService::new(transaction_repository, action_service, ic_env);
+
+        let icrc_112_requests =
+            transaction_service.create_icrc_112(action.id, link_id.clone(), &txs);
+
+        assert!(icrc_112_requests.is_none());
+    }
 }
