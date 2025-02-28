@@ -189,15 +189,6 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
         let link_id = input.link_id.clone();
         let external = false;
 
-        let link = services::link::get_link_by_id(link_id.clone())
-            .map_err(|e| CanisterError::HandleApiError(format!("Failed to get link: {:#?}", e)))?;
-
-        let caller = ic_cdk::api::caller();
-
-        validate_balance_with_asset_info(&link.clone(), &caller)
-            .await
-            .map_err(|e| CanisterError::HandleApiError(e))?;
-
         let transaction_manager: TransactionManagerService<RealIcEnvironment> =
             TransactionManagerService::get_instance();
 
