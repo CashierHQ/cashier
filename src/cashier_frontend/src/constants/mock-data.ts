@@ -50,3 +50,46 @@ export const MOCK_TOKEN_DATA: FungibleToken = {
     amount: 60,
     usdEquivalent: 65.33,
 };
+
+export const MOCK_TOKENS_LIST: FungibleToken[] = [
+    {
+        address: "mxzaz-hqaaa-aaaar-qaada-cai",
+        chain: Chain.IC,
+        name: "Bitcoin",
+        symbol: "ckBTC",
+        logo: `${IC_EXPLORER_IMAGES_PATH}mxzaz-hqaaa-aaaar-qaada-cai`,
+        decimals: 8,
+        amount: 0.5432,
+        usdEquivalent: 51_961.31,
+    },
+    {
+        address: "ss2fx-dyaaa-aaaar-qacoq-cai",
+        chain: Chain.IC,
+        name: "Etherium",
+        symbol: "ckETH",
+        logo: `${IC_EXPLORER_IMAGES_PATH}ss2fx-dyaaa-aaaar-qacoq-cai`,
+        decimals: 8,
+        amount: 4.46,
+        usdEquivalent: 15_986.77,
+    },
+    {
+        address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+        chain: Chain.IC,
+        name: "ICP",
+        symbol: "ICP",
+        logo: `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`,
+        decimals: 8,
+        amount: 10,
+        usdEquivalent: 110,
+    },
+    {
+        address: "",
+        chain: Chain.IC,
+        name: "Solana",
+        symbol: "SOL",
+        logo: "",
+        decimals: 8,
+        amount: 1,
+        usdEquivalent: null,
+    },
+];

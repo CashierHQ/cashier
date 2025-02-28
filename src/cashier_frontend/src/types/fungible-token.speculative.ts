@@ -8,5 +8,5 @@ export type FungibleToken = {
     logo: string;
     decimals: number;
     amount: number; // TODO: change to BigNumber,
-    usdEquivalent: number;
+    usdEquivalent: number | null;
 };
