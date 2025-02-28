@@ -5,10 +5,7 @@ use cashier_types::{AssetInfo, Chain, Link, LinkState, LinkType, Template};
 use crate::{
     core::link::types::{LinkStateMachineAction, LinkStateMachineActionParams, UpdateLinkInput},
     repositories::{self},
-    services::{
-        link::validate_active_link::{is_create_action_exist, is_valid_fields_before_active},
-        transaction_manager::validate::validate_balance_with_asset_info,
-    },
+    services::link::validate_active_link::{is_create_action_exist, is_valid_fields_before_active},
     types::error::CanisterError,
 }; // Import the logger macro
 
@@ -128,8 +125,6 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::Active,
             validate: Some(Box::new(|link: Link| {
                 Box::pin(async move {
-                    let caller = ic_cdk::api::caller();
-                    validate_balance_with_asset_info(&link.clone(), &caller).await?;
                     is_create_action_exist(link.id.clone())?;
                     is_valid_fields_before_active(link.clone())?;
                     Ok(())
