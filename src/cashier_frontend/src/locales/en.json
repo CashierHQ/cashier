@@ -143,10 +143,10 @@
                 }
             },
             "ledgerCanisterId": {
-                "label": "Ledger Canister ID",
+                "label": "Contract address",
                 "error": {
-                    "required": "Ledger Canister ID is required",
-                    "format": "Invalid Ledger Canister ID"
+                    "required": "Contract address is required",
+                    "format": "Invalid contract address"
                 }
             },
             "indexCanisterId": {
