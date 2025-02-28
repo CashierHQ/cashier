@@ -5,6 +5,7 @@ import { mapTransactionTypeToTransactionItemComponent } from "@/utils/map/transa
 import { formatDate } from "@/utils/helpers/datetime";
 import { MoveDownLeft, MoveUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { TransactionRecord } from "@/types/transaction-record.speculative";
 
 export const TransactionHistory = forwardRef<HTMLUListElement, HTMLProps<HTMLUListElement>>(
     ({ className, ...props }, ref) => {
@@ -53,42 +54,42 @@ export const TransactionHistoryItemBase = ({
     );
 };
 
-export function TransactionHistoryItemSend() {
+export function TransactionHistoryItemSend({ record }: { record: TransactionRecord }) {
     const { t } = useTranslation();
 
     return (
         <TransactionHistoryItemBase
             icon={<MoveUpRight size={18} />}
             text={t("history.item.send")}
-            subtext={`${t("history.item.to")}: bc1qvgtcv.....t3c2sa`}
-            amount={`-60`}
-            usdEquivalent={`$65.33`}
+            subtext={`${t("history.item.to")}: ${record.to.address}`}
+            amount={`-${record.amount}`}
+            usdEquivalent={`$${record.usdEquivalent}`}
         />
     );
 }
 
-export function TransactionHistoryItemReceive() {
+export function TransactionHistoryItemReceive({ record }: { record: TransactionRecord }) {
     const { t } = useTranslation();
 
     return (
         <TransactionHistoryItemBase
             icon={<MoveDownLeft size={18} />}
             text={t("history.item.receive")}
-            subtext={`${t("history.item.from")}: bc1qvgtcv.....t3c2sa`}
-            amount={`+60`}
-            usdEquivalent={`$65.33`}
+            subtext={`${t("history.item.from")}: ${record.to.address}`}
+            amount={`+${record.amount}`}
+            usdEquivalent={`$${record.usdEquivalent}`}
         />
     );
 }
 
 export interface TransactionHistoryItemProps extends ComponentProps<"li"> {
-    type: TransactionType;
+    record: TransactionRecord;
 }
 
-export const TransactionHistoryItem = ({ type, ...props }: TransactionHistoryItemProps) => {
-    const C = mapTransactionTypeToTransactionItemComponent(type);
+export const TransactionHistoryItem = ({ record, ...props }: TransactionHistoryItemProps) => {
+    const C = mapTransactionTypeToTransactionItemComponent(record.type);
 
-    return <C {...props} />;
+    return <C record={record} />;
 };
 TransactionHistoryItem.displayName = "TransactionHistoryItem";
 
