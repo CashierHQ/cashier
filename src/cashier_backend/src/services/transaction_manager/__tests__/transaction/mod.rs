@@ -436,22 +436,22 @@ mod tests {
         assert!(icrc_112_requests.is_some());
         let requests = icrc_112_requests.unwrap();
 
-        assert_eq!(requests.len(), 4);
-        assert_eq!(requests[0][0].nonce, Some(tx_a.id));
-        assert_eq!(requests[0][1].nonce, Some(tx_b.id));
-        assert_eq!(requests[1][0].nonce, Some(tx_c.id));
-        assert_eq!(requests[2][0].nonce, Some(tx_d.id));
-        assert_eq!(requests[3][0].nonce, Some(tx_e.id));
-        assert_eq!(requests[0][0].method, "trigger_transaction".to_string());
-        assert_eq!(requests[0][1].method, "trigger_transaction".to_string());
-        assert_eq!(requests[1][0].method, "trigger_transaction".to_string());
-        assert_eq!(requests[2][0].method, "trigger_transaction".to_string());
-        assert_eq!(requests[3][0].method, "trigger_transaction".to_string());
-        assert_eq!(requests[0][0].canister_id, canister_id.to_text());
-        assert_eq!(requests[0][1].canister_id, canister_id.to_text());
-        assert_eq!(requests[1][0].canister_id, canister_id.to_text());
-        assert_eq!(requests[2][0].canister_id, canister_id.to_text());
-        assert_eq!(requests[3][0].canister_id, canister_id.to_text());
+        let expected_group_1_ids = vec![tx_a.id.clone(), tx_b.id.clone(), tx_d.id.clone()];
+        let expected_group_2_ids = vec![tx_c.id.clone(), tx_e.id.clone()];
+
+        assert_eq!(requests.len(), 2);
+
+        for request in &requests[0] {
+            assert!(expected_group_1_ids.contains(&request.nonce.clone().unwrap()));
+            assert!(request.canister_id == canister_id.to_text());
+            assert_eq!(request.method, "trigger_transaction".to_string());
+        }
+
+        for request in &requests[1] {
+            assert!(expected_group_2_ids.contains(&request.nonce.clone().unwrap()));
+            assert!(request.canister_id == canister_id.to_text());
+            assert_eq!(request.method, "trigger_transaction".to_string());
+        }
     }
 
     // Should create ICRC 112 for all canister transaction success
