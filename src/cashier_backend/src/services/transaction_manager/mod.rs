@@ -71,8 +71,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         tx: &mut Transaction,
         state: TransactionState,
     ) -> Result<(), String> {
-        info!("Update tx state: {:#?}", tx);
-        info!("Update tx state to: {:#?}", state);
         self.transaction_service.update_tx_state(tx, state)
     }
 
@@ -224,10 +222,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     }
 
     pub fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
-        let ic_env = self.ic_env.clone();
         let tx_id = tx_id.clone();
 
-        let _time_id = ic_env.set_timer(Duration::from_secs(120), move || {
+        let _time_id = self.ic_env.set_timer(Duration::from_secs(120), move || {
             let ic_env_in_future = RealIcEnvironment::new();
 
             ic_env_in_future.spawn(async move {
