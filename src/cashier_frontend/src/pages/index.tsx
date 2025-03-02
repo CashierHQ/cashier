@@ -25,6 +25,7 @@ import TransactionToast from "@/components/transaction/transaction-toast";
 import { AiOutlineExperiment } from "react-icons/ai";
 import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
+import { Wallet } from "lucide-react";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -247,12 +248,20 @@ export default function HomePage() {
                                     alt="Cashier logo"
                                     className="max-w-[130px]"
                                 />
-                                <div className="ml-auto mr-3">
+                                {/* <div className="ml-auto mr-3">
                                     <ConnectedWalletDropdownIcon
                                         connectedAccount={walletUser.principal.toString()}
                                         disconnect={disconnect}
                                     />
-                                </div>
+                                </div> */}
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="ml-auto rounded-sm mr-3"
+                                    onClick={() => navigate("/wallet")}
+                                >
+                                    <Wallet size={16} />
+                                </Button>
                                 <Button
                                     variant="outline"
                                     size="icon"
@@ -282,7 +291,7 @@ export default function HomePage() {
                                     </button>
                                 </div>
                             )}
-                            <h2 className="text-base font-semibold mb-3 mt-3 mb-5">
+                            <h2 className="text-base font-semibold mt-3 mb-5">
                                 Links created by me
                             </h2>
                             {isLoading
