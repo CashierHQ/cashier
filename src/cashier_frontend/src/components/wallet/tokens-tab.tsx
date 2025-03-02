@@ -1,5 +1,5 @@
 import { WalletToken } from "./token-card";
-import { Link } from "react-router-dom";
+import { Link } from "@/components/ui/link";
 import { useTranslation } from "react-i18next";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 
@@ -15,7 +15,7 @@ export function WalletTokensTab({ tokens }: WalletTokensTab) {
             {tokens.map((token) => (
                 <WalletToken key={token.address} token={token} />
             ))}
-            <Link to={"/wallet/manage"} className="mx-auto whitespace-nowrap text-green">
+            <Link to="/wallet/manage" className="mx-auto whitespace-nowrap">
                 + {t("wallet.tabs.tokens.manage")}
             </Link>
         </div>

@@ -98,3 +98,5 @@ export const MOCK_TOKENS_LIST: FungibleToken[] = [
         usdConversionRate: null,
     },
 ];
+
+export const MOCK_TOTAL_USD_EQUIVALENT = 42_475.1;

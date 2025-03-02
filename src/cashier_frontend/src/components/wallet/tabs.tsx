@@ -4,14 +4,18 @@ import { WalletTokensTab } from "./tokens-tab";
 import Tabs from "@/components/ui/tabs2";
 import { useState } from "react";
 import { Info } from "lucide-react";
-import { MOCK_TOKENS_LIST } from "@/constants/mock-data";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 export enum WalletTab {
     Tokens = "Tokens",
     Nfts = "NFTs",
 }
 
-export function WalletTabs() {
+interface WalletTabsProps {
+    fungibleTokens: FungibleToken[];
+}
+
+export function WalletTabs({ fungibleTokens }: WalletTabsProps) {
     const { t } = useTranslation();
 
     const [tab, setTab] = useState<WalletTab>(WalletTab.Tokens);
@@ -48,7 +52,7 @@ export function WalletTabs() {
                 </Tabs.List>
 
                 <Tabs.Content value={WalletTab.Tokens}>
-                    <WalletTokensTab tokens={MOCK_TOKENS_LIST} />
+                    <WalletTokensTab tokens={fungibleTokens} />
                 </Tabs.Content>
 
                 <Tabs.Content value={WalletTab.Nfts}>

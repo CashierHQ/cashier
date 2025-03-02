@@ -1,11 +1,13 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { BackHeader } from "@/components/ui/back-header";
 import { Search } from "@/components/ui/search";
 import { ManageTokensList } from "@/components/manage-tokens/token-list";
 import { ManageTokensMissingTokenMessage } from "@/components/manage-tokens/missing-token-message";
 import { useTranslation } from "react-i18next";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { MOCK_TOKENS_LIST } from "@/constants/mock-data";
+import { useTokensBySearchQuery } from "@/hooks/manage-tokens.hooks";
+import { Link } from "@/components/ui/link";
 
 export default function ManageTokensPage() {
     const { t } = useTranslation();
@@ -16,15 +18,7 @@ export default function ManageTokensPage() {
     // TODO: add debouncing
     const [searchQuery, setSearchQuery] = useState<string>("");
 
-    const tokens = useMemo(() => {
-        return MOCK_TOKENS_LIST.filter((token) => {
-            const lcSearchQuery = searchQuery.toLocaleLowerCase().trim();
-            const lcName = token.name.toLocaleLowerCase();
-            const lcSymbol = token.symbol.toLocaleLowerCase();
-
-            return lcName.includes(lcSearchQuery) || lcSymbol.includes(lcSearchQuery);
-        });
-    }, [searchQuery]);
+    const tokens = useTokensBySearchQuery(MOCK_TOKENS_LIST, searchQuery);
     const isNoTokens = tokens.length === 0;
 
     return (
@@ -49,7 +43,7 @@ export default function ManageTokensPage() {
                     <ManageTokensList items={tokens} />
                 )}
 
-                <Link to="/wallet/import" className="text-green font-medium mx-auto mt-4">
+                <Link to="/wallet/import" className="mx-auto mt-4">
                     + {t("manage.import")}
                 </Link>
             </div>
