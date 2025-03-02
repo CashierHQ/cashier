@@ -1,7 +1,5 @@
-import i18n from "@/locales/config";
-
 export function formatDate(date: Date) {
-    return date.toLocaleDateString(i18n.language || "en-US", {
+    return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",

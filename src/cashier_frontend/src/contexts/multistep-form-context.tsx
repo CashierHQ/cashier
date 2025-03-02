@@ -1,4 +1,4 @@
-import { clamp } from "@/utils/helpers/clamp";
+import { clamp } from "@/utils/helpers/number/clamp";
 import { createContext, ReactNode, useCallback, useContext, useState } from "react";
 
 export interface MultiStepFormContext {

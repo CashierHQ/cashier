@@ -1,4 +1,4 @@
-import { prettyNumber } from "@/utils/helpers/number";
+import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { AssetAvatar } from "../ui/asset-avatar";
 import { useNavigate } from "react-router-dom";
 import { FungibleToken } from "@/types/fungible-token.speculative";

@@ -2,7 +2,7 @@ import { ComponentProps, forwardRef, HTMLProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { TransactionType } from "@/types/transaction-type";
 import { mapTransactionTypeToTransactionItemComponent } from "@/utils/map/transaction-type.map";
-import { formatDate } from "@/utils/helpers/datetime";
+import { formatDate } from "@/utils/helpers/date/pretty";
 import { MoveDownLeft, MoveUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TransactionRecord } from "@/types/transaction-record.speculative";

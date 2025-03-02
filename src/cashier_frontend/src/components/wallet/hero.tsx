@@ -1,7 +1,7 @@
 // import { Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
-import { prettyNumber } from "@/utils/helpers/number";
+import { prettyNumber } from "@/utils/helpers/number/pretty";
 
 interface WalletHeroProps {
     totalUsdEquivalent: number;

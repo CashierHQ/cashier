@@ -1,4 +1,5 @@
 import History from "@/components/ui/transaction-history";
+import { groupTransactionsByDate } from "@/services/transactionHistoryService/transactionHistoryService";
 import { TransactionRecord } from "@/types/transaction-record.speculative";
 import React from "react";
 
@@ -21,25 +22,4 @@ export function TransactionHistoryList({ items }: TransactionHistoryListProps) {
             ))}
         </History.Root>
     );
-}
-
-export function groupTransactionsByDate(
-    transactions: TransactionRecord[],
-): { date: string; transactions: TransactionRecord[] }[] {
-    const transactionMap = transactions.reduce((acc, transaction) => {
-        const dateKey = new Date(
-            transaction.createdAt.getFullYear(),
-            transaction.createdAt.getMonth(),
-            transaction.createdAt.getDate(),
-        ).toISOString();
-
-        if (!acc.has(dateKey)) {
-            acc.set(dateKey, []);
-        }
-        acc.get(dateKey)!.push(transaction);
-
-        return acc;
-    }, new Map<string, TransactionRecord[]>());
-
-    return Array.from(transactionMap, ([date, transactions]) => ({ date, transactions }));
 }
