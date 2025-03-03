@@ -11,9 +11,17 @@ const importTokenFormSchema = z.object({
         .string()
         .min(1, i18n.t("import.form.ledgerCanisterId.error.required"))
         .regex(CANISTER_ID_REGEX, i18n.t("import.form.ledgerCanisterId.error.format")),
-    indexCanisterId: z.string().refine((val) => val === "" || CANISTER_ID_REGEX.test(val), {
-        message: i18n.t("import.form.indexCanisterId.error.format"),
-    }),
+    indexCanisterId: z.string().refine(
+        (val) => {
+            const isEmpty = val === "";
+            const isCanisterId = CANISTER_ID_REGEX.test(val);
+
+            return isEmpty || isCanisterId;
+        },
+        {
+            message: i18n.t("import.form.indexCanisterId.error.format"),
+        },
+    ),
 });
 export type ImportTokenFormData = z.infer<typeof importTokenFormSchema>;
 
