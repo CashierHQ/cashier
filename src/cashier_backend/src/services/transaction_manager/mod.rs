@@ -142,7 +142,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     }
 
     pub async fn has_dependency(&self, tx_id: String) -> Result<bool, CanisterError> {
-        let tx = self
+        let tx: Transaction = self
             .transaction_service
             .get_tx_by_id(&tx_id)
             .map_err(|e| CanisterError::NotFound(e))?;
@@ -173,7 +173,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     ) -> Result<Option<Icrc112Requests>, CanisterError> {
         Ok(self
             .transaction_service
-            .create_icrc_112(action_id, link_id, client_txs))
+            .create_icrc_112(action_id, link_id, &client_txs))
     }
 
     pub async fn execute_tx_by_id(&self, tx_id: String) -> Result<(), CanisterError> {
@@ -228,7 +228,15 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             let ic_env_in_future = RealIcEnvironment::new();
 
             ic_env_in_future.spawn(async move {
-                let _ = tx_timeout_task(tx_id).await;
+                let res = tx_timeout_task(tx_id).await;
+                match res {
+                    Ok(_) => {
+                        info!("Transaction timeout task executed successfully");
+                    }
+                    Err(e) => {
+                        info!("Transaction timeout task executed with error: {}", e);
+                    }
+                }
             });
         });
         Ok(())
@@ -248,8 +256,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
             let new_state = self.manual_check_status_service.execute(&tx).await?;
-            info!("Tx: {:#?}", tx);
-            info!("New state: {:#?}", new_state);
             if tx.state == new_state.clone() {
                 continue;
             }
@@ -273,17 +279,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             // processing txs - ignores
             if tx.state == TransactionState::Success || tx.state == TransactionState::Processing {
                 eligible = false;
-            } else {
-                match self.has_dependency(tx.id.clone()).await {
-                    Ok(has_dependency) => {
-                        if has_dependency {
-                            eligible = false;
-                        }
-                    }
-                    Err(e) => {
-                        return Err(e);
-                    }
-                }
             }
 
             if eligible {
