@@ -81,7 +81,7 @@ describe("Timeout Link", () => {
     });
 
     beforeEach(async () => {
-        await pic.advanceTime(5 * 60 * 1000);
+        await pic.advanceTime(6 * 60 * 1000);
         await pic.tick(50);
     });
 

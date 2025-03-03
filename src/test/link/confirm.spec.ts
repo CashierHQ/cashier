@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     CreateLinkInput,
     UserDto,
@@ -22,6 +23,7 @@ import {
 } from "../../declarations/icp_ledger_canister/icp_ledger_canister.did";
 import { Account } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
+import { flattenAndFindByMethod } from "../utils/icrc-112";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -33,6 +35,7 @@ const executeICRC_112 = async ({
     action_id,
     spender_pid,
     actor,
+    trigger_tx_id,
 }: {
     icrc_112_requests: Icrc112Request[][];
     token_helper: TokenHelper;
@@ -41,6 +44,7 @@ const executeICRC_112 = async ({
     action_id: string;
     spender_pid: Principal;
     actor: Actor<_SERVICE>;
+    trigger_tx_id: string;
 }) => {
     // mimic the icrc-112 request
 
@@ -54,8 +58,6 @@ const executeICRC_112 = async ({
                         owner: spender_pid,
                         subaccount: [linkIdToSubaccount(link_id)],
                     };
-
-                    console.log("link_vault", link_vault);
 
                     const transfer_arg: TransferArg = {
                         to: link_vault,
@@ -83,19 +85,22 @@ const executeICRC_112 = async ({
                         },
                     };
 
+                    console.log("spender_pid", spender_pid.toText());
+                    console.log("user", identity.getPrincipal().toText());
+
                     const approve_res = await token_helper.approve(approve_args);
                     console.log("approve_res", safeParseJSON(approve_res));
 
                     break;
-                case "update_action":
+                case "trigger_transaction":
                     actor.setIdentity(identity);
-                    const res_update_action = await actor.update_action({
+                    const res_update_action = await actor.trigger_transaction({
                         action_id: action_id,
                         link_id: link_id,
-                        external: true,
+                        transaction_id: trigger_tx_id,
                     });
-
                     console.log("update_action", safeParseJSON(res_update_action));
+
                     break;
                 default:
                     console.log("method not found");
@@ -175,7 +180,7 @@ describe("Link", () => {
     });
 
     beforeEach(async () => {
-        await pic.advanceTime(5 * 60 * 1000);
+        await pic.advanceTime(1 * 60 * 1000);
         await pic.tick(50);
     });
 
@@ -322,6 +327,12 @@ describe("Link", () => {
     // In product, after confirm, it should use icrc-112, but PicJs does not support http agent call yet
     // This is is mimic the icrc-112 call not the actual call
     it("should be success after executing the icrc-112 request", async () => {
+        const trigger_tx_method = flattenAndFindByMethod(icrc_112_requests, "trigger_transaction");
+
+        if (!trigger_tx_method || !trigger_tx_method.nonce[0]) {
+            throw new Error("trigger_transaction method not found");
+        }
+
         await executeICRC_112({
             icrc_112_requests,
             token_helper,
@@ -330,7 +341,15 @@ describe("Link", () => {
             action_id: createLinkActionId,
             spender_pid: Principal.fromText(canister_id),
             actor,
+            trigger_tx_id: trigger_tx_method.nonce[0]!,
         });
+
+        await actor.update_action({
+            action_id: createLinkActionId,
+            link_id: linkId,
+            external: true,
+        });
+
         const input: GetLinkOptions = {
             action_type: "CreateLink",
         };
