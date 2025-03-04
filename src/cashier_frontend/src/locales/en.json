@@ -35,6 +35,7 @@
     "login": "Login",
     "processing": "Processing...",
     "retry": "Retry",
+    "optional": "Optional",
     "home": {
         "guide": {
             "header": "Cashier links",
@@ -105,5 +106,85 @@
             "When an asset is sent to the link, network fee is charged. The amount may depends on the blockchain.",
             "When an asset is received from the link, network fee is charged. Cashier preemptively collects these network fees from the link creator, so that the receiver does not have to pay a network fee to receive assets from the link."
         ]
+    },
+    "wallet": {
+        "details": {
+            "header": "Wallet Balance",
+            "send": "Send",
+            "receive": "Receive"
+        },
+        "tabs": {
+            "tokens": {
+                "header": "Tokens",
+                "manage": "Manage tokens"
+            },
+            "nfts": {
+                "header": "NFTs"
+            }
+        },
+        "banner": {
+            "title": "NFT Coming soon!",
+            "text": "Included in Release 3"
+        }
+    },
+    "manage": {
+        "header": "Manage tokens",
+        "search": {
+            "placeholder": "Search a token"
+        },
+        "import": "Import token",
+        "missing": "Missing a token?"
+    },
+    "import": {
+        "header": "Import token",
+        "form": {
+            "message1": "Ledger and Index canister IDs are on the project's website.",
+            "message2": "The Index canister ID is optional, but without it, Cashier can't display transactions.",
+            "chain": {
+                "label": "Network",
+                "placeholder": "Select a network",
+                "error": {
+                    "required": "Network is required"
+                }
+            },
+            "ledgerCanisterId": {
+                "label": "Contract address",
+                "error": {
+                    "required": "Contract address is required",
+                    "format": "Invalid contract address"
+                }
+            },
+            "indexCanisterId": {
+                "label": "Index Canister ID",
+                "error": {
+                    "format": "Invalid Index Canister ID"
+                }
+            }
+        }
+    },
+    "review": {
+        "header": "Review",
+        "token": "Token",
+        "import": "Import",
+        "message": "Make sure you trust the token you are adding. If the token you are adding is controlled by a malicious party, they could try and scam you e.g., by making you believe you received a significant amount of tokens in order to trick you into sending them tokens in return or perform other undesired actions. Learn more about scams and security risks e.g. here."
+    },
+    "history": {
+        "hero": {
+            "about": "About",
+            "tokenName": "Token Name",
+            "chain": "Network",
+            "contract": "Contract"
+        },
+        "list": {
+            "noData": "Transaction will appear here",
+            "cannotFind": "Cannot find?",
+            "checkExplorer": "Check explorer"
+        },
+        "item": {
+            "receive": "Received",
+            "from": "From",
+            "send": "Sent",
+            "to": "To"
+        }
     }
 }
