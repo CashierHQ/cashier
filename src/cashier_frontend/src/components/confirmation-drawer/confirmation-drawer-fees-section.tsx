@@ -1,6 +1,5 @@
 import { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TransactionItem } from "@/components/transaction/transaction-item";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IntentHelperService } from "@/services/fee.service";
@@ -36,19 +35,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
             <div className="flex flex-col gap-3 rounded-lg p-4 bg-lightgreen">
-                {/* {intents.map((intent) => {
-                    return (
-                        <TransactionItem
-                            key={intent.id}
-                            title={t("transaction.confirm_popup.link_creation_fee_label")}
-                            intent={intent}
-                            isUsd={isUsd}
-                        />
-                    );
-                })}
-
-                <hr className="border border-white" /> */}
-
                 <div className="flex justify-between text-lg">
                     <h4>{t("transaction.confirm_popup.total_cashier_fees_label")}</h4>
 

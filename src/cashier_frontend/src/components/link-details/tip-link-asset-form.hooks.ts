@@ -3,7 +3,7 @@ import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import CanisterUtilsService from "@/services/canisterUtils.service";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { AssetSelectItem } from "@/components/asset-select";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { mapAPITokenModelToAssetSelectModel } from "@/services/icExplorer.service";

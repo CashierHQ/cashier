@@ -20,7 +20,6 @@ import { RiMenu2Line } from "react-icons/ri";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import AppSidebar from "@/components/app-sidebar";
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
-import ConnectedWalletDropdownIcon from "@/components/connected-wallet-icon";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { AiOutlineExperiment } from "react-icons/ai";
 import { TestForm } from "@/components/test-form/test-form";
@@ -31,7 +30,7 @@ import { Wallet } from "lucide-react";
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const { connect, user: walletUser, disconnect } = useAuth();
+    const { connect, user: walletUser } = useAuth();
     const [newAppUser, setNewAppUser] = useState<UserDto>();
     const {
         data: appUser,

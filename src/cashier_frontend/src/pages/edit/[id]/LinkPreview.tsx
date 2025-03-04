@@ -3,7 +3,6 @@ import { useCashierFeeIntents } from "@/components/confirmation-drawer/confirmat
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import LinkCard from "@/components/link-card";
 import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-preview-cashier-fee-section";
-import { Button } from "@/components/ui/button";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
 
