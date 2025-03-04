@@ -14,7 +14,7 @@ import { ACTION_STATE, LINK_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { Spinner } from "@/components/ui/spinner";
-import { useIdentity } from "@nfid/identitykit/react";
+import { useAuth, useIdentity, useIdentityKit } from "@nfid/identitykit/react";
 import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -34,7 +34,7 @@ function getInitialStep(state: string | undefined) {
 
 export default function LinkPage() {
     const navigate = useNavigate();
-    const identity = useIdentity();
+    const user = useAuth();
 
     const { t } = useTranslation();
     const { linkId } = useParams();
@@ -117,7 +117,9 @@ export default function LinkPage() {
         }
     };
 
-    if (!linkId || !identity) {
+    if (!linkId || !user) {
+        console.log(linkId);
+        console.log(user);
         return <Navigate to={"/"} />;
     }
 

@@ -25,6 +25,7 @@ import TransactionToast from "@/components/transaction/transaction-toast";
 import { AiOutlineExperiment } from "react-icons/ai";
 import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
+import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -51,6 +52,7 @@ export default function HomePage() {
         enabled: !!appUser,
     });
     const queryClient = useQueryClient();
+    useUserAssets();
     const { isPending } = useUpdateLink(queryClient, identity);
 
     const [showGuide, setShowGuide] = useState(false);

@@ -18,7 +18,7 @@ import { SelectedAssetButtonInfo } from "./selected-asset-button-info";
 import { UsdSwitch } from "./usd-switch";
 import {
     useSelectedAsset,
-    useAssets,
+    useUserAssets,
     TipLinkAssetFormSchema,
     useFormActions,
 } from "./tip-link-asset-form.hooks";
@@ -40,9 +40,9 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [isUsd, setIsUsd] = useState<boolean>(false);
 
-    const { isLoadingAssets, isLoadingBalance, assets } = useAssets();
+    const { isLoadingAssets, isLoadingBalance, assets } = useUserAssets();
 
-    const form = useTipLinkAssetForm(assets, {
+    const form = useTipLinkAssetForm(assets ?? [], {
         tokenAddress: defaultValues?.tokenAddress ?? "",
         amount: BigInt(0),
         assetNumber: 0,
