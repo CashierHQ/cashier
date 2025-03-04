@@ -77,17 +77,26 @@ export default function HomePage() {
     };
 
     const handleCreateLink = async () => {
-        try {
-            setDisableCreateButton(true);
-            showToast(t("common.creating"), t("common.creatingLink"), "default");
-            const response = await new LinkService(identity).createLink({
-                link_type: LINK_TYPE.TIP_LINK,
-            });
-            navigate(`/edit/${response}`);
-        } catch {
-            showToast(t("common.error"), t("common.commonErrorMessage"), "error");
-        } finally {
-            setDisableCreateButton(true);
+        if (linkData) {
+            const linkList = Object.values(linkData).flat();
+            const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
+            if (newLink) {
+                navigate(`/edit/${newLink.id}`);
+                console.log("true");
+            }
+        } else {
+            try {
+                setDisableCreateButton(true);
+                showToast(t("common.creating"), t("common.creatingLink"), "default");
+                const response = await new LinkService(identity).createLink({
+                    link_type: LINK_TYPE.TIP_LINK,
+                });
+                navigate(`/edit/${response}`);
+            } catch {
+                showToast(t("common.error"), t("common.commonErrorMessage"), "error");
+            } finally {
+                setDisableCreateButton(true);
+            }
         }
     };
 

@@ -42,7 +42,7 @@ export default function LinkTemplate({
 
     const carousel = useCarousel();
 
-    const form = useLinkTemplateForm();
+    const form = useLinkTemplateForm({ title: link?.title || "" });
 
     useBindFormAndCarousel(form, carousel, updateLink);
 
