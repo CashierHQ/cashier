@@ -19,10 +19,11 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
         return null;
     }
     return (
-        <>
+        <div className="my-5">
             <div className="flex justify-between items-center">
-                <h2 className="font-medium ml-2">{t("link.preview.fees.label")}</h2>
-
+                <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
+                    {t("link.preview.fees.label")}
+                </h2>
                 <Info className="text-green" size={16} onClick={onInfoClick} />
             </div>
 
@@ -35,6 +36,6 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
             </ul>
 
             <LinkPreviewCashierFeeTotal intents={intents} />
-        </>
+        </div>
     );
 };

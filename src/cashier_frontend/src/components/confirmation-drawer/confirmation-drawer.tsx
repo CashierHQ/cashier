@@ -21,6 +21,8 @@ import {
     useUpdateAction,
 } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
+import { ConfirmationPopupTerms } from "./confirmation-drawer-confirm-terms";
+import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -128,7 +130,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         />
 
                         <ConfirmationPopupFeesSection intents={cashierFeeIntents} isUsd={isUsd} />
-
+                        <ConfirmationPopupLegalSection />
                         <Button disabled={isDisabled} onClick={onClickSubmit}>
                             {buttonText}
                         </Button>

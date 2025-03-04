@@ -36,7 +36,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
             <div className="flex flex-col gap-3 rounded-lg p-4 bg-lightgreen">
-                {intents.map((intent) => {
+                {/* {intents.map((intent) => {
                     return (
                         <TransactionItem
                             key={intent.id}
@@ -47,7 +47,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     );
                 })}
 
-                <hr className="border border-white" />
+                <hr className="border border-white" /> */}
 
                 <div className="flex justify-between text-lg">
                     <h4>{t("transaction.confirm_popup.total_cashier_fees_label")}</h4>

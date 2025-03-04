@@ -14,7 +14,11 @@
         "amount": "Amount",
         "defaultTemplate": "Default template",
         "asset": "Asset",
-        "linkType": "Link Type"
+        "linkType": "Link Type",
+        "preview": "Preview"
+    },
+    "details": {
+        "linkInfo": "Link info"
     },
     "claim": {
         "claim": "Claim",

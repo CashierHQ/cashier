@@ -22,6 +22,7 @@ import { LINK_TYPE } from "@/services/types/enum";
 import { useSetLinkTemplate } from "@/hooks/linkHooks";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
+import { useButtonState } from "@/hooks/useButtonState";
 
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
@@ -39,6 +40,7 @@ export default function LinkTemplate({
 
     const { link, setLink, updateLink } = useCreateLinkStore();
     const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
+    const { isButtonDisabled, setButtonDisabled } = useButtonState();
 
     const carousel = useCarousel();
 
@@ -47,6 +49,7 @@ export default function LinkTemplate({
     useBindFormAndCarousel(form, carousel, updateLink);
 
     const handleSubmit = form.handleSubmit(async (data) => {
+        setButtonDisabled(true);
         if (isLinkTypeSupported(data.linkType as LINK_TYPE)) {
             const updatedLink = await setLinkTemplate({
                 link: link!,
@@ -62,6 +65,7 @@ export default function LinkTemplate({
         } else {
             onSelectUnsupportedLinkType();
         }
+        setButtonDisabled(false);
     });
 
     return (
@@ -87,7 +91,7 @@ export default function LinkTemplate({
 
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
                     <FormLabel className="mb-3">{t("create.linkType")}</FormLabel>
-                    <div className="flex flex-grow flex-col justify-center items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
+                    <div className="flex flex-grow flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
                         <Carousel className="items-center" setApi={carousel.setApi}>
                             <CarouselContent>
                                 {LINK_TEMPLATES.map((template, index) => (
@@ -105,7 +109,7 @@ export default function LinkTemplate({
                         </Carousel>
                     </div>
 
-                    <Button type="submit" className="my-3">
+                    <Button type="submit" className="my-3" disabled={isButtonDisabled}>
                         {t("continue")}
                     </Button>
                 </form>

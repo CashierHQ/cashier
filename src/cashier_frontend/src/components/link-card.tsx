@@ -27,21 +27,21 @@ export default function LinkCard({
                 </span>
             );
         } else {
-            return <span>{header}</span>;
+            return <h2>{header}</h2>;
         }
     };
 
     return (
-        <div className="flex flex-col flex-grow justify-center items-center">
-            <div className="text-md md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
+        <div className="flex flex-col flex-grow items-center">
+            <div className="text-lg md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
                 {renderHeaderTitle()}
             </div>
 
-            <Phone.Frame className="min-h-[300px] lg:min-h-[250px] max-h-[50dvh] lg:min-w-[calc(250px*(9/16))] max-w-[calc(50dvh*(9/16))] lg:max-w-[calc(35dvh*(9/16))]">
+            <Phone.Frame className="min-h-[300px] lg:min-h-[250px] max-h-[50dvh] lg:min-w-[calc(350px*(9/16))] max-w-[calc(50dvh*(9/16))] lg:max-w-[calc(35dvh*(9/16))]">
                 <Phone.Notch />
 
                 <div className="w-full flex justify-center items-center mt-3 md:mt-1 2xl:mt-3">
-                    <img src="./logo.svg" alt="Cashier logo" className="w-[60px] 2xl:w-[100px]" />
+                    <img src="./logo.svg" alt="Cashier logo" className="w-[80px] 2xl:w-[100px]" />
                 </div>
 
                 <div className="flex flex-col flex-grow items-center justify-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 w-full">
@@ -49,7 +49,7 @@ export default function LinkCard({
                         <img
                             src={src}
                             alt="Link template"
-                            className="w-[120px] md:w-[60px] xl:w-[60px] 2xl:w-[80px] object-fit"
+                            className="w-[70px] md:w-[60px] xl:w-[60px] 2xl:w-[80px] object-fit"
                         />
                     </div>
 

@@ -13,6 +13,7 @@ import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { useCreateAction } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -95,7 +96,10 @@ export default function LinkPreview({
     };
 
     return (
-        <div className="w-full flex flex-col flex-grow">
+        <div className="w-full flex flex-col">
+            <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
+                {t("create.preview")}
+            </h2>
             {renderLinkCard()}
 
             <LinkPreviewCashierFeeSection
@@ -103,9 +107,19 @@ export default function LinkPreview({
                 onInfoClick={() => setShowInfo(true)}
             />
 
-            <Button disabled={isDisabled} onClick={handleSubmit} className="my-3">
+            <FixedBottomButton
+                type="submit"
+                variant="default"
+                size="lg"
+                onClick={handleSubmit}
+                disabled={isDisabled}
+            >
                 {isDisabled ? t("processing") : t("create.create")}
-            </Button>
+            </FixedBottomButton>
+
+            {/* <Button disabled={isDisabled} onClick={handleSubmit} className="my-3">
+                {isDisabled ? t("processing") : t("create.create")}
+            </Button> */}
 
             <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 

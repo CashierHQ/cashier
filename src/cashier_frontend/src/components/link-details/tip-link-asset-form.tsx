@@ -29,12 +29,17 @@ import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 type TipLinkAssetFormProps = {
     defaultValues?: DefaultValues<TipLinkAssetFormSchema>;
     onSubmit: SubmitHandler<TipLinkAssetFormSchema>;
+    isButtonDisabled?: boolean;
 };
 
 const USD_AMOUNT_PRESETS = [1, 2, 5, 10];
 const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 75, 100];
 
-export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultValues }) => {
+export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
+    onSubmit,
+    defaultValues,
+    isButtonDisabled,
+}) => {
     const { t } = useTranslation();
 
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
@@ -209,6 +214,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                                 variant="default"
                                 size="lg"
                                 onClick={() => console.log(form.formState.errors)}
+                                disabled={isButtonDisabled}
                             >
                                 {t("continue")}
                             </FixedBottomButton>
@@ -220,7 +226,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, defaultV
                         open={showAssetDrawer}
                         handleClose={() => setShowAssetDrawer(false)}
                         handleChange={handleSetTokenAddress}
-                        assetList={assets}
+                        assetList={assets ?? []}
                         isLoadingBalance={isLoadingBalance}
                     />
                 </>

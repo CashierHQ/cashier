@@ -82,7 +82,6 @@ export default function HomePage() {
             const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
             if (newLink) {
                 navigate(`/edit/${newLink.id}`);
-                console.log("true");
             }
         } else {
             try {
