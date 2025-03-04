@@ -86,7 +86,7 @@ export default function LinkTemplate({
                     />
 
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
-
+                    <FormLabel className="mb-3">{t("create.linkType")}</FormLabel>
                     <div className="flex flex-grow flex-col justify-center items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
                         <Carousel className="items-center" setApi={carousel.setApi}>
                             <CarouselContent>

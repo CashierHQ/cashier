@@ -13,7 +13,8 @@
         "chain": "Chain",
         "amount": "Amount",
         "defaultTemplate": "Default template",
-        "asset": "Asset"
+        "asset": "Asset",
+        "linkType": "Link Type"
     },
     "claim": {
         "claim": "Claim",

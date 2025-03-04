@@ -49,12 +49,12 @@ export default function LinkCard({
                         <img
                             src={src}
                             alt="Link template"
-                            className="w-[200px] md:w-[60px] xl:w-[60px] 2xl:w-[80px] object-fit"
+                            className="w-[120px] md:w-[60px] xl:w-[60px] 2xl:w-[80px] object-fit"
                         />
                     </div>
 
                     <h3 className="font-semibold py-2 md:py-1 2xl:py-2 text-xs">{title}</h3>
-                    <h3 className="text-[0.4rem]">{message}</h3>
+                    <h3 className="text-[0.5rem]">{message}</h3>
                     <div
                         className="text-white bg-green rounded-full py-1 mt-3 text-[0.5rem] md:text-[0.5rem] 2xl:text-[1rem] w-[90%] text-center"
                         onClick={onClaim}
