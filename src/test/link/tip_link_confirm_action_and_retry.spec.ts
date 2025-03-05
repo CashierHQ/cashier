@@ -258,12 +258,6 @@ describe("Link", () => {
 
         await execute_helper.executeIcrc1Transfer();
 
-        // await actor.update_action({
-        //     action_id: createLinkActionId,
-        //     link_id: linkId,
-        //     external: true,
-        // });
-
         // simulate time pass 5 minutes
         await pic.advanceTime(5 * 60 * 1000);
         await pic.tick(50);
@@ -276,8 +270,6 @@ describe("Link", () => {
         const res = parseResultResponse(getActionRes);
 
         const actionDto = res.action[0]!;
-
-        console.log("getActionRes", safeParseJSON(res as any));
 
         expect(res.link.id).toEqual(linkId);
         expect(actionDto.state).toEqual("Action_state_fail");
@@ -303,6 +295,8 @@ describe("Link", () => {
 
         icrc_112_requests = actionDto.icrc_112_requests[0]!;
 
+        console.log("icrc_request", JSON.stringify(icrc_112_requests, null, 2));
+
         expect(actionDto.id).toEqual(createLinkActionId);
         expect(actionDto.state).toEqual("Action_state_processing");
         const expected_states = ["Intent_state_processing", "Intent_state_success"];
@@ -310,7 +304,60 @@ describe("Link", () => {
         const actual_states = actionDto.intents.map((intent) => intent.state);
         actual_states.sort();
         expect(actual_states).toEqual(expected_states);
-        expect(icrc_112_requests).toHaveLength(1);
+        expect(icrc_112_requests).toHaveLength(2);
+        expect(icrc_112_requests[0]).toHaveLength(1);
+        expect(icrc_112_requests[1]).toHaveLength(1);
+    });
+
+    // In product, after confirm, it should use icrc-112, but PicJs does not support http agent call yet
+    // This is is mimic the icrc-112 call not the actual call
+    it("should be success after retry icrc2_approve", async () => {
+        const trigger_tx_method = flattenAndFindByMethod(icrc_112_requests, "trigger_transaction");
+
+        if (!trigger_tx_method || !trigger_tx_method.nonce[0]) {
+            throw new Error("trigger_transaction method not found");
+        }
+
+        const execute_helper = new Icrc112Executor(
+            icrc_112_requests,
+            token_helper,
+            alice,
+            linkId,
+            createLinkActionId,
+            Principal.fromText(canister_id),
+            actor,
+            trigger_tx_method.nonce[0]!,
+        );
+
+        await execute_helper.executeIcrc2Approve();
+        await execute_helper.triggerTransaction();
+
+        await actor.update_action({
+            action_id: createLinkActionId,
+            link_id: linkId,
+            external: true,
+        });
+
+        const input: GetLinkOptions = {
+            action_type: "CreateLink",
+        };
+
+        const getActionRes = await actor.get_link(linkId, [input]);
+        const res = parseResultResponse(getActionRes);
+
+        const actionDto = res.action[0]!;
+
+        console.log("getActionRes", safeParseJSON(res as any));
+
+        expect(res.link.id).toEqual(linkId);
+        expect(actionDto.state).toEqual("Action_state_success");
+        expect(actionDto.intents).toHaveLength(2);
+
+        const expected_states = ["Intent_state_success", "Intent_state_success"];
+        expected_states.sort();
+        const actual_states = actionDto.intents.map((intent) => intent.state);
+        actual_states.sort();
+        expect(actual_states).toEqual(expected_states);
     });
 });
 //
