@@ -78,13 +78,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         self.transaction_service.update_tx_state(tx, state)
     }
 
-    pub async fn manual_check_status(
-        &self,
-        transaction: &Transaction,
-    ) -> Result<TransactionState, CanisterError> {
-        self.manual_check_status_service.execute(transaction).await
-    }
-
     fn _is_group_has_dependency(&self, transaction: &Transaction) -> Result<bool, CanisterError> {
         let action = self
             .action_service
@@ -215,21 +208,14 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .get_tx_by_id(&tx_id)
             .map_err(|e| CanisterError::NotFound(e))?;
 
-        self.execute_tx(&mut tx).await
+        self.execute_canister_tx(&mut tx).await
     }
 
-    pub async fn execute_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
-        self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
-            CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {}", e))
-        })?;
-        self.update_tx_state(tx, TransactionState::Processing)
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
-            })?;
-
+    pub async fn execute_canister_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
         if tx.from_call_type == cashier_types::FromCallType::Canister {
             // the tx should not have any dependencies
-            if self._is_all_depdendency_success(&tx, false)? {
+            let is_all_dependencies_success = self._is_all_depdendency_success(&tx, true)?;
+            if is_all_dependencies_success {
                 // right now only handle transfer from
                 match self.execute_transaction_service.execute(tx).await {
                     Ok(_) => {
@@ -241,8 +227,15 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                     e
                                 ))
                             })?;
+                        let action_resp = self
+                            .action_service
+                            .get_action_by_tx_id(tx.id.clone())
+                            .map_err(|e| CanisterError::NotFound(e))?;
+
+                        info!("after update action_resp {:#?}", action_resp);
                     }
                     Err(_) => {
+                        info!("Transaction executed with error");
                         self.update_tx_state(tx, TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -253,7 +246,24 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                     }
                 }
             }
+        } else {
+            return Err(CanisterError::HandleLogicError(
+                "Invalid from_call_type".to_string(),
+            ));
         }
+
+        return Ok(());
+    }
+
+    pub async fn execute_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
+        self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+            CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {}", e))
+        })?;
+        self.update_tx_state(tx, TransactionState::Processing)
+            .map_err(|e| {
+                CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+            })?;
+
         Ok(())
     }
 
@@ -339,7 +349,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             }
         }
 
-        let eligible_txs: Vec<Transaction> = eligible_txs;
         let caller = Account {
             owner: self.ic_env.caller(),
             subaccount: None,
