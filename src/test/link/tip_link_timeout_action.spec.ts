@@ -213,6 +213,8 @@ describe("Timeout Link", () => {
         const confirmRes = await actor.process_action(input);
         const actionDto = parseResultResponse(confirmRes);
 
+        console.log("actionDto", actionDto);
+
         expect(actionDto.id).toEqual(createLinkActionId);
         expect(actionDto.state).toEqual("Action_state_processing");
 

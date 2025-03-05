@@ -15,99 +15,11 @@ import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { TokenHelper } from "../utils/token-helper";
-import { Identity } from "@dfinity/agent";
-import { linkIdToSubaccount } from "../utils";
-import {
-    ApproveArgs,
-    TransferArg,
-} from "../../declarations/icp_ledger_canister/icp_ledger_canister.did";
-import { Account } from "@dfinity/ledger-icp";
+
 import { Principal } from "@dfinity/principal";
-import { flattenAndFindByMethod } from "../utils/icrc-112";
+import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
-
-const executeICRC_112 = async ({
-    icrc_112_requests,
-    token_helper,
-    identity,
-    link_id,
-    action_id,
-    spender_pid,
-    actor,
-    trigger_tx_id,
-}: {
-    icrc_112_requests: Icrc112Request[][];
-    token_helper: TokenHelper;
-    identity: Identity;
-    link_id: string;
-    action_id: string;
-    spender_pid: Principal;
-    actor: Actor<_SERVICE>;
-    trigger_tx_id: string;
-}) => {
-    // mimic the icrc-112 request
-
-    for (const row of icrc_112_requests) {
-        for (const request of row) {
-            token_helper.with_identity(identity);
-
-            switch (request.method) {
-                case "icrc1_transfer":
-                    const link_vault: Account = {
-                        owner: spender_pid,
-                        subaccount: [linkIdToSubaccount(link_id)],
-                    };
-
-                    const transfer_arg: TransferArg = {
-                        to: link_vault,
-                        fee: [],
-                        memo: [],
-                        from_subaccount: [],
-                        created_at_time: [],
-                        amount: BigInt(10_0000_0000),
-                    };
-                    const transfer_res = await token_helper.transfer(transfer_arg);
-                    console.log("icrc1_transfer", safeParseJSON(transfer_res));
-                    break;
-                case "icrc2_approve":
-                    const approve_args: ApproveArgs = {
-                        fee: [],
-                        memo: [],
-                        from_subaccount: [],
-                        created_at_time: [],
-                        amount: BigInt(10_0000_0000),
-                        expected_allowance: [],
-                        expires_at: [],
-                        spender: {
-                            owner: spender_pid,
-                            subaccount: [],
-                        },
-                    };
-
-                    console.log("spender_pid", spender_pid.toText());
-                    console.log("user", identity.getPrincipal().toText());
-
-                    const approve_res = await token_helper.approve(approve_args);
-                    console.log("approve_res", safeParseJSON(approve_res));
-
-                    break;
-                case "trigger_transaction":
-                    actor.setIdentity(identity);
-                    const res_update_action = await actor.trigger_transaction({
-                        action_id: action_id,
-                        link_id: link_id,
-                        transaction_id: trigger_tx_id,
-                    });
-                    console.log("update_action", safeParseJSON(res_update_action));
-
-                    break;
-                default:
-                    console.log("method not found");
-            }
-        }
-    }
-};
 
 describe("Link", () => {
     let pic: PocketIc;
@@ -326,29 +238,35 @@ describe("Link", () => {
 
     // In product, after confirm, it should use icrc-112, but PicJs does not support http agent call yet
     // This is is mimic the icrc-112 call not the actual call
-    it("should be success after executing the icrc-112 request", async () => {
+    it("should be fail after only execute icrc1_transfer", async () => {
         const trigger_tx_method = flattenAndFindByMethod(icrc_112_requests, "trigger_transaction");
 
         if (!trigger_tx_method || !trigger_tx_method.nonce[0]) {
             throw new Error("trigger_transaction method not found");
         }
 
-        await executeICRC_112({
+        const execute_helper = new Icrc112Executor(
             icrc_112_requests,
             token_helper,
-            identity: alice,
-            link_id: linkId,
-            action_id: createLinkActionId,
-            spender_pid: Principal.fromText(canister_id),
+            alice,
+            linkId,
+            createLinkActionId,
+            Principal.fromText(canister_id),
             actor,
-            trigger_tx_id: trigger_tx_method.nonce[0]!,
-        });
+            trigger_tx_method.nonce[0]!,
+        );
 
-        await actor.update_action({
-            action_id: createLinkActionId,
-            link_id: linkId,
-            external: true,
-        });
+        await execute_helper.executeIcrc1Transfer();
+
+        // await actor.update_action({
+        //     action_id: createLinkActionId,
+        //     link_id: linkId,
+        //     external: true,
+        // });
+
+        // simulate time pass 5 minutes
+        await pic.advanceTime(5 * 60 * 1000);
+        await pic.tick(50);
 
         const input: GetLinkOptions = {
             action_type: "CreateLink",
@@ -359,15 +277,40 @@ describe("Link", () => {
 
         const actionDto = res.action[0]!;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         console.log("getActionRes", safeParseJSON(res as any));
 
         expect(res.link.id).toEqual(linkId);
-        expect(actionDto.state).toEqual("Action_state_success");
+        expect(actionDto.state).toEqual("Action_state_fail");
+        expect(actionDto.intents).toHaveLength(2);
 
-        actionDto.intents.forEach((intent: IntentDto) => {
-            expect(intent.state).toEqual("Intent_state_success");
-        });
+        const expected_states = ["Intent_state_fail", "Intent_state_success"];
+        expected_states.sort();
+        const actual_states = actionDto.intents.map((intent) => intent.state);
+        actual_states.sort();
+        expect(actual_states).toEqual(expected_states);
+    });
+
+    it("should retry icrc2_approve to Processing", async () => {
+        const input: ProcessActionInput = {
+            link_id: linkId,
+            action_id: createLinkActionId,
+            action_type: "CreateLink",
+            params: [],
+        };
+
+        const confirmRes = await actor.process_action(input);
+        const actionDto = parseResultResponse(confirmRes);
+
+        icrc_112_requests = actionDto.icrc_112_requests[0]!;
+
+        expect(actionDto.id).toEqual(createLinkActionId);
+        expect(actionDto.state).toEqual("Action_state_processing");
+        const expected_states = ["Intent_state_processing", "Intent_state_success"];
+        expected_states.sort();
+        const actual_states = actionDto.intents.map((intent) => intent.state);
+        actual_states.sort();
+        expect(actual_states).toEqual(expected_states);
+        expect(icrc_112_requests).toHaveLength(1);
     });
 });
 //
