@@ -3,6 +3,7 @@ import { CallCanisterResponse } from "../types/callCanister.service.types";
 import { CallCanisterService } from "./callCanister.service";
 import { JsonRequest } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
+import { IcrcMethod } from "@/types/icrc-method";
 
 /* Define types */
 export type JsonICRC112Request = JsonRequest<
@@ -86,7 +87,7 @@ export class ICRC112Service {
     public async icrc112Execute(input: Icrc112Requests): Promise<Icrc112Response> {
         const arg = {
             jsonrpc: "2.0",
-            method: this.getMethod(),
+            method: IcrcMethod.BatchCallCanisters,
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input,
@@ -129,10 +130,11 @@ export class ICRC112Service {
         canisterValidation?: CanisterValidation,
     ): Icrc112ResponseItem[] {
         const responses: Icrc112ResponseItem[] = [];
+
         response.forEach((response) => {
             // Start ICRC-114
             if (canisterValidation) {
-                //TODO: Complete ICRC-114 with canister validation
+                // TODO: Complete ICRC-114 with canister validation
                 // End ICRC-114
             } else {
                 if ("result" in response) {
@@ -142,6 +144,7 @@ export class ICRC112Service {
                 }
             }
         });
+
         return responses;
     }
 
@@ -173,7 +176,9 @@ export class ICRC112Service {
             });
             process_tasks.push(task);
         });
+
         const results = await Promise.allSettled(process_tasks);
+
         // Process each result
         results.forEach((result) => {
             if (result.status === "fulfilled") {
@@ -190,9 +195,5 @@ export class ICRC112Service {
             }
         });
         return responses;
-    }
-
-    public getMethod(): string {
-        return "icrc_112_batch_call_canister";
     }
 }

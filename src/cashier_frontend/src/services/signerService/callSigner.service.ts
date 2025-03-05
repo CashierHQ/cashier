@@ -5,6 +5,7 @@ import { Signer } from "./signer";
 import { ClientTransport } from "./transport";
 import { JsonRequest, JsonResponse } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
+import { IcrcMethod } from "@/types/icrc-method";
 
 class CallSignerService {
     private agent: HttpAgent;
@@ -17,19 +18,20 @@ class CallSignerService {
         const transport = await ClientTransport.create({
             agent: this.agent,
         });
+
         const signer = new Signer({ transport });
 
         const request: JsonRequest = {
             id: "1",
             jsonrpc: "2.0",
-            method: "icrc_112_batch_call_canisters",
+            method: IcrcMethod.BatchCallCanisters,
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input as unknown as JsonObject,
             },
         };
         const response = await signer.sendRequest(request);
-        console.log("🚀 ~ CallSignerService ~ executeIcrc112 ~ response:", response);
+
         return this.parseResponse<Icrc112Response>(response);
     }
 

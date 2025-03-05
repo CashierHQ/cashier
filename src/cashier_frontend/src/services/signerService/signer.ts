@@ -110,6 +110,7 @@ export class Signer<T extends Transport = Transport> {
                 },
             };
         }
+
         return request;
     }
 

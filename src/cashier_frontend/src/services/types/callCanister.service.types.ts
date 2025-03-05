@@ -1,4 +1,4 @@
-import { Agent } from "@dfinity/agent";
+import { Agent, CallRequest } from "@dfinity/agent";
 
 export interface RPCBase {
     origin: string;
@@ -45,4 +45,10 @@ export interface CallCanisterRequest {
 export interface CallCanisterResponse {
     contentMap: string;
     certificate: string;
+}
+
+export interface CallCanisterPollResponse {
+    certificate: Uint8Array;
+    contentMap: CallRequest | undefined;
+    reply: ArrayBuffer | undefined;
 }
