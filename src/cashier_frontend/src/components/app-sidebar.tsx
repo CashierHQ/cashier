@@ -1,8 +1,11 @@
 import { NavigationMenu, NavigationMenuLink } from "./ui/navigation-menu";
 import { SheetHeader, SheetContent, SheetTitle, SheetFooter } from "./ui/sheet";
 import { cn } from "@/lib/utils";
-
+import { LuWallet2 } from "react-icons/lu";
+import { IoExitOutline } from "react-icons/io5";
 import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
+import { useAuth } from "@nfid/identitykit/react";
+import { transformShortAddress } from "@/utils";
 
 export interface SidebarMenuItem {
     title: string;
@@ -15,6 +18,8 @@ interface AppSidebarProps {
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
+    const { user, disconnect } = useAuth();
+
     return (
         <SheetContent side="left" className="w-[100%] flex flex-col h-full">
             <SheetHeader>
@@ -47,6 +52,26 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
                     ))}
                 </NavigationMenu>
             </SheetFooter>
+            <div>
+                <div
+                    className={cn(
+                        "w-[100%] font-semibold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-accent focus:text-accent-foreground",
+                    )}
+                >
+                    <div className="flex items-center">
+                        <>
+                            <span className="mr-1">
+                                <LuWallet2 color="green" size={22} />
+                            </span>
+                            {transformShortAddress(user?.principal?.toString() || "")}
+                        </>
+
+                        <span className="ml-auto">
+                            <IoExitOutline color="gray" size={24} onClick={disconnect} />
+                        </span>
+                    </div>
+                </div>
+            </div>
         </SheetContent>
     );
 };

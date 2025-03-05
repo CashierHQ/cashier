@@ -26,7 +26,6 @@ import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import { Wallet } from "lucide-react";
-import ConnectWalletButton from "@/components/login-button";
 import LoginButton from "@/components/login-button";
 
 export default function HomePage() {
@@ -254,12 +253,6 @@ export default function HomePage() {
                                     alt="Cashier logo"
                                     className="max-w-[130px]"
                                 />
-                                {/* <div className="ml-auto mr-3">
-                                    <ConnectedWalletDropdownIcon
-                                        connectedAccount={walletUser.principal.toString()}
-                                        disconnect={disconnect}
-                                    />
-                                </div> */}
                                 <Button
                                     variant="outline"
                                     size="icon"

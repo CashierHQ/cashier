@@ -14,7 +14,7 @@ const LoginButton: React.FC<ConnectWalletButtonProps> = ({ onClick, className, c
             onClick={onClick}
             className={cn(
                 className,
-                "min-w-[85px] min-h-[50px] font-500 bg-white border-[#E8F2EE] text-green shadow hover:bg-green/90",
+                "min-w-[85px] min-h-[50px] font-500 bg-white border-[#E8F2EE] text-green shadow hover:bg-green/90 hover:text-white",
             )}
         >
             {children}
