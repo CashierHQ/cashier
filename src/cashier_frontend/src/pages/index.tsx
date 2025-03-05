@@ -1,4 +1,4 @@
-import { ConnectWalletButton, useAuth, useIdentity } from "@nfid/identitykit/react";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,6 +26,8 @@ import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import { Wallet } from "lucide-react";
+import ConnectWalletButton from "@/components/login-button";
+import LoginButton from "@/components/login-button";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -196,12 +198,7 @@ export default function HomePage() {
                     <div className="w-11/12 max-w-[400px] flex flex-col items-center">
                         <div className="w-full flex justify-between items-center">
                             <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                            <ConnectWalletButton
-                                onClick={connectToWallet}
-                                className="bg-green text-primary-foreground shadow hover:bg-green/90"
-                            >
-                                Get started
-                            </ConnectWalletButton>
+                            <LoginButton onClick={connectToWallet}>Login</LoginButton>
                         </div>
 
                         <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">

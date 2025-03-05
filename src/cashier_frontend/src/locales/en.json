@@ -27,7 +27,8 @@
         "address": "Address",
         "asset": "Asset",
         "addressPlaceholder": "ex. 0xecd93dyaf....asfewg934d",
-        "receive_options": "Receive options"
+        "receive_options": "Receive options",
+        "receive": "Receive"
     },
     "continue": "Continue",
     "submit": "Submit",

@@ -3,29 +3,51 @@ import { cn } from "@/lib/utils";
 import { LuWallet2 } from "react-icons/lu";
 
 interface WalletButtonProps {
+    title: string;
     handleConnect: () => void;
+    className?: string;
+    disabled?: boolean;
+    image?: string;
+    icon?: React.ReactNode;
+    postfixText?: string;
 }
 
-const WalletButton: React.FC<WalletButtonProps> = ({ handleConnect }) => {
+const WalletButton: React.FC<WalletButtonProps> = ({
+    title,
+    handleConnect,
+    className,
+    disabled,
+    image,
+    icon,
+    postfixText,
+}) => {
     return (
         <button
             onClick={handleConnect}
             type="button"
             className={cn(
-                "w-full h-10 px-3 py-2",
-                "bg-background text-foreground",
+                className,
+                "w-full h-10 px-3 py-5",
                 "border border-input",
-                "hover:bg-accent hover:text-accent-foreground",
                 "rounded-md",
                 "text-sm font-medium",
                 "ring-offset-background",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "flex items-center justify-start",
+                disabled
+                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    : "bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
             )}
+            disabled={disabled}
         >
-            <span className="flex items-center">
-                <LuWallet2 className="mr-2 h-4 w-4" color="green" />
-                <span className="flex-grow text-left">Connect wallet and claim</span>{" "}
+            <span className="flex items-center w-full">
+                {image ? (
+                    <img src={image} alt={title} className="h-5 w-5 mr-2" />
+                ) : (
+                    icon || <LuWallet2 className="mr-2 h-4 w-4" color="green" />
+                )}
+                <span className="flex-grow text-left">{title}</span>
+                {postfixText && <span className="ml-auto">{postfixText}</span>}
             </span>
         </button>
     );

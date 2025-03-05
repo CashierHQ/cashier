@@ -22,11 +22,11 @@ export default function LinkCardWithoutPhoneFrame({
                     alt="Link template"
                     className="w-[200px] md:w-[60px] xl:w-[60px] 2xl:w-[100px]"
                 />
-                <h3 className="font-semibold py-2">{title}</h3>
-                <h3 className="text-xs">{message}</h3>
+                <h3 className="text-lg font-semibold py-2">{title}</h3>
+                <h3 className="text-md">{message}</h3>
                 <div
                     className={cn(
-                        "text-white bg-green rounded-full py-1 px-8 mt-3 text-base w-full text-center",
+                        "text-white bg-green rounded-full py-2 px-8 mt-3 text-base w-[80%] text-center",
                         onClaim ? "cursor-pointer" : "",
                     )}
                     onClick={onClaim}
