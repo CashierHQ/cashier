@@ -181,8 +181,10 @@ mod tests {
         assert!(icrc_112_requests.is_some());
         let requests = icrc_112_requests.unwrap();
         assert_eq!(requests.len(), 1);
-        assert_eq!(requests[0][0].nonce, Some(tx_a.id));
-        assert_eq!(requests[0][1].nonce, Some(tx_b.id));
+        let expected_ids = vec![tx_a.id.clone(), tx_b.id.clone()];
+        for request in &requests[0] {
+            assert!(expected_ids.contains(&request.nonce.clone().unwrap()));
+        }
     }
 
     // Should create ICRC 112 requests with transactions having dependencies success

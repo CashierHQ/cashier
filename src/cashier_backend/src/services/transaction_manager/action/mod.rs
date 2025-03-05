@@ -62,8 +62,8 @@ impl ActionService {
         self._get_action_resp(action_id)
     }
 
-    pub fn get(&self, action_id: String) -> Option<ActionResp> {
-        self._get_action_resp(action_id).ok()
+    pub fn get(&self, action_id: String) -> Result<ActionResp, String> {
+        self._get_action_resp(action_id)
     }
 
     fn _get_action_resp(&self, action_id: String) -> Result<ActionResp, String> {

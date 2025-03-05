@@ -8,6 +8,8 @@ pub mod has_dependency;
 pub mod manual_check_status;
 #[cfg(test)]
 pub mod transaction;
+#[cfg(test)]
+pub mod transaction_manager;
 
 #[cfg(test)]
 pub mod tests {
@@ -27,7 +29,10 @@ pub mod tests {
     use rand::Rng;
     use uuid::Uuid;
 
-    use crate::utils::runtime::IcEnvironment;
+    use crate::{
+        types::icrc_112_transaction::{Icrc112Request, Icrc112Requests},
+        utils::runtime::IcEnvironment,
+    };
 
     pub const TX_TIMEOUT: u64 = 300_000_000_000; // 5 minute in nanoseconds
 
@@ -306,6 +311,26 @@ pub mod tests {
                 creator: generate_random_principal().to_text(),
             }
         }
+    }
+
+    pub fn convert_txs_to_dummy_icrc_112_request(txs: Vec<Transaction>) -> Icrc112Requests {
+        let mut icrc_112_requests: Icrc112Requests = vec![];
+
+        for tx in txs {
+            let icrc_112_request = convert_tx_to_dummy_icrc_112_request(&tx);
+            icrc_112_requests.push(vec![icrc_112_request]);
+        }
+
+        return icrc_112_requests;
+    }
+
+    pub fn convert_tx_to_dummy_icrc_112_request(tx: &Transaction) -> Icrc112Request {
+        return Icrc112Request {
+            canister_id: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+            method: "dummy".to_string(),
+            arg: "dummy".to_string(),
+            nonce: Some(tx.id.clone()),
+        };
     }
 
     pub fn create_dummy_intent(state: IntentState) -> Intent {

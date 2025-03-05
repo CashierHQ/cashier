@@ -137,7 +137,7 @@ mod tests {
 
         when!(icrc_service.balance_of(asset, to_account))
             .once()
-            .then_return(Err(CanisterError::CanisterCallError(
+            .then_return(Err(CanisterError::CanisterCallRejectError(
                 "icrc_1_balance_of".to_string(),
                 "jjio5-5aaaa-aaaam-adhaq-cai".to_string(),
                 DisplayRejectionCode(RejectionCode::CanisterReject),
@@ -299,7 +299,7 @@ mod tests {
 
         when!(icrc_service.allowance(asset1, owner_fund_account1, spender_fund_account1))
             .once()
-            .then_return(Err(CanisterError::CanisterCallError(
+            .then_return(Err(CanisterError::CanisterCallRejectError(
                 "icrc_2_allowance".to_string(),
                 "jjio5-5aaaa-aaaam-adhaq-cai".to_string(),
                 DisplayRejectionCode(RejectionCode::CanisterReject),
