@@ -75,7 +75,8 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
                 }
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => {
-                return Ok(transaction.state.clone());
+                // if this being called it mean the tx is timeout -> fail
+                return Ok(TransactionState::Fail);
             } // _ => return Err("Invalid protocol".to_string()),
         }
     }
