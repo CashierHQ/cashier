@@ -15,7 +15,7 @@ import { AuthClientTransportError } from "./transport";
 import { scopes, supportedStandards } from "./constants";
 import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
 import { HttpAgent } from "@dfinity/agent";
-import { callCanisterService } from "./callCanister.service";
+import { callCanisterService } from "@/services/canisterCallService/canisterCallService";
 import { Icrc112Response, ICRC112Service, JsonICRC112Request } from "./icrc112.service";
 import { IcrcMethod } from "@/types/icrc-method";
 
@@ -175,6 +175,7 @@ export class ClientChannel implements Channel {
         request: JsonRequest,
     ): Promise<JsonResponse> {
         const icrc112Request = request as JsonICRC112Request;
+
         const icrc112Service = new ICRC112Service({
             agent: this.#options.agent,
             callCanisterService: callCanisterService,

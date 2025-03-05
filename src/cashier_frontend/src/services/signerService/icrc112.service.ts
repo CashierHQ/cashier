@@ -1,6 +1,6 @@
 import { Agent } from "@dfinity/agent";
 import { CallCanisterResponse } from "../types/callCanister.service.types";
-import { CallCanisterService } from "./callCanister.service";
+import { CallCanisterService } from "@/services/canisterCallService/canisterCallService";
 import { JsonRequest } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
 import { IcrcMethod } from "@/types/icrc-method";
@@ -119,6 +119,7 @@ export class ICRC112Service {
                         );
                     finalResponse.responses.push(rowResponse);
                 }
+
                 break;
             }
         }
