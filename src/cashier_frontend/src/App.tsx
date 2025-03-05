@@ -29,6 +29,7 @@ function App() {
             // listSigners.push(Plug);
         }
     }, []);
+    console.log(import.meta.env.MODE);
     return (
         <IdentityKitProvider
             featuredSigner={false}
