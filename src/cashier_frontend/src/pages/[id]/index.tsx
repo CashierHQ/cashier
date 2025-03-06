@@ -9,20 +9,9 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { useAuth } from "@nfid/identitykit/react";
-import LoginButton from "@/components/login-button";
 import useToast from "@/hooks/useToast";
-
-const Header = ({
-    connectToWallet,
-}: {
-    connectToWallet: (e: React.MouseEvent<HTMLButtonElement>) => void;
-}) => (
-    <div className="w-full flex justify-between items-center mb-5">
-        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-        <LoginButton onClick={connectToWallet}>Login</LoginButton>
-    </div>
-);
+import Header from "@/components/header";
+import useConnectToWallet from "@/hooks/useConnectToWallet";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -36,8 +25,7 @@ export default function ClaimPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isClaiming, setIsClaiming] = useState(false);
     const { toastData, showToast, hideToast } = useToast();
-
-    const { connect } = useAuth();
+    const { connectToWallet } = useConnectToWallet();
 
     const form = useForm<z.infer<typeof ClaimSchema>>({
         resolver: zodResolver(ClaimSchema),
@@ -70,17 +58,11 @@ export default function ClaimPage() {
         setIsClaiming(true);
     };
 
-    const connectToWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        connect();
-    };
-
     if (isClaiming)
         return (
             <div className="w-screen flex flex-col items-center py-5">
                 <div className="w-11/12 max-w-[400px]">
-                    <Header connectToWallet={connectToWallet} />
+                    <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
                     <ClaimPageForm
                         form={form}
                         formData={formData}
@@ -101,7 +83,7 @@ export default function ClaimPage() {
     return (
         <div className="w-screen h-screen flex flex-col items-center py-5">
             <div className="w-11/12 max-w-[400px]">
-                <Header connectToWallet={connectToWallet} />
+                <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
                 <LinkCardWithoutPhoneFrame
                     label="Claim"
                     src="/icpLogo.png"

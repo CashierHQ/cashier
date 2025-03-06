@@ -16,22 +16,20 @@ import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { UserDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { RiMenu2Line } from "react-icons/ri";
-import { Sheet, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet } from "@/components/ui/sheet";
 import AppSidebar from "@/components/app-sidebar";
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { AiOutlineExperiment } from "react-icons/ai";
 import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
-import { Wallet } from "lucide-react";
-import LoginButton from "@/components/login-button";
+import Header from "@/components/header";
+import useConnectToWallet from "@/hooks/useConnectToWallet";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const { connect, user: walletUser } = useAuth();
+    const { user: walletUser } = useAuth();
     const [newAppUser, setNewAppUser] = useState<UserDto>();
     const {
         data: appUser,
@@ -65,12 +63,7 @@ export default function HomePage() {
     const { toastData, showToast, hideToast } = useToast();
     const navigate = useNavigate();
     const responsive = useResponsive();
-
-    const connectToWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        connect();
-    };
+    const { connectToWallet } = useConnectToWallet();
 
     /* TODO:: Remove after complete testing */
     const handleOpenTestForm = () => {
@@ -195,10 +188,7 @@ export default function HomePage() {
             <div className="w-screen flex justify-center py-5 h-[90%]">
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">
                     <div className="w-11/12 max-w-[400px] flex flex-col items-center">
-                        <div className="w-full flex justify-between items-center">
-                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                            <LoginButton onClick={connectToWallet}>Login</LoginButton>
-                        </div>
+                        <Header onConnect={connectToWallet} />
 
                         <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
                             <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
@@ -247,35 +237,7 @@ export default function HomePage() {
                                 responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"
                             }
                         >
-                            <div className="w-full flex justify-between items-center">
-                                <img
-                                    src="./logo.svg"
-                                    alt="Cashier logo"
-                                    className="max-w-[130px]"
-                                />
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="ml-auto rounded-sm mr-3"
-                                    onClick={() => navigate("/wallet")}
-                                >
-                                    <Wallet size={16} />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="rounded-sm mr-3"
-                                    onClick={handleOpenTestForm}
-                                >
-                                    <AiOutlineExperiment />
-                                </Button>
-
-                                <SheetTrigger asChild>
-                                    <Button variant="outline" size="icon" className="rounded-sm">
-                                        <RiMenu2Line />
-                                    </Button>
-                                </SheetTrigger>
-                            </div>
+                            <Header onConnect={connectToWallet} openTestForm={handleOpenTestForm} />
                             {showGuide && (
                                 <div className="my-3">
                                     <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>

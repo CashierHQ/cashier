@@ -106,9 +106,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             postfixText="Coming soon"
                         />
 
-                        {currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
+                        {identity ? (
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
+                                postfixText="Connected"
                             />
                         ) : (
                             <WalletButton
