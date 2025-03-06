@@ -16,7 +16,7 @@ export const LinkPreviewCashierFeeItem: FC<LinkPreviewCashierFeeItemProps> = ({ 
     return (
         <>
             {isLoadingMetadata ? (
-                <Spinner />
+                <Spinner width={22} />
             ) : (
                 <Asset
                     title={t("link.preview.fees.creationFee")}
