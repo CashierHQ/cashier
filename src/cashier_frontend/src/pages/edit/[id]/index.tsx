@@ -8,19 +8,15 @@ import LinkPreview from "./LinkPreview";
 import { useUpdateLinkSelfContained } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { ACTION_STATE, LINK_STATE } from "@/services/types/enum";
-//import SignerService from "@/services/signerService/signer.service";
-//import { Identity } from "@dfinity/agent";
-//import { toCanisterCallRequest } from "@/services/types/mapper/intent.service.mapper";
 import useToast from "@/hooks/useToast";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { Spinner } from "@/components/ui/spinner";
-import { useIdentity } from "@nfid/identitykit/react";
+import { useAuth } from "@nfid/identitykit/react";
 import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
-//import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -34,7 +30,7 @@ function getInitialStep(state: string | undefined) {
 
 export default function LinkPage() {
     const navigate = useNavigate();
-    const identity = useIdentity();
+    const user = useAuth();
 
     const { t } = useTranslation();
     const { linkId } = useParams();
@@ -61,10 +57,6 @@ export default function LinkPage() {
         if (context.step === 0 || action) {
             navigate("/");
         } else {
-            console.log("trying to step back");
-            console.log("link", link);
-            console.log("action", action);
-
             updateLink({
                 linkId: linkId!,
                 linkModel: link!,
@@ -117,7 +109,7 @@ export default function LinkPage() {
         }
     };
 
-    if (!linkId || !identity) {
+    if (!linkId || !user) {
         return <Navigate to={"/"} />;
     }
 

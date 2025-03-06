@@ -47,6 +47,10 @@ export enum LINK_ASSET_TYPE {
     ASSET_ADDED = "Asset",
 }
 
+export enum FEE_TYPE {
+    LINK_CREATION = "LinkCreation",
+}
+
 export function getLinkLabel(state: LINK_STATE): string {
     switch (state) {
         case LINK_STATE.CHOOSE_TEMPLATE:

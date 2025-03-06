@@ -1,7 +1,7 @@
 import { UserToken } from "../icExplorer.service";
 import { ITokenProviderService } from "./ITokenProviderService";
 
-const ASSET_LIST: UserToken[] = [
+export const ASSET_LIST: UserToken[] = [
     {
         symbol: "TK 1",
         amount: "0",

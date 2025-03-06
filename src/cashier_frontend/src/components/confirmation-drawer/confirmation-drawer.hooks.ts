@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
     const primaryIntents = useMemo(() => {
-        return intents?.filter((intent) => intent.task === TASK.TRANSFER_WALLET_TO_LINK) ?? [];
+        return intents ?? [];
     }, [intents]);
 
     return primaryIntents;

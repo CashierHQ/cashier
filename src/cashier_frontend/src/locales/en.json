@@ -5,7 +5,7 @@
         "linkNamePlaceholder": "Enter link name",
         "linkTemplate": "Link template",
         "linkDetails": "Link details",
-        "linkPreview": "Preview",
+        "linkPreview": "Create link",
         "create": "Create",
         "photo": "Photo",
         "name": "Name",
@@ -13,7 +13,12 @@
         "chain": "Chain",
         "amount": "Amount",
         "defaultTemplate": "Default template",
-        "asset": "Asset"
+        "asset": "Asset",
+        "linkType": "Link Type",
+        "preview": "Preview"
+    },
+    "details": {
+        "linkInfo": "Link info"
     },
     "claim": {
         "claim": "Claim",

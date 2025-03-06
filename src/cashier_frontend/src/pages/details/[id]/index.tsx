@@ -13,6 +13,7 @@ import { LinkModel } from "@/services/types/link.service.types";
 import { Skeleton } from "@/components/ui/skeleton";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { ACTION_TYPE } from "@/services/types/enum";
+import { useTranslation } from "react-i18next";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -21,6 +22,7 @@ export default function DetailPage() {
     const { toast } = useToast();
     const navigate = useNavigate();
     const { metadata } = useTokenMetadata(linkData?.link.tokenAddress);
+    const { t } = useTranslation();
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -57,7 +59,7 @@ export default function DetailPage() {
     }, [linkId, identity]);
 
     return (
-        <div className="w-screen flex flex-col items-center py-3">
+        <div className="w-screen flex flex-col items-center py-5">
             <div className="h-[80vh] w-11/12 max-w-[400px]">
                 <div className="w-full flex flex-col">
                     {!linkData ? (
@@ -77,7 +79,7 @@ export default function DetailPage() {
                                     {linkData?.link?.title}
                                 </h4>
                             </div>
-                            <div id="qr-code-section" className="flex flex-col">
+                            <div id="qr-code-section" className="flex flex-col my-5">
                                 <div className="flex items-center justify-center grow">
                                     <StateBadge state={linkData?.link?.state} />
                                 </div>
@@ -88,9 +90,13 @@ export default function DetailPage() {
                                     />
                                 </div>
                             </div>
+
+                            <h2 className="font-medium leading-6 text-gray-900 ml-2">
+                                {t("details.linkInfo")}
+                            </h2>
                             <div
                                 id="link-detail-section"
-                                className="flex flex-col my-5 border-2 rounded-xl"
+                                className="flex flex-col my-3 border-2 rounded-xl"
                             >
                                 <Table className="text-base">
                                     <TableHeader></TableHeader>

@@ -3,6 +3,9 @@ import { TransactionType } from "@/types/transaction-type";
 import { TransactionRecord } from "@/types/transaction-record.speculative";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
+import { CHAIN, FEE_TYPE } from "@/services/types/enum";
+import { FeeModel } from "@/services/types/intent.service.types";
+import { convertTokenAmountToNumber } from "@/utils";
 
 export const MOCK_TX_DATA: TransactionRecord[] = [
     {
@@ -100,3 +103,12 @@ export const MOCK_TOKENS_LIST: FungibleToken[] = [
 ];
 
 export const MOCK_TOTAL_USD_EQUIVALENT = 42_475.1;
+
+export const MOCK_CASHIER_FEES: FeeModel[] = [
+    {
+        type: FEE_TYPE.LINK_CREATION,
+        amount: BigInt(convertTokenAmountToNumber(0.001, 8)),
+        address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+        chain: CHAIN.IC,
+    },
+];
