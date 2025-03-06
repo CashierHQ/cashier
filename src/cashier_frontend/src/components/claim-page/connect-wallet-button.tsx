@@ -42,9 +42,9 @@ const WalletButton: React.FC<WalletButtonProps> = ({
         >
             <span className="flex items-center w-full">
                 {image ? (
-                    <img src={image} alt={title} className="h-5 w-5 mr-2" />
+                    <img src={image} alt={title} className="h-6 w-6 mr-2" />
                 ) : (
-                    icon || <LuWallet2 className="mr-2 h-4 w-4" color="green" />
+                    icon || <LuWallet2 className="mr-2 h-6 w-6" color="green" />
                 )}
                 <span className="flex-grow text-left">{title}</span>
                 {postfixText && <span className="ml-auto">{postfixText}</span>}

@@ -28,6 +28,12 @@ interface ClaimPageFormProps {
     setIsClaiming: (value: boolean) => void;
 }
 
+enum WALLET_OPTIONS {
+    GOOGLE = "Google login",
+    INTERNET_IDENTITY = "Internet Identity",
+    OTHER = "Other wallets",
+}
+
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     handleClaim,
@@ -37,15 +43,23 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { t } = useTranslation();
     const { connect, user } = useAuth();
     const identity = useIdentity();
-    const [selectOptionWallet, setSelectOptionWallet] = useState("");
+    const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
+    const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
-    const handleConnectWallet = () => {
+    const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
         connect();
+        setSelectOptionWallet(selectOption);
     };
 
     useEffect(() => {
-        console.log(selectOptionWallet);
-    }, [selectOptionWallet]);
+        if (identity && selectOptionWallet) {
+            setCurrentSelectOptionWallet(selectOptionWallet);
+        }
+    }, [selectOptionWallet, identity]);
+
+    useEffect(() => {
+        console.log(currentSelectOptionWallet);
+    }, [currentSelectOptionWallet]);
 
     return (
         <>
@@ -85,32 +99,39 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     <div className="ml-1">
                         <WalletButton
                             title="Google login"
-                            handleConnect={handleConnectWallet}
+                            handleConnect={() => handleConnectWallet(WALLET_OPTIONS.GOOGLE)}
                             image="/googleIcon.png"
                             disabled={true}
                             className="mx-1 my-3"
                             postfixText="Coming soon"
                         />
 
-                        <WalletButton
-                            title="Internet Identity"
-                            handleConnect={handleConnectWallet}
-                            image="/icpLogo.png"
-                            className="mx-1 my-3"
-                        />
-
-                        {identity ? (
+                        {currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
                             <CustomConnectedWalletButton
-                                handleConnect={handleConnectWallet}
+                                connectedAccount={user?.principal.toString()}
+                            />
+                        ) : (
+                            <WalletButton
+                                title="Internet Identity"
+                                handleConnect={() =>
+                                    handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY)
+                                }
+                                image="/icpLogo.png"
+                                className="mx-1 my-3"
+                            />
+                        )}
+
+                        {currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
+                            <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
                             />
                         ) : (
                             <WalletButton
                                 title="Other wallets"
-                                handleConnect={handleConnectWallet}
+                                handleConnect={() => handleConnectWallet(WALLET_OPTIONS.OTHER)}
                                 disabled={true}
                                 className="mx-1 my-3"
-                                icon={<SlWallet className="mr-2 h-4 w-4" color="green" />}
+                                icon={<SlWallet className="mr-2 h-6 w-6" color="green" />}
                             />
                         )}
 
@@ -122,7 +143,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                     <FormControl>
                                         <IconInput
                                             isCurrencyInput={false}
-                                            icon={<IoWallet />}
+                                            icon={<IoWallet className="mr-2 h-6 w-6" />}
                                             placeholder={t("claim.addressPlaceholder")}
                                             onFocus={() => setSelectOptionWallet("Typed Wallet")}
                                             className="py-5"

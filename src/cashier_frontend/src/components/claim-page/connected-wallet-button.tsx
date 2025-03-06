@@ -1,10 +1,9 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { LuWallet2 } from "react-icons/lu";
-import { FaCheck } from "react-icons/fa";
+import { transformShortAddress } from "@/utils";
 
 interface CustomConnectedWalletButtonProps {
-    handleConnect: () => void;
     connectedAccount?: string;
 }
 
@@ -27,9 +26,10 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
         >
             <span className="flex items-center mr-3">
                 <LuWallet2 className="mr-2" color="green" size={22} />
-                <span className="flex-grow text-left">{connectedAccount}</span>{" "}
+                <span className="flex-grow text-left">
+                    {transformShortAddress(connectedAccount || "")}
+                </span>{" "}
             </span>
-            <FaCheck color="green" size={22} />
         </div>
     );
 };
