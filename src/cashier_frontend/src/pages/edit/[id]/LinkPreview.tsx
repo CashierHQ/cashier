@@ -13,6 +13,8 @@ import { useCreateAction } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
+import { MOCK_CASHIER_FEES } from "@/constants/mock-data";
+import { FeeModel } from "@/services/types/intent.service.types";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -32,9 +34,9 @@ export default function LinkPreview({
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
-
-    const cashierFeeIntents = useCashierFeeIntents(action?.intents);
     const { mutateAsync: createAction } = useCreateAction();
+
+    const mockCashierFeeData: FeeModel[] = MOCK_CASHIER_FEES;
 
     const handleCreateAction = async () => {
         const updatedAction = await createAction({
@@ -102,7 +104,7 @@ export default function LinkPreview({
             {renderLinkCard()}
 
             <LinkPreviewCashierFeeSection
-                intents={cashierFeeIntents}
+                intents={mockCashierFeeData}
                 onInfoClick={() => setShowInfo(true)}
             />
 

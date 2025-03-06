@@ -1,17 +1,17 @@
-import { IntentModel } from "@/services/types/intent.service.types";
+import { FeeModel } from "@/services/types/intent.service.types";
 import { FC } from "react";
 import { Spinner } from "../ui/spinner";
 import { Asset } from "../ui/asset";
-import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { useTranslation } from "react-i18next";
+import { useFeeMetadata } from "@/hooks/useFeeMetadata";
 
 type LinkPreviewCashierFeeItemProps = {
-    intent: IntentModel;
+    feeModel: FeeModel;
 };
 
-export const LinkPreviewCashierFeeItem: FC<LinkPreviewCashierFeeItemProps> = ({ intent }) => {
+export const LinkPreviewCashierFeeItem: FC<LinkPreviewCashierFeeItemProps> = ({ feeModel }) => {
     const { t } = useTranslation();
-    const { isLoadingMetadata, assetAmount, assetSrc, assetSymbol } = useIntentMetadata(intent);
+    const { isLoadingMetadata, assetAmount, assetSrc, assetSymbol } = useFeeMetadata(feeModel);
 
     return (
         <>
