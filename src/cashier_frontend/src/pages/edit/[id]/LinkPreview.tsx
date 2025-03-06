@@ -3,7 +3,6 @@ import { useCashierFeeIntents } from "@/components/confirmation-drawer/confirmat
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import LinkCard from "@/components/link-card";
 import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-preview-cashier-fee-section";
-import { Button } from "@/components/ui/button";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
 
@@ -13,6 +12,9 @@ import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { useCreateAction } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
+import { MOCK_CASHIER_FEES } from "@/constants/mock-data";
+import { FeeModel } from "@/services/types/intent.service.types";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -32,9 +34,9 @@ export default function LinkPreview({
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
-
-    const cashierFeeIntents = useCashierFeeIntents(action?.intents);
     const { mutateAsync: createAction } = useCreateAction();
+
+    const mockCashierFeeData: FeeModel[] = MOCK_CASHIER_FEES;
 
     const handleCreateAction = async () => {
         const updatedAction = await createAction({
@@ -95,17 +97,30 @@ export default function LinkPreview({
     };
 
     return (
-        <div className="w-full flex flex-col flex-grow">
+        <div className="w-full flex flex-col">
+            <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
+                {t("create.preview")}
+            </h2>
             {renderLinkCard()}
 
             <LinkPreviewCashierFeeSection
-                intents={cashierFeeIntents}
+                intents={mockCashierFeeData}
                 onInfoClick={() => setShowInfo(true)}
             />
 
-            <Button disabled={isDisabled} onClick={handleSubmit} className="my-3">
+            <FixedBottomButton
+                type="submit"
+                variant="default"
+                size="lg"
+                onClick={handleSubmit}
+                disabled={isDisabled}
+            >
                 {isDisabled ? t("processing") : t("create.create")}
-            </Button>
+            </FixedBottomButton>
+
+            {/* <Button disabled={isDisabled} onClick={handleSubmit} className="my-3">
+                {isDisabled ? t("processing") : t("create.create")}
+            </Button> */}
 
             <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 
