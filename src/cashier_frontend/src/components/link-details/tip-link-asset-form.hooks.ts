@@ -6,7 +6,7 @@ import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useCallback, useEffect, useMemo } from "react";
 import { AssetSelectItem } from "@/components/asset-select";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import { mapAPITokenModelToAssetSelectModel } from "@/services/icExplorer.service";
+import { mapAPITokenModelToAssetSelectModel, UserToken } from "@/services/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import * as z from "zod";
 import { TokenProviderService } from "@/services/tokenProviderService";
@@ -14,6 +14,7 @@ import { useWalletAddress } from "@/hooks/useWalletAddress";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { Identity } from "@dfinity/agent";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ASSET_LIST } from "@/services/tokenProviderService/devTokenProvider.service";
 
 export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
     return z
@@ -117,6 +118,9 @@ const fetchAssetListAmounts = async (identity: Identity, assetList: AssetSelectI
 
 const fetchUserTokens = async (walletAddress: string) => {
     const tokens = await TokenProviderService.getUserTokens(walletAddress);
+    if (tokens.length === 0) {
+        tokens.push(...(ASSET_LIST as UserToken[]));
+    }
     return tokens.map(mapAPITokenModelToAssetSelectModel);
 };
 

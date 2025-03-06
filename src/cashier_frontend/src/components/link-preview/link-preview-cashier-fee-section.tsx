@@ -1,12 +1,12 @@
-import { IntentModel } from "@/services/types/intent.service.types";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Info } from "lucide-react";
 import { LinkPreviewCashierFeeItem } from "./link-preview-cashier-fee-item";
 import { LinkPreviewCashierFeeTotal } from "./link-preview-cashier-fee-total";
+import { FeeModel } from "@/services/types/intent.service.types";
 
 type LinkPreviewCashierFeeSectionProps = {
-    intents: IntentModel[];
+    intents: FeeModel[];
     onInfoClick: () => void;
 };
 
@@ -28,9 +28,9 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
             </div>
 
             <ul className="flex flex-col gap-3 border-solid border-inherit border-2 rounded-lg mt-3 p-4 overflow-y-auto max-h-[200px]">
-                {intents.map((intent) => (
-                    <li key={intent.id}>
-                        <LinkPreviewCashierFeeItem intent={intent} />
+                {intents.map((intent, index) => (
+                    <li key={`fee-${index}`}>
+                        <LinkPreviewCashierFeeItem feeModel={intent} />
                     </li>
                 ))}
             </ul>
