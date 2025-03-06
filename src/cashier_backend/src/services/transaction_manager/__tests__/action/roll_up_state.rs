@@ -6,6 +6,7 @@ mod tests {
             generate_action_with_for_processing, setup_repositories,
         },
         action::ActionService,
+        validate::ValidateService,
     };
 
     use cashier_types::{ActionState, IntentState};
@@ -19,7 +20,13 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+
         let (
             mock_action,
             intents,
@@ -106,6 +113,10 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
         );
 
         let result = action_service.roll_up_state(selected_tx.id.clone());
@@ -129,7 +140,13 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+
         let (
             mock_action,
             intents,
@@ -216,6 +233,10 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
         );
 
         let result = action_service.roll_up_state(selected_tx.id.clone());
@@ -239,7 +260,13 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+
         let (
             mock_action,
             intents,
@@ -326,6 +353,10 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
         );
 
         let result = action_service.roll_up_state(selected_tx.id.clone());
@@ -358,7 +389,13 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+
         let (
             mock_action,
             intents,
@@ -445,6 +482,10 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
         );
 
         let result = action_service.roll_up_state(selected_tx.id.clone());

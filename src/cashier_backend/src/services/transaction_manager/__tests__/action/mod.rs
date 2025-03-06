@@ -15,7 +15,8 @@ mod tests {
         repositories::{
             action::ActionRepository, action_intent::ActionIntentRepository,
             intent::IntentRepository, intent_transaction::IntentTransactionRepository,
-            transaction::TransactionRepository,
+            link_action::LinkActionRepository, transaction::TransactionRepository,
+            user_action::UserActionRepository, user_wallet::UserWalletRepository,
         },
         services::transaction_manager::__tests__::tests::{
             create_dummy_action, create_dummy_intent, create_dummy_transaction,
@@ -196,12 +197,18 @@ mod tests {
         ActionIntentRepository,
         TransactionRepository,
         IntentTransactionRepository,
+        LinkActionRepository,
+        UserActionRepository,
+        UserWalletRepository,
     ) {
         let action_repository = ActionRepository::faux();
         let intent_repository = IntentRepository::faux();
         let action_intent_repository = ActionIntentRepository::faux();
         let transaction_repository = TransactionRepository::faux();
         let intent_transaction_repository = IntentTransactionRepository::faux();
+        let link_action_repository = LinkActionRepository::faux();
+        let user_action_repository = UserActionRepository::faux();
+        let user_wallet_repository = UserWalletRepository::faux();
 
         (
             action_repository,
@@ -209,6 +216,9 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         )
     }
 }

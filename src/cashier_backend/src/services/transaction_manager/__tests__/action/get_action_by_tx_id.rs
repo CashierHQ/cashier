@@ -2,6 +2,7 @@ mod tests {
     use crate::services::transaction_manager::{
         __tests__::action::{generate_action_with_for_processing, setup_repositories},
         action::ActionService,
+        validate::ValidateService,
     };
 
     use faux::when;
@@ -14,7 +15,13 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             mut intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+
         let (
             _mock_action,
             intents,
@@ -43,6 +50,10 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
         );
 
         let result = action_service.get_action_by_tx_id("tx1".to_string());
@@ -59,7 +70,13 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+
         let (
             mock_action,
             intents,
@@ -144,6 +161,10 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
         );
 
         let result = action_service.get_action_by_tx_id(selected_tx.id.clone());

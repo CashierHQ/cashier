@@ -28,7 +28,7 @@ mod tests {
     // TS1: Update a single transaction to processing
     #[test]
     fn update_single_transaction_to_processing() {
-        let (_, _, _, mut transaction_repository, _) = setup_repositories();
+        let (_, _, _, mut transaction_repository, _, _, _, _) = setup_repositories();
 
         let mut action_service = ActionService::faux();
         let mut tx = create_dummy_transaction(TransactionState::Created);
@@ -70,7 +70,7 @@ mod tests {
     // TS2: Update a single transaction to success
     #[test]
     fn update_single_transaction_to_success() {
-        let (_, _, _, mut transaction_repository, _) = setup_repositories();
+        let (_, _, _, mut transaction_repository, _, _, _, _) = setup_repositories();
 
         let mut action_service = ActionService::faux();
         let mut tx = create_dummy_transaction(TransactionState::Processing);
@@ -112,7 +112,7 @@ mod tests {
     // TS3: Update a single transaction to fail
     #[test]
     fn update_single_transaction_to_failed() {
-        let (_, _, _, mut transaction_repository, _) = setup_repositories();
+        let (_, _, _, mut transaction_repository, _, _, _, _) = setup_repositories();
 
         let mut action_service = ActionService::faux();
         let mut tx = create_dummy_transaction(TransactionState::Processing);
@@ -154,7 +154,7 @@ mod tests {
     // Should construct icrc 112 without dependencies success
     #[test]
     fn should_construct_icrc_112_without_dependencies_success() {
-        let (_, _, _, transaction_repository, _) = setup_repositories();
+        let (_, _, _, transaction_repository, _, _, _, _) = setup_repositories();
 
         let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
@@ -190,7 +190,7 @@ mod tests {
     // Should create ICRC 112 requests with transactions having dependencies success
     #[test]
     fn should_create_icrc_112_requests_with_txs_have_dependencies_success() {
-        let (_, _, _, transaction_repository, _) = setup_repositories();
+        let (_, _, _, transaction_repository, _, _, _, _) = setup_repositories();
 
         let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
@@ -236,7 +236,7 @@ mod tests {
     // Should create ICRC 112 requests follow group order and dependencies
     #[test]
     fn should_create_icrc_112_requests_follow_group_order_and_dependencies() {
-        let (_, _, _, transaction_repository, _) = setup_repositories();
+        let (_, _, _, transaction_repository, _, _, _, _) = setup_repositories();
 
         let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
@@ -299,7 +299,7 @@ mod tests {
     // Should create ICRC 112 for Tip link success
     #[test]
     fn should_create_icrc_112_for_tip_link_success() {
-        let (_, _, _, transaction_repository, _) = setup_repositories();
+        let (_, _, _, transaction_repository, _, _, _, _) = setup_repositories();
 
         let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
@@ -389,7 +389,7 @@ mod tests {
     // Should create ICRC 112 for all canister transaction success
     #[test]
     fn should_create_icrc_112_for_all_canister_transaction_success() {
-        let (_, _, _, transaction_repository, _) = setup_repositories();
+        let (_, _, _, transaction_repository, _, _, _, _) = setup_repositories();
 
         let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
@@ -459,7 +459,7 @@ mod tests {
     // Should create ICRC 112 for all canister transaction success
     #[test]
     fn should_handle_complicated_dependencies_success() {
-        let (_, _, _, transaction_repository, _) = setup_repositories();
+        let (_, _, _, transaction_repository, _, _, _, _) = setup_repositories();
 
         let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
@@ -555,7 +555,7 @@ mod tests {
 
     #[test]
     fn should_able_to_decode_arguments_back() {
-        let (_, _, _, transaction_repository, _) = setup_repositories();
+        let (_, _, _, transaction_repository, _, _, _, _) = setup_repositories();
 
         let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();

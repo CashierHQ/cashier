@@ -1,8 +1,22 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
-use cashier_types::{ActionState, IntentState, TransactionState};
+use cashier_types::{
+    Action, ActionIntent, ActionState, ActionType, Intent, IntentState, IntentTransaction,
+    LinkAction, Transaction, TransactionState, UserAction,
+};
+use uuid::Uuid;
 
-use crate::{repositories, types::transaction_manager::ActionResp};
+use crate::{
+    core::action::types::{ActionDto, CreateActionInput},
+    repositories::{self, user_wallet},
+    types::{error::CanisterError, transaction_manager::ActionResp},
+};
+
+use super::{
+    action_adapter::{self, ConvertToIntentInput},
+    intent_adapter,
+    validate::ValidateService,
+};
 
 #[cfg_attr(test, faux::create)]
 pub struct ActionService {
@@ -11,6 +25,10 @@ pub struct ActionService {
     action_intent_repository: repositories::action_intent::ActionIntentRepository,
     transaction_repository: repositories::transaction::TransactionRepository,
     intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
+    link_action_repository: repositories::link_action::LinkActionRepository,
+    user_action_repository: repositories::user_action::UserActionRepository,
+    user_wallet_repository: repositories::user_wallet::UserWalletRepository,
+    validate_service: ValidateService,
 }
 
 #[cfg_attr(test, faux::methods)]
@@ -23,6 +41,10 @@ impl ActionService {
             transaction_repository: repositories::transaction::TransactionRepository::new(),
             intent_transaction_repository:
                 repositories::intent_transaction::IntentTransactionRepository::new(),
+            link_action_repository: repositories::link_action::LinkActionRepository::new(),
+            user_action_repository: repositories::user_action::UserActionRepository::new(),
+            user_wallet_repository: repositories::user_wallet::UserWalletRepository::new(),
+            validate_service: ValidateService::get_instance(),
         }
     }
 
@@ -32,6 +54,10 @@ impl ActionService {
         action_intent_repository: repositories::action_intent::ActionIntentRepository,
         transaction_repository: repositories::transaction::TransactionRepository,
         intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
+        link_action_repository: repositories::link_action::LinkActionRepository,
+        user_action_repository: repositories::user_action::UserActionRepository,
+        user_wallet_repository: repositories::user_wallet::UserWalletRepository,
+        validate_service: ValidateService,
     ) -> Self {
         Self {
             action_repository,
@@ -39,6 +65,10 @@ impl ActionService {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
         }
     }
 
@@ -205,5 +235,149 @@ impl ActionService {
             intents,
             intent_txs,
         })
+    }
+
+    // TODO: handle the params for the action incase claim action
+    pub async fn create_link_action(
+        &self,
+        input: CreateActionInput,
+    ) -> Result<ActionDto, CanisterError> {
+        let caller = ic_cdk::api::caller();
+        let link_repository = repositories::link::LinkRepository::new();
+        let link = link_repository
+            .get(&input.link_id)
+            .ok_or_else(|| CanisterError::ValidationErrors("Link not found".to_string()))?;
+
+        // Validate the user's balance
+        match self
+            .validate_service
+            .validate_balance_with_asset_info(&link.clone(), &caller)
+            .await
+        {
+            Ok(_) => (),
+            Err(e) => return Err(CanisterError::ValidationErrors(e)),
+        }
+
+        // Get the user ID from the user wallet store
+        let user_wallet = self
+            .user_wallet_repository
+            .get(&caller.to_text())
+            .ok_or_else(|| CanisterError::ValidationErrors("User wallet not found".to_string()))?;
+
+        // Parse the intent type
+        let action_type = ActionType::from_str(&input.action_type)
+            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
+
+        let action = Action {
+            id: Uuid::new_v4().to_string(),
+            r#type: action_type,
+            state: ActionState::Created,
+            creator: user_wallet.user_id.clone(),
+        };
+
+        let link_action = LinkAction {
+            link_id: link.id.clone(),
+            action_type: input.action_type.clone(),
+            action_id: action.id.clone(),
+        };
+
+        let create_intent_input = ConvertToIntentInput {
+            action: action.clone(),
+            link: link.clone(),
+        };
+
+        let intents = action_adapter::ic_adapter::IcAdapter::convert(create_intent_input)
+            .map_err(|e| {
+                CanisterError::ValidationErrors(format!(
+                    "Failed to convert action to intent: {}",
+                    e
+                ))
+            })
+            .map_err(|e| {
+                CanisterError::ValidationErrors(format!(
+                    "Failed to convert action to intent: {:?}",
+                    e
+                ))
+            })?;
+
+        let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
+
+        for intent in intents.clone() {
+            let transactions = intent_adapter::ic_adapter::IcAdapter::convert(&intent)
+                .map_err(|e| {
+                    CanisterError::ValidationErrors(format!(
+                        "Failed to convert intent to transaction: {}",
+                        e
+                    ))
+                })
+                .map_err(|e| {
+                    CanisterError::ValidationErrors(format!(
+                        "Failed to convert intent to transaction: {:?}",
+                        e
+                    ))
+                })?;
+
+            intent_tx_hashmap.insert(intent.id.clone(), transactions);
+        }
+
+        let _ = self._store_action_records(
+            link_action,
+            action.clone(),
+            intents.clone(),
+            intent_tx_hashmap,
+            user_wallet.user_id.clone(),
+        )?;
+
+        Ok(ActionDto::from(action, intents))
+
+        // Retrieve and return the created intent
+    }
+
+    fn _store_action_records(
+        &self,
+        link_action: LinkAction,
+        action: Action,
+        intents: Vec<Intent>,
+        intent_tx_map: HashMap<String, Vec<Transaction>>,
+        user_id: String,
+    ) -> Result<(), CanisterError> {
+        let action_intents = intents
+            .iter()
+            .map(|intent| ActionIntent {
+                action_id: action.id.clone(),
+                intent_id: intent.id.clone(),
+            })
+            .collect::<Vec<ActionIntent>>();
+
+        let mut intent_transactions: Vec<IntentTransaction> = vec![];
+        let mut transactions: Vec<Transaction> = vec![];
+
+        for (intent_id, txs) in intent_tx_map {
+            for tx in txs {
+                let intent_transaction = IntentTransaction {
+                    intent_id: intent_id.clone(),
+                    transaction_id: tx.id.clone(),
+                };
+
+                intent_transactions.push(intent_transaction);
+                transactions.push(tx);
+            }
+        }
+
+        let user_action = UserAction {
+            user_id: user_id.to_string(),
+            action_id: action.id.clone(),
+        };
+
+        self.link_action_repository.create(link_action);
+        self.user_action_repository.create(user_action);
+        self.action_repository.create(action);
+        self.action_intent_repository.batch_create(action_intents);
+        self.intent_repository.batch_create(intents);
+        self.intent_transaction_repository
+            .batch_create(intent_transactions);
+        self.transaction_repository.batch_create(transactions);
+
+        Ok(())
     }
 }
