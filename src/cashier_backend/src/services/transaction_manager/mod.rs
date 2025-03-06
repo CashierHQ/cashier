@@ -20,7 +20,6 @@ use crate::{
 pub mod action;
 pub mod action_adapter;
 pub mod builder;
-// pub mod create;
 pub mod execute_transaction;
 pub mod fee;
 pub mod intent_adapter;
@@ -37,7 +36,7 @@ pub struct UpdateActionArgs {
 
 pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     transaction_service: TransactionService<E>,
-    action_service: ActionService,
+    action_service: ActionService<E>,
     manual_check_status_service: ManualCheckStatusService<E>,
     ic_env: E,
     execute_transaction_service: execute_transaction::ExecuteTransactionService,
@@ -46,7 +45,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
 impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
         transaction_service: TransactionService<E>,
-        action_service: ActionService,
+        action_service: ActionService<E>,
         manual_check_status_service: ManualCheckStatusService<E>,
         ic_env: E,
         execute_transaction_service: execute_transaction::ExecuteTransactionService,

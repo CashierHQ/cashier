@@ -4,27 +4,31 @@ use cashier_types::{
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
-use crate::services::transaction_manager::builder::{IntentBuildResponse, IntentBuilder};
+use crate::{
+    services::transaction_manager::builder::{IntentBuildResponse, IntentBuilder},
+    utils::runtime::IcEnvironment,
+};
 
 pub struct TransferWalletToLinkTreasury;
 
-pub struct TransferWalletToLinkTreasuryBuilder {
+pub struct TransferWalletToLinkTreasuryBuilder<'a, E: IcEnvironment + Clone> {
     pub amount: u64,
     pub asset: Asset,
+    pub ic_env: &'a E,
 }
 
-impl IntentBuilder for TransferWalletToLinkTreasuryBuilder {
+impl<'a, E: IcEnvironment + Clone> IntentBuilder for TransferWalletToLinkTreasuryBuilder<'a, E> {
     fn build(&self) -> IntentBuildResponse {
-        let ts = ic_cdk::api::time();
+        let ts = self.ic_env.time();
 
         let caller_account = Account {
-            owner: ic_cdk::caller(),
+            owner: self.ic_env.caller(),
             subaccount: None,
         };
 
         let spender_wallet = Wallet {
             address: Account {
-                owner: ic_cdk::id(),
+                owner: self.ic_env.id(),
                 subaccount: None,
             }
             .to_string(),
@@ -34,7 +38,7 @@ impl IntentBuilder for TransferWalletToLinkTreasuryBuilder {
         let vault_wallet = Wallet {
             address: Account {
                 // TODO: change to treasury account
-                owner: ic_cdk::id(),
+                owner: self.ic_env.id(),
                 subaccount: None,
             }
             .to_string(),

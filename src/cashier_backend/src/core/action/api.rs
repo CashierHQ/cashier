@@ -36,7 +36,7 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
         }
     }
 
-    let action_service = ActionService::get_instance();
+    let action_service: ActionService<RealIcEnvironment> = ActionService::get_instance();
 
     action_service.create_link_action(input).await
 }

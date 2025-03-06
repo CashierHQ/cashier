@@ -8,8 +8,9 @@ use uuid::Uuid;
 
 use crate::{
     core::action::types::{ActionDto, CreateActionInput},
-    repositories::{self, user_wallet},
+    repositories::{self},
     types::{error::CanisterError, transaction_manager::ActionResp},
+    utils::runtime::IcEnvironment,
 };
 
 use super::{
@@ -19,20 +20,22 @@ use super::{
 };
 
 #[cfg_attr(test, faux::create)]
-pub struct ActionService {
+pub struct ActionService<E: IcEnvironment + Clone> {
     action_repository: repositories::action::ActionRepository,
     intent_repository: repositories::intent::IntentRepository,
     action_intent_repository: repositories::action_intent::ActionIntentRepository,
     transaction_repository: repositories::transaction::TransactionRepository,
     intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
+    link_repository: repositories::link::LinkRepository,
     link_action_repository: repositories::link_action::LinkActionRepository,
     user_action_repository: repositories::user_action::UserActionRepository,
     user_wallet_repository: repositories::user_wallet::UserWalletRepository,
     validate_service: ValidateService,
+    ic_env: E,
 }
 
 #[cfg_attr(test, faux::methods)]
-impl ActionService {
+impl<E: IcEnvironment + Clone> ActionService<E> {
     pub fn get_instance() -> Self {
         Self {
             action_repository: repositories::action::ActionRepository::new(),
@@ -41,10 +44,12 @@ impl ActionService {
             transaction_repository: repositories::transaction::TransactionRepository::new(),
             intent_transaction_repository:
                 repositories::intent_transaction::IntentTransactionRepository::new(),
+            link_repository: repositories::link::LinkRepository::new(),
             link_action_repository: repositories::link_action::LinkActionRepository::new(),
             user_action_repository: repositories::user_action::UserActionRepository::new(),
             user_wallet_repository: repositories::user_wallet::UserWalletRepository::new(),
             validate_service: ValidateService::get_instance(),
+            ic_env: E::new(),
         }
     }
 
@@ -54,10 +59,12 @@ impl ActionService {
         action_intent_repository: repositories::action_intent::ActionIntentRepository,
         transaction_repository: repositories::transaction::TransactionRepository,
         intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
+        link_repository: repositories::link::LinkRepository,
         link_action_repository: repositories::link_action::LinkActionRepository,
         user_action_repository: repositories::user_action::UserActionRepository,
         user_wallet_repository: repositories::user_wallet::UserWalletRepository,
         validate_service: ValidateService,
+        ic_env: E,
     ) -> Self {
         Self {
             action_repository,
@@ -65,10 +72,12 @@ impl ActionService {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_repository,
             link_action_repository,
             user_action_repository,
             user_wallet_repository,
             validate_service,
+            ic_env,
         }
     }
 
@@ -242,9 +251,9 @@ impl ActionService {
         &self,
         input: CreateActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        let caller = ic_cdk::api::caller();
-        let link_repository = repositories::link::LinkRepository::new();
-        let link = link_repository
+        let caller = self.ic_env.caller();
+        let link = self
+            .link_repository
             .get(&input.link_id)
             .ok_or_else(|| CanisterError::ValidationErrors("Link not found".to_string()))?;
 
@@ -264,7 +273,7 @@ impl ActionService {
             .get(&caller.to_text())
             .ok_or_else(|| CanisterError::ValidationErrors("User wallet not found".to_string()))?;
 
-        // Parse the intent type
+        // Parse the intent typex
         let action_type = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
 
@@ -286,7 +295,11 @@ impl ActionService {
             link: link.clone(),
         };
 
-        let intents = action_adapter::ic_adapter::IcAdapter::convert(create_intent_input)
+        let adapter: action_adapter::ic_adapter::IcAdapter<E> =
+            action_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
+
+        let intents = adapter
+            .convert(create_intent_input)
             .map_err(|e| {
                 CanisterError::ValidationErrors(format!(
                     "Failed to convert action to intent: {}",
@@ -302,8 +315,11 @@ impl ActionService {
 
         let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
 
+        let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
+
         for intent in intents.clone() {
-            let transactions = intent_adapter::ic_adapter::IcAdapter::convert(&intent)
+            let transactions = intent_adapter
+                .convert(&intent)
                 .map_err(|e| {
                     CanisterError::ValidationErrors(format!(
                         "Failed to convert intent to transaction: {}",
