@@ -2,6 +2,8 @@ pub mod get_action_by_tx_id;
 // pub mod roll_up_action_state;
 // pub mod roll_up_intent_state;
 pub mod roll_up_state;
+
+pub mod create_link_action;
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -15,8 +17,9 @@ mod tests {
         repositories::{
             action::ActionRepository, action_intent::ActionIntentRepository,
             intent::IntentRepository, intent_transaction::IntentTransactionRepository,
-            link_action::LinkActionRepository, transaction::TransactionRepository,
-            user_action::UserActionRepository, user_wallet::UserWalletRepository,
+            link::LinkRepository, link_action::LinkActionRepository,
+            transaction::TransactionRepository, user_action::UserActionRepository,
+            user_wallet::UserWalletRepository,
         },
         services::transaction_manager::__tests__::tests::{
             create_dummy_action, create_dummy_intent, create_dummy_transaction,
@@ -197,6 +200,7 @@ mod tests {
         ActionIntentRepository,
         TransactionRepository,
         IntentTransactionRepository,
+        LinkRepository,
         LinkActionRepository,
         UserActionRepository,
         UserWalletRepository,
@@ -206,6 +210,7 @@ mod tests {
         let action_intent_repository = ActionIntentRepository::faux();
         let transaction_repository = TransactionRepository::faux();
         let intent_transaction_repository = IntentTransactionRepository::faux();
+        let link_repository = LinkRepository::faux();
         let link_action_repository = LinkActionRepository::faux();
         let user_action_repository = UserActionRepository::faux();
         let user_wallet_repository = UserWalletRepository::faux();
@@ -216,6 +221,7 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_repository,
             link_action_repository,
             user_action_repository,
             user_wallet_repository,
