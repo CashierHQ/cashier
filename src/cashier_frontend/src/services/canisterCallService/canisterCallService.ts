@@ -34,8 +34,7 @@ export class CallCanisterService {
             );
 
             const certificate: string = toBase64(response.certificate);
-            const cborContentMap = Cbor.encode(response.contentMap);
-            const contentMap: string = toBase64(cborContentMap);
+            const contentMap: string = toBase64(Cbor.encode(response.contentMap));
             const reply = response.reply ? toBase64(response.reply) : undefined;
 
             return {

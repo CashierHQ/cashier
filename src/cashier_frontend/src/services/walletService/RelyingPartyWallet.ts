@@ -1,7 +1,7 @@
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { Icrc112Requests, Icrc112Response, ICRC112Service } from "../signerService/icrc112.service";
 import { Wallet } from "./Wallet";
-import { callCanisterService } from "../signerService/callCanister.service";
+import { callCanisterService } from "../canisterCallService/canisterCallService";
 
 export class RelyingPartyWallet extends Wallet {
     private agent: HttpAgent;

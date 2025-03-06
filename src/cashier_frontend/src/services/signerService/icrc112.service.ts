@@ -127,26 +127,28 @@ export class ICRC112Service {
     }
 
     private processResponse(
-        response: Array<Icrc112ResponseItem>,
+        items: Array<Icrc112ResponseItem>,
         canisterValidation?: CanisterValidation,
     ): Icrc112ResponseItem[] {
-        const responses: Icrc112ResponseItem[] = [];
+        return items.map((item) => this.processSingleResponse(item, canisterValidation));
+    }
 
-        response.forEach((response) => {
-            // Start ICRC-114
-            if (canisterValidation) {
-                // TODO: Complete ICRC-114 with canister validation
-                // End ICRC-114
+    private processSingleResponse(
+        item: Icrc112ResponseItem,
+        canisterValidation?: CanisterValidation,
+    ) {
+        // Start ICRC-114
+        if (canisterValidation) {
+            // TODO: Complete ICRC-114 with canister validation
+            // End ICRC-114
+            throw new Error("Canister validation not supported");
+        } else {
+            if ("result" in item) {
+                return { result: item.result } as SuccessResponse;
             } else {
-                if ("result" in response) {
-                    responses.push({ result: response.result });
-                } else {
-                    responses.push({ error: response.error });
-                }
+                return { error: item.error } as ErrorResponse;
             }
-        });
-
-        return responses;
+        }
     }
 
     private assignNonExecuteRequestToErrorResult(rowRequestLength: number): Icrc112ResponseItem[] {
@@ -165,18 +167,16 @@ export class ICRC112Service {
     private async parallelExecuteIcrcRequests(
         requests: ParallelRequests,
     ): Promise<Array<Icrc112ResponseItem>> {
-        const process_tasks: Promise<CallCanisterResponse>[] = [];
         const responses: Array<Icrc112ResponseItem> = [];
 
-        requests.forEach((request) => {
-            const task = this.callCanisterService.call({
+        const process_tasks = requests.map<Promise<CallCanisterResponse>>((request) =>
+            this.callCanisterService.call({
                 canisterId: request.canisterId,
                 calledMethodName: request.method,
                 parameters: request.arg,
                 agent: this.agent,
-            });
-            process_tasks.push(task);
-        });
+            }),
+        );
 
         const results = await Promise.allSettled(process_tasks);
 

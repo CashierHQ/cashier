@@ -1,5 +1,5 @@
 import { Agent } from "@dfinity/agent";
-import { CallCanisterService } from "../signerService/callCanister.service";
+import { CallCanisterService } from "../canisterCallService/canisterCallService";
 import {
     ErrorResponse,
     ICRC112Request,
@@ -62,11 +62,6 @@ describe("ICRC-112 service", () => {
 
     afterEach(() => {
         jest.clearAllMocks();
-    });
-
-    it("should get method success", () => {
-        const result = service.getMethod();
-        expect(result).toBe("icrc_112_batch_call_canister");
     });
 
     it("should execute icrc112 requests return success for all response", async () => {
