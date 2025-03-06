@@ -46,11 +46,11 @@ const Header: React.FC<HeaderProps> = ({ onConnect, openTestForm }) => {
                         <AiOutlineExperiment />
                     </Button>
 
-                    {/* <SheetTrigger asChild>
+                    <SheetTrigger asChild>
                         <Button variant="outline" size="icon" className="rounded-sm">
                             <RiMenu2Line />
                         </Button>
-                    </SheetTrigger> */}
+                    </SheetTrigger>
                 </div>
             </>
         );

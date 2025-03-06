@@ -146,7 +146,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                             isCurrencyInput={false}
                                             icon={<IoWallet className="mr-2 h-6 w-6" />}
                                             placeholder={t("claim.addressPlaceholder")}
-                                            onFocus={() => setSelectOptionWallet("Typed Wallet")}
+                                            onFocus={() =>
+                                                setSelectOptionWallet(WALLET_OPTIONS.OTHER)
+                                            }
                                             className="py-5"
                                             {...field}
                                         />

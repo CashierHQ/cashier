@@ -12,6 +12,7 @@ import { ACTION_TYPE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import Header from "@/components/header";
 import useConnectToWallet from "@/hooks/useConnectToWallet";
+import SheetWrapper from "@/components/sheet-wrapper";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -82,24 +83,26 @@ export default function ClaimPage() {
 
     return (
         <div className="w-screen h-screen flex flex-col items-center py-5">
-            <div className="w-11/12 max-w-[400px]">
-                <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
-                <LinkCardWithoutPhoneFrame
-                    label="Claim"
-                    src="/icpLogo.png"
-                    message={formData.description}
-                    title={formData.title}
-                    onClaim={handleStartClaimClick}
-                />
-            </div>
+            <SheetWrapper>
+                <div className="w-11/12 max-w-[400px]">
+                    <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
+                    <LinkCardWithoutPhoneFrame
+                        label="Claim"
+                        src="/icpLogo.png"
+                        message={formData.description}
+                        title={formData.title}
+                        onClaim={handleStartClaimClick}
+                    />
+                </div>
 
-            <TransactionToast
-                open={toastData?.open ?? false}
-                onOpenChange={hideToast}
-                title={toastData?.title ?? ""}
-                description={toastData?.description ?? ""}
-                variant={toastData?.variant ?? "default"}
-            />
+                <TransactionToast
+                    open={toastData?.open ?? false}
+                    onOpenChange={hideToast}
+                    title={toastData?.title ?? ""}
+                    description={toastData?.description ?? ""}
+                    variant={toastData?.variant ?? "default"}
+                />
+            </SheetWrapper>
         </div>
     );
 }

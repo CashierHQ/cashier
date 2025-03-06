@@ -25,6 +25,7 @@ import useToast from "@/hooks/useToast";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import Header from "@/components/header";
 import useConnectToWallet from "@/hooks/useConnectToWallet";
+import SheetWrapper from "@/components/sheet-wrapper";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -188,7 +189,7 @@ export default function HomePage() {
             <div className="w-screen flex justify-center py-5 h-[90%]">
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">
                     <div className="w-11/12 max-w-[400px] flex flex-col items-center">
-                        <Header onConnect={connectToWallet} />
+                        <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
 
                         <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
                             <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
@@ -231,7 +232,7 @@ export default function HomePage() {
                             : "bg-[white] h-[90%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
                     }
                 >
-                    <Sheet>
+                    <SheetWrapper>
                         <div
                             className={
                                 responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"
@@ -278,20 +279,6 @@ export default function HomePage() {
                         >
                             +
                         </button>
-
-                        <AppSidebar onItemClick={handleMenuClick} />
-                        <Dialog open={openDocumentDialog} onOpenChange={setOpenDocumentDialog}>
-                            <DialogContent className="h-[80%] w-[90%]">
-                                <DialogDescription>
-                                    <iframe
-                                        src={documentUrl}
-                                        title="description"
-                                        width="100%"
-                                        height="100%"
-                                    ></iframe>
-                                </DialogDescription>
-                            </DialogContent>
-                        </Dialog>
                         <TransactionToast
                             open={toastData?.open ?? false}
                             onOpenChange={hideToast}
@@ -299,7 +286,7 @@ export default function HomePage() {
                             description={toastData?.description ?? ""}
                             variant={toastData?.variant ?? "default"}
                         />
-                    </Sheet>
+                    </SheetWrapper>
                 </div>
             );
         }
