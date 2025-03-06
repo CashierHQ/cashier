@@ -1,5 +1,4 @@
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
-import { useCashierFeeIntents } from "@/components/confirmation-drawer/confirmation-drawer.hooks";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import LinkCard from "@/components/link-card";
 import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-preview-cashier-fee-section";
@@ -10,7 +9,7 @@ import { LINK_TYPE } from "@/services/types/enum";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { useCreateAction } from "@/hooks/linkHooks";
+import { useCreateAction, useFeePreview } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 
@@ -28,12 +27,12 @@ export default function LinkPreview({
     const { t } = useTranslation();
 
     const { link, action, setAction } = useCreateLinkStore();
+    const { data: feeIntents = [] } = useFeePreview(link?.id);
 
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
 
-    const cashierFeeIntents = useCashierFeeIntents(action?.intents);
     const { mutateAsync: createAction } = useCreateAction();
 
     const handleCreateAction = async () => {
@@ -99,7 +98,7 @@ export default function LinkPreview({
             {renderLinkCard()}
 
             <LinkPreviewCashierFeeSection
-                intents={cashierFeeIntents}
+                intents={feeIntents}
                 onInfoClick={() => setShowInfo(true)}
             />
 

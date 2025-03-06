@@ -1,7 +1,7 @@
 import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
-    _SERVICE,
+    _SERVICE as BaseService,
     CreateLinkInput,
     LinkDto,
     ProcessActionInput,
@@ -18,6 +18,19 @@ import {
 } from "./types/mapper/link.service.mapper";
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
+import { IntentModel } from "./types/intent.service.types";
+import { CHAIN, INTENT_STATE, INTENT_TYPE, TASK } from "./types/enum";
+
+interface FeeResponse {
+    id: string;
+    chain: string;
+    address: string;
+    amount: bigint;
+}
+
+interface ExtendedService extends BaseService {
+    get_fee: (linkId: string) => Promise<FeeResponse[]>;
+}
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -37,12 +50,12 @@ export interface UpdateActionInputModel {
 }
 
 class LinkService {
-    private actor: _SERVICE;
+    private actor: ExtendedService;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         this.actor = createActor(BACKEND_CANISTER_ID, {
             agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
-        });
+        }) as unknown as ExtendedService;
     }
 
     async getLinks() {
@@ -120,6 +133,31 @@ class LinkService {
         const response = parseResultResponse(await this.actor.update_action(input));
         const action = mapActionModel(response);
         return action;
+    }
+
+    async getFeePreview(linkId: string): Promise<IntentModel[]> {
+        const response = await this.actor.get_fee(linkId);
+        return response.map((fee) => ({
+            id: fee.id,
+            task: TASK.TRANSFER_WALLET_TO_TREASURY,
+            chain: CHAIN.IC,
+            state: INTENT_STATE.CREATED,
+            type: INTENT_TYPE.TRANSFER_FROM,
+            from: {
+                chain: fee.chain,
+                address: fee.address,
+            },
+            to: {
+                chain: fee.chain,
+                address: fee.address,
+            },
+            asset: {
+                chain: fee.chain,
+                address: fee.address,
+            },
+            amount: fee.amount,
+            createdAt: new Date(),
+        }));
     }
 }
 
