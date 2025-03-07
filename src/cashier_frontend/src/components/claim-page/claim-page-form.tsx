@@ -18,7 +18,7 @@ interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData: LinkDetailModel;
     handleClaim: () => void;
-    setIsClaiming: (value: boolean) => void;
+    setIsClaiming: () => void;
 }
 
 enum WALLET_OPTIONS {

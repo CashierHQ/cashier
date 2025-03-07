@@ -16,9 +16,6 @@ import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { UserDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { Sheet } from "@/components/ui/sheet";
-import AppSidebar from "@/components/app-sidebar";
-import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
@@ -58,8 +55,6 @@ export default function HomePage() {
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [disableCreateButton, setDisableCreateButton] = useState(false);
-    const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
-    const [documentUrl, setDocumentUrl] = useState("");
     const [openTestForm, setOpenTestForm] = useState(false);
     const { toastData, showToast, hideToast } = useToast();
     const navigate = useNavigate();
@@ -92,11 +87,6 @@ export default function HomePage() {
                 setDisableCreateButton(true);
             }
         }
-    };
-
-    const handleMenuClick = (docSource: string) => {
-        setDocumentUrl(docSource);
-        setOpenDocumentDialog(true);
     };
 
     const handleHideGuide = () => {
