@@ -54,4 +54,24 @@ export abstract class IntentHelperService {
 
         return totalAssetsDisplayAmount;
     }
+
+    public static async calculateFeeTotal(feeModels: FeeModel[]): Promise<number> {
+        const assetDisplayAmounts = await Promise.all(
+            feeModels.map(async (feeModel) => {
+                const metadata = await TokenUtilService.getTokenMetadata(feeModel.address);
+
+                if (!metadata) {
+                    return;
+                }
+
+                return convertDecimalBigIntToNumber(feeModel.amount, metadata.decimals);
+            }),
+        );
+
+        const totalAssetsDisplayAmount = assetDisplayAmounts.reduce<number>((total, amount) => {
+            return total + (amount ?? 0);
+        }, 0);
+
+        return totalAssetsDisplayAmount;
+    }
 }

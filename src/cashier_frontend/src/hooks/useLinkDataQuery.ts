@@ -10,6 +10,7 @@ export const useLinkDataQuery = (linkId: string | undefined) => {
         queryKey: queryKeys.links.detail(linkId, ACTION_TYPE.CREATE_LINK, identity).queryKey,
         queryFn: queryKeys.links.detail(linkId, ACTION_TYPE.CREATE_LINK, identity).queryFn,
         enabled: !!linkId && !!identity,
+        refetchOnWindowFocus: false,
     });
 
     return query;
