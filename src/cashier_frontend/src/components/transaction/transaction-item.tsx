@@ -25,9 +25,11 @@ export const TransactionItem: FC<TransactionItemProps> = ({ title, intent, isLoa
 
     return (
         <div className="flex items-center">
-            <div className="mr-1.5">
-                <Status status={mapIntentsStateToStatus(intent.state)} />
-            </div>
+            {mapIntentsStateToStatus(intent.state) !== undefined && (
+                <div className="mr-1.5">
+                    <Status status={mapIntentsStateToStatus(intent.state)} />
+                </div>
+            )}
 
             <div className="flex flex-col w-full">
                 <Asset

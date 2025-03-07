@@ -17,8 +17,8 @@ export default function LinkCardWithoutPhoneFrame({
     disabled?: boolean;
 }) {
     return (
-        <div className="flex flex-col items-center bg-lightgreen rounded-md mt-5 py-5 px-8">
-            <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 p-3">
+        <div className="flex flex-col items-center bg-lightgreen rounded-xl mt-5 py-5 px-8">
+            <div className="flex flex-col items-center bg-lightgreen rounded-xl mt-3 p-3">
                 <img
                     src={src}
                     alt="Link template"

@@ -4,6 +4,7 @@
         "linkName": "Link name",
         "linkNamePlaceholder": "Enter link name",
         "linkTemplate": "Link template",
+        "chooseLinkType": "Choose link type",
         "linkDetails": "Link details",
         "linkPreview": "Create link",
         "create": "Create",
@@ -14,7 +15,7 @@
         "amount": "Amount",
         "defaultTemplate": "Default template",
         "asset": "Asset",
-        "linkType": "Link Type",
+        "linkType": "Link type",
         "preview": "Preview"
     },
     "details": {

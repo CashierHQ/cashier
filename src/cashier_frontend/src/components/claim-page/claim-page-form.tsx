@@ -129,7 +129,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             <WalletButton
                                 title="Other wallets"
                                 handleConnect={() => handleConnectWallet(WALLET_OPTIONS.OTHER)}
-                                disabled={true}
+                                disabled={false}
                                 icon={<SlWallet className="mr-2 h-6 w-6" color="green" />}
                             />
                         )}
@@ -174,7 +174,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                         size="lg"
                         onClick={() => console.log(form.formState.errors)}
                     >
-                        {t("continue")}
+                        {t("claim.claim")}
                     </FixedBottomButton>
 
                     {/* <Button
