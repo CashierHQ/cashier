@@ -4,7 +4,13 @@ import LinkService, {
     UpdateActionInputModel,
 } from "@/services/link.service";
 import { LinkDetailModel, State } from "@/services/types/link.service.types";
-import { QueryClient, useMutation, UseMutationResult, useQueryClient } from "@tanstack/react-query";
+import {
+    QueryClient,
+    useMutation,
+    UseMutationResult,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_STATE, ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { MapLinkToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
@@ -246,4 +252,21 @@ export function useTransactionResultToast(
             }
         }
     }, [action]);
+}
+
+export function useFeePreview(linkId: string | undefined) {
+    const identity = useIdentity();
+
+    const query = useQuery({
+        queryKey: queryKeys.links.feePreview(linkId, identity).queryKey,
+        queryFn: async () => {
+            if (!linkId || !identity) return [];
+            const linkService = new LinkService(identity);
+            return linkService.getFeePreview(linkId);
+        },
+        enabled: !!linkId && !!identity,
+        refetchOnWindowFocus: false,
+    });
+
+    return query;
 }

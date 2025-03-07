@@ -74,6 +74,17 @@ export const queryKeys = createQueryKeyStore({
                 }
             },
         }),
+        feePreview: (
+            linkId: string | undefined,
+            identity: Identity | PartialIdentity | undefined,
+        ) => ({
+            queryKey: ["links", "feePreview", linkId, identity],
+            queryFn: async () => {
+                if (!linkId || !identity) return [];
+                const linkService = new LinkService(identity);
+                return linkService.getFeePreview(linkId);
+            },
+        }),
     },
     tokens: {
         metadata: (tokenAddress: string | undefined) => ({
