@@ -176,6 +176,10 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
 #[update(guard = "is_not_anonymous")]
 pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
     if input.action_id.is_empty() {
+        // create empty action
+        // assemble intent
+        // enrich intent
+        // call tx manager create action
         return create_action(CreateActionInput {
             action_type: input.action_type.clone(),
             link_id: input.link_id.clone(),

@@ -325,6 +325,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         };
         let mut eligible_txs: Vec<Transaction> = Vec::new();
         for tx in all_txs.iter() {
+            // set it false
             let mut eligible = true;
 
             // success txs - ignores
@@ -352,6 +353,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             owner: self.ic_env.caller(),
             subaccount: None,
         };
+        // This is where you create icrc_112
         let icrc_112_requests = self.create_icrc_112(
             caller,
             args.action_id.clone(),
@@ -367,6 +369,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             Some(icrc_112_requests.unwrap())
         };
 
+        // This is where execute transaction
         for mut tx in eligible_txs {
             self.execute_tx(&mut tx).await?;
         }
