@@ -9,7 +9,7 @@ import { LINK_TYPE } from "@/services/types/enum";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { useCreateAction } from "@/hooks/linkHooks";
+import { useCreateAction, useFeePreview } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
@@ -36,7 +36,7 @@ export default function LinkPreview({
     const [isDisabled, setIsDisabled] = useState(false);
     const { mutateAsync: createAction } = useCreateAction();
 
-    const mockCashierFeeData: FeeModel[] = MOCK_CASHIER_FEES;
+    const { data: feeData } = useFeePreview(link?.id);
 
     const handleCreateAction = async () => {
         const updatedAction = await createAction({
@@ -104,7 +104,7 @@ export default function LinkPreview({
             {renderLinkCard()}
 
             <LinkPreviewCashierFeeSection
-                intents={mockCashierFeeData}
+                intents={feeData ?? []}
                 onInfoClick={() => setShowInfo(true)}
             />
 
