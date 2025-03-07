@@ -19,7 +19,8 @@
         "preview": "Preview"
     },
     "details": {
-        "linkInfo": "Link info"
+        "linkInfo": "Link info",
+        "copyLink": "Copy link"
     },
     "claim": {
         "claim": "Claim",

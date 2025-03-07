@@ -67,12 +67,10 @@ export default function HomePage() {
     };
 
     const handleCreateLink = async () => {
-        if (linkData) {
-            const linkList = Object.values(linkData).flat();
-            const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
-            if (newLink) {
-                navigate(`/edit/${newLink.id}`);
-            }
+        const linkList = linkData ? Object.values(linkData).flat() : [];
+        const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
+        if (newLink) {
+            navigate(`/edit/${newLink.id}`);
         } else {
             try {
                 setDisableCreateButton(true);
