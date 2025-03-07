@@ -24,9 +24,9 @@ export default function ClaimPage() {
     const [formData, setFormData] = useState<LinkDetailModel>({} as LinkDetailModel);
     const { linkId } = useParams();
     const [isLoading, setIsLoading] = useState(true);
-    const [isClaiming, setIsClaiming] = useState(false);
     const { toastData, showToast, hideToast } = useToast();
     const { connectToWallet } = useConnectToWallet();
+    const [claimStatus, setClaimStatus] = useState("Claim");
 
     const form = useForm<z.infer<typeof ClaimSchema>>({
         resolver: zodResolver(ClaimSchema),
@@ -48,51 +48,48 @@ export default function ClaimPage() {
     if (isLoading) return null;
 
     const handleClaim = async () => {
-        if (!form.getValues("address") || form.getValues("address")?.length == 0) {
-            showToast("Test", "To receive, you need to login or connect your wallet", "error");
-            return;
-        }
-        console.log("Claiming");
+        setClaimStatus("Claimed");
+        // if (!form.getValues("address") || form.getValues("address")?.length == 0) {
+        //     showToast("Test", "To receive, you need to login or connect your wallet", "error");
+        //     return;
+        // }
+        // console.log("Claiming");
     };
 
     const handleStartClaimClick = () => {
-        setIsClaiming(true);
+        setClaimStatus("Claiming");
     };
-
-    if (isClaiming)
-        return (
-            <div className="w-screen flex flex-col items-center py-5">
-                <div className="w-11/12 max-w-[400px]">
-                    <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
-                    <ClaimPageForm
-                        form={form}
-                        formData={formData}
-                        setIsClaiming={setIsClaiming}
-                        handleClaim={handleClaim}
-                    />
-                    <TransactionToast
-                        open={toastData?.open ?? false}
-                        onOpenChange={hideToast}
-                        title={toastData?.title ?? ""}
-                        description={toastData?.description ?? ""}
-                        variant={toastData?.variant ?? "default"}
-                    />
-                </div>
-            </div>
-        );
 
     return (
         <div className="w-screen h-screen flex flex-col items-center py-5">
             <SheetWrapper>
                 <div className="w-11/12 max-w-[400px]">
                     <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
-                    <LinkCardWithoutPhoneFrame
-                        label="Claim"
-                        src="/icpLogo.png"
-                        message={formData.description}
-                        title={formData.title}
-                        onClaim={handleStartClaimClick}
-                    />
+
+                    {claimStatus === "Claiming" ? (
+                        <ClaimPageForm
+                            form={form}
+                            formData={formData}
+                            handleClaim={handleClaim}
+                            setIsClaiming={() => setClaimStatus("Claim")}
+                        />
+                    ) : claimStatus === "Claimed" ? (
+                        <LinkCardWithoutPhoneFrame
+                            label="Claimed"
+                            src="/icpLogo.png"
+                            message={formData.description}
+                            title={formData.title}
+                            disabled={true}
+                        />
+                    ) : (
+                        <LinkCardWithoutPhoneFrame
+                            label="Claim"
+                            src="/icpLogo.png"
+                            message={formData.description}
+                            title={formData.title}
+                            onClaim={handleStartClaimClick}
+                        />
+                    )}
                 </div>
 
                 <TransactionToast

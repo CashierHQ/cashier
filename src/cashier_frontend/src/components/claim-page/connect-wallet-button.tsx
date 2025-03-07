@@ -27,10 +27,10 @@ const WalletButton: React.FC<WalletButtonProps> = ({
             type="button"
             className={cn(
                 className,
-                "w-full h-10 px-3 py-5",
+                "w-full h-12 px-3 py-5 my-3",
                 "border border-input",
                 "rounded-md",
-                "text-sm font-medium",
+                "text-md",
                 "ring-offset-background",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "flex items-center justify-start",

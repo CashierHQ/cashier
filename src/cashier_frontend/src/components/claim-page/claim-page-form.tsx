@@ -1,16 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { SlWallet } from "react-icons/sl";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from "@/pages/[id]";
 import { z } from "zod";
@@ -20,6 +12,7 @@ import { IconInput } from "../icon-input";
 import WalletButton from "./connect-wallet-button";
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
+import { FixedBottomButton } from "../fix-bottom-button";
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -32,6 +25,7 @@ enum WALLET_OPTIONS {
     GOOGLE = "Google login",
     INTERNET_IDENTITY = "Internet Identity",
     OTHER = "Other wallets",
+    TYPING = "Typing",
 }
 
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
@@ -41,12 +35,17 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     setIsClaiming,
 }) => {
     const { t } = useTranslation();
-    const { connect, user } = useAuth();
+    const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
     const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
     const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
+        if (identity && selectOption !== currentSelectOptionWallet) {
+            console.log("Do you want to log out");
+            disconnect();
+            return;
+        }
         connect();
         setSelectOptionWallet(selectOption);
     };
@@ -67,12 +66,12 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {t("claim.receive")}
                 </h4>
-                <div className="absolute left-[10px]" onClick={() => setIsClaiming(false)}>
+                <div className="absolute left-[10px]" onClick={setIsClaiming}>
                     <IoIosArrowBack />
                 </div>
             </div>
             <div id="asset-section" className="my-5">
-                <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
+                <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
                     {t("claim.asset")}
                 </h2>
                 <div id="asset-detail" className="flex justify-between ml-1">
@@ -95,14 +94,15 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     className="flex flex-col gap-y-[10px] my-5"
                     onSubmit={form.handleSubmit(handleClaim)}
                 >
-                    <FormLabel id="asset-label">{t("claim.receive_options")}</FormLabel>
+                    <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
+                        {t("claim.receive_options")}
+                    </h2>
                     <div className="ml-1">
                         <WalletButton
                             title="Google login"
                             handleConnect={() => handleConnectWallet(WALLET_OPTIONS.GOOGLE)}
                             image="/googleIcon.png"
                             disabled={true}
-                            className="mx-1 my-3"
                             postfixText="Coming soon"
                         />
 
@@ -118,7 +118,6 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                     handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY)
                                 }
                                 image="/icpLogo.png"
-                                className="mx-1 my-3"
                             />
                         )}
 
@@ -131,40 +130,59 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                 title="Other wallets"
                                 handleConnect={() => handleConnectWallet(WALLET_OPTIONS.OTHER)}
                                 disabled={true}
-                                className="mx-1 my-3"
                                 icon={<SlWallet className="mr-2 h-6 w-6" color="green" />}
                             />
                         )}
 
-                        <FormField
-                            control={form.control}
-                            name="address"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormControl>
-                                        <IconInput
-                                            isCurrencyInput={false}
-                                            icon={<IoWallet className="mr-2 h-6 w-6" />}
-                                            placeholder={t("claim.addressPlaceholder")}
-                                            onFocus={() =>
-                                                setSelectOptionWallet(WALLET_OPTIONS.OTHER)
-                                            }
-                                            className="py-5"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        {/* Manually typing address */}
+                        {identity ? (
+                            <WalletButton
+                                title={t("claim.addressPlaceholder")}
+                                handleConnect={() => handleConnectWallet(WALLET_OPTIONS.TYPING)}
+                                icon={<IoWallet color="green" className="mr-2 h-6 w-6" />}
+                            />
+                        ) : (
+                            <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem className="mx-0">
+                                        <FormControl>
+                                            <IconInput
+                                                isCurrencyInput={false}
+                                                icon={
+                                                    <IoWallet
+                                                        color="green"
+                                                        className="mr-2 h-6 w-6"
+                                                    />
+                                                }
+                                                placeholder={t("claim.addressPlaceholder")}
+                                                className="py-5 h-12 text-md"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
                     </div>
 
-                    <Button
+                    <FixedBottomButton
+                        type="submit"
+                        variant="default"
+                        size="lg"
+                        onClick={() => console.log(form.formState.errors)}
+                    >
+                        {t("continue")}
+                    </FixedBottomButton>
+
+                    {/* <Button
                         type="submit"
                         className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
                     >
                         {t("continue")}
-                    </Button>
+                    </Button> */}
                 </form>
             </Form>
         </>

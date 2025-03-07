@@ -26,7 +26,7 @@
         "amount": "Amount",
         "address": "Address",
         "asset": "Asset",
-        "addressPlaceholder": "ex. 0xecd93dyaf....asfewg934d",
+        "addressPlaceholder": "Type in address",
         "receive_options": "Receive options",
         "receive": "Receive"
     },
