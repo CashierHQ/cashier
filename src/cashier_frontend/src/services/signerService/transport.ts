@@ -73,6 +73,7 @@ export class ClientTransport implements Transport {
         if (!this.#connection.connected) {
             throw new AuthClientTransportError("ClientTransport is not connected");
         }
+
         return new ClientChannel({
             authClient: this.#authClient,
             connection: this.#connection,

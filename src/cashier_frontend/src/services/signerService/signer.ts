@@ -46,7 +46,7 @@ export interface SignerOptions<T extends Transport> {
     derivationOrigin?: string;
 }
 
-export class Signer<T extends Transport = Transport> {
+export class ClientSigner<T extends Transport = Transport> {
     readonly #options: Required<Omit<SignerOptions<T>, "derivationOrigin">> &
         Pick<SignerOptions<T>, "derivationOrigin">;
     #channel?: Channel;

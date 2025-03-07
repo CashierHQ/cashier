@@ -1,7 +1,7 @@
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { Icrc112Requests, Icrc112Response } from "./icrc112.service";
-import { Signer } from "./signer";
+import { ClientSigner } from "./signer";
 import { ClientTransport } from "./transport";
 import { JsonRequest, JsonResponse } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
@@ -19,27 +19,28 @@ class CallSignerService {
             agent: this.agent,
         });
 
-        const signer = new Signer({ transport });
+        const signer = new ClientSigner({ transport });
 
         const request: JsonRequest = {
             id: "1",
             jsonrpc: "2.0",
-            method: IcrcMethod.BatchCallCanisters,
+            method: IcrcMethod.Icrc112BatchCallCanisters,
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input as unknown as JsonObject,
             },
         };
+
         const response = await signer.sendRequest(request);
 
         return this.parseResponse<Icrc112Response>(response);
     }
 
-    private parseResponse<T>(jsonObj: JsonResponse): T {
-        if ("result" in jsonObj) {
-            return jsonObj.result as unknown as T;
+    private parseResponse<T>(response: JsonResponse): T {
+        if ("result" in response) {
+            return response.result as unknown as T;
         } else {
-            throw new Error(`Error in response: ${JSON.stringify(jsonObj.error)}`);
+            throw new Error(`Error in response: ${JSON.stringify(response.error)}`);
         }
     }
 }

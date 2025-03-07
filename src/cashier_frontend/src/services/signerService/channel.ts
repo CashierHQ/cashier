@@ -105,14 +105,14 @@ export class ClientChannel implements Channel {
         }
 
         switch (request.method) {
-            case IcrcMethod.SupportedStandards:
+            case IcrcMethod.Icrc25SupportedStandards:
                 return this.createSupportedStandardsResponse(id);
-            case IcrcMethod.Permissions:
-            case IcrcMethod.RequestPermissions:
+            case IcrcMethod.Icrc25Permissions:
+            case IcrcMethod.Icrc25RequestPermissions:
                 return this.createPermissionsResponse(id);
-            case IcrcMethod.Delegation:
+            case IcrcMethod.Icrc34Delegation:
                 return this.createDelegationResponse(id, request);
-            case IcrcMethod.BatchCallCanisters:
+            case IcrcMethod.Icrc112BatchCallCanisters:
                 return this.createBatchCallCanistersResponse(id, request);
             default:
                 return this.createNotSupportedErrorResponse(id);

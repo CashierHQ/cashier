@@ -1,5 +1,5 @@
-import { HttpAgent } from "@dfinity/agent";
+import { NewCanisterCallerService } from "./NewCanisterCallerService";
 
 export interface ICanisterCaller<IN, OUT> {
-    call(agent: HttpAgent, args: IN): Promise<OUT>;
+    call(callerService: NewCanisterCallerService, args: IN): Promise<OUT>;
 }
