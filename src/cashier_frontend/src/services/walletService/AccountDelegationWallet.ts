@@ -1,4 +1,8 @@
-import { Icrc25SupportedStandardsResponse, IcrcMethod } from "@/types/icrc-method";
+import {
+    Icrc112BatchCallCanistersRawResponse,
+    Icrc25SupportedStandardsRawResponse,
+    IcrcMethod,
+} from "@/types/icrc-method";
 import { Icrc112Requests, Icrc112Response } from "../signerService/icrc112.service";
 import { IWallet } from "./IWallet";
 import { Signer } from "@slide-computer/signer";
@@ -22,7 +26,15 @@ export class AccountDelegationWallet implements IWallet {
 
     private async checkWalletSupportsIcrc112(): Promise<boolean> {
         try {
-            const response = await this.executeIcrc25();
+            // Execute an ICRC-25 RPC call to check if the wallet supports ICRC-112
+            const rawResponse = await this.signer.sendRequest({
+                id: "1",
+                jsonrpc: "2.0",
+                method: IcrcMethod.Icrc25SupportedStandards,
+                params: {},
+            });
+
+            const response = rawResponse as Icrc25SupportedStandardsRawResponse;
 
             const supportedMethods = response.result.supportedStandards.map(
                 (standard) => standard.name,
@@ -36,45 +48,16 @@ export class AccountDelegationWallet implements IWallet {
         }
     }
 
-    private async executeIcrc25(): Promise<Icrc25SupportedStandardsResponse> {
-        // Execute an ICRC-25 RPC call to check if the wallet supports ICRC-112
-        // This is a placeholder implementation; adjust as needed
+    private async executeBatchCall(input: Icrc112Requests): Promise<Icrc112Response> {
         const response = await this.signer.sendRequest({
             id: "1",
             jsonrpc: "2.0",
-            method: IcrcMethod.Icrc25SupportedStandards,
-            params: {},
+            method: IcrcMethod.Icrc112BatchCallCanisters,
+            params: input,
         });
 
-        return response as Icrc25SupportedStandardsResponse;
-    }
+        const castResponse = response as unknown as Icrc112BatchCallCanistersRawResponse;
 
-    private async executeBatchCall(input: Icrc112Requests): Promise<Icrc112Response> {
-        // Execute an ICRC-112 RPC call to execute batch transactions
-        const signedRequests = input.requests.map((request) => {
-            return this.signer.signMessage({
-                message: JSON.stringify(request),
-            });
-        });
-
-        const responses = await Promise.all(signedRequests);
-
-        // Send the signed requests to the network and get responses
-        // This is a placeholder implementation; adjust as needed
-        const icrc112Response = await this.sendSignedRequests(responses);
-
-        return icrc112Response;
-    }
-
-    private async sendSignedRequests(signedRequests: any[]): Promise<Icrc112Response> {
-        // Send the signed requests to the network
-        // This is a placeholder implementation; adjust as needed
-        const responses = await Promise.all(
-            signedRequests.map((request) => {
-                return this.signer.send(request);
-            }),
-        );
-
-        return { responses };
+        return castResponse.result.responses;
     }
 }

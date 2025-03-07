@@ -1,3 +1,5 @@
+import { Icrc112Response } from "@/services/signerService/icrc112.service";
+
 export enum IcrcMethod {
     Icrc1Transfer = "icrc1_transfer",
     Icrc2Approve = "icrc2_approve",
@@ -11,10 +13,16 @@ export enum IcrcMethod {
 
 export type JsonRpcVersion = "2.0";
 
-export type Icrc25SupportedStandardsResponse = {
+export type GenericJsonResponse<RESULT> = {
     id: string | number;
     jsonrpc: JsonRpcVersion;
-    result: {
-        supportedStandards: { name: string; url: string }[];
-    };
+    result: RESULT;
 };
+
+export type Icrc25SupportedStandardsRawResponse = GenericJsonResponse<{
+    supportedStandards: { name: string; url: string }[];
+}>;
+
+export type Icrc112BatchCallCanistersRawResponse = GenericJsonResponse<{
+    responses: Icrc112Response;
+}>;
