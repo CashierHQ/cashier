@@ -4,7 +4,7 @@ use cashier_types::ActionType;
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
-use crate::services::transaction_manager::validate::is_action_creator;
+use crate::services::transaction_manager::action::ActionService;
 use crate::services::transaction_manager::{TransactionManagerService, UpdateActionArgs};
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
@@ -36,7 +36,9 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
         }
     }
 
-    services::transaction_manager::create::create_link_action(input).await
+    let action_service: ActionService<RealIcEnvironment> = ActionService::get_instance();
+
+    action_service.create_link_action(input).await
 }
 
 #[update(guard = "is_not_anonymous")]
@@ -46,9 +48,13 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 
     let caller = ic_cdk::api::caller();
 
-    let is_creator = is_action_creator(caller.to_text(), input.action_id.clone()).map_err(|e| {
-        CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
-    })?;
+    let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
+
+    let is_creator = validate_service
+        .is_action_creator(caller.to_text(), input.action_id.clone())
+        .map_err(|e| {
+            CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
+        })?;
 
     if !is_creator {
         return Err(CanisterError::ValidationErrors(
@@ -71,10 +77,13 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<(), CanisterError> {
     let caller = ic_cdk::api::caller();
+    let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
 
-    let is_creator = is_action_creator(caller.to_text(), input.action_id).map_err(|e| {
-        CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
-    })?;
+    let is_creator = validate_service
+        .is_action_creator(caller.to_text(), input.action_id)
+        .map_err(|e| {
+            CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
+        })?;
 
     if !is_creator {
         return Err(CanisterError::ValidationErrors(

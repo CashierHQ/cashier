@@ -5,18 +5,25 @@ use cashier_types::{
 };
 use uuid::Uuid;
 
+use crate::utils::runtime::IcEnvironment;
+
 use super::IntentAdapter;
 
-pub struct IcAdapter {}
+pub struct IcAdapter<'a, E: IcEnvironment + Clone> {
+    pub ic_env: &'a E,
+}
 
-impl IcAdapter {
-    pub fn convert(intent: &Intent) -> Result<Vec<Transaction>, String> {
+impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
+    pub fn new(ic_env: &'a E) -> Self {
+        Self { ic_env }
+    }
+    pub fn convert(&self, intent: &Intent) -> Result<Vec<Transaction>, String> {
         match (intent.r#type.clone(), intent.task.clone()) {
             (IntentType::Transfer(transfer_intent), IntentTask::TransferWalletToLink) => {
-                Self::handle_transfer_wallet_to_link(transfer_intent)
+                self.handle_transfer_wallet_to_link(transfer_intent)
             }
             (IntentType::TransferFrom(transfer_intent), IntentTask::TransferWalletToTreasury) => {
-                Self::handle_transfer_wallet_to_treasury(transfer_intent)
+                self.handle_transfer_wallet_to_treasury(transfer_intent)
             }
             // Add other combinations as needed
             _ => Err("Unsupported intent type or task".to_string()),
@@ -24,10 +31,11 @@ impl IcAdapter {
     }
 
     fn handle_transfer_wallet_to_link(
+        &self,
         transfer_intent: TransferIntent,
     ) -> Result<Vec<Transaction>, String> {
         let id: Uuid = Uuid::new_v4();
-        let ts = ic_cdk::api::time();
+        let ts = self.ic_env.time();
 
         let icrc1_transfer = Icrc1Transfer {
             from: transfer_intent.from,
@@ -56,9 +64,10 @@ impl IcAdapter {
     }
 
     fn handle_transfer_wallet_to_treasury(
+        &self,
         transfer_intent: TransferFromIntent,
     ) -> Result<Vec<Transaction>, String> {
-        let ts = ic_cdk::api::time();
+        let ts = self.ic_env.time();
 
         let icrc2_approve = Icrc2Approve {
             from: transfer_intent.from.clone(),
@@ -105,12 +114,12 @@ impl IcAdapter {
     }
 }
 
-impl IntentAdapter for IcAdapter {
+impl<'a, E: IcEnvironment + Clone> IntentAdapter for IcAdapter<'a, E> {
     fn convert_to_transaction(&self, intent: Intent) -> Result<Vec<Transaction>, String> {
         if intent.chain != Chain::IC {
             return Err("Invalid chain".to_string());
         }
 
-        Self::convert(&intent)
+        self.convert(&intent)
     }
 }

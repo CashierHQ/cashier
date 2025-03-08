@@ -13,21 +13,27 @@ use crate::{
             IntentBuilder,
         },
     },
+    utils::runtime::IcEnvironment,
 };
 
 use super::{ActionAdapter, ConvertToIntentInput};
 
-pub struct IcAdapter {}
+pub struct IcAdapter<'a, E: IcEnvironment + Clone> {
+    pub ic_env: &'a E,
+}
 
-impl IcAdapter {
-    pub fn convert(input: ConvertToIntentInput) -> Result<Vec<Intent>, String> {
+impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
+    pub fn new(ic_env: &'a E) -> Self {
+        Self { ic_env }
+    }
+    pub fn convert(&self, input: ConvertToIntentInput) -> Result<Vec<Intent>, String> {
         match (
             input.link.link_type.unwrap().clone(),
             input.action.r#type.clone(),
         ) {
             (LinkType::TipLink, ActionType::CreateLink) => {
-                let fee_intent = IcAdapter::build_create_link_fee_intent()?;
-                let tip_intent = IcAdapter::build_create_tip_link_intent(input.clone())?;
+                let fee_intent = self.build_create_link_fee_intent()?;
+                let tip_intent = self.build_create_tip_link_intent(input)?;
 
                 let result: Vec<_> = fee_intent
                     .into_iter()
@@ -40,7 +46,7 @@ impl IcAdapter {
         }
     }
 
-    fn build_create_link_fee_intent() -> Result<Vec<Intent>, String> {
+    fn build_create_link_fee_intent(&self) -> Result<Vec<Intent>, String> {
         let fee_asset = Asset {
             address: ICP_CANISTER_ID.to_string(),
             chain: Chain::IC,
@@ -49,6 +55,7 @@ impl IcAdapter {
         let transfer_to_link_builer = TransferWalletToLinkTreasuryBuilder {
             amount: transaction_manager::fee::Fee::CreateTipLinkFeeIcp.as_u64(),
             asset: fee_asset,
+            ic_env: self.ic_env,
         };
 
         let res = transfer_to_link_builer.build();
@@ -56,10 +63,13 @@ impl IcAdapter {
         return Ok(res.intents);
     }
 
-    fn build_create_tip_link_intent(input: ConvertToIntentInput) -> Result<Vec<Intent>, String> {
+    fn build_create_tip_link_intent(
+        &self,
+        input: ConvertToIntentInput,
+    ) -> Result<Vec<Intent>, String> {
         let caller_wallet = Wallet {
             address: Account {
-                owner: ic_cdk::api::caller(),
+                owner: self.ic_env.caller(),
                 subaccount: None,
             }
             .to_string(),
@@ -83,6 +93,7 @@ impl IcAdapter {
             link_id: input.link.id,
             amount: first_asset.total_amount,
             asset: asset,
+            ic_env: self.ic_env,
         };
 
         let res = transfer_to_link_builer.build();
@@ -91,8 +102,8 @@ impl IcAdapter {
     }
 }
 
-impl ActionAdapter for IcAdapter {
+impl<'a, E: IcEnvironment + Clone> ActionAdapter for IcAdapter<'a, E> {
     fn convert_to_intent(&self, input: ConvertToIntentInput) -> Result<Vec<Intent>, String> {
-        IcAdapter::convert(input)
+        self.convert(input)
     }
 }

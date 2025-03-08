@@ -17,10 +17,10 @@ pub mod tests {
     use std::{collections::HashMap, future::Future, time::Duration};
 
     use cashier_types::{
-        Action, ActionIntent, ActionState, ActionType, Asset, Chain, FromCallType, IcTransaction,
-        Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent, IntentState, IntentTask,
-        IntentTransaction, IntentType, Protocol, Transaction, TransactionState, TransferFromIntent,
-        TransferIntent, Wallet,
+        Action, ActionIntent, ActionState, ActionType, Asset, AssetInfo, Chain, FromCallType,
+        IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent, IntentState,
+        IntentTask, IntentTransaction, IntentType, Link, LinkState, LinkType, Protocol,
+        Transaction, TransactionState, TransferFromIntent, TransferIntent, Wallet,
     };
 
     use candid::Principal;
@@ -82,6 +82,30 @@ pub mod tests {
                 0 => Chain::IC,
                 _ => Chain::IC,
             }
+        }
+    }
+
+    pub fn create_dummy_link() -> Link {
+        let asset_info = AssetInfo {
+            address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+            chain: Chain::IC,
+            current_amount: 0,
+            total_amount: 100,
+            amount_per_claim: 100,
+            total_claim: 0,
+        };
+
+        Link {
+            id: Uuid::new_v4().to_string(),
+            state: LinkState::ChooseLinkType,
+            title: Some("dummy link".to_string()),
+            description: Some("dummy link".to_string()),
+            link_type: Some(LinkType::TipLink),
+            asset_info: Some(vec![asset_info]),
+            template: None,
+            creator: generate_random_principal().to_text(),
+            create_at: generate_timestamp(),
+            metadata: None,
         }
     }
 

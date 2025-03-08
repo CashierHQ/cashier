@@ -18,13 +18,14 @@ type AssetInfoDto = record {
 type CanisterError = variant {
   InvalidDataError : text;
   HandleLogicError : text;
+  CanisterCallRejectError : record { text; text; RejectionCode; text };
   ParsePrincipalError : text;
   UnknownError : text;
   NotFound : text;
   ValidationErrors : text;
   ParseAccountError : text;
   AnonymousCall;
-  CanisterCallError : record { text; text; RejectionCode; text };
+  CanisterCallError : record { text; text; text };
   HandleApiError : text;
 };
 type CreateLinkInput = record { link_type : text };

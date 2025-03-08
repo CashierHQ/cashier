@@ -20,7 +20,6 @@ use crate::{
 pub mod action;
 pub mod action_adapter;
 pub mod builder;
-pub mod create;
 pub mod execute_transaction;
 pub mod fee;
 pub mod intent_adapter;
@@ -37,7 +36,7 @@ pub struct UpdateActionArgs {
 
 pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     transaction_service: TransactionService<E>,
-    action_service: ActionService,
+    action_service: ActionService<E>,
     manual_check_status_service: ManualCheckStatusService<E>,
     ic_env: E,
     execute_transaction_service: execute_transaction::ExecuteTransactionService,
@@ -46,7 +45,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
 impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
         transaction_service: TransactionService<E>,
-        action_service: ActionService,
+        action_service: ActionService<E>,
         manual_check_status_service: ManualCheckStatusService<E>,
         ic_env: E,
         execute_transaction_service: execute_transaction::ExecuteTransactionService,
@@ -266,8 +265,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
             })?;
 
-        let _time_id = ic_env.set_timer(Duration::from_secs(120), move || {
-            let ic_env_in_future = RealIcEnvironment::new();
+        Ok(())
+    }
 
     pub fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
         let tx_id = tx_id.clone();
@@ -330,6 +329,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         };
         let mut eligible_txs: Vec<Transaction> = Vec::new();
         for tx in all_txs.iter() {
+            // set it false
             let mut eligible = true;
 
             // success txs - ignores
@@ -357,6 +357,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             owner: self.ic_env.caller(),
             subaccount: None,
         };
+        // This is where you create icrc_112
         let icrc_112_requests = self.create_icrc_112(
             caller,
             args.action_id.clone(),
@@ -372,6 +373,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             Some(icrc_112_requests.unwrap())
         };
 
+        // This is where execute transaction
         for mut tx in eligible_txs {
             self.execute_tx(&mut tx).await?;
         }

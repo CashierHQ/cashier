@@ -1,11 +1,15 @@
 #[cfg(test)]
 mod tests {
     use crate::services::transaction_manager::{
-        __tests__::action::{
-            generate_action_created, generate_action_success, generate_action_with_for_fail,
-            generate_action_with_for_processing, setup_repositories,
+        __tests__::{
+            action::{
+                generate_action_created, generate_action_success, generate_action_with_for_fail,
+                generate_action_with_for_processing, setup_repositories,
+            },
+            tests::MockIcEnvironment,
         },
         action::ActionService,
+        validate::ValidateService,
     };
 
     use cashier_types::{ActionState, IntentState};
@@ -19,7 +23,15 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+        let ic_env = MockIcEnvironment::faux();
+
         let (
             mock_action,
             intents,
@@ -106,6 +118,12 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
+            ic_env,
         );
 
         let result = action_service.roll_up_state(selected_tx.id.clone());
@@ -129,7 +147,15 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+        let ic_env = MockIcEnvironment::faux();
+
         let (
             mock_action,
             intents,
@@ -216,6 +242,12 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
+            ic_env,
         );
 
         let result = action_service.roll_up_state(selected_tx.id.clone());
@@ -239,7 +271,15 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+        let ic_env = MockIcEnvironment::faux();
+
         let (
             mock_action,
             intents,
@@ -326,6 +366,12 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
+            ic_env,
         );
 
         let result = action_service.roll_up_state(selected_tx.id.clone());
@@ -358,7 +404,15 @@ mod tests {
             mut action_intent_repository,
             mut transaction_repository,
             mut intent_transaction_repository,
+            link_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
         ) = setup_repositories();
+
+        let validate_service = ValidateService::faux();
+        let ic_env = MockIcEnvironment::faux();
+
         let (
             mock_action,
             intents,
@@ -445,6 +499,12 @@ mod tests {
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
+            link_repository,
+            link_action_repository,
+            user_action_repository,
+            user_wallet_repository,
+            validate_service,
+            ic_env,
         );
 
         let result = action_service.roll_up_state(selected_tx.id.clone());
