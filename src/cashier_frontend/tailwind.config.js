@@ -56,6 +56,7 @@ export default {
                 lightyellow: "#fffaf2",
                 lightpurple: "#e8e8f2",
                 lightblack: "#475467",
+                grey: "#8d8d8d",
                 sidebar: {
                     DEFAULT: "hsl(var(--sidebar-background))",
                     foreground: "hsl(var(--sidebar-foreground))",

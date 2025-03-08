@@ -3,15 +3,18 @@ import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import CanisterUtilsService from "@/services/canisterUtils.service";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { AssetSelectItem } from "@/components/asset-select";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import { mapAPITokenModelToAssetSelectModel } from "@/services/icExplorer.service";
+import { mapAPITokenModelToAssetSelectModel, UserToken } from "@/services/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import * as z from "zod";
 import { TokenProviderService } from "@/services/tokenProviderService";
 import { useWalletAddress } from "@/hooks/useWalletAddress";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
+import { Identity } from "@dfinity/agent";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ASSET_LIST } from "@/services/tokenProviderService/devTokenProvider.service";
 
 export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
     return z
@@ -85,67 +88,70 @@ export function useTipLinkAssetForm(
     return form;
 }
 
-export function useAssets() {
+const fetchAssetListAmounts = async (identity: Identity, assetList: AssetSelectItem[]) => {
+    const canisterUtilService = new CanisterUtilsService(identity);
+
+    const assetListWithAmounts = await Promise.all(
+        assetList.map(async (asset) => {
+            const amountFetched = await canisterUtilService.checkAccountBalance(
+                asset.tokenAddress,
+                identity?.getPrincipal().toString(),
+            );
+
+            if (amountFetched === null) {
+                return asset;
+            }
+
+            const parsedAmount = await TokenUtilService.getHumanReadableAmount(
+                amountFetched,
+                asset.tokenAddress,
+            );
+
+            return {
+                ...asset,
+                amount: parsedAmount,
+            };
+        }),
+    );
+    return assetListWithAmounts;
+};
+
+const fetchUserTokens = async (walletAddress: string) => {
+    const tokens = await TokenProviderService.getUserTokens(walletAddress);
+    if (tokens.length === 0) {
+        tokens.push(...(ASSET_LIST as UserToken[]));
+    }
+    return tokens.map(mapAPITokenModelToAssetSelectModel);
+};
+
+export function useUserAssets() {
     const identity = useIdentity();
     const walletAddress = useWalletAddress();
+    const queryClient = useQueryClient();
 
-    const [isLoadingAssets, setIsLoadingAssets] = useState(true);
-    const [isLoadingBalance, setIsLoadingBalance] = useState(true);
-    const [assets, setAssets] = useState<AssetSelectItem[]>([]);
+    const { data: assets, isLoading: isLoadingAssets } = useQuery({
+        queryKey: ["userTokens", walletAddress],
+        queryFn: () => fetchUserTokens(walletAddress),
+        enabled: !!walletAddress,
+    });
 
-    const fetchAssetListAmounts = async (assetList: AssetSelectItem[]) => {
-        const canisterUtilService = new CanisterUtilsService(identity);
+    const { data: assetListWithAmounts, isLoading: isLoadingBalance } = useQuery({
+        queryKey: ["assetListAmounts", assets],
+        queryFn: () =>
+            identity ? fetchAssetListAmounts(identity, assets || []) : Promise.resolve([]),
+        enabled: !!assets,
+    });
 
-        const assetListWithAmounts = await Promise.all(
-            assetList.map(async (asset) => {
-                const amountFetched = await canisterUtilService.checkAccountBalance(
-                    asset.tokenAddress,
-                    identity?.getPrincipal().toString(),
-                );
-
-                if (amountFetched === null) {
-                    return asset;
-                }
-
-                const parsedAmount = await TokenUtilService.getHumanReadableAmount(
-                    amountFetched,
-                    asset.tokenAddress,
-                );
-
-                return {
-                    ...asset,
-                    amount: parsedAmount,
-                };
-            }),
-        );
-        return assetListWithAmounts;
-    };
-
-    // Fetch current user assets
     useEffect(() => {
-        async function fetchUserTokens() {
-            if (walletAddress) {
-                const tokens = await TokenProviderService.getUserTokens(walletAddress);
-                const assets = tokens.map(mapAPITokenModelToAssetSelectModel);
-
-                fetchAssetListAmounts(assets).then((assetsWithAmounts) => {
-                    setIsLoadingBalance(false);
-                    setAssets(assetsWithAmounts);
-                });
-
-                setAssets(assets);
-                setIsLoadingAssets(false);
-            }
+        if (walletAddress) {
+            queryClient.invalidateQueries({ queryKey: ["userTokens", walletAddress] });
         }
-
-        fetchUserTokens();
-    }, [walletAddress]);
+    }, [walletAddress, queryClient]);
 
     return {
+        assets: assetListWithAmounts,
         isLoadingAssets,
         isLoadingBalance,
-        isLoadingUsd: false,
-        assets,
     };
 }
 
