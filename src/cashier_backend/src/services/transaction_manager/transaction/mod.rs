@@ -21,7 +21,7 @@ use super::{
 #[cfg_attr(test, faux::create)]
 pub struct TransactionService<E: IcEnvironment + Clone> {
     transaction_repository: TransactionRepository,
-    action_service: ActionService,
+    action_service: ActionService<E>,
     ic_env: E,
 }
 
@@ -29,7 +29,7 @@ pub struct TransactionService<E: IcEnvironment + Clone> {
 impl<E: IcEnvironment + Clone> TransactionService<E> {
     pub fn new(
         transaction_repository: TransactionRepository,
-        action_service: ActionService,
+        action_service: ActionService<E>,
         ic_env: E,
     ) -> Self {
         Self {
