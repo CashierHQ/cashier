@@ -5,13 +5,16 @@ import { TipLinkAssetFormSchema } from "@/components/link-details/tip-link-asset
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { useSetTipLinkDetails } from "@/hooks/linkHooks";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
+import { useButtonState } from "@/hooks/useButtonState";
 
 export default function LinkDetails() {
     const { nextStep } = useMultiStepFormContext();
     const { link, setLink } = useCreateLinkStore();
     const { mutateAsync: setTipLinkDetails } = useSetTipLinkDetails();
+    const { isButtonDisabled, setButtonDisabled } = useButtonState();
 
     const handleSubmitTipLinkDetails = async (data: TipLinkAssetFormSchema) => {
+        setButtonDisabled(true);
         const updatedLink = await setTipLinkDetails({
             link: link!,
             patch: {
@@ -22,12 +25,18 @@ export default function LinkDetails() {
 
         setLink(updatedLink);
         nextStep();
+        setButtonDisabled(false);
     };
 
     const render = () => {
         switch (link!.linkType) {
             case LINK_TYPE.TIP_LINK:
-                return <TipLinkAssetForm onSubmit={handleSubmitTipLinkDetails} />;
+                return (
+                    <TipLinkAssetForm
+                        onSubmit={handleSubmitTipLinkDetails}
+                        isButtonDisabled={isButtonDisabled}
+                    />
+                );
             case LINK_TYPE.NFT_CREATE_AND_AIRDROP:
                 // TODO: uncouple NftAssetForm from link details
                 //return <NftAssetForm form={form} onChange={handleChange} onSubmit={handleSubmit} />;

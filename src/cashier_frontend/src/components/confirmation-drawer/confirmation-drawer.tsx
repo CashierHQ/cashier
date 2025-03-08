@@ -21,6 +21,7 @@ import {
     useUpdateAction,
 } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
+import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -73,19 +74,19 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         const response = await icrc112Execute(firstUpdatedAction!.icrc112Requests);
         console.log("🚀 ~ startTransaction ~ response:", response);
 
-        // TODO: Remove after demo
-        // setTimeout(async () => {
-        //     const secondUpdatedAction = await updateAction({
-        //         actionId: action!.id,
-        //         linkId: link!.id,
-        //         external: true,
-        //     });
+        setTimeout(async () => {
+            const secondUpdatedAction = await updateAction({
+                actionId: action!.id,
+                linkId: link!.id,
+                external: true,
+            });
+            console.log("🚀 ~ startTransaction ~ secondUpdatedAction:", secondUpdatedAction);
 
-        //     if (secondUpdatedAction) {
-        //         setAction(secondUpdatedAction);
-        //         onActionResult(secondUpdatedAction);
-        //     }
-        // }, 15000);
+            if (secondUpdatedAction) {
+                setAction(secondUpdatedAction);
+                onActionResult(secondUpdatedAction);
+            }
+        }, 10000);
     };
 
     const onClickSubmit = async () => {
@@ -128,7 +129,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         />
 
                         <ConfirmationPopupFeesSection intents={cashierFeeIntents} isUsd={isUsd} />
-
+                        <ConfirmationPopupLegalSection />
                         <Button disabled={isDisabled} onClick={onClickSubmit}>
                             {buttonText}
                         </Button>

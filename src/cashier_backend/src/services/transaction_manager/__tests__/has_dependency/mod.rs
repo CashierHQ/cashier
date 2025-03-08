@@ -488,7 +488,6 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
     }
-
     //TS7: Should throw error if tx A depends on a transaction that does not exist (invalid dependency)
     #[tokio::test]
     async fn should_return_false_when_all_depedencies_success() {

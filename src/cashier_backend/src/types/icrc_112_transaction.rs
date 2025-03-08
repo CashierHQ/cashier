@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 

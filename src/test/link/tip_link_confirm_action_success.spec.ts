@@ -20,7 +20,7 @@ import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Link", () => {
+describe("Timeout Link", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
