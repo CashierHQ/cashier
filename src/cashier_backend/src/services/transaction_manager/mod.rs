@@ -75,6 +75,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         tx: &mut Transaction,
         state: TransactionState,
     ) -> Result<(), String> {
+        info!("Update tx state: {:#?}", tx);
+        info!("Update tx state to: {:#?}", state);
         self.transaction_service.update_tx_state(tx, state)
     }
 
@@ -264,8 +266,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
             })?;
 
-        Ok(())
-    }
+        let _time_id = ic_env.set_timer(Duration::from_secs(120), move || {
+            let ic_env_in_future = RealIcEnvironment::new();
 
     pub fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
         let tx_id = tx_id.clone();
@@ -302,6 +304,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
             let new_state = self.manual_check_status_service.execute(&tx).await?;
+            info!("Tx: {:#?}", tx);
+            info!("New state: {:#?}", new_state);
             if tx.state == new_state.clone() {
                 continue;
             }

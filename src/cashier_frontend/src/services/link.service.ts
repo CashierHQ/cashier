@@ -18,6 +18,8 @@ import {
 } from "./types/mapper/link.service.mapper";
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
+import { FeeModel } from "./types/intent.service.types";
+import { MOCK_CASHIER_FEES } from "@/constants/mock-data";
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -50,7 +52,7 @@ class LinkService {
             await this.actor.get_links([
                 {
                     offset: BigInt(0),
-                    limit: BigInt(10),
+                    limit: BigInt(30),
                 },
             ]),
         );
@@ -120,6 +122,11 @@ class LinkService {
         const response = parseResultResponse(await this.actor.update_action(input));
         const action = mapActionModel(response);
         return action;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getFeePreview(linkId: string): Promise<FeeModel[]> {
+        return MOCK_CASHIER_FEES;
     }
 }
 

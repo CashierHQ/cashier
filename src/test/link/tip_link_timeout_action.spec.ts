@@ -40,7 +40,7 @@ describe("Timeout Link", () => {
         chain: "IC",
         address: "x5qut-viaaa-aaaar-qajda-cai",
         amount_per_claim: BigInt(100),
-        total_amount: BigInt(100),
+        total_amount: BigInt(10_0000_0000),
     };
 
     beforeAll(async () => {

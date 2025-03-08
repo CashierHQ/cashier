@@ -20,16 +20,17 @@ import { RiMenu2Line } from "react-icons/ri";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import AppSidebar from "@/components/app-sidebar";
 import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
-import ConnectedWalletDropdownIcon from "@/components/connected-wallet-icon";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { AiOutlineExperiment } from "react-icons/ai";
 import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
+import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
+import { Wallet } from "lucide-react";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const { connect, user: walletUser, disconnect } = useAuth();
+    const { connect, user: walletUser } = useAuth();
     const [newAppUser, setNewAppUser] = useState<UserDto>();
     const {
         data: appUser,
@@ -51,6 +52,7 @@ export default function HomePage() {
         enabled: !!appUser,
     });
     const queryClient = useQueryClient();
+    useUserAssets();
     const { isPending } = useUpdateLink(queryClient, identity);
 
     const [showGuide, setShowGuide] = useState(false);
@@ -75,17 +77,25 @@ export default function HomePage() {
     };
 
     const handleCreateLink = async () => {
-        try {
-            setDisableCreateButton(true);
-            showToast(t("common.creating"), t("common.creatingLink"), "default");
-            const response = await new LinkService(identity).createLink({
-                link_type: LINK_TYPE.TIP_LINK,
-            });
-            navigate(`/edit/${response}`);
-        } catch {
-            showToast(t("common.error"), t("common.commonErrorMessage"), "error");
-        } finally {
-            setDisableCreateButton(true);
+        if (linkData) {
+            const linkList = Object.values(linkData).flat();
+            const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
+            if (newLink) {
+                navigate(`/edit/${newLink.id}`);
+            }
+        } else {
+            try {
+                setDisableCreateButton(true);
+                showToast(t("common.creating"), t("common.creatingLink"), "default");
+                const response = await new LinkService(identity).createLink({
+                    link_type: LINK_TYPE.TIP_LINK,
+                });
+                navigate(`/edit/${response}`);
+            } catch {
+                showToast(t("common.error"), t("common.commonErrorMessage"), "error");
+            } finally {
+                setDisableCreateButton(true);
+            }
         }
     };
 
@@ -247,12 +257,20 @@ export default function HomePage() {
                                     alt="Cashier logo"
                                     className="max-w-[130px]"
                                 />
-                                <div className="ml-auto mr-3">
+                                {/* <div className="ml-auto mr-3">
                                     <ConnectedWalletDropdownIcon
                                         connectedAccount={walletUser.principal.toString()}
                                         disconnect={disconnect}
                                     />
-                                </div>
+                                </div> */}
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="ml-auto rounded-sm mr-3"
+                                    onClick={() => navigate("/wallet")}
+                                >
+                                    <Wallet size={16} />
+                                </Button>
                                 <Button
                                     variant="outline"
                                     size="icon"
@@ -282,7 +300,7 @@ export default function HomePage() {
                                     </button>
                                 </div>
                             )}
-                            <h2 className="text-base font-semibold mb-3 mt-3 mb-5">
+                            <h2 className="text-base font-semibold mt-3 mb-5">
                                 Links created by me
                             </h2>
                             {isLoading
