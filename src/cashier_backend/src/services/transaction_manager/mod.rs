@@ -9,7 +9,7 @@ use transaction::TransactionService;
 use crate::{
     core::action::types::ActionDto,
     info,
-    types::error::CanisterError,
+    types::{error::CanisterError, icrc_112_transaction::Icrc112Requests},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
@@ -167,8 +167,24 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         }
     }
 
-    pub fn create_icrc_112(&self) -> Result<(), String> {
-        Ok(())
+    pub fn create_icrc_112(
+        &self,
+        action_id: String,
+        link_id: String,
+        client_txs: &Vec<Transaction>,
+    ) -> Result<Option<Icrc112Requests>, CanisterError> {
+        Ok(self
+            .transaction_service
+            .create_icrc_112(action_id, link_id, client_txs))
+    }
+
+    pub async fn execute_tx_by_id(&self, tx_id: String) -> Result<(), CanisterError> {
+        let mut tx = self
+            .transaction_service
+            .get_tx_by_id(&tx_id)
+            .map_err(|e| CanisterError::NotFound(e))?;
+
+        self.execute_tx(&mut tx).await
     }
 
     pub async fn execute_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
@@ -210,8 +226,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
         let ic_env = self.ic_env.clone();
         let tx_id = tx_id.clone();
-
-        info!("Spawn tx timeout task for tx_id: {}", tx_id);
 
         let _time_id = ic_env.set_timer(Duration::from_secs(120), move || {
             let ic_env_in_future = RealIcEnvironment::new();
@@ -280,18 +294,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             }
         }
 
-        // Step #3 Construct executable tx for the tx that are eligible to execute
-        let icrc_112_requests = transaction::icrc_112::create(
-            args.link_id.clone(),
-            args.action_id.clone(),
-            &eligible_txs,
-        );
-
-        //Step #4 Actually execute the tx that is elibile
-        // for client tx set to processing
-        for tx in eligible_txs.clone() {
-            self.execute_tx(&mut tx.clone()).await?;
-        }
+        let eligible_txs: Vec<Transaction> = eligible_txs.iter().cloned().cloned().collect();
+        let icrc_112_requests =
+            self.create_icrc_112(args.action_id.clone(), args.link_id.clone(), &eligible_txs)?;
 
         let request = if icrc_112_requests.is_none() {
             None
@@ -300,6 +305,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         } else {
             Some(icrc_112_requests.unwrap())
         };
+
+        for tx in eligible_txs.clone() {
+            self.execute_tx(&mut tx.clone()).await?;
+        }
 
         let get_resp = self.action_service.get(args.action_id.clone()).unwrap();
 

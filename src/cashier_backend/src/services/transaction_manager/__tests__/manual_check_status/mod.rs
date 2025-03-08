@@ -43,29 +43,6 @@ mod tests {
         assert_eq!(result3.unwrap(), TransactionState::Success);
     }
 
-    //TS2: Transaction Status is processing , but it is not timeout
-    #[tokio::test]
-    async fn test_execute_transaction_id_processing_but_it_is_not_timeout() {
-        let icrc_service = IcrcService::faux();
-        let test_ts = generate_timestamp();
-
-        let runtime_ts = test_ts + ONE_HOUR_IN_NANOSECONDS;
-        let env = MockIcEnvironment::new_with_time(runtime_ts);
-
-        let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
-
-        let mut tx1 = create_dummy_tx_protocol(TransactionState::Processing, "icrc1_transfer");
-        tx1.created_at = test_ts;
-        // start ts should be earlier than runtime_ts to trigger test
-        let start_ts = runtime_ts - 6000_000_000;
-        tx1.start_ts = Some(start_ts);
-
-        let result1 = manual_check_service.execute(&tx1).await;
-
-        assert!(result1.is_ok());
-        assert_eq!(result1.unwrap(), TransactionState::Processing);
-    }
-
     //TS3: ICRC1 Transfer with Correct Wallet Balance
     #[tokio::test]
     async fn should_success_execute_icrc_1_transfer_with_correct_wallet_balance() {

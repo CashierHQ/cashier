@@ -5,7 +5,7 @@ use candid::Principal;
 pub trait IcEnvironment {
     fn new() -> Self;
     fn caller(&self) -> Principal;
-    fn canister_id(&self) -> Principal;
+    fn id(&self) -> Principal;
     fn time(&self) -> u64;
     fn println(&self, message: &str);
     fn spawn<F>(&self, future: F)
@@ -28,7 +28,7 @@ impl IcEnvironment for RealIcEnvironment {
     fn caller(&self) -> Principal {
         api::caller()
     }
-    fn canister_id(&self) -> Principal {
+    fn id(&self) -> Principal {
         api::id()
     }
     fn time(&self) -> u64 {

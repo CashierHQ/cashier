@@ -47,7 +47,7 @@ impl IcAdapter {
             state: TransactionState::Created,
             dependency: None,
             protocol: Protocol::IC(ic_transaction),
-            group: Some("1".to_string()),
+            group: 1,
             from_call_type: FromCallType::Wallet,
             start_ts: None,
         };
@@ -74,7 +74,7 @@ impl IcAdapter {
             state: TransactionState::Created,
             dependency: None,
             protocol: Protocol::IC(ic_approve_tx),
-            group: Some("1".to_string()),
+            group: 1,
             from_call_type: FromCallType::Wallet,
             start_ts: None,
         };
@@ -96,7 +96,7 @@ impl IcAdapter {
             state: TransactionState::Created,
             dependency: Some(vec![approve_tx.id.clone()]),
             protocol: Protocol::IC(ic_transfer_from_tx),
-            group: Some("2".to_string()),
+            group: 1,
             from_call_type: FromCallType::Canister,
             start_ts: None,
         };

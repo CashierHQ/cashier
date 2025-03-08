@@ -36,22 +36,6 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
             return Ok(transaction.state.clone());
         }
 
-        // Check if the transaction has timed out
-        // let is_timeout = match transaction.start_ts {
-        //     Some(start_ts) => {
-        //         let ts = self.ic_env.time();
-        //         let tx_timeout = get_tx_timeout_nano_seconds();
-
-        //         ts - start_ts >= tx_timeout
-        //     }
-        //     None => false,
-        // };
-
-        // //if not timeout do nothing
-        // if !is_timeout {
-        //     return Ok(transaction.state.clone());
-        // }
-
         // if timeout check the condition
         match &transaction.protocol {
             // Check balance for Icrc1Transfer
@@ -90,7 +74,6 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
                     Err(_) => Ok(TransactionState::Fail),
                 }
             }
-            // Canister call, so no need to check
             Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => {
                 return Ok(transaction.state.clone());
             } // _ => return Err("Invalid protocol".to_string()),

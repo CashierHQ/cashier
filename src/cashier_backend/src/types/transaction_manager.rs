@@ -33,13 +33,13 @@ impl ActionResp {
         Ok(group_index.get(group_key).unwrap().to_vec())
     }
 
-    pub fn flatten_intent_txs(&self) -> (HashMap<String, Vec<String>>, HashMap<String, String>) {
-        let mut group_index: HashMap<String, Vec<String>> = HashMap::new();
-        let mut id_index: HashMap<String, String> = HashMap::new();
+    pub fn flatten_intent_txs(&self) -> (HashMap<u16, Vec<String>>, HashMap<String, u16>) {
+        let mut group_index: HashMap<u16, Vec<String>> = HashMap::new();
+        let mut id_index: HashMap<String, u16> = HashMap::new();
 
         for (_intent_id, txs) in &self.intent_txs {
             for tx in txs {
-                let group_key = tx.group.clone().unwrap_or_else(|| "0".to_string());
+                let group_key = tx.group.clone();
                 group_index
                     .entry(group_key.clone())
                     .or_default()

@@ -1,21 +1,25 @@
 use candid::Nat;
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
 
-use crate::{types::icrc_112_transaction::Icrc112Request, utils::helper::to_subaccount};
+use crate::{
+    types::icrc_112_transaction::Icrc112Request,
+    utils::{helper::to_subaccount, runtime::IcEnvironment},
+};
 
 use super::TransactionBuilder;
 
-pub struct TransferToLinkEscrowWalletBuilder {
+pub struct TransferToLinkEscrowWalletBuilder<'a, E: IcEnvironment> {
     pub link_id: String,
     pub token_address: String,
     pub transfer_amount: u64,
     pub tx_id: String,
+    pub ic_env: &'a E,
 }
 
-impl TransactionBuilder for TransferToLinkEscrowWalletBuilder {
+impl<'a, E: IcEnvironment + Clone> TransactionBuilder for TransferToLinkEscrowWalletBuilder<'a, E> {
     fn build(&self) -> Icrc112Request {
         let account = Account {
-            owner: ic_cdk::id(),
+            owner: self.ic_env.id(),
             subaccount: Some(to_subaccount(self.link_id.clone())),
         };
 

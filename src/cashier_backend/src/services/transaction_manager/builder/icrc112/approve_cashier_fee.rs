@@ -1,20 +1,21 @@
 use candid::Nat;
 use icrc_ledger_types::{icrc1::account::Account, icrc2::approve::ApproveArgs};
 
-use crate::types::icrc_112_transaction::Icrc112Request;
+use crate::{types::icrc_112_transaction::Icrc112Request, utils::runtime::IcEnvironment};
 
 use super::TransactionBuilder;
 
-pub struct ApproveCashierFeeBuilder {
+pub struct ApproveCashierFeeBuilder<'a, E: IcEnvironment + Clone> {
     pub token_address: String,
     pub fee_amount: u64,
     pub tx_id: String,
+    pub ic_env: &'a E,
 }
 
-impl TransactionBuilder for ApproveCashierFeeBuilder {
+impl<'a, E: IcEnvironment + Clone> TransactionBuilder for ApproveCashierFeeBuilder<'a, E> {
     fn build(&self) -> Icrc112Request {
         let spender = Account {
-            owner: ic_cdk::id(),
+            owner: self.ic_env.id(),
             subaccount: None,
         };
 

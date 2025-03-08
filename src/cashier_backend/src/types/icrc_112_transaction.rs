@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -25,52 +27,6 @@ impl Icrc112RequestsExt for Icrc112Requests {
     }
 }
 
-pub struct Icrc112RequestsBuilder {
-    pub requests: Icrc112Requests,
-}
-impl Icrc112RequestsBuilder {
-    pub fn new() -> Self {
-        Self { requests: vec![] }
-    }
-
-    pub fn count_requests(&self) -> usize {
-        self.requests.len()
-    }
-
-    pub fn add_parallel_requests(&mut self, requests: ParallelRequests) -> usize {
-        self.requests.push(requests);
-        self.requests.len() - 1 // Return the index of the newly added group
-    }
-
-    pub fn add_one_request(&mut self, request: Icrc112Request) -> usize {
-        self.requests.push(vec![request]);
-        self.requests.len() - 1 // Return the index of the newly added group
-    }
-
-    pub fn add_to_first_group(&mut self, request: Icrc112Request) {
-        if self.requests.is_empty() {
-            self.requests.push(vec![]);
-        }
-        self.requests[0].push(request);
-    }
-
-    pub fn add_request_to_group(
-        &mut self,
-        group_index: usize,
-        request: Icrc112Request,
-    ) -> Result<(), String> {
-        if group_index < self.requests.len() {
-            self.requests[group_index].push(request);
-            Ok(())
-        } else {
-            Err(format!("Group index {} out of bounds", group_index))
-        }
-    }
-
-    pub fn build(self) -> Icrc112Requests {
-        self.requests
-    }
-}
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CanisterCallResponse {
     pub content_map: String,
