@@ -265,7 +265,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
             })?;
 
-        self.execute_canister_tx(tx).await
+        Ok(())
     }
 
     pub fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
