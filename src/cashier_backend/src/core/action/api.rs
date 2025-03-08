@@ -62,8 +62,6 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
         external: true,
     };
 
-    info!("Updating action: {:#?}", args);
-
     transaction_manager
         .update_action(args)
         .await
