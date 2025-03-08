@@ -1,7 +1,7 @@
 use cashier_types::{FromCallType, IcTransaction, Transaction};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 
-use crate::{info, types::error::CanisterError, utils::icrc::IcrcService};
+use crate::{types::error::CanisterError, utils::icrc::IcrcService};
 
 #[cfg_attr(test, faux::create)]
 pub struct ExecuteTransactionService {
@@ -21,8 +21,6 @@ impl ExecuteTransactionService {
     pub async fn execute(&self, transaction: &Transaction) -> Result<(), CanisterError> {
         let from_call_type = transaction.from_call_type.clone();
 
-        info!("Execute transaction: {:?}", transaction);
-
         match from_call_type {
             FromCallType::Canister => {
                 let protocol = transaction.protocol.as_ic_transaction().ok_or_else(|| {
@@ -31,7 +29,6 @@ impl ExecuteTransactionService {
 
                 match protocol {
                     IcTransaction::Icrc2TransferFrom(tx) => {
-                        info!("Execute Icrc2TransferFrom");
                         let args: TransferFromArgs = TransferFromArgs::try_from(tx.clone())
                             .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
 
@@ -41,8 +38,6 @@ impl ExecuteTransactionService {
                             .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
 
                         self.icrc_service.transfer_from(asset, args).await?;
-
-                        info!("Icrc2TransferFrom executed");
 
                         return Ok(());
                     }

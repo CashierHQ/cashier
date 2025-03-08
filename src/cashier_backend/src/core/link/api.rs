@@ -187,10 +187,6 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
         let link_id = input.link_id.clone();
         let external = false;
 
-        if services::link::is_link_exist(action_id.clone()) {
-            return Err(CanisterError::HandleApiError("Link not found".to_string()));
-        }
-
         let transaction_manager: TransactionManagerService<RealIcEnvironment> =
             TransactionManagerService::get_instance();
 

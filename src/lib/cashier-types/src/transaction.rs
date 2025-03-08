@@ -1,6 +1,12 @@
 use candid::Nat;
 use cashier_macros::storable;
-use icrc_ledger_types::{icrc1::transfer::Memo, icrc2::transfer_from::TransferFromArgs};
+use icrc_ledger_types::{
+    icrc1::{
+        account::{Account, ICRC1TextReprError},
+        transfer::Memo,
+    },
+    icrc2::transfer_from::TransferFromArgs,
+};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -13,7 +19,7 @@ pub struct Transaction {
     pub created_at: u64,
     pub state: TransactionState,
     pub dependency: Option<Vec<String>>,
-    pub group: Option<String>,
+    pub group: u16,
     pub from_call_type: FromCallType,
     pub protocol: Protocol,
     pub start_ts: Option<u64>,
@@ -37,6 +43,20 @@ impl Transaction {
             Protocol::IC(IcTransaction::Icrc1Transfer(_)) => "Icrc1Transfer".to_string(),
             Protocol::IC(IcTransaction::Icrc2Approve(_)) => "Icrc2Approve".to_string(),
             Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => "Icrc2TransferFrom".to_string(),
+        }
+    }
+
+    pub fn try_get_from_account(&self) -> Result<Account, ICRC1TextReprError> {
+        match &self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
+                icrc1_transfer.from.clone().get_account()
+            }
+            Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve)) => {
+                icrc2_approve.from.clone().get_account()
+            }
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
+                icrc2_transfer_from.from.clone().get_account()
+            }
         }
     }
 }
