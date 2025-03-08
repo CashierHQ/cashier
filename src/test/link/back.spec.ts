@@ -9,7 +9,7 @@ import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../utils/parser";
-import { AirdropHelper } from "../utils/airdrop-helper";
+import { TokenHelper } from "../utils/token-helper";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -23,7 +23,7 @@ describe("Back", () => {
     let linkId: string;
     // let createLinkActionId: string;
 
-    let airdropHelper: AirdropHelper;
+    let airdropHelper: TokenHelper;
 
     const testPayload = {
         title: "tip 20 icp",
@@ -66,7 +66,7 @@ describe("Back", () => {
 
         console.log("User created: ", user);
 
-        airdropHelper = new AirdropHelper(pic);
+        airdropHelper = new TokenHelper(pic);
         await airdropHelper.setupCanister();
 
         await airdropHelper.airdrop(BigInt(1_0000_0000_0000), alice.getPrincipal());

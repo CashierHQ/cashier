@@ -1,5 +1,6 @@
+use candid::Nat;
 use cashier_macros::storable;
-use icrc_ledger_types::icrc1::transfer::Memo;
+use icrc_ledger_types::{icrc1::transfer::Memo, icrc2::transfer_from::TransferFromArgs};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -30,6 +31,14 @@ impl Transaction {
             }
         }
     }
+
+    pub fn get_tx_type(&self) -> String {
+        match &self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(_)) => "Icrc1Transfer".to_string(),
+            Protocol::IC(IcTransaction::Icrc2Approve(_)) => "Icrc2Approve".to_string(),
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => "Icrc2TransferFrom".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -41,6 +50,7 @@ impl Protocol {
     pub fn as_ic_transaction(&self) -> Option<&IcTransaction> {
         match self {
             Protocol::IC(ic_transaction) => Some(ic_transaction),
+            // none if other protocol
         }
     }
 }
@@ -102,6 +112,40 @@ pub struct Icrc2TransferFrom {
     pub amount: u64,
     pub memo: Option<Memo>,
     pub ts: Option<u64>,
+}
+
+impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
+    type Error = String;
+
+    fn try_from(value: Icrc2TransferFrom) -> Result<Self, Self::Error> {
+        let spender_account = value
+            .spender
+            .get_account()
+            .map_err(|e| format!("Failed to parse spender account: {}", e.to_string()))?;
+
+        let from = value
+            .from
+            .get_account()
+            .map_err(|e| format!("Failed to parse from account: {}", e.to_string()))?;
+
+        let to = value
+            .to
+            .get_account()
+            .map_err(|e| format!("Failed to parse to account: {}", e.to_string()))?;
+
+        let amount = Nat::from(value.amount);
+        let memo = value.memo;
+
+        Ok(TransferFromArgs {
+            spender_subaccount: spender_account.subaccount,
+            from,
+            to,
+            amount,
+            fee: None,
+            memo,
+            created_at_time: value.ts,
+        })
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

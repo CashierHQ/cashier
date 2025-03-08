@@ -9,7 +9,10 @@ mod tests {
         services::transaction_manager::{
             __tests__::{
                 action::setup_repositories,
-                tests::{create_dummy_action, create_dummy_intent, create_dummy_transaction},
+                tests::{
+                    create_dummy_action, create_dummy_intent, create_dummy_transaction,
+                    generate_timestamp, MockIcEnvironment,
+                },
             },
             action::ActionService,
             transaction::TransactionService,
@@ -24,6 +27,7 @@ mod tests {
 
         let mut action_service = ActionService::faux();
         let mut tx = create_dummy_transaction(TransactionState::Created);
+        let mut ic_env = MockIcEnvironment::faux();
 
         let mut changed_tx = tx.clone();
         changed_tx.state = TransactionState::Processing;
@@ -47,7 +51,10 @@ mod tests {
 
         when!(action_service.roll_up_state).then_return(Ok(action_resp));
 
-        let transaction_service = TransactionService::new(transaction_repository, action_service);
+        when!(ic_env.time).then_return(generate_timestamp());
+
+        let transaction_service =
+            TransactionService::new(transaction_repository, action_service, ic_env);
 
         let result = transaction_service.update_tx_state(&mut tx, TransactionState::Processing);
 
@@ -62,6 +69,7 @@ mod tests {
 
         let mut action_service = ActionService::faux();
         let mut tx = create_dummy_transaction(TransactionState::Processing);
+        let mut ic_env = MockIcEnvironment::faux();
 
         let mut changed_tx = tx.clone();
         changed_tx.state = TransactionState::Success;
@@ -85,7 +93,10 @@ mod tests {
 
         when!(action_service.roll_up_state).then_return(Ok(action_resp));
 
-        let transaction_service = TransactionService::new(transaction_repository, action_service);
+        when!(ic_env.time).then_return(generate_timestamp());
+
+        let transaction_service =
+            TransactionService::new(transaction_repository, action_service, ic_env);
 
         let result = transaction_service.update_tx_state(&mut tx, TransactionState::Success);
 
@@ -100,6 +111,7 @@ mod tests {
 
         let mut action_service = ActionService::faux();
         let mut tx = create_dummy_transaction(TransactionState::Processing);
+        let mut ic_env = MockIcEnvironment::faux();
 
         let mut changed_tx = tx.clone();
         changed_tx.state = TransactionState::Fail;
@@ -123,7 +135,10 @@ mod tests {
 
         when!(action_service.roll_up_state).then_return(Ok(action_resp));
 
-        let transaction_service = TransactionService::new(transaction_repository, action_service);
+        when!(ic_env.time).then_return(generate_timestamp());
+
+        let transaction_service =
+            TransactionService::new(transaction_repository, action_service, ic_env);
 
         let result = transaction_service.update_tx_state(&mut tx, TransactionState::Fail);
 

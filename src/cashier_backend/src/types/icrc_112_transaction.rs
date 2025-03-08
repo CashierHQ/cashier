@@ -33,6 +33,10 @@ impl Icrc112RequestsBuilder {
         Self { requests: vec![] }
     }
 
+    pub fn count_requests(&self) -> usize {
+        self.requests.len()
+    }
+
     pub fn add_parallel_requests(&mut self, requests: ParallelRequests) -> usize {
         self.requests.push(requests);
         self.requests.len() - 1 // Return the index of the newly added group

@@ -12,11 +12,11 @@ import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../utils/parser";
-import { AirdropHelper } from "../utils/airdrop-helper";
+import { TokenHelper } from "../utils/token-helper";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Link", () => {
+describe("Timeout Link", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
@@ -26,7 +26,7 @@ describe("Link", () => {
     let linkId: string;
     let createLinkActionId: string;
 
-    let airdropHelper: AirdropHelper;
+    let airdropHelper: TokenHelper;
 
     const testPayload = {
         title: "tip 20 icp",
@@ -60,14 +60,14 @@ describe("Link", () => {
         actor.setIdentity(alice);
 
         // init seed for RNG
-        await pic.advanceTime(5 * 60 * 1000);
+        await pic.advanceTime(7 * 60 * 1000);
         await pic.tick(50);
 
         // create user snd airdrop
         const create_user_res = await actor.create_user();
         user = parseResultResponse(create_user_res);
 
-        airdropHelper = new AirdropHelper(pic);
+        airdropHelper = new TokenHelper(pic);
         await airdropHelper.setupCanister();
 
         await airdropHelper.airdrop(BigInt(1_0000_0000_0000), alice.getPrincipal());
@@ -218,6 +218,23 @@ describe("Link", () => {
 
         actionDto.intents.forEach((intent: IntentDto) => {
             expect(intent.state).toEqual("Intent_state_processing");
+        });
+    });
+
+    it("Should timeout", async () => {
+        const input: GetLinkOptions = {
+            action_type: "CreateLink",
+        };
+
+        const getActionRes = await actor.get_link(linkId, [input]);
+        const res = parseResultResponse(getActionRes);
+
+        expect(res.link.id).toEqual(linkId);
+        expect(res.action).toHaveLength(1);
+        expect(res.action[0]!.id).toEqual(createLinkActionId);
+        expect(res.action[0]!.state).toEqual("Action_state_fail");
+        res.action[0]!.intents.forEach((intent: IntentDto) => {
+            expect(intent.state).toEqual("Intent_state_fail");
         });
     });
 });

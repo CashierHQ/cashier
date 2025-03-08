@@ -5,6 +5,7 @@ import { resolve } from "path";
 
 import {
     type _SERVICE,
+    ApproveArgs,
     InitArgs,
     LedgerCanisterPayload,
     init as ledgerInit,
@@ -14,7 +15,7 @@ import { idlFactory } from "../../declarations/icp_ledger_canister/index";
 import { principalToAccountIdentifier } from "@dfinity/ledger-icp";
 import { IDL } from "@dfinity/candid";
 
-export class AirdropHelper {
+export class TokenHelper {
     private pic: PocketIc;
     private deployer: Identity;
     private wasm_path: string;
@@ -95,4 +96,28 @@ export class AirdropHelper {
 
         return result;
     };
+
+    public with_identity(identity: Identity) {
+        if (!this.actor) {
+            throw new Error("Canister not setup");
+        }
+
+        this.actor.setIdentity(identity);
+    }
+
+    public async transfer(arg: TransferArg) {
+        if (!this.actor) {
+            throw new Error("Canister not setup");
+        }
+
+        return await this.actor.icrc1_transfer(arg);
+    }
+
+    public approve(arg: ApproveArgs) {
+        if (!this.actor) {
+            throw new Error("Canister not setup");
+        }
+
+        return this.actor.icrc2_approve(arg);
+    }
 }

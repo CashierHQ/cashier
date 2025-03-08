@@ -12,7 +12,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error, info,
+    error,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link},
@@ -152,7 +152,6 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
     }
 
     let link_type_str = link_type.unwrap();
-    info!("link update: {:#?}", link);
     match link_type_str {
         LinkType::NftCreateAndAirdrop => match handle_update_link(input, link).await {
             Ok(l) => Ok(LinkDto::from(l)),
