@@ -7,7 +7,7 @@
     "scripts": {
         "prebuild": "dfx generate cashier_backend",
         "build": "npm run build --workspaces --if-present",
-        "pretest": "npm run prebuild",
+        "pretest": "make setup-test",
         "prestart": "dfx generate cashier_backend",
         "start": "npm start --workspaces --if-present",
         "build:backend": "make build-wasm && make build-did && dfx generate cashier_backend",

@@ -12,7 +12,7 @@ use std::str::FromStr;
 
 use crate::{common::Wallet, Asset};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[storable]
 pub struct Transaction {
     pub id: String,
@@ -168,7 +168,7 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum FromCallType {
     Canister,
     Wallet,
@@ -236,7 +236,7 @@ impl FromStr for TransactionProtocol {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TransactionState {
     Created,
     Processing,

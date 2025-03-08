@@ -21,11 +21,13 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
         return Err("Transaction start_ts is None".to_string());
     }
 
+    info!("Transaction start_ts: {:#?}", tx);
+
     let current_ts = ic_cdk::api::time();
 
     let tx_timeout: u64 = get_tx_timeout_nano_seconds();
 
-    if tx.start_ts.unwrap() + tx_timeout < current_ts {
+    if current_ts - tx.start_ts.unwrap() >= tx_timeout {
         let icrc_service = IcrcService::new();
 
         let ic_env = RealIcEnvironment::new();
@@ -39,8 +41,11 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
 
         let _ = transaction_service.update_tx_state(&mut tx, state.clone());
 
-        info!("Transaction is timeout, update state to {:?}", state);
-        // update_tx_state::update_tx_state(tx, state)
+        info!(
+            "Transaction {} is timeout, state is updated to {:?}",
+            tx_id, state
+        );
+
         Ok(())
     } else {
         return Err("Transaction is not timeout".to_string());

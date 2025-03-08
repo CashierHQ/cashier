@@ -9,9 +9,9 @@ build-did:
 setup-test:
 	make build-wasm
 	bash scripts/setup_test.sh
-	bash scripts/compress_build_wasm.sh
 	
 test:
+	make build-wasm
 	@npm run test
 
 # have to run local-setup before running this, need create did file in .dfx

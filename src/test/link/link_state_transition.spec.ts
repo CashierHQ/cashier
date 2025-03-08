@@ -13,7 +13,7 @@ import { TokenHelper } from "../utils/token-helper";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Back", () => {
+describe("Link state transition", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 

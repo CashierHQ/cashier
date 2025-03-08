@@ -1,11 +1,12 @@
 use candid::Principal;
 use icrc_ledger_types::{icrc1::account::Account, icrc2::transfer_from::TransferFromArgs};
 use serde_bytes::ByteBuf;
+use std::fmt;
 
 use crate::{
     services::ext::icrc_token::{
         Account as ExtAccount, Allowance, AllowanceArgs, Service,
-        TransferFromArgs as ExtTransferFromArgs,
+        TransferFromArgs as ExtTransferFromArgs, TransferFromError,
     },
     types::error::{CanisterError, DisplayRejectionCode},
 };
@@ -35,7 +36,7 @@ impl IcrcService {
 
         match res {
             Ok((balance,)) => Ok(balance.0.to_u64_digits().first().unwrap_or(&0).clone()),
-            Err((code, error)) => Err(CanisterError::CanisterCallError(
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
                 "icrc_1_balance_of".to_string(),
                 token_service.get_canister_id().to_string(),
                 DisplayRejectionCode(code),
@@ -72,7 +73,7 @@ impl IcrcService {
 
         match res {
             Ok((allowance,)) => Ok(allowance),
-            Err((code, error)) => Err(CanisterError::CanisterCallError(
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
                 "icrc_2_allowance".to_string(),
                 token_service.get_canister_id().to_string(),
                 DisplayRejectionCode(code),
@@ -113,13 +114,63 @@ impl IcrcService {
         let res = token_service.icrc_2_transfer_from(&arg).await;
 
         match res {
-            Ok(_) => Ok(()),
-            Err((code, error)) => Err(CanisterError::CanisterCallError(
+            Ok((call_res,)) => match call_res {
+                Ok(_block_id) => Ok(()),
+                Err(error) => Err(CanisterError::CanisterCallError(
+                    "icrc_2_transfer_from".to_string(),
+                    token_service.get_canister_id().to_string(),
+                    error.to_string(),
+                )),
+            },
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
                 "icrc_2_transfer_from".to_string(),
                 token_service.get_canister_id().to_string(),
                 DisplayRejectionCode(code),
                 error,
             )),
         }
+    }
+}
+
+impl fmt::Display for TransferFromError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TransferFromError::GenericError {
+                message,
+                error_code,
+            } => {
+                write!(f, "GenericError: {}, ErrorCode: {}", message, error_code)
+            }
+            TransferFromError::TemporarilyUnavailable => {
+                write!(f, "TemporarilyUnavailable")
+            }
+            TransferFromError::InsufficientAllowance { allowance } => {
+                write!(f, "InsufficientAllowance: Allowance: {}", allowance)
+            }
+            TransferFromError::BadBurn { min_burn_amount } => {
+                write!(f, "BadBurn: MinBurnAmount: {}", min_burn_amount)
+            }
+            TransferFromError::Duplicate { duplicate_of } => {
+                write!(f, "Duplicate: DuplicateOf: {}", duplicate_of)
+            }
+            TransferFromError::BadFee { expected_fee } => {
+                write!(f, "BadFee: ExpectedFee: {}", expected_fee)
+            }
+            TransferFromError::CreatedInFuture { ledger_time } => {
+                write!(f, "CreatedInFuture: LedgerTime: {}", ledger_time)
+            }
+            TransferFromError::TooOld => {
+                write!(f, "TooOld")
+            }
+            TransferFromError::InsufficientFunds { balance } => {
+                write!(f, "InsufficientFunds: Balance: {}", balance)
+            }
+        }
+    }
+}
+
+impl From<TransferFromError> for String {
+    fn from(error: TransferFromError) -> Self {
+        error.to_string()
     }
 }

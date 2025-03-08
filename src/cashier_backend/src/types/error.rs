@@ -29,7 +29,10 @@ pub enum CanisterError {
     ParsePrincipalError(String),
 
     #[error("Failed to call method {0} on canister {1} : Reject code {2}, {3}")]
-    CanisterCallError(String, String, DisplayRejectionCode, String),
+    CanisterCallRejectError(String, String, DisplayRejectionCode, String),
+
+    #[error("Failed to call method {0} on canister {1} : {2}")]
+    CanisterCallError(String, String, String),
 
     #[error("Canister not found: {0}")]
     NotFound(String),
