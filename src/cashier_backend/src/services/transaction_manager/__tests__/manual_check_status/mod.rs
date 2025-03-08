@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod tests {
     use candid::Nat;
-    use cashier_types::TransactionState;
+    use cashier_types::{FromCallType, TransactionState};
     use faux::when;
     use ic_cdk::api::call::RejectionCode;
+    use ic_cdk_timers::TimerId;
 
     use crate::{
         services::{
@@ -13,7 +14,11 @@ mod tests {
                     create_dummy_transaction, create_dummy_tx_protocol, generate_timestamp,
                     MockIcEnvironment, ONE_HOUR_IN_NANOSECONDS, TX_TIMEOUT,
                 },
+                action::ActionService,
+                execute_transaction::ExecuteTransactionService,
                 manual_check_status::ManualCheckStatusService,
+                transaction::TransactionService,
+                TransactionManagerService,
             },
         },
         types::error::{CanisterError, DisplayRejectionCode},
@@ -132,7 +137,7 @@ mod tests {
 
         when!(icrc_service.balance_of(asset, to_account))
             .once()
-            .then_return(Err(CanisterError::CanisterCallError(
+            .then_return(Err(CanisterError::CanisterCallRejectError(
                 "icrc_1_balance_of".to_string(),
                 "jjio5-5aaaa-aaaam-adhaq-cai".to_string(),
                 DisplayRejectionCode(RejectionCode::CanisterReject),
@@ -294,7 +299,7 @@ mod tests {
 
         when!(icrc_service.allowance(asset1, owner_fund_account1, spender_fund_account1))
             .once()
-            .then_return(Err(CanisterError::CanisterCallError(
+            .then_return(Err(CanisterError::CanisterCallRejectError(
                 "icrc_2_allowance".to_string(),
                 "jjio5-5aaaa-aaaam-adhaq-cai".to_string(),
                 DisplayRejectionCode(RejectionCode::CanisterReject),
@@ -315,5 +320,100 @@ mod tests {
         assert_eq!(result1.unwrap(), TransactionState::Fail);
         assert!(result2.is_ok());
         assert_eq!(result2.unwrap(), TransactionState::Fail);
+    }
+
+    #[tokio::test]
+    async fn should_execute_tx_success() {
+        let mut transaction_service: TransactionService<_> = TransactionService::faux();
+        let action_service = ActionService::faux();
+        let manual_check_status_service = ManualCheckStatusService::faux();
+        let mut ic_env = MockIcEnvironment::faux();
+        let execute_transaction_service = ExecuteTransactionService::faux();
+
+        let mut tx = create_dummy_tx_protocol(TransactionState::Created, "icrc1_transfer");
+        tx.from_call_type = FromCallType::Wallet;
+
+        let tx_clone = Box::new(tx.clone());
+        when!(ic_env.set_timer).then_return(TimerId::default());
+        when!(transaction_service.update_tx_state(*tx_clone.clone(), TransactionState::Processing))
+            .once()
+            .then_return(Ok(()));
+
+        let tx_manager = TransactionManagerService::new(
+            transaction_service,
+            action_service,
+            manual_check_status_service,
+            ic_env,
+            execute_transaction_service,
+        );
+
+        let result = tx_manager.execute_tx(&mut tx).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn should_execute_icrc2_transfer_from_success() {
+        let mut transaction_service: TransactionService<_> = TransactionService::faux();
+        let action_service = ActionService::faux();
+        let manual_check_status_service = ManualCheckStatusService::faux();
+        let mut ic_env = MockIcEnvironment::faux();
+        let mut execute_transaction_service = ExecuteTransactionService::faux();
+
+        let mut tx = create_dummy_tx_protocol(TransactionState::Created, "icrc2_transfer_from");
+        tx.from_call_type = FromCallType::Canister;
+
+        when!(ic_env.set_timer).then_return(TimerId::default());
+        let tx_clone = Box::new(tx.clone());
+        when!(transaction_service.update_tx_state(*tx_clone.clone(), TransactionState::Processing))
+            .once()
+            .then_return(Ok(()));
+        when!(execute_transaction_service.execute(*tx_clone.clone())).then_return(Ok(()));
+        when!(transaction_service.update_tx_state(*tx_clone.clone(), TransactionState::Success))
+            .once()
+            .then_return(Ok(()));
+
+        let tx_manager = TransactionManagerService::new(
+            transaction_service,
+            action_service,
+            manual_check_status_service,
+            ic_env,
+            execute_transaction_service,
+        );
+
+        let result = tx_manager.execute_tx(&mut tx).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn should_execute_icrc2_transfer_from_fail() {
+        let mut transaction_service: TransactionService<_> = TransactionService::faux();
+        let action_service = ActionService::faux();
+        let manual_check_status_service = ManualCheckStatusService::faux();
+        let mut ic_env = MockIcEnvironment::faux();
+        let mut execute_transaction_service = ExecuteTransactionService::faux();
+
+        let mut tx = create_dummy_tx_protocol(TransactionState::Created, "icrc2_transfer_from");
+        tx.from_call_type = FromCallType::Canister;
+
+        when!(ic_env.set_timer).then_return(TimerId::default());
+        let tx_clone = Box::new(tx.clone());
+        when!(transaction_service.update_tx_state(*tx_clone.clone(), TransactionState::Processing))
+            .once()
+            .then_return(Ok(()));
+        when!(execute_transaction_service.execute(*tx_clone.clone())).then_return(Ok(()));
+        when!(transaction_service.update_tx_state(*tx_clone.clone(), TransactionState::Success))
+            .once()
+            .then_return(Ok(()));
+
+        let tx_manager = TransactionManagerService::new(
+            transaction_service,
+            action_service,
+            manual_check_status_service,
+            ic_env,
+            execute_transaction_service,
+        );
+
+        let result = tx_manager.execute_tx(&mut tx).await;
+        assert!(result.is_ok());
     }
 }

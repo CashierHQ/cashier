@@ -16,9 +16,15 @@ type AssetInfoDto = record {
   amount_per_claim : nat64;
 };
 type CanisterError = variant {
+  InvalidDataError : text;
   HandleLogicError : text;
+  ParsePrincipalError : text;
+  UnknownError : text;
+  NotFound : text;
   ValidationErrors : text;
+  ParseAccountError : text;
   AnonymousCall;
+  CanisterCallError : record { text; text; RejectionCode; text };
   HandleApiError : text;
 };
 type CreateLinkInput = record { link_type : text };
@@ -120,13 +126,28 @@ type ProcessActionInput = record {
   action_type : text;
   params : opt vec record { text; text };
 };
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
+};
 type Result = variant { Ok : text; Err : CanisterError };
 type Result_1 = variant { Ok : UserDto; Err : text };
 type Result_2 = variant { Ok : GetLinkResp; Err : text };
 type Result_3 = variant { Ok : PaginateResult; Err : text };
 type Result_4 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_5 = variant { Ok : ActionDto; Err : CanisterError };
-type Result_6 = variant { Ok : LinkDto; Err : CanisterError };
+type Result_6 = variant { Ok; Err : CanisterError };
+type Result_7 = variant { Ok : LinkDto; Err : CanisterError };
+type TriggerTransactionInput = record {
+  transaction_id : text;
+  action_id : text;
+  link_id : text;
+};
 type TypeMetdataValue = variant {
   U64 : nat64;
   String : text;
@@ -156,6 +177,7 @@ service : () -> {
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   process_action : (ProcessActionInput) -> (Result_5);
+  trigger_transaction : (TriggerTransactionInput) -> (Result_6);
   update_action : (UpdateActionInput) -> (Result_5);
-  update_link : (UpdateLinkInput) -> (Result_6);
+  update_link : (UpdateLinkInput) -> (Result_7);
 }
