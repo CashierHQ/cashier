@@ -11,7 +11,7 @@ use crate::{
         INTENT_LABEL_WALLET_TO_TREASURY,
     },
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
-    services::transaction_manager::fee::Fee,
+    services::transaction_manager::{action_adapter::ActionAdapter, fee::Fee},
     types::{error::CanisterError, temp_action::TemporaryAction},
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
@@ -207,6 +207,37 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .get(link_actions[0].action_id.clone());
 
         return action;
+    }
+
+    pub fn validate_action(&self, action: &Action, user_id: &str) -> Result<(), CanisterError> {
+        //validate user_id
+        match action.r#type.clone() {
+            ActionType::CreateLink => {
+                let link = self.get_link_by_id(action.link_id.clone())?;
+                if action.creator != user_id && action.creator != link.creator {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+            }
+            ActionType::Withdraw => {
+                let link = self.get_link_by_id(action.link_id.clone())?;
+                if action.creator != user_id && action.creator != link.creator {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+            }
+            ActionType::Claim => {
+                if action.creator != user_id {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+            }
+        }
+
+        return Ok(());
     }
 
     pub fn validate_asset_left(&self, link_id: &str) -> () {}

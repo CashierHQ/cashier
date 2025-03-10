@@ -215,8 +215,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        info!("get_action_of_link res: {:#?}", action);
-
         if action.is_none() {
             let action_type = ActionType::from_str(&input.action_type)
                 .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
@@ -233,8 +231,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 intents: vec![],
             };
 
-            info!("temp_action: {:#?}", temp_action);
-
             let intents = self
                 .link_service
                 .assemble_intents(&mut temp_action)
@@ -250,7 +246,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
             Ok(res)
         } else {
-            // TODO: add validate here
+            // validate action
+            self.link_service
+                .validate_action(&action.as_ref().unwrap(), &user_id.unwrap())?;
 
             // execute action
             self.tx_manager_service
