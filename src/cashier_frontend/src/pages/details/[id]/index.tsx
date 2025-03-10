@@ -21,7 +21,8 @@ export default function DetailPage() {
     const identity = useIdentity();
     const { toast } = useToast();
     const navigate = useNavigate();
-    const { metadata } = useTokenMetadata(linkData?.link.tokenAddress);
+    //TODO: Update to apply asset_info as the list of assets
+    const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
     const { t } = useTranslation();
 
     const handleCopyLink = (e: React.SyntheticEvent) => {

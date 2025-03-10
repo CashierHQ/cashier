@@ -101,3 +101,9 @@ export enum WALLET {
     WALLET = "Wallet",
     CANISTER = "Canister",
 }
+
+export enum LINK_INTENT_LABEL {
+    INTENT_LABEL_WALLET_TO_LINK = "1000",
+    INTENT_LABEL_WALLET_TO_TREASURY = "1001",
+    INTENT_LABEL_LINK_TO_WALLET = "2001",
+}

@@ -1,14 +1,13 @@
 import { convertNanoSecondsToDate } from "@/utils";
 import {
-    AssetInfoDto,
     GetLinkResp,
+    LinkDetailUpdateAssetInfoInput,
     LinkDto,
     UpdateLinkInput,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
-import { LinkDetailModel, LinkModel } from "../link.service.types";
-import { CHAIN, TEMPLATE } from "../enum";
+import { AssetInfoModel, LinkDetailModel, LinkModel } from "../link.service.types";
+import { CHAIN, LINK_INTENT_LABEL, TEMPLATE } from "../enum";
 import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
-import { TokenUtilService } from "@/services/tokenUtils.service";
 import { mapActionModel } from "./action.service.mapper";
 
 const IS_USE_DEFAULT_LINK_TEMPLATE = true;
@@ -26,8 +25,12 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
             {
                 Update: {
                     title: [linkDetailModel.title],
-                    asset_info: linkDetailModel.amount
-                        ? [Array<AssetInfoDto>(mapAssetInfo(linkDetailModel))]
+                    asset_info: linkDetailModel.asset_info
+                        ? [
+                              linkDetailModel.asset_info.map((asset, index) =>
+                                  mapAssetInfo(asset, index),
+                              ),
+                          ]
                         : [],
                     description: [linkDetailModel.description],
                     template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
@@ -42,7 +45,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
 };
 
 export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
-    return {
+    const result = {
         id: link.id,
         title: fromNullable(link.title) ?? "",
         description: fromNullable(link.description) ?? "",
@@ -54,61 +57,37 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
         create_at: link.create_at
             ? convertNanoSecondsToDate(link.create_at)
             : new Date("2000-10-01"),
-        amountNumber: fromNullable(link.asset_info)
-            ? Number(fromDefinedNullable(link.asset_info)[0].total_amount)
-            : 0,
-        amount: fromNullable(link.asset_info)
-            ? fromDefinedNullable(link.asset_info)[0].total_amount
-            : BigInt(0),
-        tokenAddress: fromNullable(link.asset_info)
-            ? fromDefinedNullable(link.asset_info)[0].address
-            : "",
+        amountNumber:
+            fromNullable(link.asset_info) && link.asset_info.length > 0
+                ? Number(fromDefinedNullable(link.asset_info)[0]?.total_amount)
+                : 0,
+        asset_info: fromNullable(link.asset_info)
+            ? fromDefinedNullable(link.asset_info).map((asset) => ({
+                  address: asset?.address,
+                  amount: asset?.total_amount,
+              }))
+            : [],
     };
+    return result;
 };
 
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkModel> => {
-    const { link, action } = linkObj;
+    const { link: linkDto, action: actionDto } = linkObj;
     return {
-        action: action?.length > 0 ? mapActionModel(action[0]) : undefined,
-        link: {
-            id: link.id,
-            title: fromNullable(link.title) ?? "",
-            description: fromNullable(link.description) ?? "",
-            image: "",
-            linkType: fromNullable(link.link_type),
-            state: link.state,
-            template: fromNullable(link.template),
-            creator: link.creator,
-            create_at: link.create_at
-                ? convertNanoSecondsToDate(link.create_at)
-                : new Date("2000-10-01"),
-            amountNumber: fromNullable(link.asset_info)
-                ? await TokenUtilService.getHumanReadableAmount(
-                      fromDefinedNullable(link.asset_info)[0].total_amount,
-                      fromDefinedNullable(link.asset_info)[0].address,
-                  )
-                : 0,
-            amount: fromNullable(link.asset_info)
-                ? fromDefinedNullable(link.asset_info)[0].total_amount
-                : BigInt(0),
-            tokenAddress: fromNullable(link.asset_info)
-                ? fromDefinedNullable(link.asset_info)[0].address
-                : "",
-        },
+        action: actionDto?.length > 0 ? mapActionModel(actionDto[0]) : undefined,
+        link: MapLinkToLinkDetailModel(linkDto),
     };
 };
 
-/* TODO: Remove testing flag later*/
-const IS_TEST_LOCAL_TOKEN = false;
-// May need to update in future, now received 'amount' as param, others are constants
-const mapAssetInfo = (linkDetailModel: LinkDetailModel): AssetInfoDto => {
+//TODO: May need to update in future, now received 'amount' as param, others are constants
+const mapAssetInfo = (assetInfo: AssetInfoModel, index: number): LinkDetailUpdateAssetInfoInput => {
     return {
-        address: IS_TEST_LOCAL_TOKEN ? "x5qut-viaaa-aaaar-qajda-cai" : linkDetailModel.tokenAddress,
+        address: assetInfo.address,
         chain: CHAIN.IC,
         amount_per_claim: BigInt(1),
-        current_amount: linkDetailModel.amount,
-        total_amount: linkDetailModel.amount,
-        total_claim: BigInt(1),
+        total_amount: assetInfo.amount,
+        //label: assetInfo.label ? `${assetInfo.label}_${index}` :  `${LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK}`,
+        label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
     };
 };

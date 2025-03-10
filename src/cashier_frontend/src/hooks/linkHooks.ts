@@ -3,7 +3,7 @@ import LinkService, {
     CreateActionInputModel,
     UpdateActionInputModel,
 } from "@/services/link.service";
-import { LinkDetailModel, State } from "@/services/types/link.service.types";
+import { AssetInfoModel, LinkDetailModel, State } from "@/services/types/link.service.types";
 import {
     QueryClient,
     useMutation,
@@ -112,15 +112,12 @@ export function useSetTipLinkDetails() {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async (vars: {
-            link: LinkDetailModel;
-            patch: { amount: bigint; tokenAddress: string };
-        }) => {
+        mutationFn: async (vars: { link: LinkDetailModel; patch: AssetInfoModel[] }) => {
             const linkService = new LinkService(identity);
 
             const linkData = {
                 ...vars.link,
-                ...vars.patch,
+                asset_info: vars.patch,
                 state: State.PendingPreview,
             } as LinkDetailModel;
 

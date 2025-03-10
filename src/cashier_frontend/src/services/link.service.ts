@@ -61,7 +61,6 @@ class LinkService {
             data: [],
             metadata: response.metadata,
         };
-
         responseModel.data = response.data
             ? response.data.map((link: LinkDto) => {
                   return {
@@ -70,7 +69,6 @@ class LinkService {
                   };
               })
             : [];
-
         return responseModel;
     }
 
@@ -92,6 +90,7 @@ class LinkService {
 
     async updateLink(linkId: string, data: LinkDetailModel, isContinue: boolean) {
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
+        console.log("🚀 ~ LinkService ~ updateLink ~ completeData:", completeData);
         const response = parseResultResponse(await this.actor.update_link(completeData));
         return response;
     }
