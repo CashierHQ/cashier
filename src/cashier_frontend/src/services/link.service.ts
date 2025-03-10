@@ -1,4 +1,4 @@
-import { parseResultResponse } from "@/utils";
+import { convertTokenAmountToNumber, parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
@@ -20,6 +20,7 @@ import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
 import { MOCK_CASHIER_FEES } from "@/constants/mock-data";
+import { FEE_TYPE } from "./types/enum";
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -36,6 +37,18 @@ export interface UpdateActionInputModel {
     actionId: string;
     linkId: string;
     external: boolean;
+}
+
+/* TODO: Remove after BE have endpoint */
+interface FeeDto {
+    type: FEE_TYPE.LINK_CREATION;
+    amount: bigint;
+    asset: AssetDto;
+}
+
+interface AssetDto {
+    address: string;
+    chain: string;
 }
 
 class LinkService {
@@ -125,7 +138,25 @@ class LinkService {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getFeePreview(linkId: string): Promise<FeeModel[]> {
-        return MOCK_CASHIER_FEES;
+        const mockBackEndResponse: FeeDto[] = [
+            {
+                type: FEE_TYPE.LINK_CREATION,
+                amount: BigInt(convertTokenAmountToNumber(0.001, 8)),
+                asset: {
+                    address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+                    chain: "IC",
+                },
+            },
+        ];
+
+        return mockBackEndResponse.map((fee) => {
+            return {
+                type: fee.type,
+                amount: fee.amount,
+                address: fee.asset.address,
+                chain: fee.asset.chain,
+            };
+        });
     }
 }
 

@@ -1,4 +1,4 @@
-import { ConnectWalletButton, useAuth, useIdentity } from "@nfid/identitykit/react";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,21 +16,18 @@ import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { UserDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { RiMenu2Line } from "react-icons/ri";
-import { Sheet, SheetTrigger } from "@/components/ui/sheet";
-import AppSidebar from "@/components/app-sidebar";
-import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { AiOutlineExperiment } from "react-icons/ai";
 import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
-import { Wallet } from "lucide-react";
+import Header from "@/components/header";
+import useConnectToWallet from "@/hooks/useConnectToWallet";
+import SheetWrapper from "@/components/sheet-wrapper";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const { connect, user: walletUser } = useAuth();
+    const { user: walletUser } = useAuth();
     const [newAppUser, setNewAppUser] = useState<UserDto>();
     const {
         data: appUser,
@@ -58,18 +55,11 @@ export default function HomePage() {
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [disableCreateButton, setDisableCreateButton] = useState(false);
-    const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
-    const [documentUrl, setDocumentUrl] = useState("");
     const [openTestForm, setOpenTestForm] = useState(false);
     const { toastData, showToast, hideToast } = useToast();
     const navigate = useNavigate();
     const responsive = useResponsive();
-
-    const connectToWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        connect();
-    };
+    const { connectToWallet } = useConnectToWallet();
 
     /* TODO:: Remove after complete testing */
     const handleOpenTestForm = () => {
@@ -77,12 +67,10 @@ export default function HomePage() {
     };
 
     const handleCreateLink = async () => {
-        if (linkData) {
-            const linkList = Object.values(linkData).flat();
-            const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
-            if (newLink) {
-                navigate(`/edit/${newLink.id}`);
-            }
+        const linkList = linkData ? Object.values(linkData).flat() : [];
+        const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
+        if (newLink) {
+            navigate(`/edit/${newLink.id}`);
         } else {
             try {
                 setDisableCreateButton(true);
@@ -97,11 +85,6 @@ export default function HomePage() {
                 setDisableCreateButton(true);
             }
         }
-    };
-
-    const handleMenuClick = (docSource: string) => {
-        setDocumentUrl(docSource);
-        setOpenDocumentDialog(true);
     };
 
     const handleHideGuide = () => {
@@ -194,15 +177,7 @@ export default function HomePage() {
             <div className="w-screen flex justify-center py-5 h-[90%]">
                 <div className="w-11/12 max-w-[400px] flex flex-col items-center">
                     <div className="w-11/12 max-w-[400px] flex flex-col items-center">
-                        <div className="w-full flex justify-between items-center">
-                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                            <ConnectWalletButton
-                                onClick={connectToWallet}
-                                className="bg-green text-primary-foreground shadow hover:bg-green/90"
-                            >
-                                Get started
-                            </ConnectWalletButton>
-                        </div>
+                        <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
 
                         <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
                             <p className="text-yellow text-center font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
@@ -245,47 +220,13 @@ export default function HomePage() {
                             : "bg-[white] h-[90%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
                     }
                 >
-                    <Sheet>
+                    <SheetWrapper>
                         <div
                             className={
                                 responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"
                             }
                         >
-                            <div className="w-full flex justify-between items-center">
-                                <img
-                                    src="./logo.svg"
-                                    alt="Cashier logo"
-                                    className="max-w-[130px]"
-                                />
-                                {/* <div className="ml-auto mr-3">
-                                    <ConnectedWalletDropdownIcon
-                                        connectedAccount={walletUser.principal.toString()}
-                                        disconnect={disconnect}
-                                    />
-                                </div> */}
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="ml-auto rounded-sm mr-3"
-                                    onClick={() => navigate("/wallet")}
-                                >
-                                    <Wallet size={16} />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="rounded-sm mr-3"
-                                    onClick={handleOpenTestForm}
-                                >
-                                    <AiOutlineExperiment />
-                                </Button>
-
-                                <SheetTrigger asChild>
-                                    <Button variant="outline" size="icon" className="rounded-sm">
-                                        <RiMenu2Line />
-                                    </Button>
-                                </SheetTrigger>
-                            </div>
+                            <Header onConnect={connectToWallet} openTestForm={handleOpenTestForm} />
                             {showGuide && (
                                 <div className="my-3">
                                     <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
@@ -326,20 +267,6 @@ export default function HomePage() {
                         >
                             +
                         </button>
-
-                        <AppSidebar onItemClick={handleMenuClick} />
-                        <Dialog open={openDocumentDialog} onOpenChange={setOpenDocumentDialog}>
-                            <DialogContent className="h-[80%] w-[90%]">
-                                <DialogDescription>
-                                    <iframe
-                                        src={documentUrl}
-                                        title="description"
-                                        width="100%"
-                                        height="100%"
-                                    ></iframe>
-                                </DialogDescription>
-                            </DialogContent>
-                        </Dialog>
                         <TransactionToast
                             open={toastData?.open ?? false}
                             onOpenChange={hideToast}
@@ -347,7 +274,7 @@ export default function HomePage() {
                             description={toastData?.description ?? ""}
                             variant={toastData?.variant ?? "default"}
                         />
-                    </Sheet>
+                    </SheetWrapper>
                 </div>
             );
         }

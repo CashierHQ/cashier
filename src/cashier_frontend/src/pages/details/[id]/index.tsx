@@ -203,7 +203,7 @@ export default function DetailPage() {
                                 onClick={handleCopyLink}
                                 className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
                             >
-                                Copy
+                                {t("details.copyLink")}
                             </Button>
                         </>
                     )}

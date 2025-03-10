@@ -28,7 +28,7 @@ export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading,
     };
 
     return (
-        <div className="flex justify-between text-xs leading-tight">
+        <div className="flex justify-between text-xs text-gray-500 leading-tight">
             <h6 id="transaction-title" className="text-right">
                 {title}
             </h6>
