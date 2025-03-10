@@ -16,10 +16,17 @@ interface TransactionItemProps {
     isUsd?: boolean;
 }
 
-export const TransactionItem: FC<TransactionItemProps> = ({ title, intent, isLoading, isUsd }) => {
+export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, isUsd }) => {
     const { t } = useTranslation();
-    const { isLoadingMetadata, assetAmount, assetSymbol, assetSrc, feeAmount, feeSymbol } =
-        useIntentMetadata(intent);
+    const {
+        isLoadingMetadata,
+        assetAmount,
+        assetSymbol,
+        assetSrc,
+        feeAmount,
+        feeSymbol,
+        title: intentTitle,
+    } = useIntentMetadata(intent);
 
     const { data: conversionRates } = useConversionRatesQuery(intent.asset.address);
 
@@ -33,7 +40,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ title, intent, isLoa
 
             <div className="flex flex-col w-full">
                 <Asset
-                    title={title}
+                    title={intentTitle}
                     isLoading={isLoading || isLoadingMetadata}
                     amount={assetAmount}
                     usdAmount={convert(assetAmount, conversionRates?.tokenToUsd)}
