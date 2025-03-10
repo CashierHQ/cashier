@@ -76,10 +76,9 @@ fn transition_function(
                                         chain,
                                         total_amount: a.total_amount,
                                         amount_per_claim: a.amount_per_claim,
+                                        label: a.label.clone(),
                                         // start with 0
                                         total_claim: 0,
-                                        // start with 0
-                                        current_amount: 0,
                                     }
                                 })
                                 .collect(),
