@@ -10,7 +10,6 @@ type AssetDto = record { chain : text; address : text };
 type AssetInfoDto = record {
   total_amount : nat64;
   chain : text;
-  current_amount : nat64;
   address : text;
   total_claim : nat64;
   amount_per_claim : nat64;
@@ -84,6 +83,7 @@ type IntentDto = record {
 type LinkDetailUpdateAssetInfoInput = record {
   total_amount : nat64;
   chain : text;
+  label : text;
   address : text;
   amount_per_claim : nat64;
 };
