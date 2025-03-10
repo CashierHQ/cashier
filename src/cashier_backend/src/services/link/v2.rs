@@ -11,12 +11,9 @@ use crate::{
         INTENT_LABEL_WALLET_TO_TREASURY,
     },
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
-    services::transaction_manager::{action::v2::TemporaryAction, fee::Fee},
-    types::error::CanisterError,
-    utils::{
-        helper::to_subaccount,
-        runtime::{IcEnvironment, RealIcEnvironment},
-    },
+    services::transaction_manager::fee::Fee,
+    types::{error::CanisterError, temp_action::TemporaryAction},
+    utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 
 pub struct LinkService<E: IcEnvironment + Clone> {

@@ -1,7 +1,7 @@
 use cashier_types::{
     Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
-    IntentTask, IntentType, Protocol, Transaction, TransactionState, TransferFromIntent,
-    TransferIntent,
+    IntentTask, IntentType, Protocol, Transaction, TransactionState, TransferData,
+    TransferFromData,
 };
 use uuid::Uuid;
 
@@ -32,7 +32,7 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
 
     fn handle_transfer_wallet_to_link(
         &self,
-        transfer_intent: TransferIntent,
+        transfer_intent: TransferData,
     ) -> Result<Vec<Transaction>, String> {
         let id: Uuid = Uuid::new_v4();
         let ts = self.ic_env.time();
@@ -65,7 +65,7 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
 
     fn handle_transfer_wallet_to_treasury(
         &self,
-        transfer_intent: TransferFromIntent,
+        transfer_intent: TransferFromData,
     ) -> Result<Vec<Transaction>, String> {
         let ts = self.ic_env.time();
 

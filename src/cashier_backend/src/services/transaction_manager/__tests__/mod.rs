@@ -20,7 +20,7 @@ pub mod tests {
         Action, ActionIntent, ActionState, ActionType, Asset, AssetInfo, Chain, FromCallType,
         IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent, IntentState,
         IntentTask, IntentTransaction, IntentType, Link, LinkState, LinkType, Protocol,
-        Transaction, TransactionState, TransferFromIntent, TransferIntent, Wallet,
+        Transaction, TransactionState, TransferData, TransferFromData, Wallet,
     };
 
     use candid::Principal;
@@ -89,10 +89,10 @@ pub mod tests {
         let asset_info = AssetInfo {
             address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
             chain: Chain::IC,
-            current_amount: 0,
             total_amount: 100,
             amount_per_claim: 100,
             total_claim: 0,
+            label: "dummy".to_string(),
         };
 
         Link {
@@ -144,15 +144,15 @@ pub mod tests {
     impl Dummy<IntentType> for IntentType {
         fn dummy<R: Rng>(rng: &mut R) -> Self {
             match rng.gen_range(0..=1) {
-                0 => IntentType::Transfer(TransferIntent::dummy(rng)),
-                _ => IntentType::TransferFrom(TransferFromIntent::dummy(rng)),
+                0 => IntentType::Transfer(TransferData::dummy(rng)),
+                _ => IntentType::TransferFrom(TransferFromData::dummy(rng)),
             }
         }
     }
 
-    impl Dummy<TransferIntent> for TransferIntent {
+    impl Dummy<TransferData> for TransferData {
         fn dummy<R: Rng>(rng: &mut R) -> Self {
-            TransferIntent {
+            TransferData {
                 from: Wallet::dummy(rng),
                 to: Wallet::dummy(rng),
                 asset: Asset::dummy(rng),
@@ -161,9 +161,9 @@ pub mod tests {
         }
     }
 
-    impl Dummy<TransferFromIntent> for TransferFromIntent {
+    impl Dummy<TransferFromData> for TransferFromData {
         fn dummy<R: Rng>(rng: &mut R) -> Self {
-            TransferFromIntent {
+            TransferFromData {
                 from: Wallet::dummy(rng),
                 to: Wallet::dummy(rng),
                 asset: Asset::dummy(rng),
@@ -333,6 +333,7 @@ pub mod tests {
                 r#type: ActionType::dummy(rng),
                 state: ActionState::dummy(rng),
                 creator: generate_random_principal().to_text(),
+                link_id: Uuid::new_v4().to_string(),
             }
         }
     }
@@ -367,6 +368,7 @@ pub mod tests {
             chain: Chain::dummy(&mut rng),
             task: IntentTask::dummy(&mut rng),
             r#type: IntentType::dummy(&mut rng),
+            label: "1001".to_string(),
         }
     }
 
@@ -494,6 +496,7 @@ pub mod tests {
             r#type: ActionType::dummy(&mut rng),
             state,
             creator: generate_random_principal().to_text(),
+            link_id: Uuid::new_v4().to_string(),
         }
     }
 
