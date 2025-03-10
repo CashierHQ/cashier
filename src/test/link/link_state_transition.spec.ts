@@ -142,6 +142,7 @@ describe("Link state transition", () => {
                                     address: assetInfoTest.address,
                                     amount_per_claim: assetInfoTest.amount_per_claim,
                                     total_amount: assetInfoTest.total_amount,
+                                    label: "1000",
                                 },
                             ],
                         ],
