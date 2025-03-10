@@ -9,6 +9,19 @@ pub struct Action {
     pub r#type: ActionType,
     pub state: ActionState,
     pub creator: String,
+    pub link_id: String,
+}
+
+impl Default for Action {
+    fn default() -> Self {
+        Action {
+            id: "".to_string(),
+            r#type: ActionType::CreateLink,
+            state: ActionState::Created,
+            creator: "".to_string(),
+            link_id: "".to_string(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
