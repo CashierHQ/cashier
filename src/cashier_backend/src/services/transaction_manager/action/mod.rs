@@ -105,6 +105,10 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
         self._get_action_resp(action_id)
     }
 
+    pub fn get_action_by_id(&self, action_id: String) -> Option<Action> {
+        self.action_repository.get(action_id)
+    }
+
     fn _get_action_resp(&self, action_id: String) -> Result<ActionResp, String> {
         let action = self
             .action_repository
@@ -282,6 +286,7 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
             r#type: action_type,
             state: ActionState::Created,
             creator: user_wallet.user_id.clone(),
+            link_id: input.link_id.clone(),
         };
 
         let link_action = LinkAction {
@@ -336,7 +341,7 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
             intent_tx_hashmap.insert(intent.id.clone(), transactions);
         }
 
-        let _ = self._store_action_records(
+        let _ = self.store_action_records(
             link_action,
             action.clone(),
             intents.clone(),
@@ -349,7 +354,7 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
         // Retrieve and return the created intent
     }
 
-    fn _store_action_records(
+    pub fn store_action_records(
         &self,
         link_action: LinkAction,
         action: Action,

@@ -6,6 +6,8 @@ use crate::{
     repositories::{self},
 };
 
+pub mod v2;
+
 pub fn create_new() -> Result<UserDto, String> {
     if is_existed() {
         return Err("User already existed".to_string());

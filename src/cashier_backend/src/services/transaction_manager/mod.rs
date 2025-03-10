@@ -1,7 +1,7 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use action::ActionService;
-use cashier_types::{Transaction, TransactionState};
+use cashier_types::{Intent, LinkAction, Transaction, TransactionState};
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
 use timeout::tx_timeout_task;
@@ -11,7 +11,7 @@ use crate::{
     core::action::types::ActionDto,
     info,
     types::{
-        error::CanisterError, icrc_112_transaction::Icrc112Requests,
+        error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
         transaction_manager::ActionResp,
     },
     utils::runtime::{IcEnvironment, RealIcEnvironment},
@@ -69,13 +69,59 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         )
     }
 
+    pub fn assemble_txs(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
+        let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
+
+        let txs = intent_adapter
+            .convert(intent)
+            .map_err(|e| CanisterError::HandleLogicError(format!("Tx assemble error: {}", e)))?;
+
+        Ok(txs)
+    }
+
+    pub fn create_action(&self, temp_action: &TemporaryAction) -> Result<ActionDto, CanisterError> {
+        let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
+
+        // check action id
+        let action = self.action_service.get_action_by_id(temp_action.id.clone());
+        if action.is_some() {
+            return Err(CanisterError::HandleLogicError(
+                "Action already exists".to_string(),
+            ));
+        }
+
+        // fill in tx info
+        for intent in temp_action.intents.iter() {
+            let txs = self.assemble_txs(intent)?;
+            intent_tx_hashmap.insert(intent.id.clone(), txs);
+        }
+
+        let link_action = LinkAction {
+            link_id: temp_action.link_id.clone(),
+            action_type: temp_action.r#type.to_string().clone(),
+            action_id: temp_action.id.clone(),
+        };
+
+        // save action to DB
+        let _ = self.action_service.store_action_records(
+            link_action,
+            temp_action.as_action(),
+            temp_action.intents.clone(),
+            intent_tx_hashmap,
+            temp_action.creator.clone(),
+        );
+
+        Ok(ActionDto::from(
+            temp_action.as_action(),
+            temp_action.intents.clone(),
+        ))
+    }
+
     pub fn update_tx_state(
         &self,
         tx: &mut Transaction,
         state: TransactionState,
     ) -> Result<(), String> {
-        info!("Update tx state: {:#?}", tx);
-        info!("Update tx state to: {:#?}", state);
         self.transaction_service.update_tx_state(tx, state)
     }
 
@@ -235,8 +281,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
                         info!("after update action_resp {:#?}", action_resp);
                     }
-                    Err(_) => {
-                        info!("Transaction executed with error");
+                    Err(e) => {
+                        info!("Transaction executed with error {}", e);
                         self.update_tx_state(tx, TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -244,6 +290,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                     e
                                 ))
                             })?;
+                        return Err(CanisterError::HandleLogicError(format!(
+                            "Error executing tx: {}",
+                            e
+                        )));
                     }
                 }
             }
@@ -303,8 +353,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
             let new_state = self.manual_check_status_service.execute(&tx).await?;
-            info!("Tx: {:#?}", tx);
-            info!("New state: {:#?}", new_state);
+            info!("TX  {:#?}, New state: {:#?}", tx.protocol, new_state);
             if tx.state == new_state.clone() {
                 continue;
             }

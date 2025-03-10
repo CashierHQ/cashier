@@ -14,12 +14,10 @@ use crate::{
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
-        transaction_manager::{
-            action::v2::TemporaryAction, TransactionManagerService, UpdateActionArgs,
-        },
+        transaction_manager::{TransactionManagerService, UpdateActionArgs},
         user::v2::UserService,
     },
-    types::{api::PaginateInput, error::CanisterError},
+    types::{api::PaginateInput, error::CanisterError, temp_action::TemporaryAction},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
