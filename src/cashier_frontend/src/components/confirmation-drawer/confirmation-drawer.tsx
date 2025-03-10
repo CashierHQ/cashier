@@ -104,7 +104,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
     return (
         <Drawer open={open}>
-            <DrawerContent className="max-w-[400px] mx-auto p-3">
+            <DrawerContent className="max-w-[400px] h-[60%] mx-auto p-3">
                 <DrawerHeader>
                     <DrawerTitle className="flex justify-center items-center">
                         <div className="text-center w-[100%]">

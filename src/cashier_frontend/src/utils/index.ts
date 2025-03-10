@@ -155,3 +155,7 @@ export const convertTokenAmountToNumber = (amount: number, decimals: number): nu
 export const convertDecimalBigIntToNumber = (amount: bigint, decimals: number): number => {
     return Number(amount) / 10 ** decimals;
 };
+
+export const transformShortAddress = (address: string): string => {
+    return `${address.slice(0, 6)}...${address.slice(-8)}`;
+};

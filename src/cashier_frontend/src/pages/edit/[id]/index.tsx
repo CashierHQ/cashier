@@ -133,7 +133,7 @@ export default function LinkPage() {
                     <MultiStepForm.Header onClickBack={handleBackstep} />
 
                     <MultiStepForm.Items>
-                        <MultiStepForm.Item name={t("create.linkTemplate")}>
+                        <MultiStepForm.Item name={t("create.chooseLinkType")}>
                             <LinkTemplate
                                 onSelectUnsupportedLinkType={showUnsupportedLinkTypeToast}
                             />
