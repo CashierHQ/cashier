@@ -1,25 +1,26 @@
 use std::str::FromStr;
 
-use cashier_types::{ActionType, LinkType};
+use cashier_types::{ActionState, ActionType, LinkType};
 use ic_cdk::{query, update};
+use uuid::Uuid;
 
 use crate::{
     core::{
-        action::{
-            api::create_action,
-            types::{ActionDto, CreateActionInput, ProcessActionInput},
-        },
+        action::types::{ActionDto, ProcessActionInput},
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error,
+    error, info,
     services::{
         self,
-        link::{create_new, is_link_creator, update::handle_update_link},
-        transaction_manager::{TransactionManagerService, UpdateActionArgs},
+        link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
+        transaction_manager::{
+            action::v2::TemporaryAction, TransactionManagerService, UpdateActionArgs,
+        },
+        user::v2::UserService,
     },
     types::{api::PaginateInput, error::CanisterError},
-    utils::runtime::RealIcEnvironment,
+    utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
 use super::types::CreateLinkInput;
@@ -175,31 +176,92 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
 
 #[update(guard = "is_not_anonymous")]
 pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
-    if input.action_id.is_empty() {
-        // create empty action
-        // assemble intent
-        // enrich intent
-        // call tx manager create action
-        return create_action(CreateActionInput {
-            action_type: input.action_type.clone(),
-            link_id: input.link_id.clone(),
-            params: input.params.clone(),
-        })
-        .await;
-    } else {
-        let action_id = input.action_id.clone();
-        let link_id = input.link_id.clone();
-        let external = false;
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.process_action(input).await
+}
 
-        let transaction_manager: TransactionManagerService<RealIcEnvironment> =
-            TransactionManagerService::get_instance();
+pub struct LinkApi<E: IcEnvironment + Clone> {
+    link_service: LinkService<E>,
+    user_service: UserService,
+    tx_manager_service: TransactionManagerService<E>,
+    ic_env: E,
+}
 
-        let args = UpdateActionArgs {
-            action_id: action_id.clone(),
-            link_id: link_id.clone(),
-            external,
-        };
+impl<E: IcEnvironment + Clone> LinkApi<E> {
+    pub fn get_instance() -> Self {
+        Self {
+            link_service: LinkService::get_instance(),
+            user_service: UserService::get_instance(),
+            tx_manager_service: TransactionManagerService::get_instance(),
+            ic_env: E::new(),
+        }
+    }
 
-        transaction_manager.update_action(args).await
+    pub async fn process_action(
+        &self,
+        input: ProcessActionInput,
+    ) -> Result<ActionDto, CanisterError> {
+        let caller = self.ic_env.caller();
+
+        // get user_id and action_id
+        let user_id = self.user_service.get_user_id_by_wallet(&caller);
+
+        let action = self
+            .link_service
+            .get_action_of_link(&input.link_id, &input.action_type);
+
+        // basic validations
+        if user_id.is_none() {
+            return Err(CanisterError::ValidationErrors(
+                "User not found".to_string(),
+            ));
+        }
+
+        info!("get_action_of_link res: {:#?}", action);
+
+        if action.is_none() {
+            let action_type = ActionType::from_str(&input.action_type)
+                .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
+
+            //create temp action
+            // fill in link_id info
+            // fill in action_type info
+            let mut temp_action = TemporaryAction {
+                id: Uuid::new_v4().to_string(),
+                r#type: action_type,
+                state: ActionState::Created,
+                creator: user_id.as_ref().unwrap().to_string(),
+                link_id: input.link_id.clone(),
+                intents: vec![],
+            };
+
+            info!("temp_action: {:#?}", temp_action);
+
+            let intents = self
+                .link_service
+                .assemble_intents(&mut temp_action)
+                .map_err(|e| {
+                    CanisterError::HandleLogicError(format!("Failed to assemble intents: {}", e))
+                })?;
+
+            // fill the intent info
+            temp_action.intents = intents;
+
+            // create real action
+            let res = self.tx_manager_service.create_action(&temp_action)?;
+
+            Ok(res)
+        } else {
+            // TODO: add validate here
+
+            // execute action
+            self.tx_manager_service
+                .update_action(UpdateActionArgs {
+                    action_id: action.unwrap().id,
+                    link_id: input.link_id,
+                    external: false,
+                })
+                .await
+        }
     }
 }
