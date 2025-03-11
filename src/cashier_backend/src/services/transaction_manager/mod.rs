@@ -422,9 +422,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // check which tx are eligible to be executed
         // if tx has dependent txs, that need to be completed before executing it, it is not eligible
         // if all the dependent txs were complete, it is eligible to be executed
-        // There are additional 2 conditions (handled in has_dependency method below):
-        // 1. if tx is grouped into a batch ICRC-112, dependency between txs in the batch is ignored during eligibility check
-        // 2. if tx is gropued into a batch ICRC-112, tx is only eligible if all other tx in batch have no dependencies (so that al txs can be executed in batch together)
+        // There are additional conditions (handled in has_dependency method below):
+        // - if tx is grouped into a batch ICRC-112, dependency between txs in the batch is ignored during eligibility check
+        // - if tx is gropued into a batch ICRC-112, tx is only eligible if all other tx in batch have no dependencies (so that al txs can be executed in batch together)
+        // - if execute_wallet_tx = fase, all tx grouped into a batach ICRC-112 are not eligible. client calls update_action with this arg to relay ICRC-112 reponse to tx manager, so we don't want to execute wallet tx again.
         let all_txs = match self.action_service.get(args.action_id.clone()) {
             Ok(action_resp) => self
                 .action_service
