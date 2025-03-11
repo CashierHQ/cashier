@@ -254,7 +254,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .update_action(UpdateActionArgs {
                     action_id: action.unwrap().id,
                     link_id: input.link_id,
-                    external: false,
+                    execute_wallet_tx: false,
                 })
                 .await
         }

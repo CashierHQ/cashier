@@ -61,7 +61,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
@@ -189,7 +189,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
@@ -319,7 +319,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
@@ -388,7 +388,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: "invalid_action_id".to_string(),
             link_id: Uuid::new_v4().to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(action_service.get).then_return(Err("action not found".to_string()));
@@ -438,7 +438,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());

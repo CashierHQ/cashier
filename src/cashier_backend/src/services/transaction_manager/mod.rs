@@ -31,7 +31,7 @@ pub mod validate;
 pub struct UpdateActionArgs {
     pub action_id: String,
     pub link_id: String,
-    pub external: bool,
+    pub execute_wallet_tx: bool,
 }
 
 pub struct TransactionManagerService<E: IcEnvironment + Clone> {
