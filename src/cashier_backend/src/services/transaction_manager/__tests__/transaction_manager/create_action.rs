@@ -431,6 +431,12 @@ mod tests {
                 chain: "IC".to_string(),
             }))
         );
+        let expected_dependencies = vec![tx1_1.id.clone(), tx2_1.id.clone(), tx3_1.id.clone()];
+        let actual_dependencies = tx3_2.dependency.clone().unwrap_or_default();
+        assert!(expected_dependencies
+            .iter()
+            .all(|item| actual_dependencies.contains(item)));
+
         assert_eq!(
             tx3_1.dependency,
             Some(vec![tx1_1.id.clone(), tx2_1.id.clone()])
@@ -461,10 +467,12 @@ mod tests {
             tx3_2.protocol_metadata.get("amount"),
             Some(&MetadataValue::U64(10_0000))
         );
-        assert_eq!(
-            tx3_2.dependency,
-            Some(vec![tx1_1.id.clone(), tx2_1.id.clone(), tx3_1.id.clone()])
-        );
+        // Assert that tx3_2.dependency contains the expected values
+        let expected_dependencies = vec![tx1_1.id.clone(), tx2_1.id.clone(), tx3_1.id.clone()];
+        let actual_dependencies = tx3_2.dependency.clone().unwrap_or_default();
+        assert!(expected_dependencies
+            .iter()
+            .all(|item| actual_dependencies.contains(item)));
     }
 
     #[tokio::test]

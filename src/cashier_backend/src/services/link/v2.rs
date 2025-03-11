@@ -248,7 +248,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         match action.r#type.clone() {
             ActionType::CreateLink => {
                 let link = self.get_link_by_id(action.link_id.clone())?;
-                if action.creator != user_id && action.creator != link.creator {
+                if !(action.creator == user_id || link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
                     ));
@@ -256,7 +256,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
             ActionType::Withdraw => {
                 let link = self.get_link_by_id(action.link_id.clone())?;
-                if action.creator != user_id && action.creator != link.creator {
+                if !(action.creator == user_id || link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
                     ));
