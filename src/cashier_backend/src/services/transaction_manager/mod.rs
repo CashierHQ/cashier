@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
 use action::ActionService;
-use cashier_types::{Intent, LinkAction, Transaction, TransactionState};
+use cashier_types::{Chain, Intent, LinkAction, Transaction, TransactionState};
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
 use timeout::tx_timeout_task;
@@ -34,6 +34,7 @@ pub struct UpdateActionArgs {
     pub execute_wallet_tx: bool,
 }
 
+#[cfg_attr(test, faux::create)]
 pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     transaction_service: TransactionService<E>,
     action_service: ActionService<E>,
@@ -42,6 +43,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     execute_transaction_service: execute_transaction::ExecuteTransactionService,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
         transaction_service: TransactionService<E>,
@@ -70,13 +72,17 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     }
 
     pub fn tx_man_assemble_txs(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
-        let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
+        match intent.chain {
+            Chain::IC => {
+                let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
 
-        let txs = intent_adapter
-            .convert(intent)
-            .map_err(|e| CanisterError::HandleLogicError(format!("Tx assemble error: {}", e)))?;
+                let txs = intent_adapter.convert(intent).map_err(|e| {
+                    CanisterError::HandleLogicError(format!("Tx assemble error: {}", e))
+                })?;
 
-        Ok(txs)
+                Ok(txs)
+            }
+        }
     }
 
     pub fn tx_man_create_action(
