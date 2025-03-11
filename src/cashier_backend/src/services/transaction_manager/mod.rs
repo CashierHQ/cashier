@@ -95,6 +95,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         }
 
         // fill in tx info
+        // enrich each intent with chain-level txs needed to achieve the intent
         for intent in temp_action.intents.iter() {
             // store txs in hashmap
             let txs = self.tx_man_assemble_txs(intent)?;
