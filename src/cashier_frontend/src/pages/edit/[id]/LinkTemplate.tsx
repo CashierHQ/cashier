@@ -23,7 +23,6 @@ import { useSetLinkTemplate } from "@/hooks/linkHooks";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useButtonState } from "@/hooks/useButtonState";
-import { FixedBottomButton } from "@/components/fix-bottom-button";
 
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
