@@ -25,8 +25,16 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
             (IntentType::TransferFrom(transfer_intent), IntentTask::TransferWalletToTreasury) => {
                 self.handle_transfer_wallet_to_treasury(transfer_intent)
             }
+            (IntentType::Transfer(transfer_intent), IntentTask::TransferLinkToWallet) => {
+                self.handle_transfer_link_to_wallet(transfer_intent)
+            }
             // Add other combinations as needed
-            _ => Err("Unsupported intent type or task".to_string()),
+            _ => Err(format!(
+                "Unsupported intent type or task {:#?} {:#?}",
+                intent.r#type.clone(),
+                intent.task.clone()
+            )
+            .to_string()),
         }
     }
 
@@ -111,6 +119,37 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
         };
 
         Ok(vec![approve_tx, transfer_from_tx])
+    }
+
+    fn handle_transfer_link_to_wallet(
+        &self,
+        transfer_intent: TransferData,
+    ) -> Result<Vec<Transaction>, String> {
+        let ts = self.ic_env.time();
+
+        let icrc1_transfer = Icrc1Transfer {
+            from: transfer_intent.from,
+            to: transfer_intent.to,
+            asset: transfer_intent.asset,
+            amount: transfer_intent.amount,
+            ts: Some(ts),
+            //TODO: update memo
+            memo: None,
+        };
+
+        let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
+        let transfer_from_tx = Transaction {
+            id: Uuid::new_v4().to_string(),
+            created_at: ts,
+            state: TransactionState::Created,
+            dependency: None,
+            protocol: Protocol::IC(ic_transaction),
+            group: 1,
+            from_call_type: FromCallType::Canister,
+            start_ts: None,
+        };
+
+        Ok(vec![transfer_from_tx])
     }
 }
 

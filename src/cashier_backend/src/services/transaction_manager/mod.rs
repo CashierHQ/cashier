@@ -69,7 +69,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         )
     }
 
-    pub fn assemble_txs(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
+    pub fn tx_man_assemble_txs(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
         let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
 
         let txs = intent_adapter
@@ -79,8 +79,12 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         Ok(txs)
     }
 
-    pub fn create_action(&self, temp_action: &TemporaryAction) -> Result<ActionDto, CanisterError> {
+    pub fn tx_man_create_action(
+        &self,
+        temp_action: &TemporaryAction,
+    ) -> Result<ActionDto, CanisterError> {
         let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
+        let mut intent_tx_ids_hashmap: HashMap<String, Vec<String>> = HashMap::new();
 
         // check action id
         let action = self.action_service.get_action_by_id(temp_action.id.clone());
@@ -92,8 +96,53 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
         // fill in tx info
         for intent in temp_action.intents.iter() {
-            let txs = self.assemble_txs(intent)?;
-            intent_tx_hashmap.insert(intent.id.clone(), txs);
+            // store txs in hashmap
+            let txs = self.tx_man_assemble_txs(intent)?;
+            intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
+
+            // store tx ids in hashmap
+            let tx_ids: Vec<String> = txs.iter().map(|tx| tx.id.clone()).collect();
+            intent_tx_ids_hashmap.insert(intent.id.clone(), tx_ids);
+        }
+
+        // fill in dependency info
+        for intent in temp_action.intents.iter() {
+            // collect the tx ids of the dependencies
+            // if not found throw error
+            let dependency_tx_ids: Vec<String> = intent
+                .dependency
+                .iter()
+                .map(|dependency_id| {
+                    intent_tx_ids_hashmap
+                        .get(dependency_id)
+                        .ok_or_else(|| {
+                            CanisterError::InvalidDataError(format!(
+                                "Dependency ID {} not found",
+                                dependency_id
+                            ))
+                        })
+                        .map(|tx_ids| tx_ids.clone())
+                })
+                .collect::<Result<Vec<Vec<String>>, CanisterError>>()?
+                .into_iter()
+                .flatten()
+                .collect();
+
+            if !dependency_tx_ids.is_empty() {
+                // store the dependency tx ids in the tx of current intent
+                let txs = intent_tx_hashmap.get_mut(&intent.id).unwrap();
+                for tx in txs.iter_mut() {
+                    // if the tx already has dependency, then extend the existing dependency
+                    match &mut tx.dependency {
+                        Some(existing_deps) => {
+                            existing_deps.extend(dependency_tx_ids.clone());
+                        }
+                        None => {
+                            tx.dependency = Some(dependency_tx_ids.clone());
+                        }
+                    }
+                }
+            }
         }
 
         let link_action = LinkAction {
@@ -107,13 +156,14 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             link_action,
             temp_action.as_action(),
             temp_action.intents.clone(),
-            intent_tx_hashmap,
+            intent_tx_hashmap.clone(),
             temp_action.creator.clone(),
         );
 
-        Ok(ActionDto::from(
+        Ok(ActionDto::from_with_tx(
             temp_action.as_action(),
             temp_action.intents.clone(),
+            intent_tx_hashmap,
         ))
     }
 

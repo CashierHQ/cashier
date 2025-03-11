@@ -11,7 +11,7 @@ use crate::{
         INTENT_LABEL_WALLET_TO_TREASURY,
     },
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
-    services::transaction_manager::{action_adapter::ActionAdapter, fee::Fee},
+    services::transaction_manager::fee::Fee,
     types::{error::CanisterError, temp_action::TemporaryAction},
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
@@ -62,6 +62,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_asset_intent.state = IntentState::Created;
                 transfer_asset_intent.created_at = ts;
                 transfer_asset_intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+                // adding dependency
 
                 // create intent for transfer fee to treasury
                 //TODO: get the intent template from config then map the values
@@ -73,6 +74,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_fee_intent.state = IntentState::Created;
                 transfer_fee_intent.created_at = ts;
                 transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+                // adding dependency
 
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
@@ -97,8 +99,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return Some(intents);
     }
 
-    pub fn assemble_intents(
+    pub fn link_assemble_intents(
         &self,
+        // todo change to link_id, and action type
         temp_action: &TemporaryAction,
     ) -> Result<Vec<Intent>, CanisterError> {
         let link = self.get_link_by_id(temp_action.link_id.clone())?;
@@ -184,6 +187,37 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     transfer_from_data.amount = Fee::CreateTipLinkFeeIcp.as_u64();
 
                     intent.r#type = IntentType::TransferFrom(transfer_from_data.clone());
+                }
+                IntentTask::TransferLinkToWallet => {
+                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
+                    let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
+                        CanisterError::HandleLogicError("Asset not found".to_string())
+                    })?;
+
+                    transfer_data.amount = asset_info.total_amount;
+                    transfer_data.asset = Asset {
+                        address: asset_info.address.clone(),
+                        chain: asset_info.chain.clone(),
+                    };
+
+                    let from_account = Account {
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(link.id.clone())),
+                    };
+                    transfer_data.from = Wallet {
+                        address: from_account.to_string(),
+                        chain: Chain::IC,
+                    };
+                    let to_account = Account {
+                        owner: self.ic_env.caller(),
+                        subaccount: None,
+                    };
+                    transfer_data.to = Wallet {
+                        address: to_account.to_string(),
+                        chain: Chain::IC,
+                    };
+
+                    intent.r#type = IntentType::Transfer(transfer_data.clone());
                 }
                 _ => {}
             }

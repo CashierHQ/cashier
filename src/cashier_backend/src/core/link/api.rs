@@ -10,7 +10,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error, info,
+    error,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
@@ -231,18 +231,17 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 intents: vec![],
             };
 
+            // fill the intent info
             let intents = self
                 .link_service
-                .assemble_intents(&mut temp_action)
+                .link_assemble_intents(&mut temp_action)
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!("Failed to assemble intents: {}", e))
                 })?;
-
-            // fill the intent info
             temp_action.intents = intents;
 
             // create real action
-            let res = self.tx_manager_service.create_action(&temp_action)?;
+            let res = self.tx_manager_service.tx_man_create_action(&temp_action)?;
 
             Ok(res)
         } else {

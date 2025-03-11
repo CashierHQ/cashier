@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
