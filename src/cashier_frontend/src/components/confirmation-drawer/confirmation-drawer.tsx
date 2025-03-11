@@ -12,7 +12,7 @@ import {
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE, INTENT_STATE } from "@/services/types/enum";
 import { useNavigate } from "react-router-dom";
 import {
     useIcrc112Execute,
@@ -104,17 +104,17 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
     return (
         <Drawer open={open}>
-            <DrawerContent className="max-w-[400px] h-[60%] mx-auto p-3">
+            <DrawerContent className="max-w-[400px] h-[65%] mx-auto p-3 rounded-[1.5rem]">
                 <DrawerHeader>
-                    <DrawerTitle className="flex justify-center items-center">
-                        <div className="text-center w-[100%]">
+                    <DrawerTitle className="relative flex items-center justify-center">
+                        <div className="text-center text-xl">
                             {t("transaction.confirm_popup.title")}
                         </div>
 
                         <IoIosClose
                             onClick={onClose}
-                            className="ml-auto cursor-pointer"
-                            size={32}
+                            className="absolute right-0 cursor-pointer"
+                            size={42}
                         />
                     </DrawerTitle>
                 </DrawerHeader>
@@ -130,7 +130,11 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
                         <ConfirmationPopupFeesSection intents={cashierFeeIntents} isUsd={isUsd} />
                         <ConfirmationPopupLegalSection />
-                        <Button disabled={isDisabled} onClick={onClickSubmit}>
+                        <Button
+                            className="my-3 mx-auto py-6 w-[95%]"
+                            disabled={isDisabled}
+                            onClick={onClickSubmit}
+                        >
                             {buttonText}
                         </Button>
                     </>

@@ -23,6 +23,7 @@ import { useSetLinkTemplate } from "@/hooks/linkHooks";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useButtonState } from "@/hooks/useButtonState";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
 
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
@@ -90,7 +91,7 @@ export default function LinkTemplate({
                     />
 
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
-                    <FormLabel className="mb-3">{t("create.linkType")}</FormLabel>
+                    <FormLabel className="mx-1 mb-2">{t("create.linkType")}</FormLabel>
                     <div className="flex flex-grow flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
                         <Carousel className="items-center" setApi={carousel.setApi}>
                             <CarouselContent>
@@ -109,7 +110,11 @@ export default function LinkTemplate({
                         </Carousel>
                     </div>
 
-                    <Button type="submit" className="my-3" disabled={isButtonDisabled}>
+                    <Button
+                        type="submit"
+                        className="my-3 mx-auto py-6 w-[95%]"
+                        disabled={isButtonDisabled}
+                    >
                         {t("continue")}
                     </Button>
                 </form>

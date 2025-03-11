@@ -23,7 +23,11 @@ const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(
         } else {
             return (
                 <div className="relative w-full">
-                    <Input className={cn("pl-10 w-full", className)} ref={ref} {...props} />
+                    <Input
+                        className={cn("pl-10 w-full rounded-lg", className)}
+                        ref={ref}
+                        {...props}
+                    />
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                         {icon}
                     </div>

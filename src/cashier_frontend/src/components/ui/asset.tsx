@@ -30,7 +30,7 @@ export const Asset: FC<AssetProps> = ({
         }
 
         return (
-            <div className="flex items-center">
+            <div className="flex items-center rounded-lg">
                 {showUsd && (
                     <>
                         <span>(${usdAmount?.toFixed(3)})</span>

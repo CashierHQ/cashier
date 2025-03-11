@@ -24,12 +24,14 @@ export const useConfirmButtonState = (actionState: string | undefined, t: TFunct
     const [buttonText, setButtonText] = useState("");
 
     const mapActionStateToButtonText = () => {
+        console.log(actionState);
         switch (actionState) {
             case ACTION_STATE.CREATED:
                 return t("transaction.confirm_popup.confirm_button");
             case ACTION_STATE.PROCESSING:
                 return t("transaction.confirm_popup.inprogress_button");
             case ACTION_STATE.FAIL:
+                console.log("Return failed");
                 return t("retry");
             case ACTION_STATE.SUCCESS:
                 return t("continue");
