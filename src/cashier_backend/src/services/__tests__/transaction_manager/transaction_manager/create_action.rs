@@ -12,16 +12,16 @@ mod tests {
 
     use crate::{
         core::action::types::{AssetDto, MetadataValue, WalletDto},
-        services::transaction_manager::{
+        services::{
             __tests__::tests::{
                 create_dummy_intent, generate_random_principal, generate_timestamp,
                 MockIcEnvironment,
             },
-            action::ActionService,
-            execute_transaction::ExecuteTransactionService,
-            manual_check_status::ManualCheckStatusService,
-            transaction::TransactionService,
-            TransactionManagerService,
+            transaction_manager::{
+                action::ActionService, execute_transaction::ExecuteTransactionService,
+                manual_check_status::ManualCheckStatusService, transaction::TransactionService,
+                TransactionManagerService,
+            },
         },
         types::{error::CanisterError, temp_action::TemporaryAction},
         utils::helper::to_subaccount,

@@ -496,6 +496,3 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         ))
     }
 }
-
-#[cfg(test)]
-pub mod __tests__;

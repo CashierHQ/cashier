@@ -1,15 +1,14 @@
 #[cfg(test)]
 mod tests {
-    use crate::services::transaction_manager::{
+    use crate::services::{
         __tests__::{
-            action::{
+            tests::MockIcEnvironment,
+            transaction_manager::action::{
                 generate_action_created, generate_action_success, generate_action_with_for_fail,
                 generate_action_with_for_processing, setup_repositories,
             },
-            tests::MockIcEnvironment,
         },
-        action::ActionService,
-        validate::ValidateService,
+        transaction_manager::{action::ActionService, validate::ValidateService},
     };
 
     use cashier_types::{ActionState, IntentState};

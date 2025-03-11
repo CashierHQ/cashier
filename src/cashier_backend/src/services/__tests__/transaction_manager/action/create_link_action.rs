@@ -2,16 +2,15 @@ mod tests {
 
     use crate::{
         core::action::types::CreateActionInput,
-        services::transaction_manager::{
+        services::{
             __tests__::{
-                action::setup_repositories,
                 tests::{
                     create_dummy_link, generate_random_principal, generate_timestamp,
                     MockIcEnvironment,
                 },
+                transaction_manager::action::setup_repositories,
             },
-            action::ActionService,
-            validate::ValidateService,
+            transaction_manager::{action::ActionService, validate::ValidateService},
         },
         types::error::CanisterError,
     };
