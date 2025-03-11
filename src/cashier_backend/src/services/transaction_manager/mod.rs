@@ -365,9 +365,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
         let mut request = None;
 
-        // if check external is false -> process_action cannot generate icrc_112_requests
-        // if args.external {
-        //Step #2 : Check which txs are eligible to execute - based on dependency
+        // check which tx are eligible to be executed
+        // tx is eligible all other txs it has dependency on are successfuly complete, with two exceptions:
+        // 1. if tx is grouped with other txs into ICRC-112, dependency with other tx in the batch is ignored
+        // 2. if tx is gropued with other txs into ICRc-112, and execute_wallet_tx = false tx is ineligible
         let all_txs = match self.action_service.get(args.action_id.clone()) {
             Ok(action_resp) => self
                 .action_service
