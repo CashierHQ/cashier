@@ -8,7 +8,7 @@ import { CarouselApi } from "../ui/carousel";
 export const linkTemplateSchema = z.object({
     title: z
         .string()
-        .min(10, "Title must be at least 10 characters")
+        .min(5, "Title must be at least 5 characters")
         .max(50, "Title must be at most 50 characters"),
     linkType: z.string(),
 });
