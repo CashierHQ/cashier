@@ -256,8 +256,12 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .get_tx_by_id(&tx_id)
             .map_err(|e| CanisterError::NotFound(e))?;
 
+        // checks if tx has other dependent txs that were not completed yet
         let is_all_dependencies_success = self._is_all_depdendency_success(&tx, true)?;
 
+        // checks if tx is part of a batch of txs (ICRC-112)
+        // tx is deemed has dependency if any of the other txs in the batch still has unmet dependencies
+        // this is done so that al the txs in the batch can be executed altogether, not separately
         let is_group_has_dependency = self._is_group_has_dependency(&tx)?;
 
         // if any of the tx in the group has dependency (exclusive the tx in same group), then current tx has dependency
@@ -389,6 +393,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         Ok(())
     }
 
+    // REFACTOR LATER : we should rename external arg to execute_wallet_tx so that its clear what arg is for
     pub async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
         let action_resp = self
             .action_service
@@ -418,9 +423,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // check which tx are eligible to be executed
         // if tx has no dependent txs, that need to be completed before executing it, it is not eligible
         // if all the dependent txs were complete, it is eligible to be executed
-        // There are two exceptions (handled within dependency check method):
-        // 1. if tx is grouped with other txs into ICRC-112, dependency with other tx in the batch is ignored
-        // 2. if tx is gropued with other txs into ICRc-112, and execute_wallet_tx = false tx is ineligible
+        // There are additional 2 conditions (handled in has_dependency method below):
+        // 1. if tx is grouped into a batch ICRC-112, dependency between tx is ignored during eligibility check
+        // 2. if tx is gropued into a batch ICRC-112, unless all tx in batch have dependency met, non of the tx is eligible
         let all_txs = match self.action_service.get(args.action_id.clone()) {
             Ok(action_resp) => self
                 .action_service
@@ -440,7 +445,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 eligible = false;
             }
 
-            // check if tx has dependent txs that need to be completed before executing it
+            // check if tx has dependent txs that need to be completed before it can be executed
             match self.has_dependency(tx.id.clone()).await {
                 Ok(has_dependency) => {
                     if has_dependency {
@@ -462,7 +467,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             owner: self.ic_env.caller(),
             subaccount: None,
         };
-        // This is where you create icrc_112
+
+        // With the txs that were grouped into a batch, we assemble a icrc_112 request
         let icrc_112_requests = self.create_icrc_112(
             caller,
             args.action_id.clone(),
@@ -478,7 +484,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             Some(icrc_112_requests.unwrap())
         };
 
-        // This is where execute transaction
+        // We execute transactions
+        // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
+        // Wallet tx are executed by the client, when it receives the ICRC-112 request this method returns, and tx status is 'processing' until client updates tx manager with response of ICRC-112
         for mut tx in eligible_txs {
             self.execute_tx(&mut tx).await?;
         }
