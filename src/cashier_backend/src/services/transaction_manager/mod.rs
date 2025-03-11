@@ -421,7 +421,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         let mut request = None;
 
         // check which tx are eligible to be executed
-        // if tx has no dependent txs, that need to be completed before executing it, it is not eligible
+        // if tx has dependent txs, that need to be completed before executing it, it is not eligible
         // if all the dependent txs were complete, it is eligible to be executed
         // There are additional 2 conditions (handled in has_dependency method below):
         // 1. if tx is grouped into a batch ICRC-112, dependency between txs in the batch is ignored during eligibility check
