@@ -105,7 +105,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             intent_tx_ids_hashmap.insert(intent.id.clone(), tx_ids);
         }
 
-        // fill in dependency info
+        // fill in dependency info 
+        // if intent A has dependency on intent B, all tx in A will have dependency on txs in B
         for intent in temp_action.intents.iter() {
             // collect the tx ids of the dependencies
             // if not found throw error
