@@ -366,7 +366,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         let mut request = None;
 
         // check which tx are eligible to be executed
-        // tx is eligible all other txs it has dependency on are successfuly complete, with two exceptions:
+        // if tx has no dependent txs, that need to be completed before executing it, it is not eligible
+        // if all the dependent txs were complete, it is eligible to be executed
+        // There are two exceptions (handled within dependency check method):
         // 1. if tx is grouped with other txs into ICRC-112, dependency with other tx in the batch is ignored
         // 2. if tx is gropued with other txs into ICRc-112, and execute_wallet_tx = false tx is ineligible
         let all_txs = match self.action_service.get(args.action_id.clone()) {
@@ -379,14 +381,16 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         };
         let mut eligible_txs: Vec<Transaction> = Vec::new();
         for tx in all_txs.iter() {
-            // set it false
+            // REFACTOR LATER : we should refactor later to make default condition to false
             let mut eligible = true;
 
-            // success txs - ignores
-            // processing txs - ignores
+            // we only need to check if tx in created or failed states should be executed
+            // there is no point in re-executing tx that are already success or progressing
             if tx.state == TransactionState::Success || tx.state == TransactionState::Processing {
                 eligible = false;
             }
+
+            // check if tx has dependent txs that need to be completed before executing it
             match self.has_dependency(tx.id.clone()).await {
                 Ok(has_dependency) => {
                     if has_dependency {
@@ -398,6 +402,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 }
             }
 
+            // if tx has no dependent txs, that need to be completed before executing it, we can execute it
             if eligible {
                 eligible_txs.push(tx.clone());
             }
