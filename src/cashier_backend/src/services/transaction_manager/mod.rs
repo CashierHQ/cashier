@@ -393,7 +393,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         Ok(())
     }
 
-    // REFACTOR LATER : we should rename external arg to execute_wallet_tx so that its clear what arg is for
     pub async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
         let action_resp = self
             .action_service
