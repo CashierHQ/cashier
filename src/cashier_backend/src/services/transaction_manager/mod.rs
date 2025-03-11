@@ -424,8 +424,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // if tx has no dependent txs, that need to be completed before executing it, it is not eligible
         // if all the dependent txs were complete, it is eligible to be executed
         // There are additional 2 conditions (handled in has_dependency method below):
-        // 1. if tx is grouped into a batch ICRC-112, dependency between tx is ignored during eligibility check
-        // 2. if tx is gropued into a batch ICRC-112, unless all tx in batch have dependency met, non of the tx is eligible
+        // 1. if tx is grouped into a batch ICRC-112, dependency between txs in the batch is ignored during eligibility check
+        // 2. if tx is gropued into a batch ICRC-112, tx is only eligible if all other tx in batch have no dependencies (so that al txs can be executed in batch together)
         let all_txs = match self.action_service.get(args.action_id.clone()) {
             Ok(action_resp) => self
                 .action_service
