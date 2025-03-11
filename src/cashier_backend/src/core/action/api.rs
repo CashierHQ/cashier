@@ -34,7 +34,7 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
     let args = UpdateActionArgs {
         action_id: input.action_id.clone(),
         link_id: input.link_id.clone(),
-        external: true,
+        execute_wallet_tx: true,
     };
 
     transaction_manager
