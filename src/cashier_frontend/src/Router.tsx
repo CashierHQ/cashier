@@ -9,6 +9,7 @@ import WalletPage from "./pages/wallet/page";
 import ManageTokensPage from "./pages/wallet/manage/page";
 import ImportTokenPage from "./pages/wallet/import/page";
 import TokenDetailsPage from "./pages/wallet/details/[id]/page";
+import RequireAuth from "./router/RequireAuth";
 
 const router = createBrowserRouter([
     {
@@ -17,19 +18,35 @@ const router = createBrowserRouter([
     },
     {
         path: "/edit/:linkId",
-        element: <LinkPage />,
+        element: (
+            <RequireAuth>
+                <LinkPage />
+            </RequireAuth>
+        ),
     },
     {
         path: "/:linkId",
-        element: <ClaimPage />,
+        element: (
+            <RequireAuth>
+                <ClaimPage />
+            </RequireAuth>
+        ),
     },
     {
         path: "/details/:linkId",
-        element: <DetailPage />,
+        element: (
+            <RequireAuth>
+                <DetailPage />
+            </RequireAuth>
+        ),
     },
     {
         path: "/wallet",
-        element: <WalletLayout />,
+        element: (
+            <RequireAuth>
+                <WalletLayout />
+            </RequireAuth>
+        ),
         children: [
             {
                 index: true,
