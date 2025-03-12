@@ -283,10 +283,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
             }
             _ => {
-                return Err(CanisterError::ValidationErrors(format!(
-                    "link_validate_user_create_action is not support {}",
-                    action_type.to_string()
-                )));
+                return Ok(());
             }
         }
     }
@@ -300,7 +297,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         match action.r#type.clone() {
             ActionType::CreateLink => {
                 let link = self.get_link_by_id(action.link_id.clone())?;
-                if !(action.creator == user_id || link.creator == user_id) {
+                if !(action.creator == user_id && link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
                     ));
@@ -308,7 +305,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
             ActionType::Withdraw => {
                 let link = self.get_link_by_id(action.link_id.clone())?;
-                if !(action.creator == user_id || link.creator == user_id) {
+                if !(action.creator == user_id && link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
                     ));
