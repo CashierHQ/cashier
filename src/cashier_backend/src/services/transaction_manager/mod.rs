@@ -14,7 +14,10 @@ use crate::{
         error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
         transaction_manager::ActionResp,
     },
-    utils::runtime::{IcEnvironment, RealIcEnvironment},
+    utils::{
+        helper::to_subaccount,
+        runtime::{IcEnvironment, RealIcEnvironment},
+    },
 };
 
 pub mod action;
@@ -329,7 +332,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 // right now only handle transfer from
                 match self.execute_transaction_service.execute(tx).await {
                     Ok(_) => {
-                        info!("[execute_canister_tx] Transaction executed successfully");
                         self.update_tx_state(tx, TransactionState::Success)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -337,21 +339,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                     e
                                 ))
                             })?;
-                        let action_resp = self
-                            .action_service
-                            .get_action_by_tx_id(tx.id.clone())
-                            .map_err(|e| CanisterError::NotFound(e))?;
-
-                        info!(
-                            "[execute_canister_tx] after update action_resp {:#?}",
-                            action_resp.action.state
-                        );
                     }
                     Err(e) => {
-                        info!(
-                            "[execute_canister_tx] Transaction executed with error {}",
-                            e
-                        );
                         self.update_tx_state(tx, TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -451,46 +440,60 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 return Err(CanisterError::InvalidDataError(e));
             }
         };
-        let mut eligible_txs: Vec<Transaction> = Vec::new();
-        for tx in all_txs.iter() {
-            // REFACTOR LATER : we should refactor later to make default condition to false
-            let mut eligible = true;
 
-            // we only need to check if tx in created or failed states should be executed
-            // there is no point in re-executing tx that are already success or progressing
-            if tx.state == TransactionState::Success || tx.state == TransactionState::Processing {
-                eligible = false;
-            }
-
-            // check if tx has dependent txs that need to be completed before it can be executed
-            match self.has_dependency(tx.id.clone()).await {
-                Ok(has_dependency) => {
-                    if has_dependency {
-                        eligible = false;
-                    }
-                }
-                Err(e) => {
-                    return Err(e);
-                }
-            }
-
-            // if tx has no dependent txs, that need to be completed before executing it, we can execute it
-            if eligible {
-                eligible_txs.push(tx.clone());
-            }
-        }
-
+        // User wallet account
         let caller = Account {
             owner: self.ic_env.caller(),
             subaccount: None,
         };
+
+        // Link Vault account
+        let link_vault = Account {
+            owner: self.ic_env.id(),
+            subaccount: Some(to_subaccount(args.link_id.clone())),
+        };
+
+        // Directly identify eligible transactions while separating by type
+        let mut eligible_wallet_txs: Vec<Transaction> = Vec::new();
+        let mut eligible_canister_txs: Vec<Transaction> = Vec::new();
+
+        for tx in all_txs.iter() {
+            // Skip transactions that aren't in Created or Failed state
+            if tx.state != TransactionState::Created && tx.state != TransactionState::Fail {
+                continue;
+            }
+
+            // Check if tx has dependencies that need to be completed first
+            let has_dependency = match self.has_dependency(tx.id.clone()).await {
+                Ok(has_dep) => has_dep,
+                Err(e) => return Err(e),
+            };
+
+            // Skip transactions with unresolved dependencies
+            if has_dependency {
+                continue;
+            }
+
+            // Transaction is eligible, categorize it based on from_account
+            let from_account = match tx.try_get_from_account() {
+                Ok(account) => account,
+                Err(e) => return Err(CanisterError::InvalidDataError(e.to_string())),
+            };
+
+            if from_account == caller {
+                eligible_wallet_txs.push(tx.clone());
+            } else if from_account == link_vault {
+                eligible_canister_txs.push(tx.clone());
+            }
+            // Right now there is no tx have from_account is neither caller nor link_vault, so we don't need to handle this case
+        }
 
         // With the txs that were grouped into a batch, we assemble a icrc_112 request
         let icrc_112_requests = self.create_icrc_112(
             caller,
             args.action_id.clone(),
             args.link_id.clone(),
-            &eligible_txs,
+            &eligible_wallet_txs,
         )?;
 
         request = if icrc_112_requests.is_none() {
@@ -502,10 +505,31 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         };
 
         // We execute transactions
+
+        // Wallet tx are executed by the client, when it receives the ICRC-112 request this method returns
+        // and tx status is 'processing' until client updates tx manager with response of ICRC-112
+        for mut tx in eligible_wallet_txs {
+            self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+                CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {}", e))
+            })?;
+            self.update_tx_state(&mut tx, TransactionState::Processing)
+                .map_err(|e| {
+                    CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                })?;
+        }
+
         // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
-        // Wallet tx are executed by the client, when it receives the ICRC-112 request this method returns, and tx status is 'processing' until client updates tx manager with response of ICRC-112
-        for mut tx in eligible_txs {
-            self.execute_tx(&mut tx).await?;
+        for mut tx in eligible_canister_txs {
+            self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+                CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {}", e))
+            })?;
+            self.update_tx_state(&mut tx, TransactionState::Processing)
+                .map_err(|e| {
+                    CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                })?;
+
+            // this method update the tx state to success or fail inside of it
+            self.execute_canister_tx(&mut tx).await?;
         }
 
         let get_resp: ActionResp = self
