@@ -240,6 +240,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 &user_id.as_ref().unwrap(),
             )?;
 
+            // validate user balance
+            self.link_service
+                .link_validate_balance_with_asset_info(&input.link_id, &caller)
+                .await?;
+
             //create temp action
             // fill in link_id info
             // fill in action_type info
