@@ -1,7 +1,8 @@
+use candid::Nat;
 use cashier_types::{FromCallType, IcTransaction, Transaction};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 
-use crate::{types::error::CanisterError, utils::icrc::IcrcService};
+use crate::{info, types::error::CanisterError, utils::icrc::IcrcService};
 
 #[cfg_attr(test, faux::create)]
 pub struct ExecuteTransactionService {
@@ -29,13 +30,35 @@ impl ExecuteTransactionService {
 
                 match protocol {
                     IcTransaction::Icrc2TransferFrom(tx) => {
-                        let args: TransferFromArgs = TransferFromArgs::try_from(tx.clone())
+                        let mut args: TransferFromArgs = TransferFromArgs::try_from(tx.clone())
                             .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
 
+                        // get asset
                         let asset = tx
                             .asset
                             .get_principal()
                             .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
+
+                        let fee_u128 = u128::try_from(args.amount.clone().0);
+                        match fee_u128 {
+                            Ok(fee) => {
+                                let fee_expected = fee.checked_sub(20_000);
+                                match fee_expected {
+                                    Some(fee_expected) => args.amount = Nat::from(fee_expected),
+                                    None => {
+                                        return Err(CanisterError::HandleLogicError(
+                                            "Failed to calculate fee".to_string(),
+                                        ));
+                                    }
+                                }
+                            }
+
+                            Err(_) => {
+                                return Err(CanisterError::HandleLogicError(
+                                    "Failed to convert fee to u128".to_string(),
+                                ));
+                            }
+                        }
 
                         self.icrc_service.transfer_from(asset, args).await?;
 

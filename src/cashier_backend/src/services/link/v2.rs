@@ -272,6 +272,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // get link
         let link = self.get_link_by_id(link_id.to_string()).unwrap();
 
+        // only alow creator to create withdraw action
         match action_type {
             ActionType::Withdraw => {
                 if link.creator == user_id {

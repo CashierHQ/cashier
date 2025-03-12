@@ -112,7 +112,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             intent_tx_ids_hashmap.insert(intent.id.clone(), tx_ids);
         }
 
-        // fill in dependency info 
+        // fill in dependency info
         // if intent A has dependency on intent B, all tx in A will have dependency on txs in B
         for intent in temp_action.intents.iter() {
             // collect the tx ids of the dependencies
@@ -329,7 +329,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 // right now only handle transfer from
                 match self.execute_transaction_service.execute(tx).await {
                     Ok(_) => {
-                        info!("Transaction executed successfully");
+                        info!("[execute_canister_tx] Transaction executed successfully");
                         self.update_tx_state(tx, TransactionState::Success)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -342,10 +342,16 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                             .get_action_by_tx_id(tx.id.clone())
                             .map_err(|e| CanisterError::NotFound(e))?;
 
-                        info!("after update action_resp {:#?}", action_resp);
+                        info!(
+                            "[execute_canister_tx] after update action_resp {:#?}",
+                            action_resp.action.state
+                        );
                     }
                     Err(e) => {
-                        info!("Transaction executed with error {}", e);
+                        info!(
+                            "[execute_canister_tx] Transaction executed with error {}",
+                            e
+                        );
                         self.update_tx_state(tx, TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -415,8 +421,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // manually check the status of the tx of the action
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
-            let new_state = self.manual_check_status_service.execute(&tx).await?;
-            info!("TX  {:#?}, New state: {:#?}", tx.protocol, new_state);
+            let new_state = self
+                .manual_check_status_service
+                .execute(&tx, txs.clone())
+                .await?;
             if tx.state == new_state.clone() {
                 continue;
             }
