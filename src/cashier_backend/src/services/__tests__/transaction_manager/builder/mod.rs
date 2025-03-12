@@ -1,9 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::core::action::types::TriggerTransactionInput;
-    use crate::services::transaction_manager::__tests__::tests::{
-        generate_token_address, MockIcEnvironment,
-    };
+
+    use crate::services::__tests__::tests::{generate_token_address, MockIcEnvironment};
     use crate::services::transaction_manager::builder::icrc112::approve_cashier_fee::ApproveCashierFeeBuilder;
     use crate::services::transaction_manager::builder::icrc112::TransactionBuilder;
     use crate::services::transaction_manager::builder::icrc112::{

@@ -10,17 +10,17 @@ mod tests {
     use uuid::Uuid;
 
     use crate::{
-        services::transaction_manager::{
+        services::{
             __tests__::tests::{
                 convert_tx_to_dummy_icrc_112_request, convert_txs_to_dummy_icrc_112_request,
                 create_dummy_action, create_dummy_intent, create_dummy_tx_protocol,
                 generate_random_principal, MockIcEnvironment,
             },
-            action::ActionService,
-            execute_transaction::ExecuteTransactionService,
-            manual_check_status::ManualCheckStatusService,
-            transaction::TransactionService,
-            TransactionManagerService, UpdateActionArgs,
+            transaction_manager::{
+                action::ActionService, execute_transaction::ExecuteTransactionService,
+                manual_check_status::ManualCheckStatusService, transaction::TransactionService,
+                TransactionManagerService, UpdateActionArgs,
+            },
         },
         types::{error::CanisterError, transaction_manager::ActionResp},
     };

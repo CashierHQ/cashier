@@ -12,10 +12,11 @@ use crate::{
     },
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
     services::transaction_manager::fee::Fee,
-    types::{error::CanisterError, temp_action::TemporaryAction},
+    types::error::CanisterError,
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 
+#[cfg_attr(test, faux::create)]
 pub struct LinkService<E: IcEnvironment + Clone> {
     // LinkService fields go here
     link_repository: repositories::link::LinkRepository,
@@ -24,7 +25,22 @@ pub struct LinkService<E: IcEnvironment + Clone> {
     ic_env: E,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> LinkService<E> {
+    pub fn new(
+        link_repository: repositories::link::LinkRepository,
+        link_action_repository: LinkActionRepository,
+        action_repository: ActionRepository,
+        ic_env: E,
+    ) -> Self {
+        Self {
+            link_repository,
+            link_action_repository,
+            action_repository,
+            ic_env,
+        }
+    }
+
     pub fn get_instance() -> Self {
         Self {
             link_repository: repositories::link::LinkRepository::new(),
@@ -101,12 +117,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
     pub fn link_assemble_intents(
         &self,
-        // todo change to link_id, and action type
-        temp_action: &TemporaryAction,
+        link_id: &str,
+        action_type: &ActionType,
     ) -> Result<Vec<Intent>, CanisterError> {
-        let link = self.get_link_by_id(temp_action.link_id.clone())?;
+        let link = self.get_link_by_id(link_id.to_string())?;
 
-        let temp_intents = self.look_up_intent(&link.link_type.unwrap(), &temp_action.r#type);
+        let temp_intents = self.look_up_intent(&link.link_type.unwrap(), action_type);
 
         if temp_intents.is_none() {
             return Err(CanisterError::HandleLogicError(
@@ -219,7 +235,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                     intent.r#type = IntentType::Transfer(transfer_data.clone());
                 }
-                _ => {}
+                _ => {
+                    return Err(CanisterError::HandleLogicError(
+                        "Not found intents config for {link_type}_{action_type}".to_string(),
+                    ));
+                }
             }
         }
 
@@ -243,12 +263,41 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return action;
     }
 
-    pub fn validate_action(&self, action: &Action, user_id: &str) -> Result<(), CanisterError> {
+    pub fn link_validate_user_create_action(
+        &self,
+        link_id: &str,
+        action_type: &ActionType,
+        user_id: &str,
+    ) -> Result<(), CanisterError> {
+        // get link
+        let link = self.get_link_by_id(link_id.to_string()).unwrap();
+
+        match action_type {
+            ActionType::Withdraw => {
+                if link.creator == user_id {
+                    return Ok(());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the link".to_string(),
+                    ));
+                }
+            }
+            _ => {
+                return Ok(());
+            }
+        }
+    }
+
+    pub fn link_validate_user_update_action(
+        &self,
+        action: &Action,
+        user_id: &str,
+    ) -> Result<(), CanisterError> {
         //validate user_id
         match action.r#type.clone() {
             ActionType::CreateLink => {
                 let link = self.get_link_by_id(action.link_id.clone())?;
-                if !(action.creator == user_id || link.creator == user_id) {
+                if !(action.creator == user_id && link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
                     ));
@@ -256,7 +305,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
             ActionType::Withdraw => {
                 let link = self.get_link_by_id(action.link_id.clone())?;
-                if !(action.creator == user_id || link.creator == user_id) {
+                if !(action.creator == user_id && link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
                     ));

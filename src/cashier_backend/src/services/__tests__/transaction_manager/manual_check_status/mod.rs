@@ -8,28 +8,26 @@ mod tests {
 
     use crate::{
         services::{
+            __tests__::tests::{
+                create_dummy_transaction, create_dummy_tx_protocol, generate_timestamp,
+                MockIcEnvironment, ONE_HOUR_IN_NANOSECONDS, TX_TIMEOUT,
+            },
             ext::icrc_token::Allowance,
             transaction_manager::{
-                __tests__::tests::{
-                    create_dummy_transaction, create_dummy_tx_protocol, generate_timestamp,
-                    MockIcEnvironment, ONE_HOUR_IN_NANOSECONDS, TX_TIMEOUT,
-                },
-                action::ActionService,
-                execute_transaction::ExecuteTransactionService,
-                manual_check_status::ManualCheckStatusService,
-                transaction::TransactionService,
+                action::ActionService, execute_transaction::ExecuteTransactionService,
+                manual_check_status::ManualCheckStatusService, transaction::TransactionService,
                 TransactionManagerService,
             },
         },
         types::error::{CanisterError, DisplayRejectionCode},
-        utils::{icrc::IcrcService, runtime::IcEnvironment},
+        utils::icrc::IcrcService,
     };
 
     //TS1: Transaction Status is NOT processing
     #[tokio::test]
     async fn test_execute_transaction_not_processing() {
         let icrc_service = IcrcService::faux();
-        let env = MockIcEnvironment::new();
+        let env = MockIcEnvironment::faux();
         let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
 
         let tx1 = create_dummy_transaction(TransactionState::Created);
