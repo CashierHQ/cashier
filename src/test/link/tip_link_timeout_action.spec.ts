@@ -16,7 +16,7 @@ import { TokenHelper } from "../utils/token-helper";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Timeout Link", () => {
+describe("Tip link timeout action", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 

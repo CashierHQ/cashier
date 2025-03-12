@@ -34,9 +34,9 @@ mod tests {
         let tx2 = create_dummy_transaction(TransactionState::Fail);
         let tx3 = create_dummy_transaction(TransactionState::Success);
 
-        let result1 = manual_check_service.execute(&tx1).await;
-        let result2 = manual_check_service.execute(&tx2).await;
-        let result3 = manual_check_service.execute(&tx3).await;
+        let result1 = manual_check_service.execute(&tx1, vec![]).await;
+        let result2 = manual_check_service.execute(&tx2, vec![]).await;
+        let result3 = manual_check_service.execute(&tx3, vec![]).await;
 
         assert!(result1.is_ok());
         assert!(result2.is_ok());
@@ -73,7 +73,7 @@ mod tests {
             .then_return(Ok(icrc1_transfer_protocol.amount));
 
         let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
-        let result = manual_check_service.execute(&tx1).await;
+        let result = manual_check_service.execute(&tx1, vec![]).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), TransactionState::Success);
@@ -105,7 +105,7 @@ mod tests {
             .then_return(Ok(icrc1_transfer_protocol.amount - 1000));
 
         let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
-        let result = manual_check_service.execute(&tx1).await;
+        let result = manual_check_service.execute(&tx1, vec![]).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), TransactionState::Fail);
@@ -162,8 +162,8 @@ mod tests {
             )));
 
         let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
-        let result1 = manual_check_service.execute(&tx1).await;
-        let result2 = manual_check_service.execute(&tx2).await;
+        let result1 = manual_check_service.execute(&tx1, vec![]).await;
+        let result2 = manual_check_service.execute(&tx2, vec![]).await;
 
         assert!(result1.is_ok());
         assert_eq!(result1.unwrap(), TransactionState::Fail);
@@ -207,7 +207,7 @@ mod tests {
             .then_return(Ok(expected_allowance));
 
         let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
-        let result = manual_check_service.execute(&tx1).await;
+        let result = manual_check_service.execute(&tx1, vec![]).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), TransactionState::Success);
@@ -249,7 +249,7 @@ mod tests {
             .then_return(Ok(expected_allowance));
 
         let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
-        let result = manual_check_service.execute(&tx1).await;
+        let result = manual_check_service.execute(&tx1, vec![]).await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), TransactionState::Fail);
@@ -311,8 +311,8 @@ mod tests {
             )));
 
         let manual_check_service = ManualCheckStatusService::new(icrc_service, env);
-        let result1 = manual_check_service.execute(&tx1).await;
-        let result2 = manual_check_service.execute(&tx2).await;
+        let result1 = manual_check_service.execute(&tx1, vec![]).await;
+        let result2 = manual_check_service.execute(&tx2, vec![]).await;
 
         assert!(result1.is_ok());
         assert_eq!(result1.unwrap(), TransactionState::Fail);
