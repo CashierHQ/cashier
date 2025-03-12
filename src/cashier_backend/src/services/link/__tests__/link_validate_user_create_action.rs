@@ -1,7 +1,6 @@
 mod tests {
     use cashier_types::{ActionType, Link, LinkType};
     use faux::when;
-    use icrc_ledger_types::icrc;
     use uuid::Uuid;
 
     use crate::{
@@ -52,9 +51,8 @@ mod tests {
             ic_env,
         );
 
-        let result = link_service
-            .link_validate_user_create_action(&link_id, &action_type, &user_id, &caller)
-            .await;
+        let result =
+            link_service.link_validate_user_create_action(&link_id, &action_type, &user_id);
 
         assert!(result.is_ok());
     }
@@ -95,9 +93,8 @@ mod tests {
             ic_env,
         );
 
-        let result = link_service
-            .link_validate_user_create_action(&link_id, &action_type, &user_id, &caller)
-            .await;
+        let result =
+            link_service.link_validate_user_create_action(&link_id, &action_type, &user_id);
 
         assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
     }

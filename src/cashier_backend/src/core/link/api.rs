@@ -234,13 +234,15 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
 
             // validate create action
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id.as_ref().unwrap(),
+            )?;
+
+            // validate balance
             self.link_service
-                .link_validate_user_create_action(
-                    &input.link_id,
-                    &action_type,
-                    &user_id.as_ref().unwrap(),
-                    &caller,
-                )
+                .link_validate_balance_with_asset_info(&action_type, &input.link_id, &caller)
                 .await?;
 
             //create temp action
@@ -272,6 +274,12 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // validate action
             self.link_service
                 .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id.unwrap())?;
+
+            // validate balance
+            let action_type = action.as_ref().unwrap().r#type.clone();
+            self.link_service
+                .link_validate_balance_with_asset_info(&action_type, &input.link_id, &caller)
+                .await?;
 
             // execute action
             self.tx_manager_service
