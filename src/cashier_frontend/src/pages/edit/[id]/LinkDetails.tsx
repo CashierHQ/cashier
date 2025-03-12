@@ -1,4 +1,4 @@
-import { LINK_INTENT_LABEL, LINK_TYPE } from "@/services/types/enum";
+import { CHAIN, LINK_INTENT_LABEL, LINK_TYPE } from "@/services/types/enum";
 //import { NftAssetForm } from "@/components/link-details/nft-asset-form";
 import { TipLinkAssetForm } from "@/components/link-details/tip-link-asset-form";
 import { TipLinkAssetFormSchema } from "@/components/link-details/tip-link-asset-form.hooks";
@@ -22,6 +22,7 @@ export default function LinkDetails() {
                     amount: data.amount,
                     address: data.tokenAddress,
                     label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
+                    chain: CHAIN.IC,
                 },
             ],
         });

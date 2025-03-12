@@ -124,6 +124,11 @@ export class ICRC112Service {
         return finalResponse;
     }
 
+    public async testICRC112Execute(
+        input: Icrc112Requests,
+        linkTitle: string,
+    ): Promise<Icrc112Response> {}
+
     private processResponse(
         response: Array<Icrc112ResponseItem>,
         canisterValidation?: CanisterValidation,
