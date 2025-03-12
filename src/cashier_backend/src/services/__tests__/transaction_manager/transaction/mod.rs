@@ -9,17 +9,16 @@ mod tests {
     use uuid::Uuid;
 
     use crate::{
-        services::transaction_manager::{
+        services::{
             __tests__::{
-                action::setup_repositories,
                 tests::{
                     create_dummy_action, create_dummy_intent, create_dummy_transaction,
                     create_dummy_tx_protocol, create_dummy_tx_protocol_for_tip_link,
                     generate_timestamp, MockIcEnvironment,
                 },
+                transaction_manager::action::setup_repositories,
             },
-            action::ActionService,
-            transaction::TransactionService,
+            transaction_manager::{action::ActionService, transaction::TransactionService},
         },
         types::transaction_manager::ActionResp,
         utils::helper::to_subaccount,

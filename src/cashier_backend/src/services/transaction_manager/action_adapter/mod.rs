@@ -1,8 +1,6 @@
 use cashier_types::{Action, ActionType, Intent, Link, LinkType};
 use serde::{Deserialize, Serialize};
 
-use crate::utils::runtime::IcEnvironment;
-
 pub mod ic_adapter;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,9 +1,7 @@
+pub mod create_link_action;
 pub mod get_action_by_tx_id;
-// pub mod roll_up_action_state;
-// pub mod roll_up_intent_state;
 pub mod roll_up_state;
 
-pub mod create_link_action;
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -21,7 +19,7 @@ mod tests {
             transaction::TransactionRepository, user_action::UserActionRepository,
             user_wallet::UserWalletRepository,
         },
-        services::transaction_manager::__tests__::tests::{
+        services::__tests__::tests::{
             create_dummy_action, create_dummy_intent, create_dummy_transaction,
             generate_action_intent, generate_intents_and_txs, merge_hashmaps,
         },
