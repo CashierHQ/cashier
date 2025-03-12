@@ -1,3 +1,4 @@
+use candid::Principal;
 use cashier_types::{
     Action, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, Link, LinkType,
     Wallet,
@@ -13,7 +14,7 @@ use crate::{
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
     services::transaction_manager::fee::Fee,
     types::error::CanisterError,
-    utils::{helper::to_subaccount, runtime::IcEnvironment},
+    utils::{helper::to_subaccount, icrc::IcrcService, runtime::IcEnvironment},
 };
 
 #[cfg_attr(test, faux::create)]
@@ -22,6 +23,7 @@ pub struct LinkService<E: IcEnvironment + Clone> {
     link_repository: repositories::link::LinkRepository,
     link_action_repository: LinkActionRepository,
     action_repository: ActionRepository,
+    icrc_service: IcrcService,
     ic_env: E,
 }
 
@@ -31,12 +33,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         link_repository: repositories::link::LinkRepository,
         link_action_repository: LinkActionRepository,
         action_repository: ActionRepository,
+        icrc_service: IcrcService,
         ic_env: E,
     ) -> Self {
         Self {
             link_repository,
             link_action_repository,
             action_repository,
+            icrc_service,
             ic_env,
         }
     }
@@ -46,6 +50,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             link_repository: repositories::link::LinkRepository::new(),
             link_action_repository: LinkActionRepository::new(),
             action_repository: ActionRepository::new(),
+            icrc_service: IcrcService::new(),
             ic_env: E::new(),
         }
     }
@@ -322,6 +327,50 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
 
         return Ok(());
+    }
+
+    pub async fn link_validate_balance_with_asset_info(
+        &self,
+        link_id: &str,
+        user: &Principal,
+    ) -> Result<(), CanisterError> {
+        let link = self
+            .get_link_by_id(link_id.to_string())
+            .map_err(|e| CanisterError::NotFound(e.to_string()))?;
+
+        let asset_info = link
+            .asset_info
+            .clone()
+            .ok_or_else(|| CanisterError::NotFound("Asset info not found".to_string()))?;
+
+        for asset in asset_info {
+            let token_pid = Principal::from_text(asset.address.as_str()).map_err(|e| {
+                CanisterError::HandleLogicError(format!(
+                    "Error converting token address to principal: {:?}",
+                    e
+                ))
+            })?;
+
+            let account = Account {
+                owner: *user,
+                subaccount: None,
+            };
+
+            let balance = self
+                .icrc_service
+                .balance_of(token_pid, account)
+                .await
+                .map_err(|e| e)?;
+
+            if balance <= asset.total_amount {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Insufficient balance for asset: {}, balance: {}, required: {} and fee try smaller amount",
+                    asset.address, balance, asset.total_amount
+                )));
+            }
+        }
+
+        Ok(())
     }
 
     pub fn validate_asset_left(&self, link_id: &str) -> () {}

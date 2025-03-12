@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     core::action::types::{ActionDto, CreateActionInput},
+    info,
     repositories::{self},
     types::{error::CanisterError, transaction_manager::ActionResp},
     utils::runtime::IcEnvironment,
@@ -267,7 +268,9 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
             .validate_balance_with_asset_info(&link.clone(), &caller)
             .await
         {
-            Ok(_) => (),
+            Ok(_) => {
+                info!("User balance validated");
+            }
             Err(e) => return Err(CanisterError::ValidationErrors(e)),
         }
 

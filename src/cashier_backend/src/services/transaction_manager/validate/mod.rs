@@ -3,6 +3,7 @@ use cashier_types::Link;
 use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
+    info,
     repositories::{action, user_wallet},
     utils::icrc::IcrcService,
 };
@@ -64,6 +65,7 @@ impl ValidateService {
                         asset.address, e
                     )
                 })?;
+
             if balance <= asset.total_amount {
                 return Err(format!(
                     "Insufficient balance for asset: {}, balance: {}, required: {} and fee try smaller amount",

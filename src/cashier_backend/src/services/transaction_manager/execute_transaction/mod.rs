@@ -2,7 +2,7 @@ use candid::Nat;
 use cashier_types::{FromCallType, IcTransaction, Transaction};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 
-use crate::{info, types::error::CanisterError, utils::icrc::IcrcService};
+use crate::{types::error::CanisterError, utils::icrc::IcrcService};
 
 #[cfg_attr(test, faux::create)]
 pub struct ExecuteTransactionService {
