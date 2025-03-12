@@ -70,23 +70,27 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             actionId: action!.id,
         });
         setAction(firstUpdatedAction);
-
-        const response = await icrc112Execute(firstUpdatedAction!.icrc112Requests);
-        console.log("🚀 ~ startTransaction ~ response:", response);
-
-        setTimeout(async () => {
-            const secondUpdatedAction = await updateAction({
-                actionId: action!.id,
-                linkId: link!.id,
-                external: true,
+        if (firstUpdatedAction) {
+            console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
+            const response = await icrc112Execute({
+                transactions: firstUpdatedAction!.icrc112Requests,
+                linkTitle: link?.title || "",
             });
-            console.log("🚀 ~ startTransaction ~ secondUpdatedAction:", secondUpdatedAction);
+            console.log("🚀 ~ icrc112Execute ~ response:", response);
+            if (response) {
+                const secondUpdatedAction = await updateAction({
+                    actionId: action!.id,
+                    linkId: link!.id,
+                    external: true,
+                });
+                console.log("🚀 ~ secondUpdatedAction ~ response:", secondUpdatedAction);
 
-            if (secondUpdatedAction) {
-                setAction(secondUpdatedAction);
-                onActionResult(secondUpdatedAction);
+                if (secondUpdatedAction) {
+                    setAction(secondUpdatedAction);
+                    onActionResult(secondUpdatedAction);
+                }
             }
-        }, 10000);
+        }
     };
 
     const onClickSubmit = async () => {

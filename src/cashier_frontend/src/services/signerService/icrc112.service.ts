@@ -127,7 +127,54 @@ export class ICRC112Service {
     public async testICRC112Execute(
         input: Icrc112Requests,
         linkTitle: string,
-    ): Promise<Icrc112Response> {}
+    ): Promise<Icrc112Response> {
+        //TODO: 7.3 test case */
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+
+        const arg = {
+            jsonrpc: "2.0",
+            method: this.getMethod(),
+            params: {
+                sender: (await this.agent.getPrincipal()).toString(),
+                requests: input,
+            },
+        };
+
+        const finalResponse: Icrc112Response = { responses: [] };
+
+        /*TODO: Use linkTitle to create testing scenarios*/
+        // linkTitle = "7.4_Something" => skip icrc2
+        // linkTitle = "7.5_Something" => skip icrc2, add 10mins
+
+        for (let i = 0; i < arg.params.requests.length; i++) {
+            //Start parallel execution
+            const parallelRequests = arg.params.requests[i];
+            const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
+
+            //Process each response from batch call and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
+            const icrc112ResponseItems: Icrc112ResponseItem[] =
+                this.processResponse(parallelResponses);
+            //End parallel execution
+
+            finalResponse.responses.push(icrc112ResponseItems);
+
+            // If there are any error responses in the current row,
+            // then break and assign non-execute requests to error result
+            if (icrc112ResponseItems.some((response) => "error" in response)) {
+                for (let newIndex = i + 1; newIndex < arg.params.requests.length; newIndex++) {
+                    const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
+                    const rowResponse: Icrc112ResponseItem[] =
+                        this.assignNonExecuteRequestToErrorResult(
+                            nonExecuteParallelRequestRow.length,
+                        );
+                    finalResponse.responses.push(rowResponse);
+                }
+                break;
+            }
+        }
+
+        return finalResponse;
+    }
 
     private processResponse(
         response: Array<Icrc112ResponseItem>,
@@ -165,11 +212,15 @@ export class ICRC112Service {
 
     private async parallelExecuteIcrcRequests(
         requests: ParallelRequests,
+        linkTitle?: string,
     ): Promise<Array<Icrc112ResponseItem>> {
         const process_tasks: Promise<CallCanisterResponse>[] = [];
         const responses: Array<Icrc112ResponseItem> = [];
 
         requests.forEach((request) => {
+            if (linkTitle?.includes("7.4")) {
+                // skip icrc2
+            }
             const task = this.callCanisterService.call({
                 canisterId: request.canisterId,
                 calledMethodName: request.method,
