@@ -268,11 +268,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return action;
     }
 
-    pub fn link_validate_user_create_action(
+    pub async fn link_validate_user_create_action(
         &self,
         link_id: &str,
         action_type: &ActionType,
         user_id: &str,
+        user_wallet: &Principal,
     ) -> Result<(), CanisterError> {
         // get link
         let link = self.get_link_by_id(link_id.to_string()).unwrap();
@@ -287,6 +288,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         "User is not the creator of the link".to_string(),
                     ));
                 }
+            }
+            ActionType::CreateLink => {
+                self.link_validate_balance_with_asset_info(link_id, user_wallet)
+                    .await
             }
             _ => {
                 return Ok(());

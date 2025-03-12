@@ -3,7 +3,6 @@ use cashier_types::Link;
 use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
-    info,
     repositories::{action, user_wallet},
     utils::icrc::IcrcService,
 };
