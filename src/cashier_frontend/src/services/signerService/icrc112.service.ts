@@ -128,6 +128,8 @@ export class ICRC112Service {
         input: Icrc112Requests,
         linkTitle: string,
     ): Promise<Icrc112Response> {
+        console.log("Test execution started with linkTitle:", linkTitle);
+
         //TODO: 7.3 test case */
         await new Promise((resolve) => setTimeout(resolve, 10000));
 
@@ -142,16 +144,21 @@ export class ICRC112Service {
 
         const finalResponse: Icrc112Response = { responses: [] };
 
-        /*TODO: Use linkTitle to create testing scenarios*/
-        // linkTitle = "7.4_Something" => skip icrc2
-        // linkTitle = "7.5_Something" => skip icrc2, add 10mins
+        // Add delay for 7.5 scenario
+        if (linkTitle?.includes("7.5")) {
+            console.log("Detected 7.5 scenario - adding 10 minute delay");
+            await new Promise((resolve) => setTimeout(resolve, 600000));
+        }
 
         for (let i = 0; i < arg.params.requests.length; i++) {
             //Start parallel execution
             const parallelRequests = arg.params.requests[i];
-            const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
+            const parallelResponses = await this.parallelExecuteIcrcRequests(
+                parallelRequests,
+                linkTitle,
+            );
 
-            //Process each response from batch call and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
+            //Process each response from batch call and map them to schema
             const icrc112ResponseItems: Icrc112ResponseItem[] =
                 this.processResponse(parallelResponses);
             //End parallel execution
@@ -214,13 +221,26 @@ export class ICRC112Service {
         requests: ParallelRequests,
         linkTitle?: string,
     ): Promise<Array<Icrc112ResponseItem>> {
+        console.log("Processing requests with linkTitle:", linkTitle);
         const process_tasks: Promise<CallCanisterResponse>[] = [];
         const responses: Array<Icrc112ResponseItem> = [];
 
         requests.forEach((request) => {
-            if (linkTitle?.includes("7.4")) {
-                // skip icrc2
+            // Skip icrc2 requests for both 7.4 and 7.5 scenarios
+            if (
+                (linkTitle?.includes("7.4") || linkTitle?.includes("7.5")) &&
+                request.method.includes("icrc2")
+            ) {
+                console.log(`Skipping ICRC2 request for method: ${request.method}`);
+                responses.push({
+                    error: {
+                        code: 1002,
+                        message: "ICRC2 requests are skipped in this test scenario",
+                    },
+                });
+                return;
             }
+            console.log(`Processing request for method: ${request.method}`);
             const task = this.callCanisterService.call({
                 canisterId: request.canisterId,
                 calledMethodName: request.method,
@@ -229,6 +249,7 @@ export class ICRC112Service {
             });
             process_tasks.push(task);
         });
+
         const results = await Promise.allSettled(process_tasks);
         // Process each result
         results.forEach((result) => {
