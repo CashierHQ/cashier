@@ -212,7 +212,6 @@ mod tests {
         let mut validate_service = ValidateService::faux();
         let mut ic_env = MockIcEnvironment::faux();
 
-        let link_id = Uuid::new_v4().to_string();
         let caller = Principal::anonymous();
 
         let link = create_dummy_link();

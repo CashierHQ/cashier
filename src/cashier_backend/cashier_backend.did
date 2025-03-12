@@ -77,8 +77,9 @@ type IntentDto = record {
   task : text;
   "type" : text;
   created_at : nat64;
-  type_metadata : vec record { text; TypeMetdataValue };
+  type_metadata : vec record { text; MetadataValue };
   state : text;
+  transactions : vec TransactionDto;
 };
 type LinkDetailUpdateAssetInfoInput = record {
   total_amount : nat64;
@@ -109,6 +110,13 @@ type LinkDto = record {
   template : opt text;
 };
 type LinkStateMachineActionParams = variant { Update : LinkDetailUpdateInput };
+type MetadataValue = variant {
+  U64 : nat64;
+  String : text;
+  MaybeMemo : opt blob;
+  Asset : AssetDto;
+  Wallet : AssetDto;
+};
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
   metadata : PaginateResultMetadata;
@@ -144,16 +152,20 @@ type Result_4 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_5 = variant { Ok : ActionDto; Err : CanisterError };
 type Result_6 = variant { Ok; Err : CanisterError };
 type Result_7 = variant { Ok : LinkDto; Err : CanisterError };
+type TransactionDto = record {
+  id : text;
+  protocol : text;
+  protocol_metadata : vec record { text; MetadataValue };
+  from_call_type : text;
+  created_at : nat64;
+  state : text;
+  dependency : opt vec text;
+  group : nat16;
+};
 type TriggerTransactionInput = record {
   transaction_id : text;
   action_id : text;
   link_id : text;
-};
-type TypeMetdataValue = variant {
-  U64 : nat64;
-  String : text;
-  Asset : AssetDto;
-  Wallet : AssetDto;
 };
 type UpdateActionInput = record {
   action_id : text;

@@ -318,6 +318,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         if tx.from_call_type == cashier_types::FromCallType::Canister {
             // the tx should not have any dependencies
             let is_all_dependencies_success = self._is_all_depdendency_success(&tx, true)?;
+
             if is_all_dependencies_success {
                 // right now only handle transfer from
                 match self.execute_transaction_service.execute(tx).await {

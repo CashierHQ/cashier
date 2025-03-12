@@ -106,7 +106,7 @@ mod tests {
         when!(ic_env.caller).then_return(caller.clone());
         when!(user_service.get_user_id_by_wallet).then_return(Some(user_id.clone()));
         when!(link_service.get_action_of_link).then_return(Some(action.clone()));
-        when!(link_service.validate_user_update_action).then_return(Ok(()));
+        when!(link_service.link_validate_user_update_action).then_return(Ok(()));
         when!(tx_manager_service.update_action).then_return(Ok(ActionDto {
             id: action_id.clone(),
             r#type: action_type.clone(),
