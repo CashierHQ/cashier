@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useState } from "react";
+import { ChangeEvent, FC, useEffect, useState } from "react";
 import { DefaultValues, SubmitHandler } from "react-hook-form";
 import {
     Form,
@@ -25,6 +25,8 @@ import {
 import { useTipLinkAssetForm } from "./tip-link-asset-form.hooks";
 import { AmountActionButtons } from "./amount-action-buttons";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
+import { useTokenMetadataList } from "@/hooks/useTokenMetadataQuery";
+import { TokenUtilService } from "@/services/tokenUtils.service";
 
 type TipLinkAssetFormProps = {
     defaultValues?: DefaultValues<TipLinkAssetFormSchema>;
@@ -41,6 +43,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
     isButtonDisabled,
 }) => {
     const { t } = useTranslation();
+    const { data: metadataList } = useTokenMetadataList();
 
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [isUsd, setIsUsd] = useState<boolean>(false);
@@ -49,8 +52,12 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
 
     const form = useTipLinkAssetForm(assets ?? [], {
         tokenAddress: defaultValues?.tokenAddress ?? "",
-        amount: BigInt(0),
-        assetNumber: 0,
+        amount: defaultValues?.amount ?? BigInt(0),
+        assetNumber: TokenUtilService.getHumanReadableAmountFromMetadata(
+            defaultValues?.amount ?? BigInt(0),
+            metadataList?.find((metadata) => metadata.canisterId === defaultValues?.tokenAddress)
+                ?.metadata,
+        ),
         usdNumber: null,
     });
 

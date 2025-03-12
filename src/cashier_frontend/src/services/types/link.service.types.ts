@@ -37,7 +37,6 @@ export type LinkDetailModel = {
     template?: string;
     creator?: string;
     create_at: Date;
-    amountNumber: number;
     asset_info: AssetInfoModel[];
 };
 

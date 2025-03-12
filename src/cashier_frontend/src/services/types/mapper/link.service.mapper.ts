@@ -26,11 +26,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
                 Update: {
                     title: [linkDetailModel.title],
                     asset_info: linkDetailModel.asset_info
-                        ? [
-                              linkDetailModel.asset_info.map((asset, index) =>
-                                  mapAssetInfo(asset, index),
-                              ),
-                          ]
+                        ? [linkDetailModel.asset_info.map((asset) => mapAssetInfo(asset))]
                         : [],
                     description: [linkDetailModel.description],
                     template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
@@ -57,10 +53,6 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
         create_at: link.create_at
             ? convertNanoSecondsToDate(link.create_at)
             : new Date("2000-10-01"),
-        amountNumber:
-            fromNullable(link.asset_info) && link.asset_info.length > 0
-                ? Number(fromDefinedNullable(link.asset_info)[0]?.total_amount)
-                : 0,
         asset_info: fromNullable(link.asset_info)
             ? fromDefinedNullable(link.asset_info).map((asset) => ({
                   address: asset?.address,
@@ -81,13 +73,12 @@ export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkMode
 };
 
 //TODO: May need to update in future, now received 'amount' as param, others are constants
-const mapAssetInfo = (assetInfo: AssetInfoModel, index: number): LinkDetailUpdateAssetInfoInput => {
+const mapAssetInfo = (assetInfo: AssetInfoModel): LinkDetailUpdateAssetInfoInput => {
     return {
         address: assetInfo.address,
         chain: CHAIN.IC,
         amount_per_claim: BigInt(1),
         total_amount: assetInfo.amount,
-        //label: assetInfo.label ? `${assetInfo.label}_${index}` :  `${LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK}`,
-        label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
+        label: assetInfo.label ?? LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
     };
 };

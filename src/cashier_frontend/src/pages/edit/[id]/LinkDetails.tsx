@@ -38,6 +38,10 @@ export default function LinkDetails() {
                     <TipLinkAssetForm
                         onSubmit={handleSubmitTipLinkDetails}
                         isButtonDisabled={isButtonDisabled}
+                        defaultValues={{
+                            amount: link?.asset_info[0]?.amount,
+                            tokenAddress: link?.asset_info[0]?.address,
+                        }}
                     />
                 );
             case LINK_TYPE.NFT_CREATE_AND_AIRDROP:
