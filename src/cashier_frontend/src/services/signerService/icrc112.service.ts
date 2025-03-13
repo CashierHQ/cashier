@@ -122,7 +122,7 @@ export class ICRC112Service {
             const rowRequest = arg.params.requests[rowIndex];
             const rowResponse = await this.parallelExecuteIcrcRequests(rowRequest);
 
-            // Loop inside each row
+            // Step #2 Validate responses of each request in the sub-array
             for (let requestIndex = 0; requestIndex < rowRequest.length; requestIndex++) {
                 const singleResponse = rowResponse[requestIndex];
                 const singleRequest = rowRequest[requestIndex];
