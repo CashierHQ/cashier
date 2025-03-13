@@ -1,7 +1,9 @@
 use std::{collections::HashMap, time::Duration};
 
 use action::ActionService;
-use cashier_types::{Chain, Intent, LinkAction, Transaction, TransactionState};
+use cashier_types::{
+    Chain, Intent, IntentTask, IntentType, LinkAction, Transaction, TransactionState,
+};
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
 use timeout::tx_timeout_task;
@@ -79,11 +81,24 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             Chain::IC => {
                 let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
 
-                let txs = intent_adapter.convert(intent).map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Tx assemble error: {}", e))
-                })?;
-
-                Ok(txs)
+                match (intent.r#type.clone(), intent.task.clone()) {
+                    (IntentType::Transfer(transfer_intent), IntentTask::TransferWalletToLink) => {
+                        intent_adapter.tx_man_ic_assemble_icrc1_wallet_transfer(transfer_intent)
+                    }
+                    (
+                        IntentType::TransferFrom(transfer_intent),
+                        IntentTask::TransferWalletToTreasury,
+                    ) => intent_adapter.tx_man_ic_assemble_icrc2_wallet_transfer(transfer_intent),
+                    (IntentType::Transfer(transfer_intent), IntentTask::TransferLinkToWallet) => {
+                        intent_adapter.tx_man_ic_assemble_icrc1_canister_transfer(transfer_intent)
+                    }
+                    // Add other combinations as needed
+                    _ => Err(CanisterError::InvalidDataError(format!(
+                        "Unsupported intent type or task {:#?} {:#?}",
+                        intent.r#type.clone(),
+                        intent.task.clone()
+                    )))?,
+                }
             }
         }
     }
