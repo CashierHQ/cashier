@@ -129,6 +129,7 @@ export class ICRC112Service {
 
                 // Validation 1: Check if raw response has error
                 if ("error" in singleResponse) {
+                    // Sets response to fail
                     rowHadError = true;
                     this.setResponse({
                         finalResponse,
@@ -148,6 +149,7 @@ export class ICRC112Service {
                     const blockId = this.parseReply(singleResponse.result.reply);
 
                     if (blockId) {
+                        // Sets response to success
                         this.setResponse({
                             finalResponse,
                             isError: false,
@@ -156,6 +158,7 @@ export class ICRC112Service {
                             successResult: singleResponse.result,
                         });
                     } else {
+                        // Sets response to fail
                         rowHadError = true;
                         this.setResponse({
                             finalResponse,
@@ -186,6 +189,7 @@ export class ICRC112Service {
                         //     });
                         // }
                     } else {
+                        // Sets response to fail
                         rowHadError = true;
                         this.setResponse({
                             finalResponse,
