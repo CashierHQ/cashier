@@ -144,7 +144,7 @@ export class ICRC112Service {
                 // After validation 1, request MUST ALSO PASS either validation 2 or 3
                 if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
                     // Validation 2: Check block_id for recognized standards
-                    if(true){ // TODO: Khoi to change true to IS ICRC-1,2,7
+                    if(true){ // TODO: Khoi to change 'true' to logic for checking ICRC-1,2,7
                         //TODO: Serhii to implement this function
                         const blockId = this.parseReply(singleResponse.result.reply);
                         if (blockId) {
