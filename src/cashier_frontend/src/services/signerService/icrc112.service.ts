@@ -151,6 +151,7 @@ export class ICRC112Service {
 
                 // Skip validation 2 and 3 on last row
                 if (rowIndex= maxRow-1) {
+                    // Sets response to success
                     this.setResponse({
                         finalResponse,
                         isError: false,
