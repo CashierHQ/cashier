@@ -144,6 +144,7 @@ export class ICRC112Service {
 
                 // Validation 2: Check block_id for recognized standards
                 if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
+                    //TODO: Serhii to implement this function
                     const blockId = this.parseReply(singleResponse.result.reply);
 
                     if (blockId) {
