@@ -152,7 +152,10 @@ export class ICRC112Service {
 
                 if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
                     // Validation 2: Check block_id for recognized standards
-                    if (singleRequest.method in STANDARDS_USING_BLOCK_ID) {
+                    if (singleRequest.method == "icrc1_transfer"
+                        || singleRequest.method == "icrc2_approve"
+                        || singleRequest.method == "icrc2_transfer"
+                        || singleRequest.method == "icrc7_transfer") {
                         //TODO: Serhii to implement this function
                         const blockId = this.parseReply(singleResponse.result.reply);
                         if (blockId) {
