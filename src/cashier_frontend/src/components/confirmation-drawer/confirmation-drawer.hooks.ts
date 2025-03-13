@@ -3,9 +3,21 @@ import { IntentModel } from "@/services/types/intent.service.types";
 import { TFunction } from "i18next";
 import { useEffect, useMemo, useState } from "react";
 
+const sortIntents = (intents: IntentModel[] | undefined) => {
+    return (intents ?? []).sort((a, b) => {
+        if (a.task === TASK.TRANSFER_WALLET_TO_LINK && b.task !== TASK.TRANSFER_WALLET_TO_LINK) {
+            return -1;
+        }
+        if (a.task !== TASK.TRANSFER_WALLET_TO_LINK && b.task === TASK.TRANSFER_WALLET_TO_LINK) {
+            return 1;
+        }
+        return 0;
+    });
+};
+
 export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
     const primaryIntents = useMemo(() => {
-        return intents ?? [];
+        return sortIntents(intents);
     }, [intents]);
 
     return primaryIntents;

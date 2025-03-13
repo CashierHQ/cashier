@@ -144,12 +144,6 @@ export class ICRC112Service {
 
         const finalResponse: Icrc112Response = { responses: [] };
 
-        // Add delay for 7.5 scenario
-        if (linkTitle?.includes("7.5")) {
-            console.log("Detected 7.5 scenario - adding 10 minute delay");
-            await new Promise((resolve) => setTimeout(resolve, 600000));
-        }
-
         for (let i = 0; i < arg.params.requests.length; i++) {
             //Start parallel execution
             const parallelRequests = arg.params.requests[i];
@@ -157,6 +151,12 @@ export class ICRC112Service {
                 parallelRequests,
                 linkTitle,
             );
+
+            // Add delay for 7.5 scenario
+            if (linkTitle?.includes("7.5")) {
+                console.log("Detected 7.5 scenario - adding 10 minute delay");
+                await new Promise((resolve) => setTimeout(resolve, 600000));
+            }
 
             //Process each response from batch call and map them to schema
             const icrc112ResponseItems: Icrc112ResponseItem[] =
