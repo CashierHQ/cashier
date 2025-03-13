@@ -106,11 +106,12 @@ export class ICRC112Service {
 
 
             // Step #2.1 validate if received response
+                // if no response return 1001 error
             // Step #2.2 if tx uses a reqcognized standards
-                // ICRC-1,2,7 validate that certificate has block id
+                // ICRC-1,2,7 validate that certificate has block id... if no block id return 1001 error
             // Step #2.3 if tx does not use a reqcognized standards
-                // if canister validation call failed 1003
-                // if canister validation wasn't provided 1002
+                // validation with ICRC-114 .... if validate returnas false return 1003
+                // if canister validation wasn't provided return 1002
 
             
 
