@@ -226,7 +226,7 @@ export class ICRC112Service {
                                  isError: true,
                                  rowIndex,
                                  requestIndex,
-                                 errorMessage: "Canister validation return error",
+                                 errorMessage: "Canister validation return false",
                                  errorCode: 1003,
                             });
                         }
