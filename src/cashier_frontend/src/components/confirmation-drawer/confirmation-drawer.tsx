@@ -22,11 +22,13 @@ import {
 } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
+import { isCashierError } from "@/services/errorProcess.service";
 
 interface ConfirmationDrawerProps {
     open: boolean;
     onClose?: () => void;
     onInfoClick?: () => void;
+    onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
 }
 
@@ -35,6 +37,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     onClose = () => {},
     onInfoClick = () => {},
     onActionResult = () => {},
+    onCashierError = () => {},
 }) => {
     const navigate = useNavigate();
 
@@ -64,31 +67,39 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     };
 
     const startTransaction = async () => {
-        const firstUpdatedAction = await processAction({
-            linkId: link!.id,
-            actionType: ACTION_TYPE.CREATE_LINK,
-            actionId: action!.id,
-        });
-        setAction(firstUpdatedAction);
-        if (firstUpdatedAction) {
-            console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
-            const response = await icrc112Execute({
-                transactions: firstUpdatedAction!.icrc112Requests,
-                linkTitle: link?.title || "",
+        try {
+            const firstUpdatedAction = await processAction({
+                linkId: link!.id,
+                actionType: ACTION_TYPE.CREATE_LINK,
+                actionId: action!.id,
             });
-            console.log("🚀 ~ icrc112Execute ~ response:", response);
-            if (response) {
-                const secondUpdatedAction = await updateAction({
-                    actionId: action!.id,
-                    linkId: link!.id,
-                    external: true,
+            setAction(firstUpdatedAction);
+            if (firstUpdatedAction) {
+                console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
+                const response = await icrc112Execute({
+                    transactions: firstUpdatedAction!.icrc112Requests,
+                    linkTitle: link?.title || "",
                 });
-                console.log("🚀 ~ secondUpdatedAction ~ response:", secondUpdatedAction);
+                console.log("🚀 ~ icrc112Execute ~ response:", response);
+                if (response) {
+                    const secondUpdatedAction = await updateAction({
+                        actionId: action!.id,
+                        linkId: link!.id,
+                        external: true,
+                    });
+                    console.log("🚀 ~ secondUpdatedAction ~ response:", secondUpdatedAction);
 
-                if (secondUpdatedAction) {
-                    setAction(secondUpdatedAction);
-                    onActionResult(secondUpdatedAction);
+                    if (secondUpdatedAction) {
+                        setAction(secondUpdatedAction);
+                        onActionResult(secondUpdatedAction);
+                    }
                 }
+            }
+        } catch (error) {
+            if (isCashierError(error)) {
+                onCashierError(error);
+            } else {
+                console.error(error);
             }
         }
     };
