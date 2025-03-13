@@ -17,6 +17,7 @@ import { Principal } from "@dfinity/principal";
 import { fromBase64, toBase64 } from "@nfid/identitykit";
 import { CallCanisterRequest, CallCanisterResponse } from "../types/callCanister.service.types";
 import { bufFromBufLike } from "@dfinity/candid";
+import { parseIcrc1Transfer } from "../parser";
 
 export class CallCanisterService {
     public async call(request: CallCanisterRequest): Promise<CallCanisterResponse> {
@@ -31,6 +32,8 @@ export class CallCanisterService {
             const cborContentMap = Cbor.encode(response.contentMap);
             const contentMap: string = toBase64(cborContentMap);
             const reply = response.reply ? toBase64(response.reply) : undefined;
+
+            parseIcrc1Transfer(response.reply!);
 
             return {
                 certificate,
