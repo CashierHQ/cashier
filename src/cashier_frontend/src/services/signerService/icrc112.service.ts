@@ -162,7 +162,7 @@ export class ICRC112Service {
                     continue;    
                 }
 
-                // After validation 1, response MUST pass EITHER validation 2 or 3
+                // In addition to validation 1, response MUST pass EITHER validation 2 or 3
                 else if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
                     // Validation 2: Check block_id for recognized standards
                     if (singleRequest.method == "icrc1_transfer"
