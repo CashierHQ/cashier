@@ -6,7 +6,9 @@ import { IoExitOutline } from "react-icons/io5";
 import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
 import { useAuth } from "@nfid/identitykit/react";
 import { transformShortAddress } from "@/utils";
+import { FaRegCopy } from "react-icons/fa";
 import copy from "copy-to-clipboard";
+import { useToast } from "@/hooks/use-toast";
 
 export interface SidebarMenuItem {
     title: string;
@@ -20,11 +22,15 @@ interface AppSidebarProps {
 
 const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
     const { user, disconnect } = useAuth();
+    const { toast } = useToast();
 
     const handleCopy = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
             copy(user?.principal.toString() ?? "");
+            toast({
+                description: "Copied",
+            });
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -69,11 +75,14 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
                     )}
                 >
                     <div className="flex items-center">
-                        <div className="flex items-center" onClick={handleCopy}>
+                        <div className="flex items-center cursor-pointer" onClick={handleCopy}>
                             <span className="mr-1">
                                 <LuWallet2 color="green" size={22} />
                             </span>
                             {transformShortAddress(user?.principal?.toString() || "")}
+                            <span className="ml-2">
+                                <FaRegCopy color="gray" size={20} />
+                            </span>
                         </div>
 
                         <span className="ml-auto">
