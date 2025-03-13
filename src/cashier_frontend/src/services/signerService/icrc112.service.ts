@@ -188,7 +188,7 @@ export class ICRC112Service {
                     if (arg.params.validation) {
                         // TODO: Call canister validation
                         // const canisterValidationResponse = Call canisterValidation();
-                        // if (canisterValidationResponse) {
+                        if (canisterValidationResponse) {
                         //        // Sets response to success
                         //        this.setResponse({
                         //        finalResponse,
@@ -196,8 +196,8 @@ export class ICRC112Service {
                         //        rowIndex,
                         //        requestIndex,
                         //        successResult: singleResponse.result,
-                        });
-                        // } else {
+                        //
+                        } else {
                         //         // Sets response to fail
                         //         rowHadError = true;
                         //         this.setResponse({
@@ -208,7 +208,7 @@ export class ICRC112Service {
                         //         errorMessage: "Canister validation return error",
                         //         errorCode: 1003,
                         //     });
-                        // }
+                        }
                     } else {
                         // Sets response to fail
                         rowHadError = true;
