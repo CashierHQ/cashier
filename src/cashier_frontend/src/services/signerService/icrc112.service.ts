@@ -136,7 +136,7 @@ export class ICRC112Service {
 
                 // Validation 1: Check if raw response has error
                 if ("error" in singleResponse) {
-                    // Sets response to fail
+                    // Sets response to fail (error provided by response)
                     rowHadError = true;
                     this.setResponse({
                         finalResponse,
@@ -181,7 +181,7 @@ export class ICRC112Service {
                                 successResult: singleResponse.result,
                             });
                         } else {
-                            // Sets response to fail
+                            // Sets response to fail (error 1003)
                             rowHadError = true;
                             this.setResponse({
                                 finalResponse,
@@ -219,7 +219,7 @@ export class ICRC112Service {
                                 successResult: singleResponse.result,
                             });
                         } else {
-                            // Sets response to fail
+                            // Sets response to fail (error 1003)
                             rowHadError = true;
                             this.setResponse({
                                  finalResponse,
@@ -231,7 +231,7 @@ export class ICRC112Service {
                             });
                         }
                     } else {
-                        // Sets response to fail
+                        // Sets response to fail (error 1002)
                         rowHadError = true;
                         this.setResponse({
                             finalResponse,
