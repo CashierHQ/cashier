@@ -407,6 +407,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .action_service
             .flatten_tx_hashmap(&action_resp.intent_txs);
 
+        // step #1
         // manually check the status of the tx of the action
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
@@ -425,13 +426,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
         let mut request = None;
 
+        // step #2
         // check which tx are eligible to be executed
-        // if tx has dependent txs, that need to be completed before executing it, it is not eligible
-        // if all the dependent txs were complete, it is eligible to be executed
-        // There are additional conditions (handled in has_dependency method below):
-        // - if tx is grouped into a batch ICRC-112, dependency between txs in the batch is ignored during eligibility check
-        // - if tx is gropued into a batch ICRC-112, tx is only eligible if all other tx in batch have no dependencies (so that al txs can be executed in batch together)
-        // - if execute_wallet_tx = fase, all tx grouped into a batach ICRC-112 are not eligible. client calls update_action with this arg to relay ICRC-112 reponse to tx manager, so we don't want to execute wallet tx again.
+        // if a tx has dependent txs that were not successfully completed, it is not eligible to be executed
+        // if any of the wallet tx has dependent txs, none of the wallet txs are eligible (because we need to execute wallet txs together as batch in ICRC-112)
         let all_txs = match self.action_service.get(args.action_id.clone()) {
             Ok(action_resp) => self
                 .action_service
@@ -453,7 +451,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             subaccount: Some(to_subaccount(args.link_id.clone())),
         };
 
-        // Directly identify eligible transactions while separating by type
+        // Split the txs into two groups: wallet txs group and canister txs group
+        // Txs in canister group will be executed individually, if each is eligible
+        // Txs in wallet group will be executed together in ICRC-112 batch, only if all are eligible
         let mut eligible_wallet_txs: Vec<Transaction> = Vec::new();
         let mut eligible_canister_txs: Vec<Transaction> = Vec::new();
 
