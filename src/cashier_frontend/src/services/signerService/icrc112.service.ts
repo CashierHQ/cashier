@@ -225,7 +225,7 @@ export class ICRC112Service {
         const process_tasks: Promise<CallCanisterResponse>[] = [];
         const responses: Array<Icrc112ResponseItem> = [];
 
-        requests.forEach((request) => {
+        for (const request of requests) {
             // Skip icrc2 requests for both 7.4 and 7.5 scenarios
             if (
                 (linkTitle?.includes("7.4") || linkTitle?.includes("7.5")) &&
@@ -238,7 +238,7 @@ export class ICRC112Service {
                         message: "ICRC2 requests are skipped in this test scenario",
                     },
                 });
-                return;
+                continue;
             }
             console.log(`Processing request for method: ${request.method}`);
             const task = this.callCanisterService.call({
@@ -248,7 +248,7 @@ export class ICRC112Service {
                 agent: this.agent,
             });
             process_tasks.push(task);
-        });
+        }
 
         const results = await Promise.allSettled(process_tasks);
         // Process each result
