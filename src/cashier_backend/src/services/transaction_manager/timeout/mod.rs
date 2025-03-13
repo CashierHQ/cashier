@@ -1,3 +1,5 @@
+use cashier_types::TransactionState;
+
 use crate::{
     constant::get_tx_timeout_nano_seconds,
     error, info,
@@ -15,6 +17,10 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
         TransactionService::get_instance();
 
     let mut tx = transaction_service.get_tx_by_id(&tx_id)?;
+
+    if tx.state == TransactionState::Success || tx.state == TransactionState::Fail {
+        return Ok(());
+    }
 
     if tx.start_ts.is_none() {
         error!("Transaction start_ts is None");
@@ -35,7 +41,7 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
         let manual_check_status_service = ManualCheckStatusService::new(icrc_service, ic_env);
 
         let state = manual_check_status_service
-            .execute(&tx)
+            .execute(&tx, vec![])
             .await
             .map_err(|e| format!("Error in manual check status: {:?}", e))?;
 

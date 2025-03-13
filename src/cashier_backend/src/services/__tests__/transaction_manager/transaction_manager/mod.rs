@@ -73,10 +73,10 @@ mod tests {
             .times(2)
             .then_return(vec![tx1.clone(), tx2.clone()]);
 
-        when!(manual_check_status_service.execute(tx1.clone()))
+        when!(manual_check_status_service.execute(tx1.clone(), vec![]))
             .times(1)
             .then_return(Ok(TransactionState::Created));
-        when!(manual_check_status_service.execute(tx2.clone()))
+        when!(manual_check_status_service.execute(tx2.clone(), vec![]))
             .times(1)
             .then_return(Ok(TransactionState::Created));
 
@@ -202,10 +202,10 @@ mod tests {
             .times(2)
             .then_return(vec![tx1.clone(), tx2.clone()]);
 
-        when!(manual_check_status_service.execute(tx1.clone()))
+        when!(manual_check_status_service.execute(tx1.clone(), vec![]))
             .times(1)
             .then_return(Ok(TransactionState::Created));
-        when!(manual_check_status_service.execute(tx2.clone()))
+        when!(manual_check_status_service.execute(tx2.clone(), vec![]))
             .times(1)
             .then_return(Ok(TransactionState::Created));
 
@@ -323,10 +323,10 @@ mod tests {
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
-        when!(manual_check_status_service.execute(tx1.clone()))
+        when!(manual_check_status_service.execute(tx1.clone(), vec![]))
             .times(1)
             .then_return(Ok(TransactionState::Processing));
-        when!(manual_check_status_service.execute(tx2.clone()))
+        when!(manual_check_status_service.execute(tx2.clone(), vec![]))
             .times(1)
             .then_return(Ok(TransactionState::Success));
         when!(action_service.get)
@@ -446,7 +446,7 @@ mod tests {
 
         when!(action_service.flatten_tx_hashmap).then_return(vec![tx.clone()]);
 
-        when!(manual_check_status_service.execute(tx.clone())).then_return(Err(
+        when!(manual_check_status_service.execute).then_return(Err(
             CanisterError::InvalidDataError("Invalid data".to_string()),
         ));
 

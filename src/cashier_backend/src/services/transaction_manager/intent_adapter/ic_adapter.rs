@@ -1,13 +1,11 @@
 use cashier_types::{
-    Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
+    FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
     IntentTask, IntentType, Protocol, Transaction, TransactionState, TransferData,
     TransferFromData,
 };
 use uuid::Uuid;
 
-use crate::utils::runtime::IcEnvironment;
-
-use super::IntentAdapter;
+use crate::{types::error::CanisterError, utils::runtime::IcEnvironment};
 
 pub struct IcAdapter<'a, E: IcEnvironment + Clone> {
     pub ic_env: &'a E,
@@ -17,31 +15,28 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
     pub fn new(ic_env: &'a E) -> Self {
         Self { ic_env }
     }
-    pub fn convert(&self, intent: &Intent) -> Result<Vec<Transaction>, String> {
+    pub fn convert(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
         match (intent.r#type.clone(), intent.task.clone()) {
             (IntentType::Transfer(transfer_intent), IntentTask::TransferWalletToLink) => {
-                self.handle_transfer_wallet_to_link(transfer_intent)
+                self.tx_man_ic_assemble_icrc1_wallet_transfer(transfer_intent)
             }
             (IntentType::TransferFrom(transfer_intent), IntentTask::TransferWalletToTreasury) => {
-                self.handle_transfer_wallet_to_treasury(transfer_intent)
+                self.tx_man_ic_assemble_icrc2_wallet_transfer(transfer_intent)
             }
             (IntentType::Transfer(transfer_intent), IntentTask::TransferLinkToWallet) => {
-                self.handle_transfer_link_to_wallet(transfer_intent)
+                self.tx_man_ic_assemble_icrc1_canister_transfer(transfer_intent)
             }
             // Add other combinations as needed
-            _ => Err(format!(
-                "Unsupported intent type or task {:#?} {:#?}",
-                intent.r#type.clone(),
-                intent.task.clone()
-            )
-            .to_string()),
+            _ => Err(CanisterError::ValidationErrors(
+                "Invalid intent type and task combination".to_string(),
+            )),
         }
     }
 
-    fn handle_transfer_wallet_to_link(
+    pub fn tx_man_ic_assemble_icrc1_wallet_transfer(
         &self,
         transfer_intent: TransferData,
-    ) -> Result<Vec<Transaction>, String> {
+    ) -> Result<Vec<Transaction>, CanisterError> {
         let id: Uuid = Uuid::new_v4();
         let ts = self.ic_env.time();
 
@@ -71,10 +66,10 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
         Ok(vec![transaction])
     }
 
-    fn handle_transfer_wallet_to_treasury(
+    pub fn tx_man_ic_assemble_icrc2_wallet_transfer(
         &self,
         transfer_intent: TransferFromData,
-    ) -> Result<Vec<Transaction>, String> {
+    ) -> Result<Vec<Transaction>, CanisterError> {
         let ts = self.ic_env.time();
 
         let icrc2_approve = Icrc2Approve {
@@ -121,10 +116,10 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
         Ok(vec![approve_tx, transfer_from_tx])
     }
 
-    fn handle_transfer_link_to_wallet(
+    pub fn tx_man_ic_assemble_icrc1_canister_transfer(
         &self,
         transfer_intent: TransferData,
-    ) -> Result<Vec<Transaction>, String> {
+    ) -> Result<Vec<Transaction>, CanisterError> {
         let ts = self.ic_env.time();
 
         let icrc1_transfer = Icrc1Transfer {
@@ -150,15 +145,5 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
         };
 
         Ok(vec![transfer_from_tx])
-    }
-}
-
-impl<'a, E: IcEnvironment + Clone> IntentAdapter for IcAdapter<'a, E> {
-    fn convert_to_transaction(&self, intent: Intent) -> Result<Vec<Transaction>, String> {
-        if intent.chain != Chain::IC {
-            return Err("Invalid chain".to_string());
-        }
-
-        self.convert(&intent)
     }
 }
