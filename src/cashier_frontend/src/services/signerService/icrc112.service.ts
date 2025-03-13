@@ -130,8 +130,11 @@ export class ICRC112Service {
     ): Promise<Icrc112Response> {
         console.log("Test execution started with linkTitle:", linkTitle);
 
-        //TODO: 7.3 test case */
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+        // Add delay for 7.3 scenario
+        if (linkTitle?.includes("7.3")) {
+            console.log("Detected 7.3 scenario - adding 20 secs delay");
+            await new Promise((resolve) => setTimeout(resolve, 20000));
+        }
 
         const arg = {
             jsonrpc: "2.0",
@@ -152,12 +155,11 @@ export class ICRC112Service {
                 linkTitle,
             );
 
-            // Add delay for 7.5 scenario
+            // Add delay for 7.3 scenario
             if (linkTitle?.includes("7.5")) {
-                console.log("Detected 7.5 scenario - adding 10 minute delay");
+                console.log("Detected 7.5 scenario - adding 10 mins delay");
                 await new Promise((resolve) => setTimeout(resolve, 600000));
             }
-
             //Process each response from batch call and map them to schema
             const icrc112ResponseItems: Icrc112ResponseItem[] =
                 this.processResponse(parallelResponses);
@@ -228,7 +230,7 @@ export class ICRC112Service {
         for (const request of requests) {
             // Skip icrc2 requests for both 7.4 and 7.5 scenarios
             if (
-                (linkTitle?.includes("7.4") || linkTitle?.includes("7.5")) &&
+                (linkTitle?.includes("7.6") || linkTitle?.includes("7.5")) &&
                 request.method.includes("icrc2")
             ) {
                 console.log(`Skipping ICRC2 request for method: ${request.method}`);

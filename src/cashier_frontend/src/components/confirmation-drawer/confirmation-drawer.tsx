@@ -101,6 +101,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             } else {
                 console.error(error);
             }
+            setIsDisabled(false);
+            setButtonText(t("transaction.confirm_popup.confirm_button"));
         }
     };
 
