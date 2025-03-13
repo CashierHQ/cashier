@@ -91,6 +91,7 @@ export class ICRC112Service {
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input,
+                validation: undefined as { canisterId: string; method: string } | undefined,
             },
         };
 
@@ -101,19 +102,62 @@ export class ICRC112Service {
             const parallelRequests = arg.params.requests[i];
             const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
 
-
             // Step #2 Validate all the transactions in the row (skip when i = arg.params.requests.length-1)
+            if (i < arg.params.requests.length - 1) {
+                for (let j = 0; j < parallelResponses.length; j++) {
+                    const response = parallelResponses[j];
+                    const request = parallelRequests[j];
 
+                    // Step #2.1 validate if received response
+                    if ("error" in response) {
+                        //this req =>
+                        break;
+                    }
 
-            // Step #2.1 validate if received response
-            // Step #2.2 if tx uses a reqcognized standards
-                // ICRC-1,2,7 validate that certificate has block id
-            // Step #2.3 if tx does not use a reqcognized standards
-                // if canister validation call failed 1003
-                // if canister validation wasn't provided 1002
-
-            
-
+                    // Step #2.2 if tx uses a recognized standards
+                    if (SUPPORTED_PARSED_METHODS.includes(request.method)) {
+                        // ICRC-1,2,7 validate that certificate has block id
+                        if (!response.result.certificate) {
+                            parallelResponses[j] = {
+                                error: {
+                                    code: 1004,
+                                    message: "Missing certificate for ICRC standard transaction",
+                                },
+                            };
+                        }
+                    } else {
+                        // Step #2.3 if tx does not use a recognized standards
+                        const validation = arg.params.validation;
+                        if (validation) {
+                            try {
+                                await this.callCanisterService.call({
+                                    canisterId: validation.canisterId,
+                                    calledMethodName: validation.method,
+                                    parameters: request.arg,
+                                    agent: this.agent,
+                                });
+                            } catch (error) {
+                                // if canister validation call failed 1003
+                                parallelResponses[j] = {
+                                    error: {
+                                        code: 1003,
+                                        message: `Canister validation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+                                    },
+                                };
+                            }
+                        } else {
+                            // if canister validation wasn't provided 1002
+                            parallelResponses[j] = {
+                                error: {
+                                    code: 1002,
+                                    message:
+                                        "Missing canister validation for non-standard transaction",
+                                },
+                            };
+                        }
+                    }
+                }
+            }
 
             //Process each response from batch call and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
             const icrc112ResponseItems: Icrc112ResponseItem[] =
