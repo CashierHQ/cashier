@@ -194,6 +194,15 @@ export class ICRC112Service {
                         continue;
                     } else {
                         // Placeholder for validating requests that use standards aside from ICRC-1, 2, 7
+                        // Sets response to success
+                        this.setResponse({
+                            finalResponse,
+                            isError: false,
+                            rowIndex,
+                            requestIndex,
+                            successResult: singleResponse.result,
+                        });
+                        continue;
                     }
                 } else {
                     // Validation 3: Check by canister validation
