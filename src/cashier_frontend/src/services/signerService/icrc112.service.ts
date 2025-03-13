@@ -142,34 +142,35 @@ export class ICRC112Service {
                     continue;
                 }
                 // After validation 1, request MUST ALSO PASS either validation 2 or 3
-
-                // Validation 2: Check block_id for recognized standards
                 if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
-                    //TODO: Serhii to implement this function
-                    const blockId = this.parseReply(singleResponse.result.reply);
-
-                    if (blockId) {
-                        // Sets response to success
-                        this.setResponse({
-                            finalResponse,
-                            isError: false,
-                            rowIndex,
-                            requestIndex,
-                            successResult: singleResponse.result,
-                        });
-                    } else {
-                        // Sets response to fail
-                        rowHadError = true;
-                        this.setResponse({
-                            finalResponse,
-                            isError: true,
-                            rowIndex,
-                            requestIndex,
-                            errorMessage: "Can not find block id",
-                            errorCode: 1003,
-                        });
+                    // Validation 2: Check block_id for recognized standards
+                    if(true){ // TODO: Khoi to change true to IS ICRC-1,2,7
+                        //TODO: Serhii to implement this function
+                        const blockId = this.parseReply(singleResponse.result.reply);
+                        if (blockId) {
+                            this.setResponse({
+                                finalResponse,
+                                isError: false,
+                                rowIndex,
+                                requestIndex,
+                                successResult: singleResponse.result,
+                            });
+                        } else {
+                            rowHadError = true;
+                            this.setResponse({
+                                finalResponse,
+                                isError: true,
+                                rowIndex,
+                                requestIndex,
+                                errorMessage: "Can not find block id",
+                                errorCode: 1003,
+                            });
+                        }
+                        continue;
                     }
-                    continue;
+                    else {
+                        // Placeholder for validating requests that use standards aside from ICRC-1, 2, 7
+                    }
                 } else {
                     // Validation 3: Check by canister validation
                     if (arg.params.validation) {
