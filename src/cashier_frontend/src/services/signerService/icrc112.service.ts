@@ -84,19 +84,22 @@ export class ICRC112Service {
     }
 
     public async icrc112Execute(input: Icrc112Requests): Promise<Icrc112Response> {
+        const sequenceFailed = false;
+
         const arg = {
             jsonrpc: "2.0",
-            method: this.getMethod(),
+            method: IcrcMethod.Icrc112BatchCallCanisters,
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input,
+                validation: undefined as { canisterId: string; method: string } | undefined,
             },
         };
 
         const finalResponse: Icrc112Response = { responses: [] };
 
         for (let i = 0; i < arg.params.requests.length; i++) {
-            //Start parallel execution
+            // Step #1 Parallel executes all the requests in the sub-array
             const parallelRequests = arg.params.requests[i];
             const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
 
@@ -105,11 +108,13 @@ export class ICRC112Service {
                 this.processResponse(parallelResponses);
             //End parallel execution
 
-            finalResponse.responses.push(icrc112ResponseItems);
+            //finalResponse.responses.push(icrc112ResponseItems);
 
-            // If there are any error responses in the current row,
-            // then break and assign non-execute requests to error result
+            // Step #2 Validate all the transactions in the row (skip when i = arg.params.requests.length-1)
+            // Step #2.1 validate if received response
+            // if no response return 1001 error
             if (icrc112ResponseItems.some((response) => "error" in response)) {
+                finalResponse.responses.push(icrc112ResponseItems);
                 for (let newIndex = i + 1; newIndex < arg.params.requests.length; newIndex++) {
                     const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
                     const rowResponse: Icrc112ResponseItem[] =
@@ -120,8 +125,77 @@ export class ICRC112Service {
                 }
                 break;
             }
+
+            // Step #2.2 if tx uses a reqcognized standards
+
+            // ICRC-1,2,7 validate that certificate has block id... if no block id return 1001 error
+            for (let newIndex = 0; newIndex < parallelRequests.length; newIndex++) {
+                const singleRowResponse = icrc112ResponseItems[newIndex];
+                const singleRowRequest = parallelRequests[newIndex];
+                // If the request.method is known standard
+                // ICRC-1,2,7 validate that certificate has block id existed
+                if (
+                    singleRowRequest.method == "ICRC-1" ||
+                    singleRowRequest.method == "ICRC-2" ||
+                    singleRowRequest.method == "ICRC-7"
+                ) {
+                    const parsedCertificated = this.parseCertificate(singleRowResponse.certificate);
+
+                    if (parsedCertificated.block_id in response) {
+                        // do nothing (continue the loop)
+                    } else {
+                        //TODO: Do below steps:
+                        // this response is 1003 error
+                        icrc112ResponseItems[newIndex] = {
+                            error: {
+                                code: 1003,
+                                message: "Certificate does not have block id",
+                            },
+                        };
+
+                        for (
+                            let newIndex = i + 1;
+                            newIndex < arg.params.requests.length;
+                            newIndex++
+                        ) {
+                            const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
+                            const rowResponses: Icrc112ResponseItem[] =
+                                this.assignNonExecuteRequestToErrorResult(
+                                    nonExecuteParallelRequestRow.length,
+                                );
+                            finalResponse.responses.push(rowResponses);
+                        }
+                        break;
+                    }
+
+                    // If the request.method is NOT known standard
+                } else {
+                    const canisterValidation = arg.params.validation;
+                    if (canisterValidation) {
+                        //const response = Call canisterValidation();
+                        //TODO: replace with above
+                        const responseCanisterValidation = true;
+                        if (responseCanisterValidation) {
+                            // do nothing (continue the loop)
+                        } else {
+                            // TODO: Do this part later
+                            finalResponse.responses.push(icrc112ResponseItems);
+                            //Return of request is 1003
+                            //Break and fill response of remaining rows with 1001 error
+                        }
+                    } else {
+                        // TODO: Do this part later
+                        //Return of request is 1002
+                        //Break and fill response of remaining rows with 1001 error
+                    }
+                }
+            }
         }
         return finalResponse;
+    }
+
+    private parseCertificate(certificate: string) {
+        //const candid = new CandidJSON({IDL: IDL});
     }
 
     public async testICRC112Execute(
