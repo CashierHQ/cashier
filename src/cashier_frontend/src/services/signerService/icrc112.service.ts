@@ -148,8 +148,21 @@ export class ICRC112Service {
                     });
                     continue;
                 }
+
+                // Skip validation 2 and 3 on last row
+                if (rowIndex= maxRow-1) {
+                    this.setResponse({
+                        finalResponse,
+                        isError: false,
+                        rowIndex,
+                        requestIndex,
+                        successResult: singleResponse.result,
+                    });
+                    continue;    
+                }
+
                 // After validation 1, response MUST pass EITHER validation 2 or 3
-                if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
+                else if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
                     // Validation 2: Check block_id for recognized standards
                     if (singleRequest.method == "icrc1_transfer"
                         || singleRequest.method == "icrc2_approve"
