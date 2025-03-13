@@ -97,9 +97,23 @@ export class ICRC112Service {
         const finalResponse: Icrc112Response = { responses: [] };
 
         for (let i = 0; i < arg.params.requests.length; i++) {
-            //Start parallel execution
+            // Step #1 Parallel executes all the requests in the sub-array
             const parallelRequests = arg.params.requests[i];
             const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
+
+
+            // Step #2 Validate all the transactions in the row (skip when i = arg.params.requests.length-1)
+
+
+            // Step #2.1 validate if received response
+            // Step #2.2 if tx uses a reqcognized standards
+                // ICRC-1,2,7 validate that certificate has block id
+            // Step #2.3 if tx does not use a reqcognized standards
+                // if canister validation call failed 1003
+                // if canister validation wasn't provided 1002
+
+            
+
 
             //Process each response from batch call and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
             const icrc112ResponseItems: Icrc112ResponseItem[] =
