@@ -67,6 +67,13 @@ export const SUPPORTED_PARSED_METHODS = [
     "icrc7_transfer",
 ];
 
+const STANDARDS_USING_BLOCK_ID = [
+    "icrc1_transfer",
+    "icrc2_approve",
+    "icrc2_transfer",
+    "icrc7_transfer",
+];
+
 export type Icrc112ResponseItem = SuccessResponse | ErrorResponse;
 
 export interface Icrc112Response {
@@ -141,10 +148,11 @@ export class ICRC112Service {
                     });
                     continue;
                 }
-                // After validation 1, request MUST ALSO PASS either validation 2 or 3
+                // If pass validation 1, then continue to next validation 2
+
                 if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
                     // Validation 2: Check block_id for recognized standards
-                    if(true){ // TODO: Khoi to change 'true' to logic for checking ICRC-1,2,7
+                    if (singleRequest.method in STANDARDS_USING_BLOCK_ID) {
                         //TODO: Serhii to implement this function
                         const blockId = this.parseReply(singleResponse.result.reply);
                         if (blockId) {
@@ -167,8 +175,7 @@ export class ICRC112Service {
                             });
                         }
                         continue;
-                    }
-                    else {
+                    } else {
                         // Placeholder for validating requests that use standards aside from ICRC-1, 2, 7
                     }
                 } else {
