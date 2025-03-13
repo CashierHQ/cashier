@@ -159,6 +159,7 @@ export class ICRC112Service {
                         //TODO: Serhii to implement this function
                         const blockId = this.parseReply(singleResponse.result.reply);
                         if (blockId) {
+                            // Sets response to success
                             this.setResponse({
                                 finalResponse,
                                 isError: false,
@@ -167,6 +168,7 @@ export class ICRC112Service {
                                 successResult: singleResponse.result,
                             });
                         } else {
+                            // Sets response to fail
                             rowHadError = true;
                             this.setResponse({
                                 finalResponse,
