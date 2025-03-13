@@ -192,7 +192,6 @@ export class ICRC112Service {
                                 errorCode: 1003,
                             });
                         }
-                        continue;
                     } else {
                         // Placeholder for validating requests that use standards aside from ICRC-1, 2, 7
                         // Sets response to success
@@ -203,8 +202,8 @@ export class ICRC112Service {
                             requestIndex,
                             successResult: singleResponse.result,
                         });
-                        continue;
                     }
+                    continue;
                 } else {
                     // Validation 3: Check by canister validation (ICRC-114)
                     if (arg.params.validation) {
