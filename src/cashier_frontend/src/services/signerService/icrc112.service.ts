@@ -189,25 +189,25 @@ export class ICRC112Service {
                         // TODO: Call canister validation
                         // const canisterValidationResponse = Call canisterValidation();
                         if (canisterValidationResponse) {
-                        //        // Sets response to success
-                        //        this.setResponse({
-                        //        finalResponse,
-                        //        isError: false,
-                        //        rowIndex,
-                        //        requestIndex,
-                        //        successResult: singleResponse.result,
-                        //
+                        //      // Sets response to success
+                        //      this.setResponse({
+                        //         finalResponse,
+                        //         isError: false,
+                        //         rowIndex,
+                        //         requestIndex,
+                        //         successResult: singleResponse.result,
+                        //      });
                         } else {
-                        //         // Sets response to fail
-                        //         rowHadError = true;
-                        //         this.setResponse({
+                        //      // Sets response to fail
+                        //      rowHadError = true;
+                        //      this.setResponse({
                         //         finalResponse,
                         //         isError: true,
                         //         rowIndex,
                         //         requestIndex,
                         //         errorMessage: "Canister validation return error",
                         //         errorCode: 1003,
-                        //     });
+                        //      });
                         }
                     } else {
                         // Sets response to fail
