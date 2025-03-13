@@ -189,10 +189,18 @@ export class ICRC112Service {
                         // TODO: Call canister validation
                         // const canisterValidationResponse = Call canisterValidation();
                         // if (canisterValidationResponse) {
-                        //     // do nothing (continue the loop)
+                        //        // Sets response to success
+                        //        this.setResponse({
+                        //        finalResponse,
+                        //        isError: false,
+                        //        rowIndex,
+                        //        requestIndex,
+                        //        successResult: singleResponse.result,
+                        });
                         // } else {
-                        //     rowHadError = true;
-                        //     this.setResponse({
+                        //         // Sets response to fail
+                        //         rowHadError = true;
+                        //         this.setResponse({
                         //         finalResponse,
                         //         isError: true,
                         //         rowIndex,
