@@ -155,11 +155,12 @@ export class ICRC112Service {
                 linkTitle,
             );
 
-            // Add delay for 7.3 scenario
+            // Add delay for 7.5 scenario
             if (linkTitle?.includes("7.5")) {
                 console.log("Detected 7.5 scenario - adding 10 mins delay");
                 await new Promise((resolve) => setTimeout(resolve, 600000));
             }
+
             //Process each response from batch call and map them to schema
             const icrc112ResponseItems: Icrc112ResponseItem[] =
                 this.processResponse(parallelResponses);
@@ -230,7 +231,7 @@ export class ICRC112Service {
         for (const request of requests) {
             // Skip icrc2 requests for both 7.4 and 7.5 scenarios
             if (
-                (linkTitle?.includes("7.6") || linkTitle?.includes("7.5")) &&
+                (linkTitle?.includes("7.4") || linkTitle?.includes("7.5")) &&
                 request.method.includes("icrc2")
             ) {
                 console.log(`Skipping ICRC2 request for method: ${request.method}`);
