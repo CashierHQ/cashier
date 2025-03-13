@@ -148,8 +148,7 @@ export class ICRC112Service {
                     });
                     continue;
                 }
-                // If pass validation 1, then continue to next validation 2
-
+                // After validation 1, request MUST pass EITHER validation 2 or 3
                 if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
                     // Validation 2: Check block_id for recognized standards
                     if (singleRequest.method == "icrc1_transfer"
