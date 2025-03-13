@@ -1,7 +1,7 @@
 import { Agent } from "@dfinity/agent";
 import { CallCanisterResponse } from "../types/callCanister.service.types";
 import { CallCanisterService } from "./callCanister.service";
-import { fromBase64, JsonRequest } from "@slide-computer/signer";
+import { JsonRequest } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
 import { parseIcrc1Transfer } from "../parser";
 

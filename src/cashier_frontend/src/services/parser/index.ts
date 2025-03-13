@@ -1,5 +1,4 @@
 import { IDL } from "@dfinity/candid";
-import { fromBase64 } from "@slide-computer/signer";
 import { idlFactory } from "./icrc";
 
 export const parseIcrc1Transfer = (bytes: ArrayBuffer) => {
@@ -23,9 +22,23 @@ export const parseIcrc1Transfer = (bytes: ArrayBuffer) => {
     console.log("decoded", decoded);
 };
 
-const res2 =
-    "RElETAhrAryKAX3F/tIBAWsI0cSYfALCkey5An+UwceJBAPrgqiXBAShw+v9BwXwh+bbCQaT5b7IDH/rnNvVDwdsAsfrxNAJccSYsbUNfWwBm7O+pgp9bAGLvfKbAX1sAb+bt/ANfWwBo7uRjAp4bAGcuracAn0BAADHBQ==";
+export const parseIcrc2Approve = (bytes: ArrayBuffer) => {
+    const service = idlFactory({ IDL });
 
-parseIcrc1Transfer(fromBase64(res2));
+    const fields = service._fields;
 
-//
+    let approve_result_type = null;
+    for (const field of fields) {
+        if (field[0] === "icrc2_approve") {
+            approve_result_type = field[1].retTypes[0];
+        }
+    }
+
+    if (!approve_result_type) {
+        throw new Error("Approve result not found");
+    }
+
+    const decoded = IDL.decode([approve_result_type], bytes)[0];
+
+    console.log("decoded", decoded);
+};
