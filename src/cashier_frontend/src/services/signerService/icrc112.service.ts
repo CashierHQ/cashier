@@ -180,6 +180,7 @@ export class ICRC112Service {
                                 requestIndex,
                                 successResult: singleResponse.result,
                             });
+                            continue;
                         } else {
                             // Sets response to fail (error 1003)
                             rowHadError = true;
@@ -191,6 +192,7 @@ export class ICRC112Service {
                                 errorMessage: "Can not find block id",
                                 errorCode: 1003,
                             });
+                            continue;
                         }
                     } else {
                         // Placeholder for validating requests that use standards aside from ICRC-1, 2, 7
@@ -202,8 +204,8 @@ export class ICRC112Service {
                             requestIndex,
                             successResult: singleResponse.result,
                         });
+                        continue;
                     }
-                    continue;
                 } else {
                     // Validation 3: Check by canister validation (ICRC-114)
                     if (arg.params.validation) {
@@ -218,6 +220,7 @@ export class ICRC112Service {
                                 requestIndex,
                                 successResult: singleResponse.result,
                             });
+                            continue;
                         } else {
                             // Sets response to fail (error 1003)
                             rowHadError = true;
@@ -229,6 +232,7 @@ export class ICRC112Service {
                                  errorMessage: "Canister validation return false",
                                  errorCode: 1003,
                             });
+                            continue;
                         }
                     } else {
                         // Sets response to fail (error 1002)
@@ -241,8 +245,8 @@ export class ICRC112Service {
                             errorMessage: "Canister validation is needed but not provided",
                             errorCode: 1002,
                         });
+                        continue;
                     }
-                    continue;
                 }
             }
 
