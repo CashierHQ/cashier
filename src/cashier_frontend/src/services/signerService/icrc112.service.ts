@@ -342,9 +342,9 @@ export class ICRC112Service {
             // Step #1 Parallel executes all the requests in the sub-array
             const rowRequest = arg.params.requests[rowIndex];
             let rowResponse: Icrc112ResponseItem[] = [];
-            if (rowIndex == 1) {
-                break;
-            }
+            // if (rowIndex == 1) {
+            //     break;
+            // }
             rowResponse = await this.parallelExecuteIcrcRequests(rowRequest, linkTitle);
             console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ rowResponse:", rowResponse);
 
