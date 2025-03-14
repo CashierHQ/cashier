@@ -14,6 +14,8 @@ import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import { FixedBottomButton } from "../fix-bottom-button";
 import { Spinner } from "../ui/spinner";
+import ConfirmDialog from "../confirm-dialog";
+import { useConfirmDialog } from "@/hooks/useDialog";
 
 interface ClaimLinkDetail {
     title: string;
@@ -46,13 +48,18 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { t } = useTranslation();
     const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
+    const { open, options, showDialog, hideDialog } = useConfirmDialog();
+
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
     const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
     const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
         if (identity && selectOption !== currentSelectOptionWallet) {
-            console.log("Do you want to log out");
-            disconnect();
+            showDialog({
+                title: "Are you sure?",
+                description:
+                    "You are connected to another wallet. Would you like to disconnect and continue?",
+            });
             return;
         }
         connect();
@@ -170,7 +177,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                     />
                                                 }
                                                 placeholder={t("claim.addressPlaceholder")}
-                                                className="py-5 h-12 text-md"
+                                                className="py-5 h-14 text-md rounded-xl"
                                                 {...field}
                                             />
                                         </FormControl>
@@ -198,6 +205,17 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     </Button> */}
                 </form>
             </Form>
+            <ConfirmDialog
+                open={open}
+                title={options.title}
+                description={options.description}
+                actionText="Disconnect"
+                onSubmit={() => {
+                    disconnect();
+                    hideDialog();
+                }}
+                onOpenChange={hideDialog}
+            />
         </>
     );
 };
