@@ -150,8 +150,7 @@ type Result_2 = variant { Ok : GetLinkResp; Err : text };
 type Result_3 = variant { Ok : PaginateResult; Err : text };
 type Result_4 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_5 = variant { Ok : ActionDto; Err : CanisterError };
-type Result_6 = variant { Ok; Err : CanisterError };
-type Result_7 = variant { Ok : LinkDto; Err : CanisterError };
+type Result_6 = variant { Ok : LinkDto; Err : CanisterError };
 type TransactionDto = record {
   id : text;
   protocol : text;
@@ -190,7 +189,7 @@ service : () -> {
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   process_action : (ProcessActionInput) -> (Result_5);
-  trigger_transaction : (TriggerTransactionInput) -> (Result_6);
+  trigger_transaction : (TriggerTransactionInput) -> (Result);
   update_action : (UpdateActionInput) -> (Result_5);
-  update_link : (UpdateLinkInput) -> (Result_7);
+  update_link : (UpdateLinkInput) -> (Result_6);
 }

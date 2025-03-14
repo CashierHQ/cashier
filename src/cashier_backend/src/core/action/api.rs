@@ -44,7 +44,7 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 }
 
 #[update(guard = "is_not_anonymous")]
-pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<(), CanisterError> {
+pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
     let caller = ic_cdk::api::caller();
     let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
 
@@ -60,10 +60,31 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<(), C
         ));
     }
 
-    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
-        TransactionManagerService::get_instance();
+    // TODO: remove this after testing
+    let link = services::link::get_link_by_id(input.link_id.clone())
+        .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get link: {}", e)))?;
 
-    transaction_manager
-        .execute_tx_by_id(input.transaction_id)
-        .await
+    if let Some(title) = &link.title {
+        if title.contains("7.4") {
+            let transaction_manager: TransactionManagerService<RealIcEnvironment> =
+                TransactionManagerService::get_instance();
+
+            transaction_manager
+                .execute_test_fail(input.transaction_id)
+                .await?;
+
+            return Ok("Executed success".to_string());
+        } else {
+            let transaction_manager: TransactionManagerService<RealIcEnvironment> =
+                TransactionManagerService::get_instance();
+
+            transaction_manager
+                .execute_tx_by_id(input.transaction_id)
+                .await?;
+
+            return Ok("Executed success".to_string());
+        }
+    }
+
+    Ok("Executed success".to_string())
 }
