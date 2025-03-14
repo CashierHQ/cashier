@@ -6,16 +6,16 @@ mod tests {
     use faux::when;
 
     use crate::{
-        services::transaction_manager::{
-            action::ActionService,
-            manual_check_status::ManualCheckStatusService,
-            transaction::TransactionService,
-            TransactionManagerService,
+        services::{
             __tests__::tests::{
                 create_dummy_action, create_dummy_intent, create_dummy_transaction,
                 MockIcEnvironment,
             },
-            execute_transaction::ExecuteTransactionService,
+            transaction_manager::{
+                action::ActionService, execute_transaction::ExecuteTransactionService,
+                manual_check_status::ManualCheckStatusService, transaction::TransactionService,
+                TransactionManagerService,
+            },
         },
         types::{error::CanisterError, transaction_manager::ActionResp},
     };

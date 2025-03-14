@@ -1,45 +1,14 @@
-use std::str::FromStr;
-
-use cashier_types::ActionType;
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
-use crate::services::transaction_manager::action::ActionService;
 use crate::services::transaction_manager::{TransactionManagerService, UpdateActionArgs};
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
     core::{action::types::ActionDto, CanisterError},
-    services::{self, link::is_link_creator},
+    services::{self},
 };
 
-use super::types::{CreateActionInput, TriggerTransactionInput, UpdateActionInput};
-
-// pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
-//     let caller = ic_cdk::api::caller();
-
-//     let action_type = ActionType::from_str(&input.action_type)
-//         .map_err(|_| CanisterError::ValidationErrors(format!("Invalid intent type ")))?;
-
-//     match action_type {
-//         ActionType::CreateLink => {
-//             if !is_link_creator(caller.to_text(), &input.link_id) {
-//                 return Err(CanisterError::ValidationErrors(
-//                     "User is not the creator of the link".to_string(),
-//                 ));
-//             }
-//         }
-
-//         _ => {
-//             return Err(CanisterError::ValidationErrors(
-//                 "Invalid intent type".to_string(),
-//             ));
-//         }
-//     }
-
-//     let action_service: ActionService<RealIcEnvironment> = ActionService::get_instance();
-
-//     action_service.create_link_action(input).await
-// }
+use super::types::{TriggerTransactionInput, UpdateActionInput};
 
 #[update(guard = "is_not_anonymous")]
 pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
@@ -65,7 +34,7 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
     let args = UpdateActionArgs {
         action_id: input.action_id.clone(),
         link_id: input.link_id.clone(),
-        external: true,
+        execute_wallet_tx: true,
     };
 
     transaction_manager

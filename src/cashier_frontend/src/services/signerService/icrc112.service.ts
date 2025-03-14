@@ -60,12 +60,35 @@ export interface CanisterValidation {
     method: string;
 }
 
-export const SUPPORTED_PARSED_METHODS = ["icrc1_transfer", "icrc2_approve", "icrc7_transfer"];
+export const SUPPORTED_PARSED_METHODS = [
+    "icrc1_transfer",
+    "icrc2_approve",
+    "icrc2_transfer",
+    "icrc7_transfer",
+];
+
+const STANDARDS_USING_BLOCK_ID = [
+    "icrc1_transfer",
+    "icrc2_approve",
+    "icrc2_transfer",
+    "icrc7_transfer",
+];
 
 export type Icrc112ResponseItem = SuccessResponse | ErrorResponse;
 
 export interface Icrc112Response {
     responses: Icrc112ResponseItem[][];
+}
+
+// Define an interface for the parameters
+interface SetResponseParams {
+    finalResponse: Icrc112Response;
+    isError: boolean;
+    rowIndex: number;
+    requestIndex: number;
+    errorMessage?: string;
+    errorCode?: number;
+    successResult?: CallCanisterResponse;
 }
 
 export class ICRC112Service {
@@ -86,6 +109,201 @@ export class ICRC112Service {
     public async icrc112Execute(input: Icrc112Requests): Promise<Icrc112Response> {
         const arg = {
             jsonrpc: "2.0",
+            method: "icrc_112_batch_call_canisters",
+            params: {
+                sender: (await this.agent.getPrincipal()).toString(),
+                requests: input,
+                validation: undefined as { canisterId: string; method: string } | undefined,
+            },
+        };
+
+        let rowIndex = 0;
+        const maxRow = arg.params.requests.length;
+
+        // Later add each individual response to this 2D array
+        const finalResponse: Icrc112Response = { responses: [] };
+
+        outerLoop: for (rowIndex = 0; rowIndex < maxRow; rowIndex++) {
+            let rowHadError = false;
+            // Step #1 Parallel executes all the requests in the sub-array
+            const rowRequest = arg.params.requests[rowIndex];
+            const rowResponse = await this.parallelExecuteIcrcRequests(rowRequest);
+
+            // Step #2 Validate responses of each request in the sub-array
+            for (let requestIndex = 0; requestIndex < rowRequest.length; requestIndex++) {
+                const singleResponse = rowResponse[requestIndex];
+                const singleRequest = rowRequest[requestIndex];
+
+                // Validation 1: Check if raw response has error
+                if ("error" in singleResponse) {
+                    // Sets response to fail (error provided by response)
+                    rowHadError = true;
+                    this.setResponse({
+                        finalResponse,
+                        isError: true,
+                        rowIndex,
+                        requestIndex,
+                        errorMessage: singleResponse.error.message,
+                        errorCode: singleResponse.error.code,
+                    });
+                    continue;
+                }
+
+                // Skip validation 2 and 3 on last row
+                else if (rowIndex= maxRow-1) {
+                    // Sets response to success
+                    this.setResponse({
+                        finalResponse,
+                        isError: false,
+                        rowIndex,
+                        requestIndex,
+                        successResult: singleResponse.result,
+                    });
+                    continue;    
+                }
+
+                // In addition to validation 1, response MUST pass EITHER validation 2 or 3
+                else if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
+                    // Validation 2: Check block_id for recognized standards
+                    if (singleRequest.method == "icrc1_transfer"
+                        || singleRequest.method == "icrc2_approve"
+                        || singleRequest.method == "icrc2_transfer"
+                        || singleRequest.method == "icrc7_transfer") {
+                        //TODO: Serhii to implement this function
+                        const blockId = this.parseReply(singleResponse.result.reply);
+                        if (blockId) {
+                            // Sets response to success
+                            this.setResponse({
+                                finalResponse,
+                                isError: false,
+                                rowIndex,
+                                requestIndex,
+                                successResult: singleResponse.result,
+                            });
+                            continue;
+                        } else {
+                            // Sets response to fail (error 1003)
+                            rowHadError = true;
+                            this.setResponse({
+                                finalResponse,
+                                isError: true,
+                                rowIndex,
+                                requestIndex,
+                                errorMessage: "Can not find block id",
+                                errorCode: 1003,
+                            });
+                            continue;
+                        }
+                    } else {
+                        // Placeholder for validating requests that use standards aside from ICRC-1, 2, 7
+                        // Sets response to success
+                        this.setResponse({
+                            finalResponse,
+                            isError: false,
+                            rowIndex,
+                            requestIndex,
+                            successResult: singleResponse.result,
+                        });
+                        continue;
+                    }
+                } else {
+                    // Validation 3: Check by canister validation (ICRC-114)
+                    if (arg.params.validation) {
+                        // TODO: Call canister validation
+                        // const canisterValidationResponse = Call canisterValidation();
+                        if (canisterValidationResponse) {
+                            // Sets response to success
+                            this.setResponse({
+                                finalResponse,
+                                isError: false,
+                                rowIndex,
+                                requestIndex,
+                                successResult: singleResponse.result,
+                            });
+                            continue;
+                        } else {
+                            // Sets response to fail (error 1003)
+                            rowHadError = true;
+                            this.setResponse({
+                                 finalResponse,
+                                 isError: true,
+                                 rowIndex,
+                                 requestIndex,
+                                 errorMessage: "Canister validation return false",
+                                 errorCode: 1003,
+                            });
+                            continue;
+                        }
+                    } else {
+                        // Sets response to fail (error 1002)
+                        rowHadError = true;
+                        this.setResponse({
+                            finalResponse,
+                            isError: true,
+                            rowIndex,
+                            requestIndex,
+                            errorMessage: "Canister validation is needed but not provided",
+                            errorCode: 1002,
+                        });
+                        continue;
+                    }
+                }
+            }
+
+            if (rowHadError) {
+                // fill in 1001 errors for all requests in the row_index + 1 to last row
+                for (let newIndex = rowIndex + 1; newIndex < maxRow; newIndex++) {
+                    const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
+                    const rowResponse: Icrc112ResponseItem[] =
+                        this.assignNonExecuteRequestToErrorResult(
+                            nonExecuteParallelRequestRow.length,
+                        );
+                    finalResponse.responses.push(rowResponse);
+                }
+                break outerLoop;
+            }
+        }
+        return finalResponse;
+    }
+
+    private setResponse(params: SetResponseParams) {
+        if (params.isError) {
+            params.finalResponse.responses[params.rowIndex][params.requestIndex] = {
+                error: {
+                    code: params.errorCode ? params.errorCode : 1003,
+                    message: params.errorMessage ?? "Error while executing request",
+                },
+            };
+        } else {
+            params.finalResponse.responses[params.rowIndex][params.requestIndex] = {
+                result: params.successResult ?? {
+                    contentMap: "",
+                    certificate: "",
+                },
+            };
+        }
+    }
+
+    private parseReply(reply?: string): string {
+        // if rely is undefined, return error
+        //const candid = new CandidJSON({IDL: IDL});
+        return "temporary success";
+    }
+
+    public async testICRC112Execute(
+        input: Icrc112Requests,
+        linkTitle: string,
+    ): Promise<Icrc112Response> {
+        console.log("Test execution started with linkTitle:", linkTitle);
+
+        // Add delay for 7.3 scenario
+        if (linkTitle?.includes("7.3")) {
+            console.log("Detected 7.3 scenario - adding 20 secs delay");
+            await new Promise((resolve) => setTimeout(resolve, 20000));
+        }
+
+        const arg = {
+            jsonrpc: "2.0",
             method: this.getMethod(),
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
@@ -98,9 +316,18 @@ export class ICRC112Service {
         for (let i = 0; i < arg.params.requests.length; i++) {
             //Start parallel execution
             const parallelRequests = arg.params.requests[i];
-            const parallelResponses = await this.parallelExecuteIcrcRequests(parallelRequests);
+            const parallelResponses = await this.parallelExecuteIcrcRequests(
+                parallelRequests,
+                linkTitle,
+            );
 
-            //Process each response from batch call and map them to schema, Map them to "SuccessResponse" or "ErrorResponse"
+            // Add delay for 7.5 scenario
+            if (linkTitle?.includes("7.5")) {
+                console.log("Detected 7.5 scenario - adding 10 mins delay");
+                await new Promise((resolve) => setTimeout(resolve, 600000));
+            }
+
+            //Process each response from batch call and map them to schema
             const icrc112ResponseItems: Icrc112ResponseItem[] =
                 this.processResponse(parallelResponses);
             //End parallel execution
@@ -121,25 +348,17 @@ export class ICRC112Service {
                 break;
             }
         }
+
         return finalResponse;
     }
 
-    private processResponse(
-        response: Array<Icrc112ResponseItem>,
-        canisterValidation?: CanisterValidation,
-    ): Icrc112ResponseItem[] {
+    private processResponse(response: Array<Icrc112ResponseItem>): Icrc112ResponseItem[] {
         const responses: Icrc112ResponseItem[] = [];
         response.forEach((response) => {
-            // Start ICRC-114
-            if (canisterValidation) {
-                //TODO: Complete ICRC-114 with canister validation
-                // End ICRC-114
+            if ("result" in response) {
+                responses.push({ result: response.result });
             } else {
-                if ("result" in response) {
-                    responses.push({ result: response.result });
-                } else {
-                    responses.push({ error: response.error });
-                }
+                responses.push({ error: response.error });
             }
         });
         return responses;
@@ -160,11 +379,28 @@ export class ICRC112Service {
 
     private async parallelExecuteIcrcRequests(
         requests: ParallelRequests,
+        linkTitle?: string,
     ): Promise<Array<Icrc112ResponseItem>> {
+        console.log("Processing requests with linkTitle:", linkTitle);
         const process_tasks: Promise<CallCanisterResponse>[] = [];
         const responses: Array<Icrc112ResponseItem> = [];
 
-        requests.forEach((request) => {
+        for (const request of requests) {
+            // Skip icrc2 requests for both 7.4 and 7.5 scenarios
+            if (
+                (linkTitle?.includes("7.4") || linkTitle?.includes("7.5")) &&
+                request.method.includes("icrc2")
+            ) {
+                console.log(`Skipping ICRC2 request for method: ${request.method}`);
+                responses.push({
+                    error: {
+                        code: 1002,
+                        message: "ICRC2 requests are skipped in this test scenario",
+                    },
+                });
+                continue;
+            }
+            console.log(`Processing request for method: ${request.method}`);
             const task = this.callCanisterService.call({
                 canisterId: request.canisterId,
                 calledMethodName: request.method,
@@ -172,7 +408,8 @@ export class ICRC112Service {
                 agent: this.agent,
             });
             process_tasks.push(task);
-        });
+        }
+
         const results = await Promise.allSettled(process_tasks);
         // Process each result
         results.forEach((result) => {

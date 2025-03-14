@@ -1,11 +1,12 @@
 mod tests {
-    use crate::services::transaction_manager::{
+    use crate::services::{
         __tests__::{
-            action::{generate_action_with_for_processing, setup_repositories},
             tests::MockIcEnvironment,
+            transaction_manager::action::{
+                generate_action_with_for_processing, setup_repositories,
+            },
         },
-        action::ActionService,
-        validate::ValidateService,
+        transaction_manager::{action::ActionService, validate::ValidateService},
     };
 
     use faux::when;

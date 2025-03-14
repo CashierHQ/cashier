@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
+import { TokenUtilService } from "@/services/tokenUtils.service";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -137,7 +138,10 @@ export default function DetailPage() {
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
                                             <TableCell className="text-right px-5">
-                                                {linkData?.link?.amountNumber}
+                                                {TokenUtilService.getHumanReadableAmountFromMetadata(
+                                                    linkData?.link?.asset_info[0].amount,
+                                                    metadata,
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     </TableBody>

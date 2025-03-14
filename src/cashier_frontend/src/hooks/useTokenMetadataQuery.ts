@@ -21,4 +21,23 @@ const useTokenMetadataQuery = (tokenAddress: string | undefined) => {
     });
 };
 
+export const useTokenMetadataList = () => {
+    return useQuery<TokenMetadataWithCanisterId[]>({
+        queryKey: queryKeys.tokens.metadataList().queryKey,
+        queryFn: async () => {
+            const metadataList: TokenMetadataWithCanisterId[] = await queryKeys.tokens
+                .metadataList()
+                .queryFn({
+                    queryKey: queryKeys.tokens.metadataList().queryKey,
+                    signal: new AbortController().signal,
+                    meta: undefined,
+                });
+            if (!metadataList) {
+                throw new Error("Token metadata list not found");
+            }
+            return metadataList;
+        },
+    });
+};
+
 export default useTokenMetadataQuery;

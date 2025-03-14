@@ -10,7 +10,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error, info,
+    error,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
@@ -195,6 +195,20 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
     }
 
+    pub fn new(
+        link_service: LinkService<E>,
+        user_service: UserService,
+        tx_manager_service: TransactionManagerService<E>,
+        ic_env: E,
+    ) -> Self {
+        Self {
+            link_service,
+            user_service,
+            tx_manager_service,
+            ic_env,
+        }
+    }
+
     pub async fn process_action(
         &self,
         input: ProcessActionInput,
@@ -204,10 +218,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // get user_id and action_id
         let user_id = self.user_service.get_user_id_by_wallet(&caller);
 
-        let action = self
-            .link_service
-            .get_action_of_link(&input.link_id, &input.action_type);
-
         // basic validations
         if user_id.is_none() {
             return Err(CanisterError::ValidationErrors(
@@ -215,11 +225,20 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        info!("get_action_of_link res: {:#?}", action);
+        let action = self
+            .link_service
+            .get_action_of_link(&input.link_id, &input.action_type);
 
         if action.is_none() {
             let action_type = ActionType::from_str(&input.action_type)
                 .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
+
+            // validate create action
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id.as_ref().unwrap(),
+            )?;
 
             //create temp action
             // fill in link_id info
@@ -233,31 +252,30 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 intents: vec![],
             };
 
-            info!("temp_action: {:#?}", temp_action);
-
+            // fill the intent info
             let intents = self
                 .link_service
-                .assemble_intents(&mut temp_action)
+                .link_assemble_intents(&temp_action.link_id, &temp_action.r#type)
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!("Failed to assemble intents: {}", e))
                 })?;
-
-            // fill the intent info
             temp_action.intents = intents;
 
             // create real action
-            let res = self.tx_manager_service.create_action(&temp_action)?;
+            let res = self.tx_manager_service.tx_man_create_action(&temp_action)?;
 
             Ok(res)
         } else {
-            // TODO: add validate here
+            // validate action
+            self.link_service
+                .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id.unwrap())?;
 
             // execute action
             self.tx_manager_service
                 .update_action(UpdateActionArgs {
                     action_id: action.unwrap().id,
                     link_id: input.link_id,
-                    external: false,
+                    execute_wallet_tx: false,
                 })
                 .await
         }

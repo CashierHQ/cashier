@@ -12,10 +12,11 @@ use crate::{
     },
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
     services::transaction_manager::fee::Fee,
-    types::{error::CanisterError, temp_action::TemporaryAction},
+    types::error::CanisterError,
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 
+#[cfg_attr(test, faux::create)]
 pub struct LinkService<E: IcEnvironment + Clone> {
     // LinkService fields go here
     link_repository: repositories::link::LinkRepository,
@@ -24,7 +25,22 @@ pub struct LinkService<E: IcEnvironment + Clone> {
     ic_env: E,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> LinkService<E> {
+    pub fn new(
+        link_repository: repositories::link::LinkRepository,
+        link_action_repository: LinkActionRepository,
+        action_repository: ActionRepository,
+        ic_env: E,
+    ) -> Self {
+        Self {
+            link_repository,
+            link_action_repository,
+            action_repository,
+            ic_env,
+        }
+    }
+
     pub fn get_instance() -> Self {
         Self {
             link_repository: repositories::link::LinkRepository::new(),
@@ -62,6 +78,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_asset_intent.state = IntentState::Created;
                 transfer_asset_intent.created_at = ts;
                 transfer_asset_intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+                // adding dependency
 
                 // create intent for transfer fee to treasury
                 //TODO: get the intent template from config then map the values
@@ -73,6 +90,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_fee_intent.state = IntentState::Created;
                 transfer_fee_intent.created_at = ts;
                 transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+                // adding dependency
 
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
@@ -97,13 +115,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return Some(intents);
     }
 
-    pub fn assemble_intents(
+    pub fn link_assemble_intents(
         &self,
-        temp_action: &TemporaryAction,
+        link_id: &str,
+        action_type: &ActionType,
     ) -> Result<Vec<Intent>, CanisterError> {
-        let link = self.get_link_by_id(temp_action.link_id.clone())?;
+        let link = self.get_link_by_id(link_id.to_string())?;
 
-        let temp_intents = self.look_up_intent(&link.link_type.unwrap(), &temp_action.r#type);
+        let temp_intents = self.look_up_intent(&link.link_type.unwrap(), action_type);
 
         if temp_intents.is_none() {
             return Err(CanisterError::HandleLogicError(
@@ -185,7 +204,42 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                     intent.r#type = IntentType::TransferFrom(transfer_from_data.clone());
                 }
-                _ => {}
+                IntentTask::TransferLinkToWallet => {
+                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
+                    let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
+                        CanisterError::HandleLogicError("Asset not found".to_string())
+                    })?;
+
+                    transfer_data.amount = asset_info.total_amount;
+                    transfer_data.asset = Asset {
+                        address: asset_info.address.clone(),
+                        chain: asset_info.chain.clone(),
+                    };
+
+                    let from_account = Account {
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(link.id.clone())),
+                    };
+                    transfer_data.from = Wallet {
+                        address: from_account.to_string(),
+                        chain: Chain::IC,
+                    };
+                    let to_account = Account {
+                        owner: self.ic_env.caller(),
+                        subaccount: None,
+                    };
+                    transfer_data.to = Wallet {
+                        address: to_account.to_string(),
+                        chain: Chain::IC,
+                    };
+
+                    intent.r#type = IntentType::Transfer(transfer_data.clone());
+                }
+                _ => {
+                    return Err(CanisterError::HandleLogicError(
+                        "Not found intents config for {link_type}_{action_type}".to_string(),
+                    ));
+                }
             }
         }
 
@@ -207,6 +261,66 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .get(link_actions[0].action_id.clone());
 
         return action;
+    }
+
+    pub fn link_validate_user_create_action(
+        &self,
+        link_id: &str,
+        action_type: &ActionType,
+        user_id: &str,
+    ) -> Result<(), CanisterError> {
+        // get link
+        let link = self.get_link_by_id(link_id.to_string()).unwrap();
+
+        match action_type {
+            ActionType::Withdraw => {
+                if link.creator == user_id {
+                    return Ok(());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the link".to_string(),
+                    ));
+                }
+            }
+            _ => {
+                return Ok(());
+            }
+        }
+    }
+
+    pub fn link_validate_user_update_action(
+        &self,
+        action: &Action,
+        user_id: &str,
+    ) -> Result<(), CanisterError> {
+        //validate user_id
+        match action.r#type.clone() {
+            ActionType::CreateLink => {
+                let link = self.get_link_by_id(action.link_id.clone())?;
+                if !(action.creator == user_id && link.creator == user_id) {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+            }
+            ActionType::Withdraw => {
+                let link = self.get_link_by_id(action.link_id.clone())?;
+                if !(action.creator == user_id && link.creator == user_id) {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+            }
+            ActionType::Claim => {
+                if action.creator != user_id {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+            }
+        }
+
+        return Ok(());
     }
 
     pub fn validate_asset_left(&self, link_id: &str) -> () {}

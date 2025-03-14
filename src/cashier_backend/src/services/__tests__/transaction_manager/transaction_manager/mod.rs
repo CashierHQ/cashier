@@ -1,3 +1,5 @@
+pub mod create_action;
+
 mod tests {
     use std::collections::HashMap;
 
@@ -8,17 +10,17 @@ mod tests {
     use uuid::Uuid;
 
     use crate::{
-        services::transaction_manager::{
+        services::{
             __tests__::tests::{
                 convert_tx_to_dummy_icrc_112_request, convert_txs_to_dummy_icrc_112_request,
                 create_dummy_action, create_dummy_intent, create_dummy_tx_protocol,
                 generate_random_principal, MockIcEnvironment,
             },
-            action::ActionService,
-            execute_transaction::ExecuteTransactionService,
-            manual_check_status::ManualCheckStatusService,
-            transaction::TransactionService,
-            TransactionManagerService, UpdateActionArgs,
+            transaction_manager::{
+                action::ActionService, execute_transaction::ExecuteTransactionService,
+                manual_check_status::ManualCheckStatusService, transaction::TransactionService,
+                TransactionManagerService, UpdateActionArgs,
+            },
         },
         types::{error::CanisterError, transaction_manager::ActionResp},
     };
@@ -59,7 +61,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
@@ -187,7 +189,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
@@ -317,7 +319,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
@@ -386,7 +388,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: "invalid_action_id".to_string(),
             link_id: Uuid::new_v4().to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(action_service.get).then_return(Err("action not found".to_string()));
@@ -436,7 +438,7 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            external: true,
+            execute_wallet_tx: true,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());

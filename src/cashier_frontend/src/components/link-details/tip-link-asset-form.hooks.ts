@@ -15,60 +15,61 @@ import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { Identity } from "@dfinity/agent";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ASSET_LIST } from "@/services/tokenProviderService/devTokenProvider.service";
+import { linkDetailsFormSchema, LinkDetailsFormSchema } from "./link-details-form";
 
-export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
-    return z
-        .object({
-            tokenAddress: z.string().min(1, { message: "Asset is required" }),
-            amount: z.bigint(),
-            assetNumber: z
-                .number({ message: "Must input number" })
-                .positive({ message: "Must be greater than 0" })
-                .nullable(),
-            usdNumber: z
-                .number({ message: "Must input number" })
-                .positive({ message: "Must be greater than 0" })
-                .nullable(),
-        })
-        .superRefine((val, ctx) => {
-            if (val.assetNumber === null) {
-                ctx.addIssue({
-                    code: "custom",
-                    message: "Must input number",
-                    path: ["usdNumber"],
-                });
-                ctx.addIssue({
-                    code: "custom",
-                    message: "Must input number",
-                    path: ["assetNumber"],
-                });
-            }
+// export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
+//     return z
+//         .object({
+//             tokenAddress: z.string().min(1, { message: "Asset is required" }),
+//             amount: z.bigint(),
+//             assetNumber: z
+//                 .number({ message: "Must input number" })
+//                 .positive({ message: "Must be greater than 0" })
+//                 .nullable(),
+//             usdNumber: z
+//                 .number({ message: "Must input number" })
+//                 .positive({ message: "Must be greater than 0" })
+//                 .nullable(),
+//         })
+//         .superRefine((val, ctx) => {
+//             if (val.assetNumber === null) {
+//                 ctx.addIssue({
+//                     code: "custom",
+//                     message: "Must input number",
+//                     path: ["usdNumber"],
+//                 });
+//                 ctx.addIssue({
+//                     code: "custom",
+//                     message: "Must input number",
+//                     path: ["assetNumber"],
+//                 });
+//             }
 
-            const asset = assets.find((asset) => asset.tokenAddress === val.tokenAddress);
+//             const asset = assets.find((asset) => asset.tokenAddress === val.tokenAddress);
 
-            if (!asset || val.assetNumber === null || val.assetNumber > asset.amount) {
-                ctx.addIssue({
-                    code: "custom",
-                    message: "Your balance is not enough",
-                    path: ["assetNumber"],
-                });
-                ctx.addIssue({
-                    code: "custom",
-                    message: "Your balance is not enough",
-                    path: ["usdNumber"],
-                });
-            }
-        });
-};
+//             if (!asset || val.assetNumber === null || val.assetNumber > asset.amount) {
+//                 ctx.addIssue({
+//                     code: "custom",
+//                     message: "Your balance is not enough",
+//                     path: ["assetNumber"],
+//                 });
+//                 ctx.addIssue({
+//                     code: "custom",
+//                     message: "Your balance is not enough",
+//                     path: ["usdNumber"],
+//                 });
+//             }
+//         });
+// };
 
-export type TipLinkAssetFormSchema = z.infer<ReturnType<typeof tipLinkAssetFormSchema>>;
+export type TipLinkAssetFormSchema = LinkDetailsFormSchema;
 
 export function useTipLinkAssetForm(
     assets: AssetSelectItem[],
     defaultValues?: DefaultValues<TipLinkAssetFormSchema>,
 ): UseFormReturn<TipLinkAssetFormSchema> {
     const form = useForm<TipLinkAssetFormSchema>({
-        resolver: zodResolver(tipLinkAssetFormSchema(assets)),
+        resolver: zodResolver(linkDetailsFormSchema(assets)),
         defaultValues: defaultValues,
     });
 

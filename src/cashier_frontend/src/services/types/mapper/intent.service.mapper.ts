@@ -2,7 +2,7 @@ import { convertNanoSecondsToDate } from "@/utils";
 import {
     AssetDto,
     IntentDto,
-    TypeMetdataValue,
+    MetadataValue,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { CHAIN, INTENT_STATE, INTENT_TYPE, TASK } from "../enum";
 import { TransactionModel } from "../intent.service.types";
@@ -48,7 +48,7 @@ export const toCanisterCallRequest = (tx: TransactionModel) => {
 };
 
 const mapMetadataToWalletModel = (
-    metadata: [string, TypeMetdataValue][],
+    metadata: [string, MetadataValue][],
     intentType: string,
     propName: string,
 ): WalletModel => {
@@ -67,7 +67,7 @@ const mapMetadataToWalletModel = (
 };
 
 const mapMetadataToAssetModel = (
-    metadata: [string, TypeMetdataValue][],
+    metadata: [string, MetadataValue][],
     intentType: string,
     propName: string,
 ): AssetModel => {
@@ -86,7 +86,7 @@ const mapMetadataToAssetModel = (
 };
 
 const mapMetadataToAmount = (
-    metadata: [string, TypeMetdataValue][],
+    metadata: [string, MetadataValue][],
     intentType: string,
     propName: string,
 ): bigint => {

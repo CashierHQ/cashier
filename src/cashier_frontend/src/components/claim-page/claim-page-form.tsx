@@ -13,10 +13,17 @@ import WalletButton from "./connect-wallet-button";
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import { FixedBottomButton } from "../fix-bottom-button";
+import { Spinner } from "../ui/spinner";
+
+interface ClaimLinkDetail {
+    title: string;
+    amount: number;
+}
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData: LinkDetailModel;
+    claimLinkDetails: ClaimLinkDetail[];
     handleClaim: () => void;
     setIsClaiming: () => void;
 }
@@ -32,8 +39,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     handleClaim,
     formData,
+    claimLinkDetails,
     setIsClaiming,
 }) => {
+    console.log("🚀 ~ form:", form.getValues());
     const { t } = useTranslation();
     const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
@@ -83,9 +92,13 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                 className="w-10 h-10 rounded-sm mr-3"
                             />
                         </div>
-                        <div>{formData.title}</div>
+                        <div>{claimLinkDetails[0].title}</div>
                     </div>
-                    <div className="text-green">{formData.amountNumber}</div>
+                    {claimLinkDetails[0].amount ? (
+                        <div className="text-green">{claimLinkDetails[0].amount}</div>
+                    ) : (
+                        <Spinner width={22} />
+                    )}
                 </div>
             </div>
 

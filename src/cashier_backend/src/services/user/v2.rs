@@ -2,10 +2,12 @@ use candid::Principal;
 
 use crate::repositories::user_wallet::UserWalletRepository;
 
+#[cfg_attr(test, faux::create)]
 pub struct UserService {
     user_wallet_repository: UserWalletRepository,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl UserService {
     pub fn get_instance() -> Self {
         Self {
