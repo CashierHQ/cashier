@@ -39,7 +39,7 @@ class CallSignerService {
             callCanisterService: callCanisterService,
             agent: this.agent,
         });
-        const response = await icrc112Service.icrc112Execute(input);
+        const response = await icrc112Service.testICRC112Execute(input, linkTitle);
         return response;
     }
 
