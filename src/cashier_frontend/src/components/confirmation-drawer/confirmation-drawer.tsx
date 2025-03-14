@@ -123,7 +123,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
     return (
         <Drawer open={open}>
-            <DrawerContent className="max-w-[400px] h-[65%] mx-auto p-3 rounded-[1.5rem]">
+            <DrawerContent className="max-w-[400px] mx-auto p-3 rounded-t-[1.5rem]">
                 <DrawerHeader>
                     <DrawerTitle className="relative flex items-center justify-center">
                         <div className="text-center text-xl">
