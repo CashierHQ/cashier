@@ -238,7 +238,7 @@ export class ICRC112Service {
             }
         }
 
-        // If execution was aborted because of a failed validation, fill in 1001 errors for all remaining requests
+        // If execution was aborted because of a failed validation, fill in 1001 errors for all requests in remaining rows (rowIndex + 1 to maxRow)
         if (rowHadError) {
             for (let newIndex = rowIndex + 1; newIndex < maxRow; newIndex++) {
                 const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
