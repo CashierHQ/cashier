@@ -231,7 +231,7 @@ export class ICRC112Service {
 
                 console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ finalResponse:", finalResponse);
             }
-            
+
             // If any of the requests in this row failed valididation, do not execute following rows (sub-arrays)
             if (rowHadError) {
                 break outerLoop;
@@ -353,8 +353,7 @@ export class ICRC112Service {
                         },
                     },
                 ];
-            }
-            if (linkTitle.includes("7.5") && rowIndex == 1) {
+            } else if (linkTitle.includes("7.5") && rowIndex == 1) {
                 console.log("Detected 7.5 scenario");
                 // Sleep 10mins in the scenarios 7.5
                 console.log("Sleeping for 10mins");
