@@ -27,8 +27,6 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
         return Err("Transaction start_ts is None".to_string());
     }
 
-    info!("Transaction start_ts: {:#?}", tx);
-
     let current_ts = ic_cdk::api::time();
 
     let tx_timeout: u64 = get_tx_timeout_nano_seconds();
@@ -48,8 +46,10 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
         let _ = transaction_service.update_tx_state(&mut tx, state.clone());
 
         info!(
-            "Transaction {} is timeout, state is updated to {:?}",
-            tx_id, state
+            "[tx_timeout_task] Transaction {} {} is timeout, state is updated to {:?}",
+            tx_id,
+            tx.protocol.as_ic_transaction().unwrap().to_str(),
+            state
         );
 
         Ok(())

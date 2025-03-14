@@ -240,9 +240,11 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
 
         for intent in intents.clone() {
             self.intent_repository.update(intent.clone());
+            info!("Updated intent state: {:?}", intent.state);
         }
 
         self.action_repository.update(action.clone());
+        info!("Updated action state: {:?}", action.state);
 
         Ok(ActionResp {
             action,

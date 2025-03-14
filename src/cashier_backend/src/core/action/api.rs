@@ -1,6 +1,7 @@
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
+use crate::info;
 use crate::services::transaction_manager::{TransactionManagerService, UpdateActionArgs};
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
@@ -65,6 +66,8 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
         .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get link: {}", e)))?;
 
     if let Some(title) = &link.title {
+        info!("title {}", title.contains("7.4"));
+
         if title.contains("7.4") {
             let transaction_manager: TransactionManagerService<RealIcEnvironment> =
                 TransactionManagerService::get_instance();

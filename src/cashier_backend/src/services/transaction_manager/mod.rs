@@ -320,6 +320,11 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             if from_account == caller {
                 tx_execute_from_user_wallet.push(tx.clone());
             }
+
+            info!(
+                "tx_execute_from_user_wallet: {:#?}",
+                tx_execute_from_user_wallet
+            );
         }
 
         Ok(self.transaction_service.create_icrc_112(
@@ -411,9 +416,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             ic_env_in_future.spawn(async move {
                 let res = tx_timeout_task(tx_id).await;
                 match res {
-                    Ok(_) => {
-                        info!("Transaction timeout task executed successfully");
-                    }
+                    Ok(_) => {}
                     Err(e) => {
                         info!("Transaction timeout task executed with error: {}", e);
                     }
@@ -514,48 +517,63 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             // Right now there is no tx have from_account is neither caller nor link_vault, so we don't need to handle this case
         }
 
-        // With the txs that were grouped into a batch, we assemble a icrc_112 request
-        let icrc_112_requests = self.create_icrc_112(
-            caller,
-            args.action_id.clone(),
-            args.link_id.clone(),
-            &eligible_wallet_txs,
-        )?;
+        if !args.execute_wallet_tx {
+            // With the txs that were grouped into a batch, we assemble a icrc_112 request
+            let icrc_112_requests = self.create_icrc_112(
+                caller,
+                args.action_id.clone(),
+                args.link_id.clone(),
+                &eligible_wallet_txs,
+            )?;
 
-        request = if icrc_112_requests.is_none() {
-            None
-        } else if icrc_112_requests.as_ref().unwrap().len() == 0 {
-            None
-        } else {
-            Some(icrc_112_requests.unwrap())
-        };
+            info!(
+                "Eligible wallet txs: {:#?}, eligible canister txs: {:#?}",
+                eligible_wallet_txs, eligible_canister_txs
+            );
 
-        // We execute transactions
+            info!("ICRC-112 requests: {:#?}", icrc_112_requests);
 
-        // Wallet tx are executed by the client, when it receives the ICRC-112 request this method returns
-        // and tx status is 'processing' until client updates tx manager with response of ICRC-112
-        for mut tx in eligible_wallet_txs {
-            self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
-                CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {}", e))
-            })?;
-            self.update_tx_state(&mut tx, TransactionState::Processing)
-                .map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+            request = if icrc_112_requests.is_none() {
+                None
+            } else if icrc_112_requests.as_ref().unwrap().len() == 0 {
+                None
+            } else {
+                Some(icrc_112_requests.unwrap())
+            };
+
+            // We execute transactions
+
+            // Wallet tx are executed by the client, when it receives the ICRC-112 request this method returns
+            // and tx status is 'processing' until client updates tx manager with response of ICRC-112
+            for mut tx in eligible_wallet_txs {
+                self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+                    CanisterError::HandleLogicError(format!(
+                        "Error spawning tx timeout task: {}",
+                        e
+                    ))
                 })?;
-        }
+                self.update_tx_state(&mut tx, TransactionState::Processing)
+                    .map_err(|e| {
+                        CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                    })?;
+            }
 
-        // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
-        for mut tx in eligible_canister_txs {
-            self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
-                CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {}", e))
-            })?;
-            self.update_tx_state(&mut tx, TransactionState::Processing)
-                .map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+            // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
+            for mut tx in eligible_canister_txs {
+                self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+                    CanisterError::HandleLogicError(format!(
+                        "Error spawning tx timeout task: {}",
+                        e
+                    ))
                 })?;
+                self.update_tx_state(&mut tx, TransactionState::Processing)
+                    .map_err(|e| {
+                        CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                    })?;
 
-            // this method update the tx state to success or fail inside of it
-            self.execute_canister_tx(&mut tx).await?;
+                // this method update the tx state to success or fail inside of it
+                self.execute_canister_tx(&mut tx).await?;
+            }
         }
 
         let get_resp: ActionResp = self
