@@ -12,6 +12,7 @@ mod tests {
             link::v2::LinkService,
         },
         types::error::CanisterError,
+        utils::icrc::IcrcService,
     };
 
     #[test]
@@ -20,6 +21,7 @@ mod tests {
         let mut link_repository = LinkRepository::faux();
         let link_action_repository = LinkActionRepository::faux();
         let action_repository = ActionRepository::faux();
+        let icrc_service = IcrcService::faux();
 
         let link_id = Uuid::new_v4().to_string();
         let user_id = Uuid::new_v4().to_string();
@@ -52,6 +54,7 @@ mod tests {
             link_repository,
             link_action_repository,
             action_repository,
+            icrc_service,
             ic_env,
         );
 
@@ -69,6 +72,7 @@ mod tests {
         let link_id = Uuid::new_v4().to_string();
         let user_id = Uuid::new_v4().to_string();
         let action_type = ActionType::CreateLink;
+        let icrc_service = IcrcService::faux();
 
         let link = Link {
             id: link_id.clone(),
@@ -96,6 +100,7 @@ mod tests {
             link_repository,
             link_action_repository,
             action_repository,
+            icrc_service,
             ic_env,
         );
 

@@ -32,7 +32,7 @@ export interface CallCanisterRequest {
 export interface CallCanisterResponse {
     contentMap: string;
     certificate: string;
-    reply?: string;
+    reply?: ArrayBuffer;
 }
 
 export interface CallCanisterRequest {

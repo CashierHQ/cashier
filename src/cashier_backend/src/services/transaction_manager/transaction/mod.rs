@@ -58,6 +58,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
 
         tx.state = state;
         if tx.state == TransactionState::Processing {
+            // For timeout task checking is timeout or not. Update the start_ts only when current function set the state to Processing.
             tx.start_ts = Some(self.ic_env.time());
         }
 

@@ -19,7 +19,6 @@ import {
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
-import { MOCK_CASHIER_FEES } from "@/constants/mock-data";
 import { FEE_TYPE } from "./types/enum";
 
 interface ResponseLinksModel {

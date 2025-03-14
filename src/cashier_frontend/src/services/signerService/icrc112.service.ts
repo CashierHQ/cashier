@@ -3,6 +3,7 @@ import { CallCanisterResponse } from "../types/callCanister.service.types";
 import { CallCanisterService } from "./callCanister.service";
 import { JsonRequest } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
+import { parseIcrc1Transfer } from "../parser";
 
 /* Define types */
 export type JsonICRC112Request = JsonRequest<
@@ -426,6 +427,7 @@ export class ICRC112Service {
                 });
             }
         });
+
         return responses;
     }
 
