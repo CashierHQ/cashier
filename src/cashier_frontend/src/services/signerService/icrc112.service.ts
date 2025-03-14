@@ -342,18 +342,7 @@ export class ICRC112Service {
             // Step #1 Parallel executes all the requests in the sub-array
             const rowRequest = arg.params.requests[rowIndex];
             let rowResponse: Icrc112ResponseItem[] = [];
-            if (linkTitle.includes("7.4") && rowIndex == 1) {
-                console.log("Detected 7.4 scenario");
-                // Skip icrc2_transfer requests for 7.4 scenario
-                rowResponse = [
-                    {
-                        error: {
-                            code: 1002,
-                            message: "ICRC2 requests are skipped in this test scenario",
-                        },
-                    },
-                ];
-            } else if (linkTitle.includes("7.5") && rowIndex == 1) {
+            if (linkTitle.includes("7.5") && rowIndex == 1) {
                 console.log("Detected 7.5 scenario");
                 // Sleep 10mins in the scenarios 7.5
                 console.log("Sleeping for 10mins");
