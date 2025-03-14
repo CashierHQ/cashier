@@ -342,16 +342,7 @@ export class ICRC112Service {
             // Step #1 Parallel executes all the requests in the sub-array
             const rowRequest = arg.params.requests[rowIndex];
             let rowResponse: Icrc112ResponseItem[] = [];
-            if (linkTitle.includes("7.5") && rowIndex == 1) {
-                console.log("Detected 7.5 scenario");
-                // Sleep 10mins in the scenarios 7.5
-                console.log("Sleeping for 10mins");
-                await new Promise((resolve) => setTimeout(resolve, 100000));
-                rowResponse = await this.parallelExecuteIcrcRequests(rowRequest, linkTitle);
-            } else {
-                rowResponse = await this.parallelExecuteIcrcRequests(rowRequest, linkTitle);
-            }
-
+            rowResponse = await this.parallelExecuteIcrcRequests(rowRequest, linkTitle);
             console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ rowResponse:", rowResponse);
 
             // Step #2 Validate responses of each request in the sub-array
