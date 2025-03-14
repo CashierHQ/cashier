@@ -154,15 +154,7 @@ export class ICRC112Service {
 
                 // Skip validation 2 and 3 on last row
                 else if (rowIndex == maxRow - 1) {
-                    // Sets response to success
-                    this.setResponse({
-                        finalResponse,
-                        isError: false,
-                        rowIndex,
-                        requestIndex,
-                        successResult: singleResponse.result,
-                    });
-                    continue;
+                    // no validation
                 }
 
                 // In addition to validation 1, response MUST pass EITHER validation 2 or 3
