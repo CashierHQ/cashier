@@ -19,7 +19,7 @@ export function useLinkTemplateForm(defaultValues?: DefaultValues<LinkTemplateSc
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
             title: "",
-            linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
+            linkType: LINK_TYPE.TIP_LINK,
             ...defaultValues,
         },
     });

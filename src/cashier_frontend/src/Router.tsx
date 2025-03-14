@@ -26,11 +26,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/:linkId",
-        element: (
-            <RequireAuth>
-                <ClaimPage />
-            </RequireAuth>
-        ),
+        element: <ClaimPage />,
     },
     {
         path: "/details/:linkId",

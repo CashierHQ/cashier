@@ -210,6 +210,7 @@ const CarouselPrevious = React.forwardRef<HTMLButtonElement, React.ComponentProp
                 )}
                 disabled={!canScrollPrev}
                 onClick={scrollPrev}
+                type="button"
                 {...props}
             >
                 <FaChevronLeft className="h-5 w-5" color="#36A18B" />
@@ -238,6 +239,7 @@ const CarouselNext = React.forwardRef<HTMLButtonElement, React.ComponentProps<ty
                 )}
                 disabled={!canScrollNext}
                 onClick={scrollNext}
+                type="button"
                 {...props}
             >
                 <FaChevronRight className="h-5 w-5" color="#36A18B" />
