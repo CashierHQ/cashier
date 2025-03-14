@@ -239,13 +239,14 @@ export class ICRC112Service {
 
                 console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ finalResponse:", finalResponse);
             }
-
+            
+            // If any of the requests in this row failed valididation, do not execute following rows (sub-arrays)
             if (rowHadError) {
                 break outerLoop;
             }
         }
 
-        // fill in 1001 errors for all requests in the row_index + 1 to last row
+        // If execution was aborted because of a failed validation, fill in 1001 errors for all remaining requests
         if (rowHadError) {
             for (let newIndex = rowIndex + 1; newIndex < maxRow; newIndex++) {
                 const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
