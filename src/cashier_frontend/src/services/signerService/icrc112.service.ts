@@ -2,8 +2,8 @@ import { Agent } from "@dfinity/agent";
 import { CallCanisterResponse } from "../types/callCanister.service.types";
 import { CallCanisterService } from "./callCanister.service";
 import { JsonRequest } from "@slide-computer/signer";
-import type { JsonObject } from "@dfinity/candid";
-import { parseIcrc1Transfer } from "../parser";
+import type { JsonObject, JsonValue } from "@dfinity/candid";
+import { parseIcrc1Transfer, parseIcrc2Approve } from "../parser";
 
 /* Define types */
 export type JsonICRC112Request = JsonRequest<
@@ -120,21 +120,23 @@ export class ICRC112Service {
 
         let rowIndex = 0;
         const maxRow = arg.params.requests.length;
+        let rowHadError = false;
 
         // Later add each individual response to this 2D array
-        const finalResponse: Icrc112Response = { responses: [] };
+        const finalResponse: Icrc112Response = {
+            responses: arg.params.requests.map((row) => new Array(row.length).fill(null)),
+        };
 
         outerLoop: for (rowIndex = 0; rowIndex < maxRow; rowIndex++) {
-            let rowHadError = false;
             // Step #1 Parallel executes all the requests in the sub-array
             const rowRequest = arg.params.requests[rowIndex];
             const rowResponse = await this.parallelExecuteIcrcRequests(rowRequest);
+            console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ rowResponse:", rowResponse);
 
             // Step #2 Validate responses of each request in the sub-array
             for (let requestIndex = 0; requestIndex < rowRequest.length; requestIndex++) {
                 const singleResponse = rowResponse[requestIndex];
                 const singleRequest = rowRequest[requestIndex];
-
                 // Validation 1: Check if raw response has error
                 if ("error" in singleResponse) {
                     // Sets response to fail (error provided by response)
@@ -151,7 +153,7 @@ export class ICRC112Service {
                 }
 
                 // Skip validation 2 and 3 on last row
-                else if (rowIndex= maxRow-1) {
+                else if (rowIndex == maxRow - 1) {
                     // Sets response to success
                     this.setResponse({
                         finalResponse,
@@ -160,29 +162,24 @@ export class ICRC112Service {
                         requestIndex,
                         successResult: singleResponse.result,
                     });
-                    continue;    
+                    continue;
                 }
 
                 // In addition to validation 1, response MUST pass EITHER validation 2 or 3
-                else if (singleRequest.method in SUPPORTED_PARSED_METHODS) {
+                else if (SUPPORTED_PARSED_METHODS.includes(singleRequest.method)) {
                     // Validation 2: Check block_id for recognized standards
-                    if (singleRequest.method == "icrc1_transfer"
-                        || singleRequest.method == "icrc2_approve"
-                        || singleRequest.method == "icrc2_transfer"
-                        || singleRequest.method == "icrc7_transfer") {
+                    if (
+                        singleRequest.method == "icrc1_transfer" ||
+                        singleRequest.method == "icrc2_approve" ||
+                        singleRequest.method == "icrc2_transfer" ||
+                        singleRequest.method == "icrc7_transfer"
+                    ) {
                         //TODO: Serhii to implement this function
-                        const blockId = this.parseReply(singleResponse.result.reply);
-                        if (blockId) {
-                            // Sets response to success
-                            this.setResponse({
-                                finalResponse,
-                                isError: false,
-                                rowIndex,
-                                requestIndex,
-                                successResult: singleResponse.result,
-                            });
-                            continue;
-                        } else {
+                        const blockId = this.parseReply(
+                            singleRequest.method,
+                            singleResponse.result.reply,
+                        );
+                        if (!blockId) {
                             // Sets response to fail (error 1003)
                             rowHadError = true;
                             this.setResponse({
@@ -195,43 +192,24 @@ export class ICRC112Service {
                             });
                             continue;
                         }
-                    } else {
-                        // Placeholder for validating requests that use standards aside from ICRC-1, 2, 7
-                        // Sets response to success
-                        this.setResponse({
-                            finalResponse,
-                            isError: false,
-                            rowIndex,
-                            requestIndex,
-                            successResult: singleResponse.result,
-                        });
-                        continue;
                     }
                 } else {
                     // Validation 3: Check by canister validation (ICRC-114)
                     if (arg.params.validation) {
                         // TODO: Call canister validation
                         // const canisterValidationResponse = Call canisterValidation();
-                        if (canisterValidationResponse) {
-                            // Sets response to success
-                            this.setResponse({
-                                finalResponse,
-                                isError: false,
-                                rowIndex,
-                                requestIndex,
-                                successResult: singleResponse.result,
-                            });
-                            continue;
-                        } else {
+                        // TODO: Set temporary canisterValidationResponse = false;
+                        const canisterValidationResponse = false;
+                        if (!canisterValidationResponse) {
                             // Sets response to fail (error 1003)
                             rowHadError = true;
                             this.setResponse({
-                                 finalResponse,
-                                 isError: true,
-                                 rowIndex,
-                                 requestIndex,
-                                 errorMessage: "Canister validation return false",
-                                 errorCode: 1003,
+                                finalResponse,
+                                isError: true,
+                                rowIndex,
+                                requestIndex,
+                                errorMessage: "Canister validation return false",
+                                errorCode: 1003,
                             });
                             continue;
                         }
@@ -249,29 +227,51 @@ export class ICRC112Service {
                         continue;
                     }
                 }
+
+                // Sets response to success if all validations passed
+                this.setResponse({
+                    finalResponse,
+                    isError: false,
+                    rowIndex,
+                    requestIndex,
+                    successResult: singleResponse.result,
+                });
+
+                console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ finalResponse:", finalResponse);
             }
 
             if (rowHadError) {
-                // fill in 1001 errors for all requests in the row_index + 1 to last row
-                for (let newIndex = rowIndex + 1; newIndex < maxRow; newIndex++) {
-                    const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
-                    const rowResponse: Icrc112ResponseItem[] =
-                        this.assignNonExecuteRequestToErrorResult(
-                            nonExecuteParallelRequestRow.length,
-                        );
-                    finalResponse.responses.push(rowResponse);
-                }
                 break outerLoop;
             }
         }
+
+        // fill in 1001 errors for all requests in the row_index + 1 to last row
+        if (rowHadError) {
+            for (let newIndex = rowIndex + 1; newIndex < maxRow; newIndex++) {
+                const nonExecuteParallelRequestRow = arg.params.requests[newIndex];
+                for (let reqIndex = 0; reqIndex < nonExecuteParallelRequestRow.length; reqIndex++) {
+                    this.setResponse({
+                        finalResponse,
+                        isError: true,
+                        rowIndex: newIndex,
+                        requestIndex: reqIndex,
+                        errorMessage: "Not processed due to batch request failure",
+                        errorCode: 1001,
+                    });
+                }
+            }
+        }
+
+        console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ finalResponse:", finalResponse);
         return finalResponse;
     }
 
     private setResponse(params: SetResponseParams) {
+        console.log(params.finalResponse);
         if (params.isError) {
             params.finalResponse.responses[params.rowIndex][params.requestIndex] = {
                 error: {
-                    code: params.errorCode ? params.errorCode : 1003,
+                    code: params.errorCode ?? 1003,
                     message: params.errorMessage ?? "Error while executing request",
                 },
             };
@@ -285,10 +285,34 @@ export class ICRC112Service {
         }
     }
 
-    private parseReply(reply?: string): string {
+    private parseReply(method: string, reply?: ArrayBuffer): bigint | undefined {
         // if rely is undefined, return error
-        //const candid = new CandidJSON({IDL: IDL});
-        return "temporary success";
+        if (!reply) {
+            return undefined;
+        }
+
+        let responseFromParse: JsonValue | undefined;
+
+        switch (method) {
+            case "icrc1_transfer":
+                responseFromParse = parseIcrc1Transfer(reply);
+                break;
+            case "icrc2_approve":
+                responseFromParse = parseIcrc2Approve(reply);
+                break;
+        }
+
+        if (
+            responseFromParse &&
+            typeof responseFromParse === "object" &&
+            "Ok" in responseFromParse
+        ) {
+            const okValue = responseFromParse.Ok;
+            if (typeof okValue === "bigint") {
+                return BigInt(okValue);
+            }
+        }
+        return undefined;
     }
 
     public async testICRC112Execute(

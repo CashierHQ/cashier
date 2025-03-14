@@ -1,7 +1,7 @@
-import { IDL } from "@dfinity/candid";
+import { IDL, JsonValue } from "@dfinity/candid";
 import { idlFactory } from "./icrc";
 
-export const parseIcrc1Transfer = (bytes: ArrayBuffer) => {
+export const parseIcrc1Transfer = (bytes: ArrayBuffer): JsonValue => {
     const service = idlFactory({ IDL });
 
     const fields = service._fields;
@@ -18,11 +18,11 @@ export const parseIcrc1Transfer = (bytes: ArrayBuffer) => {
     }
 
     const decoded = IDL.decode([transfer_result_type], bytes)[0];
-
     console.log("decoded", decoded);
+    return decoded;
 };
 
-export const parseIcrc2Approve = (bytes: ArrayBuffer) => {
+export const parseIcrc2Approve = (bytes: ArrayBuffer): JsonValue => {
     const service = idlFactory({ IDL });
 
     const fields = service._fields;
@@ -39,6 +39,6 @@ export const parseIcrc2Approve = (bytes: ArrayBuffer) => {
     }
 
     const decoded = IDL.decode([approve_result_type], bytes)[0];
-
-    console.log("decoded", decoded);
+    console.log("🚀 ~ parseIcrc2Approve ~ decoded:", decoded);
+    return decoded;
 };

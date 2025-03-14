@@ -96,6 +96,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 }
             }
         } catch (error) {
+            console.log("🚀 ~ startTransaction ~ error:", error);
             if (isCashierError(error)) {
                 onCashierError(error);
             } else {
@@ -103,6 +104,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             }
             setIsDisabled(false);
             setButtonText(t("transaction.confirm_popup.confirm_button"));
+            throw error;
         }
     };
 
