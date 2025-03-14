@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
+import { IoWalletOutline } from "react-icons/io5";
 import { SlWallet } from "react-icons/sl";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
@@ -159,7 +160,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             <WalletButton
                                 title={t("claim.addressPlaceholder")}
                                 handleConnect={() => handleConnectWallet(WALLET_OPTIONS.TYPING)}
-                                icon={<IoWallet color="green" className="mr-2 h-6 w-6" />}
+                                icon={<IoWalletOutline color="green" className="mr-2 h-6 w-6" />}
                             />
                         ) : (
                             <FormField
@@ -171,7 +172,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                             <IconInput
                                                 isCurrencyInput={false}
                                                 icon={
-                                                    <IoWallet
+                                                    <IoWalletOutline
                                                         color="green"
                                                         className="mr-2 h-6 w-6"
                                                     />

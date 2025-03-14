@@ -24,12 +24,15 @@ export default function LinkCardWithoutPhoneFrame({
                     alt="Link template"
                     className="w-[250px] md:w-[60px] xl:w-[60px] 2xl:w-[100px]"
                 />
-                <h3 className="text-lg font-semibold py-2">{title}</h3>
-                <h3 className="text-md">{message}</h3>
+                <div className="mb-8">
+                    <h3 className="text-lg font-semibold py-2">{title}</h3>
+                    <h3 className="text-md text-[#475467]">{message}</h3>
+                </div>
+
                 {disabled ? (
                     <div
                         className={cn(
-                            "text-green bg-white rounded-full py-2 px-8 mt-3 text-base w-[80%] text-center font-bold",
+                            "text-green bg-white rounded-full py-3 px-8 mt-3 text-base w-[100%] text-center font-bold",
                             onClaim ? "cursor-pointer" : "",
                         )}
                     >
@@ -38,7 +41,7 @@ export default function LinkCardWithoutPhoneFrame({
                 ) : (
                     <div
                         className={cn(
-                            "text-white bg-green rounded-full py-2 px-8 mt-3 text-base w-[80%] text-center",
+                            "text-white bg-green rounded-full py-3 px-8 mt-3 text-base w-[100%] text-center",
                             onClaim ? "cursor-pointer" : "",
                         )}
                         onClick={onClaim}
