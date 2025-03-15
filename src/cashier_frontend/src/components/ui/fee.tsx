@@ -14,6 +14,15 @@ export type FeeProps = {
 export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading, isUsd }) => {
     const showUsd = isUsd && usdAmount !== undefined;
 
+    /*TODO: Remove after mid milestone*/
+    const getSymbol = (title?: string) => {
+        if (title === "ICP") {
+            return "ICP";
+        } else if (title === "CUTE") {
+            return "CHAT";
+        } else return title;
+    };
+
     const renderAmount = () => {
         if (isLoading) {
             return <Spinner width={22} />;
@@ -22,7 +31,7 @@ export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading,
         return (
             <div className="flex">
                 + {showUsd && `($${usdAmount.toFixed(3)}) ≈ `}
-                {amount} {symbol}
+                {amount} {getSymbol(symbol)}
             </div>
         );
     };

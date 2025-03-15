@@ -8,6 +8,7 @@ import { Asset } from "@/components/ui/asset";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { convert } from "@/utils/helpers/convert";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 interface TransactionItemProps {
     title: string;
@@ -30,6 +31,15 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
 
     const { data: conversionRates } = useConversionRatesQuery(intent.asset.address);
 
+    //TODO: Remove after mid milestone
+    const getTokenAvatar = (tokenAddress: string) => {
+        if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
+            return `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`;
+        } else if (tokenAddress === "k64dn-7aaaa-aaaam-qcdaq-cai") {
+            return `${IC_EXPLORER_IMAGES_PATH}2ouva-viaaa-aaaaq-aaamq-cai`;
+        } else return assetSrc;
+    };
+
     return (
         <div className="flex items-center">
             {mapIntentsStateToStatus(intent.state) !== undefined && (
@@ -44,7 +54,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
                     isLoading={isLoading || isLoadingMetadata}
                     amount={assetAmount}
                     usdAmount={convert(assetAmount, conversionRates?.tokenToUsd)}
-                    src={assetSrc}
+                    src={getTokenAvatar(intent.asset.address)}
                     symbol={assetSymbol}
                     isUsd={isUsd}
                 />

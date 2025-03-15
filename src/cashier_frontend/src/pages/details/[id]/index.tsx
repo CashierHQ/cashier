@@ -110,7 +110,7 @@ export default function DetailPage() {
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
                                             <TableCell className="text-right px-5">
-                                                {linkData?.link?.linkType}
+                                                Tip link
                                             </TableCell>
                                         </TableRow>
                                         <TableRow>
@@ -128,7 +128,9 @@ export default function DetailPage() {
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
                                             <TableCell className="text-right px-5">
-                                                {metadata ? metadata.name : "N/A"}
+                                                {metadata?.name === "CUTE"
+                                                    ? "CHAT"
+                                                    : metadata?.name}
                                             </TableCell>
                                         </TableRow>
                                         <TableRow>

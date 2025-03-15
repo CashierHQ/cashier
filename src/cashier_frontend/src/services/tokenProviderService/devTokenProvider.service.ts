@@ -3,26 +3,26 @@ import { ITokenProviderService } from "./ITokenProviderService";
 
 export const ASSET_LIST: UserToken[] = [
     {
-        symbol: "tICP",
+        symbol: "ICP",
         amount: "0",
         ledgerId: "x5qut-viaaa-aaaar-qajda-cai",
         accountId: "",
         valueUSD: "",
     },
     {
-        symbol: "tCHAT",
+        symbol: "CHAT",
         amount: "0",
         ledgerId: "k64dn-7aaaa-aaaam-qcdaq-cai",
         accountId: "",
         valueUSD: "",
     },
-    {
-        symbol: "ICP",
-        amount: "0",
-        ledgerId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        accountId: "",
-        valueUSD: "",
-    },
+    // {
+    //     symbol: "ICP",
+    //     amount: "0",
+    //     ledgerId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+    //     accountId: "",
+    //     valueUSD: "",
+    // },
     {
         symbol: "BOB",
         amount: "0",
