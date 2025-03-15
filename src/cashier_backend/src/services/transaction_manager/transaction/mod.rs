@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
+use crate::info;
+use crate::repositories::transaction;
 use crate::services::transaction_manager::builder::icrc112::TransactionBuilder;
 use crate::types::icrc_112_transaction::Icrc112Requests;
 use crate::{
@@ -90,7 +92,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
     }
 
     // TODO: handle the case icrc1 transfer execute by canister
-
+    // TODO add unit for one transaction
     pub fn create_icrc_112(
         &self,
         action_id: String,
@@ -101,6 +103,14 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
 
         if transactions.is_empty() {
             return None;
+        }
+        // handle the case when there is only one transaction
+        if transactions.len() == 1 {
+            let tx = &transactions[0];
+            let icrc_112_request =
+                self.convert_tx_to_icrc_112_request(&action_id, link_id.clone(), tx);
+
+            return Some(vec![vec![icrc_112_request]]);
         }
 
         let mut icrc_112_requests: Vec<Vec<Icrc112Request>> = Vec::new();

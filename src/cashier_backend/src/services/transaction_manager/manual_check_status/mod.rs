@@ -97,11 +97,6 @@ impl<E: IcEnvironment> ManualCheckStatusService<E> {
                     validate_allowance::validate_allowance(&self.icrc_service, &icrc2_approve_info)
                         .await;
 
-                info!(
-                    "[ManualCheckStatusService] Icrc2Approve is_valid: {:?}",
-                    is_valid
-                );
-
                 match is_valid {
                     Ok(valid) => {
                         if valid {
