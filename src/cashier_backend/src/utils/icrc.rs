@@ -1,4 +1,4 @@
-use candid::Principal;
+use candid::{Nat, Principal};
 use icrc_ledger_types::{icrc1::account::Account, icrc2::transfer_from::TransferFromArgs};
 use serde_bytes::ByteBuf;
 use std::fmt;
@@ -86,7 +86,7 @@ impl IcrcService {
         &self,
         token_pid: Principal,
         arg: TransferFromArgs,
-    ) -> Result<(), CanisterError> {
+    ) -> Result<Nat, CanisterError> {
         let token_service = Service::new(token_pid);
 
         let memo = match arg.memo.is_some() {
@@ -115,7 +115,7 @@ impl IcrcService {
 
         match res {
             Ok((call_res,)) => match call_res {
-                Ok(_block_id) => Ok(()),
+                Ok(_block_id) => Ok(_block_id),
                 Err(error) => Err(CanisterError::CanisterCallError(
                     "icrc_2_transfer_from".to_string(),
                     token_service.get_canister_id().to_string(),

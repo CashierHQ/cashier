@@ -1,10 +1,11 @@
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { Icrc112Requests, Icrc112Response } from "./icrc112.service";
+import { Icrc112Requests, Icrc112Response, ICRC112Service } from "./icrc112.service";
 import { Signer } from "./signer";
 import { ClientTransport } from "./transport";
 import { JsonRequest, JsonResponse } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
+import { callCanisterService } from "./callCanister.service";
 
 class CallSignerService {
     private agent: HttpAgent;
@@ -31,6 +32,15 @@ class CallSignerService {
         const response = await signer.sendRequest(request);
         console.log("🚀 ~ CallSignerService ~ executeIcrc112 ~ response:", response);
         return this.parseResponse<Icrc112Response>(response);
+    }
+
+    async tesstExecute(input: Icrc112Requests, linkTitle: string): Promise<Icrc112Response> {
+        const icrc112Service = new ICRC112Service({
+            callCanisterService: callCanisterService,
+            agent: this.agent,
+        });
+        const response = await icrc112Service.testICRC112Execute(input, linkTitle);
+        return response;
     }
 
     private parseResponse<T>(jsonObj: JsonResponse): T {

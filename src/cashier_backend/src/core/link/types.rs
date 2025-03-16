@@ -19,6 +19,7 @@ pub struct LinkDetailUpdateAssetInfoInput {
     pub chain: String,
     pub total_amount: u64,
     pub amount_per_claim: u64,
+    pub label: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -84,7 +85,6 @@ pub struct LinkDto {
 pub struct AssetInfoDto {
     pub address: String,
     pub chain: String,
-    pub current_amount: u64,
     pub total_amount: u64,
     pub amount_per_claim: u64,
     pub total_claim: u64,
@@ -131,10 +131,9 @@ impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
             chain,
             total_amount: input.total_amount,
             amount_per_claim: input.amount_per_claim,
+            label: input.label,
             // start with 0
             total_claim: 0,
-            // start with 0
-            current_amount: 0,
         }
     }
 }
@@ -146,7 +145,6 @@ impl From<&cashier_types::AssetInfo> for AssetInfoDto {
         AssetInfoDto {
             address: input.address.clone(),
             chain,
-            current_amount: input.total_amount, // Set current_amount to total_amount
             total_amount: input.total_amount,
             amount_per_claim: input.amount_per_claim,
             total_claim: input.total_claim,
@@ -213,7 +211,6 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
         AssetInfoDto {
             address: input.address.clone(),
             chain,
-            current_amount: input.total_amount, // Set current_amount to total_amount
             total_amount: input.total_amount,
             amount_per_claim: input.amount_per_claim,
             total_claim: 0,

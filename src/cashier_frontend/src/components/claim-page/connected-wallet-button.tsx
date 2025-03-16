@@ -15,11 +15,11 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
     return (
         <button
             className={cn(
-                "w-full h-12 px-3 py-5 space-y-2 mx-1 my-3",
+                "w-full h-14 px-3 py-5 space-y-2 my-3",
                 "bg-background text-foreground",
                 "border border-input border-green",
                 "hover:bg-accent hover:text-accent-foreground",
-                "rounded-md",
+                "rounded-xl",
                 "text-md",
                 "ring-offset-background",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

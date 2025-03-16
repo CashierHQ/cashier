@@ -103,6 +103,14 @@ impl IcTransaction {
             _ => None,
         }
     }
+
+    pub fn to_str(&self) -> &str {
+        match self {
+            IcTransaction::Icrc1Transfer(_) => "Icrc1Transfer",
+            IcTransaction::Icrc2Approve(_) => "Icrc2Approve",
+            IcTransaction::Icrc2TransferFrom(_) => "Icrc2TransferFrom",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

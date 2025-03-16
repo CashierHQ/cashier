@@ -139,7 +139,7 @@ export default function LinkPage() {
                             />
                         </MultiStepForm.Item>
 
-                        <MultiStepForm.Item name={t("create.linkDetails")}>
+                        <MultiStepForm.Item name={t("create.addAssets")}>
                             <LinkDetails />
                         </MultiStepForm.Item>
 

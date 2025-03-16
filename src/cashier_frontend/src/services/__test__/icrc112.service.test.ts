@@ -13,7 +13,7 @@ const generateMockCallCanisterResponse = (requestNum: number): CallCanisterRespo
     return {
         certificate: "certificateResponse" + requestNum,
         contentMap: "contentMapResponse" + requestNum,
-        reply: "replyResponse" + requestNum,
+        reply: new TextEncoder().encode("replyResponse" + requestNum).buffer,
     };
 };
 
@@ -76,13 +76,13 @@ describe("ICRC-112 service", () => {
         const mockResponseCallCanister1: CallCanisterResponse = {
             contentMap: "contentMapResponse1",
             certificate: "certificateResponse1",
-            reply: "replyResponse1",
+            reply: new TextEncoder().encode("replyResponse1").buffer,
         };
 
         const mockResponseCallCanister2: CallCanisterResponse = {
             contentMap: "contentMapResponse2",
             certificate: "certificateResponse2",
-            reply: "replyResponse2",
+            reply: new TextEncoder().encode("replyResponse2").buffer,
         };
 
         const requests: Icrc112Requests = [[mockRequest1, mockRequest2]];

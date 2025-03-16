@@ -6,7 +6,10 @@ import { z } from "zod";
 import { CarouselApi } from "../ui/carousel";
 
 export const linkTemplateSchema = z.object({
-    title: z.string().min(5),
+    title: z
+        .string()
+        .min(5, "Link name must be at least 5 characters")
+        .max(50, "Link name must be at most 50 characters"),
     linkType: z.string(),
 });
 export type LinkTemplateSchema = z.infer<typeof linkTemplateSchema>;
@@ -16,7 +19,7 @@ export function useLinkTemplateForm(defaultValues?: DefaultValues<LinkTemplateSc
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
             title: "",
-            linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
+            linkType: LINK_TYPE.TIP_LINK,
             ...defaultValues,
         },
     });

@@ -64,6 +64,7 @@ impl ValidateService {
                         asset.address, e
                     )
                 })?;
+
             if balance <= asset.total_amount {
                 return Err(format!(
                     "Insufficient balance for asset: {}, balance: {}, required: {} and fee try smaller amount",
@@ -82,8 +83,8 @@ impl ValidateService {
                 return Err("User not found".to_string());
             }
         };
-        let intent = self.action_repository.get(action_id);
-        match intent {
+        let action = self.action_repository.get(action_id);
+        match action {
             Some(action) => Ok(action.creator == user_wallet.user_id),
             None => {
                 return Err("Action not found".to_string());

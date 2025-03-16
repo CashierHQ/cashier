@@ -6,8 +6,8 @@ use crate::common::Chain;
 pub struct AssetInfo {
     pub address: String,
     pub chain: Chain,
-    pub current_amount: u64,
     pub total_amount: u64,
     pub amount_per_claim: u64,
     pub total_claim: u64,
+    pub label: String,
 }

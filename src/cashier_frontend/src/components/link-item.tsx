@@ -50,7 +50,7 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
                 {link.image ? (
                     <img src={link.image} alt="link" className="w-10 h-10 rounded-sm" />
                 ) : (
-                    <div className="w-10 h-10 rounded-sm bg-gray-200"></div>
+                    <img src="/icpToken.png" alt="link" className="w-10 h-10 rounded-sm" />
                 )}
             </div>
             <div className="flex items-center justify-between grow ml-3">

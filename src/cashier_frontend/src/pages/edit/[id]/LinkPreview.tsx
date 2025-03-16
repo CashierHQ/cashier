@@ -129,6 +129,7 @@ export default function LinkPreview({
                 onClose={() => setShowConfirmation(false)}
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
+                onCashierError={onCashierError}
             />
         </div>
     );

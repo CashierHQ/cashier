@@ -12,4 +12,7 @@ pub mod init_and_upgrade;
 pub mod link;
 pub mod user;
 
+#[cfg(test)]
+pub mod __tests__;
+
 ic_cdk::export_candid!();

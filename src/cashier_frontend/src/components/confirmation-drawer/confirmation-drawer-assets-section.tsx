@@ -27,7 +27,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                         {t("transaction.confirm_popup.send_label")}
                     </h2>
 
-                    <Info className="text-destructive ml-1.5" size={16} onClick={onInfoClick} />
+                    <Info className="text-destructive ml-1.5" size={22} onClick={onInfoClick} />
                 </div>
 
                 <button className="flex text-destructive items-center" onClick={onUsdClick}>
@@ -36,7 +36,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 </button>
             </div>
 
-            <ol className="flex flex-col gap-3 border-solid border-inherit border-2 rounded-lg mt-3 p-4 overflow-y-auto max-h-[200px]">
+            <ol className="flex flex-col gap-3 border-solid border-inherit border-[1px] rounded-xl mt-1 p-4 overflow-y-auto max-h-[200px]">
                 {intents.map((intent) => (
                     <li key={intent.id}>
                         <TransactionItem

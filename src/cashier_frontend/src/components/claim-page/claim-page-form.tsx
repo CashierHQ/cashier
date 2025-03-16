@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
+import { IoWalletOutline } from "react-icons/io5";
 import { SlWallet } from "react-icons/sl";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
@@ -13,10 +14,19 @@ import WalletButton from "./connect-wallet-button";
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import { FixedBottomButton } from "../fix-bottom-button";
+import { Spinner } from "../ui/spinner";
+import ConfirmDialog from "../confirm-dialog";
+import { useConfirmDialog } from "@/hooks/useDialog";
+
+interface ClaimLinkDetail {
+    title: string;
+    amount: number;
+}
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData: LinkDetailModel;
+    claimLinkDetails: ClaimLinkDetail[];
     handleClaim: () => void;
     setIsClaiming: () => void;
 }
@@ -32,18 +42,25 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     handleClaim,
     formData,
+    claimLinkDetails,
     setIsClaiming,
 }) => {
+    console.log("🚀 ~ form:", form.getValues());
     const { t } = useTranslation();
     const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
+    const { open, options, showDialog, hideDialog } = useConfirmDialog();
+
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
     const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
     const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
         if (identity && selectOption !== currentSelectOptionWallet) {
-            console.log("Do you want to log out");
-            disconnect();
+            showDialog({
+                title: "Are you sure?",
+                description:
+                    "You are connected to another wallet. Would you like to disconnect and continue?",
+            });
             return;
         }
         connect();
@@ -83,9 +100,13 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                 className="w-10 h-10 rounded-sm mr-3"
                             />
                         </div>
-                        <div>{formData.title}</div>
+                        <div>{claimLinkDetails[0].title}</div>
                     </div>
-                    <div className="text-green">{formData.amountNumber}</div>
+                    {claimLinkDetails[0].amount ? (
+                        <div className="text-green">{claimLinkDetails[0].amount}</div>
+                    ) : (
+                        <Spinner width={22} />
+                    )}
                 </div>
             </div>
 
@@ -139,7 +160,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             <WalletButton
                                 title={t("claim.addressPlaceholder")}
                                 handleConnect={() => handleConnectWallet(WALLET_OPTIONS.TYPING)}
-                                icon={<IoWallet color="green" className="mr-2 h-6 w-6" />}
+                                icon={<IoWalletOutline color="green" className="mr-2 h-6 w-6" />}
                             />
                         ) : (
                             <FormField
@@ -151,13 +172,13 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                             <IconInput
                                                 isCurrencyInput={false}
                                                 icon={
-                                                    <IoWallet
+                                                    <IoWalletOutline
                                                         color="green"
                                                         className="mr-2 h-6 w-6"
                                                     />
                                                 }
                                                 placeholder={t("claim.addressPlaceholder")}
-                                                className="py-5 h-12 text-md"
+                                                className="py-5 h-14 text-md rounded-xl"
                                                 {...field}
                                             />
                                         </FormControl>
@@ -185,6 +206,17 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     </Button> */}
                 </form>
             </Form>
+            <ConfirmDialog
+                open={open}
+                title={options.title}
+                description={options.description}
+                actionText="Disconnect"
+                onSubmit={() => {
+                    disconnect();
+                    hideDialog();
+                }}
+                onOpenChange={hideDialog}
+            />
         </>
     );
 };

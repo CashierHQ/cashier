@@ -10,7 +10,6 @@ type AssetDto = record { chain : text; address : text };
 type AssetInfoDto = record {
   total_amount : nat64;
   chain : text;
-  current_amount : nat64;
   address : text;
   total_claim : nat64;
   amount_per_claim : nat64;
@@ -78,12 +77,14 @@ type IntentDto = record {
   task : text;
   "type" : text;
   created_at : nat64;
-  type_metadata : vec record { text; TypeMetdataValue };
+  type_metadata : vec record { text; MetadataValue };
   state : text;
+  transactions : vec TransactionDto;
 };
 type LinkDetailUpdateAssetInfoInput = record {
   total_amount : nat64;
   chain : text;
+  label : text;
   address : text;
   amount_per_claim : nat64;
 };
@@ -109,6 +110,13 @@ type LinkDto = record {
   template : opt text;
 };
 type LinkStateMachineActionParams = variant { Update : LinkDetailUpdateInput };
+type MetadataValue = variant {
+  U64 : nat64;
+  String : text;
+  MaybeMemo : opt blob;
+  Asset : AssetDto;
+  Wallet : AssetDto;
+};
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
   metadata : PaginateResultMetadata;
@@ -142,18 +150,21 @@ type Result_2 = variant { Ok : GetLinkResp; Err : text };
 type Result_3 = variant { Ok : PaginateResult; Err : text };
 type Result_4 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
 type Result_5 = variant { Ok : ActionDto; Err : CanisterError };
-type Result_6 = variant { Ok; Err : CanisterError };
-type Result_7 = variant { Ok : LinkDto; Err : CanisterError };
+type Result_6 = variant { Ok : LinkDto; Err : CanisterError };
+type TransactionDto = record {
+  id : text;
+  protocol : text;
+  protocol_metadata : vec record { text; MetadataValue };
+  from_call_type : text;
+  created_at : nat64;
+  state : text;
+  dependency : opt vec text;
+  group : nat16;
+};
 type TriggerTransactionInput = record {
   transaction_id : text;
   action_id : text;
   link_id : text;
-};
-type TypeMetdataValue = variant {
-  U64 : nat64;
-  String : text;
-  Asset : AssetDto;
-  Wallet : AssetDto;
 };
 type UpdateActionInput = record {
   action_id : text;
@@ -178,7 +189,7 @@ service : () -> {
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   process_action : (ProcessActionInput) -> (Result_5);
-  trigger_transaction : (TriggerTransactionInput) -> (Result_6);
+  trigger_transaction : (TriggerTransactionInput) -> (Result);
   update_action : (UpdateActionInput) -> (Result_5);
-  update_link : (UpdateLinkInput) -> (Result_7);
+  update_link : (UpdateLinkInput) -> (Result_6);
 }

@@ -3,7 +3,7 @@ import LinkService, {
     CreateActionInputModel,
     UpdateActionInputModel,
 } from "@/services/link.service";
-import { LinkDetailModel, State } from "@/services/types/link.service.types";
+import { AssetInfoModel, LinkDetailModel, State } from "@/services/types/link.service.types";
 import {
     QueryClient,
     useMutation,
@@ -112,17 +112,15 @@ export function useSetTipLinkDetails() {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async (vars: {
-            link: LinkDetailModel;
-            patch: { amount: bigint; tokenAddress: string };
-        }) => {
+        mutationFn: async (vars: { link: LinkDetailModel; patch: AssetInfoModel[] }) => {
             const linkService = new LinkService(identity);
 
             const linkData = {
                 ...vars.link,
-                ...vars.patch,
+                asset_info: vars.patch,
                 state: State.PendingPreview,
             } as LinkDetailModel;
+            console.log("🚀 ~ mutationFn: ~ linkData:", linkData);
 
             const linkDto = await linkService.updateLink(vars.link.id, linkData, true);
 
@@ -211,7 +209,13 @@ export function useIcrc112Execute() {
     const identity = useIdentity();
 
     const mutation = useMutation({
-        mutationFn: async (transactions: Icrc112RequestModel[][] | undefined) => {
+        mutationFn: async ({
+            transactions,
+            linkTitle,
+        }: {
+            transactions: Icrc112RequestModel[][] | undefined;
+            linkTitle: string;
+        }) => {
             const identityProvided = !!identity;
             const transactionsProvided = transactions && transactions.length > 0;
 
@@ -221,7 +225,10 @@ export function useIcrc112Execute() {
 
             const signerService = new CallSignerService(identity);
 
-            return await signerService.execute(transactions as unknown as SequenceRequest);
+            return await signerService.tesstExecute(
+                transactions as unknown as SequenceRequest,
+                linkTitle,
+            );
         },
     });
 
