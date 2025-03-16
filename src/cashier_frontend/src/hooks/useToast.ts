@@ -7,6 +7,7 @@ const useToast = () => {
         title: "",
         description: "",
         variant: "default",
+        onOpenChange: () => {},
     });
 
     const showToast = useCallback(
@@ -16,6 +17,7 @@ const useToast = () => {
                 title,
                 description,
                 variant,
+                onOpenChange: () => {},
             });
         },
         [],

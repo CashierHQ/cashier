@@ -1,5 +1,5 @@
 use cashier_types::{
-    Asset, Chain, Intent, IntentState, IntentTask, IntentType, TransferIntent, Wallet,
+    Asset, Chain, Intent, IntentState, IntentTask, IntentType, TransferData, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -45,7 +45,7 @@ impl<'a, E: IcEnvironment + Clone> IntentBuilder for TransferWalletToLinkIntentB
 
         let intent = Intent {
             id: id.to_string(),
-            r#type: IntentType::Transfer(TransferIntent {
+            r#type: IntentType::Transfer(TransferData {
                 from: deposit_from_wallet,
                 to: deposit_wallet,
                 asset: self.asset.clone(),
@@ -56,6 +56,7 @@ impl<'a, E: IcEnvironment + Clone> IntentBuilder for TransferWalletToLinkIntentB
             task: IntentTask::TransferWalletToLink,
             dependency: vec![],
             chain: Chain::IC,
+            label: "1002".to_string(),
         };
 
         IntentBuildResponse {

@@ -1,5 +1,6 @@
 import { IntentCreateModel } from "./intent.service.types";
 import { ActionModel } from "./action.service.types";
+import { CHAIN, LINK_INTENT_LABEL } from "./enum";
 
 export enum State {
     New = "New",
@@ -20,26 +21,10 @@ export enum Chain {
 }
 
 export type AssetInfoModel = {
-    chain: string;
     address: string;
     amount: bigint;
-};
-
-export type UpdateLinkInput = {
-    title: string;
-    //++ assetInfo
-    chain: Chain;
-    amount: number;
-    // -- assetInfo
-
-    //++ action
-    // -- action
-
-    description: string;
-    state: State;
-    template: Template;
-    image: string;
-    create_at: Date;
+    label?: LINK_INTENT_LABEL;
+    chain?: CHAIN;
 };
 
 export type LinkDetailModel = {
@@ -52,9 +37,7 @@ export type LinkDetailModel = {
     template?: string;
     creator?: string;
     create_at: Date;
-    amount: bigint;
-    amountNumber: number;
-    tokenAddress: string;
+    asset_info: AssetInfoModel[];
 };
 
 export type LinkModel = {

@@ -14,6 +14,15 @@ pub struct Asset {
     pub chain: Chain,
 }
 
+impl Default for Asset {
+    fn default() -> Self {
+        Asset {
+            address: "".to_string(),
+            chain: Chain::IC,
+        }
+    }
+}
+
 impl Asset {
     pub fn get_principal(&self) -> Result<Principal, PrincipalError> {
         Principal::from_text(self.address.clone())
@@ -47,6 +56,15 @@ impl FromStr for Chain {
 pub struct Wallet {
     pub address: String,
     pub chain: Chain,
+}
+
+impl Default for Wallet {
+    fn default() -> Self {
+        Wallet {
+            address: "".to_string(),
+            chain: Chain::IC,
+        }
+    }
 }
 
 impl Wallet {

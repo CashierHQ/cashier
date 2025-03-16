@@ -4,10 +4,11 @@ import { Toast, ToastClose, ToastProvider, ToastViewport } from "@/components/ui
 import { FiXCircle } from "react-icons/fi";
 import { CiCircleCheck } from "react-icons/ci";
 import { cva, type VariantProps } from "class-variance-authority";
+import { IoIosClose } from "react-icons/io";
 
 // Define custom variants
 const transactionToastVariants = cva(
-    "bg-[#FFFAF2] group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md border p-4 pr-6 shadow-lg transition-all",
+    "bg-[#FFFAF2] group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-xl border-0 p-4 pr-6 shadow-lg transition-all",
     {
         variants: {
             variant: {
@@ -25,7 +26,7 @@ export interface TransactionToastProps extends VariantProps<typeof transactionTo
     open: boolean;
     title: string;
     description: string;
-    onOpenChange?: (open: boolean) => void;
+    onOpenChange: (open: boolean) => void;
 }
 
 const TransactionToast: FC<TransactionToastProps> = ({
@@ -42,7 +43,7 @@ const TransactionToast: FC<TransactionToastProps> = ({
                 onOpenChange={onOpenChange}
                 className={cn(transactionToastVariants({ variant }))}
             >
-                <div className="grid gap-1">
+                <div className="grid gap-1 w-full">
                     <div className="flex items-center">
                         {variant === "default" ? (
                             <CiCircleCheck color="green" size={48} />
@@ -50,13 +51,20 @@ const TransactionToast: FC<TransactionToastProps> = ({
                             <FiXCircle color="red" size={48} />
                         )}
 
-                        <div className="ml-3">
-                            <div className="text-xl font-medium text-black">{title}</div>
+                        <div className="ml-3 flex-1">
+                            <div className="flex items-center justify-between">
+                                <div className="text-xl font-medium text-black">{title}</div>
+                                <IoIosClose
+                                    onClick={() => onOpenChange(false)}
+                                    className="cursor-pointer"
+                                    size={38}
+                                    color="#98A2B3"
+                                />
+                            </div>
                             <div className="text-md opacity-90">{description}</div>
                         </div>
                     </div>
                 </div>
-                <ToastClose />
             </Toast>
             <ToastViewport className="fixed bottom-20 sm:bottom-20 left-1/2 -translate-x-1/2" />
         </ToastProvider>

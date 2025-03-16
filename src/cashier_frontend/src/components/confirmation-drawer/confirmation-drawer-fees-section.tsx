@@ -1,7 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { IntentModel } from "@/services/types/intent.service.types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IntentHelperService } from "@/services/fee.service";
 import { convert } from "@/utils/helpers/convert";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
@@ -34,7 +33,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
-            <div className="flex flex-col gap-3 rounded-lg p-4 bg-lightgreen">
+            <div className="flex flex-col gap-3 rounded-xl p-4 bg-lightgreen">
                 <div className="flex justify-between text-lg">
                     <h4>{t("transaction.confirm_popup.total_cashier_fees_label")}</h4>
 
@@ -44,10 +43,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                             conversionRates!.tokenToUsd !== undefined &&
                             `($${convert(totalCashierFee, conversionRates!.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
                         {totalCashierFee} {assetSymbol}
-                        <Avatar className="w-7 h-7 ml-3">
-                            <AvatarImage src={assetSrc} />
-                            <AvatarFallback>{assetSymbol}</AvatarFallback>
-                        </Avatar>
                     </div>
                 </div>
             </div>

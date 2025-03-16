@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
+import { TokenUtilService } from "@/services/tokenUtils.service";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -21,7 +22,8 @@ export default function DetailPage() {
     const identity = useIdentity();
     const { toast } = useToast();
     const navigate = useNavigate();
-    const { metadata } = useTokenMetadata(linkData?.link.tokenAddress);
+    //TODO: Update to apply asset_info as the list of assets
+    const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
     const { t } = useTranslation();
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
@@ -108,7 +110,7 @@ export default function DetailPage() {
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
                                             <TableCell className="text-right px-5">
-                                                {linkData?.link?.linkType}
+                                                Tip link
                                             </TableCell>
                                         </TableRow>
                                         <TableRow>
@@ -126,7 +128,9 @@ export default function DetailPage() {
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
                                             <TableCell className="text-right px-5">
-                                                {metadata ? metadata.name : "N/A"}
+                                                {metadata?.name === "CUTE"
+                                                    ? "CHAT"
+                                                    : metadata?.name}
                                             </TableCell>
                                         </TableRow>
                                         <TableRow>
@@ -136,7 +140,10 @@ export default function DetailPage() {
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
                                             <TableCell className="text-right px-5">
-                                                {linkData?.link?.amountNumber}
+                                                {TokenUtilService.getHumanReadableAmountFromMetadata(
+                                                    linkData?.link?.asset_info[0].amount,
+                                                    metadata,
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     </TableBody>

@@ -18,7 +18,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({ text, handleClick, childrenNo
                 "bg-background text-foreground",
                 "border border-input",
                 "hover:bg-accent hover:text-accent-foreground",
-                "rounded-md",
+                "rounded-lg",
                 "text-sm font-medium",
                 "ring-offset-background",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

@@ -3,9 +3,21 @@ import { IntentModel } from "@/services/types/intent.service.types";
 import { TFunction } from "i18next";
 import { useEffect, useMemo, useState } from "react";
 
+const sortIntents = (intents: IntentModel[] | undefined) => {
+    return (intents ?? []).sort((a, b) => {
+        if (a.task === TASK.TRANSFER_WALLET_TO_LINK && b.task !== TASK.TRANSFER_WALLET_TO_LINK) {
+            return -1;
+        }
+        if (a.task !== TASK.TRANSFER_WALLET_TO_LINK && b.task === TASK.TRANSFER_WALLET_TO_LINK) {
+            return 1;
+        }
+        return 0;
+    });
+};
+
 export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
     const primaryIntents = useMemo(() => {
-        return intents ?? [];
+        return sortIntents(intents);
     }, [intents]);
 
     return primaryIntents;
@@ -22,14 +34,16 @@ export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
 export const useConfirmButtonState = (actionState: string | undefined, t: TFunction) => {
     const [isDisabled, setIsDisabled] = useState(false);
     const [buttonText, setButtonText] = useState("");
-
+    console.log(actionState);
     const mapActionStateToButtonText = () => {
+        console.log(actionState);
         switch (actionState) {
             case ACTION_STATE.CREATED:
                 return t("transaction.confirm_popup.confirm_button");
             case ACTION_STATE.PROCESSING:
                 return t("transaction.confirm_popup.inprogress_button");
             case ACTION_STATE.FAIL:
+                console.log("Return failed");
                 return t("retry");
             case ACTION_STATE.SUCCESS:
                 return t("continue");

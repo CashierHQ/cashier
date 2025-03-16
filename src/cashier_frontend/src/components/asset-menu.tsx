@@ -36,6 +36,21 @@ interface AssetItemProps {
 }
 
 const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalance }) => {
+    //TODO: Remove after mid milestone
+    const getTokenAvatar = (tokenAddress: string) => {
+        if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
+            return `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`;
+        } else if (tokenAddress === "k64dn-7aaaa-aaaam-qcdaq-cai") {
+            return `${IC_EXPLORER_IMAGES_PATH}2ouva-viaaa-aaaaq-aaamq-cai`;
+        } else return `${IC_EXPLORER_IMAGES_PATH}${tokenAddress}`;
+    };
+
+    const getTokenName = (name: string) => {
+        if (name === "CUTE") {
+            return "CHAT";
+        } else return name;
+    };
+
     return (
         <li>
             <NavigationMenuLink onSelect={() => onSelected(asset.tokenAddress)} asChild>
@@ -46,8 +61,8 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalanc
                 >
                     <div className="flex items-center">
                         <Avatar className="mr-3">
-                            <AvatarImage src={`${IC_EXPLORER_IMAGES_PATH}${asset.tokenAddress}`} />
-                            <AvatarFallback>{asset.name}</AvatarFallback>
+                            <AvatarImage src={getTokenAvatar(asset.tokenAddress)} />
+                            <AvatarFallback>{getTokenName(asset.name)}</AvatarFallback>
                         </Avatar>
                         <div id="asset-info" className="text-md text-left">
                             <div>{asset?.name}</div>

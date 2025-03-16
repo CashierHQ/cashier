@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     core::action::types::{ActionDto, CreateActionInput},
+    info,
     repositories::{self},
     types::{error::CanisterError, transaction_manager::ActionResp},
     utils::runtime::IcEnvironment,
@@ -103,6 +104,10 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
 
     pub fn get(&self, action_id: String) -> Result<ActionResp, String> {
         self._get_action_resp(action_id)
+    }
+
+    pub fn get_action_by_id(&self, action_id: String) -> Option<Action> {
+        self.action_repository.get(action_id)
     }
 
     fn _get_action_resp(&self, action_id: String) -> Result<ActionResp, String> {
@@ -235,9 +240,11 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
 
         for intent in intents.clone() {
             self.intent_repository.update(intent.clone());
+            info!("Updated intent state: {:?}", intent.state);
         }
 
         self.action_repository.update(action.clone());
+        info!("Updated action state: {:?}", action.state);
 
         Ok(ActionResp {
             action,
@@ -246,110 +253,113 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
         })
     }
 
-    // TODO: handle the params for the action incase claim action
-    pub async fn create_link_action(
-        &self,
-        input: CreateActionInput,
-    ) -> Result<ActionDto, CanisterError> {
-        let caller = self.ic_env.caller();
-        let link = self
-            .link_repository
-            .get(&input.link_id)
-            .ok_or_else(|| CanisterError::ValidationErrors("Link not found".to_string()))?;
+    // Deprecated
+    // pub async fn deperated_create_link_action(
+    //     &self,
+    //     input: CreateActionInput,
+    // ) -> Result<ActionDto, CanisterError> {
+    //     let caller = self.ic_env.caller();
+    //     let link = self
+    //         .link_repository
+    //         .get(&input.link_id)
+    //         .ok_or_else(|| CanisterError::ValidationErrors("Link not found".to_string()))?;
 
-        // Validate the user's balance
-        match self
-            .validate_service
-            .validate_balance_with_asset_info(&link.clone(), &caller)
-            .await
-        {
-            Ok(_) => (),
-            Err(e) => return Err(CanisterError::ValidationErrors(e)),
-        }
+    //     // Validate the user's balance
+    //     match self
+    //         .validate_service
+    //         .validate_balance_with_asset_info(&link.clone(), &caller)
+    //         .await
+    //     {
+    //         Ok(_) => {
+    //             info!("User balance validated");
+    //         }
+    //         Err(e) => return Err(CanisterError::ValidationErrors(e)),
+    //     }
 
-        // Get the user ID from the user wallet store
-        let user_wallet = self
-            .user_wallet_repository
-            .get(&caller.to_text())
-            .ok_or_else(|| CanisterError::ValidationErrors("User wallet not found".to_string()))?;
+    //     // Get the user ID from the user wallet store
+    //     let user_wallet = self
+    //         .user_wallet_repository
+    //         .get(&caller.to_text())
+    //         .ok_or_else(|| CanisterError::ValidationErrors("User wallet not found".to_string()))?;
 
-        // Parse the intent typex
-        let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
+    //     // Parse the intent typex
+    //     let action_type = ActionType::from_str(&input.action_type)
+    //         .map_err(|_| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
 
-        let action = Action {
-            id: Uuid::new_v4().to_string(),
-            r#type: action_type,
-            state: ActionState::Created,
-            creator: user_wallet.user_id.clone(),
-        };
+    //     let action = Action {
+    //         id: Uuid::new_v4().to_string(),
+    //         r#type: action_type,
+    //         state: ActionState::Created,
+    //         creator: user_wallet.user_id.clone(),
+    //         link_id: input.link_id.clone(),
+    //     };
 
-        let link_action = LinkAction {
-            link_id: link.id.clone(),
-            action_type: input.action_type.clone(),
-            action_id: action.id.clone(),
-        };
+    //     let link_action = LinkAction {
+    //         link_id: link.id.clone(),
+    //         action_type: input.action_type.clone(),
+    //         action_id: action.id.clone(),
+    //     };
 
-        let create_intent_input = ConvertToIntentInput {
-            action: action.clone(),
-            link: link.clone(),
-        };
+    //     let create_intent_input = ConvertToIntentInput {
+    //         action: action.clone(),
+    //         link: link.clone(),
+    //     };
 
-        let adapter: action_adapter::ic_adapter::IcAdapter<E> =
-            action_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
+    //     let adapter: action_adapter::ic_adapter::IcAdapter<E> =
+    //         action_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
 
-        let intents = adapter
-            .convert(create_intent_input)
-            .map_err(|e| {
-                CanisterError::ValidationErrors(format!(
-                    "Failed to convert action to intent: {}",
-                    e
-                ))
-            })
-            .map_err(|e| {
-                CanisterError::ValidationErrors(format!(
-                    "Failed to convert action to intent: {:?}",
-                    e
-                ))
-            })?;
+    //     let intents = adapter
+    //         .convert(create_intent_input)
+    //         .map_err(|e| {
+    //             CanisterError::ValidationErrors(format!(
+    //                 "Failed to convert action to intent: {}",
+    //                 e
+    //             ))
+    //         })
+    //         .map_err(|e| {
+    //             CanisterError::ValidationErrors(format!(
+    //                 "Failed to convert action to intent: {:?}",
+    //                 e
+    //             ))
+    //         })?;
 
-        let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
+    //     let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
 
-        let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
+    //     let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
 
-        for intent in intents.clone() {
-            let transactions = intent_adapter
-                .convert(&intent)
-                .map_err(|e| {
-                    CanisterError::ValidationErrors(format!(
-                        "Failed to convert intent to transaction: {}",
-                        e
-                    ))
-                })
-                .map_err(|e| {
-                    CanisterError::ValidationErrors(format!(
-                        "Failed to convert intent to transaction: {:?}",
-                        e
-                    ))
-                })?;
+    //     for intent in intents.clone() {
+    //         let transactions = intent_adapter
+    //             .convert(&intent)
+    //             .map_err(|e| {
+    //                 CanisterError::ValidationErrors(format!(
+    //                     "Failed to convert intent to transaction: {}",
+    //                     e
+    //                 ))
+    //             })
+    //             .map_err(|e| {
+    //                 CanisterError::ValidationErrors(format!(
+    //                     "Failed to convert intent to transaction: {:?}",
+    //                     e
+    //                 ))
+    //             })?;
 
-            intent_tx_hashmap.insert(intent.id.clone(), transactions);
-        }
+    //         intent_tx_hashmap.insert(intent.id.clone(), transactions);
+    //     }
 
-        let _ = self._store_action_records(
-            link_action,
-            action.clone(),
-            intents.clone(),
-            intent_tx_hashmap,
-            user_wallet.user_id.clone(),
-        )?;
+    //     let _ = self.store_action_records(
+    //         link_action,
+    //         action.clone(),
+    //         intents.clone(),
+    //         intent_tx_hashmap,
+    //         user_wallet.user_id.clone(),
+    //     )?;
 
-        Ok(ActionDto::from(action, intents))
+    //     Ok(ActionDto::from(action, intents))
 
-        // Retrieve and return the created intent
-    }
+    //     // Retrieve and return the created intent
+    // }
 
-    fn _store_action_records(
+    pub fn store_action_records(
         &self,
         link_action: LinkAction,
         action: Action,

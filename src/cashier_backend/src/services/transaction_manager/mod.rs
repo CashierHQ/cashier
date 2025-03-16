@@ -1,7 +1,9 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use action::ActionService;
-use cashier_types::{Transaction, TransactionState};
+use cashier_types::{
+    Chain, Intent, IntentTask, IntentType, LinkAction, Transaction, TransactionState,
+};
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
 use timeout::tx_timeout_task;
@@ -11,10 +13,13 @@ use crate::{
     core::action::types::ActionDto,
     info,
     types::{
-        error::CanisterError, icrc_112_transaction::Icrc112Requests,
+        error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
         transaction_manager::ActionResp,
     },
-    utils::runtime::{IcEnvironment, RealIcEnvironment},
+    utils::{
+        helper::to_subaccount,
+        runtime::{IcEnvironment, RealIcEnvironment},
+    },
 };
 
 pub mod action;
@@ -31,9 +36,10 @@ pub mod validate;
 pub struct UpdateActionArgs {
     pub action_id: String,
     pub link_id: String,
-    pub external: bool,
+    pub execute_wallet_tx: bool,
 }
 
+#[cfg_attr(test, faux::create)]
 pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     transaction_service: TransactionService<E>,
     action_service: ActionService<E>,
@@ -42,6 +48,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     execute_transaction_service: execute_transaction::ExecuteTransactionService,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
         transaction_service: TransactionService<E>,
@@ -69,13 +76,128 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         )
     }
 
+    pub fn tx_man_assemble_txs(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
+        match intent.chain {
+            Chain::IC => {
+                let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
+
+                match (intent.r#type.clone(), intent.task.clone()) {
+                    (IntentType::Transfer(transfer_intent), IntentTask::TransferWalletToLink) => {
+                        intent_adapter.tx_man_ic_assemble_icrc1_wallet_transfer(transfer_intent)
+                    }
+                    (
+                        IntentType::TransferFrom(transfer_intent),
+                        IntentTask::TransferWalletToTreasury,
+                    ) => intent_adapter.tx_man_ic_assemble_icrc2_wallet_transfer(transfer_intent),
+                    (IntentType::Transfer(transfer_intent), IntentTask::TransferLinkToWallet) => {
+                        intent_adapter.tx_man_ic_assemble_icrc1_canister_transfer(transfer_intent)
+                    }
+                    // Add other combinations as needed
+                    _ => Err(CanisterError::InvalidDataError(format!(
+                        "Unsupported intent type or task {:#?} {:#?}",
+                        intent.r#type.clone(),
+                        intent.task.clone()
+                    )))?,
+                }
+            }
+        }
+    }
+
+    pub fn tx_man_create_action(
+        &self,
+        temp_action: &TemporaryAction,
+    ) -> Result<ActionDto, CanisterError> {
+        let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
+        let mut intent_tx_ids_hashmap: HashMap<String, Vec<String>> = HashMap::new();
+
+        // check action id
+        let action = self.action_service.get_action_by_id(temp_action.id.clone());
+        if action.is_some() {
+            return Err(CanisterError::HandleLogicError(
+                "Action already exists".to_string(),
+            ));
+        }
+
+        // fill in tx info
+        // enrich each intent with chain-level txs needed to achieve the intent
+        for intent in temp_action.intents.iter() {
+            // store txs in hashmap
+            let txs = self.tx_man_assemble_txs(intent)?;
+            intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
+
+            // store tx ids in hashmap
+            let tx_ids: Vec<String> = txs.iter().map(|tx| tx.id.clone()).collect();
+            intent_tx_ids_hashmap.insert(intent.id.clone(), tx_ids);
+        }
+
+        // fill in dependency info
+        // if intent A has dependency on intent B, all tx in A will have dependency on txs in B
+        for intent in temp_action.intents.iter() {
+            // collect the tx ids of the dependencies
+            // if not found throw error
+            let dependency_tx_ids: Vec<String> = intent
+                .dependency
+                .iter()
+                .map(|dependency_id| {
+                    intent_tx_ids_hashmap
+                        .get(dependency_id)
+                        .ok_or_else(|| {
+                            CanisterError::InvalidDataError(format!(
+                                "Dependency ID {} not found",
+                                dependency_id
+                            ))
+                        })
+                        .map(|tx_ids| tx_ids.clone())
+                })
+                .collect::<Result<Vec<Vec<String>>, CanisterError>>()?
+                .into_iter()
+                .flatten()
+                .collect();
+
+            if !dependency_tx_ids.is_empty() {
+                // store the dependency tx ids in the tx of current intent
+                let txs = intent_tx_hashmap.get_mut(&intent.id).unwrap();
+                for tx in txs.iter_mut() {
+                    // if the tx already has dependency, then extend the existing dependency
+                    match &mut tx.dependency {
+                        Some(existing_deps) => {
+                            existing_deps.extend(dependency_tx_ids.clone());
+                        }
+                        None => {
+                            tx.dependency = Some(dependency_tx_ids.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        let link_action = LinkAction {
+            link_id: temp_action.link_id.clone(),
+            action_type: temp_action.r#type.to_string().clone(),
+            action_id: temp_action.id.clone(),
+        };
+
+        // save action to DB
+        let _ = self.action_service.store_action_records(
+            link_action,
+            temp_action.as_action(),
+            temp_action.intents.clone(),
+            intent_tx_hashmap.clone(),
+            temp_action.creator.clone(),
+        );
+
+        Ok(ActionDto::from_with_tx(
+            temp_action.as_action(),
+            temp_action.intents.clone(),
+            intent_tx_hashmap,
+        ))
+    }
+
     pub fn update_tx_state(
         &self,
         tx: &mut Transaction,
         state: TransactionState,
     ) -> Result<(), String> {
-        info!("Update tx state: {:#?}", tx);
-        info!("Update tx state to: {:#?}", state);
         self.transaction_service.update_tx_state(tx, state)
     }
 
@@ -160,8 +282,12 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .get_tx_by_id(&tx_id)
             .map_err(|e| CanisterError::NotFound(e))?;
 
+        // checks if tx has other dependent txs that were not completed yet
         let is_all_dependencies_success = self._is_all_depdendency_success(&tx, true)?;
 
+        // checks if tx is part of a batch of txs (ICRC-112)
+        // tx is deemed has dependency if any of the other txs in the batch still has unmet dependencies
+        // this is done so that al the txs in the batch can be executed altogether, not separately
         let is_group_has_dependency = self._is_group_has_dependency(&tx)?;
 
         // if any of the tx in the group has dependency (exclusive the tx in same group), then current tx has dependency
@@ -194,6 +320,11 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             if from_account == caller {
                 tx_execute_from_user_wallet.push(tx.clone());
             }
+
+            info!(
+                "tx_execute_from_user_wallet: {:#?}",
+                tx_execute_from_user_wallet
+            );
         }
 
         Ok(self.transaction_service.create_icrc_112(
@@ -216,11 +347,11 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         if tx.from_call_type == cashier_types::FromCallType::Canister {
             // the tx should not have any dependencies
             let is_all_dependencies_success = self._is_all_depdendency_success(&tx, true)?;
+
             if is_all_dependencies_success {
                 // right now only handle transfer from
                 match self.execute_transaction_service.execute(tx).await {
                     Ok(_) => {
-                        info!("Transaction executed successfully");
                         self.update_tx_state(tx, TransactionState::Success)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -228,15 +359,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                     e
                                 ))
                             })?;
-                        let action_resp = self
-                            .action_service
-                            .get_action_by_tx_id(tx.id.clone())
-                            .map_err(|e| CanisterError::NotFound(e))?;
-
-                        info!("after update action_resp {:#?}", action_resp);
                     }
-                    Err(_) => {
-                        info!("Transaction executed with error");
+                    Err(e) => {
                         self.update_tx_state(tx, TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -244,6 +368,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                     e
                                 ))
                             })?;
+                        return Err(CanisterError::HandleLogicError(format!(
+                            "Error executing tx: {}",
+                            e
+                        )));
                     }
                 }
             }
@@ -277,9 +405,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             ic_env_in_future.spawn(async move {
                 let res = tx_timeout_task(tx_id).await;
                 match res {
-                    Ok(_) => {
-                        info!("Transaction timeout task executed successfully");
-                    }
+                    Ok(_) => {}
                     Err(e) => {
                         info!("Transaction timeout task executed with error: {}", e);
                     }
@@ -302,9 +428,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // manually check the status of the tx of the action
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
-            let new_state = self.manual_check_status_service.execute(&tx).await?;
-            info!("Tx: {:#?}", tx);
-            info!("New state: {:#?}", new_state);
+            let new_state = self
+                .manual_check_status_service
+                .execute(&tx, txs.clone())
+                .await?;
             if tx.state == new_state.clone() {
                 continue;
             }
@@ -316,9 +443,13 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
         let mut request = None;
 
-        // if check external is false -> process_action cannot generate icrc_112_requests
-        // if args.external {
-        //Step #2 : Check which txs are eligible to execute - based on dependency
+        // check which tx are eligible to be executed
+        // if tx has dependent txs, that need to be completed before executing it, it is not eligible
+        // if all the dependent txs were complete, it is eligible to be executed
+        // There are additional conditions (handled in has_dependency method below):
+        // - if tx is grouped into a batch ICRC-112, dependency between txs in the batch is ignored during eligibility check
+        // - if tx is gropued into a batch ICRC-112, tx is only eligible if all other tx in batch have no dependencies (so that al txs can be executed in batch together)
+        // - if execute_wallet_tx = fase, all tx grouped into a batach ICRC-112 are not eligible. client calls update_action with this arg to relay ICRC-112 reponse to tx manager, so we don't want to execute wallet tx again.
         let all_txs = match self.action_service.get(args.action_id.clone()) {
             Ok(action_resp) => self
                 .action_service
@@ -327,55 +458,111 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 return Err(CanisterError::InvalidDataError(e));
             }
         };
-        let mut eligible_txs: Vec<Transaction> = Vec::new();
-        for tx in all_txs.iter() {
-            // set it false
-            let mut eligible = true;
 
-            // success txs - ignores
-            // processing txs - ignores
-            if tx.state == TransactionState::Success || tx.state == TransactionState::Processing {
-                eligible = false;
-            }
-            match self.has_dependency(tx.id.clone()).await {
-                Ok(has_dependency) => {
-                    if has_dependency {
-                        eligible = false;
-                    }
-                }
-                Err(e) => {
-                    return Err(e);
-                }
-            }
-
-            if eligible {
-                eligible_txs.push(tx.clone());
-            }
-        }
-
+        // User wallet account
         let caller = Account {
             owner: self.ic_env.caller(),
             subaccount: None,
         };
-        // This is where you create icrc_112
-        let icrc_112_requests = self.create_icrc_112(
-            caller,
-            args.action_id.clone(),
-            args.link_id.clone(),
-            &eligible_txs,
-        )?;
 
-        request = if icrc_112_requests.is_none() {
-            None
-        } else if icrc_112_requests.as_ref().unwrap().len() == 0 {
-            None
-        } else {
-            Some(icrc_112_requests.unwrap())
+        // Link Vault account
+        let link_vault = Account {
+            owner: self.ic_env.id(),
+            subaccount: Some(to_subaccount(args.link_id.clone())),
         };
 
-        // This is where execute transaction
-        for mut tx in eligible_txs {
-            self.execute_tx(&mut tx).await?;
+        // Directly identify eligible transactions while separating by type
+        let mut eligible_wallet_txs: Vec<Transaction> = Vec::new();
+        let mut eligible_canister_txs: Vec<Transaction> = Vec::new();
+
+        for tx in all_txs.iter() {
+            // Skip transactions that aren't in Created or Failed state
+            if tx.state != TransactionState::Created && tx.state != TransactionState::Fail {
+                continue;
+            }
+
+            // Check if tx has dependencies that need to be completed first
+            let has_dependency = match self.has_dependency(tx.id.clone()).await {
+                Ok(has_dep) => has_dep,
+                Err(e) => return Err(e),
+            };
+
+            // Skip transactions with unresolved dependencies
+            if has_dependency {
+                continue;
+            }
+
+            // Transaction is eligible, categorize it based on from_account
+            let from_account = match tx.try_get_from_account() {
+                Ok(account) => account,
+                Err(e) => return Err(CanisterError::InvalidDataError(e.to_string())),
+            };
+
+            if from_account == caller {
+                eligible_wallet_txs.push(tx.clone());
+            } else if from_account == link_vault {
+                eligible_canister_txs.push(tx.clone());
+            }
+            // Right now there is no tx have from_account is neither caller nor link_vault, so we don't need to handle this case
+        }
+
+        if !args.execute_wallet_tx {
+            // With the txs that were grouped into a batch, we assemble a icrc_112 request
+            let icrc_112_requests = self.create_icrc_112(
+                caller,
+                args.action_id.clone(),
+                args.link_id.clone(),
+                &eligible_wallet_txs,
+            )?;
+
+            info!(
+                "Eligible wallet txs: {:#?}, eligible canister txs: {:#?}",
+                eligible_wallet_txs, eligible_canister_txs
+            );
+
+            info!("ICRC-112 requests: {:#?}", icrc_112_requests);
+
+            request = if icrc_112_requests.is_none() {
+                None
+            } else if icrc_112_requests.as_ref().unwrap().len() == 0 {
+                None
+            } else {
+                Some(icrc_112_requests.unwrap())
+            };
+
+            // We execute transactions
+
+            // Wallet tx are executed by the client, when it receives the ICRC-112 request this method returns
+            // and tx status is 'processing' until client updates tx manager with response of ICRC-112
+            for mut tx in eligible_wallet_txs {
+                self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+                    CanisterError::HandleLogicError(format!(
+                        "Error spawning tx timeout task: {}",
+                        e
+                    ))
+                })?;
+                self.update_tx_state(&mut tx, TransactionState::Processing)
+                    .map_err(|e| {
+                        CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                    })?;
+            }
+
+            // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
+            for mut tx in eligible_canister_txs {
+                self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+                    CanisterError::HandleLogicError(format!(
+                        "Error spawning tx timeout task: {}",
+                        e
+                    ))
+                })?;
+                self.update_tx_state(&mut tx, TransactionState::Processing)
+                    .map_err(|e| {
+                        CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                    })?;
+
+                // this method update the tx state to success or fail inside of it
+                self.execute_canister_tx(&mut tx).await?;
+            }
         }
 
         let get_resp: ActionResp = self
@@ -391,6 +578,3 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         ))
     }
 }
-
-#[cfg(test)]
-pub mod __tests__;

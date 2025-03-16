@@ -97,7 +97,7 @@ export class Icrc112Executor {
             memo: [],
             from_subaccount: [],
             created_at_time: [],
-            amount: BigInt(10_0000_0000),
+            amount: BigInt(520000),
             expected_allowance: [],
             expires_at: [],
             spender: {

@@ -21,7 +21,7 @@ import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Link", () => {
+describe("Tip link confirm and retry success", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
@@ -154,6 +154,7 @@ describe("Link", () => {
                                     address: assetInfoTest.address,
                                     amount_per_claim: assetInfoTest.amount_per_claim,
                                     total_amount: assetInfoTest.total_amount,
+                                    label: "1000",
                                 },
                             ],
                         ],
@@ -187,6 +188,8 @@ describe("Link", () => {
         const link = await actor.get_link(linkId, []);
         const linkRes = parseResultResponse(link);
         const actionRes = parseResultResponse(createActionRes);
+
+        console.log("actionRes", safeParseJSON(actionRes as any));
 
         createLinkActionId = actionRes.id;
 
@@ -333,11 +336,13 @@ describe("Link", () => {
         await execute_helper.executeIcrc2Approve();
         await execute_helper.triggerTransaction();
 
-        await actor.update_action({
+        const update_action_res = await actor.update_action({
             action_id: createLinkActionId,
             link_id: linkId,
             external: true,
         });
+
+        console.log("update_action_res", safeParseJSON(update_action_res as any));
 
         const input: GetLinkOptions = {
             action_type: "CreateLink",

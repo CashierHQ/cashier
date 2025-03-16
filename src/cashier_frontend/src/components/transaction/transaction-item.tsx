@@ -8,6 +8,7 @@ import { Asset } from "@/components/ui/asset";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { convert } from "@/utils/helpers/convert";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 interface TransactionItemProps {
     title: string;
@@ -16,12 +17,28 @@ interface TransactionItemProps {
     isUsd?: boolean;
 }
 
-export const TransactionItem: FC<TransactionItemProps> = ({ title, intent, isLoading, isUsd }) => {
+export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, isUsd }) => {
     const { t } = useTranslation();
-    const { isLoadingMetadata, assetAmount, assetSymbol, assetSrc, feeAmount, feeSymbol } =
-        useIntentMetadata(intent);
+    const {
+        isLoadingMetadata,
+        assetAmount,
+        assetSymbol,
+        assetSrc,
+        feeAmount,
+        feeSymbol,
+        title: intentTitle,
+    } = useIntentMetadata(intent);
 
     const { data: conversionRates } = useConversionRatesQuery(intent.asset.address);
+
+    //TODO: Remove after mid milestone
+    const getTokenAvatar = (tokenAddress: string) => {
+        if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
+            return `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`;
+        } else if (tokenAddress === "k64dn-7aaaa-aaaam-qcdaq-cai") {
+            return `${IC_EXPLORER_IMAGES_PATH}2ouva-viaaa-aaaaq-aaamq-cai`;
+        } else return assetSrc;
+    };
 
     return (
         <div className="flex items-center">
@@ -33,11 +50,11 @@ export const TransactionItem: FC<TransactionItemProps> = ({ title, intent, isLoa
 
             <div className="flex flex-col w-full">
                 <Asset
-                    title={title}
+                    title={intentTitle}
                     isLoading={isLoading || isLoadingMetadata}
                     amount={assetAmount}
                     usdAmount={convert(assetAmount, conversionRates?.tokenToUsd)}
-                    src={assetSrc}
+                    src={getTokenAvatar(intent.asset.address)}
                     symbol={assetSymbol}
                     isUsd={isUsd}
                 />

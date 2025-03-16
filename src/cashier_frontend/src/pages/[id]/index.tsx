@@ -13,6 +13,8 @@ import useToast from "@/hooks/useToast";
 import Header from "@/components/header";
 import useConnectToWallet from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
+import useTokenMetadata from "@/hooks/tokenUtilsHooks";
+import { TokenUtilService } from "@/services/tokenUtils.service";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -32,6 +34,12 @@ export default function ClaimPage() {
         resolver: zodResolver(ClaimSchema),
     });
 
+    const { metadata } = useTokenMetadata(formData?.asset_info?.[0].address);
+
+    // Watch form values to trigger re-render
+    const watchedToken = form.watch("token");
+    const watchedAmount = form.watch("amount");
+
     useEffect(() => {
         if (!linkId) return;
         const fetchData = async () => {
@@ -39,11 +47,21 @@ export default function ClaimPage() {
             const link = linkObj.link;
             setFormData(link);
             form.setValue("token", link.title);
-            form.setValue("amount", link.amountNumber);
             setIsLoading(false);
         };
         fetchData();
     }, [linkId]);
+
+    useEffect(() => {
+        if (!metadata) return;
+        form.setValue(
+            "amount",
+            TokenUtilService.getHumanReadableAmountFromMetadata(
+                formData?.asset_info?.[0].amount,
+                metadata,
+            ),
+        );
+    }, [formData, metadata]);
 
     if (isLoading) return null;
 
@@ -70,6 +88,12 @@ export default function ClaimPage() {
                         <ClaimPageForm
                             form={form}
                             formData={formData}
+                            claimLinkDetails={[
+                                {
+                                    title: watchedToken,
+                                    amount: watchedAmount,
+                                },
+                            ]}
                             handleClaim={handleClaim}
                             setIsClaiming={() => setClaimStatus("Claim")}
                         />

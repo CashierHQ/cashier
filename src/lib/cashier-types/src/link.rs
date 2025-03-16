@@ -19,6 +19,15 @@ pub struct Link {
     pub metadata: Option<HashMap<String, String>>,
 }
 
+impl Link {
+    pub fn get_asset_by_label(&self, label: &str) -> Option<AssetInfo> {
+        self.asset_info
+            .as_ref()
+            .and_then(|asset_info| asset_info.iter().find(|asset| asset.label == label))
+            .cloned()
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum LinkType {
     NftCreateAndAirdrop,

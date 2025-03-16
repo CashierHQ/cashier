@@ -1,4 +1,4 @@
-import { LINK_TYPE } from "@/services/types/enum";
+import { CHAIN, LINK_INTENT_LABEL, LINK_TYPE } from "@/services/types/enum";
 //import { NftAssetForm } from "@/components/link-details/nft-asset-form";
 import { TipLinkAssetForm } from "@/components/link-details/tip-link-asset-form";
 import { TipLinkAssetFormSchema } from "@/components/link-details/tip-link-asset-form.hooks";
@@ -17,10 +17,14 @@ export default function LinkDetails() {
         setButtonDisabled(true);
         const updatedLink = await setTipLinkDetails({
             link: link!,
-            patch: {
-                amount: data.amount,
-                tokenAddress: data.tokenAddress,
-            },
+            patch: [
+                {
+                    amount: data.amount,
+                    address: data.tokenAddress,
+                    label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
+                    chain: CHAIN.IC,
+                },
+            ],
         });
 
         setLink(updatedLink);
@@ -35,6 +39,10 @@ export default function LinkDetails() {
                     <TipLinkAssetForm
                         onSubmit={handleSubmitTipLinkDetails}
                         isButtonDisabled={isButtonDisabled}
+                        defaultValues={{
+                            amount: link?.asset_info[0]?.amount,
+                            tokenAddress: link?.asset_info[0]?.address,
+                        }}
                     />
                 );
             case LINK_TYPE.NFT_CREATE_AND_AIRDROP:
