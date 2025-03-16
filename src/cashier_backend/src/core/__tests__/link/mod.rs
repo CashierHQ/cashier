@@ -64,6 +64,7 @@ mod tests {
             intents: vec![],
             icrc_112_requests: None,
         }));
+        when!(link_service.link_validate_balance_with_asset_info).then_return(Ok(()));
 
         let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
 
@@ -115,6 +116,7 @@ mod tests {
             intents: vec![],
             icrc_112_requests: None,
         }));
+        when!(link_service.link_validate_balance_with_asset_info).then_return(Ok(()));
 
         let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
 
@@ -212,10 +214,62 @@ mod tests {
         when!(link_service.link_assemble_intents).then_return(Err(
             CanisterError::HandleLogicError("Failed to assemble intents".to_string()),
         ));
+        when!(link_service.link_validate_balance_with_asset_info).then_return(Ok(()));
 
         let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
         let result = api.process_action(input).await;
 
         assert!(matches!(result, Err(CanisterError::HandleLogicError(_))));
+    }
+
+    #[tokio::test]
+    async fn should_return_error_if_not_enough_balance() {
+        let mut link_service = LinkService::faux();
+        let mut user_service = UserService::faux();
+        let mut tx_manager_service = TransactionManagerService::faux();
+        let mut ic_env = MockIcEnvironment::faux();
+
+        let link_id = Uuid::new_v4().to_string();
+        let user_id = Uuid::new_v4().to_string();
+        let action_type = "CreateLink".to_string();
+        let caller = Principal::anonymous();
+        let action_id = Uuid::new_v4().to_string();
+
+        let input = ProcessActionInput {
+            link_id: link_id.clone(),
+            action_type: action_type.clone(),
+            action_id: action_id.clone(),
+            params: None,
+        };
+
+        let action = Action {
+            id: action_id.clone(),
+            r#type: ActionType::from_str(&action_type).unwrap(),
+            state: ActionState::Created,
+            creator: user_id.clone(),
+            link_id: link_id.clone(),
+        };
+
+        when!(ic_env.caller).then_return(caller.clone());
+        when!(user_service.get_user_id_by_wallet).then_return(Some(user_id.clone()));
+        when!(link_service.get_action_of_link).then_return(Some(action.clone()));
+        when!(link_service.link_validate_user_update_action).then_return(Ok(()));
+        when!(tx_manager_service.update_action).then_return(Ok(ActionDto {
+            id: action_id.clone(),
+            r#type: action_type.clone(),
+            state: ActionState::Processing.to_string(),
+            creator: user_id.clone(),
+            intents: vec![],
+            icrc_112_requests: None,
+        }));
+
+        when!(link_service.link_validate_balance_with_asset_info).then_return(Err(
+            CanisterError::ValidationErrors("Failed to validate balance".to_string()),
+        ));
+
+        let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
+        let result = api.process_action(input).await;
+
+        assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
     }
 }

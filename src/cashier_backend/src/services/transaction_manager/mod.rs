@@ -334,17 +334,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         ))
     }
 
-    // TODO: remove this after testing
-    pub async fn execute_test_fail(&self, tx_id: String) -> Result<(), CanisterError> {
-        let mut tx = self
-            .transaction_service
-            .get_tx_by_id(&tx_id)
-            .map_err(|e| CanisterError::NotFound(e))?;
-
-        self.update_tx_state(&mut tx, TransactionState::Fail)
-            .map_err(|e| CanisterError::HandleLogicError(format!("Error updating tx state: {}", e)))
-    }
-
     pub async fn execute_tx_by_id(&self, tx_id: String) -> Result<(), CanisterError> {
         let mut tx = self
             .transaction_service

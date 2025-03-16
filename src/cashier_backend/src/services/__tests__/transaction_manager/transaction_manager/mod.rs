@@ -361,6 +361,8 @@ mod tests {
             .await
             .unwrap();
 
+        println!("{:#?}", action_dto);
+
         assert_eq!(action_dto.id, action.id);
         assert_eq!(action_dto.creator, creator.owner.to_string());
         assert_eq!(action_dto.state, ActionState::Processing.to_string());
@@ -373,6 +375,7 @@ mod tests {
             action_dto.intents[1].state,
             IntentState::Success.to_string()
         );
+
         assert!(action_dto.icrc_112_requests.is_none());
     }
 

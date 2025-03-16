@@ -61,33 +61,12 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
         ));
     }
 
-    // TODO: remove this after testing
-    let link = services::link::get_link_by_id(input.link_id.clone())
-        .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get link: {}", e)))?;
+    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
+        TransactionManagerService::get_instance();
 
-    if let Some(title) = &link.title {
-        info!("title {}", title.contains("7.4"));
+    transaction_manager
+        .execute_tx_by_id(input.transaction_id)
+        .await?;
 
-        if title.contains("7.4") {
-            let transaction_manager: TransactionManagerService<RealIcEnvironment> =
-                TransactionManagerService::get_instance();
-
-            transaction_manager
-                .execute_test_fail(input.transaction_id)
-                .await?;
-
-            return Ok("Executed success".to_string());
-        } else {
-            let transaction_manager: TransactionManagerService<RealIcEnvironment> =
-                TransactionManagerService::get_instance();
-
-            transaction_manager
-                .execute_tx_by_id(input.transaction_id)
-                .await?;
-
-            return Ok("Executed success".to_string());
-        }
-    }
-
-    Ok("Executed success".to_string())
+    return Ok("Executed success".to_string());
 }
