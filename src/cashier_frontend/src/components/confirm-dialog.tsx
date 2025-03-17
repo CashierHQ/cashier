@@ -12,11 +12,11 @@ import { IoIosClose } from "react-icons/io";
 
 export interface ConfirmDialogProps {
     open: boolean;
-    title: string;
-    description: string;
-    actionText: string;
+    title?: string;
+    description?: string | React.ReactNode;
+    actionText?: string;
     onOpenChange: (open: boolean) => void;
-    onSubmit: () => void;
+    onSubmit?: () => void;
 }
 
 const ConfirmDialog: FC<ConfirmDialogProps> = ({
@@ -40,7 +40,7 @@ const ConfirmDialog: FC<ConfirmDialogProps> = ({
                         />
                     </div>
 
-                    <AlertDialogDescription className="text-md font-normal text-black">
+                    <AlertDialogDescription className="text-md font-normal text-black break-words">
                         {description}
                     </AlertDialogDescription>
                 </AlertDialogHeader>

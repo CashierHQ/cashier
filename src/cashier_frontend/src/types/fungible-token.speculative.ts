@@ -7,7 +7,7 @@ export type FungibleToken = {
     symbol: string;
     logo: string;
     decimals: number;
-    amount: number; // TODO: change to BigNumber,
+    amount: bigint;
     usdEquivalent: number | null;
     usdConversionRate: number | null;
 };
