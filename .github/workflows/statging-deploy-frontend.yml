@@ -3,10 +3,11 @@
 
 name: Staging Deploy Frontend
 on:
-    # for future testing
-    push:
+    pull_request:
         branches:
             - staging
+        types:
+            - closed
         paths:
             - "src/cashier_frontend/**"
 
@@ -35,7 +36,7 @@ jobs:
                   echo "${{ secrets.CASHIER_DEV }}" > private_key.pem
 
             - name: Import identity
-              run: dfx identity import cashier-dev private_key.pem  --disable-encryption
+              run: dfx identity import cashier-dev private_key.pem --storage-mode=plaintext
 
             - name: Get cashier dev address
               run: |
@@ -56,6 +57,7 @@ jobs:
             - name: deploy to staging env
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
+                  DFX_WARNING: -mainnet_plaintext_identity
               run: |
                   echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
                   dfx deploy cashier_frontend_staging --ic
