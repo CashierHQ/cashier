@@ -8,8 +8,8 @@ on:
         branches:
             - staging
             - staging-test
-        paths:
-            - "src/cashier_frontend/**"
+        # paths:
+        #     - "src/cashier_frontend/**"
 
 jobs:
     build_and_deploy_staging:
