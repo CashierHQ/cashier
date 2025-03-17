@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
 import { SlWallet } from "react-icons/sl";
+import { IoClose } from "react-icons/io5";
+import { MdOutlineContentPaste } from "react-icons/md";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from "@/pages/[id]";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { IoWallet } from "react-icons/io5";
 import { IconInput } from "../icon-input";
 import WalletButton from "./connect-wallet-button";
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
@@ -17,6 +18,7 @@ import { FixedBottomButton } from "../fix-bottom-button";
 import { Spinner } from "../ui/spinner";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
+import { Principal } from "@dfinity/principal";
 
 interface ClaimLinkDetail {
     title: string;
@@ -65,6 +67,23 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         }
         connect();
         setSelectOptionWallet(selectOption);
+    };
+
+    const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
+        try {
+            console.log("Paste");
+            // Check principal format
+            const text = await navigator.clipboard.readText();
+            const isValid = Principal.fromText(text);
+            console.log(isValid);
+            field.onChange(text);
+        } catch (err) {
+            console.error("Failed to read clipboard contents: ", err);
+        }
+    };
+
+    const handleRemoveAllText = (field: { onChange: (value: string) => void }) => {
+        field.onChange("");
     };
 
     useEffect(() => {
@@ -176,6 +195,24 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                         color="green"
                                                         className="mr-2 h-6 w-6"
                                                     />
+                                                }
+                                                rightIcon={
+                                                    field.value ? (
+                                                        <IoClose
+                                                            color="green"
+                                                            className="mr-1 h-6 w-6"
+                                                        />
+                                                    ) : (
+                                                        <MdOutlineContentPaste
+                                                            color="green"
+                                                            className="mr-2 h-5 w-5"
+                                                        />
+                                                    )
+                                                }
+                                                onRightIconClick={() =>
+                                                    field.value
+                                                        ? handleRemoveAllText(field)
+                                                        : handlePasteClick(field)
                                                 }
                                                 placeholder={t("claim.addressPlaceholder")}
                                                 className="py-5 h-14 text-md rounded-xl"
