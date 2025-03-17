@@ -111,9 +111,9 @@ export default function LinkTemplate({
 
                     <Button
                         type="submit"
-                        className="my-3 mx-auto w-[90%]"
+                        className="my-3 mx-auto w-[95%]"
                         disabled={isButtonDisabled}
-                        size={"lg"}
+                        size="lg"
                     >
                         {t("continue")}
                     </Button>
