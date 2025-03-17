@@ -10,11 +10,6 @@ on:
             - closed
         paths:
             - "src/cashier_frontend/**"
-    push:
-        branches:
-            - staging-test
-        # paths:
-        #     - "src/cashier_frontend/**"
 
 jobs:
     build_and_deploy_staging:
