@@ -2,9 +2,11 @@ import { getLinkLabel, LINK_STATE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
 export function StateBadge({ state }: { state: string | undefined }) {
+    const baseLabelClass = "text-sm font-xs rounded-full px-2";
+
     if (state === LINK_STATE.ADD_ASSET) {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightyellow text-yellow">
+            <div className={`${baseLabelClass} bg-lightyellow text-yellow`}>
                 {getLinkLabel(LINK_STATE.ADD_ASSET)}
             </div>
         );
@@ -12,7 +14,7 @@ export function StateBadge({ state }: { state: string | undefined }) {
 
     if (state === LINK_STATE.CHOOSE_TEMPLATE) {
         return (
-            <div className="text-sm font-normal rounded-full px-2 bg-lightpurple text-[#3648A1]">
+            <div className={`${baseLabelClass} bg-lightpurple text-[#3648A1]`}>
                 {getLinkLabel(LINK_STATE.CHOOSE_TEMPLATE)}
             </div>
         );
@@ -20,7 +22,7 @@ export function StateBadge({ state }: { state: string | undefined }) {
 
     if (state === LINK_STATE.ACTIVE) {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-green text-white">
+            <div className={`${baseLabelClass} py-1 bg-green text-white`}>
                 {getLinkLabel(LINK_STATE.ACTIVE)}
             </div>
         );
@@ -28,7 +30,7 @@ export function StateBadge({ state }: { state: string | undefined }) {
 
     if (state === LINK_STATE.INACTIVE) {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-gray-200 text-gray-700">
+            <div className={`${baseLabelClass} bg-gray-200 text-gray-700`}>
                 {getLinkLabel(LINK_STATE.INACTIVE)}
             </div>
         );
@@ -36,11 +38,12 @@ export function StateBadge({ state }: { state: string | undefined }) {
 
     if (state === LINK_STATE.CREATE_LINK) {
         return (
-            <div className="text-sm text-gray-500 font-xs text-green rounded-full px-2 bg-lightgreen">
+            <div className={`${baseLabelClass} text-green bg-lightgreen`}>
                 {getLinkLabel(LINK_STATE.CREATE_LINK)}
             </div>
         );
     }
+    return null;
 }
 
 export default function LinkItem({ link }: { link: LinkDetailModel }) {
