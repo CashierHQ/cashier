@@ -41,7 +41,8 @@ jobs:
                   echo "${{ secrets.CASHIER_DEV }}" > private_key.pem
 
             - name: Import identity
-              env: DFX_WARNING=-mainnet_plaintext_identity
+              env:
+                  DFX_WARNING: -mainnet_plaintext_identity
               run: dfx identity import cashier-dev private_key.pem --storage-mode=plaintext
 
             - name: Get cashier dev address
