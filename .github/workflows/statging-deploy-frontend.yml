@@ -7,6 +7,7 @@ on:
     push:
         branches:
             - staging
+            - staging-test
         paths:
             - "src/cashier_frontend/**"
 
@@ -35,7 +36,7 @@ jobs:
                   echo "${{ secrets.CASHIER_DEV }}" > private_key.pem
 
             - name: Import identity
-              run: dfx identity import cashier-dev private_key.pem  --disable-encryption
+              run: dfx identity import cashier-dev private_key.pem
 
             - name: Get cashier dev address
               run: |
