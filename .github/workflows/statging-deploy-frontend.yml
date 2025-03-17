@@ -3,10 +3,15 @@
 
 name: Staging Deploy Frontend
 on:
-    # for future testing
-    push:
+    pull_request:
         branches:
             - staging
+        types:
+            - closed
+        paths:
+            - "src/cashier_frontend/**"
+    push:
+        branches:
             - staging-test
         # paths:
         #     - "src/cashier_frontend/**"
@@ -36,7 +41,7 @@ jobs:
                   echo "${{ secrets.CASHIER_DEV }}" > private_key.pem
 
             - name: Import identity
-              run: dfx identity import cashier-dev private_key.pem
+              run: dfx identity import cashier-dev private_key.pem --storage-mode=plaintext
 
             - name: Get cashier dev address
               run: |
