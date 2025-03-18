@@ -1,70 +1,60 @@
 import AssetButton from "@/components/asset-button";
+import AssetDrawer from "@/components/asset-drawer";
 import { AssetSelectItem } from "@/components/asset-select";
-import ConfirmDialog from "@/components/confirm-dialog";
+import { useConfirmButtonState } from "@/components/confirmation-drawer/confirmation-drawer.hooks";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
 import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
+import TransactionToast from "@/components/transaction/transaction-toast";
 import { BackHeader } from "@/components/ui/back-header";
-import { Spinner } from "@/components/ui/spinner";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import {
+    useSelectedWalletSendAsset,
+    useWalletSendAssetForm,
+    useWalletSendAssetFormActions,
+    WalletSendAssetFormSchema,
+} from "@/components/wallet/send/send-asset-form.hooks";
+import { MOCK_TOKENS_LIST } from "@/constants/mock-data";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
-import { toast } from "@/hooks/use-toast";
-import { useConfirmDialog } from "@/hooks/useDialog";
-import { transformShortAddress } from "@/utils";
+import useToast from "@/hooks/useToast";
+import { useTokenMetadataList } from "@/hooks/useTokenMetadataQuery";
+import CanisterUtilsService from "@/services/canisterUtils.service";
+import { TokenUtilService } from "@/services/tokenUtils.service";
+import { ACTION_STATE } from "@/services/types/enum";
+import { convertTokenAmountToNumber } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
-import { useAuth } from "@nfid/identitykit/react";
-import copy from "copy-to-clipboard";
-import { Info } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
+import { Copy, Info } from "lucide-react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FaRegCopy } from "react-icons/fa";
+import { MdOutlineContentPaste } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
-
-function AccountIdContent({ accountId }: { accountId: string }) {
-    const handleCopyAccountId = (e: React.SyntheticEvent) => {
-        try {
-            e.stopPropagation();
-            copy(accountId ?? "");
-            toast({
-                description: "Copied",
-            });
-        } catch (err) {
-            console.log("🚀 ~ handleCopyLink ~ err:", err);
-        }
-    };
-    return (
-        <>
-            <div className="my-3">
-                ICP uses two address formats, account id and principle id. Centralized exchanges use
-                the account id, so we encourage you to use the account id to avoid sending or
-                receiving to wallets that do not support principle ids.
-            </div>
-            <div>In case you'd like to use a Account ID, you can use the address below.</div>
-            <div
-                id="account-id-display"
-                className="my-3 text-green flex items-center"
-                style={{ wordBreak: "break-all" }}
-                onClick={handleCopyAccountId}
-            >
-                <div
-                    className="break-words overflow-hidden mr-2"
-                    style={{ wordBreak: "break-all" }}
-                >
-                    {accountId}
-                </div>
-                <FaRegCopy color="green" size={32} />
-            </div>
-        </>
-    );
-}
 
 export default function SendTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const identity = useIdentity();
     const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId: string }>();
-    const { metadata, loading } = useTokenMetadata(tokenId);
+    const { metadata } = useTokenMetadata(tokenId);
+    const { data: metadataList } = useTokenMetadataList();
     const { user } = useAuth();
-    const { open, options, showDialog, hideDialog } = useConfirmDialog();
+    const { toastData, showToast, hideToast } = useToast();
+
     const [accountId, setAccountId] = useState<string>("");
+    const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
+
+    const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
+        ACTION_STATE.CREATED,
+        t,
+    );
 
     const assetSelectedItem: AssetSelectItem = {
         name: metadata?.symbol || "",
@@ -72,22 +62,76 @@ export default function SendTokenPage() {
         amount: undefined,
     };
 
-    const handleShowAccountId = () => {
-        showDialog({
-            title: "Account ID",
-            description: <AccountIdContent accountId={accountId} />,
-        });
+    const defaultAssetList = useMemo(() => {
+        return MOCK_TOKENS_LIST.map((token) => ({
+            name: token.name,
+            tokenAddress: token.address,
+            amount: TokenUtilService.getHumanReadableAmountFromMetadata(
+                token.amount,
+                metadataList?.find((metadata) => metadata.canisterId === token.address)?.metadata,
+            ),
+        }));
+    }, [assetSelectedItem.name, assetSelectedItem.tokenAddress, metadataList]);
+
+    const form = useWalletSendAssetForm(defaultAssetList ?? [], {
+        tokenAddress: tokenId ?? "",
+        amount: BigInt(0),
+        assetNumber: 0,
+    });
+
+    const selectedAsset = useSelectedWalletSendAsset(defaultAssetList, form);
+    const { setTokenAmount, setTokenAddress, setWalletAddress } =
+        useWalletSendAssetFormActions(form);
+
+    const handleSetTokenAddress = (address: string) => {
+        setTokenAddress(address);
+        setShowAssetDrawer(false);
     };
 
-    const handleCopy = (e: React.SyntheticEvent) => {
+    const handleAmountInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        setTokenAmount(value);
+    };
+
+    const handleSetWalletAddress = (event: ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        setWalletAddress(value);
+    };
+
+    const onSubmitSend = async (data: WalletSendAssetFormSchema) => {
+        console.log(data);
+        setButtonText("Sending...");
+        setIsDisabled(true);
         try {
-            e.stopPropagation();
-            copy(user?.principal.toString() ?? "");
-            toast({
-                description: "Copied",
-            });
+            if (metadata) {
+                const canisterUtils = new CanisterUtilsService(identity);
+                await canisterUtils.transferTo(
+                    data.walletAddress,
+                    data.tokenAddress,
+                    convertTokenAmountToNumber(data.assetNumber ?? 0, metadata.decimals),
+                );
+                showToast("Success", "Transfer successful", "default");
+            } else {
+                console.log("Can not get token metadata");
+                showToast("Error", "Can not get token metadata", "error");
+            }
+        } catch (e) {
+            console.log(e);
+            showToast("Error", "Unexpected", "error");
+        } finally {
+            setButtonText("Confirm");
+            setIsDisabled(false);
+        }
+    };
+
+    const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
+        try {
+            console.log("Paste");
+            // Check principal format
+            const text = await navigator.clipboard.readText();
+            field.onChange(text);
         } catch (err) {
-            console.log("🚀 ~ handleCopyLink ~ err:", err);
+            console.error("Failed to read clipboard contents: ", err);
         }
     };
 
@@ -107,65 +151,125 @@ export default function SendTokenPage() {
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
             </BackHeader>
-            <div id="content" className="mx-2">
-                <div className="mt-5">
-                    <div id="warning-section" className="text-green flex items-center">
-                        <Info className="text-green mr-1" />
-                        <p>Send token to this wallet</p>
-                    </div>
-                </div>
+            <div id="content" className="mx-2 my-5">
+                <>
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit((data) => {
+                                onSubmitSend(data);
+                            })}
+                            className="space-y-8 mb-[100px]"
+                        >
+                            <FormField
+                                name="tokenAddress"
+                                control={form.control}
+                                render={() => (
+                                    <FormItem>
+                                        <FormLabel>{t("create.asset")}</FormLabel>
+                                        <AssetButton
+                                            handleClick={() => setShowAssetDrawer(true)}
+                                            text="Choose Asset"
+                                            childrenNode={
+                                                <SelectedAssetButtonInfo
+                                                    selectedToken={selectedAsset}
+                                                    isLoadingBalance={false}
+                                                />
+                                            }
+                                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                <div id="token-details" className="my-5">
-                    <h2 className="font-medium leading-6 text-gray-900 mb-2">
-                        {t("wallet.receive.receiveToken")}
-                    </h2>
-                    {loading ? (
-                        <Spinner width={26} height={26} />
-                    ) : (
-                        <AssetButton
-                            handleClick={() => console.log("test")}
-                            text="Choose Asset"
-                            childrenNode={
-                                <SelectedAssetButtonInfo
-                                    selectedToken={assetSelectedItem}
-                                    isLoadingBalance={loading}
-                                />
-                            }
-                        />
-                    )}
-                </div>
+                            <FormField
+                                control={form.control}
+                                name={"assetNumber"}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div className="flex justify-between items-center">
+                                            <FormLabel>{t("create.amount")}</FormLabel>
+                                        </div>
+                                        <FormControl>
+                                            <IconInput
+                                                type="number"
+                                                step="any"
+                                                isCurrencyInput={true}
+                                                currencySymbol={selectedAsset?.name}
+                                                {...field}
+                                                value={form.getValues("assetNumber") ?? ""}
+                                                onChange={handleAmountInputChange}
+                                                className="pl-3 py-5 h-14 text-md rounded-xl appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                            />
+                                        </FormControl>
 
-                <div id="address-detail" className="my-3">
-                    <h2 className="font-medium leading-6 text-gray-900 mb-2">
-                        Receive {metadata?.symbol} adrress
-                    </h2>
-                    <IconInput
-                        isCurrencyInput={false}
-                        placeholder={t("claim.addressPlaceholder")}
-                        className="pl-3 py-5 h-14 text-md rounded-xl"
-                        value={transformShortAddress(user?.principal?.toString() ?? "")}
-                        disabled={true}
-                        rightIcon={<FaRegCopy color="green" size={22} />}
-                        onRightIconClick={handleCopy}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name={"walletAddress"}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div className="flex justify-between items-center">
+                                            <FormLabel>Wallet address</FormLabel>
+                                        </div>
+                                        <FormControl>
+                                            <IconInput
+                                                type="text"
+                                                step="any"
+                                                isCurrencyInput={false}
+                                                rightIcon={
+                                                    <MdOutlineContentPaste
+                                                        size={20}
+                                                        color="green"
+                                                    />
+                                                }
+                                                onRightIconClick={() => handlePasteClick(field)}
+                                                {...field}
+                                                value={form.getValues("walletAddress") ?? ""}
+                                                onChange={handleSetWalletAddress}
+                                                className="pl-3 py-5 h-14 text-md rounded-xl appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                            />
+                                        </FormControl>
+
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FixedBottomButton
+                                type="submit"
+                                variant="default"
+                                size="lg"
+                                disabled={isDisabled}
+                                className="fixed bottom-[30px] left-1/2 -translate-x-1/2"
+                                onClick={() => console.log(form.formState.errors)}
+                            >
+                                {buttonText}
+                            </FixedBottomButton>
+                        </form>
+                    </Form>
+
+                    <AssetDrawer
+                        title="Select Asset"
+                        open={showAssetDrawer}
+                        handleClose={() => setShowAssetDrawer(false)}
+                        handleChange={handleSetTokenAddress}
+                        assetList={defaultAssetList ?? []}
+                        isLoadingBalance={false}
                     />
-                </div>
-
-                <div
-                    id="account-id"
-                    className="flex justify-center mt-4"
-                    onClick={handleShowAccountId}
-                >
-                    <span className="text-green text-sm underline underline-offset-4">
-                        {t("wallet.receive.useAccountId")}
-                    </span>
-                </div>
-
-                <ConfirmDialog
-                    open={open}
-                    description={options.description}
-                    onOpenChange={hideDialog}
-                />
+                </>
             </div>
+
+            <TransactionToast
+                open={toastData?.open ?? false}
+                onOpenChange={hideToast}
+                title={toastData?.title ?? ""}
+                description={toastData?.description ?? ""}
+                variant={toastData?.variant ?? "default"}
+            />
         </div>
     );
 }
