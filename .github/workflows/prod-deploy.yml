@@ -3,9 +3,13 @@
 
 name: Prod Deploy
 on:
-    push:
+    pull_request:
         branches:
             - main
+        types:
+            - closed
+        paths:
+            - "src/cashier_frontend/**"
 
 jobs:
     build_and_deploy_prod:
@@ -53,6 +57,7 @@ jobs:
             - name: deploy to staging env
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
+                  DFX_WARNING: -mainnet_plaintext_identity
               run: |
                   echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
                   dfx deploy cashier_frontend_staging --ic
