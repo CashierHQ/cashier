@@ -12,13 +12,15 @@ import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { IconInput } from "../icon-input";
 import WalletButton from "./connect-wallet-button";
-import { useAuth, useIdentity } from "@nfid/identitykit/react";
+import { useAuth, useIdentity, useSigner } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import { FixedBottomButton } from "../fix-bottom-button";
 import { Spinner } from "../ui/spinner";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { Principal } from "@dfinity/principal";
+import { useSigners } from "@/contexts/signer-list-context";
+import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 
 interface ClaimLinkDetail {
     title: string;
@@ -52,6 +54,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
+    const { setSigners } = useSigners();
 
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
     const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
@@ -64,6 +67,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     "You are connected to another wallet. Would you like to disconnect and continue?",
             });
             return;
+        }
+        if (selectOption === WALLET_OPTIONS.OTHER) {
+            setSigners([NFIDW, Stoic]);
+        } else if (selectOption === WALLET_OPTIONS.INTERNET_IDENTITY) {
+            setSigners([InternetIdentity]);
         }
         connect();
         setSelectOptionWallet(selectOption);
@@ -146,7 +154,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             postfixText="Coming soon"
                         />
 
-                        {identity ? (
+                        {/* Internet Identity */}
+                        {identity &&
+                        currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
                                 postfixText="Connected"
@@ -161,9 +171,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             />
                         )}
 
-                        {currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
+                        {/* Other wallets */}
+                        {identity && currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
+                                postfixText="Connected"
                             />
                         ) : (
                             <WalletButton
