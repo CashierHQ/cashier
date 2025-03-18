@@ -7,10 +7,15 @@ interface IconInputProps extends InputProps {
     isCurrencyInput: boolean;
     currencySymbol?: string;
     isDisabled?: boolean;
+    rightIcon?: React.ReactNode;
+    onRightIconClick?: () => void;
 }
 
 const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(
-    ({ className, icon, isCurrencyInput, currencySymbol, ...props }, ref) => {
+    (
+        { className, icon, rightIcon, onRightIconClick, isCurrencyInput, currencySymbol, ...props },
+        ref,
+    ) => {
         if (isCurrencyInput) {
             return (
                 <div className="relative">
@@ -24,13 +29,27 @@ const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(
             return (
                 <div className="relative w-full">
                     <Input
-                        className={cn("pl-10 w-full rounded-lg", className)}
+                        className={cn(
+                            "pl-10 w-full rounded-lg",
+                            rightIcon ? "pr-12" : "",
+                            className,
+                        )}
                         ref={ref}
                         {...props}
                     />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        {icon}
-                    </div>
+                    {icon && (
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            {icon}
+                        </div>
+                    )}
+                    {rightIcon && (
+                        <div
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            onClick={onRightIconClick}
+                        >
+                            {rightIcon}
+                        </div>
+                    )}
                 </div>
             );
         }
