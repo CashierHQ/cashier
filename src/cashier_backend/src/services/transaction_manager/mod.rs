@@ -36,6 +36,7 @@ pub mod validate;
 pub struct UpdateActionArgs {
     pub action_id: String,
     pub link_id: String,
+    // using for marking the method called outside of icrc-112
     pub execute_wallet_tx: bool,
 }
 
@@ -514,13 +515,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 args.link_id.clone(),
                 &eligible_wallet_txs,
             )?;
-
-            info!(
-                "Eligible wallet txs: {:#?}, eligible canister txs: {:#?}",
-                eligible_wallet_txs, eligible_canister_txs
-            );
-
-            info!("ICRC-112 requests: {:#?}", icrc_112_requests);
 
             request = if icrc_112_requests.is_none() {
                 None
