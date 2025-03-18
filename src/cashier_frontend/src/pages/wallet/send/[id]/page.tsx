@@ -5,6 +5,7 @@ import { useConfirmButtonState } from "@/components/confirmation-drawer/confirma
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
 import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
+import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { BackHeader } from "@/components/ui/back-header";
 import {
@@ -31,7 +32,6 @@ import { ACTION_STATE } from "@/services/types/enum";
 import { convertTokenAmountToNumber } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
-import { Copy, Info } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MdOutlineContentPaste } from "react-icons/md";
@@ -56,22 +56,24 @@ export default function SendTokenPage() {
         t,
     );
 
+    const { isLoadingAssets, isLoadingBalance, assets: defaultAssetList } = useUserAssets();
+
     const assetSelectedItem: AssetSelectItem = {
         name: metadata?.symbol || "",
         tokenAddress: tokenId ?? "",
         amount: undefined,
     };
 
-    const defaultAssetList = useMemo(() => {
-        return MOCK_TOKENS_LIST.map((token) => ({
-            name: token.name,
-            tokenAddress: token.address,
-            amount: TokenUtilService.getHumanReadableAmountFromMetadata(
-                token.amount,
-                metadataList?.find((metadata) => metadata.canisterId === token.address)?.metadata,
-            ),
-        }));
-    }, [assetSelectedItem.name, assetSelectedItem.tokenAddress, metadataList]);
+    // const defaultAssetList = useMemo(() => {
+    //     return MOCK_TOKENS_LIST.map((token) => ({
+    //         name: token.name,
+    //         tokenAddress: token.address,
+    //         amount: TokenUtilService.getHumanReadableAmountFromMetadata(
+    //             token.amount,
+    //             metadataList?.find((metadata) => metadata.canisterId === token.address)?.metadata,
+    //         ),
+    //     }));
+    // }, [assetSelectedItem.name, assetSelectedItem.tokenAddress, metadataList]);
 
     const form = useWalletSendAssetForm(defaultAssetList ?? [], {
         tokenAddress: tokenId ?? "",
