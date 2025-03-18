@@ -68,20 +68,20 @@ export default function DetailPage() {
                         renderSkeletonLoading()
                     ) : (
                         <>
-                            <div id="heading-section" className="flex mb-5">
+                            <div id="heading-section" className="flex mb-5 items-center">
                                 <div
-                                    className="cursor-pointer"
+                                    className="absolute left-5 cursor-pointer"
                                     onClick={() => {
                                         navigate("/");
                                     }}
                                 >
-                                    <ChevronLeftIcon width={25} height={25} />
+                                    <ChevronLeftIcon width={26} height={26} />
                                 </div>
-                                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center mx-auto">
+                                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight mx-auto flex-grow text-center">
                                     {linkData?.link?.title}
                                 </h4>
                             </div>
-                            <div id="qr-code-section" className="flex flex-col my-5">
+                            <div id="qr-code-section" className="flex flex-col my-2">
                                 <div className="flex items-center justify-center grow">
                                     <StateBadge state={linkData?.link?.state} />
                                 </div>
@@ -98,7 +98,7 @@ export default function DetailPage() {
                             </h2>
                             <div
                                 id="link-detail-section"
-                                className="flex flex-col my-3 border-2 rounded-xl"
+                                className="flex flex-col my-3 border-[1px] rounded-xl border-lightgreen"
                             >
                                 <Table className="text-base">
                                     <TableHeader></TableHeader>
@@ -109,7 +109,7 @@ export default function DetailPage() {
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
-                                            <TableCell className="text-right px-5">
+                                            <TableCell className="text-right px-5 text-lightblack">
                                                 Tip link
                                             </TableCell>
                                         </TableRow>
@@ -119,7 +119,9 @@ export default function DetailPage() {
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
-                                            <TableCell className="text-right px-5">ICP</TableCell>
+                                            <TableCell className="text-right px-5 text-lightblack">
+                                                ICP
+                                            </TableCell>
                                         </TableRow>
                                         <TableRow>
                                             <TableCell className="font-medium px-5">
@@ -127,7 +129,7 @@ export default function DetailPage() {
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
-                                            <TableCell className="text-right px-5">
+                                            <TableCell className="text-right px-5 text-lightblack">
                                                 {metadata?.name === "CUTE"
                                                     ? "CHAT"
                                                     : metadata?.name}
@@ -139,7 +141,7 @@ export default function DetailPage() {
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell></TableCell>
-                                            <TableCell className="text-right px-5">
+                                            <TableCell className="text-right px-5 text-lightblack">
                                                 {TokenUtilService.getHumanReadableAmountFromMetadata(
                                                     linkData?.link?.asset_info[0].amount,
                                                     metadata,
@@ -207,7 +209,8 @@ export default function DetailPage() {
                     </div> */}
                             <Button
                                 onClick={handleCopyLink}
-                                className="fixed text-[1rem] bottom-[30px] w-[80vw] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 py-5"
+                                size="lg"
+                                className="fixed text-[1rem] bottom-[30px] w-[90%] max-w-[350px] left-1/2 -translate-x-1/2"
                             >
                                 {t("details.copyLink")}
                             </Button>

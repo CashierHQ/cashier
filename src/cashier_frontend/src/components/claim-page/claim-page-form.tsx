@@ -2,21 +2,25 @@ import React, { useEffect, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
 import { SlWallet } from "react-icons/sl";
+import { IoClose } from "react-icons/io5";
+import { MdOutlineContentPaste } from "react-icons/md";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from "@/pages/[id]";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { IoWallet } from "react-icons/io5";
 import { IconInput } from "../icon-input";
 import WalletButton from "./connect-wallet-button";
-import { useAuth, useIdentity } from "@nfid/identitykit/react";
+import { useAuth, useIdentity, useSigner } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import { FixedBottomButton } from "../fix-bottom-button";
 import { Spinner } from "../ui/spinner";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
+import { Principal } from "@dfinity/principal";
+import { useSigners } from "@/contexts/signer-list-context";
+import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 
 interface ClaimLinkDetail {
     title: string;
@@ -50,11 +54,21 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
+    const { setSigners } = useSigners();
 
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
     const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
     const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
+        if ((form.getValues("address") ?? "").trim().length > 0) {
+            showDialog({
+                title: "Are you sure?",
+                description:
+                    "You are connected to another wallet. Would you like to disconnect and continue?",
+            });
+            return;
+        }
+
         if (identity && selectOption !== currentSelectOptionWallet) {
             showDialog({
                 title: "Are you sure?",
@@ -63,8 +77,30 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             });
             return;
         }
+        if (selectOption === WALLET_OPTIONS.OTHER) {
+            setSigners([NFIDW, Stoic]);
+        } else if (selectOption === WALLET_OPTIONS.INTERNET_IDENTITY) {
+            setSigners([InternetIdentity]);
+        }
         connect();
         setSelectOptionWallet(selectOption);
+    };
+
+    const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
+        try {
+            console.log("Paste");
+            // Check principal format
+            const text = await navigator.clipboard.readText();
+            const isValid = Principal.fromText(text);
+            console.log(isValid);
+            field.onChange(text);
+        } catch (err) {
+            console.error("Failed to read clipboard contents: ", err);
+        }
+    };
+
+    const handleRemoveAllText = (field: { onChange: (value: string) => void }) => {
+        field.onChange("");
     };
 
     useEffect(() => {
@@ -127,7 +163,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             postfixText="Coming soon"
                         />
 
-                        {identity ? (
+                        {/* Internet Identity */}
+                        {identity &&
+                        currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
                                 postfixText="Connected"
@@ -142,9 +180,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             />
                         )}
 
-                        {currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
+                        {/* Other wallets */}
+                        {identity && currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
+                                postfixText="Connected"
                             />
                         ) : (
                             <WalletButton
@@ -176,6 +216,24 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                         color="green"
                                                         className="mr-2 h-6 w-6"
                                                     />
+                                                }
+                                                rightIcon={
+                                                    field.value ? (
+                                                        <IoClose
+                                                            color="green"
+                                                            className="mr-1 h-6 w-6"
+                                                        />
+                                                    ) : (
+                                                        <MdOutlineContentPaste
+                                                            color="green"
+                                                            className="mr-2 h-5 w-5"
+                                                        />
+                                                    )
+                                                }
+                                                onRightIconClick={() =>
+                                                    field.value
+                                                        ? handleRemoveAllText(field)
+                                                        : handlePasteClick(field)
                                                 }
                                                 placeholder={t("claim.addressPlaceholder")}
                                                 className="py-5 h-14 text-md rounded-xl"
@@ -213,6 +271,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 actionText="Disconnect"
                 onSubmit={() => {
                     disconnect();
+                    form.setValue("address", "");
+                    form.clearErrors();
                     hideDialog();
                 }}
                 onOpenChange={hideDialog}
