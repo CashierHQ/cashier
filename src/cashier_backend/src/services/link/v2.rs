@@ -1,7 +1,9 @@
+use std::str::FromStr;
+
 use candid::Principal;
 use cashier_types::{
-    Action, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, Link, LinkType,
-    Wallet,
+    user, Action, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, Link,
+    LinkAction, LinkType, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -251,11 +253,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok(intents)
     }
 
-    // TODO: add user id or wallet address as param
-    pub fn get_action_of_link(&self, link_id: &str, action_type: &str) -> Option<Action> {
-        let link_actions = self
-            .link_action_repository
-            .get_by_link_action(link_id.to_string(), action_type.to_string());
+    pub fn get_action_of_link(
+        &self,
+        link_id: &str,
+        action_type: &str,
+        user_id: &str,
+    ) -> Option<Action> {
+        let link_actions = self.link_action_repository.get_by_link_action(
+            link_id.to_string(),
+            action_type.to_string(),
+            user_id.to_string(),
+        );
 
         if link_actions.is_empty() {
             return None;
@@ -379,4 +387,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     }
 
     pub fn validate_asset_left(&self, link_id: &str) -> () {}
+
+    pub fn get_link_action_user(
+        &self,
+        link_id: String,
+        action_type: String,
+        user_id: String,
+    ) -> Result<Option<LinkAction>, CanisterError> {
+        let action_type = ActionType::from_str(action_type.as_str()).map_err(|e| {
+            CanisterError::HandleLogicError(format!("Error converting action type: {:?}", e))
+        })?;
+
+        todo!()
+    }
 }

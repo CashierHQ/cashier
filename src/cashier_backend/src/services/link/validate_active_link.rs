@@ -29,10 +29,13 @@ pub fn is_valid_fields_before_active(link: Link) -> Result<bool, String> {
     Ok(true)
 }
 
-pub fn is_create_action_exist(link_id: String) -> Result<bool, String> {
+pub fn is_create_action_exist(link_id: String, user_id: String) -> Result<bool, String> {
     let link_action_repository = link_action::LinkActionRepository::new();
-    let link_intent_create =
-        link_action_repository.get_by_link_action(link_id, ActionType::CreateLink.to_string());
+    let link_intent_create = link_action_repository.get_by_link_action(
+        link_id,
+        ActionType::CreateLink.to_string(),
+        user_id,
+    );
 
     if link_intent_create.is_empty() {
         return Ok(false);

@@ -16,6 +16,7 @@ impl LinkActionRepository {
                 link_id: link_action.link_id.clone(),
                 action_type: link_action.action_type.clone(),
                 action_id: link_action.action_id.clone(),
+                user_id: link_action.user_id.clone(),
             };
             store.insert(id.to_str(), link_action);
         });
@@ -29,11 +30,13 @@ impl LinkActionRepository {
         &self,
         link_id: LinkKey,
         action_type: ActionTypeKey,
+        user_id: String,
     ) -> Vec<LinkAction> {
         LINK_ACTION_STORE.with_borrow(|store| {
             let key: LinkActionKey = LinkActionKey {
                 link_id: link_id.clone(),
                 action_type: action_type.clone(),
+                user_id: user_id.clone(),
                 action_id: "".to_string(),
             };
 
