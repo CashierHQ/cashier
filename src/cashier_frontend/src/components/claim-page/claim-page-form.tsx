@@ -60,6 +60,15 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
     const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
+        if ((form.getValues("address") ?? "").trim().length > 0) {
+            showDialog({
+                title: "Are you sure?",
+                description:
+                    "You are connected to another wallet. Would you like to disconnect and continue?",
+            });
+            return;
+        }
+
         if (identity && selectOption !== currentSelectOptionWallet) {
             showDialog({
                 title: "Are you sure?",
@@ -262,6 +271,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 actionText="Disconnect"
                 onSubmit={() => {
                     disconnect();
+                    form.setValue("address", "");
+                    form.clearErrors();
                     hideDialog();
                 }}
                 onOpenChange={hideDialog}
