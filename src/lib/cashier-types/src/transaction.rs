@@ -59,6 +59,31 @@ impl Transaction {
             }
         }
     }
+
+    pub fn set_from(&mut self, from_account: Account) -> () {
+        use crate::Chain;
+
+        match &mut self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
+                icrc1_transfer.from = Wallet {
+                    address: from_account.to_string(),
+                    chain: Chain::IC,
+                }
+            }
+            Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve)) => {
+                icrc2_approve.from = Wallet {
+                    address: from_account.to_string(),
+                    chain: Chain::IC,
+                }
+            }
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
+                icrc2_transfer_from.from = Wallet {
+                    address: from_account.to_string(),
+                    chain: Chain::IC,
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

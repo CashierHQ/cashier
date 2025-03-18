@@ -1,7 +1,6 @@
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
-use crate::info;
 use crate::services::transaction_manager::{TransactionManagerService, UpdateActionArgs};
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{

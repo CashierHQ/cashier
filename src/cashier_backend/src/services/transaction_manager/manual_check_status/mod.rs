@@ -1,7 +1,6 @@
 use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
 
 use crate::{
-    info,
     types::error::CanisterError,
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };

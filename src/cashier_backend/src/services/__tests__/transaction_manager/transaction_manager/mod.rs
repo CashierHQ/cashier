@@ -3,6 +3,7 @@ pub mod create_action;
 mod tests {
     use std::collections::HashMap;
 
+    use candid::Principal;
     use cashier_types::{ActionState, IntentState, TransactionState};
     use faux::when;
     use ic_cdk_timers::TimerId;
@@ -40,11 +41,13 @@ mod tests {
         let mut intent2 = create_dummy_intent(cashier_types::IntentState::Created);
         let mut tx1 = create_dummy_tx_protocol(TransactionState::Created, "icrc1_transfer");
         let mut tx2 = create_dummy_tx_protocol(TransactionState::Created, "icrc1_transfer");
-
         let creator = Account {
             owner: generate_random_principal(),
             subaccount: None,
         };
+        tx1.set_from(creator);
+        tx2.set_from(creator);
+
         action.creator = creator.owner.to_text();
 
         let mut intent_txs = HashMap::new();
@@ -61,10 +64,12 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            execute_wallet_tx: true,
+            execute_wallet_tx: false,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
+        when!(ic_env.id).then_return(Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap());
+
         when!(action_service.get)
             .times(3)
             .then_return(Ok(action_resp.clone()));
@@ -73,10 +78,10 @@ mod tests {
             .times(2)
             .then_return(vec![tx1.clone(), tx2.clone()]);
 
-        when!(manual_check_status_service.execute(tx1.clone(), vec![]))
+        when!(manual_check_status_service.execute(tx1.clone(), vec![tx1.clone(), tx2.clone()]))
             .times(1)
             .then_return(Ok(TransactionState::Created));
-        when!(manual_check_status_service.execute(tx2.clone(), vec![]))
+        when!(manual_check_status_service.execute(tx2.clone(), vec![tx1.clone(), tx2.clone()]))
             .times(1)
             .then_return(Ok(TransactionState::Created));
 
@@ -141,6 +146,7 @@ mod tests {
             action_dto.intents[1].state,
             IntentState::Processing.to_string()
         );
+        println!("{:#?}", action_dto);
         assert!(action_dto.icrc_112_requests.is_some());
         let requests = action_dto.icrc_112_requests.unwrap().clone();
         assert_eq!(requests.len(), 2);
@@ -189,10 +195,11 @@ mod tests {
         let args = UpdateActionArgs {
             action_id: action.id.clone(),
             link_id: link_id.to_string(),
-            execute_wallet_tx: true,
+            execute_wallet_tx: false,
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
+        when!(ic_env.id).then_return(Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap());
 
         when!(action_service.get)
             .times(3)
@@ -202,10 +209,10 @@ mod tests {
             .times(2)
             .then_return(vec![tx1.clone(), tx2.clone()]);
 
-        when!(manual_check_status_service.execute(tx1.clone(), vec![]))
+        when!(manual_check_status_service.execute(tx1.clone(), vec![tx1.clone(), tx2.clone()]))
             .times(1)
             .then_return(Ok(TransactionState::Created));
-        when!(manual_check_status_service.execute(tx2.clone(), vec![]))
+        when!(manual_check_status_service.execute(tx2.clone(), vec![tx1.clone(), tx2.clone()]))
             .times(1)
             .then_return(Ok(TransactionState::Created));
 
@@ -323,10 +330,11 @@ mod tests {
         };
 
         when!(ic_env.caller).then_return(creator.owner.clone());
-        when!(manual_check_status_service.execute(tx1.clone(), vec![]))
+        when!(ic_env.id).then_return(Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap());
+        when!(manual_check_status_service.execute(tx1.clone(), vec![tx1.clone(), tx2.clone()]))
             .times(1)
             .then_return(Ok(TransactionState::Processing));
-        when!(manual_check_status_service.execute(tx2.clone(), vec![]))
+        when!(manual_check_status_service.execute(tx2.clone(), vec![tx1.clone(), tx2.clone()]))
             .times(1)
             .then_return(Ok(TransactionState::Success));
         when!(action_service.get)
@@ -360,8 +368,6 @@ mod tests {
             .update_action(args)
             .await
             .unwrap();
-
-        println!("{:#?}", action_dto);
 
         assert_eq!(action_dto.id, action.id);
         assert_eq!(action_dto.creator, creator.owner.to_string());

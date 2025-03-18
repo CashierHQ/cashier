@@ -1,24 +1,18 @@
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 use cashier_types::{
-    Action, ActionIntent, ActionState, ActionType, Intent, IntentState, IntentTransaction,
-    LinkAction, Transaction, TransactionState, UserAction,
+    Action, ActionIntent, ActionState, Intent, IntentState, IntentTransaction, LinkAction,
+    Transaction, TransactionState, UserAction,
 };
-use uuid::Uuid;
 
 use crate::{
-    core::action::types::{ActionDto, CreateActionInput},
     info,
     repositories::{self},
     types::{error::CanisterError, transaction_manager::ActionResp},
     utils::runtime::IcEnvironment,
 };
 
-use super::{
-    action_adapter::{self, ConvertToIntentInput},
-    intent_adapter,
-    validate::ValidateService,
-};
+use super::validate::ValidateService;
 
 #[cfg_attr(test, faux::create)]
 pub struct ActionService<E: IcEnvironment + Clone> {
