@@ -12,15 +12,15 @@ import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { IconInput } from "../icon-input";
 import WalletButton from "./connect-wallet-button";
-import { useAuth, useIdentity, useSigner } from "@nfid/identitykit/react";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import { FixedBottomButton } from "../fix-bottom-button";
 import { Spinner } from "../ui/spinner";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
-import { Principal } from "@dfinity/principal";
 import { useSigners } from "@/contexts/signer-list-context";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
+import { Principal } from "@dfinity/principal";
 
 interface ClaimLinkDetail {
     title: string;
@@ -45,7 +45,6 @@ enum WALLET_OPTIONS {
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     handleClaim,
-    formData,
     claimLinkDetails,
     setIsClaiming,
 }) => {

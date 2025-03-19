@@ -129,6 +129,15 @@
         "banner": {
             "title": "NFT Coming soon!",
             "text": "Included in Release 3"
+        },
+        "receive": {
+            "header": "Receive",
+            "address": "Address",
+            "copy": "Copy",
+            "copySuccess": "Address copied to clipboard",
+            "copyError": "Failed to copy address",
+            "receiveToken": "Receive token",
+            "useAccountId": "Use Account ID instead"
         }
     },
     "manage": {

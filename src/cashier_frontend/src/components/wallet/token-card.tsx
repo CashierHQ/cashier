@@ -2,6 +2,7 @@ import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { AssetAvatar } from "../ui/asset-avatar";
 import { useNavigate } from "react-router-dom";
 import { FungibleToken } from "@/types/fungible-token.speculative";
+import { convertDecimalBigIntToNumber } from "@/utils";
 
 export interface WalletTokenProps {
     token: FungibleToken;
@@ -10,7 +11,7 @@ export interface WalletTokenProps {
 export function WalletToken({ token }: WalletTokenProps) {
     const navigate = useNavigate();
 
-    const navigateToDetailsPage = () => navigate("/wallet/details/mock-details-page");
+    const navigateToDetailsPage = () => navigate(`/wallet/details/${token.address}`);
 
     return (
         <article className="flex justify-between" onClick={navigateToDetailsPage}>
@@ -29,7 +30,9 @@ export function WalletToken({ token }: WalletTokenProps) {
             </div>
 
             <div className="flex flex-col gap-1.5">
-                <span className="text-right leading-4">{prettyNumber(token.amount)}</span>
+                <span className="text-right leading-4">
+                    {prettyNumber(convertDecimalBigIntToNumber(token.amount, token.decimals))}
+                </span>
 
                 <span className="text-grey text-right text-xs leading-none">
                     {token.usdEquivalent === null ? "-" : `$${prettyNumber(token.usdEquivalent)}`}

@@ -27,20 +27,22 @@ export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({
     };
 
     return (
-        <div className="flex font-normal">
+        <div className="flex font-normal items-center">
             <Avatar className="mr-3">
                 <AvatarImage src={getTokenAvatar(selectedToken.tokenAddress)} />
                 <AvatarFallback>{selectedToken.name}</AvatarFallback>
             </Avatar>
             <div id="asset-info" className="text-md text-left">
                 <div>{selectedToken.name}</div>
-                <div>
-                    {isLoadingBalance ? (
-                        <Skeleton className="w-[130px] h-4 mt-1" />
-                    ) : (
-                        `Balance ${selectedToken.amount} ${selectedToken.name}`
-                    )}
-                </div>
+                {selectedToken.amount && (
+                    <div>
+                        {isLoadingBalance ? (
+                            <Skeleton className="w-[130px] h-4 mt-1" />
+                        ) : (
+                            `Balance ${selectedToken.amount} ${selectedToken.name}`
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

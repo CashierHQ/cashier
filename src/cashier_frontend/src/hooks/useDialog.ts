@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 
 interface ConfirmDialogOptions {
     title: string;
-    description: string;
+    description: string | React.ReactNode;
 }
 
 export const useConfirmDialog = () => {

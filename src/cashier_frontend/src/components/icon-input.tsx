@@ -1,4 +1,4 @@
-import React from "react";
+import React, { SyntheticEvent } from "react";
 import { Input, InputProps } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +8,7 @@ interface IconInputProps extends InputProps {
     currencySymbol?: string;
     isDisabled?: boolean;
     rightIcon?: React.ReactNode;
-    onRightIconClick?: () => void;
+    onRightIconClick?: (e: SyntheticEvent) => void;
 }
 
 const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(

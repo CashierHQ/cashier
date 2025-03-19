@@ -4,13 +4,18 @@ import { Copy, CopyCheck } from "lucide-react";
 import { mapChainToPrettyName } from "@/utils/map/chain.map";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useState } from "react";
+import { convertDecimalBigIntToNumber } from "@/utils";
+import { useNavigate } from "react-router-dom";
 
 interface TokenDetailsHeroProps {
     token: FungibleToken;
 }
 
 export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
+    console.log("🚀 ~ TokenDetailsHero ~ token:", token);
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const navigateReceivePage = () => navigate(`/wallet/receive/${token.address}`);
 
     const [hasCopiedAddress, setHasCopiedAddress] = useState<boolean>(false);
 
@@ -18,18 +23,19 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
         navigator.clipboard.writeText(token.address);
         setHasCopiedAddress(true);
     };
+    console.log(convertDecimalBigIntToNumber(token.amount, token.decimals));
 
     const CopyIcon = hasCopiedAddress ? CopyCheck : Copy;
 
     return (
         <div className="flex flex-col mt-3 items-center">
             <p className="text-[32px] font-semibold">
-                {token.amount} {token.name}
+                {convertDecimalBigIntToNumber(token.amount, token.decimals)} {token.name}
             </p>
             <p className="text-xs text-grey font-semibold">${token.usdEquivalent}</p>
 
             <div className="mt-4">
-                <SendReceive />
+                <SendReceive onReceive={navigateReceivePage} />
             </div>
 
             <div className="mt-5 w-full">
