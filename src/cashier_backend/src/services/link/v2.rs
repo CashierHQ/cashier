@@ -1,7 +1,7 @@
 use candid::Principal;
 use cashier_types::{
-    Action, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, Link, LinkType,
-    Wallet,
+    Action, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, Link,
+    LinkAction, LinkType, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -251,11 +251,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok(intents)
     }
 
-    // TODO: add user id or wallet address as param
-    pub fn get_action_of_link(&self, link_id: &str, action_type: &str) -> Option<Action> {
-        let link_actions = self
-            .link_action_repository
-            .get_by_link_action(link_id.to_string(), action_type.to_string());
+    pub fn get_action_of_link(
+        &self,
+        link_id: &str,
+        action_type: &str,
+        user_id: &str,
+    ) -> Option<Action> {
+        let link_actions = self.link_action_repository.get_by_prefix(
+            link_id.to_string(),
+            action_type.to_string(),
+            user_id.to_string(),
+        );
 
         if link_actions.is_empty() {
             return None;
@@ -379,4 +385,32 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     }
 
     pub fn validate_asset_left(&self, link_id: &str) -> () {}
+
+    pub fn get_link_action_user(
+        &self,
+        link_id: String,
+        action_type: String,
+        user_id: String,
+    ) -> Result<Option<LinkAction>, CanisterError> {
+        let link_acrtion = self.link_action_repository.get_by_prefix(
+            link_id.clone(),
+            action_type.clone(),
+            user_id.clone(),
+        );
+
+        if link_acrtion.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(link_acrtion[0].clone()))
+    }
+
+    pub fn create_link_action_user(
+        &self,
+        link_id: String,
+        action_type: String,
+        user_id: String,
+    ) -> Result<LinkAction, CanisterError> {
+        todo!()
+    }
 }

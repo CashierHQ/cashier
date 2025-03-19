@@ -58,7 +58,7 @@ pub enum LinkStateMachineActionParams {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct UpdateLinkInput {
     pub id: String,
-    pub action: String,
+    pub action: String, // goto
     pub params: Option<LinkStateMachineActionParams>,
 }
 
@@ -309,4 +309,26 @@ impl UpdateLinkInput {
             None => Ok(()),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct LinkGetUserStateInput {
+    pub link_id: String,
+    pub action_type: String,
+    pub anonymous_wallet_address: Option<String>,
+    pub create_if_not_exist: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct LinkGetUserStateOutput {
+    pub action: ActionDto,
+    pub link_user_state: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct LinkUpdateUserStateInput {
+    pub link_id: String,
+    pub action_type: String,
+    pub anonymous_wallet_address: Option<String>,
+    pub goto: String,
 }

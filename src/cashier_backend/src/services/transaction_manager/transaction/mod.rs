@@ -1,7 +1,5 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
-use crate::info;
-use crate::repositories::transaction;
 use crate::services::transaction_manager::builder::icrc112::TransactionBuilder;
 use crate::types::icrc_112_transaction::Icrc112Requests;
 use crate::{

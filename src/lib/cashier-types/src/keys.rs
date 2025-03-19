@@ -38,13 +38,15 @@ pub struct LinkActionKey {
     pub link_id: String,
     pub action_type: String,
     pub action_id: String,
+    // if it is anonymous user, user_id = ANON#<anonymous_wallet_address>
+    pub user_id: String,
 }
 
 impl LinkActionKey {
     pub fn to_str(&self) -> String {
         format!(
-            "LINK#{}#TYPE#{}#ACTION#{}",
-            self.link_id, self.action_type, self.action_id
+            "LINK#{}#USER#{}#TYPE#{}#ACTION#{}",
+            self.link_id, self.user_id, self.action_type, self.action_id
         )
     }
 }

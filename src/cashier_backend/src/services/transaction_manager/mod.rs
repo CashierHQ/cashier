@@ -2,7 +2,7 @@ use std::{collections::HashMap, time::Duration};
 
 use action::ActionService;
 use cashier_types::{
-    Chain, Intent, IntentTask, IntentType, LinkAction, Transaction, TransactionState,
+    Chain, Intent, IntentTask, IntentType, LinkAction, LinkUserState, Transaction, TransactionState,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
@@ -176,6 +176,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             link_id: temp_action.link_id.clone(),
             action_type: temp_action.r#type.to_string().clone(),
             action_id: temp_action.id.clone(),
+            user_id: temp_action.creator.clone(),
+            link_user_state: LinkUserState::ChooseWallet,
         };
 
         // save action to DB

@@ -16,6 +16,7 @@ impl LinkActionRepository {
                 link_id: link_action.link_id.clone(),
                 action_type: link_action.action_type.clone(),
                 action_id: link_action.action_id.clone(),
+                user_id: link_action.user_id.clone(),
             };
             store.insert(id.to_str(), link_action);
         });
@@ -25,27 +26,30 @@ impl LinkActionRepository {
         LINK_ACTION_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
-    pub fn get_by_link_action(
+    // Query by link_id, action_type, user_id, skip action_id
+    pub fn get_by_prefix(
         &self,
         link_id: LinkKey,
         action_type: ActionTypeKey,
+        user_id: String,
     ) -> Vec<LinkAction> {
         LINK_ACTION_STORE.with_borrow(|store| {
             let key: LinkActionKey = LinkActionKey {
                 link_id: link_id.clone(),
                 action_type: action_type.clone(),
+                user_id: user_id.clone(),
                 action_id: "".to_string(),
             };
 
             let prefix = key.to_str().clone();
 
-            let actions: Vec<_> = store
+            let link_actions: Vec<_> = store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
                 .map(|(_, value)| value.clone())
                 .collect();
 
-            actions
+            link_actions
         })
     }
 
