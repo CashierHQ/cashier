@@ -106,9 +106,9 @@ pub fn get_link_by_id(id: String) -> Result<Link, String> {
     Ok(link)
 }
 
-pub fn get_link_action(link_id: String, action_type: String) -> Option<Action> {
+pub fn get_link_action(link_id: String, action_type: String, user_id: String) -> Option<Action> {
     let link_action_repository = link_action::LinkActionRepository::new();
-    let link_actions = link_action_repository.get_by_link_action(link_id, action_type);
+    let link_actions = link_action_repository.get_by_prefix(link_id, action_type, user_id);
 
     if link_actions.is_empty() {
         return None;

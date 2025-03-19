@@ -13,8 +13,10 @@ mod tests {
             link::api::LinkApi,
         },
         services::{
-            __tests__::tests::MockIcEnvironment, link::v2::LinkService,
-            transaction_manager::TransactionManagerService, user::v2::UserService,
+            __tests__::tests::MockIcEnvironment,
+            link::v2::LinkService,
+            transaction_manager::{action::ActionService, TransactionManagerService},
+            user::v2::UserService,
         },
         types::{error::CanisterError, temp_action::TemporaryAction},
     };
@@ -25,6 +27,7 @@ mod tests {
         let mut user_service = UserService::faux();
         let mut tx_manager_service = TransactionManagerService::faux();
         let mut ic_env = MockIcEnvironment::faux();
+        let action_service = ActionService::faux();
 
         let link_id = Uuid::new_v4().to_string();
         let user_id = Uuid::new_v4().to_string();
@@ -66,7 +69,13 @@ mod tests {
         }));
         when!(link_service.link_validate_balance_with_asset_info).then_return(Ok(()));
 
-        let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
+        let api = LinkApi::new(
+            link_service,
+            user_service,
+            tx_manager_service,
+            action_service,
+            ic_env,
+        );
 
         let result = api.process_action(input).await;
 
@@ -81,6 +90,7 @@ mod tests {
         let mut link_service = LinkService::faux();
         let mut user_service = UserService::faux();
         let mut tx_manager_service = TransactionManagerService::faux();
+        let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
 
         let link_id = Uuid::new_v4().to_string();
@@ -118,7 +128,13 @@ mod tests {
         }));
         when!(link_service.link_validate_balance_with_asset_info).then_return(Ok(()));
 
-        let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
+        let api = LinkApi::new(
+            link_service,
+            user_service,
+            tx_manager_service,
+            action_service,
+            ic_env,
+        );
 
         let result = api.process_action(input).await;
 
@@ -134,6 +150,7 @@ mod tests {
         let mut user_service = UserService::faux();
         let tx_manager_service = TransactionManagerService::faux();
         let mut ic_env = MockIcEnvironment::faux();
+        let action_service = ActionService::faux();
 
         let link_id = Uuid::new_v4().to_string();
         let action_type = "CreateLink".to_string();
@@ -150,7 +167,13 @@ mod tests {
         when!(ic_env.caller).then_return(caller.clone());
         when!(user_service.get_user_id_by_wallet).then_return(None);
 
-        let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
+        let api = LinkApi::new(
+            link_service,
+            user_service,
+            tx_manager_service,
+            action_service,
+            ic_env,
+        );
 
         let result = api.process_action(input).await;
 
@@ -163,6 +186,7 @@ mod tests {
         let mut user_service = UserService::faux();
         let tx_manager_service = TransactionManagerService::faux();
         let mut ic_env = MockIcEnvironment::faux();
+        let action_service = ActionService::faux();
 
         let link_id = Uuid::new_v4().to_string();
         let action_type = "dummy".to_string();
@@ -180,7 +204,13 @@ mod tests {
         when!(user_service.get_user_id_by_wallet).then_return(Some(Uuid::new_v4().to_string()));
         when!(link_service.get_action_of_link).then_return(None);
 
-        let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
+        let api = LinkApi::new(
+            link_service,
+            user_service,
+            tx_manager_service,
+            action_service,
+            ic_env,
+        );
 
         let result = api.process_action(input).await;
 
@@ -192,6 +222,7 @@ mod tests {
         let mut link_service = LinkService::faux();
         let mut user_service = UserService::faux();
         let tx_manager_service = TransactionManagerService::faux();
+        let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
 
         let link_id = Uuid::new_v4().to_string();
@@ -216,7 +247,13 @@ mod tests {
         ));
         when!(link_service.link_validate_balance_with_asset_info).then_return(Ok(()));
 
-        let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
+        let api = LinkApi::new(
+            link_service,
+            user_service,
+            tx_manager_service,
+            action_service,
+            ic_env,
+        );
         let result = api.process_action(input).await;
 
         assert!(matches!(result, Err(CanisterError::HandleLogicError(_))));
@@ -227,6 +264,7 @@ mod tests {
         let mut link_service = LinkService::faux();
         let mut user_service = UserService::faux();
         let mut tx_manager_service = TransactionManagerService::faux();
+        let action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
 
         let link_id = Uuid::new_v4().to_string();
@@ -267,7 +305,13 @@ mod tests {
             CanisterError::ValidationErrors("Failed to validate balance".to_string()),
         ));
 
-        let api = LinkApi::new(link_service, user_service, tx_manager_service, ic_env);
+        let api = LinkApi::new(
+            link_service,
+            user_service,
+            tx_manager_service,
+            action_service,
+            ic_env,
+        );
         let result = api.process_action(input).await;
 
         assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));

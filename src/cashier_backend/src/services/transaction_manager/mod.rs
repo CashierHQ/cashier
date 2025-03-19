@@ -2,7 +2,7 @@ use std::{collections::HashMap, time::Duration};
 
 use action::ActionService;
 use cashier_types::{
-    Chain, Intent, IntentTask, IntentType, LinkAction, Transaction, TransactionState,
+    Chain, Intent, IntentTask, IntentType, LinkAction, LinkUserState, Transaction, TransactionState,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
@@ -36,6 +36,7 @@ pub mod validate;
 pub struct UpdateActionArgs {
     pub action_id: String,
     pub link_id: String,
+    // using for marking the method called outside of icrc-112
     pub execute_wallet_tx: bool,
 }
 
@@ -175,6 +176,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             link_id: temp_action.link_id.clone(),
             action_type: temp_action.r#type.to_string().clone(),
             action_id: temp_action.id.clone(),
+            user_id: temp_action.creator.clone(),
+            link_user_state: LinkUserState::ChooseWallet,
         };
 
         // save action to DB
@@ -514,13 +517,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 args.link_id.clone(),
                 &eligible_wallet_txs,
             )?;
-
-            info!(
-                "Eligible wallet txs: {:#?}, eligible canister txs: {:#?}",
-                eligible_wallet_txs, eligible_canister_txs
-            );
-
-            info!("ICRC-112 requests: {:#?}", icrc_112_requests);
 
             request = if icrc_112_requests.is_none() {
                 None

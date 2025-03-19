@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use candid::Principal;
 use cashier_types::{ActionState, ActionType, LinkType};
 use ic_cdk::{query, update};
 use uuid::Uuid;
@@ -14,14 +15,16 @@ use crate::{
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
-        transaction_manager::{TransactionManagerService, UpdateActionArgs},
+        transaction_manager::{action::ActionService, TransactionManagerService, UpdateActionArgs},
         user::v2::UserService,
     },
     types::{api::PaginateInput, error::CanisterError, temp_action::TemporaryAction},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
-use super::types::CreateLinkInput;
+use super::types::{
+    CreateLinkInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
+};
 
 #[query(guard = "is_not_anonymous")]
 async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
@@ -42,6 +45,11 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDt
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     let caller = ic_cdk::api::caller();
 
+    let user_id = services::user::v2::UserService::get_instance().get_user_id_by_wallet(&caller);
+    if user_id.is_none() {
+        return Err("User not found".to_string());
+    }
+
     let is_valid_creator = is_link_creator(caller.to_text(), &id);
 
     let action_type: Option<ActionType> = match options {
@@ -61,7 +69,7 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
     let link = services::link::get_link_by_id(id.clone())?;
 
     // if not link creator doesn't allow get create link and withdraw action
-    let action = match action_type {
+    let action_type = match action_type {
         Some(action_type) => match action_type {
             ActionType::CreateLink => {
                 if is_valid_creator {
@@ -82,8 +90,10 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
         None => None,
     };
 
-    let action = match action {
-        Some(action_type) => services::link::get_link_action(id, action_type.to_string()),
+    let action = match action_type {
+        Some(action_type) => {
+            services::link::get_link_action(id, action_type.to_string(), user_id.unwrap())
+        }
         None => None,
     };
 
@@ -178,10 +188,27 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
     api.process_action(input).await
 }
 
+#[update]
+pub async fn link_get_user_state(
+    input: LinkGetUserStateInput,
+) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.link_get_user_state(input)
+}
+
+#[update]
+pub async fn link_update_user_state(
+    input: LinkUpdateUserStateInput,
+) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.link_update_user_state(input)
+}
+
 pub struct LinkApi<E: IcEnvironment + Clone> {
     link_service: LinkService<E>,
     user_service: UserService,
     tx_manager_service: TransactionManagerService<E>,
+    action_service: ActionService<E>,
     ic_env: E,
 }
 
@@ -191,6 +218,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             link_service: LinkService::get_instance(),
             user_service: UserService::get_instance(),
             tx_manager_service: TransactionManagerService::get_instance(),
+            action_service: ActionService::get_instance(),
             ic_env: E::new(),
         }
     }
@@ -199,12 +227,14 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         link_service: LinkService<E>,
         user_service: UserService,
         tx_manager_service: TransactionManagerService<E>,
+        action_service: ActionService<E>,
         ic_env: E,
     ) -> Self {
         Self {
             link_service,
             user_service,
             tx_manager_service,
+            action_service,
             ic_env,
         }
     }
@@ -225,9 +255,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        let action = self
-            .link_service
-            .get_action_of_link(&input.link_id, &input.action_type);
+        let action = self.link_service.get_action_of_link(
+            &input.link_id,
+            &input.action_type,
+            &user_id.as_ref().unwrap(),
+        );
 
         if action.is_none() {
             let action_type = ActionType::from_str(&input.action_type)
@@ -290,5 +322,159 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 })
                 .await
         }
+    }
+
+    pub fn link_get_user_state(
+        &self,
+        input: LinkGetUserStateInput,
+    ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+        let caller = self.ic_env.caller();
+        let mut temp_user_id = match caller != Principal::anonymous() {
+            true => self.user_service.get_user_id_by_wallet(&caller),
+            false => None,
+        };
+
+        // Validation
+        // cannot have both session key & anonymous_wallet_address
+        if temp_user_id.is_some() && input.anonymous_wallet_address.is_some() {
+            return Err(CanisterError::ValidationErrors(
+                "
+                Cannot have both session key & anonymous_wallet_address
+                "
+                .to_string(),
+            ));
+        }
+
+        // cannot have both empty session key & anonymous_wallet_address
+        if temp_user_id.is_none() && input.anonymous_wallet_address.is_none() {
+            return Err(CanisterError::ValidationErrors(
+                "
+                Cannot have both empty session key & anonymous_wallet_address
+                "
+                .to_string(),
+            ));
+        }
+
+        // if session key not null, temp_user_id = fetch id from (session_key) -- already did above
+
+        // if anonymous_wallet_address not null, temp_user_id = anonymous_wallet_address
+        if input.anonymous_wallet_address.is_some() {
+            temp_user_id = Some(input.anonymous_wallet_address.unwrap());
+        }
+
+        // Check "LinkAction" table to check records with
+        // link_action link_id = input link_id
+        // link_action type = input action type
+        // link_action user_id = search_user_id
+        let mut link_action = self.link_service.get_link_action_user(
+            input.link_id.clone(),
+            input.action_type.clone(),
+            temp_user_id.clone().unwrap(),
+        )?;
+
+        // If not found
+        // if flag create_if_not_exist = true
+        //  create new link action
+        //  set the new link action to link_action
+        // else
+        //  return action = null
+        //  return link_user_state = null
+        if link_action.is_none() {
+            if input.create_if_not_exist {
+                // create new link action
+                let new_link_action = self.link_service.create_link_action_user(
+                    input.link_id.clone(),
+                    input.action_type.clone(),
+                    temp_user_id.unwrap(),
+                )?;
+                link_action = Some(new_link_action);
+            } else {
+                return Ok(None);
+            }
+        }
+
+        // If found "LinkAction" values
+        // return action = get action from (action _id)
+        // return state = record user_state
+        let action = self
+            .action_service
+            .get_action_by_id(link_action.as_ref().unwrap().action_id.clone())
+            .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
+
+        return Ok(Some(LinkGetUserStateOutput {
+            action: ActionDto::from(action, vec![]),
+            link_user_state: link_action.unwrap().link_user_state.to_string(),
+        }));
+    }
+
+    pub fn link_update_user_state(
+        &self,
+        input: LinkUpdateUserStateInput,
+    ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+        let caller = self.ic_env.caller();
+        let mut temp_user_id = match caller != Principal::anonymous() {
+            true => self.user_service.get_user_id_by_wallet(&caller),
+            false => None,
+        };
+
+        // Validation
+        // cannot have both session key & anonymous_wallet_address
+        if temp_user_id.is_some() && input.anonymous_wallet_address.is_some() {
+            return Err(CanisterError::ValidationErrors(
+                "
+                Cannot have both session key & anonymous_wallet_address
+                "
+                .to_string(),
+            ));
+        }
+
+        // cannot have both empty session key & anonymous_wallet_address
+        if temp_user_id.is_none() && input.anonymous_wallet_address.is_none() {
+            return Err(CanisterError::ValidationErrors(
+                "
+                Cannot have both empty session key & anonymous_wallet_address
+                "
+                .to_string(),
+            ));
+        }
+
+        //         Logic
+        // if session key not null, temp_user_id = fetch id from (session_key) -- already did in 301
+
+        // if anonymous_wallet_address not null, temp_user_id = anonymous_wallet_address
+        if input.anonymous_wallet_address.is_some() {
+            temp_user_id = Some(input.anonymous_wallet_address.unwrap());
+        }
+
+        // Check "LinkAction" table to check records with
+        // link_action link_id = input link_id
+        // link_action type = input action type
+        // link_action user_id = search_user_id
+        let link_action = self.link_service.get_link_action_user(
+            input.link_id,
+            input.action_type,
+            temp_user_id.unwrap(),
+        )?;
+
+        // If not found
+        // return action = null
+        // return link_user_state = null
+        if link_action.is_none() {
+            return Ok(None);
+        }
+
+        // If found "LinkAction" values
+        // return action = get action from (action _id)
+        // return state = record user_state
+        let action_id = link_action.as_ref().unwrap().action_id.clone();
+        let action = self
+            .action_service
+            .get_action_by_id(action_id)
+            .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
+
+        return Ok(Some(LinkGetUserStateOutput {
+            action: ActionDto::from(action, vec![]),
+            link_user_state: link_action.unwrap().link_user_state.to_string(),
+        }));
     }
 }

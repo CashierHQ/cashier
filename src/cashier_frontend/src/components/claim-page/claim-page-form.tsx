@@ -18,6 +18,8 @@ import { FixedBottomButton } from "../fix-bottom-button";
 import { Spinner } from "../ui/spinner";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
+import { useSigners } from "@/contexts/signer-list-context";
+import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import { Principal } from "@dfinity/principal";
 
 interface ClaimLinkDetail {
@@ -43,7 +45,6 @@ enum WALLET_OPTIONS {
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     handleClaim,
-    formData,
     claimLinkDetails,
     setIsClaiming,
 }) => {
@@ -52,11 +53,21 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
+    const { setSigners } = useSigners();
 
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
     const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
     const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
+        if ((form.getValues("address") ?? "").trim().length > 0) {
+            showDialog({
+                title: "Are you sure?",
+                description:
+                    "You are connected to another wallet. Would you like to disconnect and continue?",
+            });
+            return;
+        }
+
         if (identity && selectOption !== currentSelectOptionWallet) {
             showDialog({
                 title: "Are you sure?",
@@ -64,6 +75,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     "You are connected to another wallet. Would you like to disconnect and continue?",
             });
             return;
+        }
+        if (selectOption === WALLET_OPTIONS.OTHER) {
+            setSigners([NFIDW, Stoic]);
+        } else if (selectOption === WALLET_OPTIONS.INTERNET_IDENTITY) {
+            setSigners([InternetIdentity]);
         }
         connect();
         setSelectOptionWallet(selectOption);
@@ -146,7 +162,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             postfixText="Coming soon"
                         />
 
-                        {identity ? (
+                        {/* Internet Identity */}
+                        {identity &&
+                        currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
                                 postfixText="Connected"
@@ -161,9 +179,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             />
                         )}
 
-                        {currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
+                        {/* Other wallets */}
+                        {identity && currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
+                                postfixText="Connected"
                             />
                         ) : (
                             <WalletButton
@@ -250,6 +270,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 actionText="Disconnect"
                 onSubmit={() => {
                     disconnect();
+                    form.setValue("address", "");
+                    form.clearErrors();
                     hideDialog();
                 }}
                 onOpenChange={hideDialog}
