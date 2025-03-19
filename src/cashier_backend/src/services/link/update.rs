@@ -124,7 +124,7 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::Active,
             validate: Some(Box::new(|link: Link| {
                 Box::pin(async move {
-                    is_create_action_exist(link.id.clone())?;
+                    is_create_action_exist(link.id.clone(), link.creator.clone())?;
                     is_valid_fields_before_active(link.clone())?;
                     Ok(())
                 })
@@ -145,7 +145,7 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::AddAssets,
             validate: Some(Box::new(|link| {
                 Box::pin(async move {
-                    let is_exist = is_create_action_exist(link.id.clone())?;
+                    let is_exist = is_create_action_exist(link.id.clone(), link.creator.clone())?;
                     if is_exist {
                         Err("Action exists, cannot transition back".to_string())
                     } else {
@@ -161,7 +161,7 @@ pub fn get_transitions() -> Vec<Transition> {
             dest: LinkState::ChooseLinkType,
             validate: Some(Box::new(|link| {
                 Box::pin(async move {
-                    let is_exist = is_create_action_exist(link.id.clone())?;
+                    let is_exist = is_create_action_exist(link.id.clone(), link.creator.clone())?;
                     if is_exist {
                         Err("Action exists, cannot transition back".to_string())
                     } else {
