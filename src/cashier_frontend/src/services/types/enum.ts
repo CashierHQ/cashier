@@ -107,3 +107,8 @@ export enum LINK_INTENT_LABEL {
     INTENT_LABEL_WALLET_TO_TREASURY = "1001",
     INTENT_LABEL_LINK_TO_WALLET = "2001",
 }
+
+export enum LINK_USER_STATE {
+    CHOOSE_WALLET = "User_state_choose_wallet",
+    COMPLETE = "User_state_completed_link",
+}

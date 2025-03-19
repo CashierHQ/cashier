@@ -56,13 +56,18 @@ export type TipLinkModel = {
 export type LinkGetUserStateInputModel = {
     link_id: string;
     action_type: ACTION_TYPE;
-    anonymous_wallet_address?: string;
     create_if_not_exist: boolean;
+    anonymous_wallet_address?: string;
 };
 
 export type LinkUpdateUserStateInputModel = {
     link_id: string;
     action_type: ACTION_TYPE;
-    goto: string;
+    isContinue: boolean;
     anonymous_wallet_address?: string;
+};
+
+export type LinkGetUserStateOutputModel = {
+    action: ActionModel | undefined;
+    link_user_state: string | undefined;
 };

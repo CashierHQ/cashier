@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import LinkService from "@/services/link.service";
 import { z } from "zod";
@@ -15,6 +15,8 @@ import useConnectToWallet from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { TokenUtilService } from "@/services/tokenUtils.service";
+import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
+import { useLinkUserState } from "@/hooks/linkUserHooks";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -23,8 +25,21 @@ export const ClaimSchema = z.object({
 });
 
 export default function ClaimPage() {
-    const [formData, setFormData] = useState<LinkDetailModel>({} as LinkDetailModel);
+    const [enableFetchLinkUserState, setEnableFetchLinkUserState] = useState(false);
     const { linkId } = useParams();
+
+    const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(linkId);
+
+    const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
+        {
+            action_type: ACTION_TYPE.CLAIM_LINK,
+            link_id: linkId ?? "",
+            create_if_not_exist: false,
+            anonymous_wallet_address: "",
+        },
+        enableFetchLinkUserState,
+    );
+
     const [isLoading, setIsLoading] = useState(true);
     const { toastData, showToast, hideToast } = useToast();
     const { connectToWallet } = useConnectToWallet();
@@ -34,36 +49,10 @@ export default function ClaimPage() {
         resolver: zodResolver(ClaimSchema),
     });
 
-    const { metadata } = useTokenMetadata(formData?.asset_info?.[0].address);
+    const { metadata } = useTokenMetadata(linkData?.link.asset_info?.[0].address);
 
-    // Watch form values to trigger re-render
-    const watchedToken = form.watch("token");
-    const watchedAmount = form.watch("amount");
-
-    useEffect(() => {
-        if (!linkId) return;
-        const fetchData = async () => {
-            const linkObj = await new LinkService().getLink(linkId, ACTION_TYPE.CREATE_LINK);
-            const link = linkObj.link;
-            setFormData(link);
-            form.setValue("token", link.title);
-            setIsLoading(false);
-        };
-        fetchData();
-    }, [linkId]);
-
-    useEffect(() => {
-        if (!metadata) return;
-        form.setValue(
-            "amount",
-            TokenUtilService.getHumanReadableAmountFromMetadata(
-                formData?.asset_info?.[0].amount,
-                metadata,
-            ),
-        );
-    }, [formData, metadata]);
-
-    if (isLoading) return null;
+    console.log(linkData);
+    console.log(linkUserState);
 
     const handleClaim = async () => {
         setClaimStatus("Claimed");
@@ -78,16 +67,49 @@ export default function ClaimPage() {
         setClaimStatus("Claiming");
     };
 
+    const handleConnectWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
+        connectToWallet(e);
+        setEnableFetchLinkUserState(true);
+    };
+
+    // Watch form values to trigger re-render
+    const watchedToken = form.watch("token");
+    const watchedAmount = form.watch("amount");
+
+    useEffect(() => {
+        if (linkData) {
+            form.setValue("token", linkData.link.title);
+            setIsLoading(false);
+        }
+    }, [linkData]);
+
+    useEffect(() => {
+        setIsLoading(isFetchingLinkData);
+    }, [isFetchingLinkData]);
+
+    useEffect(() => {
+        if (!metadata) return;
+        form.setValue(
+            "amount",
+            TokenUtilService.getHumanReadableAmountFromMetadata(
+                linkData?.link.asset_info?.[0].amount ?? BigInt(0),
+                metadata,
+            ),
+        );
+    }, [linkData, metadata]);
+
+    if (isLoading) return null;
+
     return (
         <div className="w-screen h-screen flex flex-col items-center py-5">
             <SheetWrapper>
                 <div className="w-11/12 max-w-[400px]">
-                    <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
+                    <Header onConnect={handleConnectWallet} openTestForm={connectToWallet} />
 
-                    {claimStatus === "Claiming" ? (
+                    {claimStatus === "Claiming" && linkData ? (
                         <ClaimPageForm
                             form={form}
-                            formData={formData}
+                            formData={linkData?.link}
                             claimLinkDetails={[
                                 {
                                     title: watchedToken,
@@ -101,17 +123,18 @@ export default function ClaimPage() {
                         <LinkCardWithoutPhoneFrame
                             label="Claimed"
                             src="/icpLogo.png"
-                            message={formData.description}
-                            title={formData.title}
+                            message={linkData?.link.description ?? ""}
+                            title={linkData?.link.title ?? ""}
                             disabled={true}
                         />
                     ) : (
                         <LinkCardWithoutPhoneFrame
                             label="Claim"
                             src="/icpLogo.png"
-                            message={formData.description}
-                            title={formData.title}
+                            message={linkData?.link.description ?? ""}
+                            title={linkData?.link.title ?? ""}
                             onClaim={handleStartClaimClick}
+                            disabled={linkData === undefined}
                         />
                     )}
                 </div>

@@ -22,6 +22,7 @@ import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
+    mapLinkUserStateModel,
 } from "./types/mapper/link.service.mapper";
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
@@ -174,20 +175,20 @@ class LinkService {
             create_if_not_exist: input.create_if_not_exist,
         };
         const response = parseResultResponse(await this.actor.link_get_user_state(params));
-        return response;
+        return mapLinkUserStateModel(response);
     }
 
     async updateLinkUserState(input: LinkUpdateUserStateInputModel) {
         const params: LinkUpdateUserStateInput = {
             link_id: input.link_id,
             action_type: input.action_type,
-            goto: input.goto,
+            goto: input.isContinue ? "Continue" : "Back",
             anonymous_wallet_address: input.anonymous_wallet_address
                 ? [input.anonymous_wallet_address]
                 : [],
         };
         const response = parseResultResponse(await this.actor.link_update_user_state(params));
-        return response;
+        return mapLinkUserStateModel(response);
     }
 }
 

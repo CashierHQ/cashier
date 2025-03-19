@@ -1,4 +1,5 @@
 import LinkService from "@/services/link.service";
+import { LinkGetUserStateInputModel } from "@/services/types/link.service.types";
 import { UsdConversionService } from "@/services/usdConversionService";
 import UserService from "@/services/user.service";
 import { groupLinkListByDate } from "@/utils";
@@ -82,6 +83,22 @@ export const queryKeys = createQueryKeyStore({
                 if (!linkId || !identity) return [];
                 const linkService = new LinkService(identity);
                 return linkService.getFeePreview(linkId);
+            },
+        }),
+        userState: (
+            input: LinkGetUserStateInputModel,
+            identity: Identity | PartialIdentity | undefined,
+        ) => ({
+            queryKey: [QUERY_KEYS.LINKS, input.link_id, input.action_type],
+            queryFn: async () => {
+                try {
+                    const linkService = new LinkService(identity);
+                    const userState = await linkService.getLinkUserState(input);
+                    return userState;
+                } catch (error) {
+                    console.log("🚀 ~ queryFn: ~ error:", error);
+                    throw error;
+                }
             },
         }),
     },
