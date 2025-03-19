@@ -1,6 +1,6 @@
 import { IntentCreateModel } from "./intent.service.types";
 import { ActionModel } from "./action.service.types";
-import { CHAIN, LINK_INTENT_LABEL } from "./enum";
+import { ACTION_TYPE, CHAIN, LINK_INTENT_LABEL } from "./enum";
 
 export enum State {
     New = "New",
@@ -51,4 +51,18 @@ export type TipLinkModel = {
     title: string;
     asset: string;
     amount: number;
+};
+
+export type LinkGetUserStateInputModel = {
+    link_id: string;
+    action_type: ACTION_TYPE;
+    anonymous_wallet_address?: string;
+    create_if_not_exist: boolean;
+};
+
+export type LinkUpdateUserStateInputModel = {
+    link_id: string;
+    action_type: ACTION_TYPE;
+    goto: string;
+    anonymous_wallet_address?: string;
 };

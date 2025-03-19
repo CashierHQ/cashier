@@ -4,13 +4,20 @@ import {
     _SERVICE,
     CreateLinkInput,
     LinkDto,
+    LinkGetUserStateInput,
+    LinkUpdateUserStateInput,
     ProcessActionInput,
     UpdateActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
-import { LinkDetailModel, LinkModel } from "./types/link.service.types";
+import {
+    LinkDetailModel,
+    LinkGetUserStateInputModel,
+    LinkModel,
+    LinkUpdateUserStateInputModel,
+} from "./types/link.service.types";
 import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
@@ -155,6 +162,32 @@ class LinkService {
                 chain: fee.asset.chain,
             };
         });
+    }
+
+    async getLinkUserState(input: LinkGetUserStateInputModel) {
+        const params: LinkGetUserStateInput = {
+            link_id: input.link_id,
+            action_type: input.action_type,
+            anonymous_wallet_address: input.anonymous_wallet_address
+                ? [input.anonymous_wallet_address]
+                : [],
+            create_if_not_exist: input.create_if_not_exist,
+        };
+        const response = parseResultResponse(await this.actor.link_get_user_state(params));
+        return response;
+    }
+
+    async updateLinkUserState(input: LinkUpdateUserStateInputModel) {
+        const params: LinkUpdateUserStateInput = {
+            link_id: input.link_id,
+            action_type: input.action_type,
+            goto: input.goto,
+            anonymous_wallet_address: input.anonymous_wallet_address
+                ? [input.anonymous_wallet_address]
+                : [],
+        };
+        const response = parseResultResponse(await this.actor.link_update_user_state(params));
+        return response;
     }
 }
 
