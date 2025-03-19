@@ -1,8 +1,6 @@
-use std::str::FromStr;
-
 use candid::Principal;
 use cashier_types::{
-    user, Action, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, Link,
+    Action, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, Link,
     LinkAction, LinkType, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
@@ -259,7 +257,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         action_type: &str,
         user_id: &str,
     ) -> Option<Action> {
-        let link_actions = self.link_action_repository.get_by_link_action(
+        let link_actions = self.link_action_repository.get_by_prefix(
             link_id.to_string(),
             action_type.to_string(),
             user_id.to_string(),
@@ -394,10 +392,25 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         action_type: String,
         user_id: String,
     ) -> Result<Option<LinkAction>, CanisterError> {
-        let action_type = ActionType::from_str(action_type.as_str()).map_err(|e| {
-            CanisterError::HandleLogicError(format!("Error converting action type: {:?}", e))
-        })?;
+        let link_acrtion = self.link_action_repository.get_by_prefix(
+            link_id.clone(),
+            action_type.clone(),
+            user_id.clone(),
+        );
 
+        if link_acrtion.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(link_acrtion[0].clone()))
+    }
+
+    pub fn create_link_action_user(
+        &self,
+        link_id: String,
+        action_type: String,
+        user_id: String,
+    ) -> Result<LinkAction, CanisterError> {
         todo!()
     }
 }

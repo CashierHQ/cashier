@@ -12,6 +12,7 @@ use crate::{
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
     error,
+    repositories::link_action,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
@@ -339,8 +340,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        //         Logic
-        // if session key not null, temp_user_id = fetch id from (session_key) -- already did in 301
+        // if session key not null, temp_user_id = fetch id from (session_key) -- already did above
 
         // if anonymous_wallet_address not null, temp_user_id = anonymous_wallet_address
         if input.anonymous_wallet_address.is_some() {
@@ -351,17 +351,31 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // link_action link_id = input link_id
         // link_action type = input action type
         // link_action user_id = search_user_id
-        let link_action = self.link_service.get_link_action_user(
-            input.link_id,
-            input.action_type,
-            temp_user_id.unwrap(),
+        let mut link_action = self.link_service.get_link_action_user(
+            input.link_id.clone(),
+            input.action_type.clone(),
+            temp_user_id.clone().unwrap(),
         )?;
 
         // If not found
-        // return action = null
-        // return link_user_state = null
+        // if flag create_if_not_exist = true
+        //  create new link action
+        //  set the new link action to link_action
+        // else
+        //  return action = null
+        //  return link_user_state = null
         if link_action.is_none() {
-            return Ok(None);
+            if input.create_if_not_exist {
+                // create new link action
+                let new_link_action = self.link_service.create_link_action_user(
+                    input.link_id.clone(),
+                    input.action_type.clone(),
+                    temp_user_id.unwrap(),
+                )?;
+                link_action = Some(new_link_action);
+            } else {
+                return Ok(None);
+            }
         }
 
         // If found "LinkAction" values
@@ -369,14 +383,12 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // return state = record user_state
         let action = self
             .action_service
-            .get_action_by_id(link_action.unwrap().action_id)
+            .get_action_by_id(link_action.as_ref().unwrap().action_id.clone())
             .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
 
         return Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from(action, vec![]),
-            // TODO: update this to newest schema
-            // link_user_state: link_action.unwrap().user_state,
-            link_user_state: "".to_string(),
+            link_user_state: link_action.unwrap().link_user_state.to_string(),
         }));
     }
 

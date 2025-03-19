@@ -26,7 +26,8 @@ impl LinkActionRepository {
         LINK_ACTION_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
-    pub fn get_by_link_action(
+    // Query by link_id, action_type, user_id, skip action_id
+    pub fn get_by_prefix(
         &self,
         link_id: LinkKey,
         action_type: ActionTypeKey,
@@ -42,13 +43,13 @@ impl LinkActionRepository {
 
             let prefix = key.to_str().clone();
 
-            let actions: Vec<_> = store
+            let link_actions: Vec<_> = store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
                 .map(|(_, value)| value.clone())
                 .collect();
 
-            actions
+            link_actions
         })
     }
 
