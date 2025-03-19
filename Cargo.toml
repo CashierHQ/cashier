@@ -2,7 +2,8 @@
 members = [
     "src/cashier_backend", 
     "src/lib/cashier-macros",
-    "src/lib/cashier-types"
+    "src/lib/cashier-types",
+    "src/token_storage"
 ]
 resolver = "2"
 
