@@ -12,7 +12,7 @@ import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 export interface AssetSelectItem {
     name: string;
-    amount: number;
+    amount: number | undefined;
     tokenAddress: string;
 }
 
