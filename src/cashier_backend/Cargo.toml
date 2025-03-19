@@ -37,8 +37,4 @@ async-trait = "0.1.86"
 tokio =  {version = "1.43.0", features = ["full"]}
 faux = { version = "0.1.12" }
 
-# [features]
-# test = ["faux"]
-
-
 
