@@ -27,7 +27,7 @@ import {
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
-import { FEE_TYPE } from "./types/enum";
+import { ACTION_TYPE, FEE_TYPE } from "./types/enum";
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -92,11 +92,11 @@ class LinkService {
         return responseModel;
     }
 
-    async getLink(linkId: string, actionType: string) {
+    async getLink(linkId: string, actionType?: string) {
         const response = parseResultResponse(
             await this.actor.get_link(linkId, [
                 {
-                    action_type: actionType,
+                    action_type: ACTION_TYPE.CREATE_LINK,
                 },
             ]),
         );
@@ -126,6 +126,7 @@ class LinkService {
             action_type: input.actionType,
             params: [],
         };
+        console.log("🚀 ~ LinkService ~ processAction ~ inputModel:", inputModel);
         const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         return action;

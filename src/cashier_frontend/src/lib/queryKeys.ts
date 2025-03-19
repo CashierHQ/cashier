@@ -57,8 +57,8 @@ export const queryKeys = createQueryKeyStore({
         }),
         detail: (
             linkId: string | undefined,
-            actionType: string,
             identity: Identity | PartialIdentity | undefined,
+            actionType?: string,
         ) => ({
             queryKey: [QUERY_KEYS.LINKS, linkId],
             queryFn: async () => {

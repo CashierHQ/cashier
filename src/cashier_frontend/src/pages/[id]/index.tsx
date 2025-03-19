@@ -29,6 +29,7 @@ export default function ClaimPage() {
     const { linkId } = useParams();
 
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(linkId);
+    console.log("🚀 ~ ClaimPage ~ linkData:", linkData);
 
     const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
         {

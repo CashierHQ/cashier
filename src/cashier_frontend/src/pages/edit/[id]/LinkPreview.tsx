@@ -42,7 +42,7 @@ export default function LinkPreview({
         const updatedAction = await createAction({
             linkId: link!.id,
         });
-
+        console.log("🚀 ~ handleCreateAction ~ updatedAction:", updatedAction);
         setAction(updatedAction);
     };
 
