@@ -311,6 +311,7 @@ impl UpdateLinkInput {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkGetUserStateInput {
     pub link_id: String,
     pub action_type: String,
@@ -318,11 +319,13 @@ pub struct LinkGetUserStateInput {
     pub create_if_not_exist: bool,
 }
 
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkGetUserStateOutput {
     pub action: ActionDto,
     pub link_user_state: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkUpdateUserStateInput {
     pub link_id: String,
     pub action_type: String,

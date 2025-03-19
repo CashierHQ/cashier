@@ -109,7 +109,23 @@ type LinkDto = record {
   state : text;
   template : opt text;
 };
+type LinkGetUserStateInput = record {
+  link_id : text;
+  action_type : text;
+  anonymous_wallet_address : opt text;
+  create_if_not_exist : bool;
+};
+type LinkGetUserStateOutput = record {
+  action : ActionDto;
+  link_user_state : text;
+};
 type LinkStateMachineActionParams = variant { Update : LinkDetailUpdateInput };
+type LinkUpdateUserStateInput = record {
+  link_id : text;
+  action_type : text;
+  goto : text;
+  anonymous_wallet_address : opt text;
+};
 type MetadataValue = variant {
   U64 : nat64;
   String : text;
@@ -149,8 +165,12 @@ type Result_1 = variant { Ok : UserDto; Err : text };
 type Result_2 = variant { Ok : GetLinkResp; Err : text };
 type Result_3 = variant { Ok : PaginateResult; Err : text };
 type Result_4 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
-type Result_5 = variant { Ok : ActionDto; Err : CanisterError };
-type Result_6 = variant { Ok : LinkDto; Err : CanisterError };
+type Result_5 = variant {
+  Ok : opt LinkGetUserStateOutput;
+  Err : CanisterError;
+};
+type Result_6 = variant { Ok : ActionDto; Err : CanisterError };
+type Result_7 = variant { Ok : LinkDto; Err : CanisterError };
 type TransactionDto = record {
   id : text;
   protocol : text;
@@ -188,8 +208,10 @@ service : () -> {
       Result_4,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
-  process_action : (ProcessActionInput) -> (Result_5);
+  link_get_user_state : (LinkGetUserStateInput) -> (Result_5);
+  link_update_user_state : (LinkUpdateUserStateInput) -> (Result_5);
+  process_action : (ProcessActionInput) -> (Result_6);
   trigger_transaction : (TriggerTransactionInput) -> (Result);
-  update_action : (UpdateActionInput) -> (Result_5);
-  update_link : (UpdateLinkInput) -> (Result_6);
+  update_action : (UpdateActionInput) -> (Result_6);
+  update_link : (UpdateLinkInput) -> (Result_7);
 }

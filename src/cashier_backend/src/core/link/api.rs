@@ -12,7 +12,6 @@ use crate::{
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
     error,
-    repositories::link_action,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
@@ -187,6 +186,22 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
 pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.process_action(input).await
+}
+
+#[update]
+pub async fn link_get_user_state(
+    input: LinkGetUserStateInput,
+) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.link_get_user_state(input)
+}
+
+#[update]
+pub async fn link_update_user_state(
+    input: LinkUpdateUserStateInput,
+) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.link_update_user_state(input)
 }
 
 pub struct LinkApi<E: IcEnvironment + Clone> {
