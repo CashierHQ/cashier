@@ -9,12 +9,13 @@ import { LINK_TYPE } from "@/services/types/enum";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { useCreateAction, useFeePreview } from "@/hooks/linkHooks";
+import { useCreateAction, useFeePreview, useSetLinkActive } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { MOCK_CASHIER_FEES } from "@/constants/mock-data";
 import { FeeModel } from "@/services/types/intent.service.types";
+import { useNavigate } from "react-router-dom";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -28,13 +29,15 @@ export default function LinkPreview({
     onActionResult,
 }: LinkPreviewProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
-    const { link, action, setAction } = useCreateLinkStore();
+    const { link, action, setAction, setLink } = useCreateLinkStore();
 
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
     const { mutateAsync: createAction } = useCreateAction();
+    const { mutateAsync: setLinkActive } = useSetLinkActive();
 
     const { data: feeData } = useFeePreview(link?.id);
 
@@ -96,6 +99,13 @@ export default function LinkPreview({
         );
     };
 
+    const handleSetLinkToActive = async () => {
+        const activeLink = await setLinkActive({ link: link! });
+        setLink(activeLink);
+
+        navigate(`/details/${link!.id}`);
+    };
+
     return (
         <div className="w-full flex flex-col">
             <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
@@ -130,6 +140,7 @@ export default function LinkPreview({
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
                 onCashierError={onCashierError}
+                onSuccessContinue={handleSetLinkToActive}
             />
         </div>
     );

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import Header from "@/components/header";
 import useConnectToWallet from "@/hooks/useConnectToWallet";
@@ -21,6 +21,9 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import { LinkCardPage } from "./LinkCardPage";
 import { ClaimFormPage } from "./ClaimFormPage";
 import { Spinner } from "@/components/ui/spinner";
+import { getCashierError } from "@/services/errorProcess.service";
+import { ActionModel } from "@/services/types/action.service.types";
+import { useTranslation } from "react-i18next";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -45,6 +48,7 @@ export default function ClaimPage() {
     const [enableFetchLinkUserState, setEnableFetchLinkUserState] = useState(false);
     const { linkId } = useParams();
     const identity = useIdentity();
+    const { t } = useTranslation();
 
     //const updateLinkUserState = useUpdateLinkUserState();
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(linkId);
@@ -70,16 +74,42 @@ export default function ClaimPage() {
     const { metadata } = useTokenMetadata(linkData?.link.asset_info?.[0].address);
 
     const handleClaim = async () => {
-        // if (!form.getValues("address") || form.getValues("address")?.length == 0) {
-        //     showToast("Test", "To receive, you need to login or connect your wallet", "error");
-        //     return;
-        // }
-        // console.log("Claiming");
+        if (!form.getValues("address") || form.getValues("address")?.length == 0) {
+            showToast("Test", "To receive, you need to login or connect your wallet", "error");
+            return;
+        }
+        console.log("Claiming");
     };
 
     const handleConnectWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
         connectToWallet(e);
         setEnableFetchLinkUserState(true);
+    };
+
+    const showCashierErrorToast = (error: Error) => {
+        const cahierError = getCashierError(error);
+
+        showToast(t("transaction.create_intent.action_failed"), cahierError.message, "error");
+    };
+
+    const showActionResultToast = (action: ActionModel) => {
+        if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
+            const toastData = {
+                title:
+                    action.state === ACTION_STATE.SUCCESS
+                        ? t("transaction.confirm_popup.transaction_success")
+                        : t("transaction.confirm_popup.transaction_failed"),
+                description:
+                    action.state === ACTION_STATE.SUCCESS
+                        ? t("transaction.confirm_popup.transaction_success_message")
+                        : t("transaction.confirm_popup.transaction_failed_message"),
+                variant:
+                    action.state === ACTION_STATE.SUCCESS
+                        ? ("default" as const)
+                        : ("error" as const),
+            };
+            showToast(toastData.title, toastData.description, toastData.variant);
+        }
     };
 
     // Watch form values to trigger re-render
@@ -139,6 +169,8 @@ export default function ClaimPage() {
                                             }}
                                             onSubmit={handleClaim}
                                             linkData={linkData}
+                                            onActionResult={showActionResultToast}
+                                            onCashierError={showCashierErrorToast}
                                         />
                                     </MultiStepForm.Item>
 

@@ -66,6 +66,7 @@
             "cashier_link_label": "Cashier link",
             "send_label": "You send",
             "asset_label": "Asset to add to link",
+            "asset_claim_label": "Asset",
             "cashier_fee_label": "Cashier fee",
             "network_fee_label": "Network fee",
             "link_creation_fee_label": "Link creation fee",

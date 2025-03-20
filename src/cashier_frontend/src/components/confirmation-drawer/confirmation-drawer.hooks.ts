@@ -34,9 +34,7 @@ export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
 export const useConfirmButtonState = (actionState: string | undefined, t: TFunction) => {
     const [isDisabled, setIsDisabled] = useState(false);
     const [buttonText, setButtonText] = useState("");
-    console.log(actionState);
     const mapActionStateToButtonText = () => {
-        console.log(actionState);
         switch (actionState) {
             case ACTION_STATE.CREATED:
                 return t("transaction.confirm_popup.confirm_button");

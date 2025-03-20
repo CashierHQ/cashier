@@ -28,7 +28,16 @@ import {
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
-import { ACTION_STATE, ACTION_TYPE, FEE_TYPE, LINK_USER_STATE } from "./types/enum";
+import {
+    ACTION_STATE,
+    ACTION_TYPE,
+    CHAIN,
+    FEE_TYPE,
+    INTENT_STATE,
+    INTENT_TYPE,
+    LINK_USER_STATE,
+    TASK,
+} from "./types/enum";
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -190,7 +199,29 @@ class LinkService {
                 id: "action_id",
                 state: ACTION_STATE.CREATED,
                 creator: "",
-                intents: [],
+                intents: [
+                    {
+                        id: "1",
+                        state: INTENT_STATE.CREATED,
+                        asset: {
+                            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+                            chain: "IC",
+                        },
+                        chain: CHAIN.IC,
+                        task: TASK.TRANSFER_LINK_TO_WALLET,
+                        amount: BigInt(1000000000),
+                        createdAt: new Date(),
+                        from: {
+                            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+                            chain: "IC",
+                        },
+                        to: {
+                            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+                            chain: "IC",
+                        },
+                        type: INTENT_TYPE.TRANSFER,
+                    },
+                ],
                 type: ACTION_TYPE.CLAIM_LINK,
                 icrc112Requests: [],
             },
@@ -200,6 +231,7 @@ class LinkService {
         //return mapLinkUserStateModel(response);
     }
 
+    //TODO: Mock response data, remove after BE finish implementation
     async updateLinkUserState(input: LinkUpdateUserStateInputModel) {
         const params: LinkUpdateUserStateInput = {
             link_id: input.link_id,
@@ -209,9 +241,21 @@ class LinkService {
                 ? [input.anonymous_wallet_address]
                 : [],
         };
-        const response = parseResultResponse(await this.actor.link_update_user_state(params));
+        //const response = parseResultResponse(await this.actor.link_update_user_state(params));
         //TODO: Mock response for testing
-        return mapLinkUserStateModel(response);
+        const mockResponse: LinkGetUserStateOutputModel = {
+            action: {
+                id: "action_id",
+                state: ACTION_STATE.SUCCESS,
+                creator: "",
+                intents: [],
+                type: ACTION_TYPE.CLAIM_LINK,
+                icrc112Requests: [],
+            },
+            link_user_state: LINK_USER_STATE.COMPLETE,
+        };
+        return mockResponse;
+        //return mapLinkUserStateModel(response);
     }
 }
 

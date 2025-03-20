@@ -12,14 +12,8 @@ import {
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { ACTION_STATE, ACTION_TYPE, INTENT_STATE } from "@/services/types/enum";
-import { useNavigate } from "react-router-dom";
-import {
-    useIcrc112Execute,
-    useProcessAction,
-    useSetLinkActive,
-    useUpdateAction,
-} from "@/hooks/linkHooks";
+import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
+import { useIcrc112Execute, useProcessAction, useUpdateAction } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
@@ -30,6 +24,7 @@ interface ConfirmationDrawerProps {
     onInfoClick?: () => void;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
+    onSuccessContinue?: () => Promise<void>;
 }
 
 export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
@@ -38,15 +33,13 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     onInfoClick = () => {},
     onActionResult = () => {},
     onCashierError = () => {},
+    onSuccessContinue = async () => {},
 }) => {
-    const navigate = useNavigate();
-
     const { t } = useTranslation();
-    const { link, setLink, action, setAction } = useCreateLinkStore();
+    const { link, action, setAction } = useCreateLinkStore();
 
     const [isUsd, setIsUsd] = useState(false);
 
-    const { mutateAsync: setLinkActive } = useSetLinkActive();
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
@@ -58,13 +51,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         action?.state,
         t,
     );
-
-    const handleSetLinkToActive = async () => {
-        const activeLink = await setLinkActive({ link: link! });
-        setLink(activeLink);
-
-        navigate(`/details/${link!.id}`);
-    };
 
     const startTransaction = async () => {
         try {
@@ -115,7 +101,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         setButtonText(t("transaction.confirm_popup.processing"));
 
         if (isTxSuccess) {
-            await handleSetLinkToActive();
+            await onSuccessContinue();
         } else {
             await startTransaction();
         }
@@ -147,7 +133,12 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                             onUsdClick={() => setIsUsd((old) => !old)}
                         />
 
-                        <ConfirmationPopupFeesSection intents={cashierFeeIntents} isUsd={isUsd} />
+                        {cashierFeeIntents && cashierFeeIntents.length > 0 && (
+                            <ConfirmationPopupFeesSection
+                                intents={cashierFeeIntents}
+                                isUsd={isUsd}
+                            />
+                        )}
                         <ConfirmationPopupLegalSection />
                         <Button
                             className="my-3 mx-auto py-6 w-[95%]"

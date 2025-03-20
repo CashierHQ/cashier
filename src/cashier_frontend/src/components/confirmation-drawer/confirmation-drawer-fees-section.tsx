@@ -16,7 +16,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     isUsd,
 }) => {
     const { t } = useTranslation();
-    const { assetSrc, assetSymbol } = useIntentMetadata(intents[0]);
+    const { assetSymbol } = useIntentMetadata(intents?.[0]);
     const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
         intents[0]?.asset.address,
     );

@@ -185,7 +185,7 @@ export function useProcessAction() {
     return mutation;
 }
 
-export function useCreateAction() {
+export function useCreateAction(actionType?: ACTION_TYPE) {
     const identity = useIdentity();
 
     const mutation = useMutation({
@@ -194,7 +194,7 @@ export function useCreateAction() {
 
             return linkService.processAction({
                 ...vars,
-                actionType: ACTION_TYPE.CREATE_LINK,
+                actionType: actionType ?? ACTION_TYPE.CREATE_LINK,
                 actionId: undefined,
             });
         },

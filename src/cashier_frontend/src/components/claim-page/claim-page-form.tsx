@@ -103,6 +103,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         if (identity && selectOptionWallet) {
             setCurrentSelectOptionWallet(selectOptionWallet);
         }
+        // If user already connect wallet, then use the connected wallet address
+        if (identity) {
+            form.setValue("address", user?.principal.toString());
+        }
     }, [selectOptionWallet, identity]);
 
     useEffect(() => {
@@ -250,12 +254,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                         )}
                     </div>
 
-                    <FixedBottomButton
-                        type="submit"
-                        variant="default"
-                        size="lg"
-                        onClick={() => console.log(form.formState.errors)}
-                    >
+                    <FixedBottomButton type="submit" variant="default" size="lg">
                         {t("claim.claim")}
                     </FixedBottomButton>
 
