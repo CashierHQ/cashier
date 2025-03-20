@@ -45,6 +45,7 @@ const TransactionToast: FC<TransactionToastProps> = ({
         <ToastProvider>
             <Toast
                 open={open}
+                duration={Infinity}
                 onOpenChange={onOpenChange}
                 className={cn(transactionToastVariants({ variant }))}
             >
@@ -97,8 +98,8 @@ const TransactionToast: FC<TransactionToastProps> = ({
                                         </div>
                                         <IoIosClose
                                             onClick={() => onOpenChange(false)}
-                                            className="cursor-pointer"
-                                            size={38}
+                                            className="cursor-pointer ml-5"
+                                            size={48}
                                             color="#98A2B3"
                                         />
                                     </div>
