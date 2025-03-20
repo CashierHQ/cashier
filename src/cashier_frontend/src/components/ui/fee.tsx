@@ -6,7 +6,6 @@ export type FeeProps = {
     amount?: number | undefined;
     usdAmount?: number | undefined;
     symbol?: string | undefined;
-
     isLoading?: boolean;
     isUsd?: boolean;
 };
@@ -19,7 +18,7 @@ export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading,
         if (title === "ICP") {
             return "ICP";
         } else if (title === "CUTE") {
-            return "CHAT";
+            return "tCHAT";
         } else return title;
     };
 

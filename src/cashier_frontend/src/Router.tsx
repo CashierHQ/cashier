@@ -11,6 +11,7 @@ import ImportTokenPage from "./pages/wallet/import/page";
 import TokenDetailsPage from "./pages/wallet/details/[id]/page";
 import RequireAuth from "./router/RequireAuth";
 import ReceiveTokenPage from "./pages/wallet/receive/[id]/page";
+import SendTokenPage from "./pages/wallet/send/[id]/page";
 
 const router = createBrowserRouter([
     {
@@ -64,6 +65,10 @@ const router = createBrowserRouter([
             {
                 path: "receive/:tokenId?",
                 element: <ReceiveTokenPage />,
+            },
+            {
+                path: "send/:tokenId?",
+                element: <SendTokenPage />,
             },
         ],
     },

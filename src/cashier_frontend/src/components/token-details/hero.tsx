@@ -16,6 +16,7 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const navigateReceivePage = () => navigate(`/wallet/receive/${token.address}`);
+    const navigateSendPage = () => navigate(`/wallet/send/${token.address}`);
 
     const [hasCopiedAddress, setHasCopiedAddress] = useState<boolean>(false);
 
@@ -35,7 +36,7 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
             <p className="text-xs text-grey font-semibold">${token.usdEquivalent}</p>
 
             <div className="mt-4">
-                <SendReceive onReceive={navigateReceivePage} />
+                <SendReceive onReceive={navigateReceivePage} onSend={navigateSendPage} />
             </div>
 
             <div className="mt-5 w-full">

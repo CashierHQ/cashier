@@ -35,9 +35,9 @@ export const Asset: FC<AssetProps> = ({
 
     const getSymbol = (title?: string) => {
         if (title === "ICP") {
-            return "ICP";
+            return "tICP";
         } else if (title === "CUTE") {
-            return "CHAT";
+            return "tCHAT";
         } else return title;
     };
 

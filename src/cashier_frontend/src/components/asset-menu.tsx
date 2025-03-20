@@ -47,7 +47,7 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalanc
 
     const getTokenName = (name: string) => {
         if (name === "CUTE") {
-            return "CHAT";
+            return "tCHAT";
         } else return name;
     };
 
