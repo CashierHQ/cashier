@@ -39,6 +39,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     linkData,
     onCashierError = () => {},
     onActionResult,
+    onSubmit,
 }) => {
     const { linkId } = useParams();
     const identity = useIdentity();
@@ -144,7 +145,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                         amount: claimLinkDetails.amount,
                     },
                 ]}
-                onSubmit={handleSubmit}
+                onSubmit={onSubmit}
                 onBack={prevStep}
             />
 

@@ -27,6 +27,8 @@ export interface TransactionToastProps extends VariantProps<typeof transactionTo
     title: string;
     description: string;
     onOpenChange: (open: boolean) => void;
+    icon?: React.ReactNode;
+    boldText?: boolean;
 }
 
 const TransactionToast: FC<TransactionToastProps> = ({
@@ -35,7 +37,10 @@ const TransactionToast: FC<TransactionToastProps> = ({
     description,
     variant,
     onOpenChange,
+    icon,
+    boldText,
 }) => {
+    console.log("🚀 ~ boldText:", boldText);
     return (
         <ToastProvider>
             <Toast
@@ -45,23 +50,60 @@ const TransactionToast: FC<TransactionToastProps> = ({
             >
                 <div className="grid gap-1 w-full">
                     <div className="flex items-center">
-                        {variant === "default" ? (
+                        {icon ? (
+                            icon
+                        ) : variant === "default" ? (
                             <CiCircleCheck color="green" size={48} />
                         ) : (
                             <FiXCircle color="red" size={48} />
                         )}
-
                         <div className="ml-3 flex-1">
-                            <div className="flex items-center justify-between">
-                                <div className="text-xl font-medium text-black">{title}</div>
-                                <IoIosClose
-                                    onClick={() => onOpenChange(false)}
-                                    className="cursor-pointer"
-                                    size={38}
-                                    color="#98A2B3"
-                                />
-                            </div>
-                            <div className="text-md opacity-90">{description}</div>
+                            {title.length > 0 ? (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-xl font-medium text-black">
+                                            {title}
+                                        </div>
+                                        <IoIosClose
+                                            onClick={() => onOpenChange(false)}
+                                            className="cursor-pointer"
+                                            size={38}
+                                            color="#98A2B3"
+                                        />
+                                    </div>
+                                    <div
+                                        className={cn(
+                                            variant == "default"
+                                                ? "text-md opacity-90 text-green"
+                                                : "text-md opacity-90 text-red",
+                                            boldText ? "font-bold" : "",
+                                        )}
+                                    >
+                                        {description}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <div
+                                            className={cn(
+                                                variant == "default"
+                                                    ? "text-md opacity-90 text-green"
+                                                    : "text-md opacity-90 text-red",
+                                                boldText ? "font-bold" : "",
+                                            )}
+                                        >
+                                            {description}
+                                        </div>
+                                        <IoIosClose
+                                            onClick={() => onOpenChange(false)}
+                                            className="cursor-pointer"
+                                            size={38}
+                                            color="#98A2B3"
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -24,6 +24,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
+import { IoInformationCircle } from "react-icons/io5";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -51,7 +52,10 @@ export default function ClaimPage() {
     const { t } = useTranslation();
 
     //const updateLinkUserState = useUpdateLinkUserState();
-    const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(linkId);
+    const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
+        linkId,
+        ACTION_TYPE.CLAIM_LINK,
+    );
 
     const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
         {
@@ -75,7 +79,13 @@ export default function ClaimPage() {
 
     const handleClaim = async () => {
         if (!form.getValues("address") || form.getValues("address")?.length == 0) {
-            showToast("Test", "To receive, you need to login or connect your wallet", "error");
+            showToast(
+                "",
+                "To receive, you need to login or connect your wallet",
+                "default",
+                <IoInformationCircle size={40} color="#36A18B" />,
+                true,
+            );
             return;
         }
         console.log("Claiming");
@@ -195,6 +205,8 @@ export default function ClaimPage() {
                     title={toastData?.title ?? ""}
                     description={toastData?.description ?? ""}
                     variant={toastData?.variant ?? "default"}
+                    icon={toastData?.icon}
+                    boldText={toastData?.boldText}
                 />
             </SheetWrapper>
         </div>

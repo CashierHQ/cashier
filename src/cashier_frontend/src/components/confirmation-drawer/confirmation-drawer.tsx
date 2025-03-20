@@ -133,11 +133,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                             onUsdClick={() => setIsUsd((old) => !old)}
                         />
 
-                        {cashierFeeIntents && cashierFeeIntents.length > 0 && (
-                            <ConfirmationPopupFeesSection
-                                intents={cashierFeeIntents}
-                                isUsd={isUsd}
-                            />
+                        {primaryIntents && primaryIntents.length > 0 && (
+                            <ConfirmationPopupFeesSection intents={primaryIntents} isUsd={isUsd} />
                         )}
                         <ConfirmationPopupLegalSection />
                         <Button
