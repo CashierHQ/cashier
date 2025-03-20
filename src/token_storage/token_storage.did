@@ -1,9 +1,24 @@
-type IcrcToken = record { ledger_id : principal; index_id : principal };
+type AddTokenInput = record {
+  decimals : opt nat8;
+  chain : Chain;
+  ledger_id : opt principal;
+  enabled : opt bool;
+  index_id : opt principal;
+  symbol : opt text;
+};
+type Chain = variant { IC };
+type RemoveTokenInput = record { chain : Chain; ledger_id : opt principal };
 type Result = variant { Ok; Err : text };
-type Token = record { "type" : TokenType; enable : bool };
-type TokenType = variant { Icrc : IcrcToken };
+type UserToken = record {
+  decimals : opt nat8;
+  chain : Chain;
+  enabled : opt bool;
+  icrc_ledger_id : opt principal;
+  icrc_index_id : opt principal;
+  symbol : opt text;
+};
 service : {
-  add_token : (text, Token) -> (Result);
-  list_tokens : () -> (vec Token) query;
-  remove_token : (text) -> (Result);
+  add_token : (AddTokenInput) -> (Result);
+  list_tokens : () -> (vec UserToken) query;
+  remove_token : (RemoveTokenInput) -> (Result);
 }
