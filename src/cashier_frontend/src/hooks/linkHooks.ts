@@ -120,8 +120,6 @@ export function useSetTipLinkDetails() {
                 asset_info: vars.patch,
                 state: State.PendingPreview,
             } as LinkDetailModel;
-            console.log("🚀 ~ mutationFn: ~ linkData:", linkData);
-
             const linkDto = await linkService.updateLink(vars.link.id, linkData, true);
 
             return MapLinkToLinkDetailModel(linkDto);

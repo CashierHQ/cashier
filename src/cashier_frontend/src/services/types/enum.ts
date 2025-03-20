@@ -109,6 +109,7 @@ export enum LINK_INTENT_LABEL {
 }
 
 export enum LINK_USER_STATE {
+    NO_STATE = "No_state",
     CHOOSE_WALLET = "User_state_choose_wallet",
     COMPLETE = "User_state_completed_link",
 }

@@ -15,6 +15,7 @@ import { PartialIdentity } from "@dfinity/identity";
 import {
     LinkDetailModel,
     LinkGetUserStateInputModel,
+    LinkGetUserStateOutputModel,
     LinkModel,
     LinkUpdateUserStateInputModel,
 } from "./types/link.service.types";
@@ -27,7 +28,7 @@ import {
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
-import { ACTION_TYPE, FEE_TYPE } from "./types/enum";
+import { ACTION_STATE, ACTION_TYPE, FEE_TYPE, LINK_USER_STATE } from "./types/enum";
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -131,7 +132,6 @@ class LinkService {
             action_type: input.actionType,
             params: [],
         };
-        console.log("🚀 ~ LinkService ~ processAction ~ inputModel:", inputModel);
         const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         return action;
@@ -171,8 +171,8 @@ class LinkService {
         });
     }
 
+    //TODO: Mock response data, remove after BE finish implementation
     async getLinkUserState(input: LinkGetUserStateInputModel) {
-        console.log("Calling getLinkUserState");
         const params: LinkGetUserStateInput = {
             link_id: input.link_id,
             action_type: input.action_type,
@@ -181,8 +181,23 @@ class LinkService {
                 : [],
             create_if_not_exist: input.create_if_not_exist,
         };
-        const response = parseResultResponse(await this.actor.link_get_user_state(params));
-        return mapLinkUserStateModel(response);
+        if (input.create_if_not_exist) {
+            console.log("CALLING LINK GET USER STATE WITH PARAM CREATE IF NOT EXIST = TRUE");
+        }
+        //const response = parseResultResponse(await this.actor.link_get_user_state(params));
+        const mockResponse: LinkGetUserStateOutputModel = {
+            action: {
+                id: "action_id",
+                state: ACTION_STATE.CREATED,
+                creator: "",
+                intents: [],
+                type: ACTION_TYPE.CLAIM_LINK,
+                icrc112Requests: [],
+            },
+            link_user_state: LINK_USER_STATE.CHOOSE_WALLET,
+        };
+        return mockResponse;
+        //return mapLinkUserStateModel(response);
     }
 
     async updateLinkUserState(input: LinkUpdateUserStateInputModel) {
@@ -196,7 +211,6 @@ class LinkService {
         };
         const response = parseResultResponse(await this.actor.link_update_user_state(params));
         //TODO: Mock response for testing
-        console.log("🚀 ~ LinkService ~ updateLinkUserState ~ response:", response);
         return mapLinkUserStateModel(response);
     }
 }

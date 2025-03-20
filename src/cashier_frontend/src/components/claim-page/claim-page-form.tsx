@@ -22,7 +22,7 @@ import { useSigners } from "@/contexts/signer-list-context";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import { Principal } from "@dfinity/principal";
 
-interface ClaimLinkDetail {
+export interface ClaimLinkDetail {
     title: string;
     amount: number;
 }
@@ -31,8 +31,8 @@ interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData: LinkDetailModel;
     claimLinkDetails: ClaimLinkDetail[];
-    handleClaim: () => void;
-    setIsClaiming: () => void;
+    onSubmit: () => void;
+    onBack?: () => void;
 }
 
 enum WALLET_OPTIONS {
@@ -44,11 +44,10 @@ enum WALLET_OPTIONS {
 
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
-    handleClaim,
+    onSubmit,
     claimLinkDetails,
-    setIsClaiming,
+    onBack,
 }) => {
-    console.log("🚀 ~ form:", form.getValues());
     const { t } = useTranslation();
     const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
@@ -87,11 +86,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
         try {
-            console.log("Paste");
             // Check principal format
             const text = await navigator.clipboard.readText();
-            const isValid = Principal.fromText(text);
-            console.log(isValid);
+            Principal.fromText(text);
             field.onChange(text);
         } catch (err) {
             console.error("Failed to read clipboard contents: ", err);
@@ -124,11 +121,12 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {t("claim.receive")}
                 </h4>
-                <div className="absolute left-[10px]" onClick={setIsClaiming}>
+                <div className="absolute left-[10px]" onClick={onBack}>
                     <IoIosArrowBack />
                 </div>
             </div>
-            <div id="asset-section" className="my-5">
+
+            <div id="asset-section" className="w-full my-5">
                 <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
                     {t("claim.asset")}
                 </h2>
@@ -153,8 +151,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
             <Form {...form}>
                 <form
-                    className="flex flex-col gap-y-[10px] my-5"
-                    onSubmit={form.handleSubmit(handleClaim)}
+                    className="w-full flex flex-col gap-y-[10px] my-5"
+                    onSubmit={form.handleSubmit(onSubmit)}
                 >
                     <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
                         {t("claim.receive_options")}

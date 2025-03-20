@@ -44,8 +44,10 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
         queryFn: async () => {
             const linkService = new LinkService(identity);
             const userState = await linkService.getLinkUserState(input);
+            console.log("🚀 ~ queryFn: ~ userState:", userState);
             return userState;
         },
         enabled: !!identity && isEnabled,
+        refetchOnWindowFocus: false,
     });
 }

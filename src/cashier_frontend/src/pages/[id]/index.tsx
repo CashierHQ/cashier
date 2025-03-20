@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { ACTION_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import Header from "@/components/header";
 import useConnectToWallet from "@/hooks/useConnectToWallet";
@@ -16,6 +16,11 @@ import { TokenUtilService } from "@/services/tokenUtils.service";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { useLinkUserState, useUpdateLinkUserState } from "@/hooks/linkUserHooks";
 import { useIdentity } from "@nfid/identitykit/react";
+import { MultiStepForm } from "@/components/multi-step-form";
+import { LinkDetailModel } from "@/services/types/link.service.types";
+import { LinkCardPage } from "./LinkCardPage";
+import { ClaimFormPage } from "./ClaimFormPage";
+import { Spinner } from "@/components/ui/spinner";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -23,11 +28,25 @@ export const ClaimSchema = z.object({
     address: z.string().optional(),
 });
 
+const STEP_LINK_USER_STATE_ORDER = [
+    LINK_USER_STATE.NO_STATE,
+    LINK_USER_STATE.CHOOSE_WALLET,
+    LINK_USER_STATE.COMPLETE,
+];
+
+function getInitialStep(state: string | undefined) {
+    if (state === undefined) {
+        state = LINK_USER_STATE.NO_STATE;
+    }
+    return STEP_LINK_USER_STATE_ORDER.findIndex((x) => x === state);
+}
+
 export default function ClaimPage() {
     const [enableFetchLinkUserState, setEnableFetchLinkUserState] = useState(false);
     const { linkId } = useParams();
     const identity = useIdentity();
-    const updateLinkUserState = useUpdateLinkUserState();
+
+    //const updateLinkUserState = useUpdateLinkUserState();
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(linkId);
 
     const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
@@ -37,13 +56,12 @@ export default function ClaimPage() {
             create_if_not_exist: false,
             anonymous_wallet_address: "",
         },
-        enableFetchLinkUserState,
+        true,
     );
 
     const [isLoading, setIsLoading] = useState(true);
     const { toastData, showToast, hideToast } = useToast();
     const { connectToWallet } = useConnectToWallet();
-    const [claimStatus, setClaimStatus] = useState("Claim");
 
     const form = useForm<z.infer<typeof ClaimSchema>>({
         resolver: zodResolver(ClaimSchema),
@@ -52,23 +70,11 @@ export default function ClaimPage() {
     const { metadata } = useTokenMetadata(linkData?.link.asset_info?.[0].address);
 
     const handleClaim = async () => {
-        setClaimStatus("Claimed");
         // if (!form.getValues("address") || form.getValues("address")?.length == 0) {
         //     showToast("Test", "To receive, you need to login or connect your wallet", "error");
         //     return;
         // }
         // console.log("Claiming");
-    };
-
-    const handleStartClaimClick = () => {
-        updateLinkUserState.mutate({
-            input: {
-                link_id: linkId ?? "",
-                action_type: ACTION_TYPE.CLAIM_LINK,
-                isContinue: true,
-            },
-        });
-        setClaimStatus("Claiming");
     };
 
     const handleConnectWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -85,14 +91,11 @@ export default function ClaimPage() {
             form.setValue("token", linkData.link.title);
             setIsLoading(false);
         }
+
         if (linkData && identity) {
             setEnableFetchLinkUserState(true);
         }
     }, [linkData, identity]);
-
-    useEffect(() => {
-        setIsLoading(isFetchingLinkData);
-    }, [isFetchingLinkData]);
 
     useEffect(() => {
         if (!metadata) return;
@@ -112,37 +115,45 @@ export default function ClaimPage() {
             <SheetWrapper>
                 <div className="w-11/12 max-w-[400px]">
                     <Header onConnect={handleConnectWallet} openTestForm={connectToWallet} />
-
-                    {claimStatus === "Claiming" && linkData ? (
-                        <ClaimPageForm
-                            form={form}
-                            formData={linkData?.link}
-                            claimLinkDetails={[
-                                {
-                                    title: watchedToken,
-                                    amount: watchedAmount,
-                                },
-                            ]}
-                            handleClaim={handleClaim}
-                            setIsClaiming={() => setClaimStatus("Claim")}
-                        />
-                    ) : claimStatus === "Claimed" ? (
-                        <LinkCardWithoutPhoneFrame
-                            label="Claimed"
-                            src="/icpLogo.png"
-                            message={linkData?.link.description ?? ""}
-                            title={linkData?.link.title ?? ""}
-                            disabled={true}
-                        />
+                    {isFetchingLinkData || isFetchingLinkUserState ? (
+                        <div className="flex justify-center items-center h-full">
+                            <Spinner sizes="32" />
+                        </div>
                     ) : (
-                        <LinkCardWithoutPhoneFrame
-                            label="Claim"
-                            src="/icpLogo.png"
-                            message={linkData?.link.description ?? ""}
-                            title={linkData?.link.title ?? ""}
-                            onClaim={handleStartClaimClick}
-                            disabled={linkData === undefined}
-                        />
+                        <div className="flex flex-col flex-grow w-full sm:max-w-[400px] md:max-w-[100%] my-3">
+                            <MultiStepForm
+                                initialStep={getInitialStep(linkUserState?.link_user_state)}
+                            >
+                                <MultiStepForm.Header showIndicator={false} showHeader={false} />
+                                <MultiStepForm.Items>
+                                    <MultiStepForm.Item name="Claim">
+                                        <LinkCardPage linkData={linkData} />
+                                    </MultiStepForm.Item>
+
+                                    <MultiStepForm.Item name="Choose wallet">
+                                        <ClaimFormPage
+                                            form={form}
+                                            claimLinkDetails={{
+                                                title: watchedToken ?? "",
+                                                amount: watchedAmount ?? 0,
+                                            }}
+                                            onSubmit={handleClaim}
+                                            linkData={linkData}
+                                        />
+                                    </MultiStepForm.Item>
+
+                                    <MultiStepForm.Item name="Complete">
+                                        <LinkCardWithoutPhoneFrame
+                                            label="Claimed"
+                                            src="/icpLogo.png"
+                                            message={linkData?.link.description ?? ""}
+                                            title={linkData?.link.title ?? ""}
+                                            disabled={true}
+                                        />
+                                    </MultiStepForm.Item>
+                                </MultiStepForm.Items>
+                            </MultiStepForm>
+                        </div>
                     )}
                 </div>
 
