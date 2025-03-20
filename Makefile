@@ -1,18 +1,17 @@
 # export WASM32_UNKNOWN_UNKNOWN_OPENSSL_DIR=/opt/homebrew/opt/openssl@1.1
 
-build-backend:
-	bash ./scripts/build_package.sh cashier_backend
+build-wasm:
+	@cargo build --release --target wasm32-unknown-unknown --package cashier_backend
 
-build-token-storage:
-	bash ./scripts/build_package.sh token_storage
-
+build-did:
+	@candid-extractor target/wasm32-unknown-unknown/release/cashier_backend.wasm > src/cashier_backend/cashier_backend.did
 
 setup-test:
-	make build-backend
+	make build-wasm
 	bash scripts/setup_test.sh
 	
 test:
-	make build-backend
+	make build-wasm
 	@npm run test
 
 # have to run local-setup before running this, need create did file in .dfx
@@ -23,10 +22,12 @@ g:
 	rm src/declarations/icp_ledger_canister/icp_ledger_canister.did
 
 predeploy:
-	make build-backend
+	make build-wasm
+	make build-did
 
 build: 
-	make build-backend
+	make build-wasm
+	make build-did
 
 deploy:
 	@bash scripts/deploy.sh

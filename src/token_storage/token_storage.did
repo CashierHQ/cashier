@@ -1,9 +1,0 @@
-type IcrcToken = record { ledger_id : principal; index_id : principal };
-type Result = variant { Ok; Err : text };
-type Token = record { "type" : TokenType; enable : bool };
-type TokenType = variant { Icrc : IcrcToken };
-service : {
-  add_token : (text, Token) -> (Result);
-  list_tokens : () -> (vec Token) query;
-  remove_token : (text) -> (Result);
-}
