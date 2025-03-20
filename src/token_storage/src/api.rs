@@ -1,8 +1,7 @@
 use candid::Principal;
-use cashier_types::token::Token;
 use ic_cdk::{query, update};
 
-use crate::repository::TokenRepository;
+use crate::{repository::TokenRepository, types::Token};
 
 #[update]
 pub fn add_token(id: String, token: Token) -> Result<(), String> {

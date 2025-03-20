@@ -4,7 +4,6 @@ pub mod common;
 pub mod intent;
 pub mod keys;
 pub mod link;
-pub mod token;
 pub mod transaction;
 pub mod user;
 
@@ -14,6 +13,5 @@ pub use common::*;
 pub use intent::*;
 pub use keys::*;
 pub use link::*;
-pub use token::*;
 pub use transaction::*;
 pub use user::*;
