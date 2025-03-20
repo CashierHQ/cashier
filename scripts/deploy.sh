@@ -10,36 +10,28 @@ if [[ "$1" == "--skip" ]]; then
     echo "Skipping configuration. Using default values."
 else
     # Prompt for network
-    read -p "Enter network (ic or local): " network_input
+    read -p "Enter network (ic, staging, local): " network_input
     if [ "$network_input" == "ic" ]; then
         network="--ic"
+        env_file=".env.production"
+    elif [ "$network_input" == "staging" ]; then
+        network="--ic"
+        env_file=".env.staging"
     elif [ "$network_input" == "local" ]; then
         network=""
+        env_file=".env.local"
     else
-        echo "Invalid network. Please enter ic or local."
-        exit 1
-    fi
-
-    # Prompt for stage
-    read -p "Enter stage (prod or staging): " stage
-    if [ "$stage" != "prod" ] && [ "$stage" != "staging" ]; then
-        echo "Invalid stage. Please enter prod or staging."
+        echo "Invalid network. Please enter ic, staging, or local."
         exit 1
     fi
 
     # Prompt for package
-    if [ "$stage" == "prod" ]; then
-        read -p "Enter package (cashier_backend, cashier_frontend): " package
-        if [ "$package" != "cashier_backend" ] && [ "$package" != "cashier_frontend" ]; then
-            echo "Invalid package for prod. Please enter cashier_backend or cashier_frontend."
-            exit 1
-        fi
-    elif [ "$stage" == "staging" ]; then
-        read -p "Enter package (cashier_frontend_staging): " package
-        if [ "$package" != "cashier_frontend_staging" ]; then
-            echo "Invalid package for staging. Please enter cashier_frontend_staging."
-            exit 1
-        fi
+    read -p "Enter package (cashier_backend, token_storage, cashier_frontend): " package_input
+    if [ "$package_input" == "cashier_backend" ] || [ "$package_input" == "token_storage" ] || [ "$package_input" == "cashier_frontend" ]; then
+        package="$package_input"
+    else
+        echo "Invalid package. Please enter cashier_backend, token_storage, or cashier_frontend."
+        exit 1
     fi
 
     # Prompt for identity
@@ -52,17 +44,11 @@ else
 fi
 
 # Source the appropriate environment file
-if [ "$network" == "--ic" ]; then
-    echo "Using .env.staging"
-    set -a
-    source .env.staging
-    set +a
-else
-    echo "Using .env.local"
-    set -a
-    source .env.local
-    set +a
-fi
+echo "Using $env_file"
+set -a
+source "$env_file"
+set +a
 
 # Run dfx deploy
+echo "Deploying $package to network $network_input with identity $identity"
 dfx deploy $package $network $identity
