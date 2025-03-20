@@ -1205,6 +1205,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "token_storage"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "cashier-macros",
+ "ic-cdk 0.16.0",
+ "ic-stable-structures",
+ "serde",
+ "serde_cbor",
+ "serde_json",
+]
+
+[[package]]
 name = "tokio"
 version = "1.43.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
