@@ -12,10 +12,10 @@ else
     # Prompt for network
     read -p "Enter network (ic, staging, local): " network_input
     if [ "$network_input" == "ic" ]; then
-        network="--ic"
+        network="ic"
         env_file=".env.production"
     elif [ "$network_input" == "staging" ]; then
-        network="--ic"
+        network="staging"
         env_file=".env.staging"
     elif [ "$network_input" == "local" ]; then
         network=""
@@ -50,5 +50,8 @@ source "$env_file"
 set +a
 
 # Run dfx deploy
-echo "Deploying $package to network $network_input with identity $identity"
-dfx deploy $package $network $identity
+echo "====================================================== "
+echo "dfx deploy $package --network $network $identity"
+echo "======================================================"
+
+dfx deploy $package --network $network $identity

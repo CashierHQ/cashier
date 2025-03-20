@@ -46,11 +46,14 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
     let caller = ic_cdk::api::caller();
 
     let user_id = services::user::v2::UserService::get_instance().get_user_id_by_wallet(&caller);
-    if user_id.is_none() {
-        return Err("User not found".to_string());
-    }
 
-    let is_valid_creator = is_link_creator(caller.to_text(), &id);
+    // Allow both anonymous callers and non-anonymous callers without user IDs to proceed
+
+    let is_valid_creator = if !(caller == Principal::anonymous()) {
+        is_link_creator(caller.to_text(), &id)
+    } else {
+        false // Anonymous callers can't be creators
+    };
 
     // Extract action_type from options
     let action_type = match options {
@@ -78,9 +81,13 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
     // Get link and action data
     let link = services::link::get_link_by_id(id.clone())?;
 
-    let action = action_type.and_then(|action_type| {
-        services::link::get_link_action(id, action_type.to_string(), user_id.unwrap())
-    });
+    // Get action data (only if user_id exists)
+    let action = match (action_type, &user_id) {
+        (Some(action_type), Some(user_id)) => {
+            services::link::get_link_action(id, action_type.to_string(), user_id.clone())
+        }
+        _ => None,
+    };
 
     let action_dto = action.map(|action| {
         let intents = services::action::get_intents_by_action_id(action.id.clone());
