@@ -18,8 +18,10 @@ test:
 # have to run local-setup before running this, need create did file in .dfx
 g: 
 	@dfx generate cashier_backend
+	@dfx generate token_storage
 	@dfx generate icp_ledger_canister
 	rm src/declarations/cashier_backend/cashier_backend.did
+	rm src/declarations/token_storage/token_storage.did
 	rm src/declarations/icp_ledger_canister/icp_ledger_canister.did
 
 predeploy:
