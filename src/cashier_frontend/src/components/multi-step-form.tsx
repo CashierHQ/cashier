@@ -22,9 +22,13 @@ export function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps)
 
 interface MultiStepFormHeaderProps {
     onClickBack?: (context: MultiStepFormContext) => void;
+    showIndicator?: boolean;
 }
 
-export function MultiStepFormHeader({ onClickBack = () => {} }: MultiStepFormHeaderProps) {
+export function MultiStepFormHeader({
+    onClickBack = () => {},
+    showIndicator = true,
+}: MultiStepFormHeaderProps) {
     const context = useMultiStepFormContext();
 
     return (
@@ -41,18 +45,20 @@ export function MultiStepFormHeader({ onClickBack = () => {} }: MultiStepFormHea
                 </button>
             </div>
 
-            <div className="flex w-full mb-3">
-                {new Array(context.steps).fill(0).map((_, index) => (
-                    <div
-                        key={index}
-                        className={cn("h-[4px] rounded-full mx-[2px]", {
-                            "bg-green": index <= context.step,
-                            "bg-lightgreen": index > context.step,
-                        })}
-                        style={{ width: `${100 / context.steps}%` }}
-                    />
-                ))}
-            </div>
+            {showIndicator && (
+                <div className="flex w-full mb-3">
+                    {new Array(context.steps).fill(0).map((_, index) => (
+                        <div
+                            key={index}
+                            className={cn("h-[4px] rounded-full mx-[2px]", {
+                                "bg-green": index <= context.step,
+                                "bg-lightgreen": index > context.step,
+                            })}
+                            style={{ width: `${100 / context.steps}%` }}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

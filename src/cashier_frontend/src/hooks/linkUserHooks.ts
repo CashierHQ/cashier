@@ -46,6 +46,6 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
             const userState = await linkService.getLinkUserState(input);
             return userState;
         },
-        enabled: isEnabled,
+        enabled: !!identity && isEnabled,
     });
 }

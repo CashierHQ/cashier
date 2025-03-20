@@ -1,11 +1,9 @@
-import { SyntheticEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import LinkService from "@/services/link.service";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
-import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { ACTION_TYPE } from "@/services/types/enum";
@@ -16,7 +14,8 @@ import SheetWrapper from "@/components/sheet-wrapper";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
-import { useLinkUserState } from "@/hooks/linkUserHooks";
+import { useLinkUserState, useUpdateLinkUserState } from "@/hooks/linkUserHooks";
+import { useIdentity } from "@nfid/identitykit/react";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -27,9 +26,9 @@ export const ClaimSchema = z.object({
 export default function ClaimPage() {
     const [enableFetchLinkUserState, setEnableFetchLinkUserState] = useState(false);
     const { linkId } = useParams();
-
+    const identity = useIdentity();
+    const updateLinkUserState = useUpdateLinkUserState();
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(linkId);
-    console.log("🚀 ~ ClaimPage ~ linkData:", linkData);
 
     const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
         {
@@ -52,9 +51,6 @@ export default function ClaimPage() {
 
     const { metadata } = useTokenMetadata(linkData?.link.asset_info?.[0].address);
 
-    console.log(linkData);
-    console.log(linkUserState);
-
     const handleClaim = async () => {
         setClaimStatus("Claimed");
         // if (!form.getValues("address") || form.getValues("address")?.length == 0) {
@@ -65,6 +61,13 @@ export default function ClaimPage() {
     };
 
     const handleStartClaimClick = () => {
+        updateLinkUserState.mutate({
+            input: {
+                link_id: linkId ?? "",
+                action_type: ACTION_TYPE.CLAIM_LINK,
+                isContinue: true,
+            },
+        });
         setClaimStatus("Claiming");
     };
 
@@ -82,7 +85,10 @@ export default function ClaimPage() {
             form.setValue("token", linkData.link.title);
             setIsLoading(false);
         }
-    }, [linkData]);
+        if (linkData && identity) {
+            setEnableFetchLinkUserState(true);
+        }
+    }, [linkData, identity]);
 
     useEffect(() => {
         setIsLoading(isFetchingLinkData);

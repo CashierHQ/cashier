@@ -94,11 +94,16 @@ class LinkService {
 
     async getLink(linkId: string, actionType?: string) {
         const response = parseResultResponse(
-            await this.actor.get_link(linkId, [
-                {
-                    action_type: ACTION_TYPE.CREATE_LINK,
-                },
-            ]),
+            await this.actor.get_link(
+                linkId,
+                actionType
+                    ? [
+                          {
+                              action_type: actionType,
+                          },
+                      ]
+                    : [],
+            ),
         );
         const result = await MapLinkDetailModel(response);
         return result;
@@ -167,6 +172,7 @@ class LinkService {
     }
 
     async getLinkUserState(input: LinkGetUserStateInputModel) {
+        console.log("Calling getLinkUserState");
         const params: LinkGetUserStateInput = {
             link_id: input.link_id,
             action_type: input.action_type,
@@ -189,6 +195,8 @@ class LinkService {
                 : [],
         };
         const response = parseResultResponse(await this.actor.link_update_user_state(params));
+        //TODO: Mock response for testing
+        console.log("🚀 ~ LinkService ~ updateLinkUserState ~ response:", response);
         return mapLinkUserStateModel(response);
     }
 }

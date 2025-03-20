@@ -112,6 +112,12 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         console.log(currentSelectOptionWallet);
     }, [currentSelectOptionWallet]);
 
+    useEffect(() => {
+        if (identity) {
+            setCurrentSelectOptionWallet(WALLET_OPTIONS.INTERNET_IDENTITY);
+        }
+    }, []);
+
     return (
         <>
             <div className="w-full flex justify-center items-center mt-5 relative">

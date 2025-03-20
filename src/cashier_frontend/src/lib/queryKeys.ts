@@ -63,9 +63,8 @@ export const queryKeys = createQueryKeyStore({
             queryKey: [QUERY_KEYS.LINKS, linkId],
             queryFn: async () => {
                 if (!linkId) throw new Error("Link ID is required");
-
                 try {
-                    const linkService = new LinkService(identity);
+                    const linkService = identity ? new LinkService(identity) : new LinkService();
                     const linkDetail = await linkService.getLink(linkId, actionType);
                     return linkDetail;
                 } catch (error) {
@@ -74,6 +73,7 @@ export const queryKeys = createQueryKeyStore({
                 }
             },
         }),
+
         feePreview: (
             linkId: string | undefined,
             identity: Identity | PartialIdentity | undefined,
