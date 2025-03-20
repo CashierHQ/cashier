@@ -76,7 +76,7 @@ export default function AppRouter() {
             className={
                 isSmallDevice
                     ? ""
-                    : "bg-gradient-to-r from-[#F4FCF9] to-[#F7FAF8] h-[100vh] flex items-center justify-center"
+                    : "bg-gradient-to-r from-[#F4FCF9] to-[#F7FAF8] flex items-center justify-center"
             }
         >
             <RouterProvider router={router} />

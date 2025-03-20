@@ -107,7 +107,7 @@ export default function LinkPreview({
     };
 
     return (
-        <div className="w-full flex flex-col">
+        <div className="w-full flex flex-col flex-grow relative">
             <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
                 {t("create.preview")}
             </h2>
@@ -122,6 +122,7 @@ export default function LinkPreview({
                 type="submit"
                 variant="default"
                 size="lg"
+                className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
                 onClick={handleSubmit}
                 disabled={isDisabled}
             >

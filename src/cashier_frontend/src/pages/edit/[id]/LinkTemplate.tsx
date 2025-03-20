@@ -23,6 +23,7 @@ import { useSetLinkTemplate } from "@/hooks/linkHooks";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useButtonState } from "@/hooks/useButtonState";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
 
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
@@ -69,7 +70,7 @@ export default function LinkTemplate({
     });
 
     return (
-        <div className="w-full flex flex-col flex-grow overflow-hidden">
+        <div className="w-full flex flex-col flex-grow overflow-hidden relative">
             <Form {...form}>
                 <form onSubmit={handleSubmit} className="flex flex-col flex-grow">
                     <FormField
@@ -91,7 +92,7 @@ export default function LinkTemplate({
 
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
                     <FormLabel className="mx-1 mb-2">{t("create.linkType")}</FormLabel>
-                    <div className="flex flex-grow flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
+                    <div className="flex flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3 mb-[100px]">
                         <Carousel className="items-center" setApi={carousel.setApi}>
                             <CarouselContent>
                                 {LINK_TEMPLATES.map((template, index) => (
@@ -109,14 +110,15 @@ export default function LinkTemplate({
                         </Carousel>
                     </div>
 
-                    <Button
+                    <FixedBottomButton
                         type="submit"
-                        className="my-3 mx-auto w-[90%]"
-                        disabled={isButtonDisabled}
+                        variant="default"
                         size="lg"
+                        className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
+                        disabled={isButtonDisabled}
                     >
                         {t("continue")}
-                    </Button>
+                    </FixedBottomButton>
                 </form>
             </Form>
         </div>
