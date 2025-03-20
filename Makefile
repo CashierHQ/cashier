@@ -6,6 +6,13 @@ build-backend:
 build-token-storage:
 	bash ./scripts/build_package.sh token_storage
 
+# staging
+build-icp-ledger:
+	dfx start --background
+	dfx canister create icp_ledger_canister
+	dfx build icp_ledger_canister
+	dfx stop
+
 
 setup-test:
 	make build-backend
