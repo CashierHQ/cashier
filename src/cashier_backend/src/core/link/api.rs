@@ -52,58 +52,40 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
 
     let is_valid_creator = is_link_creator(caller.to_text(), &id);
 
-    let action_type: Option<ActionType> = match options {
-        Some(options) => match ActionType::from_str(&options.action_type) {
-            Ok(link_type) => match link_type {
-                ActionType::CreateLink => Some(link_type),
-                ActionType::Withdraw => Some(link_type),
-                ActionType::Claim => return Err("Invalid action type".to_string()),
-            },
-            Err(_) => {
-                return Err("Invalid action type".to_string());
-            }
-        },
+    // Extract action_type from options
+    let action_type = match options {
+        Some(options) => ActionType::from_str(&options.action_type)
+            .map_err(|_| "Invalid action type".to_string())
+            .map(Some)?,
         None => None,
     };
 
+    // Handle different action types based on permissions
+    let action_type = match action_type {
+        // For CreateLink or Withdraw, require creator permission
+        Some(ActionType::CreateLink) | Some(ActionType::Withdraw) => {
+            if !is_valid_creator {
+                return Err("Only creator can access this action type".to_string());
+            }
+            action_type
+        }
+        // For Claim, don't return the action (handled separately)
+        Some(ActionType::Claim) => None,
+        // For other types, pass through
+        _ => action_type,
+    };
+
+    // Get link and action data
     let link = services::link::get_link_by_id(id.clone())?;
 
-    // if not link creator doesn't allow get create link and withdraw action
-    let action_type = match action_type {
-        Some(action_type) => match action_type {
-            ActionType::CreateLink => {
-                if is_valid_creator {
-                    Some(action_type)
-                } else {
-                    None
-                }
-            }
-            ActionType::Withdraw => {
-                if is_valid_creator {
-                    Some(action_type)
-                } else {
-                    None
-                }
-            }
-            ActionType::Claim => None,
-        },
-        None => None,
-    };
+    let action = action_type.and_then(|action_type| {
+        services::link::get_link_action(id, action_type.to_string(), user_id.unwrap())
+    });
 
-    let action = match action_type {
-        Some(action_type) => {
-            services::link::get_link_action(id, action_type.to_string(), user_id.unwrap())
-        }
-        None => None,
-    };
-
-    let action_dto = match action {
-        Some(action) => {
-            let intents = services::action::get_intents_by_action_id(action.id.clone());
-            Some(ActionDto::from(action, intents))
-        }
-        None => None,
-    };
+    let action_dto = action.map(|action| {
+        let intents = services::action::get_intents_by_action_id(action.id.clone());
+        ActionDto::from(action, intents)
+    });
 
     return Ok(GetLinkResp {
         link: LinkDto::from(link),
