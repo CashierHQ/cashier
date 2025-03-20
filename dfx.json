@@ -5,17 +5,14 @@
             "package": "cashier_backend",
             "type": "rust",
             "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai",
-            "gzip": true,
-            "wasm": "target/wasm32-unknown-unknown/release/cashier_backend.wasm"
-        },
-        "token_storage": {
-            "candid": "src/token_storage/token_storage.did",
-            "package": "token_storage",
-            "type": "rust",
-            "gzip": true,
-            "wasm": "target/wasm32-unknown-unknown/release/token_storage.wasm"
+            "gzip": true
         },
         "cashier_frontend": {
+            "source": ["src/cashier_frontend/dist"],
+            "type": "assets",
+            "workspace": "cashier_frontend"
+        },
+        "cashier_frontend_staging": {
             "source": ["src/cashier_frontend/dist"],
             "type": "assets",
             "workspace": "cashier_frontend"
@@ -36,23 +33,6 @@
         "build": {
             "args": "",
             "packtool": ""
-        }
-    },
-    "networks": {
-        "ic": {
-            "type": "persistent",
-            "providers": ["https://icp0.io"]
-        },
-        "staging": {
-            "type": "persistent",
-            "providers": ["https://icp0.io"]
-        },
-        "local": {
-            "bind": "localhost:4943",
-            "type": "ephemeral",
-            "replica": {
-                "subnet_type": "system"
-            }
         }
     },
     "output_env_file": ".env",
