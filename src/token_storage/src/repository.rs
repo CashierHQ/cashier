@@ -1,10 +1,9 @@
 use std::cell::RefCell;
 
-use cashier_types::Token;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
-use crate::types::Candid;
+use crate::types::{Candid, Token};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 

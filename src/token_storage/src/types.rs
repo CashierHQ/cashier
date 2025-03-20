@@ -1,9 +1,10 @@
 use std::borrow::Cow;
 
 use candid::CandidType;
+use candid::Principal;
+use cashier_macros::storable;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::Deserialize;
-
 #[derive(Default)]
 pub struct Candid<T>(pub T)
 where
@@ -42,4 +43,25 @@ where
     pub fn inner_mut(&mut self) -> &mut T {
         &mut self.0
     }
+}
+
+#[storable]
+#[derive(Clone, CandidType)]
+pub struct Token {
+    r#type: TokenType,
+    enable: bool,
+}
+
+#[repr(u8)]
+#[storable]
+#[derive(Clone, CandidType)]
+pub enum TokenType {
+    Icrc(IcrcToken) = 1,
+}
+
+#[storable]
+#[derive(Clone, CandidType)]
+pub struct IcrcToken {
+    ledger_id: Principal,
+    index_id: Principal,
 }
