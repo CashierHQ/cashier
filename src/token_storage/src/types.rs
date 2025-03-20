@@ -5,6 +5,10 @@ use candid::Principal;
 use cashier_macros::storable;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::Deserialize;
+
+pub type LedgerId = Principal;
+pub type IndexId = Principal;
+
 #[derive(Default)]
 pub struct Candid<T>(pub T)
 where
@@ -45,23 +49,49 @@ where
     }
 }
 
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 #[storable]
-#[derive(Clone, CandidType)]
-pub struct Token {
-    r#type: TokenType,
-    enable: bool,
-}
-
-#[repr(u8)]
-#[storable]
-#[derive(Clone, CandidType)]
-pub enum TokenType {
-    Icrc(IcrcToken) = 1,
+pub enum Chain {
+    IC,
 }
 
 #[storable]
-#[derive(Clone, CandidType)]
-pub struct IcrcToken {
-    ledger_id: Principal,
-    index_id: Principal,
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct UserToken {
+    pub icrc_ledger_id: Option<LedgerId>,
+    pub icrc_index_id: Option<IndexId>,
+    pub symbol: Option<String>,
+    pub decimals: Option<u8>,
+    pub enabled: Option<bool>,
+    pub chain: Chain,
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct AddTokenInput {
+    pub chain: Chain,
+    pub ledger_id: Option<LedgerId>,
+    pub index_id: Option<IndexId>,
+    pub symbol: Option<String>,
+    pub decimals: Option<u8>,
+    pub enabled: Option<bool>,
+}
+
+impl From<AddTokenInput> for UserToken {
+    fn from(input: AddTokenInput) -> Self {
+        Self {
+            icrc_ledger_id: input.ledger_id,
+            icrc_index_id: input.index_id,
+            symbol: input.symbol,
+            decimals: input.decimals,
+            enabled: input.enabled,
+            chain: input.chain,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+
+pub struct RemoveTokenInput {
+    pub chain: Chain,
+    pub ledger_id: Option<LedgerId>,
 }

@@ -6,6 +6,13 @@ build-backend:
 build-token-storage:
 	bash ./scripts/build_package.sh token_storage
 
+# staging
+build-icp-ledger:
+	dfx start --background
+	dfx canister create icp_ledger_canister
+	dfx build icp_ledger_canister
+	dfx stop
+
 
 setup-test:
 	make build-backend
@@ -18,8 +25,10 @@ test:
 # have to run local-setup before running this, need create did file in .dfx
 g: 
 	@dfx generate cashier_backend
+	@dfx generate token_storage
 	@dfx generate icp_ledger_canister
 	rm src/declarations/cashier_backend/cashier_backend.did
+	rm src/declarations/token_storage/token_storage.did
 	rm src/declarations/icp_ledger_canister/icp_ledger_canister.did
 
 predeploy:

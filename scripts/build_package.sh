@@ -10,7 +10,7 @@ fi
 PACKAGE_NAME=$1
 
 # Build the package
-cargo build --release --target wasm32-unknown-unknown --package "$PACKAGE_NAME"
+cargo build --release --target wasm32-unknown-unknown --package "$PACKAGE_NAME" --locked
 
 # Extract candid interface
 candid-extractor "target/wasm32-unknown-unknown/release/${PACKAGE_NAME}.wasm" > "src/${PACKAGE_NAME}/${PACKAGE_NAME}.did"

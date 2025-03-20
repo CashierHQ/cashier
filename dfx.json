@@ -6,14 +6,16 @@
             "type": "rust",
             "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai",
             "gzip": true,
-            "wasm": "target/wasm32-unknown-unknown/release/cashier_backend.wasm"
+            "wasm": "target/wasm32-unknown-unknown/release/cashier_backend.wasm",
+            "build": "bash ./scripts/build_package.sh cashier_backend"
         },
         "token_storage": {
             "candid": "src/token_storage/token_storage.did",
             "package": "token_storage",
             "type": "rust",
             "gzip": true,
-            "wasm": "target/wasm32-unknown-unknown/release/token_storage.wasm"
+            "wasm": "target/wasm32-unknown-unknown/release/token_storage.wasm",
+            "build": "bash ./scripts/build_package.sh token_storage"
         },
         "cashier_frontend": {
             "source": ["src/cashier_frontend/dist"],
