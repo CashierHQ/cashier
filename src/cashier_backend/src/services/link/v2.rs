@@ -11,6 +11,7 @@ use crate::{
         ICP_CANISTER_ID, INTENT_LABEL_LINK_TO_WALLET, INTENT_LABEL_WALLET_TO_LINK,
         INTENT_LABEL_WALLET_TO_TREASURY,
     },
+    info,
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
     services::transaction_manager::fee::Fee,
     types::error::CanisterError,
@@ -111,7 +112,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 intent.id = Uuid::new_v4().to_string();
                 intent.state = IntentState::Created;
                 intent.created_at = ts;
-                intent.label = INTENT_LABEL_LINK_TO_WALLET.to_string();
+                // same label with transfer asset to link
+                intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
 
                 intents.push(intent);
             }
@@ -143,7 +145,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 IntentTask::TransferWalletToLink => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
-                        CanisterError::HandleLogicError("Asset not found".to_string())
+                        CanisterError::HandleLogicError(
+                            "[link_assemble_intents] task TransferWalletToLink Asset not found"
+                                .to_string(),
+                        )
                     })?;
 
                     transfer_data.amount = asset_info.total_amount;
@@ -211,8 +216,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
                 IntentTask::TransferLinkToWallet => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
+                    info!("intent: {:#?}", intent);
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
-                        CanisterError::HandleLogicError("Asset not found".to_string())
+                        CanisterError::HandleLogicError(
+                            "[link_assemble_intents] task TransferLinkToWallet Asset not found"
+                                .to_string(),
+                        )
                     })?;
 
                     transfer_data.amount = asset_info.total_amount;

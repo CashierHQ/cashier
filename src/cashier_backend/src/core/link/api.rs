@@ -11,7 +11,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error,
+    error, info,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
@@ -283,7 +283,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .link_service
                 .link_assemble_intents(&temp_action.link_id, &temp_action.r#type)
                 .map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Failed to assemble intents: {}", e))
+                    CanisterError::HandleLogicError(format!(
+                        "[process_action] Failed to assemble intents: {}",
+                        e
+                    ))
                 })?;
             temp_action.intents = intents;
 
@@ -344,6 +347,27 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
+        // only support claim action type
+        match ActionType::from_str(&input.action_type) {
+            Ok(action_type) => {
+                if action_type != ActionType::Claim {
+                    return Err(CanisterError::ValidationErrors(
+                        "
+                        Invalid action type, only Claim action type is allowed
+                        "
+                        .to_string(),
+                    ));
+                }
+            }
+            Err(_) => {
+                return Err(CanisterError::ValidationErrors(
+                    "
+                    Invalid action type
+                    "
+                    .to_string(),
+                ));
+            }
+        }
         // if session key not null, temp_user_id = fetch id from (session_key) -- already did above
 
         // if anonymous_wallet_address not null, temp_user_id = anonymous_wallet_address
@@ -368,31 +392,25 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // else
         //  return action = null
         //  return link_user_state = null
+        info!("[link_get_user_state] link_action: {:#?}", link_action);
+
         if link_action.is_none() {
-            if input.create_if_not_exist {
-                // create new link action
-                let new_link_action = self.link_service.create_link_action_user(
-                    input.link_id.clone(),
-                    input.action_type.clone(),
-                    temp_user_id.unwrap(),
-                )?;
-                link_action = Some(new_link_action);
-            } else {
-                return Ok(None);
-            }
+            return Ok(None);
         }
 
         // If found "LinkAction" values
         // return action = get action from (action _id)
         // return state = record user_state
+        let action_id = link_action.as_ref().unwrap().action_id.clone();
+        let link_user_state = link_action.as_ref().unwrap().link_user_state.clone();
         let action = self
             .action_service
-            .get_action_by_id(link_action.as_ref().unwrap().action_id.clone())
+            .get_action_by_id(action_id)
             .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
 
         return Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from(action, vec![]),
-            link_user_state: link_action.unwrap().link_user_state.to_string(),
+            link_user_state: link_user_state.unwrap().to_string(),
         }));
     }
 
@@ -450,20 +468,23 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // return link_user_state = null
         if link_action.is_none() {
             return Ok(None);
+        } else {
+            // If found "LinkAction" values
+            // return action = get action from (action _id)
+            // return state = record user_state
+            let link_action_unwrap = link_action.unwrap();
+
+            let link_user_state: Option<cashier_types::LinkUserState> =
+                link_action_unwrap.link_user_state.clone();
+            let action = self
+                .action_service
+                .get_action_by_id(link_action_unwrap.action_id.clone())
+                .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
+
+            return Ok(Some(LinkGetUserStateOutput {
+                action: ActionDto::from(action, vec![]),
+                link_user_state: link_user_state.unwrap().to_string(),
+            }));
         }
-
-        // If found "LinkAction" values
-        // return action = get action from (action _id)
-        // return state = record user_state
-        let action_id = link_action.as_ref().unwrap().action_id.clone();
-        let action = self
-            .action_service
-            .get_action_by_id(action_id)
-            .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
-
-        return Ok(Some(LinkGetUserStateOutput {
-            action: ActionDto::from(action, vec![]),
-            link_user_state: link_action.unwrap().link_user_state.to_string(),
-        }));
     }
 }

@@ -316,7 +316,7 @@ pub struct LinkGetUserStateInput {
     pub link_id: String,
     pub action_type: String,
     pub anonymous_wallet_address: Option<String>,
-    pub create_if_not_exist: bool,
+    // pub create_if_not_exist: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]

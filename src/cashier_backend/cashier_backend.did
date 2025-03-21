@@ -113,7 +113,6 @@ type LinkGetUserStateInput = record {
   link_id : text;
   action_type : text;
   anonymous_wallet_address : opt text;
-  create_if_not_exist : bool;
 };
 type LinkGetUserStateOutput = record {
   action : ActionDto;
