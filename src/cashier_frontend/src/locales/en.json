@@ -72,6 +72,7 @@
             "link_creation_fee_label": "Link creation fee",
             "total_fee_label": "Total fee",
             "total_cashier_fees_label": "Total Cashier fees",
+            "total_assets_received_label": "Total assets received",
             "confirm_button": "Confirm",
             "inprogress_button": "Transaction in progress...",
             "retry_button": "Retry",

@@ -152,7 +152,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                         amount: claimLinkDetails.amount,
                     },
                 ]}
-                onSubmit={onSubmit}
+                onSubmit={handleSubmit}
                 onBack={prevStep}
             />
 

@@ -25,7 +25,13 @@ export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
 
 export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
     const cashierFeeIntents = useMemo(() => {
-        return intents?.filter((intent) => intent.task === TASK.TRANSFER_WALLET_TO_TREASURY) ?? [];
+        return (
+            intents?.filter(
+                (intent) =>
+                    intent.task === TASK.TRANSFER_WALLET_TO_TREASURY ||
+                    intent.task === TASK.TRANSFER_LINK_TO_WALLET,
+            ) ?? []
+        );
     }, [intents]);
 
     return cashierFeeIntents;

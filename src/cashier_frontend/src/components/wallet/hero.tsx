@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
 import { prettyNumber } from "@/utils/helpers/number/pretty";
+import { useNavigate } from "react-router-dom";
 
 interface WalletHeroProps {
     totalUsdEquivalent: number;
@@ -9,6 +10,10 @@ interface WalletHeroProps {
 
 export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+
+    //const navigateReceivePage = () => navigate(`/wallet/receive`);
+    const navigateSendPage = () => navigate(`/wallet/send`);
 
     return (
         <div className="flex flex-col items-center px-4 pt-6 pb-5">
@@ -27,7 +32,7 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
                 </button> */}
             </div>
 
-            <SendReceive />
+            <SendReceive onSend={navigateSendPage} />
         </div>
     );
 }
