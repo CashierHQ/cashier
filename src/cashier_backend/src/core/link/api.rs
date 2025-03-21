@@ -24,6 +24,7 @@ use crate::{
 
 use super::types::{
     CreateLinkInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
+    UserStateMachineGoto,
 };
 
 #[query(guard = "is_not_anonymous")]
@@ -269,6 +270,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             //create temp action
             // fill in link_id info
             // fill in action_type info
+            // TODO: adding the state of user link in TemporaryAction
             let mut temp_action = TemporaryAction {
                 id: Uuid::new_v4().to_string(),
                 r#type: action_type,
@@ -453,38 +455,36 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             temp_user_id = Some(input.anonymous_wallet_address.unwrap());
         }
 
+        let goto = UserStateMachineGoto::from_str(&input.goto.clone())
+            .map_err(|e| CanisterError::ValidationErrors(format!("Invalid goto: {}", e)))?;
+
         // Check "LinkAction" table to check records with
         // link_action link_id = input link_id
         // link_action type = input action type
         // link_action user_id = search_user_id
-        let link_action = self.link_service.get_link_action_user(
-            input.link_id,
-            input.action_type,
-            temp_user_id.unwrap(),
+        let link_action = self.link_service.handle_link_state_machine(
+            input.link_id.clone(),
+            input.action_type.clone(),
+            temp_user_id.clone().unwrap(),
+            goto,
         )?;
 
         // If not found
         // return action = null
         // return link_user_state = null
-        if link_action.is_none() {
-            return Ok(None);
-        } else {
-            // If found "LinkAction" values
-            // return action = get action from (action _id)
-            // return state = record user_state
-            let link_action_unwrap = link_action.unwrap();
+        // If found "LinkAction" values
+        // return action = get action from (action _id)
+        // return state = record user_state
+        let link_user_state: Option<cashier_types::LinkUserState> =
+            link_action.link_user_state.clone();
+        let action = self
+            .action_service
+            .get_action_by_id(link_action.action_id.clone())
+            .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
 
-            let link_user_state: Option<cashier_types::LinkUserState> =
-                link_action_unwrap.link_user_state.clone();
-            let action = self
-                .action_service
-                .get_action_by_id(link_action_unwrap.action_id.clone())
-                .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
-
-            return Ok(Some(LinkGetUserStateOutput {
-                action: ActionDto::from(action, vec![]),
-                link_user_state: link_user_state.unwrap().to_string(),
-            }));
-        }
+        return Ok(Some(LinkGetUserStateOutput {
+            action: ActionDto::from(action, vec![]),
+            link_user_state: link_user_state.unwrap().to_string(),
+        }));
     }
 }

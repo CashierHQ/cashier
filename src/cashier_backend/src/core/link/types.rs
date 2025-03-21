@@ -332,3 +332,26 @@ pub struct LinkUpdateUserStateInput {
     pub anonymous_wallet_address: Option<String>,
     pub goto: String,
 }
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
+pub enum UserStateMachineGoto {
+    Continue,
+    Back,
+}
+
+impl UserStateMachineGoto {
+    pub fn to_string(&self) -> String {
+        match self {
+            UserStateMachineGoto::Continue => "Continue".to_string(),
+            UserStateMachineGoto::Back => "Back".to_string(),
+        }
+    }
+
+    pub fn from_str(intent: &str) -> Result<UserStateMachineGoto, String> {
+        match intent {
+            "Continue" => Ok(UserStateMachineGoto::Continue),
+            "Back" => Ok(UserStateMachineGoto::Back),
+            _ => Err("Invalid UserStateMachineGoto. Valid value: Continue, Back".to_string()),
+        }
+    }
+}
