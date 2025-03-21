@@ -104,9 +104,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             setCurrentSelectOptionWallet(selectOptionWallet);
         }
         // If user already connect wallet, then use the connected wallet address
-        // if (identity) {
-        //     form.setValue("address", user?.principal.toString());
-        // }
+        if (identity) {
+            form.setValue("address", user?.principal.toString());
+        }
     }, [selectOptionWallet, identity]);
 
     useEffect(() => {

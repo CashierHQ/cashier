@@ -134,6 +134,13 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         }
     };
 
+    // Create link user state if not exist when logged in user land on this page
+    useEffect(() => {
+        if (!linkUserState && identity) {
+            console.log("Creating link user state");
+        }
+    }, [linkUserState, identity]);
+
     return (
         <>
             <ClaimPageForm

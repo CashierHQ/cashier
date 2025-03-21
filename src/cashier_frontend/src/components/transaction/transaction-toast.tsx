@@ -40,7 +40,6 @@ const TransactionToast: FC<TransactionToastProps> = ({
     icon,
     boldText,
 }) => {
-    console.log("🚀 ~ boldText:", boldText);
     return (
         <ToastProvider>
             <Toast

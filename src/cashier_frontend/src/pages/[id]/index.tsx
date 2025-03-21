@@ -32,16 +32,10 @@ export const ClaimSchema = z.object({
     address: z.string().optional(),
 });
 
-const STEP_LINK_USER_STATE_ORDER = [
-    LINK_USER_STATE.NO_STATE,
-    LINK_USER_STATE.CHOOSE_WALLET,
-    LINK_USER_STATE.COMPLETE,
-];
+const STEP_LINK_USER_STATE_ORDER = [LINK_USER_STATE.CHOOSE_WALLET, LINK_USER_STATE.COMPLETE];
 
 function getInitialStep(state: string | undefined) {
-    if (state === undefined) {
-        state = LINK_USER_STATE.NO_STATE;
-    }
+    if (!state) return 0;
     return STEP_LINK_USER_STATE_ORDER.findIndex((x) => x === state);
 }
 
@@ -50,6 +44,7 @@ export default function ClaimPage() {
     const { linkId } = useParams();
     const identity = useIdentity();
     const { t } = useTranslation();
+    const [showDefaultPage, setShowDefaultPage] = useState(true);
 
     //const updateLinkUserState = useUpdateLinkUserState();
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
@@ -161,40 +156,46 @@ export default function ClaimPage() {
                         </div>
                     ) : (
                         <div className="flex flex-col flex-grow w-full sm:max-w-[400px] md:max-w-[100%] my-3">
-                            <MultiStepForm
-                                initialStep={getInitialStep(linkUserState?.link_user_state)}
-                            >
-                                <MultiStepForm.Header showIndicator={false} showHeader={false} />
-                                <MultiStepForm.Items>
-                                    <MultiStepForm.Item name="Claim">
-                                        <LinkCardPage linkData={linkData} />
-                                    </MultiStepForm.Item>
+                            {(!identity || !linkUserState) && linkData && showDefaultPage ? (
+                                <LinkCardPage
+                                    linkData={linkData}
+                                    onClickClaim={() => setShowDefaultPage(false)}
+                                />
+                            ) : (
+                                <MultiStepForm
+                                    initialStep={getInitialStep(linkUserState?.link_user_state)}
+                                >
+                                    <MultiStepForm.Header
+                                        showIndicator={false}
+                                        showHeader={false}
+                                    />
+                                    <MultiStepForm.Items>
+                                        <MultiStepForm.Item name="Choose wallet">
+                                            <ClaimFormPage
+                                                form={form}
+                                                claimLinkDetails={{
+                                                    title: watchedToken ?? "",
+                                                    amount: watchedAmount ?? 0,
+                                                }}
+                                                onSubmit={handleClaim}
+                                                linkData={linkData}
+                                                onActionResult={showActionResultToast}
+                                                onCashierError={showCashierErrorToast}
+                                            />
+                                        </MultiStepForm.Item>
 
-                                    <MultiStepForm.Item name="Choose wallet">
-                                        <ClaimFormPage
-                                            form={form}
-                                            claimLinkDetails={{
-                                                title: watchedToken ?? "",
-                                                amount: watchedAmount ?? 0,
-                                            }}
-                                            onSubmit={handleClaim}
-                                            linkData={linkData}
-                                            onActionResult={showActionResultToast}
-                                            onCashierError={showCashierErrorToast}
-                                        />
-                                    </MultiStepForm.Item>
-
-                                    <MultiStepForm.Item name="Complete">
-                                        <LinkCardWithoutPhoneFrame
-                                            label="Claimed"
-                                            src="/icpLogo.png"
-                                            message={linkData?.link.description ?? ""}
-                                            title={linkData?.link.title ?? ""}
-                                            disabled={true}
-                                        />
-                                    </MultiStepForm.Item>
-                                </MultiStepForm.Items>
-                            </MultiStepForm>
+                                        <MultiStepForm.Item name="Complete">
+                                            <LinkCardWithoutPhoneFrame
+                                                label="Claimed"
+                                                src="/icpLogo.png"
+                                                message={linkData?.link.description ?? ""}
+                                                title={linkData?.link.title ?? ""}
+                                                disabled={true}
+                                            />
+                                        </MultiStepForm.Item>
+                                    </MultiStepForm.Items>
+                                </MultiStepForm>
+                            )}
                         </div>
                     )}
                 </div>

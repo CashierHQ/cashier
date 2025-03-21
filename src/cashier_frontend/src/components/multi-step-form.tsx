@@ -73,6 +73,7 @@ interface MultiStepFormItemsProps {
 
 export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
     const { step, setSteps, setStepName } = useMultiStepFormContext();
+    console.log("🚀 ~ MultiStepFormItems ~ step:", step);
 
     const stepsList = Children.toArray(children) as ReactElement<MultiStepFormItemProps>[];
     const stepComponent = stepsList[step];
