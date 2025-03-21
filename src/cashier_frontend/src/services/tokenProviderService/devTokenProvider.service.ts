@@ -16,13 +16,20 @@ export const ASSET_LIST: UserToken[] = [
         accountId: "",
         valueUSD: "",
     },
-    // {
-    //     symbol: "ICP",
-    //     amount: "0",
-    //     ledgerId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-    //     accountId: "",
-    //     valueUSD: "",
-    // },
+    {
+        symbol: "ICP",
+        amount: "0",
+        ledgerId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+        accountId: "",
+        valueUSD: "",
+    },
+    {
+        symbol: "CHAT",
+        amount: "0",
+        ledgerId: "2ouva-viaaa-aaaaq-aaamq-cai",
+        accountId: "",
+        valueUSD: "",
+    },
     {
         symbol: "BOB",
         amount: "0",

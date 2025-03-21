@@ -109,9 +109,16 @@ export default function ReceiveTokenPage() {
             </BackHeader>
             <div id="content" className="mx-2">
                 <div className="mt-5">
-                    <div id="warning-section" className="text-green flex items-center">
-                        <Info className="text-green mr-1" />
-                        <p>Send token to this wallet</p>
+                    <div id="warning-section" className="text-green flex place-items-start">
+                        <Info className="text-green mr-2" size={22} />
+                        <div className="w-fit">
+                            {t("wallet.receive.receiveWarning1")}{" "}
+                            {t("wallet.receive.receiveWarning2")}
+                            <span className="font-bold">
+                                {t("wallet.receive.boldReceiveWarning")}
+                            </span>
+                            {t("wallet.receive.receiveWarning3")}
+                        </div>
                     </div>
                 </div>
 

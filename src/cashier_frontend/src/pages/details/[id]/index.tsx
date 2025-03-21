@@ -137,7 +137,7 @@ export default function DetailPage() {
                                             <TableCell></TableCell>
                                             <TableCell className="text-right px-5 text-lightblack">
                                                 {metadata?.name === "CUTE"
-                                                    ? "CHAT"
+                                                    ? "tCHAT"
                                                     : metadata?.name}
                                             </TableCell>
                                         </TableRow>

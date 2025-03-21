@@ -138,7 +138,11 @@
             "copySuccess": "Address copied to clipboard",
             "copyError": "Failed to copy address",
             "receiveToken": "Receive token",
-            "useAccountId": "Use Account ID instead"
+            "useAccountId": "Use Account ID instead",
+            "receiveWarning1": "Send assets to this address to begin using Cashier.",
+            "receiveWarning2": "Ensure that you are only sending assets that are ",
+            "boldReceiveWarning": "meant for this address,",
+            "receiveWarning3": " otherwise you may lose them forever."
         }
     },
     "manage": {
