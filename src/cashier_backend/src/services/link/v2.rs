@@ -416,8 +416,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok(Some(link_action[0].clone()))
     }
 
-    // TODO: rename to handle_user_link_state_machine
-    pub fn handle_link_state_machine(
+    pub fn handle_user_link_state_machine(
         &self,
         link_id: String,
         action_type: String,

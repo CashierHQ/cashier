@@ -328,6 +328,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         input: LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         let caller = self.ic_env.caller();
+
         let mut temp_user_id = match caller != Principal::anonymous() {
             true => self.user_service.get_user_id_by_wallet(&caller),
             false => None,
@@ -337,10 +338,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // cannot have both session key & anonymous_wallet_address
         if temp_user_id.is_some() && input.anonymous_wallet_address.is_some() {
             return Err(CanisterError::ValidationErrors(
-                "
-                Cannot have both session key & anonymous_wallet_address
-                "
-                .to_string(),
+                "Cannot have both session key & anonymous_wallet_address".to_string(),
             ));
         }
 
@@ -435,21 +433,37 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // cannot have both session key & anonymous_wallet_address
         if temp_user_id.is_some() && input.anonymous_wallet_address.is_some() {
             return Err(CanisterError::ValidationErrors(
-                "
-                Cannot have both session key & anonymous_wallet_address
-                "
-                .to_string(),
+                "Cannot have both session key & anonymous_wallet_address".to_string(),
             ));
         }
 
         // cannot have both empty session key & anonymous_wallet_address
         if temp_user_id.is_none() && input.anonymous_wallet_address.is_none() {
             return Err(CanisterError::ValidationErrors(
-                "
-                Cannot have both empty session key & anonymous_wallet_address
-                "
-                .to_string(),
+                "Cannot have both empty session key & anonymous_wallet_address".to_string(),
             ));
+        }
+
+        // validate action type
+        match ActionType::from_str(&input.action_type) {
+            Ok(action_type) => {
+                if action_type != ActionType::Claim {
+                    return Err(CanisterError::ValidationErrors(
+                        "
+                        Invalid action type, only Claim action type is allowed
+                        "
+                        .to_string(),
+                    ));
+                }
+            }
+            Err(_) => {
+                return Err(CanisterError::ValidationErrors(
+                    "
+                    Invalid action type
+                    "
+                    .to_string(),
+                ));
+            }
         }
 
         //         Logic
@@ -467,7 +481,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // link_action link_id = input link_id
         // link_action type = input action type
         // link_action user_id = search_user_id
-        let link_action = self.link_service.handle_link_state_machine(
+        let link_action = self.link_service.handle_user_link_state_machine(
             input.link_id.clone(),
             input.action_type.clone(),
             temp_user_id.clone().unwrap(),

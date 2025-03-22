@@ -1,4 +1,10 @@
 #[cfg(test)]
+pub mod link_update_user_state;
+
+#[cfg(test)]
+pub mod link_get_user_state;
+
+#[cfg(test)]
 mod tests {
     use std::str::FromStr;
 

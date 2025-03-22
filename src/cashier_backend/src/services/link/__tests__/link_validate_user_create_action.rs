@@ -26,7 +26,6 @@ mod tests {
         let link_id = Uuid::new_v4().to_string();
         let user_id = Uuid::new_v4().to_string();
         let action_type = ActionType::Withdraw;
-        let caller = generate_random_principal();
 
         let link = Link {
             id: link_id.clone(),
