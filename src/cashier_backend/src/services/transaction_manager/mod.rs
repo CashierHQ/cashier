@@ -13,7 +13,9 @@ use crate::{
     core::action::types::ActionDto,
     info,
     types::{
-        error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
+        error::CanisterError,
+        icrc_112_transaction::Icrc112Requests,
+        temp_action::{self, TemporaryAction},
         transaction_manager::ActionResp,
     },
     utils::{
@@ -124,7 +126,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         for intent in temp_action.intents.iter() {
             // store txs in hashmap
             let txs = self.tx_man_assemble_txs(intent)?;
-            info!("127 txs: {:#?}", txs);
             intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
 
             // store tx ids in hashmap
@@ -176,17 +177,13 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // set link_user_state based on action type
         // if action type is claim, then set link_user_state to ChooseWallet
         // else set it to None
-        let link_user_state = match temp_action.r#type {
-            cashier_types::ActionType::Claim => Some(LinkUserState::ChooseWallet),
-            _ => None,
-        };
 
         let link_action = LinkAction {
             link_id: temp_action.link_id.clone(),
             action_type: temp_action.r#type.to_string().clone(),
             action_id: temp_action.id.clone(),
             user_id: temp_action.creator.clone(),
-            link_user_state,
+            link_user_state: temp_action.default_link_user_state.clone(),
         };
 
         // save action to DB

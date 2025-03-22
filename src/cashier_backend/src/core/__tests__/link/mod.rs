@@ -52,6 +52,7 @@ mod tests {
             creator: user_id.clone(),
             link_id: link_id.clone(),
             intents: vec![],
+            default_link_user_state: None,
         };
 
         when!(ic_env.caller).then_return(caller.clone());

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use candid::Principal;
-use cashier_types::{ActionState, ActionType, LinkType};
+use cashier_types::{ActionState, ActionType, LinkType, LinkUserState};
 use ic_cdk::{query, update};
 use uuid::Uuid;
 
@@ -270,7 +270,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             //create temp action
             // fill in link_id info
             // fill in action_type info
-            // TODO: adding the state of user link in TemporaryAction
+            // fill in default_link_user_state info
+            let default_link_user_state = match action_type {
+                ActionType::Claim => Some(LinkUserState::ChooseWallet),
+                _ => None,
+            };
             let mut temp_action = TemporaryAction {
                 id: Uuid::new_v4().to_string(),
                 r#type: action_type,
@@ -278,6 +282,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 creator: user_id.as_ref().unwrap().to_string(),
                 link_id: input.link_id.clone(),
                 intents: vec![],
+                default_link_user_state,
             };
 
             // fill the intent info

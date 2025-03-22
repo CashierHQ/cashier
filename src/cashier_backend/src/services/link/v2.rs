@@ -477,38 +477,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 current_user_state, goto
             )));
         }
-        // Determine the new state based on current state
-        // pattern matching based on current state and goto
-        let new_state = match (current_user_state.clone(), goto) {
-            (LinkUserState::ChooseWallet, UserStateMachineGoto::Continue) => {
-                // Validate the action exists and is successful
-                let action = self
-                    .get_action_of_link(&link_id, &action_type, &user_id)
-                    .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
-
-                if action.state != ActionState::Success {
-                    return Err(CanisterError::HandleLogicError(
-                        "Action is not success".to_string(),
-                    ));
-                }
-
-                // Return the new state
-                LinkUserState::CompletedLink
-            }
-            // Cannot transition from final state
-            (LinkUserState::CompletedLink, _any_goto) => {
-                return Err(CanisterError::HandleLogicError(
-                    "current state is final state".to_string(),
-                ));
-            }
-            // other case that not cover
-            (_other_state, other_goto) => {
-                return Err(CanisterError::HandleLogicError(format!(
-                    "current state {:#?} is not allowed to transition: {:#?}",
-                    current_user_state, other_goto
-                )));
-            }
-        };
 
         // Only update the state field
         link_action.link_user_state = Some(new_state);
