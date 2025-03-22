@@ -1,7 +1,7 @@
 use candid::Principal;
 use cashier_types::{
     Action, ActionState, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType,
-    Link, LinkAction, LinkType, LinkUserState, Wallet,
+    Link, LinkAction, LinkState, LinkType, LinkUserState, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -285,19 +285,29 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return action;
     }
 
-    pub fn link_validate_user_create_action(
+    // this method validate for each action type
+    // create link: only creator can create link
+    // withdraw: only creator can withdraw
+    // claim: any one can claim
+    pub async fn link_validate_user_create_action(
         &self,
         link_id: &str,
         action_type: &ActionType,
         user_id: &str,
+        caller: &Principal,
     ) -> Result<(), CanisterError> {
         // get link
         let link = self.get_link_by_id(link_id.to_string()).unwrap();
 
-        // only alow creator to create withdraw action
+        info!("link data: {:#?}", link);
+
         match action_type {
-            ActionType::Withdraw => {
+            ActionType::CreateLink => {
+                // validate user id == link creator
                 if link.creator == user_id {
+                    // validate user’s balance
+                    self.link_validate_balance_with_asset_info(action_type, link_id, caller)
+                        .await?;
                     return Ok(());
                 } else {
                     return Err(CanisterError::ValidationErrors(
@@ -305,16 +315,41 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
+            ActionType::Withdraw => {
+                // validate user id == link creator
+                if link.creator == user_id {
+                    //TODO : validate link's balance, link state
+                    return Ok(());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the link".to_string(),
+                    ));
+                }
+            }
+            ActionType::Claim => {
+                // validate link state
+                info!("link state: {:#?}", link.state);
+                if link.state != LinkState::Active {
+                    return Err(CanisterError::ValidationErrors(
+                        "Link is not active".to_string(),
+                    ));
+                }
+
+                // TODO: validate link's balance
+                return Ok(());
+            }
+            // validate creator and balance
             _ => {
                 return Ok(());
             }
         }
     }
 
-    pub fn link_validate_user_update_action(
+    pub async fn link_validate_user_update_action(
         &self,
         action: &Action,
         user_id: &str,
+        caller: &Principal,
     ) -> Result<(), CanisterError> {
         //validate user_id
         match action.r#type.clone() {
@@ -325,6 +360,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         "User is not the creator of the action".to_string(),
                     ));
                 }
+
+                self.link_validate_balance_with_asset_info(&action.r#type, &link.id, caller)
+                    .await?;
             }
             ActionType::Withdraw => {
                 let link = self.get_link_by_id(action.link_id.clone())?;

@@ -26,6 +26,7 @@ mod tests {
         let link_id = Uuid::new_v4().to_string();
         let user_id = Uuid::new_v4().to_string();
         let action_type = ActionType::Withdraw;
+        let caller = generate_random_principal();
 
         let link = Link {
             id: link_id.clone(),
@@ -50,8 +51,9 @@ mod tests {
             ic_env,
         );
 
-        let result =
-            link_service.link_validate_user_create_action(&link_id, &action_type, &user_id);
+        let result = link_service
+            .link_validate_user_create_action(&link_id, &action_type, &user_id, &caller)
+            .await;
 
         assert!(result.is_ok());
     }
@@ -92,8 +94,9 @@ mod tests {
             ic_env,
         );
 
-        let result =
-            link_service.link_validate_user_create_action(&link_id, &action_type, &user_id);
+        let result = link_service
+            .link_validate_user_create_action(&link_id, &action_type, &user_id, &caller)
+            .await;
 
         assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
     }
