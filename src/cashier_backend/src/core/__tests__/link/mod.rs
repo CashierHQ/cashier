@@ -5,6 +5,9 @@ pub mod link_update_user_state;
 pub mod link_get_user_state;
 
 #[cfg(test)]
+pub mod process_action_anonymous;
+
+#[cfg(test)]
 mod tests {
     use std::str::FromStr;
 

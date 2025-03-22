@@ -249,6 +249,16 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
+        // check wallet address
+        match Principal::from_text(input.wallet_address.clone()) {
+            Ok(_) => (),
+            Err(_) => {
+                return Err(CanisterError::ValidationErrors(
+                    "Invalid wallet address".to_string(),
+                ));
+            }
+        }
+
         let action_type = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
 
@@ -309,7 +319,19 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
             Ok(res)
         } else {
-            todo!()
+            // validate action
+            self.link_service
+                .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id, &caller)
+                .await?;
+
+            // execute action
+            self.tx_manager_service
+                .update_action(UpdateActionArgs {
+                    action_id: action.unwrap().id,
+                    link_id: input.link_id,
+                    execute_wallet_tx: false,
+                })
+                .await
         }
     }
 
