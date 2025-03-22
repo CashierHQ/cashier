@@ -168,7 +168,6 @@ describe("Tip Link claim create user", () => {
                 link_id: linkId,
                 action_id: "",
                 action_type: "CreateLink",
-                params: [],
             };
             const createActionRes = await actor.process_action(processActionInput);
             const actionRes = parseResultResponse(createActionRes);
@@ -180,7 +179,6 @@ describe("Tip Link claim create user", () => {
                 link_id: linkId,
                 action_id: createLinkActionId,
                 action_type: "CreateLink",
-                params: [],
             };
             const confirmRes = await actor.process_action(confirmActionInput);
             const confirmActionDto = parseResultResponse(confirmRes);
@@ -226,6 +224,20 @@ describe("Tip Link claim create user", () => {
             finalActionDto.intents.forEach((intent: IntentDto) => {
                 expect(intent.state).toEqual("Intent_state_success");
             });
+
+            // change link state to active
+            const linkInput: UpdateLinkInput = {
+                id: linkId,
+                action: "Continue",
+                params: [],
+            };
+
+            const updateLinkRes = await actor.update_link(linkInput);
+            const linkUpdated = parseResultResponse(updateLinkRes);
+
+            expect(linkUpdated.id).toEqual(linkId);
+            expect(linkUpdated.asset_info).toHaveLength(1);
+            expect(linkUpdated.state).toEqual("Link_state_active");
         });
     });
 
@@ -245,7 +257,7 @@ describe("Tip Link claim create user", () => {
                 expect(res.Ok).toEqual([]);
             } else {
                 // Optional: Better error message if test fails
-                fail(`Expected Ok result but got: ${JSON.stringify(res)}`);
+                throw new Error("Expected Ok in response");
             }
         });
 
@@ -254,7 +266,6 @@ describe("Tip Link claim create user", () => {
                 action_id: createLinkActionId,
                 link_id: linkId,
                 action_type: "Claim",
-                params: [],
             });
 
             expect(res).toHaveProperty("Ok");
@@ -267,8 +278,6 @@ describe("Tip Link claim create user", () => {
                 anonymous_wallet_address: [],
             });
             const parsedRes = parseResultResponse(res);
-
-            console.log("parsedRes", parsedRes);
 
             expect(res).toHaveProperty("Ok");
             if (parsedRes[0]) {
