@@ -56,7 +56,6 @@ export default function ClaimPage() {
         {
             action_type: ACTION_TYPE.CLAIM_LINK,
             link_id: linkId ?? "",
-            create_if_not_exist: false,
             anonymous_wallet_address: "",
         },
         true,

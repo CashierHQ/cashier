@@ -141,7 +141,6 @@ class LinkService {
             action_id: input.actionId ?? "",
             link_id: input.linkId,
             action_type: input.actionType,
-            params: [],
         };
         const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
@@ -190,11 +189,8 @@ class LinkService {
             anonymous_wallet_address: input.anonymous_wallet_address
                 ? [input.anonymous_wallet_address]
                 : [],
-            create_if_not_exist: input.create_if_not_exist,
         };
-        if (input.create_if_not_exist) {
-            console.log("CALLING LINK GET USER STATE WITH PARAM CREATE IF NOT EXIST = TRUE");
-        }
+
         //const response = parseResultResponse(await this.actor.link_get_user_state(params));
         const mockResponse: LinkGetUserStateOutputModel = {
             action: {

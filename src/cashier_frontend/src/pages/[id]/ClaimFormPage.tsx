@@ -62,7 +62,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         {
             action_type: ACTION_TYPE.CLAIM_LINK,
             link_id: linkId ?? "",
-            create_if_not_exist: true,
             anonymous_wallet_address: "",
         },
         enableFetch,
