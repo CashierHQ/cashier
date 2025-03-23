@@ -96,6 +96,7 @@ mod tests {
             creator: creator.clone(),
             link_id: link_id.clone(),
             intents: intents.clone(),
+            default_link_user_state: None,
         };
 
         when!(action_service.get_action_by_id).then_return(None);
@@ -307,6 +308,7 @@ mod tests {
             creator: creator.clone(),
             link_id: link_id.clone(),
             intents: intents.clone(),
+            default_link_user_state: None,
         };
 
         when!(action_service.get_action_by_id).then_return(None);
@@ -501,6 +503,7 @@ mod tests {
             creator: creator.clone(),
             link_id: link_id.clone(),
             intents: intents.clone(),
+            default_link_user_state: None,
         };
 
         when!(action_service.get_action_by_id).then_return(Some(temp_action.as_action()));

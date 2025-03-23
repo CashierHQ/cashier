@@ -13,7 +13,7 @@ import {
 import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
-import { parseResultResponse, safeParseJSON } from "../utils/parser";
+import { parseResultResponse } from "../utils/parser";
 import { TokenHelper } from "../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
@@ -226,10 +226,6 @@ describe("Tip Link confirm action success", () => {
 
         icrc_112_requests = actionDto.icrc_112_requests[0]!;
 
-        console.log("icrc_request", JSON.stringify(icrc_112_requests, null, 2));
-
-        console.log("confirmRes", safeParseJSON(actionDto as any));
-
         expect(actionDto.id).toEqual(createLinkActionId);
         expect(actionDto.state).toEqual("Action_state_processing");
 
@@ -278,9 +274,6 @@ describe("Tip Link confirm action success", () => {
         const res = parseResultResponse(getActionRes);
 
         const actionDto = res.action[0]!;
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        console.log("getActionRes", safeParseJSON(res as any));
 
         expect(res.link.id).toEqual(linkId);
         expect(actionDto.state).toEqual("Action_state_success");

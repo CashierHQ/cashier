@@ -5,7 +5,7 @@ use cashier_types::{
 };
 use uuid::Uuid;
 
-use crate::{types::error::CanisterError, utils::runtime::IcEnvironment};
+use crate::{info, types::error::CanisterError, utils::runtime::IcEnvironment};
 
 pub struct IcAdapter<'a, E: IcEnvironment + Clone> {
     pub ic_env: &'a E,
@@ -131,6 +131,11 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
             //TODO: update memo
             memo: None,
         };
+
+        info!(
+            "[tx_man_ic_assemble_icrc1_canister_transfer] icrc1_transfer: {:?}",
+            icrc1_transfer
+        );
 
         let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
         let transfer_from_tx = Transaction {

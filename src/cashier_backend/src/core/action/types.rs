@@ -39,7 +39,14 @@ pub struct ProcessActionInput {
     pub link_id: String,
     pub action_type: String,
     pub action_id: String,
-    pub params: Option<HashMap<String, String>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct ProcessActionAnonymousInput {
+    pub link_id: String,
+    pub action_type: String,
+    pub action_id: String,
+    pub wallet_address: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
