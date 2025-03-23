@@ -10,7 +10,6 @@ import {
 import { useTranslation } from "react-i18next";
 import LinkCard from "@/components/link-card";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
 import {
     useBindFormAndCarousel,
     useCarousel,

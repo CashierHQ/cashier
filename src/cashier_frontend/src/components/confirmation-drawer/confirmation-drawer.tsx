@@ -12,7 +12,7 @@ import {
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE, INTENT_STATE } from "@/services/types/enum";
 import { useIcrc112Execute, useProcessAction, useUpdateAction } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";

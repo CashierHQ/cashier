@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { IoIosArrowBack } from "react-icons/io";
+import { IoIosArrowBack, IoIosCloseCircle } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
-import { SlWallet } from "react-icons/sl";
+import { PiWallet } from "react-icons/pi";
+import { HiOutlineWallet } from "react-icons/hi2";
 import { IoClose } from "react-icons/io5";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
@@ -21,6 +22,7 @@ import { useConfirmDialog } from "@/hooks/useDialog";
 import { useSigners } from "@/contexts/signer-list-context";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import { Principal } from "@dfinity/principal";
+import { FaCircleCheck } from "react-icons/fa6";
 
 export interface ClaimLinkDetail {
     title: string;
@@ -99,6 +101,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     const handleRemoveAllText = (field: { onChange: (value: string) => void }) => {
         field.onChange("");
+        form.clearErrors("address");
     };
 
     useEffect(() => {
@@ -182,6 +185,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
                                 postfixText="Connected"
+                                postfixIcon={
+                                    <img src="/icpLogo.png" alt="icp" className="w-6 h-6 mr-2" />
+                                }
                             />
                         ) : (
                             <WalletButton
@@ -204,7 +210,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                 title="Other wallets"
                                 handleConnect={() => handleConnectWallet(WALLET_OPTIONS.OTHER)}
                                 disabled={false}
-                                icon={<SlWallet className="mr-2 h-6 w-6" color="green" />}
+                                icon={<HiOutlineWallet className="mr-2 h-6 w-6" color="green" />}
                             />
                         )}
 
@@ -213,7 +219,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             <WalletButton
                                 title={t("claim.addressPlaceholder")}
                                 handleConnect={() => handleConnectWallet(WALLET_OPTIONS.TYPING)}
-                                icon={<IoWalletOutline color="green" className="mr-2 h-6 w-6" />}
+                                icon={<PiWallet color="green" className="mr-2 h-6 w-6" />}
                             />
                         ) : (
                             <FormField
@@ -231,9 +237,15 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                     />
                                                 }
                                                 rightIcon={
-                                                    field.value ? (
-                                                        <IoClose
-                                                            color="green"
+                                                    field.value && form.formState.errors.address ? (
+                                                        <IoIosCloseCircle
+                                                            color="red"
+                                                            className="mr-1 h-6 w-6"
+                                                        />
+                                                    ) : field.value &&
+                                                      !form.formState.errors.address ? (
+                                                        <FaCircleCheck
+                                                            color="#36A18B"
                                                             className="mr-1 h-6 w-6"
                                                         />
                                                     ) : (
@@ -250,6 +262,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                 }
                                                 placeholder={t("claim.addressPlaceholder")}
                                                 className="py-5 h-14 text-md rounded-xl"
+                                                onFocusShowIcon={true}
+                                                onFocusText={true}
                                                 {...field}
                                                 onChange={(e) => {
                                                     field.onChange(e);
@@ -259,10 +273,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                             Principal.fromText(e.target.value);
                                                             form.clearErrors("address");
                                                         } else {
-                                                            form.setError("address", {
-                                                                type: "manual",
-                                                                message: "Address is required",
-                                                            });
+                                                            form.clearErrors("address");
                                                         }
                                                     } catch {
                                                         form.setError("address", {

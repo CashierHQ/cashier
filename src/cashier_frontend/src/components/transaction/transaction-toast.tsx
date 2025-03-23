@@ -1,10 +1,10 @@
 import React, { FC } from "react";
 import { cn } from "@/lib/utils";
-import { Toast, ToastClose, ToastProvider, ToastViewport } from "@/components/ui/toast";
-import { FiXCircle } from "react-icons/fi";
-import { CiCircleCheck } from "react-icons/ci";
+import { Toast, ToastProvider, ToastViewport } from "@/components/ui/toast";
 import { cva, type VariantProps } from "class-variance-authority";
 import { IoIosClose } from "react-icons/io";
+import { IoIosCloseCircle } from "react-icons/io";
+import { FaCircleCheck } from "react-icons/fa6";
 
 // Define custom variants
 const transactionToastVariants = cva(
@@ -49,14 +49,17 @@ const TransactionToast: FC<TransactionToastProps> = ({
                 className={cn(transactionToastVariants({ variant }))}
             >
                 <div className="grid gap-1 w-full">
-                    <div className="flex items-center">
-                        {icon ? (
-                            icon
-                        ) : variant === "default" ? (
-                            <CiCircleCheck color="green" size={48} />
-                        ) : (
-                            <FiXCircle color="red" size={48} />
-                        )}
+                    <div className="flex items-start">
+                        <div className="py-2">
+                            {icon ? (
+                                icon
+                            ) : variant === "default" ? (
+                                <FaCircleCheck color="#36A18B" size={28} />
+                            ) : (
+                                <IoIosCloseCircle color="red" size={28} />
+                            )}
+                        </div>
+
                         <div className="ml-3 flex-1">
                             {title.length > 0 ? (
                                 <>

@@ -67,7 +67,7 @@ export const Asset: FC<AssetProps> = ({
     };
 
     return (
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center font-normal">
             <h6>{title}</h6>
 
             {renderAmount()}

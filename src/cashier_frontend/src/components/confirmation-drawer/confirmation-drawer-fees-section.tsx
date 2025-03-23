@@ -26,14 +26,12 @@ const getItemLabel = (intent: IntentModel) => {
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
-    isUsd,
 }) => {
     const { t } = useTranslation();
     const { assetSymbol } = useIntentMetadata(intents?.[0]);
     const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
         intents[0]?.asset.address,
     );
-    console.log("🚀 ~ conversionRates:", conversionRates);
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
 
     useEffect(() => {
@@ -44,12 +42,18 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
         initState();
     }, []);
+    useEffect(() => {
+        if (!conversionRates?.tokenToUsd && conversionRates) {
+            conversionRates.tokenToUsd = 6;
+        }
+        console.log("🚀 ~ conversionRates:", conversionRates);
+    }, [conversionRates]);
 
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
             <div className="flex flex-col gap-3 rounded-xl p-4 bg-lightgreen">
-                <div className="flex justify-between text-lg">
-                    <h4>{t(getItemLabel(intents[0]))}</h4>
+                <div className="flex justify-between font-medium">
+                    <div>{t(getItemLabel(intents[0]))}</div>
 
                     <div className="flex items-center">
                         {!isLoadingConversionRates &&

@@ -210,10 +210,7 @@ class LinkService {
                 ? [input.anonymous_wallet_address]
                 : [],
         };
-
         const response = parseResultResponse(await this.actor.link_get_user_state(params));
-        console.log("🚀 ~ LinkService ~ getLinkUserState ~ response:", response);
-
         return mapLinkUserStateModel(response);
     }
 

@@ -13,8 +13,6 @@ import { useCreateAction, useFeePreview, useSetLinkActive } from "@/hooks/linkHo
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
-import { MOCK_CASHIER_FEES } from "@/constants/mock-data";
-import { FeeModel } from "@/services/types/intent.service.types";
 import { useNavigate } from "react-router-dom";
 
 export interface LinkPreviewProps {
