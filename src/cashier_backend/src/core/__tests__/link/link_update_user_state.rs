@@ -1,4 +1,6 @@
 mod tests {
+    use std::collections::HashMap;
+
     use candid::Principal;
     use cashier_types::{Action, ActionState, ActionType, LinkAction, LinkUserState};
     use faux::when;
@@ -7,12 +9,15 @@ mod tests {
     use crate::{
         core::link::{api::LinkApi, types::LinkUpdateUserStateInput},
         services::{
-            __tests__::tests::{generate_random_principal, MockIcEnvironment},
+            __tests__::tests::{
+                create_dummy_intent, create_dummy_transaction, generate_action_intent,
+                generate_random_principal, MockIcEnvironment,
+            },
             link::v2::LinkService,
             transaction_manager::{action::ActionService, TransactionManagerService},
             user::v2::UserService,
         },
-        types::error::CanisterError,
+        types::{error::CanisterError, transaction_manager::ActionResp},
     };
 
     #[tokio::test]
@@ -45,10 +50,29 @@ mod tests {
             creator: user_id.clone(),
         };
 
+        let intent1 = create_dummy_intent(cashier_types::IntentState::Success);
+        let intent2 = create_dummy_intent(cashier_types::IntentState::Success);
+
+        let intents = vec![intent1.clone(), intent2.clone()];
+
+        let tx1 = create_dummy_transaction(cashier_types::TransactionState::Success);
+        let tx2 = create_dummy_transaction(cashier_types::TransactionState::Success);
+        let tx3 = create_dummy_transaction(cashier_types::TransactionState::Success);
+
+        let mut intent_txs = HashMap::new();
+        intent_txs.insert(intent1.id.clone(), vec![tx1.clone(), tx2.clone()]);
+        intent_txs.insert(intent2.id.clone(), vec![tx3.clone()]);
+
+        let action_resp = ActionResp {
+            action: action.clone(),
+            intents,
+            intent_txs,
+        };
+
         when!(ic_env.caller).then_return(caller);
         when!(user_service.get_user_id_by_wallet).then_return(Some(user_id.clone()));
         when!(link_service.handle_user_link_state_machine).then_return(Ok(link_action.clone()));
-        when!(action_service.get_action_by_id).then_return(Some(action.clone()));
+        when!(action_service.get).then_return(Ok(action_resp));
 
         let api = LinkApi::new(
             link_service,
