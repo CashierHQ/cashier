@@ -2,7 +2,7 @@ use std::{collections::HashMap, time::Duration};
 
 use action::ActionService;
 use cashier_types::{
-    Chain, Intent, IntentTask, IntentType, LinkAction, LinkUserState, Transaction, TransactionState,
+    Chain, Intent, IntentTask, IntentType, LinkAction, Transaction, TransactionState,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
@@ -13,9 +13,7 @@ use crate::{
     core::action::types::ActionDto,
     info,
     types::{
-        error::CanisterError,
-        icrc_112_transaction::Icrc112Requests,
-        temp_action::{self, TemporaryAction},
+        error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
         transaction_manager::ActionResp,
     },
     utils::{

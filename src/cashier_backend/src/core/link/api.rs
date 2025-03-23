@@ -1,4 +1,4 @@
-use std::{fmt::format, str::FromStr};
+use std::str::FromStr;
 
 use candid::Principal;
 use cashier_types::{ActionState, ActionType, LinkType, LinkUserState};
@@ -11,7 +11,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error, info,
+    error,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
@@ -490,7 +490,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // link_action link_id = input link_id
         // link_action type = input action type
         // link_action user_id = search_user_id
-        let mut link_action = self.link_service.get_link_action_user(
+        let link_action = self.link_service.get_link_action_user(
             input.link_id.clone(),
             input.action_type.clone(),
             temp_user_id.clone().unwrap(),
