@@ -42,12 +42,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
         initState();
     }, []);
-    useEffect(() => {
-        if (!conversionRates?.tokenToUsd && conversionRates) {
-            conversionRates.tokenToUsd = 6;
-        }
-        console.log("🚀 ~ conversionRates:", conversionRates);
-    }, [conversionRates]);
 
     return (
         <section id="confirmation-popup-section-total" className="mb-3">

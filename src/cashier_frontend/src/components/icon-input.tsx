@@ -11,7 +11,7 @@ interface IconInputProps extends InputProps {
     onRightIconClick?: (e: SyntheticEvent) => void;
     onFocusShowIcon?: boolean;
     onFocusText?: boolean;
-    value?: string;
+    value?: string | number;
 }
 
 const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(
