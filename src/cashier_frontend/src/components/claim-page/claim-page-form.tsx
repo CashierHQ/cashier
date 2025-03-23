@@ -31,8 +31,9 @@ interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData: LinkDetailModel;
     claimLinkDetails: ClaimLinkDetail[];
-    onSubmit: () => void;
+    onSubmit: (address: string) => void;
     onBack?: () => void;
+    isDisabled?: boolean;
 }
 
 enum WALLET_OPTIONS {
@@ -47,6 +48,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     onSubmit,
     claimLinkDetails,
     onBack,
+    isDisabled,
 }) => {
     const { t } = useTranslation();
     const { connect, disconnect, user } = useAuth();
@@ -88,7 +90,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         try {
             // Check principal format
             const text = await navigator.clipboard.readText();
-            Principal.fromText(text);
+            Principal.fromText(text ?? "");
             field.onChange(text);
         } catch (err) {
             console.error("Failed to read clipboard contents: ", err);
@@ -156,12 +158,16 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             <Form {...form}>
                 <form
                     className="w-full flex flex-col gap-y-[10px] my-5"
-                    onSubmit={form.handleSubmit(onSubmit)}
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        onSubmit(form.getValues("address") ?? "");
+                    }}
                 >
                     <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
                         {t("claim.receive_options")}
                     </h2>
                     <div className="ml-1">
+                        {/* Google login */}
                         <WalletButton
                             title="Google login"
                             handleConnect={() => handleConnectWallet(WALLET_OPTIONS.GOOGLE)}
@@ -245,6 +251,26 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                 placeholder={t("claim.addressPlaceholder")}
                                                 className="py-5 h-14 text-md rounded-xl"
                                                 {...field}
+                                                onChange={(e) => {
+                                                    field.onChange(e);
+                                                    // Validate the address format
+                                                    try {
+                                                        if (e.target.value) {
+                                                            Principal.fromText(e.target.value);
+                                                            form.clearErrors("address");
+                                                        } else {
+                                                            form.setError("address", {
+                                                                type: "manual",
+                                                                message: "Address is required",
+                                                            });
+                                                        }
+                                                    } catch {
+                                                        form.setError("address", {
+                                                            type: "manual",
+                                                            message: "Invalid address format",
+                                                        });
+                                                    }
+                                                }}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -259,16 +285,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                         variant="default"
                         size="lg"
                         className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
+                        disabled={isDisabled}
                     >
-                        {t("claim.claim")}
+                        {isDisabled ? t("processing") : t("claim.claim")}
                     </FixedBottomButton>
-
-                    {/* <Button
-                        type="submit"
-                        className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
-                    >
-                        {t("continue")}
-                    </Button> */}
                 </form>
             </Form>
             <ConfirmDialog

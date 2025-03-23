@@ -4,7 +4,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
-import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { ACTION_STATE, ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
@@ -14,10 +13,9 @@ import SheetWrapper from "@/components/sheet-wrapper";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
-import { useLinkUserState, useUpdateLinkUserState } from "@/hooks/linkUserHooks";
+import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
-import { LinkDetailModel } from "@/services/types/link.service.types";
 import { LinkCardPage } from "./LinkCardPage";
 import { ClaimFormPage } from "./ClaimFormPage";
 import { Spinner } from "@/components/ui/spinner";
@@ -25,6 +23,7 @@ import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
 import { IoInformationCircle } from "react-icons/io5";
+import { useCreateLinkStore } from "@/stores/createLinkStore";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -45,23 +44,25 @@ export default function ClaimPage() {
     const identity = useIdentity();
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
+    const [assetNumber, setAssetNumber] = useState(0);
+    const { updateLink } = useCreateLinkStore();
 
-    //const updateLinkUserState = useUpdateLinkUserState();
+    // Fetch link data
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
         linkId,
         ACTION_TYPE.CLAIM_LINK,
     );
 
+    // Fetch link user state when user is logged in and there's link data
     const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
         {
             action_type: ACTION_TYPE.CLAIM_LINK,
             link_id: linkId ?? "",
             anonymous_wallet_address: "",
         },
-        true,
+        enableFetchLinkUserState,
     );
 
-    const [isLoading, setIsLoading] = useState(true);
     const { toastData, showToast, hideToast } = useToast();
     const { connectToWallet } = useConnectToWallet();
 
@@ -87,7 +88,6 @@ export default function ClaimPage() {
 
     const handleConnectWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
         connectToWallet(e);
-        setEnableFetchLinkUserState(true);
     };
 
     const showCashierErrorToast = (error: Error) => {
@@ -116,25 +116,18 @@ export default function ClaimPage() {
         }
     };
 
-    // Watch form values to trigger re-render
-    const watchedToken = form.watch("token");
-    const watchedAmount = form.watch("amount");
-
     useEffect(() => {
-        if (linkData) {
-            form.setValue("token", linkData.link.title);
-            setIsLoading(false);
-        }
-
         if (linkData && identity) {
             setEnableFetchLinkUserState(true);
+        }
+        if (linkData) {
+            updateLink(linkData.link);
         }
     }, [linkData, identity]);
 
     useEffect(() => {
         if (!metadata) return;
-        form.setValue(
-            "amount",
+        setAssetNumber(
             TokenUtilService.getHumanReadableAmountFromMetadata(
                 linkData?.link.asset_info?.[0].amount ?? BigInt(0),
                 metadata,
@@ -142,20 +135,20 @@ export default function ClaimPage() {
         );
     }, [linkData, metadata]);
 
-    if (isLoading) return null;
-
     return (
         <div className="w-screen h-screen flex flex-col items-center py-5">
             <SheetWrapper>
                 <div className="w-11/12 max-w-[400px]">
                     <Header onConnect={handleConnectWallet} openTestForm={connectToWallet} />
-                    {isFetchingLinkData || isFetchingLinkUserState ? (
+                    {isFetchingLinkData ? (
                         <div className="flex justify-center items-center h-full">
                             <Spinner sizes="32" />
                         </div>
                     ) : (
                         <div className="flex flex-col flex-grow w-full sm:max-w-[400px] md:max-w-[100%] my-3">
-                            {(!identity || !linkUserState) && linkData && showDefaultPage ? (
+                            {(!identity || !linkUserState?.link_user_state) &&
+                            linkData &&
+                            showDefaultPage ? (
                                 <LinkCardPage
                                     linkData={linkData}
                                     onClickClaim={() => setShowDefaultPage(false)}
@@ -173,13 +166,14 @@ export default function ClaimPage() {
                                             <ClaimFormPage
                                                 form={form}
                                                 claimLinkDetails={{
-                                                    title: watchedToken ?? "",
-                                                    amount: watchedAmount ?? 0,
+                                                    title: linkData?.link.title ?? "",
+                                                    amount: assetNumber ?? 0,
                                                 }}
                                                 onSubmit={handleClaim}
                                                 linkData={linkData}
                                                 onActionResult={showActionResultToast}
                                                 onCashierError={showCashierErrorToast}
+                                                onBack={() => setShowDefaultPage(true)}
                                             />
                                         </MultiStepForm.Item>
 

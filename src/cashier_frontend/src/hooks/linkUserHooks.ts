@@ -4,6 +4,7 @@ import {
     LinkUpdateUserStateInputModel,
     LinkGetUserStateInputModel,
 } from "@/services/types/link.service.types";
+import { Identity } from "@dfinity/agent";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -47,7 +48,15 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
             console.log("🚀 ~ queryFn: ~ userState:", userState);
             return userState;
         },
-        enabled: !!identity && isEnabled,
+        enabled: isEnabled,
         refetchOnWindowFocus: false,
     });
+}
+
+export async function fetchLinkUserState(
+    input: LinkGetUserStateInputModel,
+    identity: Identity | undefined,
+) {
+    const linkService = new LinkService(identity);
+    return await linkService.getLinkUserState(input);
 }

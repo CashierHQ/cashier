@@ -56,9 +56,10 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         try {
             const firstUpdatedAction = await processAction({
                 linkId: link!.id,
-                actionType: ACTION_TYPE.CREATE_LINK,
+                actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
                 actionId: action!.id,
             });
+            console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
             setAction(firstUpdatedAction);
             if (firstUpdatedAction) {
                 console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);

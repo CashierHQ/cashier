@@ -53,8 +53,8 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
                     <div className="flex items-center">
                         {!isLoadingConversionRates &&
-                            conversionRates!.tokenToUsd !== undefined &&
-                            `($${convert(totalCashierFee, conversionRates!.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
+                            conversionRates?.tokenToUsd !== undefined &&
+                            `($${convert(totalCashierFee, conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
                         {totalCashierFee} {assetSymbol}
                     </div>
                 </div>

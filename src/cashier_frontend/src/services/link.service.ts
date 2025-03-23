@@ -6,6 +6,7 @@ import {
     LinkDto,
     LinkGetUserStateInput,
     LinkUpdateUserStateInput,
+    ProcessActionAnonymousInput,
     ProcessActionInput,
     UpdateActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
@@ -47,6 +48,13 @@ interface ResponseLinksModel {
 export interface CreateActionInputModel {
     linkId: string;
     actionType: string;
+    actionId?: string;
+}
+
+export interface CreateActionAnonymousInputModel {
+    linkId: string;
+    actionType: string;
+    walletAddress: string;
     actionId?: string;
 }
 
@@ -142,7 +150,20 @@ class LinkService {
             link_id: input.linkId,
             action_type: input.actionType,
         };
+        console.log("🚀 ~ LinkService ~ processAction ~ inputModel:", inputModel);
         const response = parseResultResponse(await this.actor.process_action(inputModel));
+        const action = mapActionModel(response);
+        return action;
+    }
+
+    async processActionAnonymous(input: CreateActionAnonymousInputModel): Promise<ActionModel> {
+        const inputModel: ProcessActionAnonymousInput = {
+            action_id: input.actionId ?? "",
+            link_id: input.linkId,
+            action_type: input.actionType,
+            wallet_address: input.walletAddress,
+        };
+        const response = parseResultResponse(await this.actor.process_action_anonymous(inputModel));
         const action = mapActionModel(response);
         return action;
     }
@@ -181,7 +202,6 @@ class LinkService {
         });
     }
 
-    //TODO: Mock response data, remove after BE finish implementation
     async getLinkUserState(input: LinkGetUserStateInputModel) {
         const params: LinkGetUserStateInput = {
             link_id: input.link_id,
@@ -191,42 +211,10 @@ class LinkService {
                 : [],
         };
 
-        //const response = parseResultResponse(await this.actor.link_get_user_state(params));
-        const mockResponse: LinkGetUserStateOutputModel = {
-            action: {
-                id: "action_id",
-                state: ACTION_STATE.CREATED,
-                creator: "",
-                intents: [
-                    {
-                        id: "1",
-                        state: INTENT_STATE.CREATED,
-                        asset: {
-                            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-                            chain: "IC",
-                        },
-                        chain: CHAIN.IC,
-                        task: TASK.TRANSFER_LINK_TO_WALLET,
-                        amount: BigInt(1000000000),
-                        createdAt: new Date(),
-                        from: {
-                            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-                            chain: "IC",
-                        },
-                        to: {
-                            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-                            chain: "IC",
-                        },
-                        type: INTENT_TYPE.TRANSFER,
-                    },
-                ],
-                type: ACTION_TYPE.CLAIM_LINK,
-                icrc112Requests: [],
-            },
-            link_user_state: LINK_USER_STATE.CHOOSE_WALLET,
-        };
-        return mockResponse;
-        //return mapLinkUserStateModel(response);
+        const response = parseResultResponse(await this.actor.link_get_user_state(params));
+        console.log("🚀 ~ LinkService ~ getLinkUserState ~ response:", response);
+
+        return mapLinkUserStateModel(response);
     }
 
     //TODO: Mock response data, remove after BE finish implementation

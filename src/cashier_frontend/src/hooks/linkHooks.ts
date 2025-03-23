@@ -191,11 +191,30 @@ export function useCreateAction(actionType?: ACTION_TYPE) {
     const mutation = useMutation({
         mutationFn: (vars: { linkId: string }) => {
             const linkService = new LinkService(identity);
-
+            console.log("Calling create action");
             return linkService.processAction({
-                ...vars,
+                linkId: vars.linkId,
                 actionType: actionType ?? ACTION_TYPE.CREATE_LINK,
                 actionId: undefined,
+            });
+        },
+    });
+
+    return mutation;
+}
+
+export function useCreateActionAnonymous(actionType?: ACTION_TYPE) {
+    const identity = useIdentity();
+
+    const mutation = useMutation({
+        mutationFn: async (vars: { linkId: string; walletAddress: string }) => {
+            const linkService = new LinkService(identity);
+
+            return linkService.processActionAnonymous({
+                linkId: vars.linkId,
+                actionType: actionType ?? ACTION_TYPE.CREATE_LINK,
+                actionId: undefined,
+                walletAddress: vars.walletAddress,
             });
         },
     });
