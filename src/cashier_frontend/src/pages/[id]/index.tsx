@@ -48,13 +48,13 @@ export default function ClaimPage() {
     const { updateLink } = useCreateLinkStore();
 
     // Fetch link data
-    const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
+    const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(
         linkId,
         ACTION_TYPE.CLAIM_LINK,
     );
 
     // Fetch link user state when user is logged in and there's link data
-    const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
+    const { data: linkUserState, isLoading: isLoadingLinkUserState } = useLinkUserState(
         {
             action_type: ACTION_TYPE.CLAIM_LINK,
             link_id: linkId ?? "",
@@ -140,7 +140,7 @@ export default function ClaimPage() {
             <SheetWrapper>
                 <div className="w-11/12 max-w-[400px]">
                     <Header onConnect={handleConnectWallet} openTestForm={connectToWallet} />
-                    {isFetchingLinkData ? (
+                    {isLoadingLinkData || isLoadingLinkUserState ? (
                         <div className="flex justify-center items-center h-full">
                             <Spinner sizes="32" />
                         </div>
