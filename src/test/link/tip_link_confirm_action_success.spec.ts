@@ -180,7 +180,6 @@ describe("Tip Link confirm action success", () => {
             link_id: linkId,
             action_id: "",
             action_type: "CreateLink",
-            params: [],
         };
 
         const createActionRes = await actor.process_action(input);
@@ -218,7 +217,6 @@ describe("Tip Link confirm action success", () => {
             link_id: linkId,
             action_id: createLinkActionId,
             action_type: "CreateLink",
-            params: [],
         };
 
         const confirmRes = await actor.process_action(input);

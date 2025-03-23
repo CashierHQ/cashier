@@ -595,11 +595,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             link_action.link_user_state.clone();
         let action = self
             .action_service
-            .get_action_by_id(link_action.action_id.clone())
-            .ok_or_else(|| CanisterError::HandleLogicError("Action not found".to_string()))?;
+            .get(link_action.action_id.clone())
+            .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
 
         return Ok(Some(LinkGetUserStateOutput {
-            action: ActionDto::from(action, vec![]),
+            action: ActionDto::from_with_tx(action.action, action.intents, action.intent_txs),
             link_user_state: link_user_state.unwrap().to_string(),
         }));
     }
