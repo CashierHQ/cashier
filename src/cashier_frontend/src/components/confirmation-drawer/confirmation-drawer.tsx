@@ -17,6 +17,7 @@ import { useIcrc112Execute, useProcessAction, useUpdateAction } from "@/hooks/li
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
+import { useIdentity } from "@nfid/identitykit/react";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -37,6 +38,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 }) => {
     const { t } = useTranslation();
     const { link, action, setAction } = useCreateLinkStore();
+    const identity = useIdentity();
 
     const [isUsd, setIsUsd] = useState(false);
 
@@ -52,35 +54,56 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         t,
     );
 
+    const handleProcessClaimAction = async () => {
+        if (identity) {
+            console.log("Call process action for logged in user to claim");
+            // const processActionResult = await processAction({
+            //     linkId: link!.id,
+            //     actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
+            //     actionId: action!.id,
+            // });
+        } else {
+            console.log("Call process action for anonymous user to claim");
+        }
+    };
+
+    const handleProcessCreateAction = async () => {
+        const firstUpdatedAction = await processAction({
+            linkId: link!.id,
+            actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
+            actionId: action!.id,
+        });
+        console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
+        setAction(firstUpdatedAction);
+        if (firstUpdatedAction) {
+            console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
+            const response = await icrc112Execute({
+                transactions: firstUpdatedAction!.icrc112Requests,
+                linkTitle: link?.title || "",
+            });
+            console.log("🚀 ~ icrc112Execute ~ response:", response);
+            if (response) {
+                const secondUpdatedAction = await updateAction({
+                    actionId: action!.id,
+                    linkId: link!.id,
+                    external: true,
+                });
+                console.log("🚀 ~ secondUpdatedAction ~ response:", secondUpdatedAction);
+
+                if (secondUpdatedAction) {
+                    setAction(secondUpdatedAction);
+                    onActionResult(secondUpdatedAction);
+                }
+            }
+        }
+    };
+
     const startTransaction = async () => {
         try {
-            const firstUpdatedAction = await processAction({
-                linkId: link!.id,
-                actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
-                actionId: action!.id,
-            });
-            console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
-            setAction(firstUpdatedAction);
-            if (firstUpdatedAction) {
-                console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
-                const response = await icrc112Execute({
-                    transactions: firstUpdatedAction!.icrc112Requests,
-                    linkTitle: link?.title || "",
-                });
-                console.log("🚀 ~ icrc112Execute ~ response:", response);
-                if (response) {
-                    const secondUpdatedAction = await updateAction({
-                        actionId: action!.id,
-                        linkId: link!.id,
-                        external: true,
-                    });
-                    console.log("🚀 ~ secondUpdatedAction ~ response:", secondUpdatedAction);
-
-                    if (secondUpdatedAction) {
-                        setAction(secondUpdatedAction);
-                        onActionResult(secondUpdatedAction);
-                    }
-                }
+            if (action?.type === ACTION_TYPE.CLAIM_LINK) {
+                await handleProcessClaimAction();
+            } else {
+                handleProcessCreateAction();
             }
         } catch (error) {
             console.log("🚀 ~ startTransaction ~ error:", error);
