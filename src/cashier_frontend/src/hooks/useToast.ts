@@ -11,12 +11,20 @@ const useToast = () => {
     });
 
     const showToast = useCallback(
-        (title: string, description: string, variant: "default" | "error" | null | undefined) => {
+        (
+            title: string,
+            description: string,
+            variant: "default" | "error" | null | undefined,
+            icon?: React.ReactNode,
+            boldText?: boolean,
+        ) => {
             setToastData({
                 open: true,
                 title,
                 description,
                 variant,
+                icon,
+                boldText,
                 onOpenChange: () => {},
             });
         },

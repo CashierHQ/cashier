@@ -24,7 +24,7 @@ export const SearchIcon = forwardRef<SVGSVGElement, ComponentProps<typeof Lookin
 
 export const SearchInput = forwardRef<HTMLInputElement, ComponentProps<typeof Input>>(
     ({ className, ...props }) => {
-        return <Input className={cn("pl-11 py-2.5 h-auto]", className)} {...props} />;
+        return <Input className={cn("pl-11 py-2.5", className)} {...props} />;
     },
 );
 

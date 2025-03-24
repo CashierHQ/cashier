@@ -113,7 +113,6 @@ type LinkGetUserStateInput = record {
   link_id : text;
   action_type : text;
   anonymous_wallet_address : opt text;
-  create_if_not_exist : bool;
 };
 type LinkGetUserStateOutput = record {
   action : ActionDto;
@@ -145,11 +144,16 @@ type PaginateResultMetadata = record {
   offset : nat64;
   limit : nat64;
 };
+type ProcessActionAnonymousInput = record {
+  action_id : text;
+  link_id : text;
+  action_type : text;
+  wallet_address : text;
+};
 type ProcessActionInput = record {
   action_id : text;
   link_id : text;
   action_type : text;
-  params : opt vec record { text; text };
 };
 type RejectionCode = variant {
   NoError;
@@ -211,6 +215,7 @@ service : () -> {
   link_get_user_state : (LinkGetUserStateInput) -> (Result_5);
   link_update_user_state : (LinkUpdateUserStateInput) -> (Result_5);
   process_action : (ProcessActionInput) -> (Result_6);
+  process_action_anonymous : (ProcessActionAnonymousInput) -> (Result_6);
   trigger_transaction : (TriggerTransactionInput) -> (Result);
   update_action : (UpdateActionInput) -> (Result_6);
   update_link : (UpdateLinkInput) -> (Result_7);

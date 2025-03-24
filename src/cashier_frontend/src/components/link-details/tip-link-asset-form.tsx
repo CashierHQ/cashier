@@ -131,7 +131,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
     };
 
     return (
-        <div className="w-full">
+        <div className="w-full flex flex-col flex-grow relative">
             {isLoadingAssets ? (
                 <AssetFormSkeleton />
             ) : (
@@ -141,7 +141,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
                             onSubmit={form.handleSubmit((data) => {
                                 onSubmit(data);
                             })}
-                            className="space-y-8 mb-[100px]"
+                            className="space-y-8"
                         >
                             <FormField
                                 name="tokenAddress"
@@ -220,7 +220,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
                                 type="submit"
                                 variant="default"
                                 size="lg"
-                                className="fixed bottom-[30px] left-1/2 -translate-x-1/2"
+                                className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
                                 onClick={() => console.log(form.formState.errors)}
                                 disabled={isButtonDisabled}
                             >

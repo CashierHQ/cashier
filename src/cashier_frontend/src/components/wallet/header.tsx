@@ -11,7 +11,7 @@ export function WalletHeader({ onClose = () => {} }: WalletHeaderProps) {
             <Logo />
 
             <button onClick={onClose}>
-                <X size={40} />
+                <X size={32} />
             </button>
         </div>
     );

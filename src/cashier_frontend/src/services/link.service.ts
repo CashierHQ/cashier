@@ -4,22 +4,41 @@ import {
     _SERVICE,
     CreateLinkInput,
     LinkDto,
+    LinkGetUserStateInput,
+    LinkUpdateUserStateInput,
+    ProcessActionAnonymousInput,
     ProcessActionInput,
     UpdateActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
-import { LinkDetailModel, LinkModel } from "./types/link.service.types";
+import {
+    LinkDetailModel,
+    LinkGetUserStateInputModel,
+    LinkGetUserStateOutputModel,
+    LinkModel,
+    LinkUpdateUserStateInputModel,
+} from "./types/link.service.types";
 import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
+    mapLinkUserStateModel,
 } from "./types/mapper/link.service.mapper";
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
-import { FEE_TYPE } from "./types/enum";
+import {
+    ACTION_STATE,
+    ACTION_TYPE,
+    CHAIN,
+    FEE_TYPE,
+    INTENT_STATE,
+    INTENT_TYPE,
+    LINK_USER_STATE,
+    TASK,
+} from "./types/enum";
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -29,6 +48,13 @@ interface ResponseLinksModel {
 export interface CreateActionInputModel {
     linkId: string;
     actionType: string;
+    actionId?: string;
+}
+
+export interface CreateActionAnonymousInputModel {
+    linkId: string;
+    actionType: string;
+    walletAddress: string;
     actionId?: string;
 }
 
@@ -84,13 +110,20 @@ class LinkService {
         return responseModel;
     }
 
-    async getLink(linkId: string, actionType: string) {
+    async getLink(linkId: string, actionType?: string) {
+        console.log(linkId);
+        console.log(actionType);
         const response = parseResultResponse(
-            await this.actor.get_link(linkId, [
-                {
-                    action_type: actionType,
-                },
-            ]),
+            await this.actor.get_link(
+                linkId,
+                actionType
+                    ? [
+                          {
+                              action_type: actionType,
+                          },
+                      ]
+                    : [],
+            ),
         );
         const result = await MapLinkDetailModel(response);
         return result;
@@ -116,9 +149,21 @@ class LinkService {
             action_id: input.actionId ?? "",
             link_id: input.linkId,
             action_type: input.actionType,
-            params: [],
         };
+        console.log("🚀 ~ LinkService ~ processAction ~ inputModel:", inputModel);
         const response = parseResultResponse(await this.actor.process_action(inputModel));
+        const action = mapActionModel(response);
+        return action;
+    }
+
+    async processActionAnonymous(input: CreateActionAnonymousInputModel): Promise<ActionModel> {
+        const inputModel: ProcessActionAnonymousInput = {
+            action_id: input.actionId ?? "",
+            link_id: input.linkId,
+            action_type: input.actionType,
+            wallet_address: input.walletAddress,
+        };
+        const response = parseResultResponse(await this.actor.process_action_anonymous(inputModel));
         const action = mapActionModel(response);
         return action;
     }
@@ -155,6 +200,45 @@ class LinkService {
                 chain: fee.asset.chain,
             };
         });
+    }
+
+    async getLinkUserState(input: LinkGetUserStateInputModel) {
+        const params: LinkGetUserStateInput = {
+            link_id: input.link_id,
+            action_type: input.action_type,
+            anonymous_wallet_address: input.anonymous_wallet_address
+                ? [input.anonymous_wallet_address]
+                : [],
+        };
+        const response = parseResultResponse(await this.actor.link_get_user_state(params));
+        return mapLinkUserStateModel(response);
+    }
+
+    //TODO: Mock response data, remove after BE finish implementation
+    async updateLinkUserState(input: LinkUpdateUserStateInputModel) {
+        const params: LinkUpdateUserStateInput = {
+            link_id: input.link_id,
+            action_type: input.action_type,
+            goto: input.isContinue ? "Continue" : "Back",
+            anonymous_wallet_address: input.anonymous_wallet_address
+                ? [input.anonymous_wallet_address]
+                : [],
+        };
+        //const response = parseResultResponse(await this.actor.link_update_user_state(params));
+        //TODO: Mock response for testing
+        const mockResponse: LinkGetUserStateOutputModel = {
+            action: {
+                id: "action_id",
+                state: ACTION_STATE.SUCCESS,
+                creator: "",
+                intents: [],
+                type: ACTION_TYPE.CLAIM_LINK,
+                icrc112Requests: [],
+            },
+            link_user_state: LINK_USER_STATE.COMPLETE,
+        };
+        return mockResponse;
+        //return mapLinkUserStateModel(response);
     }
 }
 

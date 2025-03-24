@@ -5,18 +5,30 @@ import { IntentHelperService } from "@/services/fee.service";
 import { convert } from "@/utils/helpers/convert";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
+import { TASK } from "@/services/types/enum";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
     isUsd?: boolean;
 };
 
+const getItemLabel = (intent: IntentModel) => {
+    switch (intent.task) {
+        case TASK.TRANSFER_LINK_TO_WALLET:
+            return "transaction.confirm_popup.total_assets_received_label";
+        case TASK.TRANSFER_WALLET_TO_LINK:
+        case TASK.TRANSFER_WALLET_TO_TREASURY:
+        default:
+            return "transaction.confirm_popup.total_cashier_fees_label";
+    }
+    return intent.task;
+};
+
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
-    isUsd,
 }) => {
     const { t } = useTranslation();
-    const { assetSrc, assetSymbol } = useIntentMetadata(intents[0]);
+    const { assetSymbol } = useIntentMetadata(intents?.[0]);
     const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
         intents[0]?.asset.address,
     );
@@ -34,14 +46,13 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
             <div className="flex flex-col gap-3 rounded-xl p-4 bg-lightgreen">
-                <div className="flex justify-between text-lg">
-                    <h4>{t("transaction.confirm_popup.total_cashier_fees_label")}</h4>
+                <div className="flex justify-between font-medium">
+                    <div>{t(getItemLabel(intents[0]))}</div>
 
                     <div className="flex items-center">
-                        {isUsd &&
-                            !isLoadingConversionRates &&
-                            conversionRates!.tokenToUsd !== undefined &&
-                            `($${convert(totalCashierFee, conversionRates!.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
+                        {!isLoadingConversionRates &&
+                            conversionRates?.tokenToUsd !== undefined &&
+                            `($${convert(totalCashierFee, conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
                         {totalCashierFee} {assetSymbol}
                     </div>
                 </div>
