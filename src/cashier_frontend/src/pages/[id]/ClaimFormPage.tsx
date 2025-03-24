@@ -68,6 +68,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         const updatedAction = await createAction({
             linkId: linkId!,
         });
+        console.log("🚀 ~ handleCreateAction ~ updatedAction:", updatedAction);
         return updatedAction;
     };
 
@@ -81,6 +82,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     const handleSubmit = async (anonymousWalletAddress: string = "") => {
         // Validation
+        console.log("Click submit");
         onSubmit();
         try {
             setIsDisabledButton(true);
@@ -105,11 +107,16 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                             },
                             identity,
                         );
+                        console.log(
+                            "🚀 ~ handleSubmit ~ anonymousLinkUserState:",
+                            anonymousLinkUserState,
+                        );
 
                         if (!anonymousLinkUserState.link_user_state) {
                             // If action is not exist, then create new one
                             const anonymousAction =
                                 await handleCreateActionAnonymous(anonymousWalletAddress);
+                            console.log("🚀 ~ handleSubmit ~ anonymousAction:", anonymousAction);
                             setAction(anonymousAction);
                             setShowConfirmation(true);
                         } else {
