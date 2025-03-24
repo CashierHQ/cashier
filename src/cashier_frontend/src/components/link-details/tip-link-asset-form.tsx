@@ -223,6 +223,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                 variant="default"
                                 size="lg"
                                 className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
+                                onClick={() => console.log(form.formState.errors)}
                                 disabled={isButtonDisabled}
                             >
                                 {t("continue")}

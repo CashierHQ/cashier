@@ -3,7 +3,7 @@ import { ITokenProviderService } from "./ITokenProviderService";
 
 export const ASSET_LIST: UserToken[] = [
     {
-        symbol: "tICP",
+        symbol: "ICP",
         amount: "0",
         ledgerId: "x5qut-viaaa-aaaar-qajda-cai",
         accountId: "",
