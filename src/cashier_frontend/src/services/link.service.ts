@@ -111,8 +111,6 @@ class LinkService {
     }
 
     async getLink(linkId: string, actionType?: string) {
-        console.log(linkId);
-        console.log(actionType);
         const response = parseResultResponse(
             await this.actor.get_link(
                 linkId,
@@ -150,7 +148,6 @@ class LinkService {
             link_id: input.linkId,
             action_type: input.actionType,
         };
-        console.log("🚀 ~ LinkService ~ processAction ~ inputModel:", inputModel);
         const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         return action;

@@ -1,5 +1,5 @@
 import { ChangeEvent, FC, useState } from "react";
-import { DefaultValues, SubmitHandler } from "react-hook-form";
+import { SubmitHandler } from "react-hook-form";
 import {
     Form,
     FormControl,
@@ -27,9 +27,9 @@ import { AmountActionButtons } from "./amount-action-buttons";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { useTokenMetadataList } from "@/hooks/useTokenMetadataQuery";
 import { TokenUtilService } from "@/services/tokenUtils.service";
+import { useCreateLinkStore } from "@/stores/createLinkStore";
 
 type TipLinkAssetFormProps = {
-    defaultValues?: DefaultValues<TipLinkAssetFormSchema>;
     onSubmit: SubmitHandler<TipLinkAssetFormSchema>;
     isButtonDisabled?: boolean;
 };
@@ -37,29 +37,32 @@ type TipLinkAssetFormProps = {
 const USD_AMOUNT_PRESETS = [1, 2, 5, 10];
 const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 75, 100];
 
-export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
-    onSubmit,
-    defaultValues,
-    isButtonDisabled,
-}) => {
+export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButtonDisabled }) => {
     const { t } = useTranslation();
     const { data: metadataList } = useTokenMetadataList();
+    const { link } = useCreateLinkStore();
 
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [isUsd, setIsUsd] = useState<boolean>(false);
 
     const { isLoadingAssets, isLoadingBalance, assets } = useUserAssets();
 
-    const form = useTipLinkAssetForm(assets ?? [], {
-        tokenAddress: defaultValues?.tokenAddress ?? "",
-        amount: defaultValues?.amount ?? BigInt(0),
-        assetNumber: TokenUtilService.getHumanReadableAmountFromMetadata(
-            defaultValues?.amount ?? BigInt(0),
-            metadataList?.find((metadata) => metadata.canisterId === defaultValues?.tokenAddress)
-                ?.metadata,
-        ),
+    // Initialize form with values from link state if they exist
+    const defaultValues = {
+        tokenAddress: link?.asset_info[0]?.address ?? "",
+        amount: link?.asset_info[0]?.amount ?? BigInt(0),
+        assetNumber: link?.asset_info[0]?.amount
+            ? TokenUtilService.getHumanReadableAmountFromMetadata(
+                  link.asset_info[0].amount,
+                  metadataList?.find(
+                      (metadata) => metadata.canisterId === link.asset_info[0].address,
+                  )?.metadata,
+              )
+            : null,
         usdNumber: null,
-    });
+    };
+
+    const form = useTipLinkAssetForm(assets ?? [], defaultValues);
 
     const selectedAsset = useSelectedAsset(assets, form);
     const { setUsdAmount, setTokenAmount, setTokenAddress } = useFormActions(form);
@@ -108,7 +111,6 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
         const usdValue = form.getValues("usdNumber");
         const tokenValue = form.getValues("assetNumber");
         const value = isUsd ? usdValue : tokenValue;
-
         return value ?? "";
     };
 
@@ -221,7 +223,6 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({
                                 variant="default"
                                 size="lg"
                                 className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
-                                onClick={() => console.log(form.formState.errors)}
                                 disabled={isButtonDisabled}
                             >
                                 {t("continue")}

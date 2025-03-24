@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
@@ -11,7 +11,6 @@ import { ACTION_STATE, LINK_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { Spinner } from "@/components/ui/spinner";
-import { useAuth } from "@nfid/identitykit/react";
 import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -30,8 +29,6 @@ function getInitialStep(state: string | undefined) {
 
 export default function LinkPage() {
     const navigate = useNavigate();
-    const user = useAuth();
-
     const { t } = useTranslation();
     const { linkId } = useParams();
     const { toastData, showToast, hideToast } = useToast();
@@ -57,11 +54,13 @@ export default function LinkPage() {
         if (context.step === 0 || action) {
             navigate("/");
         } else {
-            updateLink({
+            // Update the link state on the server with current values
+            await updateLink({
                 linkId: linkId!,
                 linkModel: link!,
                 isContinue: false,
             });
+
             context.prevStep();
         }
     };
@@ -90,33 +89,25 @@ export default function LinkPage() {
     };
 
     const showActionResultToast = (action: ActionModel) => {
-        if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
-            const toastData = {
-                title:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? t("transaction.confirm_popup.transaction_success")
-                        : t("transaction.confirm_popup.transaction_failed"),
-                description:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? t("transaction.confirm_popup.transaction_success_message")
-                        : t("transaction.confirm_popup.transaction_failed_message"),
-                variant:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? ("default" as const)
-                        : ("error" as const),
-            };
-            showToast(toastData.title, toastData.description, toastData.variant);
+        if (action.state === ACTION_STATE.FAIL) {
+            showToast(
+                t("transaction.confirm_popup.transaction_failed"),
+                t("transaction.confirm_popup.transaction_failed_message"),
+                "error",
+            );
+        } else if (action.state === ACTION_STATE.SUCCESS) {
+            showToast(
+                t("transaction.confirm_popup.transaction_success"),
+                t("transaction.confirm_popup.transaction_success_message"),
+                "default",
+            );
         }
     };
 
-    if (!linkId || !user) {
-        return <Navigate to={"/"} />;
-    }
-
-    if (isFetchingLinkData || getInitialStep(link?.state) < 0) {
+    if (isFetchingLinkData) {
         return (
-            <div className="flex flex-col justify-center items-center w-full h-svh">
-                <Spinner width={64} />
+            <div className="w-screen h-screen flex items-center justify-center">
+                <Spinner />
             </div>
         );
     }
@@ -128,7 +119,7 @@ export default function LinkPage() {
                 "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
             )}
         >
-            <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
+            <div className="w-11/12 h-full flex flex-col sm:max-w-[400px] md:max-w-[100%]">
                 <MultiStepForm initialStep={getInitialStep(linkData?.link?.state)}>
                     <MultiStepForm.Header onClickBack={handleBackstep} />
 

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { StateBadge } from "@/components/link-item";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import useToast from "@/hooks/useToast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
@@ -16,13 +16,15 @@ import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { TokenUtilService } from "@/services/tokenUtils.service";
+import TransactionToast from "@/components/transaction/transaction-toast";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
     const { linkId } = useParams();
     const identity = useIdentity();
-    const { toast } = useToast();
     const navigate = useNavigate();
+    const { toastData, showToast, hideToast } = useToast();
+
     //TODO: Update to apply asset_info as the list of assets
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
     const { t } = useTranslation();
@@ -31,9 +33,7 @@ export default function DetailPage() {
         try {
             e.stopPropagation();
             copy(window.location.href.replace("details/", ""));
-            toast({
-                description: "Copied",
-            });
+            showToast("Copied successfully", "", "default", undefined, false);
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -220,6 +220,14 @@ export default function DetailPage() {
                             >
                                 {t("details.copyLink")}
                             </Button>
+
+                            <TransactionToast
+                                open={toastData?.open ?? false}
+                                onOpenChange={hideToast}
+                                title={toastData?.title ?? ""}
+                                description={toastData?.description ?? ""}
+                                variant={toastData?.variant ?? "default"}
+                            />
                         </>
                     )}
                 </div>
