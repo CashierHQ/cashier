@@ -3,9 +3,15 @@ import {
     GetLinkResp,
     LinkDetailUpdateAssetInfoInput,
     LinkDto,
+    LinkGetUserStateOutput,
     UpdateLinkInput,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
-import { AssetInfoModel, LinkDetailModel, LinkModel } from "../link.service.types";
+import {
+    AssetInfoModel,
+    LinkDetailModel,
+    LinkGetUserStateOutputModel,
+    LinkModel,
+} from "../link.service.types";
 import { CHAIN, LINK_INTENT_LABEL, TEMPLATE } from "../enum";
 import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 import { mapActionModel } from "./action.service.mapper";
@@ -80,5 +86,16 @@ const mapAssetInfo = (assetInfo: AssetInfoModel): LinkDetailUpdateAssetInfoInput
         amount_per_claim: BigInt(1),
         total_amount: assetInfo.amount,
         label: assetInfo.label ?? LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
+    };
+};
+
+// Map back-end link user state to front-end model
+export const mapLinkUserStateModel = (
+    model: [LinkGetUserStateOutput] | [],
+): LinkGetUserStateOutputModel => {
+    console.log("🚀 ~ model:", model);
+    return {
+        action: model[0] ? mapActionModel(model[0]?.action) : undefined,
+        link_user_state: model[0]?.link_user_state ?? undefined,
     };
 };

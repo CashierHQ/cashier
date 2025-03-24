@@ -120,8 +120,6 @@ export function useSetTipLinkDetails() {
                 asset_info: vars.patch,
                 state: State.PendingPreview,
             } as LinkDetailModel;
-            console.log("🚀 ~ mutationFn: ~ linkData:", linkData);
-
             const linkDto = await linkService.updateLink(vars.link.id, linkData, true);
 
             return MapLinkToLinkDetailModel(linkDto);
@@ -187,17 +185,36 @@ export function useProcessAction() {
     return mutation;
 }
 
-export function useCreateAction() {
+export function useCreateAction(actionType?: ACTION_TYPE) {
     const identity = useIdentity();
 
     const mutation = useMutation({
         mutationFn: (vars: { linkId: string }) => {
             const linkService = new LinkService(identity);
-
+            console.log("Calling create action");
             return linkService.processAction({
-                ...vars,
-                actionType: ACTION_TYPE.CREATE_LINK,
+                linkId: vars.linkId,
+                actionType: actionType ?? ACTION_TYPE.CREATE_LINK,
                 actionId: undefined,
+            });
+        },
+    });
+
+    return mutation;
+}
+
+export function useCreateActionAnonymous(actionType?: ACTION_TYPE) {
+    const identity = useIdentity();
+
+    const mutation = useMutation({
+        mutationFn: async (vars: { linkId: string; walletAddress: string }) => {
+            const linkService = new LinkService(identity);
+
+            return linkService.processActionAnonymous({
+                linkId: vars.linkId,
+                actionType: actionType ?? ACTION_TYPE.CREATE_LINK,
+                actionId: undefined,
+                walletAddress: vars.walletAddress,
             });
         },
     });

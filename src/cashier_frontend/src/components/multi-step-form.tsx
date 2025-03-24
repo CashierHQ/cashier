@@ -22,37 +22,47 @@ export function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps)
 
 interface MultiStepFormHeaderProps {
     onClickBack?: (context: MultiStepFormContext) => void;
+    showIndicator?: boolean;
+    showHeader?: boolean;
 }
 
-export function MultiStepFormHeader({ onClickBack = () => {} }: MultiStepFormHeaderProps) {
+export function MultiStepFormHeader({
+    onClickBack = () => {},
+    showIndicator = true,
+    showHeader = true,
+}: MultiStepFormHeaderProps) {
     const context = useMultiStepFormContext();
 
     return (
         <div className="w-full">
-            <div className="w-full flex items-center justify-center mb-3 relative">
-                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
-                    {context.stepName}
-                </h4>
-                <button
-                    className="absolute left-1 cursor-pointer text-[1.5rem]"
-                    onClick={() => onClickBack(context)}
-                >
-                    <ChevronLeftIcon width={25} height={25} />
-                </button>
-            </div>
+            {showHeader && (
+                <div className="w-full flex items-center justify-center mb-3 relative">
+                    <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
+                        {context.stepName}
+                    </h4>
+                    <button
+                        className="absolute left-1 cursor-pointer text-[1.5rem]"
+                        onClick={() => onClickBack(context)}
+                    >
+                        <ChevronLeftIcon width={25} height={25} />
+                    </button>
+                </div>
+            )}
 
-            <div className="flex w-full mb-3">
-                {new Array(context.steps).fill(0).map((_, index) => (
-                    <div
-                        key={index}
-                        className={cn("h-[4px] rounded-full mx-[2px]", {
-                            "bg-green": index <= context.step,
-                            "bg-lightgreen": index > context.step,
-                        })}
-                        style={{ width: `${100 / context.steps}%` }}
-                    />
-                ))}
-            </div>
+            {showIndicator && (
+                <div className="flex w-full mb-3">
+                    {new Array(context.steps).fill(0).map((_, index) => (
+                        <div
+                            key={index}
+                            className={cn("h-[4px] rounded-full mx-[2px]", {
+                                "bg-green": index <= context.step,
+                                "bg-lightgreen": index > context.step,
+                            })}
+                            style={{ width: `${100 / context.steps}%` }}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

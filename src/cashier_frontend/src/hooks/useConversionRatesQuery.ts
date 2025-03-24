@@ -8,6 +8,7 @@ export function useConversionRatesQuery(asset: string | undefined) {
     const query = useQuery({
         ...queryKeys.tokens.conversionRates(wallet, asset),
         enabled: !!wallet && !!asset,
+        refetchOnWindowFocus: false,
     });
 
     return query;
