@@ -11,8 +11,6 @@ import { formatDateString } from "@/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { useUpdateLink } from "@/hooks/linkHooks";
-import UserService from "@/services/user.service";
-import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { UserDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
@@ -21,24 +19,14 @@ import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import Header from "@/components/header";
-import useConnectToWallet from "@/hooks/useConnectToWallet";
+import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
     const { user: walletUser } = useAuth();
-    const [newAppUser, setNewAppUser] = useState<UserDto>();
-    const {
-        data: appUser,
-        isLoading: isUserLoading,
-        error: loadUserError,
-        refetch: refetchAppUser,
-    } = useQuery({
-        ...queryKeys.users.detail(identity),
-        retry: 1,
-        enabled: !!identity,
-    });
+    const { connectToWallet, appUser, isUserLoading } = useConnectToWallet();
 
     const {
         data: linkData,
@@ -59,7 +47,6 @@ export default function HomePage() {
     const { toastData, showToast, hideToast } = useToast();
     const navigate = useNavigate();
     const responsive = useResponsive();
-    const { connectToWallet } = useConnectToWallet();
 
     /* TODO:: Remove after complete testing */
     const handleOpenTestForm = () => {
@@ -101,34 +88,10 @@ export default function HomePage() {
     }, []);
 
     useEffect(() => {
-        if (newAppUser) {
-            refetchAppUser();
-        }
-    }, [newAppUser]);
-
-    // If users is not exist in Cashier App,
-    // then create account for them
-    useEffect(() => {
-        const createUser = async () => {
-            const userService = new UserService(identity);
-            try {
-                const user = await userService.createUser();
-                setNewAppUser(user);
-            } catch (error) {
-                console.log("🚀 ~ createUser ~ error:", error);
-            }
-        };
-
-        if (
-            identity &&
-            !appUser &&
-            loadUserError?.message.toLowerCase().includes(SERVICE_CALL_ERROR.USER_NOT_FOUND)
-        ) {
-            createUser();
-        } else if (identity && appUser) {
+        if (identity && appUser) {
             refetchLinks();
         }
-    }, [identity, appUser, loadUserError]);
+    }, [identity, appUser]);
 
     useEffect(() => {
         if (isUserLoading || isLinksLoading || isPending) {

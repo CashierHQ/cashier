@@ -8,7 +8,7 @@ import TransactionToast from "@/components/transaction/transaction-toast";
 import { ACTION_STATE, ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import Header from "@/components/header";
-import useConnectToWallet from "@/hooks/useConnectToWallet";
+import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { TokenUtilService } from "@/services/tokenUtils.service";

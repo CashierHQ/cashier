@@ -1,56 +1,61 @@
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queryKeys";
+import UserService from "@/services/user.service";
 
-export enum WALLET_OPTIONS {
-    GOOGLE = "Google login",
-    INTERNET_IDENTITY = "Internet Identity",
-    OTHER = "Other wallets",
-    TYPING = "Typing",
-}
-
-export type WalletType = "Internet Identity" | "NFID" | "Stoic" | "Unknown";
-
-const useConnectToWallet = () => {
-    const { connect, user } = useAuth();
+export const useConnectToWallet = () => {
+    const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
-    const [currentWallet, setCurrentWallet] = useState<WalletType>("Unknown");
-    const [selectedOption, setSelectedOption] = useState<WALLET_OPTIONS | undefined>();
+    const {
+        data: appUser,
+        isLoading: isUserLoading,
+        error: loadUserError,
+        refetch: refetchAppUser,
+    } = useQuery({
+        ...queryKeys.users.detail(identity),
+        retry: 1,
+        enabled: !!identity,
+    });
 
     useEffect(() => {
-        if (identity && user) {
-            // Determine wallet type based on the selected option
-            if (selectedOption === WALLET_OPTIONS.INTERNET_IDENTITY) {
-                setCurrentWallet("Internet Identity");
-            } else if (selectedOption === WALLET_OPTIONS.OTHER) {
-                // When OTHER is selected, it could be either NFID or Stoic
-                // You might need additional logic to determine which one
-                setCurrentWallet("NFID"); // or 'Stoic' depending on actual connection
-            } else {
-                setCurrentWallet("Unknown");
+        const createUser = async () => {
+            if (!identity) return;
+
+            const userService = new UserService(identity);
+            try {
+                await userService.createUser();
+                await refetchAppUser();
+            } catch (error) {
+                console.log("🚀 ~ createUser ~ error:", error);
             }
-        } else {
-            setCurrentWallet("Unknown");
+        };
+
+        if (
+            identity &&
+            !appUser &&
+            loadUserError?.message.toLowerCase().includes(SERVICE_CALL_ERROR.USER_NOT_FOUND)
+        ) {
+            createUser();
         }
-    }, [identity, user, selectedOption]);
+    }, [identity, appUser, loadUserError]);
 
     const connectToWallet = async (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-
         try {
             await connect();
         } catch (error) {
             console.error("Failed to connect wallet:", error);
-            setCurrentWallet("Unknown");
         }
     };
 
     return {
         connectToWallet,
-        currentWallet,
-        isConnected: !!user,
-        principalId: user?.principal.toString(),
+        disconnect,
+        user,
+        appUser,
+        identity,
+        isUserLoading,
+        refetchAppUser,
     };
 };
-
-export default useConnectToWallet;
