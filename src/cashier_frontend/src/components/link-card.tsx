@@ -32,7 +32,7 @@ export default function LinkCard({
     };
 
     return (
-        <div className="flex flex-col flex-grow items-center">
+        <div className="flex flex-col items-center">
             <div className="text-lg md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
                 {renderHeaderTitle()}
             </div>

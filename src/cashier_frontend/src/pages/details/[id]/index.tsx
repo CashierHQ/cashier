@@ -1,4 +1,5 @@
 import * as React from "react";
+import { cn } from "@/lib/utils";
 import { StateBadge } from "@/components/link-item";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -61,8 +62,13 @@ export default function DetailPage() {
     }, [linkId, identity]);
 
     return (
-        <div className="w-screen flex flex-col items-center py-5">
-            <div className="h-[80vh] w-11/12 max-w-[400px]">
+        <div
+            className={cn(
+                "w-screen h-dvh max-h-dvh flex flex-col items-center py-3",
+                "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
+            )}
+        >
+            <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
                 <div className="w-full flex flex-col">
                     {!linkData ? (
                         renderSkeletonLoading()

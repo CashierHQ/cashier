@@ -1,0 +1,196 @@
+import ClaimPageForm, { ClaimLinkDetail } from "@/components/claim-page/claim-page-form";
+import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
+import { LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
+import { FC, useEffect, useState } from "react";
+import { UseFormReturn } from "react-hook-form";
+import { ClaimSchema } from ".";
+import { z } from "zod";
+import {
+    fetchLinkUserState,
+    useLinkUserState,
+    useUpdateLinkUserState,
+} from "@/hooks/linkUserHooks";
+import { ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
+import { useParams } from "react-router-dom";
+import { useIdentity } from "@nfid/identitykit/react";
+import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
+import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
+import { ActionModel } from "@/services/types/action.service.types";
+import { useCreateAction, useCreateActionAnonymous } from "@/hooks/linkHooks";
+import { isCashierError } from "@/services/errorProcess.service";
+import { useCreateLinkStore } from "@/stores/createLinkStore";
+
+type ClaimFormPageProps = {
+    form: UseFormReturn<z.infer<typeof ClaimSchema>>;
+    claimLinkDetails: ClaimLinkDetail;
+    onSubmit: () => void;
+    linkData?: LinkModel;
+    onCashierError?: (error: Error) => void;
+    onActionResult?: (action: ActionModel) => void;
+    onBack?: () => void;
+};
+
+export const ClaimFormPage: FC<ClaimFormPageProps> = ({
+    form,
+    claimLinkDetails,
+    linkData,
+    onCashierError = () => {},
+    onActionResult,
+    onSubmit,
+    onBack,
+}) => {
+    const { linkId } = useParams();
+    const identity = useIdentity();
+    const { nextStep } = useMultiStepFormContext();
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [showInfo, setShowInfo] = useState(false);
+    const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.CLAIM_LINK);
+    const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous(ACTION_TYPE.CLAIM_LINK);
+    const { action, setAction } = useCreateLinkStore();
+    const [isDisabledButton, setIsDisabledButton] = useState(false);
+
+    const updateLinkUserState = useUpdateLinkUserState();
+
+    const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
+        {
+            action_type: ACTION_TYPE.CLAIM_LINK,
+            link_id: linkId ?? "",
+            anonymous_wallet_address: "",
+        },
+        !!linkId && !!identity,
+    );
+
+    const handleCreateAction = async (): Promise<ActionModel> => {
+        if (linkUserState?.action) {
+            return linkUserState.action;
+        }
+
+        const updatedAction = await createAction({
+            linkId: linkId!,
+        });
+        console.log("🚀 ~ handleCreateAction ~ updatedAction:", updatedAction);
+        return updatedAction;
+    };
+
+    const handleCreateActionAnonymous = async (walletAddress: string): Promise<ActionModel> => {
+        const linkUserAction = await createActionAnonymous({
+            linkId: linkId!,
+            walletAddress: walletAddress,
+        });
+        return linkUserAction;
+    };
+
+    const handleSubmit = async (anonymousWalletAddress: string = "") => {
+        // Validation
+        onSubmit();
+        try {
+            setIsDisabledButton(true);
+            if (anonymousWalletAddress) {
+                if (action) {
+                    // Display the confirmation drawer
+                    setShowConfirmation(true);
+                } else {
+                    if (identity) {
+                        const action = await handleCreateAction();
+                        if (action) {
+                            setAction(action);
+                            setShowConfirmation(true);
+                        }
+                    } else {
+                        // Fetch user link state
+                        const anonymousLinkUserState = await fetchLinkUserState(
+                            {
+                                action_type: ACTION_TYPE.CLAIM_LINK,
+                                link_id: linkId ?? "",
+                                anonymous_wallet_address: anonymousWalletAddress,
+                            },
+                            identity,
+                        );
+                        console.log(
+                            "🚀 ~ handleSubmit ~ anonymousLinkUserState:",
+                            anonymousLinkUserState,
+                        );
+
+                        if (!anonymousLinkUserState.link_user_state) {
+                            // If action is not exist, then create new one
+                            const anonymousAction =
+                                await handleCreateActionAnonymous(anonymousWalletAddress);
+                            console.log("🚀 ~ handleSubmit ~ anonymousAction:", anonymousAction);
+                            setAction(anonymousAction);
+                            setShowConfirmation(true);
+                        } else {
+                            // If action is existed, then do action based on link_user_state
+                            if (
+                                anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE
+                            ) {
+                                // Redirect
+                            } else {
+                                setAction(anonymousLinkUserState.action);
+                                setShowConfirmation(true);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            if (isCashierError(error)) {
+                onCashierError(error);
+            }
+            console.log("🚀 ~ handleSubmit ~ error:", error);
+        } finally {
+            setIsDisabledButton(false);
+        }
+    };
+
+    const handleUpdateLinkUserState = async () => {
+        const result = await updateLinkUserState.mutateAsync({
+            input: {
+                action_type: ACTION_TYPE.CLAIM_LINK,
+                link_id: linkId ?? "",
+                isContinue: true,
+                anonymous_wallet_address: "",
+            },
+        });
+        if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
+            nextStep();
+        }
+    };
+
+    // Create link user state if not exist when logged in user land on this page
+    useEffect(() => {
+        if (!linkUserState && identity) {
+            console.log("Creating link user state");
+        }
+    }, [linkUserState, identity]);
+
+    return (
+        !isFetchingLinkUserState && (
+            <>
+                <ClaimPageForm
+                    form={form}
+                    formData={linkData?.link ?? ({} as LinkDetailModel)}
+                    claimLinkDetails={[
+                        {
+                            title: claimLinkDetails.title,
+                            amount: claimLinkDetails.amount,
+                        },
+                    ]}
+                    onSubmit={handleSubmit}
+                    onBack={onBack}
+                    isDisabled={isDisabledButton}
+                />
+
+                <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
+
+                <ConfirmationDrawer
+                    open={showConfirmation && !showInfo}
+                    onClose={() => setShowConfirmation(false)}
+                    onInfoClick={() => setShowInfo(true)}
+                    onActionResult={onActionResult}
+                    onCashierError={onCashierError}
+                    onSuccessContinue={handleUpdateLinkUserState}
+                />
+            </>
+        )
+    );
+};

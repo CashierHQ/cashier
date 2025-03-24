@@ -21,7 +21,6 @@ export class ActorManager {
             throw new Error("Identity not found");
         }
 
-        console.log("getHttpAgent ", this.identity.getPrincipal().toText());
         const agent = HttpAgent.createSync({
             identity: this.identity,
             host: "http://127.0.0.1:4943",

@@ -10,7 +10,6 @@ import {
     ApproveArgs,
     TransferArg,
 } from "../../declarations/icp_ledger_canister/icp_ledger_canister.did";
-import { safeParseJSON } from "../utils/parser";
 import { Identity } from "@dfinity/agent";
 
 export function flattenAndFindByMethod(
@@ -87,8 +86,7 @@ export class Icrc112Executor {
             amount: BigInt(10_0000_0000),
         };
         this.token_helper.with_identity(this.identity);
-        const transfer_res = await this.token_helper.transfer(transfer_arg);
-        console.log("icrc1_transfer", safeParseJSON(transfer_res));
+        await this.token_helper.transfer(transfer_arg);
     }
 
     public async executeIcrc2Approve() {
@@ -107,17 +105,15 @@ export class Icrc112Executor {
         };
 
         this.token_helper.with_identity(this.identity);
-        const approve_res = await this.token_helper.approve(approve_args);
-        console.log("approve_res", safeParseJSON(approve_res));
+        await this.token_helper.approve(approve_args);
     }
 
     public async triggerTransaction() {
         this.actor.setIdentity(this.identity);
-        const res_update_action = await this.actor.trigger_transaction({
+        await this.actor.trigger_transaction({
             action_id: this.action_id,
             link_id: this.link_id,
             transaction_id: this.trigger_tx_id,
         });
-        console.log("trigger_transaction response ", safeParseJSON(res_update_action));
     }
 }

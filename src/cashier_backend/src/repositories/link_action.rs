@@ -22,6 +22,18 @@ impl LinkActionRepository {
         });
     }
 
+    pub fn update(&self, link_action: LinkAction) {
+        LINK_ACTION_STORE.with_borrow_mut(|store| {
+            let id: LinkActionKey = LinkActionKey {
+                link_id: link_action.link_id.clone(),
+                action_type: link_action.action_type.clone(),
+                action_id: link_action.action_id.clone(),
+                user_id: link_action.user_id.clone(),
+            };
+            store.insert(id.to_str(), link_action);
+        });
+    }
+
     pub fn get(&self, id: LinkActionKey) -> Option<LinkAction> {
         LINK_ACTION_STORE.with_borrow(|store| store.get(&id.to_str()))
     }

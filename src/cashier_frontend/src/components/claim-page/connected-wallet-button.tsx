@@ -6,11 +6,13 @@ import { transformShortAddress } from "@/utils";
 interface CustomConnectedWalletButtonProps {
     connectedAccount?: string;
     postfixText?: string;
+    postfixIcon?: React.ReactNode;
 }
 
 const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = ({
     connectedAccount,
     postfixText,
+    postfixIcon,
 }) => {
     return (
         <button
@@ -27,7 +29,7 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
             )}
         >
             <span className="flex items-center w-full">
-                <LuWallet2 className="mr-2" color="green" size={22} />
+                {postfixIcon ? postfixIcon : <LuWallet2 className="mr-2" color="green" size={22} />}
                 <span className="flex-grow text-left">
                     {transformShortAddress(connectedAccount || "")}
                 </span>{" "}

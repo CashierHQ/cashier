@@ -41,7 +41,7 @@ pub struct LinkAction {
     pub action_id: String,
     pub action_type: String,
     pub user_id: String,
-    pub link_user_state: LinkUserState,
+    pub link_user_state: Option<LinkUserState>,
 }
 
 impl LinkType {
@@ -143,7 +143,7 @@ impl FromStr for Template {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum LinkUserState {
     ChooseWallet,
     CompletedLink,

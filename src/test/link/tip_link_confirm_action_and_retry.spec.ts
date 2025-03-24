@@ -13,7 +13,7 @@ import {
 import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
-import { parseResultResponse, safeParseJSON } from "../utils/parser";
+import { parseResultResponse } from "../utils/parser";
 import { TokenHelper } from "../utils/token-helper";
 
 import { Principal } from "@dfinity/principal";
@@ -181,15 +181,12 @@ describe("Tip link confirm and retry success", () => {
             link_id: linkId,
             action_id: "",
             action_type: "CreateLink",
-            params: [],
         };
 
         const createActionRes = await actor.process_action(input);
         const link = await actor.get_link(linkId, []);
         const linkRes = parseResultResponse(link);
         const actionRes = parseResultResponse(createActionRes);
-
-        console.log("actionRes", safeParseJSON(actionRes as any));
 
         createLinkActionId = actionRes.id;
 
@@ -221,7 +218,6 @@ describe("Tip link confirm and retry success", () => {
             link_id: linkId,
             action_id: createLinkActionId,
             action_type: "CreateLink",
-            params: [],
         };
 
         const confirmRes = await actor.process_action(input);
@@ -229,8 +225,6 @@ describe("Tip link confirm and retry success", () => {
         const actionDto = parseResultResponse(confirmRes);
 
         icrc_112_requests = actionDto.icrc_112_requests[0]!;
-
-        console.log("icrc_request 112", JSON.stringify(icrc_112_requests, null, 2));
 
         expect(actionDto.id).toEqual(createLinkActionId);
         expect(actionDto.state).toEqual("Action_state_processing");
@@ -291,15 +285,12 @@ describe("Tip link confirm and retry success", () => {
             link_id: linkId,
             action_id: createLinkActionId,
             action_type: "CreateLink",
-            params: [],
         };
 
         const confirmRes = await actor.process_action(input);
         const actionDto = parseResultResponse(confirmRes);
 
         icrc_112_requests = actionDto.icrc_112_requests[0]!;
-
-        console.log("icrc_request", JSON.stringify(icrc_112_requests, null, 2));
 
         expect(actionDto.id).toEqual(createLinkActionId);
         expect(actionDto.state).toEqual("Action_state_processing");
@@ -336,13 +327,11 @@ describe("Tip link confirm and retry success", () => {
         await execute_helper.executeIcrc2Approve();
         await execute_helper.triggerTransaction();
 
-        const update_action_res = await actor.update_action({
+        await actor.update_action({
             action_id: createLinkActionId,
             link_id: linkId,
             external: true,
         });
-
-        console.log("update_action_res", safeParseJSON(update_action_res as any));
 
         const input: GetLinkOptions = {
             action_type: "CreateLink",
@@ -352,8 +341,6 @@ describe("Tip link confirm and retry success", () => {
         const res = parseResultResponse(getActionRes);
 
         const actionDto = res.action[0]!;
-
-        console.log("getActionRes", safeParseJSON(res as any));
 
         expect(res.link.id).toEqual(linkId);
         expect(actionDto.state).toEqual("Action_state_success");

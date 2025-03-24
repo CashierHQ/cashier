@@ -89,8 +89,9 @@ impl From<AddTokenInput> for UserToken {
     }
 }
 
-#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct RemoveTokenInput {
     pub chain: Chain,
     pub ledger_id: Option<LedgerId>,

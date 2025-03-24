@@ -169,7 +169,6 @@ describe("Tip Link validate user not have enough balance", () => {
             link_id: linkId,
             action_id: "",
             action_type: "CreateLink",
-            params: [],
         };
 
         const createActionRes = await actor.process_action(input);

@@ -170,7 +170,6 @@ describe("Tip link timeout action", () => {
             link_id: linkId,
             action_id: "",
             action_type: "CreateLink",
-            params: [],
         };
 
         const createActionRes = await actor.process_action(input);
@@ -208,13 +207,10 @@ describe("Tip link timeout action", () => {
             link_id: linkId,
             action_id: createLinkActionId,
             action_type: "CreateLink",
-            params: [],
         };
 
         const confirmRes = await actor.process_action(input);
         const actionDto = parseResultResponse(confirmRes);
-
-        console.log("actionDto", actionDto);
 
         expect(actionDto.id).toEqual(createLinkActionId);
         expect(actionDto.state).toEqual("Action_state_processing");

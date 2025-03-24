@@ -1,4 +1,13 @@
 #[cfg(test)]
+pub mod link_update_user_state;
+
+#[cfg(test)]
+pub mod link_get_user_state;
+
+#[cfg(test)]
+pub mod process_action_anonymous;
+
+#[cfg(test)]
 mod tests {
     use std::str::FromStr;
 
@@ -12,6 +21,7 @@ mod tests {
             action::types::{ActionDto, ProcessActionInput},
             link::api::LinkApi,
         },
+        info,
         services::{
             __tests__::tests::MockIcEnvironment,
             link::v2::LinkService,
@@ -40,7 +50,6 @@ mod tests {
             link_id: link_id.clone(),
             action_type: action_type.clone(),
             action_id: action_id.clone(),
-            params: None,
         };
 
         let action_type_enum = ActionType::from_str(&action_type).unwrap();
@@ -52,6 +61,7 @@ mod tests {
             creator: user_id.clone(),
             link_id: link_id.clone(),
             intents: vec![],
+            default_link_user_state: None,
         };
 
         when!(ic_env.caller).then_return(caller.clone());
@@ -103,7 +113,6 @@ mod tests {
             link_id: link_id.clone(),
             action_type: action_type.clone(),
             action_id: action_id.clone(),
-            params: None,
         };
 
         let action = Action {
@@ -161,7 +170,6 @@ mod tests {
             link_id: link_id.clone(),
             action_type: action_type.clone(),
             action_id: action_id.clone(),
-            params: None,
         };
 
         when!(ic_env.caller).then_return(caller.clone());
@@ -197,7 +205,6 @@ mod tests {
             link_id: link_id.clone(),
             action_type: action_type.clone(),
             action_id: action_id.clone(),
-            params: None,
         };
 
         when!(ic_env.caller).then_return(caller.clone());
@@ -235,7 +242,6 @@ mod tests {
             link_id: link_id.clone(),
             action_type: action_type.clone(),
             action_id: action_id.clone(),
-            params: None,
         };
 
         when!(ic_env.caller).then_return(caller.clone());
@@ -277,7 +283,6 @@ mod tests {
             link_id: link_id.clone(),
             action_type: action_type.clone(),
             action_id: action_id.clone(),
-            params: None,
         };
 
         let action = Action {
@@ -301,7 +306,7 @@ mod tests {
             icrc_112_requests: None,
         }));
 
-        when!(link_service.link_validate_balance_with_asset_info).then_return(Err(
+        when!(link_service.link_validate_user_update_action).then_return(Err(
             CanisterError::ValidationErrors("Failed to validate balance".to_string()),
         ));
 
@@ -313,6 +318,8 @@ mod tests {
             ic_env,
         );
         let result = api.process_action(input).await;
+
+        info!("{:?}", result);
 
         assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
     }

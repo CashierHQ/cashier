@@ -25,7 +25,13 @@ export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
 
 export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
     const cashierFeeIntents = useMemo(() => {
-        return intents?.filter((intent) => intent.task === TASK.TRANSFER_WALLET_TO_TREASURY) ?? [];
+        return (
+            intents?.filter(
+                (intent) =>
+                    intent.task === TASK.TRANSFER_WALLET_TO_TREASURY ||
+                    intent.task === TASK.TRANSFER_LINK_TO_WALLET,
+            ) ?? []
+        );
     }, [intents]);
 
     return cashierFeeIntents;
@@ -34,9 +40,7 @@ export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
 export const useConfirmButtonState = (actionState: string | undefined, t: TFunction) => {
     const [isDisabled, setIsDisabled] = useState(false);
     const [buttonText, setButtonText] = useState("");
-    console.log(actionState);
     const mapActionStateToButtonText = () => {
-        console.log(actionState);
         switch (actionState) {
             case ACTION_STATE.CREATED:
                 return t("transaction.confirm_popup.confirm_button");

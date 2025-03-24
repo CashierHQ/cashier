@@ -24,10 +24,10 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
                 <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
                     {t("link.preview.fees.label")}
                 </h2>
-                <Info className="text-green" size={22} onClick={onInfoClick} />
+                <Info className="text-green" size={20} onClick={onInfoClick} />
             </div>
 
-            <ul className="flex flex-col gap-3 border-solid border-inherit border-2 rounded-xl mt-3 p-4 overflow-y-auto max-h-[200px]">
+            <ul className="flex flex-col gap-3 border-solid border-inherit border-[1px] rounded-xl mt-3 ml-2 px-4 py-3 overflow-y-auto max-h-[200px]">
                 {intents.map((intent, index) => (
                     <li key={`fee-${index}`}>
                         <LinkPreviewCashierFeeItem feeModel={intent} />
@@ -35,7 +35,9 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
                 ))}
             </ul>
 
-            <LinkPreviewCashierFeeTotal intents={intents} />
+            <div className="ml-2">
+                <LinkPreviewCashierFeeTotal intents={intents} />
+            </div>
         </div>
     );
 };

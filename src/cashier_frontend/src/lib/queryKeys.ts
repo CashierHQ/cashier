@@ -1,4 +1,5 @@
 import LinkService from "@/services/link.service";
+import { LinkGetUserStateInputModel } from "@/services/types/link.service.types";
 import { UsdConversionService } from "@/services/usdConversionService";
 import UserService from "@/services/user.service";
 import { groupLinkListByDate } from "@/utils";
@@ -56,15 +57,14 @@ export const queryKeys = createQueryKeyStore({
         }),
         detail: (
             linkId: string | undefined,
-            actionType: string,
             identity: Identity | PartialIdentity | undefined,
+            actionType?: string,
         ) => ({
             queryKey: [QUERY_KEYS.LINKS, linkId],
             queryFn: async () => {
                 if (!linkId) throw new Error("Link ID is required");
-
                 try {
-                    const linkService = new LinkService(identity);
+                    const linkService = identity ? new LinkService(identity) : new LinkService();
                     const linkDetail = await linkService.getLink(linkId, actionType);
                     return linkDetail;
                 } catch (error) {
@@ -73,6 +73,7 @@ export const queryKeys = createQueryKeyStore({
                 }
             },
         }),
+
         feePreview: (
             linkId: string | undefined,
             identity: Identity | PartialIdentity | undefined,
@@ -82,6 +83,22 @@ export const queryKeys = createQueryKeyStore({
                 if (!linkId || !identity) return [];
                 const linkService = new LinkService(identity);
                 return linkService.getFeePreview(linkId);
+            },
+        }),
+        userState: (
+            input: LinkGetUserStateInputModel,
+            identity: Identity | PartialIdentity | undefined,
+        ) => ({
+            queryKey: [QUERY_KEYS.LINKS, input.link_id, input.action_type],
+            queryFn: async () => {
+                try {
+                    const linkService = new LinkService(identity);
+                    const userState = await linkService.getLinkUserState(input);
+                    return userState;
+                } catch (error) {
+                    console.log("🚀 ~ queryFn: ~ error:", error);
+                    throw error;
+                }
             },
         }),
     },

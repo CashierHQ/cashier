@@ -100,8 +100,6 @@ export class CallCanisterService {
 
             reply = lookupResultToBuffer(certificate.lookup([...path, "reply"]));
 
-            console.log("status", status);
-
             switch (status) {
                 case "replied":
                     break;

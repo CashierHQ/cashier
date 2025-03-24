@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { IoIosArrowBack } from "react-icons/io";
+import { IoIosArrowBack, IoIosCloseCircle } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
-import { SlWallet } from "react-icons/sl";
+import { PiWallet } from "react-icons/pi";
+import { HiOutlineWallet } from "react-icons/hi2";
 import { IoClose } from "react-icons/io5";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
@@ -21,8 +22,9 @@ import { useConfirmDialog } from "@/hooks/useDialog";
 import { useSigners } from "@/contexts/signer-list-context";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import { Principal } from "@dfinity/principal";
+import { FaCircleCheck } from "react-icons/fa6";
 
-interface ClaimLinkDetail {
+export interface ClaimLinkDetail {
     title: string;
     amount: number;
 }
@@ -31,8 +33,9 @@ interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData: LinkDetailModel;
     claimLinkDetails: ClaimLinkDetail[];
-    handleClaim: () => void;
-    setIsClaiming: () => void;
+    onSubmit: (address: string) => void;
+    onBack?: () => void;
+    isDisabled?: boolean;
 }
 
 enum WALLET_OPTIONS {
@@ -44,11 +47,11 @@ enum WALLET_OPTIONS {
 
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
-    handleClaim,
+    onSubmit,
     claimLinkDetails,
-    setIsClaiming,
+    onBack,
+    isDisabled,
 }) => {
-    console.log("🚀 ~ form:", form.getValues());
     const { t } = useTranslation();
     const { connect, disconnect, user } = useAuth();
     const identity = useIdentity();
@@ -87,11 +90,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
         try {
-            console.log("Paste");
             // Check principal format
             const text = await navigator.clipboard.readText();
-            const isValid = Principal.fromText(text);
-            console.log(isValid);
+            Principal.fromText(text ?? "");
             field.onChange(text);
         } catch (err) {
             console.error("Failed to read clipboard contents: ", err);
@@ -100,11 +101,16 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     const handleRemoveAllText = (field: { onChange: (value: string) => void }) => {
         field.onChange("");
+        form.clearErrors("address");
     };
 
     useEffect(() => {
         if (identity && selectOptionWallet) {
             setCurrentSelectOptionWallet(selectOptionWallet);
+        }
+        // If user already connect wallet, then use the connected wallet address
+        if (identity) {
+            form.setValue("address", user?.principal.toString());
         }
     }, [selectOptionWallet, identity]);
 
@@ -112,17 +118,24 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         console.log(currentSelectOptionWallet);
     }, [currentSelectOptionWallet]);
 
+    useEffect(() => {
+        if (identity) {
+            setCurrentSelectOptionWallet(WALLET_OPTIONS.INTERNET_IDENTITY);
+        }
+    }, []);
+
     return (
         <>
             <div className="w-full flex justify-center items-center mt-5 relative">
                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                     {t("claim.receive")}
                 </h4>
-                <div className="absolute left-[10px]" onClick={setIsClaiming}>
+                <div className="absolute left-[10px]" onClick={onBack}>
                     <IoIosArrowBack />
                 </div>
             </div>
-            <div id="asset-section" className="my-5">
+
+            <div id="asset-section" className="w-full my-5">
                 <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
                     {t("claim.asset")}
                 </h2>
@@ -147,13 +160,17 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
             <Form {...form}>
                 <form
-                    className="flex flex-col gap-y-[10px] my-5"
-                    onSubmit={form.handleSubmit(handleClaim)}
+                    className="w-full flex flex-col gap-y-[10px] my-5"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        onSubmit(form.getValues("address") ?? "");
+                    }}
                 >
                     <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
                         {t("claim.receive_options")}
                     </h2>
                     <div className="ml-1">
+                        {/* Google login */}
                         <WalletButton
                             title="Google login"
                             handleConnect={() => handleConnectWallet(WALLET_OPTIONS.GOOGLE)}
@@ -168,6 +185,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             <CustomConnectedWalletButton
                                 connectedAccount={user?.principal.toString()}
                                 postfixText="Connected"
+                                postfixIcon={
+                                    <img src="/icpLogo.png" alt="icp" className="w-6 h-6 mr-2" />
+                                }
                             />
                         ) : (
                             <WalletButton
@@ -190,7 +210,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                 title="Other wallets"
                                 handleConnect={() => handleConnectWallet(WALLET_OPTIONS.OTHER)}
                                 disabled={false}
-                                icon={<SlWallet className="mr-2 h-6 w-6" color="green" />}
+                                icon={<HiOutlineWallet className="mr-2 h-6 w-6" color="green" />}
                             />
                         )}
 
@@ -199,7 +219,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             <WalletButton
                                 title={t("claim.addressPlaceholder")}
                                 handleConnect={() => handleConnectWallet(WALLET_OPTIONS.TYPING)}
-                                icon={<IoWalletOutline color="green" className="mr-2 h-6 w-6" />}
+                                icon={<PiWallet color="green" className="mr-2 h-6 w-6" />}
                             />
                         ) : (
                             <FormField
@@ -217,9 +237,15 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                     />
                                                 }
                                                 rightIcon={
-                                                    field.value ? (
-                                                        <IoClose
-                                                            color="green"
+                                                    field.value && form.formState.errors.address ? (
+                                                        <IoIosCloseCircle
+                                                            color="red"
+                                                            className="mr-1 h-6 w-6"
+                                                        />
+                                                    ) : field.value &&
+                                                      !form.formState.errors.address ? (
+                                                        <FaCircleCheck
+                                                            color="#36A18B"
                                                             className="mr-1 h-6 w-6"
                                                         />
                                                     ) : (
@@ -236,7 +262,26 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                 }
                                                 placeholder={t("claim.addressPlaceholder")}
                                                 className="py-5 h-14 text-md rounded-xl"
+                                                onFocusShowIcon={true}
+                                                onFocusText={true}
                                                 {...field}
+                                                onChange={(e) => {
+                                                    field.onChange(e);
+                                                    // Validate the address format
+                                                    try {
+                                                        if (e.target.value) {
+                                                            Principal.fromText(e.target.value);
+                                                            form.clearErrors("address");
+                                                        } else {
+                                                            form.clearErrors("address");
+                                                        }
+                                                    } catch {
+                                                        form.setError("address", {
+                                                            type: "manual",
+                                                            message: "Invalid address format",
+                                                        });
+                                                    }
+                                                }}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -250,17 +295,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                         type="submit"
                         variant="default"
                         size="lg"
-                        onClick={() => console.log(form.formState.errors)}
+                        className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
+                        disabled={isDisabled}
                     >
-                        {t("claim.claim")}
+                        {isDisabled ? t("processing") : t("claim.claim")}
                     </FixedBottomButton>
-
-                    {/* <Button
-                        type="submit"
-                        className="fixed bottom-[30px] w-[80vw] max-w-[350px] left-1/2 -translate-x-1/2"
-                    >
-                        {t("continue")}
-                    </Button> */}
                 </form>
             </Form>
             <ConfirmDialog

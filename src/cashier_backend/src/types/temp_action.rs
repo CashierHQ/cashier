@@ -1,4 +1,4 @@
-use cashier_types::{Action, ActionState, ActionType, Intent};
+use cashier_types::{Action, ActionState, ActionType, Intent, LinkUserState};
 
 #[derive(Debug, Clone)]
 pub struct TemporaryAction {
@@ -8,6 +8,7 @@ pub struct TemporaryAction {
     pub creator: String,
     pub link_id: String,
     pub intents: Vec<Intent>,
+    pub default_link_user_state: Option<LinkUserState>,
 }
 
 impl TemporaryAction {

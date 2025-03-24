@@ -20,7 +20,12 @@ const Header: React.FC<HeaderProps> = ({ onConnect, openTestForm }) => {
     if (!user) {
         return (
             <div className="w-full flex justify-between items-center">
-                <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                <img
+                    src="./logo.svg"
+                    alt="Cashier logo"
+                    className="max-w-[130px]"
+                    onClick={() => navigate("/")}
+                />
                 <LoginButton onClick={onConnect}>Login</LoginButton>
             </div>
         );
@@ -28,7 +33,12 @@ const Header: React.FC<HeaderProps> = ({ onConnect, openTestForm }) => {
         return (
             <>
                 <div className="w-full flex justify-between items-center">
-                    <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                    <img
+                        src="./logo.svg"
+                        alt="Cashier logo"
+                        className="max-w-[130px]"
+                        onClick={() => navigate("/")}
+                    />
                     <Button
                         variant="outline"
                         size="icon"

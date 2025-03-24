@@ -1,16 +1,15 @@
 use candid::Principal;
 use cashier_types::{
-    Action, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, Link,
-    LinkAction, LinkType, Wallet,
+    Action, ActionState, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType,
+    Link, LinkAction, LinkState, LinkType, LinkUserState, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
 use crate::{
-    constant::{
-        ICP_CANISTER_ID, INTENT_LABEL_LINK_TO_WALLET, INTENT_LABEL_WALLET_TO_LINK,
-        INTENT_LABEL_WALLET_TO_TREASURY,
-    },
+    constant::{ICP_CANISTER_ID, INTENT_LABEL_WALLET_TO_LINK, INTENT_LABEL_WALLET_TO_TREASURY},
+    core::link::types::UserStateMachineGoto,
+    info,
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
     services::transaction_manager::fee::Fee,
     types::error::CanisterError,
@@ -111,7 +110,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 intent.id = Uuid::new_v4().to_string();
                 intent.state = IntentState::Created;
                 intent.created_at = ts;
-                intent.label = INTENT_LABEL_LINK_TO_WALLET.to_string();
+                // same label with transfer asset to link
+                intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
 
                 intents.push(intent);
             }
@@ -143,7 +143,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 IntentTask::TransferWalletToLink => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
-                        CanisterError::HandleLogicError("Asset not found".to_string())
+                        CanisterError::HandleLogicError(
+                            "[link_assemble_intents] task TransferWalletToLink Asset not found"
+                                .to_string(),
+                        )
                     })?;
 
                     transfer_data.amount = asset_info.total_amount;
@@ -211,8 +214,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
                 IntentTask::TransferLinkToWallet => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
+                    info!("intent: {:#?}", intent);
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
-                        CanisterError::HandleLogicError("Asset not found".to_string())
+                        CanisterError::HandleLogicError(
+                            "[link_assemble_intents] task TransferLinkToWallet Asset not found"
+                                .to_string(),
+                        )
                     })?;
 
                     transfer_data.amount = asset_info.total_amount;
@@ -274,19 +281,29 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return action;
     }
 
-    pub fn link_validate_user_create_action(
+    // this method validate for each action type
+    // create link: only creator can create link
+    // withdraw: only creator can withdraw
+    // claim: any one can claim
+    pub async fn link_validate_user_create_action(
         &self,
         link_id: &str,
         action_type: &ActionType,
         user_id: &str,
+        caller: &Principal,
     ) -> Result<(), CanisterError> {
         // get link
         let link = self.get_link_by_id(link_id.to_string()).unwrap();
 
-        // only alow creator to create withdraw action
+        info!("link data: {:#?}", link);
+
         match action_type {
-            ActionType::Withdraw => {
+            ActionType::CreateLink => {
+                // validate user id == link creator
                 if link.creator == user_id {
+                    // validate user’s balance
+                    self.link_validate_balance_with_asset_info(action_type, link_id, caller)
+                        .await?;
                     return Ok(());
                 } else {
                     return Err(CanisterError::ValidationErrors(
@@ -294,16 +311,41 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
+            ActionType::Withdraw => {
+                // validate user id == link creator
+                if link.creator == user_id {
+                    //TODO : validate link's balance, link state
+                    return Ok(());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the link".to_string(),
+                    ));
+                }
+            }
+            ActionType::Claim => {
+                // validate link state
+                info!("link state: {:#?}", link.state);
+                if link.state != LinkState::Active {
+                    return Err(CanisterError::ValidationErrors(
+                        "Link is not active".to_string(),
+                    ));
+                }
+
+                // TODO: validate link's balance
+                return Ok(());
+            }
+            // validate creator and balance
             _ => {
                 return Ok(());
             }
         }
     }
 
-    pub fn link_validate_user_update_action(
+    pub async fn link_validate_user_update_action(
         &self,
         action: &Action,
         user_id: &str,
+        caller: &Principal,
     ) -> Result<(), CanisterError> {
         //validate user_id
         match action.r#type.clone() {
@@ -314,6 +356,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         "User is not the creator of the action".to_string(),
                     ));
                 }
+
+                self.link_validate_balance_with_asset_info(&action.r#type, &link.id, caller)
+                    .await?;
             }
             ActionType::Withdraw => {
                 let link = self.get_link_by_id(action.link_id.clone())?;
@@ -392,25 +437,87 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         action_type: String,
         user_id: String,
     ) -> Result<Option<LinkAction>, CanisterError> {
-        let link_acrtion = self.link_action_repository.get_by_prefix(
+        let link_action = self.link_action_repository.get_by_prefix(
             link_id.clone(),
             action_type.clone(),
             user_id.clone(),
         );
 
-        if link_acrtion.is_empty() {
+        if link_action.is_empty() {
             return Ok(None);
         }
 
-        Ok(Some(link_acrtion[0].clone()))
+        Ok(Some(link_action[0].clone()))
     }
 
-    pub fn create_link_action_user(
+    pub fn handle_user_link_state_machine(
         &self,
         link_id: String,
         action_type: String,
         user_id: String,
+        goto: UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError> {
-        todo!()
+        // check inputs that can be changed this state
+        let action_list = self.link_action_repository.get_by_prefix(
+            link_id.clone(),
+            action_type.clone(),
+            user_id.clone(),
+        );
+
+        if action_list.is_empty() {
+            return Err(CanisterError::NotFound("Link action not found".to_string()));
+        }
+
+        let mut link_action = action_list[0].clone();
+
+        // Validate current state
+        let current_user_state = link_action
+            .link_user_state
+            .clone()
+            .ok_or_else(|| CanisterError::HandleLogicError("unknown state".to_string()))?;
+
+        // Flattened state transitions using if/else
+        let new_state;
+
+        // Check if we're in final state (CompletedLink)
+        if current_user_state == LinkUserState::CompletedLink {
+            return Err(CanisterError::HandleLogicError(
+                "current state is final state".to_string(),
+            ));
+        }
+        // Check for valid transition: ChooseWallet -> CompletedLink
+        else if current_user_state == LinkUserState::ChooseWallet
+            && goto == UserStateMachineGoto::Continue
+        {
+            // Validate the action exists and is successful
+            let action = self
+                .get_action_of_link(&link_id, &action_type, &user_id)
+                .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
+
+            if action.state != ActionState::Success {
+                return Err(CanisterError::HandleLogicError(
+                    "Action is not success".to_string(),
+                ));
+            }
+
+            // Set the new state
+            new_state = LinkUserState::CompletedLink;
+        }
+        // Any other transition is invalid
+        else {
+            return Err(CanisterError::HandleLogicError(format!(
+                "current state {:#?} is not allowed to transition: {:#?}",
+                current_user_state, goto
+            )));
+        }
+
+        // Only update the state field
+        link_action.link_user_state = Some(new_state);
+
+        // Update in repository
+        self.link_action_repository.update(link_action.clone());
+
+        // Return the updated link_action
+        Ok(link_action)
     }
 }

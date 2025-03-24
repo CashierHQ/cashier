@@ -12,6 +12,8 @@ const getIntentTitle = (intent: IntentModel, t: (key: string) => string) => {
             return t("transaction.confirm_popup.asset_label");
         case TASK.TRANSFER_WALLET_TO_TREASURY:
             return t("transaction.confirm_popup.link_creation_fee_label");
+        case TASK.TRANSFER_LINK_TO_WALLET:
+            return t("transaction.confirm_popup.asset_claim_label");
     }
 };
 

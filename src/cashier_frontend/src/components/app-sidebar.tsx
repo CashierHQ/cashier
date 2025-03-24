@@ -9,6 +9,7 @@ import { transformShortAddress } from "@/utils";
 import { FaRegCopy } from "react-icons/fa";
 import copy from "copy-to-clipboard";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export interface SidebarMenuItem {
     title: string;
@@ -23,6 +24,7 @@ interface AppSidebarProps {
 const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
     const { user, disconnect } = useAuth();
     const { toast } = useToast();
+    const navigate = useNavigate();
 
     const handleCopy = (e: React.SyntheticEvent) => {
         try {
@@ -34,6 +36,11 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
+    };
+
+    const handleDisConnect = () => {
+        disconnect();
+        navigate("/");
     };
 
     return (
@@ -86,7 +93,7 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
                         </div>
 
                         <span className="ml-auto">
-                            <IoExitOutline color="gray" size={24} onClick={disconnect} />
+                            <IoExitOutline color="gray" size={24} onClick={handleDisConnect} />
                         </span>
                     </div>
                 </div>

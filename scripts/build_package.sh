@@ -9,6 +9,10 @@ fi
 
 PACKAGE_NAME=$1
 
+echo "============================================================"
+echo "Building package: $PACKAGE_NAME"
+echo "============================================================"
+
 # Build the package
 cargo build --release --target wasm32-unknown-unknown --package "$PACKAGE_NAME" --locked
 
