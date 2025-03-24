@@ -136,7 +136,7 @@ export default function ClaimPage() {
     }, [linkData, metadata]);
 
     return (
-        <div className="w-screen h-90 flex flex-col items-center py-5">
+        <div className="w-screen h-90 md:h-screen flex flex-col items-center py-5">
             <SheetWrapper>
                 <div className="w-11/12 max-w-[400px] h-full">
                     <Header onConnect={handleConnectWallet} openTestForm={connectToWallet} />
@@ -166,7 +166,7 @@ export default function ClaimPage() {
                                             <ClaimFormPage
                                                 form={form}
                                                 claimLinkDetails={{
-                                                    title: metadata?.name ?? "",
+                                                    title: metadata?.symbol ?? "",
                                                     amount: assetNumber ?? 0,
                                                 }}
                                                 onSubmit={handleClaim}

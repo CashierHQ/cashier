@@ -90,10 +90,22 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
         try {
-            // Check principal format
             const text = await navigator.clipboard.readText();
-            Principal.fromText(text ?? "");
             field.onChange(text);
+            // Add validation for pasted text
+            try {
+                if (text) {
+                    Principal.fromText(text);
+                    form.clearErrors("address");
+                } else {
+                    form.clearErrors("address");
+                }
+            } catch {
+                form.setError("address", {
+                    type: "manual",
+                    message: "Invalid address format",
+                });
+            }
         } catch (err) {
             console.error("Failed to read clipboard contents: ", err);
         }
@@ -274,6 +286,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                     onFocusText={true}
                                                     {...field}
                                                     onChange={(e) => {
+                                                        console.log("Change address", e);
                                                         field.onChange(e);
                                                         // Validate the address format
                                                         try {
