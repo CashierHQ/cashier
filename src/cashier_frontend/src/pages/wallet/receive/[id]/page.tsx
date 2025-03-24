@@ -13,6 +13,7 @@ import { Info, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaRegCopy } from "react-icons/fa";
+import { FiCopy } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import { AssetSelectItem } from "@/components/asset-select";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
@@ -152,10 +153,10 @@ export default function ReceiveTokenPage() {
                     <IconInput
                         isCurrencyInput={false}
                         placeholder={t("claim.addressPlaceholder")}
-                        className="pl-3 py-5 h-14 text-md rounded-xl"
+                        className="pl-3 py-5 h-12 text-md"
                         value={transformShortAddress(user?.principal?.toString() ?? "")}
                         disabled={true}
-                        rightIcon={<FaRegCopy color="green" size={22} />}
+                        rightIcon={<FiCopy color="#36A18B" size={18} />}
                         onRightIconClick={handleCopy}
                     />
                 </div>
