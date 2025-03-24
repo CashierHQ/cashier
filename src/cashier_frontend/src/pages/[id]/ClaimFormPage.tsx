@@ -82,6 +82,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     const handleSubmit = async (anonymousWalletAddress: string = "") => {
         // Validation
+        console.log("Click submit");
         onSubmit();
         try {
             setIsDisabledButton(true);

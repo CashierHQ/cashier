@@ -191,7 +191,6 @@ export function useCreateAction(actionType?: ACTION_TYPE) {
     const mutation = useMutation({
         mutationFn: (vars: { linkId: string }) => {
             const linkService = new LinkService(identity);
-            console.log("Calling create action");
             return linkService.processAction({
                 linkId: vars.linkId,
                 actionType: actionType ?? ACTION_TYPE.CREATE_LINK,

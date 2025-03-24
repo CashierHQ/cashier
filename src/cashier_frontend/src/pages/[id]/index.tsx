@@ -136,16 +136,16 @@ export default function ClaimPage() {
     }, [linkData, metadata]);
 
     return (
-        <div className="w-screen h-screen flex flex-col items-center py-5">
+        <div className="w-screen h-90 md:h-screen flex flex-col items-center py-5">
             <SheetWrapper>
-                <div className="w-11/12 max-w-[400px]">
+                <div className="w-11/12 max-w-[400px] h-full">
                     <Header onConnect={handleConnectWallet} openTestForm={connectToWallet} />
                     {isLoadingLinkData || isLoadingLinkUserState ? (
                         <div className="flex justify-center items-center h-full">
                             <Spinner sizes="32" />
                         </div>
                     ) : (
-                        <div className="flex flex-col flex-grow w-full sm:max-w-[400px] md:max-w-[100%] my-3">
+                        <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
                             {(!identity || !linkUserState?.link_user_state) &&
                             linkData &&
                             showDefaultPage ? (
@@ -166,7 +166,7 @@ export default function ClaimPage() {
                                             <ClaimFormPage
                                                 form={form}
                                                 claimLinkDetails={{
-                                                    title: linkData?.link.title ?? "",
+                                                    title: metadata?.symbol ?? "",
                                                     amount: assetNumber ?? 0,
                                                 }}
                                                 onSubmit={handleClaim}
