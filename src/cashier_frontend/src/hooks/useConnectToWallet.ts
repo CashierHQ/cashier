@@ -33,14 +33,9 @@ const useConnectToWallet = () => {
         }
     }, [identity, user, selectedOption]);
 
-    const connectToWallet = async (
-        e: React.MouseEvent<HTMLButtonElement>,
-        option: WALLET_OPTIONS,
-    ) => {
+    const connectToWallet = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();
-
-        setSelectedOption(option);
 
         try {
             await connect();
