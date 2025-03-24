@@ -12,7 +12,7 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
-    //const navigateReceivePage = () => navigate(`/wallet/receive`);
+    const navigateReceivePage = () => navigate(`/wallet/receive`);
     const navigateSendPage = () => navigate(`/wallet/send`);
 
     return (
@@ -32,7 +32,7 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
                 </button> */}
             </div>
 
-            <SendReceive onSend={navigateSendPage} />
+            <SendReceive onSend={navigateSendPage} onReceive={navigateReceivePage} />
         </div>
     );
 }

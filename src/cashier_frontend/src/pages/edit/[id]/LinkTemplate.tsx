@@ -69,9 +69,9 @@ export default function LinkTemplate({
     });
 
     return (
-        <div className="w-full flex flex-col flex-grow overflow-hidden relative">
+        <div className="w-full flex flex-col flex-1">
             <Form {...form}>
-                <form onSubmit={handleSubmit} className="flex flex-col flex-grow">
+                <form onSubmit={handleSubmit} className="flex flex-col h-full">
                     <FormField
                         control={form.control}
                         name="title"
@@ -91,11 +91,11 @@ export default function LinkTemplate({
 
                     <div className="w-full h-[1px] bg-gray-200 my-3" />
                     <FormLabel className="mx-1 mb-2">{t("create.linkType")}</FormLabel>
-                    <div className="flex flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3 mb-[100px]">
-                        <Carousel className="items-center" setApi={carousel.setApi}>
-                            <CarouselContent>
+                    <div className="flex-1 flex flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3">
+                        <Carousel className="items-center flex-1" setApi={carousel.setApi}>
+                            <CarouselContent className="h-full">
                                 {LINK_TEMPLATES.map((template, index) => (
-                                    <CarouselItem key={`template-${index}`}>
+                                    <CarouselItem key={`template-${index}`} className="h-full">
                                         <LinkCard
                                             label={template.label}
                                             header={template.header}
@@ -113,7 +113,7 @@ export default function LinkTemplate({
                         type="submit"
                         variant="default"
                         size="lg"
-                        className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
+                        className="mt-4"
                         disabled={isButtonDisabled}
                     >
                         {t("continue")}

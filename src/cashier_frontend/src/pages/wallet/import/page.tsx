@@ -24,6 +24,10 @@ export default function ImportTokenPage() {
         }
     }
 
+    const onSubmitImportToken = (data: ImportTokenFormData) => {
+        console.log("🚀 ~ onSubmitImportToken ~ data:", data);
+    };
+
     return (
         <div className="flex flex-col h-full px-4 pt-2 pb-6">
             <BackHeader onBack={goBack}>
@@ -35,7 +39,7 @@ export default function ImportTokenPage() {
             {importData ? (
                 <ImportTokenReview data={importData} onImport={goToDetails} />
             ) : (
-                <ImportTokenForm onSubmit={setImportData} />
+                <ImportTokenForm onSubmit={onSubmitImportToken} />
             )}
         </div>
     );

@@ -14,6 +14,7 @@ import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useNavigate } from "react-router-dom";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -73,6 +74,16 @@ export default function LinkPreview({
         }
     };
 
+    const getTokenImage = (tokenAddress: string) => {
+        if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
+            return `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`;
+        }
+        if (tokenAddress === "k64dn-7aaaa-aaaam-qcdaq-cai") {
+            return `${IC_EXPLORER_IMAGES_PATH}2ouva-viaaa-aaaaq-aaamq-cai`;
+        }
+        return `${IC_EXPLORER_IMAGES_PATH}${tokenAddress}`;
+    };
+
     const renderLinkCard = () => {
         if (!link) return null;
 
@@ -80,7 +91,7 @@ export default function LinkPreview({
             return (
                 <LinkCard
                     label="Tip"
-                    src="/icpLogo.png"
+                    src={getTokenImage(link.asset_info[0].address)}
                     message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP}
                     title={link.title}
                 />

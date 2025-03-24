@@ -12,7 +12,6 @@ interface TokenDetailsHeroProps {
 }
 
 export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
-    console.log("🚀 ~ TokenDetailsHero ~ token:", token);
     const { t } = useTranslation();
     const navigate = useNavigate();
     const navigateReceivePage = () => navigate(`/wallet/receive/${token.address}`);
@@ -24,7 +23,6 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
         navigator.clipboard.writeText(token.address);
         setHasCopiedAddress(true);
     };
-    console.log(convertDecimalBigIntToNumber(token.amount, token.decimals));
 
     const CopyIcon = hasCopiedAddress ? CopyCheck : Copy;
 

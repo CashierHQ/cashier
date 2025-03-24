@@ -58,7 +58,7 @@ const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(
         if (isCurrencyInput) {
             return (
                 <div className="relative">
-                    <Input className={className} ref={ref} {...props} />
+                    <Input className={className} ref={ref} value={value} {...props} />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                         {currencySymbol}
                     </div>
@@ -85,6 +85,7 @@ const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(
                             console.log("onBlur");
                             setTimeout(() => setIsFocused(false), 0);
                         }}
+                        value={value}
                         {...props}
                     />
                     {icon && (

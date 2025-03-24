@@ -1,4 +1,4 @@
-import { CHAIN, LINK_INTENT_LABEL, LINK_TYPE } from "@/services/types/enum";
+import { CHAIN, LINK_INTENT_LABEL } from "@/services/types/enum";
 //import { NftAssetForm } from "@/components/link-details/nft-asset-form";
 import { TipLinkAssetForm } from "@/components/link-details/tip-link-asset-form";
 import { TipLinkAssetFormSchema } from "@/components/link-details/tip-link-asset-form.hooks";
@@ -32,27 +32,12 @@ export default function LinkDetails() {
         setButtonDisabled(false);
     };
 
-    const render = () => {
-        switch (link!.linkType) {
-            case LINK_TYPE.TIP_LINK:
-                return (
-                    <TipLinkAssetForm
-                        onSubmit={handleSubmitTipLinkDetails}
-                        isButtonDisabled={isButtonDisabled}
-                        defaultValues={{
-                            amount: link?.asset_info[0]?.amount,
-                            tokenAddress: link?.asset_info[0]?.address,
-                        }}
-                    />
-                );
-            case LINK_TYPE.NFT_CREATE_AND_AIRDROP:
-                // TODO: uncouple NftAssetForm from link details
-                //return <NftAssetForm form={form} onChange={handleChange} onSubmit={handleSubmit} />;
-                return null;
-            default:
-                return null;
-        }
-    };
-
-    return render();
+    return (
+        <div className="w-full h-full flex flex-col">
+            <TipLinkAssetForm
+                onSubmit={handleSubmitTipLinkDetails}
+                isButtonDisabled={isButtonDisabled}
+            />
+        </div>
+    );
 }

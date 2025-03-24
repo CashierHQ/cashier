@@ -90,10 +90,22 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
         try {
-            // Check principal format
             const text = await navigator.clipboard.readText();
-            Principal.fromText(text ?? "");
             field.onChange(text);
+            // Add validation for pasted text
+            try {
+                if (text) {
+                    Principal.fromText(text);
+                    form.clearErrors("address");
+                } else {
+                    form.clearErrors("address");
+                }
+            } catch {
+                form.setError("address", {
+                    type: "manual",
+                    message: "Invalid address format",
+                });
+            }
         } catch (err) {
             console.error("Failed to read clipboard contents: ", err);
         }
@@ -125,183 +137,195 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     }, []);
 
     return (
-        <>
-            <div className="w-full flex justify-center items-center mt-5 relative">
-                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
-                    {t("claim.receive")}
-                </h4>
-                <div className="absolute left-[10px]" onClick={onBack}>
-                    <IoIosArrowBack />
-                </div>
-            </div>
-
-            <div id="asset-section" className="w-full my-5">
-                <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
-                    {t("claim.asset")}
-                </h2>
-                <div id="asset-detail" className="flex justify-between ml-1">
-                    <div className="flex items-center">
-                        <div className="flex gap-x-5 items-center">
-                            <img
-                                src="/icpLogo.png"
-                                alt="link"
-                                className="w-10 h-10 rounded-sm mr-3"
-                            />
-                        </div>
-                        <div>{claimLinkDetails[0].title}</div>
+        <div className="flex flex-col">
+            <div className="flex-1">
+                <div className="w-full flex justify-center items-center mt-5 relative">
+                    <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
+                        {t("claim.receive")}
+                    </h4>
+                    <div className="absolute left-[10px]" onClick={onBack}>
+                        <IoIosArrowBack />
                     </div>
-                    {claimLinkDetails[0].amount ? (
-                        <div className="text-green">{claimLinkDetails[0].amount}</div>
-                    ) : (
-                        <Spinner width={22} />
-                    )}
                 </div>
-            </div>
 
-            <Form {...form}>
-                <form
-                    className="w-full flex flex-col gap-y-[10px] my-5"
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        onSubmit(form.getValues("address") ?? "");
-                    }}
-                >
+                <div id="asset-section" className="w-full my-5">
                     <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
-                        {t("claim.receive_options")}
+                        {t("claim.asset")}
                     </h2>
-                    <div className="ml-1">
-                        {/* Google login */}
-                        <WalletButton
-                            title="Google login"
-                            handleConnect={() => handleConnectWallet(WALLET_OPTIONS.GOOGLE)}
-                            image="/googleIcon.png"
-                            disabled={true}
-                            postfixText="Coming soon"
-                        />
-
-                        {/* Internet Identity */}
-                        {identity &&
-                        currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
-                            <CustomConnectedWalletButton
-                                connectedAccount={user?.principal.toString()}
-                                postfixText="Connected"
-                                postfixIcon={
-                                    <img src="/icpLogo.png" alt="icp" className="w-6 h-6 mr-2" />
-                                }
-                            />
+                    <div id="asset-detail" className="flex justify-between ml-1">
+                        <div className="flex items-center">
+                            <div className="flex gap-x-5 items-center">
+                                <img
+                                    src="/icpLogo.png"
+                                    alt="link"
+                                    className="w-10 h-10 rounded-sm mr-3"
+                                />
+                            </div>
+                            <div>{claimLinkDetails[0].title}</div>
+                        </div>
+                        {claimLinkDetails[0].amount ? (
+                            <div className="text-green">{claimLinkDetails[0].amount}</div>
                         ) : (
-                            <WalletButton
-                                title="Internet Identity"
-                                handleConnect={() =>
-                                    handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY)
-                                }
-                                image="/icpLogo.png"
-                            />
-                        )}
-
-                        {/* Other wallets */}
-                        {identity && currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
-                            <CustomConnectedWalletButton
-                                connectedAccount={user?.principal.toString()}
-                                postfixText="Connected"
-                            />
-                        ) : (
-                            <WalletButton
-                                title="Other wallets"
-                                handleConnect={() => handleConnectWallet(WALLET_OPTIONS.OTHER)}
-                                disabled={false}
-                                icon={<HiOutlineWallet className="mr-2 h-6 w-6" color="green" />}
-                            />
-                        )}
-
-                        {/* Manually typing address */}
-                        {identity ? (
-                            <WalletButton
-                                title={t("claim.addressPlaceholder")}
-                                handleConnect={() => handleConnectWallet(WALLET_OPTIONS.TYPING)}
-                                icon={<PiWallet color="green" className="mr-2 h-6 w-6" />}
-                            />
-                        ) : (
-                            <FormField
-                                control={form.control}
-                                name="address"
-                                render={({ field }) => (
-                                    <FormItem className="mx-0">
-                                        <FormControl>
-                                            <IconInput
-                                                isCurrencyInput={false}
-                                                icon={
-                                                    <IoWalletOutline
-                                                        color="green"
-                                                        className="mr-2 h-6 w-6"
-                                                    />
-                                                }
-                                                rightIcon={
-                                                    field.value && form.formState.errors.address ? (
-                                                        <IoIosCloseCircle
-                                                            color="red"
-                                                            className="mr-1 h-6 w-6"
-                                                        />
-                                                    ) : field.value &&
-                                                      !form.formState.errors.address ? (
-                                                        <FaCircleCheck
-                                                            color="#36A18B"
-                                                            className="mr-1 h-6 w-6"
-                                                        />
-                                                    ) : (
-                                                        <MdOutlineContentPaste
-                                                            color="green"
-                                                            className="mr-2 h-5 w-5"
-                                                        />
-                                                    )
-                                                }
-                                                onRightIconClick={() =>
-                                                    field.value
-                                                        ? handleRemoveAllText(field)
-                                                        : handlePasteClick(field)
-                                                }
-                                                placeholder={t("claim.addressPlaceholder")}
-                                                className="py-5 h-14 text-md rounded-xl"
-                                                onFocusShowIcon={true}
-                                                onFocusText={true}
-                                                {...field}
-                                                onChange={(e) => {
-                                                    field.onChange(e);
-                                                    // Validate the address format
-                                                    try {
-                                                        if (e.target.value) {
-                                                            Principal.fromText(e.target.value);
-                                                            form.clearErrors("address");
-                                                        } else {
-                                                            form.clearErrors("address");
-                                                        }
-                                                    } catch {
-                                                        form.setError("address", {
-                                                            type: "manual",
-                                                            message: "Invalid address format",
-                                                        });
-                                                    }
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <Spinner width={22} />
                         )}
                     </div>
+                </div>
 
-                    <FixedBottomButton
-                        type="submit"
-                        variant="default"
-                        size="lg"
-                        className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
-                        disabled={isDisabled}
+                <Form {...form}>
+                    <form
+                        className="w-full flex flex-col gap-y-[10px] my-5"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            onSubmit(form.getValues("address") ?? "");
+                        }}
                     >
-                        {isDisabled ? t("processing") : t("claim.claim")}
-                    </FixedBottomButton>
-                </form>
-            </Form>
+                        <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
+                            {t("claim.receive_options")}
+                        </h2>
+                        <div className="px-1">
+                            {/* Google login */}
+                            <WalletButton
+                                title="Google login"
+                                handleConnect={() => handleConnectWallet(WALLET_OPTIONS.GOOGLE)}
+                                image="/googleIcon.png"
+                                disabled={true}
+                                postfixText="Coming soon"
+                            />
+
+                            {/* Internet Identity */}
+                            {identity &&
+                            currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
+                                <CustomConnectedWalletButton
+                                    connectedAccount={user?.principal.toString()}
+                                    postfixText="Connected"
+                                    postfixIcon={
+                                        <img
+                                            src="/icpLogo.png"
+                                            alt="icp"
+                                            className="w-6 h-6 mr-2"
+                                        />
+                                    }
+                                />
+                            ) : (
+                                <WalletButton
+                                    title="Internet Identity"
+                                    handleConnect={() =>
+                                        handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY)
+                                    }
+                                    image="/icpLogo.png"
+                                />
+                            )}
+
+                            {/* Other wallets */}
+                            {identity && currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
+                                <CustomConnectedWalletButton
+                                    connectedAccount={user?.principal.toString()}
+                                    postfixText="Connected"
+                                />
+                            ) : (
+                                <WalletButton
+                                    title="Other wallets"
+                                    handleConnect={() => handleConnectWallet(WALLET_OPTIONS.OTHER)}
+                                    disabled={false}
+                                    icon={
+                                        <HiOutlineWallet className="mr-2 h-6 w-6" color="green" />
+                                    }
+                                />
+                            )}
+
+                            {/* Manually typing address */}
+                            {identity ? (
+                                <WalletButton
+                                    title={t("claim.addressPlaceholder")}
+                                    handleConnect={() => handleConnectWallet(WALLET_OPTIONS.TYPING)}
+                                    icon={<PiWallet color="green" className="mr-2 h-6 w-6" />}
+                                />
+                            ) : (
+                                <FormField
+                                    control={form.control}
+                                    name="address"
+                                    render={({ field }) => (
+                                        <FormItem className="mx-0">
+                                            <FormControl>
+                                                <IconInput
+                                                    isCurrencyInput={false}
+                                                    icon={
+                                                        <IoWalletOutline
+                                                            color="green"
+                                                            className="mr-2 h-6 w-6"
+                                                        />
+                                                    }
+                                                    rightIcon={
+                                                        field.value &&
+                                                        form.formState.errors.address ? (
+                                                            <IoIosCloseCircle
+                                                                color="red"
+                                                                className="mr-1 h-6 w-6"
+                                                            />
+                                                        ) : field.value &&
+                                                          !form.formState.errors.address ? (
+                                                            <FaCircleCheck
+                                                                color="#36A18B"
+                                                                className="mr-1 h-6 w-6"
+                                                            />
+                                                        ) : (
+                                                            <MdOutlineContentPaste
+                                                                color="green"
+                                                                className="mr-2 h-5 w-5"
+                                                            />
+                                                        )
+                                                    }
+                                                    onRightIconClick={() =>
+                                                        field.value
+                                                            ? handleRemoveAllText(field)
+                                                            : handlePasteClick(field)
+                                                    }
+                                                    placeholder={t("claim.addressPlaceholder")}
+                                                    className="py-5 h-14 text-md rounded-xl"
+                                                    onFocusShowIcon={true}
+                                                    onFocusText={true}
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        console.log("Change address", e);
+                                                        field.onChange(e);
+                                                        // Validate the address format
+                                                        try {
+                                                            if (e.target.value) {
+                                                                Principal.fromText(e.target.value);
+                                                                form.clearErrors("address");
+                                                            } else {
+                                                                form.clearErrors("address");
+                                                            }
+                                                        } catch {
+                                                            form.setError("address", {
+                                                                type: "manual",
+                                                                message: "Invalid address format",
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+                        </div>
+                        <div className="fixed bottom-0 left-0 right-0 p-5 bg-white">
+                            <FixedBottomButton
+                                type="submit"
+                                variant="default"
+                                size="lg"
+                                className="w-full"
+                                disabled={isDisabled}
+                            >
+                                {isDisabled ? t("processing") : t("claim.claim")}
+                            </FixedBottomButton>
+                        </div>
+                    </form>
+                </Form>
+            </div>
+
             <ConfirmDialog
                 open={open}
                 title={options.title}
@@ -315,7 +339,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 }}
                 onOpenChange={hideDialog}
             />
-        </>
+        </div>
     );
 };
 
