@@ -24,7 +24,7 @@ use crate::{
 
 use super::types::{
     CreateLinkInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
-    UserStateMachineGoto,
+    UpdateActionInput, UserStateMachineGoto,
 };
 
 #[query(guard = "is_not_anonymous")]
@@ -200,6 +200,12 @@ pub async fn link_update_user_state(
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.link_update_user_state(input)
+}
+
+#[update(guard = "is_not_anonymous")]
+pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.update_action(input).await
 }
 
 pub struct LinkApi<E: IcEnvironment + Clone> {
@@ -603,5 +609,38 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             action: ActionDto::from_with_tx(action.action, action.intents, action.intent_txs),
             link_user_state: link_user_state.unwrap().to_string(),
         }));
+    }
+
+    pub async fn update_action(
+        &self,
+        input: UpdateActionInput,
+    ) -> Result<ActionDto, CanisterError> {
+        let caller = ic_cdk::api::caller();
+
+        let validate_service =
+            services::transaction_manager::validate::ValidateService::get_instance();
+
+        let is_creator = validate_service
+            .is_action_creator(caller.to_text(), input.action_id.clone())
+            .map_err(|e| {
+                CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
+            })?;
+
+        if !is_creator {
+            return Err(CanisterError::ValidationErrors(
+                "User is not the creator of the action".to_string(),
+            ));
+        }
+
+        let args = UpdateActionArgs {
+            action_id: input.action_id.clone(),
+            link_id: input.link_id.clone(),
+            execute_wallet_tx: true,
+        };
+
+        self.tx_manager_service
+            .update_action(args)
+            .await
+            .map_err(|e| CanisterError::HandleLogicError(format!("Failed to update action: {}", e)))
     }
 }

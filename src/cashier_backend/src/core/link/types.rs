@@ -355,3 +355,10 @@ impl UserStateMachineGoto {
         }
     }
 }
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct UpdateActionInput {
+    pub link_id: String,
+    pub action_id: String,
+    pub external: bool,
+}
