@@ -75,7 +75,7 @@ export default function ClaimPage() {
     const { metadata } = useTokenMetadata(linkData?.link.asset_info?.[0].address);
 
     const handleClaim = async () => {
-        if (!form.getValues("address") || form.getValues("address")?.length == 0) {
+        if (!identity && (!form.getValues("address") || form.getValues("address")?.length == 0)) {
             showToast(
                 "",
                 "To receive, you need to login or connect your wallet",
