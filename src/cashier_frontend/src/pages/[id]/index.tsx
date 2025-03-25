@@ -24,6 +24,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
 import { IoInformationCircle } from "react-icons/io5";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -41,6 +42,7 @@ function getInitialStep(state: string | undefined) {
 export default function ClaimPage() {
     const [enableFetchLinkUserState, setEnableFetchLinkUserState] = useState(false);
     const { linkId } = useParams();
+    const { renderSkeleton } = useSkeletonLoading();
     const identity = useIdentity();
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
@@ -135,15 +137,19 @@ export default function ClaimPage() {
         );
     }, [linkData, metadata]);
 
+    useEffect(() => {
+        if (linkData && linkUserState?.link_user_state) {
+            setShowDefaultPage(false);
+        }
+    }, [linkData, linkUserState?.link_user_state]);
+
     return (
-        <div className="w-screen h-90 md:h-screen flex flex-col items-center py-5">
+        <div className="w-screen min-h-screen md:min-h-screen flex flex-col items-center overflow-hidden py-5">
             <SheetWrapper>
-                <div className="w-11/12 max-w-[400px] h-full">
+                <div className="w-11/12 items-center max-w-[400px] h-full flex flex-col flex-1">
                     <Header onConnect={handleConnectWallet} openTestForm={connectToWallet} />
                     {isLoadingLinkData || isLoadingLinkUserState ? (
-                        <div className="flex justify-center items-center h-full">
-                            <Spinner sizes="32" />
-                        </div>
+                        renderSkeleton()
                     ) : (
                         <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
                             {(!identity || !linkUserState?.link_user_state) &&

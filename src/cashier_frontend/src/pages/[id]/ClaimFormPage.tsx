@@ -19,6 +19,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useCreateAction, useCreateActionAnonymous } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -41,6 +42,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 }) => {
     const { linkId } = useParams();
     const identity = useIdentity();
+    const { renderSkeleton } = useSkeletonLoading();
     const { nextStep } = useMultiStepFormContext();
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
@@ -51,7 +53,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     const updateLinkUserState = useUpdateLinkUserState();
 
-    const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
+    const { data: linkUserState, isLoading: isLoadingLinkUserState } = useLinkUserState(
         {
             action_type: ACTION_TYPE.CLAIM_LINK,
             link_id: linkId ?? "",
@@ -160,9 +162,11 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         }
     }, [linkUserState, identity]);
 
-    return (
-        !isFetchingLinkUserState && (
-            <>
+    return isLoadingLinkUserState ? (
+        renderSkeleton()
+    ) : (
+        <>
+            <div className="w-full h-full flex flex-grow flex-col">
                 <ClaimPageForm
                     form={form}
                     formData={linkData?.link ?? ({} as LinkDetailModel)}
@@ -176,18 +180,18 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     onBack={onBack}
                     isDisabled={isDisabledButton}
                 />
+            </div>
 
-                <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
+            <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 
-                <ConfirmationDrawer
-                    open={showConfirmation && !showInfo}
-                    onClose={() => setShowConfirmation(false)}
-                    onInfoClick={() => setShowInfo(true)}
-                    onActionResult={onActionResult}
-                    onCashierError={onCashierError}
-                    onSuccessContinue={handleUpdateLinkUserState}
-                />
-            </>
-        )
+            <ConfirmationDrawer
+                open={showConfirmation && !showInfo}
+                onClose={() => setShowConfirmation(false)}
+                onInfoClick={() => setShowInfo(true)}
+                onActionResult={onActionResult}
+                onCashierError={onCashierError}
+                onSuccessContinue={handleUpdateLinkUserState}
+            />
+        </>
     );
 };

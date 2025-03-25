@@ -3,7 +3,6 @@ import { IoIosArrowBack, IoIosCloseCircle } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
 import { PiWallet } from "react-icons/pi";
 import { HiOutlineWallet } from "react-icons/hi2";
-import { IoClose } from "react-icons/io5";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
@@ -137,8 +136,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     }, []);
 
     return (
-        <div className="flex flex-col">
-            <div className="flex-1">
+        <>
+            <div className="w-full flex flex-col flex-grow relative">
                 <div className="w-full flex justify-center items-center mt-5 relative">
                     <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                         {t("claim.receive")}
@@ -173,7 +172,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
                 <Form {...form}>
                     <form
-                        className="w-full flex flex-col gap-y-[10px] my-5"
+                        className="w-full flex flex-col gap-y-[10px] my-5 pb-[80px]"
                         onSubmit={(e) => {
                             e.preventDefault();
                             onSubmit(form.getValues("address") ?? "");
@@ -311,17 +310,16 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                 />
                             )}
                         </div>
-                        <div className="fixed bottom-0 left-0 right-0 p-5 bg-white">
-                            <FixedBottomButton
-                                type="submit"
-                                variant="default"
-                                size="lg"
-                                className="w-full"
-                                disabled={isDisabled}
-                            >
-                                {isDisabled ? t("processing") : t("claim.claim")}
-                            </FixedBottomButton>
-                        </div>
+
+                        <FixedBottomButton
+                            type="submit"
+                            variant="default"
+                            size="lg"
+                            className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
+                            disabled={isDisabled}
+                        >
+                            {isDisabled ? t("processing") : t("claim.claim")}
+                        </FixedBottomButton>
                     </form>
                 </Form>
             </div>
@@ -339,7 +337,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 }}
                 onOpenChange={hideDialog}
             />
-        </div>
+        </>
     );
 };
 
