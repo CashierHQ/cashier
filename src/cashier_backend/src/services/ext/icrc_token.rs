@@ -2,6 +2,7 @@
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
 use candid::{self, CandidType, Deserialize, Principal};
+use core::fmt;
 use ic_cdk::api::call::CallResult as Result;
 use serde::Serialize;
 use std::vec::Vec as StdVec;
@@ -258,6 +259,47 @@ pub enum TransferError {
     InsufficientFunds {
         balance: candid::Nat,
     },
+}
+
+impl fmt::Display for TransferError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TransferError::GenericError {
+                message,
+                error_code,
+            } => {
+                write!(f, "GenericError: {}, ErrorCode: {}", message, error_code)
+            }
+            TransferError::TemporarilyUnavailable => {
+                write!(f, "TemporarilyUnavailable")
+            }
+            TransferError::BadBurn { min_burn_amount } => {
+                write!(f, "BadBurn: MinBurnAmount: {}", min_burn_amount)
+            }
+            TransferError::Duplicate { duplicate_of } => {
+                write!(f, "Duplicate: DuplicateOf: {}", duplicate_of)
+            }
+            TransferError::BadFee { expected_fee } => {
+                write!(f, "BadFee: ExpectedFee: {}", expected_fee)
+            }
+            TransferError::CreatedInFuture { ledger_time } => {
+                write!(f, "CreatedInFuture: LedgerTime: {}", ledger_time)
+            }
+            TransferError::TooOld => {
+                write!(f, "TooOld")
+            }
+            TransferError::InsufficientFunds { balance } => {
+                write!(f, "InsufficientFunds: Balance: {}", balance)
+            }
+        }
+    }
+}
+
+// You might also want to implement From<TransferError> for String
+impl From<TransferError> for String {
+    fn from(error: TransferError) -> Self {
+        error.to_string()
+    }
 }
 pub type Result_ = std::result::Result<candid::Nat, TransferError>;
 #[derive(CandidType, Deserialize, Clone, Debug)]

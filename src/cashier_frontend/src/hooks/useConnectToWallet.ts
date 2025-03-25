@@ -41,7 +41,7 @@ export const useConnectToWallet = () => {
         }
     }, [identity, appUser, loadUserError]);
 
-    const connectToWallet = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    const connectToWallet = async () => {
         try {
             await connect();
         } catch (error) {
