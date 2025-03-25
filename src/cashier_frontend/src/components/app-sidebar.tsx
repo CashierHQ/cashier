@@ -10,6 +10,7 @@ import { FaRegCopy } from "react-icons/fa";
 import copy from "copy-to-clipboard";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 
 export interface SidebarMenuItem {
     title: string;
@@ -22,7 +23,8 @@ interface AppSidebarProps {
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
-    const { user, disconnect } = useAuth();
+    const { user } = useAuth();
+    const { disconnectWallet } = useConnectToWallet();
     const { toast } = useToast();
     const navigate = useNavigate();
 
@@ -39,7 +41,7 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
     };
 
     const handleDisConnect = () => {
-        disconnect();
+        disconnectWallet();
         navigate("/");
     };
 

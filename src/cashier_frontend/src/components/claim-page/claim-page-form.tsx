@@ -315,7 +315,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             type="submit"
                             variant="default"
                             size="lg"
-                            className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
+                            className="absolute bottom-[0px] left-1/2 -translate-x-1/2"
                             disabled={isDisabled}
                         >
                             {isDisabled ? t("processing") : t("claim.claim")}
