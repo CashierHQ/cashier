@@ -7,15 +7,17 @@ import { AiOutlineExperiment } from "react-icons/ai";
 import { SheetTrigger } from "./ui/sheet";
 import { RiMenu2Line } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
+import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 
 interface HeaderProps {
     onConnect: (e: React.MouseEvent<HTMLButtonElement>) => void;
     openTestForm: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onConnect, openTestForm }) => {
+const Header: React.FC<HeaderProps> = ({ openTestForm }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { connectToWallet } = useConnectToWallet();
 
     if (!user) {
         return (
@@ -26,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ onConnect, openTestForm }) => {
                     className="max-w-[130px]"
                     onClick={() => navigate("/")}
                 />
-                <LoginButton onClick={onConnect}>Login</LoginButton>
+                <LoginButton onClick={connectToWallet}>Login</LoginButton>
             </div>
         );
     } else {
