@@ -86,8 +86,8 @@ export default function ClaimPage() {
         console.log("Claiming");
     };
 
-    const handleConnectWallet = (e: React.MouseEvent<HTMLButtonElement>) => {
-        connectToWallet(e);
+    const handleConnectWallet = () => {
+        connectToWallet();
     };
 
     const showCashierErrorToast = (error: Error) => {
