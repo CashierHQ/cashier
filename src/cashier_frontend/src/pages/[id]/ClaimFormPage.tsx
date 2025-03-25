@@ -46,7 +46,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const [showInfo, setShowInfo] = useState(false);
     const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.CLAIM_LINK);
     const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous(ACTION_TYPE.CLAIM_LINK);
-    const { action, setAction } = useCreateLinkStore();
+    const { action, setAction, setAnonymousWalletAddress } = useCreateLinkStore();
     const [isDisabledButton, setIsDisabledButton] = useState(false);
 
     const updateLinkUserState = useUpdateLinkUserState();
@@ -107,26 +107,22 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                             },
                             identity,
                         );
-                        console.log(
-                            "🚀 ~ handleSubmit ~ anonymousLinkUserState:",
-                            anonymousLinkUserState,
-                        );
-
                         if (!anonymousLinkUserState.link_user_state) {
                             // If action is not exist, then create new one
                             const anonymousAction =
                                 await handleCreateActionAnonymous(anonymousWalletAddress);
-                            console.log("🚀 ~ handleSubmit ~ anonymousAction:", anonymousAction);
                             setAction(anonymousAction);
+                            setAnonymousWalletAddress(anonymousWalletAddress);
                             setShowConfirmation(true);
                         } else {
                             // If action is existed, then do action based on link_user_state
                             if (
                                 anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE
                             ) {
-                                // Redirect
+                                nextStep();
                             } else {
                                 setAction(anonymousLinkUserState.action);
+                                setAnonymousWalletAddress(anonymousWalletAddress);
                                 setShowConfirmation(true);
                             }
                         }
