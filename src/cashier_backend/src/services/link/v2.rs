@@ -333,11 +333,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 // TODO: validate link's balance
                 return Ok(());
-            }
-            // validate creator and balance
-            _ => {
-                return Ok(());
-            }
+            } // validate creator and balance
+              // _ => {
+              //     return Ok(());
+              // }
         }
     }
 

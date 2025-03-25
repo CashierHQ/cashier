@@ -1,11 +1,14 @@
 use candid::{Nat, Principal};
-use icrc_ledger_types::{icrc1::account::Account, icrc2::transfer_from::TransferFromArgs};
+use icrc_ledger_types::{
+    icrc1::{account::Account, transfer::TransferArg},
+    icrc2::transfer_from::TransferFromArgs,
+};
 use serde_bytes::ByteBuf;
 use std::fmt;
 
 use crate::{
     services::ext::icrc_token::{
-        Account as ExtAccount, Allowance, AllowanceArgs, Service,
+        Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg as ExtTransferArg,
         TransferFromArgs as ExtTransferFromArgs, TransferFromError,
     },
     types::error::{CanisterError, DisplayRejectionCode},
@@ -18,6 +21,22 @@ pub struct IcrcService {}
 impl IcrcService {
     pub fn new() -> Self {
         Self {}
+    }
+
+    pub async fn fee(&self, token_pid: Principal) -> Result<u64, CanisterError> {
+        let token_service = Service::new(token_pid);
+
+        let res = token_service.icrc_1_fee().await;
+
+        match res {
+            Ok((fee,)) => Ok(fee.0.to_u64_digits().first().unwrap_or(&0).clone()),
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
+                "icrc_1_fee".to_string(),
+                token_service.get_canister_id().to_string(),
+                DisplayRejectionCode(code),
+                error,
+            )),
+        }
     }
 
     pub async fn balance_of(
@@ -124,6 +143,50 @@ impl IcrcService {
             },
             Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
                 "icrc_2_transfer_from".to_string(),
+                token_service.get_canister_id().to_string(),
+                DisplayRejectionCode(code),
+                error,
+            )),
+        }
+    }
+
+    pub async fn transfer(
+        &self,
+        token_pid: Principal,
+        arg: TransferArg,
+    ) -> Result<Nat, CanisterError> {
+        let token_service = Service::new(token_pid);
+
+        let memo = match arg.memo.is_some() {
+            true => Some(arg.memo.unwrap().0),
+            false => None,
+        };
+
+        let transfer_arg = ExtTransferArg {
+            to: ExtAccount {
+                owner: arg.to.owner,
+                subaccount: arg.to.subaccount.map(|sub| ByteBuf::from(sub.to_vec())),
+            },
+            from_subaccount: arg.from_subaccount.map(|sub| ByteBuf::from(sub.to_vec())),
+            amount: arg.amount,
+            fee: arg.fee,
+            memo,
+            created_at_time: arg.created_at_time,
+        };
+
+        let res = token_service.icrc_1_transfer(&transfer_arg).await;
+
+        match res {
+            Ok((call_res,)) => match call_res {
+                Ok(_block_id) => Ok(_block_id),
+                Err(error) => Err(CanisterError::CanisterCallError(
+                    "icrc_1_transfer".to_string(),
+                    token_service.get_canister_id().to_string(),
+                    error.to_string(),
+                )),
+            },
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
+                "icrc_1_transfer".to_string(),
                 token_service.get_canister_id().to_string(),
                 DisplayRejectionCode(code),
                 error,
