@@ -60,4 +60,4 @@ jobs:
                   DFX_WARNING: -mainnet_plaintext_identity
               run: |
                   echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
-                  dfx deploy cashier_frontend_staging --ic
+                  dfx deploy cashier_frontend_staging --network staging
