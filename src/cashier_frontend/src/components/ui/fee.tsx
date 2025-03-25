@@ -1,5 +1,7 @@
-import { FC } from "react";
+import { act, FC } from "react";
 import { Spinner } from "./spinner";
+import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { ACTION_TYPE } from "@/services/types/enum";
 
 export type FeeProps = {
     title?: string | undefined;
@@ -12,6 +14,7 @@ export type FeeProps = {
 
 export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading, isUsd }) => {
     const showUsd = isUsd && usdAmount !== undefined;
+    const { action } = useCreateLinkStore();
 
     /*TODO: Remove after mid milestone*/
     const getSymbol = (title?: string) => {
@@ -22,14 +25,20 @@ export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading,
         } else return title;
     };
 
+    const getPrefixAmount = () => {
+        if (action?.type === ACTION_TYPE.CLAIM_LINK) {
+            return "-";
+        }
+        return "+";
+    };
+
     const renderAmount = () => {
         if (isLoading) {
             return <Spinner width={22} />;
         }
-
         return (
             <div className="flex">
-                + {showUsd && `($${usdAmount.toFixed(3)}) ≈ `}
+                {getPrefixAmount()} {showUsd && `($${usdAmount.toFixed(3)}) ≈ `}
                 {amount} {getSymbol(symbol)}
             </div>
         );
