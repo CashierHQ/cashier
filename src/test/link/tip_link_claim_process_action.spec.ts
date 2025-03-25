@@ -16,6 +16,7 @@ import { parseResultResponse } from "../utils/parser";
 import { TokenHelper } from "../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
+import { fromNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -46,7 +47,7 @@ describe("Tip Link claim create user", () => {
     const assetInfoTest = {
         chain: "IC",
         address: "x5qut-viaaa-aaaar-qajda-cai",
-        amount_per_claim: BigInt(100),
+        amount_per_claim: BigInt(10_0000_0000),
         total_amount: BigInt(10_0000_0000),
     };
 
@@ -286,6 +287,41 @@ describe("Tip Link claim create user", () => {
                 expect(parsedRes[0].action.type).toEqual("Claim");
             } else {
                 throw new Error("Expected Ok in response");
+            }
+        });
+
+        it("Should change be success after call process_action", async () => {
+            const tokenHelper = new TokenHelper(pic);
+            const bobAccount = {
+                owner: bob.getPrincipal(),
+                subaccount: [] as any,
+            };
+            const balanceBefore = await tokenHelper.balanceOf(bobAccount);
+            const res = await actor.process_action({
+                action_id: createLinkActionId,
+                link_id: linkId,
+                action_type: "Claim",
+            });
+            const parsedRes = parseResultResponse(res);
+            const balanceAfter = await tokenHelper.balanceOf(bobAccount);
+            const get_link_res = await actor.get_link(linkId, []);
+            const parsed_res = parseResultResponse(get_link_res);
+
+            console.log("link", parsed_res.link.asset_info);
+
+            expect(res).toHaveProperty("Ok");
+            expect(parsedRes.state).toEqual("Action_state_success");
+            expect(parsedRes.intents[0].state).toEqual("Intent_state_success");
+            expect(balanceBefore).toEqual(BigInt(0));
+            // minus fee
+            expect(balanceAfter).toEqual(assetInfoTest.amount_per_claim - BigInt(10_000));
+            const asset_info = fromNullable(parsed_res.link.asset_info);
+            expect(asset_info).toHaveLength(1);
+            // Add a null check before accessing array element
+            if (asset_info && asset_info.length > 0) {
+                expect(asset_info[0].total_claim).toEqual(BigInt(1));
+            } else {
+                throw new Error("Expected asset_info to have length > 0");
             }
         });
     });

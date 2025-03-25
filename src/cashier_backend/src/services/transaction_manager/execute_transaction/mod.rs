@@ -1,6 +1,6 @@
 use candid::Nat;
 use cashier_types::{FromCallType, IcTransaction, Transaction};
-use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
+use icrc_ledger_types::{icrc1::transfer::TransferArg, icrc2::transfer_from::TransferFromArgs};
 
 use crate::{types::error::CanisterError, utils::icrc::IcrcService};
 
@@ -29,6 +29,7 @@ impl ExecuteTransactionService {
                 })?;
 
                 match protocol {
+                    // right now only for fee transfer
                     IcTransaction::Icrc2TransferFrom(tx) => {
                         let mut args: TransferFromArgs = TransferFromArgs::try_from(tx.clone())
                             .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
@@ -39,12 +40,17 @@ impl ExecuteTransactionService {
                             .get_principal()
                             .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
 
-                        let fee_u128 = u128::try_from(args.amount.clone().0);
-                        match fee_u128 {
-                            Ok(fee) => {
-                                let fee_expected = fee.checked_sub(20_000);
-                                match fee_expected {
-                                    Some(fee_expected) => args.amount = Nat::from(fee_expected),
+                        let transfer_amount = u128::try_from(args.amount.clone().0);
+                        match transfer_amount {
+                            Ok(amount) => {
+                                let amount_subtract_fee = {
+                                    let token_fee = self.icrc_service.fee(asset).await?;
+                                    amount.checked_sub(token_fee as u128)
+                                };
+                                match amount_subtract_fee {
+                                    Some(amount_subtract_fee) => {
+                                        args.amount = Nat::from(amount_subtract_fee)
+                                    }
                                     None => {
                                         return Err(CanisterError::HandleLogicError(
                                             "Failed to calculate fee".to_string(),
@@ -64,6 +70,47 @@ impl ExecuteTransactionService {
 
                         return Ok(());
                     }
+                    IcTransaction::Icrc1Transfer(tx) => {
+                        let mut args: TransferArg = TransferArg::try_from(tx.clone())
+                            .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
+
+                        // get asset
+                        let asset = tx
+                            .asset
+                            .get_principal()
+                            .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
+
+                        let transfer_amount = u128::try_from(args.amount.clone().0);
+                        match transfer_amount {
+                            Ok(amount) => {
+                                let amount_subtract_fee = {
+                                    let token_fee = self.icrc_service.fee(asset).await?;
+                                    amount.checked_sub(token_fee as u128)
+                                };
+                                match amount_subtract_fee {
+                                    Some(amount_subtract_fee) => {
+                                        args.amount = Nat::from(amount_subtract_fee)
+                                    }
+                                    None => {
+                                        return Err(CanisterError::HandleLogicError(
+                                            "Failed to calculate fee".to_string(),
+                                        ));
+                                    }
+                                }
+                            }
+
+                            Err(_) => {
+                                return Err(CanisterError::HandleLogicError(
+                                    "Failed to convert fee to u128".to_string(),
+                                ));
+                            }
+                        }
+
+                        self.icrc_service.transfer(asset, args).await?;
+
+                        return Ok(());
+                    }
+
                     _ => {
                         return Err(CanisterError::HandleLogicError(
                             "Unsupported IcTransaction".to_string(),

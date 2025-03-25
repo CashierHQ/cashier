@@ -12,8 +12,10 @@ import {
     TransferArg,
 } from "../../declarations/icp_ledger_canister/icp_ledger_canister.did";
 import { idlFactory } from "../../declarations/icp_ledger_canister/index";
-import { principalToAccountIdentifier } from "@dfinity/ledger-icp";
+import { Account, principalToAccountIdentifier } from "@dfinity/ledger-icp";
 import { IDL } from "@dfinity/candid";
+
+const LEDGER_ID = Principal.fromText("x5qut-viaaa-aaaar-qajda-cai");
 
 export class TokenHelper {
     private pic: PocketIc;
@@ -27,7 +29,6 @@ export class TokenHelper {
     }
 
     public setupCanister = async () => {
-        const LEDGER_ID = Principal.fromText("x5qut-viaaa-aaaar-qajda-cai");
         const init_args: InitArgs = {
             send_whitelist: [],
             token_symbol: [],
@@ -119,5 +120,10 @@ export class TokenHelper {
         }
 
         return this.actor.icrc2_approve(arg);
+    }
+
+    public async balanceOf(account: Account) {
+        const actor = this.pic.createActor<_SERVICE>(idlFactory, LEDGER_ID);
+        return actor.icrc1_balance_of(account);
     }
 }

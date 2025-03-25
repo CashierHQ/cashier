@@ -5,7 +5,7 @@ use cashier_types::{Intent, Protocol};
 use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
 
-use crate::types::{icrc_112_transaction::Icrc112Requests, transaction_manager::ActionResp};
+use crate::types::icrc_112_transaction::Icrc112Requests;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
