@@ -1,14 +1,14 @@
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
-use crate::services::transaction_manager::{TransactionManagerService, UpdateActionArgs};
+use crate::services::transaction_manager::TransactionManagerService;
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
-    core::{action::types::ActionDto, CanisterError},
+    core::CanisterError,
     services::{self},
 };
 
-use super::types::{TriggerTransactionInput, UpdateActionInput};
+use super::types::TriggerTransactionInput;
 
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
