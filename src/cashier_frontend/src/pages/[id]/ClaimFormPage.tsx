@@ -19,6 +19,8 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useCreateAction, useCreateActionAnonymous } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
+import { useTranslation } from "react-i18next";
 
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -41,17 +43,21 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 }) => {
     const { linkId } = useParams();
     const identity = useIdentity();
+    const { t } = useTranslation();
+    const { renderSkeleton } = useSkeletonLoading();
     const { nextStep } = useMultiStepFormContext();
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.CLAIM_LINK);
     const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous(ACTION_TYPE.CLAIM_LINK);
-    const { action, setAction, setAnonymousWalletAddress } = useCreateLinkStore();
-    const [isDisabledButton, setIsDisabledButton] = useState(false);
+    const { action, anonymousWalletAddress, setAction, setAnonymousWalletAddress } =
+        useCreateLinkStore();
+    const [isDisabledButton, setIsDisabledButton] = useState(true);
+    const [buttonText, setButtonText] = useState(t("claim.claim"));
 
     const updateLinkUserState = useUpdateLinkUserState();
 
-    const { data: linkUserState, isFetching: isFetchingLinkUserState } = useLinkUserState(
+    const { data: linkUserState, isLoading: isLoadingLinkUserState } = useLinkUserState(
         {
             action_type: ACTION_TYPE.CLAIM_LINK,
             link_id: linkId ?? "",
@@ -82,49 +88,48 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     const handleSubmit = async (anonymousWalletAddress: string = "") => {
         // Validation
-        console.log("Click submit");
         onSubmit();
         try {
             setIsDisabledButton(true);
-            if (anonymousWalletAddress) {
-                if (action) {
-                    // Display the confirmation drawer
-                    setShowConfirmation(true);
+            setButtonText(t("processing"));
+
+            if (action) {
+                // Display the confirmation drawer
+                setShowConfirmation(true);
+            } else {
+                if (identity) {
+                    // Logged in user
+                    const action = await handleCreateAction();
+                    if (action) {
+                        setAction(action);
+                        setShowConfirmation(true);
+                    }
                 } else {
-                    if (identity) {
-                        const action = await handleCreateAction();
-                        if (action) {
-                            setAction(action);
-                            setShowConfirmation(true);
-                        }
+                    // Anonymous user
+                    // Fetch user link state
+                    const anonymousLinkUserState = await fetchLinkUserState(
+                        {
+                            action_type: ACTION_TYPE.CLAIM_LINK,
+                            link_id: linkId ?? "",
+                            anonymous_wallet_address: anonymousWalletAddress,
+                        },
+                        identity,
+                    );
+                    if (!anonymousLinkUserState.link_user_state) {
+                        // If action is not exist, then create new one
+                        const anonymousAction =
+                            await handleCreateActionAnonymous(anonymousWalletAddress);
+                        setAction(anonymousAction);
+                        setAnonymousWalletAddress(anonymousWalletAddress);
+                        setShowConfirmation(true);
                     } else {
-                        // Fetch user link state
-                        const anonymousLinkUserState = await fetchLinkUserState(
-                            {
-                                action_type: ACTION_TYPE.CLAIM_LINK,
-                                link_id: linkId ?? "",
-                                anonymous_wallet_address: anonymousWalletAddress,
-                            },
-                            identity,
-                        );
-                        if (!anonymousLinkUserState.link_user_state) {
-                            // If action is not exist, then create new one
-                            const anonymousAction =
-                                await handleCreateActionAnonymous(anonymousWalletAddress);
-                            setAction(anonymousAction);
+                        // If action is already existed, then do redirect based on link_user_state
+                        if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
+                            nextStep();
+                        } else {
+                            setAction(anonymousLinkUserState.action);
                             setAnonymousWalletAddress(anonymousWalletAddress);
                             setShowConfirmation(true);
-                        } else {
-                            // If action is existed, then do action based on link_user_state
-                            if (
-                                anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE
-                            ) {
-                                nextStep();
-                            } else {
-                                setAction(anonymousLinkUserState.action);
-                                setAnonymousWalletAddress(anonymousWalletAddress);
-                                setShowConfirmation(true);
-                            }
                         }
                     }
                 }
@@ -136,6 +141,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
             console.log("🚀 ~ handleSubmit ~ error:", error);
         } finally {
             setIsDisabledButton(false);
+            setButtonText(t("claim.claim"));
         }
     };
 
@@ -145,7 +151,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                 action_type: ACTION_TYPE.CLAIM_LINK,
                 link_id: linkId ?? "",
                 isContinue: true,
-                anonymous_wallet_address: "",
+                anonymous_wallet_address: anonymousWalletAddress,
             },
         });
         if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
@@ -160,9 +166,11 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         }
     }, [linkUserState, identity]);
 
-    return (
-        !isFetchingLinkUserState && (
-            <>
+    return isLoadingLinkUserState ? (
+        renderSkeleton()
+    ) : (
+        <>
+            <div className="w-full h-full flex flex-grow flex-col">
                 <ClaimPageForm
                     form={form}
                     formData={linkData?.link ?? ({} as LinkDetailModel)}
@@ -175,19 +183,21 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     onSubmit={handleSubmit}
                     onBack={onBack}
                     isDisabled={isDisabledButton}
+                    setDisabled={setIsDisabledButton}
+                    buttonText={buttonText}
                 />
+            </div>
 
-                <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
+            <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 
-                <ConfirmationDrawer
-                    open={showConfirmation && !showInfo}
-                    onClose={() => setShowConfirmation(false)}
-                    onInfoClick={() => setShowInfo(true)}
-                    onActionResult={onActionResult}
-                    onCashierError={onCashierError}
-                    onSuccessContinue={handleUpdateLinkUserState}
-                />
-            </>
-        )
+            <ConfirmationDrawer
+                open={showConfirmation && !showInfo}
+                onClose={() => setShowConfirmation(false)}
+                onInfoClick={() => setShowInfo(true)}
+                onActionResult={onActionResult}
+                onCashierError={onCashierError}
+                onSuccessContinue={handleUpdateLinkUserState}
+            />
+        </>
     );
 };

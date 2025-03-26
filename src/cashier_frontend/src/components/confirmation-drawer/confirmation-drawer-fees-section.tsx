@@ -6,6 +6,7 @@ import { convert } from "@/utils/helpers/convert";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { TASK } from "@/services/types/enum";
+import { Spinner } from "../ui/spinner";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -21,7 +22,6 @@ const getItemLabel = (intent: IntentModel) => {
         default:
             return "transaction.confirm_popup.total_cashier_fees_label";
     }
-    return intent.task;
 };
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
@@ -50,10 +50,15 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     <div>{t(getItemLabel(intents[0]))}</div>
 
                     <div className="flex items-center">
-                        {!isLoadingConversionRates &&
-                            conversionRates?.tokenToUsd !== undefined &&
-                            `($${convert(totalCashierFee, conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
-                        {totalCashierFee} {assetSymbol}
+                        {isLoadingConversionRates || !totalCashierFee ? (
+                            <Spinner width={22} />
+                        ) : (
+                            <>
+                                {conversionRates?.tokenToUsd !== undefined &&
+                                    `($${convert(totalCashierFee, conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}
+                                {totalCashierFee} {assetSymbol}
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
