@@ -11,12 +11,12 @@ import LinkService from "@/services/link.service";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import QRCode from "react-qr-code";
 import { LinkModel } from "@/services/types/link.service.types";
-import { Skeleton } from "@/components/ui/skeleton";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import TransactionToast from "@/components/transaction/transaction-toast";
+import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -24,6 +24,7 @@ export default function DetailPage() {
     const identity = useIdentity();
     const navigate = useNavigate();
     const { toastData, showToast, hideToast } = useToast();
+    const { renderSkeleton } = useSkeletonLoading();
 
     //TODO: Update to apply asset_info as the list of assets
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
@@ -37,18 +38,6 @@ export default function DetailPage() {
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
-    };
-
-    const renderSkeletonLoading = () => {
-        return Array.from({ length: 5 }).map((_, index) => (
-            <div className="flex items-center space-x-4 my-3" key={index}>
-                <Skeleton className="h-10 w-10 rounded-sm" />
-                <div className="space-y-2">
-                    <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                    <Skeleton className="h-3 w-[200px]" />
-                </div>
-            </div>
-        ));
     };
 
     React.useEffect(() => {
@@ -69,9 +58,9 @@ export default function DetailPage() {
             )}
         >
             <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
-                <div className="w-full flex flex-col">
+                <div className="w-full flex flex-grow flex-col">
                     {!linkData ? (
-                        renderSkeletonLoading()
+                        renderSkeleton()
                     ) : (
                         <>
                             <div id="heading-section" className="flex mb-5 items-center">

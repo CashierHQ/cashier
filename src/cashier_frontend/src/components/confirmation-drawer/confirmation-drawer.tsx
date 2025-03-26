@@ -72,6 +72,10 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
                 actionId: action!.id,
             });
+            console.log(
+                "🚀 ~ handleProcessClaimAction ~ processActionResult:",
+                processActionResult,
+            );
             if (processActionResult) {
                 setAction(processActionResult);
                 onActionResult(processActionResult);
@@ -83,6 +87,10 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 actionId: action!.id,
                 walletAddress: anonymousWalletAddress ?? "",
             });
+            console.log(
+                "🚀 ~ handleProcessClaimAction ~ processActionResult:",
+                processActionResult,
+            );
             if (processActionResult) {
                 setAction(processActionResult);
                 onActionResult(processActionResult);

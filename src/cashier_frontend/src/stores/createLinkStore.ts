@@ -42,6 +42,7 @@ export interface CreateLinkStoreData {
 
     setAction(action: ActionModel | undefined): void;
     setAnonymousWalletAddress(walletAddress: string): void;
+    clearStore(): void;
 }
 
 export const useCreateLinkStore = create<CreateLinkStoreData>((set, get) => ({
@@ -57,4 +58,6 @@ export const useCreateLinkStore = create<CreateLinkStoreData>((set, get) => ({
 
     setAction: (action) => set({ action }),
     setAnonymousWalletAddress: (walletAddress) => set({ anonymousWalletAddress: walletAddress }),
+    clearStore: () =>
+        set({ link: undefined, action: undefined, anonymousWalletAddress: undefined }),
 }));

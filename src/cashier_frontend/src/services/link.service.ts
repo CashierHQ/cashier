@@ -212,8 +212,8 @@ class LinkService {
         return mapLinkUserStateModel(response);
     }
 
-    //TODO: Mock response data, remove after BE finish implementation
     async updateLinkUserState(input: LinkUpdateUserStateInputModel) {
+        console.log("🚀 ~ LinkService ~ updateLinkUserState ~ input:", input);
         const params: LinkUpdateUserStateInput = {
             link_id: input.link_id,
             action_type: input.action_type,
@@ -222,21 +222,8 @@ class LinkService {
                 ? [input.anonymous_wallet_address]
                 : [],
         };
-        //const response = parseResultResponse(await this.actor.link_update_user_state(params));
-        //TODO: Mock response for testing
-        const mockResponse: LinkGetUserStateOutputModel = {
-            action: {
-                id: "action_id",
-                state: ACTION_STATE.SUCCESS,
-                creator: "",
-                intents: [],
-                type: ACTION_TYPE.CLAIM_LINK,
-                icrc112Requests: [],
-            },
-            link_user_state: LINK_USER_STATE.COMPLETE,
-        };
-        return mockResponse;
-        //return mapLinkUserStateModel(response);
+        const response = parseResultResponse(await this.actor.link_update_user_state(params));
+        return mapLinkUserStateModel(response);
     }
 }
 

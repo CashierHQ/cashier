@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { IoIosArrowBack, IoIosCloseCircle } from "react-icons/io";
+import { IoIosArrowBack, IoMdClose } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
 import { PiWallet } from "react-icons/pi";
 import { HiOutlineWallet } from "react-icons/hi2";
-import { IoClose } from "react-icons/io5";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
@@ -22,7 +21,9 @@ import { useConfirmDialog } from "@/hooks/useDialog";
 import { useSigners } from "@/contexts/signer-list-context";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import { Principal } from "@dfinity/principal";
-import { FaCircleCheck } from "react-icons/fa6";
+import { FaCheck } from "react-icons/fa6";
+import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
+import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 
 export interface ClaimLinkDetail {
     title: string;
@@ -36,6 +37,8 @@ interface ClaimPageFormProps {
     onSubmit: (address: string) => void;
     onBack?: () => void;
     isDisabled?: boolean;
+    setDisabled?: (disabled: boolean) => void;
+    buttonText?: string;
 }
 
 enum WALLET_OPTIONS {
@@ -51,15 +54,53 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     claimLinkDetails,
     onBack,
     isDisabled,
+    setDisabled,
+    buttonText,
 }) => {
     const { t } = useTranslation();
-    const { connect, disconnect, user } = useAuth();
+    const { user, disconnect } = useAuth();
     const identity = useIdentity();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
     const { setSigners } = useSigners();
 
+    const { connectToWallet: connect } = useConnectToWallet();
+
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
     const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
+
+    // Check if the address is valid
+    const isAddressValid = () => {
+        const address = form.getValues("address");
+        if (!address) return false;
+
+        try {
+            Principal.fromText(address);
+            return true;
+        } catch {
+            return false;
+        }
+    };
+
+    // Update disabled state based on identity or address validation
+    useEffect(() => {
+        if (setDisabled) {
+            // Enable button if user has connected wallet or entered valid address
+            const shouldEnable = !!identity || isAddressValid();
+            setDisabled(!shouldEnable);
+        }
+    }, [identity, setDisabled, isAddressValid]);
+
+    // Watch for address changes to update the disabled state
+    useEffect(() => {
+        const subscription = form.watch(() => {
+            if (setDisabled) {
+                const shouldEnable = !!identity || isAddressValid();
+                setDisabled(!shouldEnable);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [form, identity, setDisabled]);
 
     const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
         if ((form.getValues("address") ?? "").trim().length > 0) {
@@ -97,23 +138,30 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 if (text) {
                     Principal.fromText(text);
                     form.clearErrors("address");
+                    // Update disabled state when address is valid
+                    if (setDisabled) {
+                        setDisabled(false);
+                    }
                 } else {
                     form.clearErrors("address");
+                    // Update disabled state when address is empty
+                    if (setDisabled && !identity) {
+                        setDisabled(true);
+                    }
                 }
             } catch {
                 form.setError("address", {
                     type: "manual",
                     message: "Invalid address format",
                 });
+                // Update disabled state when address is invalid
+                if (setDisabled && !identity) {
+                    setDisabled(true);
+                }
             }
         } catch (err) {
             console.error("Failed to read clipboard contents: ", err);
         }
-    };
-
-    const handleRemoveAllText = (field: { onChange: (value: string) => void }) => {
-        field.onChange("");
-        form.clearErrors("address");
     };
 
     useEffect(() => {
@@ -136,9 +184,17 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         }
     }, []);
 
+    // Ensure we immediately update the button state when isDisabled prop changes
+    useEffect(() => {
+        // This effect ensures the button's disabled state is controlled by the parent component
+        if (setDisabled && isDisabled !== undefined) {
+            setDisabled(isDisabled);
+        }
+    }, [isDisabled, setDisabled]);
+
     return (
-        <div className="flex flex-col">
-            <div className="flex-1">
+        <>
+            <div className="w-full flex flex-col flex-grow relative">
                 <div className="w-full flex justify-center items-center mt-5 relative">
                     <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                         {t("claim.receive")}
@@ -173,9 +229,13 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
                 <Form {...form}>
                     <form
-                        className="w-full flex flex-col gap-y-[10px] my-5"
+                        className="w-full flex flex-col gap-y-[10px] my-5 pb-[80px]"
                         onSubmit={(e) => {
                             e.preventDefault();
+                            // Disable the button immediately on submission
+                            if (setDisabled) {
+                                setDisabled(true);
+                            }
                             onSubmit(form.getValues("address") ?? "");
                         }}
                     >
@@ -258,15 +318,15 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                     rightIcon={
                                                         field.value &&
                                                         form.formState.errors.address ? (
-                                                            <IoIosCloseCircle
+                                                            <IoMdClose
                                                                 color="red"
-                                                                className="mr-1 h-6 w-6"
+                                                                className="mr-1 h-5 w-5"
                                                             />
                                                         ) : field.value &&
                                                           !form.formState.errors.address ? (
-                                                            <FaCircleCheck
+                                                            <FaCheck
                                                                 color="#36A18B"
-                                                                className="mr-1 h-6 w-6"
+                                                                className="mr-1 h-5 w-5"
                                                             />
                                                         ) : (
                                                             <MdOutlineContentPaste
@@ -275,53 +335,64 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                             />
                                                         )
                                                     }
-                                                    onRightIconClick={() =>
-                                                        field.value
-                                                            ? handleRemoveAllText(field)
-                                                            : handlePasteClick(field)
-                                                    }
+                                                    onRightIconClick={() => handlePasteClick(field)}
                                                     placeholder={t("claim.addressPlaceholder")}
                                                     className="py-5 h-14 text-md rounded-xl"
                                                     onFocusShowIcon={true}
                                                     onFocusText={true}
                                                     {...field}
                                                     onChange={(e) => {
-                                                        console.log("Change address", e);
                                                         field.onChange(e);
                                                         // Validate the address format
                                                         try {
                                                             if (e.target.value) {
                                                                 Principal.fromText(e.target.value);
                                                                 form.clearErrors("address");
+                                                                // Update disabled state when address is valid
+                                                                if (setDisabled) {
+                                                                    setDisabled(false);
+                                                                }
                                                             } else {
                                                                 form.clearErrors("address");
+                                                                // Update disabled state when address is empty
+                                                                if (setDisabled && !identity) {
+                                                                    setDisabled(true);
+                                                                }
                                                             }
                                                         } catch {
                                                             form.setError("address", {
                                                                 type: "manual",
-                                                                message: "Invalid address format",
+                                                                message: "wallet-format-error",
                                                             });
+                                                            // Update disabled state when address is invalid
+                                                            if (setDisabled && !identity) {
+                                                                setDisabled(true);
+                                                            }
                                                         }
                                                     }}
                                                 />
                                             </FormControl>
-                                            <FormMessage />
+                                            {form.formState.errors.address?.message ===
+                                            "wallet-format-error" ? (
+                                                <ErrorMessageWithIcon message="The wallet format is incorrect. Please make sure you are entering the correct wallet." />
+                                            ) : (
+                                                <FormMessage />
+                                            )}
                                         </FormItem>
                                     )}
                                 />
                             )}
                         </div>
-                        <div className="fixed bottom-0 left-0 right-0 p-5 bg-white">
-                            <FixedBottomButton
-                                type="submit"
-                                variant="default"
-                                size="lg"
-                                className="w-full"
-                                disabled={isDisabled}
-                            >
-                                {isDisabled ? t("processing") : t("claim.claim")}
-                            </FixedBottomButton>
-                        </div>
+
+                        <FixedBottomButton
+                            type="submit"
+                            variant="default"
+                            size="lg"
+                            className="absolute bottom-[0px] left-1/2 -translate-x-1/2"
+                            disabled={isDisabled}
+                        >
+                            {buttonText ?? t("claim.claim")}
+                        </FixedBottomButton>
                     </form>
                 </Form>
             </div>
@@ -339,7 +410,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 }}
                 onOpenChange={hideDialog}
             />
-        </div>
+        </>
     );
 };
 
