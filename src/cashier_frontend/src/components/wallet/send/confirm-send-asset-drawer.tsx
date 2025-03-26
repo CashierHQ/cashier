@@ -1,4 +1,4 @@
-import { act, FC, useState } from "react";
+import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
@@ -13,7 +13,6 @@ import {
     useUpdateAction,
 } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
-import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationPopupFeesSection } from "@/components/confirmation-drawer/confirmation-drawer-fees-section";
 import { ConfirmationPopupLegalSection } from "@/components/confirmation-drawer/confirmation-drawer-legal-section";
