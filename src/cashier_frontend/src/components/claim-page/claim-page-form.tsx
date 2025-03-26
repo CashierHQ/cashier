@@ -41,13 +41,6 @@ interface ClaimPageFormProps {
     buttonText?: string;
 }
 
-enum WALLET_OPTIONS {
-    GOOGLE = "Google login",
-    INTERNET_IDENTITY = "Internet Identity",
-    OTHER = "Other wallets",
-    TYPING = "Typing",
-}
-
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     onSubmit,
@@ -61,12 +54,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { user, disconnect } = useAuth();
     const identity = useIdentity();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
-    const { setSigners } = useSigners();
+    const { currentConnectOption, setSigners, setCurrentConnectOption } = useSigners();
 
     const { connectToWallet: connect } = useConnectToWallet();
 
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
-    const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
     // Check if the address is valid
     const isAddressValid = () => {
@@ -184,7 +176,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         if (identity && !currentConnectOption && setCurrentConnectOption) {
             setCurrentConnectOption(WALLET_OPTIONS.INTERNET_IDENTITY);
         }
-    }, []);
+    }, [setCurrentConnectOption]);
 
     // Ensure we immediately update the button state when isDisabled prop changes
     useEffect(() => {
@@ -256,7 +248,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
                             {/* Internet Identity */}
                             {identity &&
-                            currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
+                            currentConnectOption === WALLET_OPTIONS.INTERNET_IDENTITY ? (
                                 <CustomConnectedWalletButton
                                     connectedAccount={user?.principal.toString()}
                                     postfixText="Connected"
@@ -279,7 +271,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             )}
 
                             {/* Other wallets */}
-                            {identity && currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
+                            {identity && currentConnectOption === WALLET_OPTIONS.OTHER ? (
                                 <CustomConnectedWalletButton
                                     connectedAccount={user?.principal.toString()}
                                     postfixText="Connected"

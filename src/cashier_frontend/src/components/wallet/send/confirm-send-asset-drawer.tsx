@@ -24,7 +24,7 @@ import {
     usePrimaryIntents,
 } from "@/components/confirmation-drawer/confirmation-drawer.hooks";
 import { SendAssetConfirmationPopupAssetsSection } from "./send-asset-confirmation-drawer-assets-section";
-import { SendTransactionStatus, WalletSendTransactionStatus } from "./send-transaction-status";
+import { SendTransactionStatus } from "./send-transaction-status";
 import CanisterUtilsService from "@/services/canisterUtils.service";
 
 export interface SendAssetInfo {
