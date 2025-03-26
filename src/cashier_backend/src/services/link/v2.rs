@@ -331,10 +331,15 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
 
                 // validate link balance
+                let asset = link.asset_info.clone().ok_or_else(|| {
+                    CanisterError::HandleLogicError("Asset info not found".to_string())
+                })?;
+                let asset_address = asset[0].address.clone();
+
                 let link_balance = self
                     .icrc_service
                     .balance_of(
-                        Principal::from_text(ICP_CANISTER_ID).unwrap(),
+                        Principal::from_text(asset_address).unwrap(),
                         Account {
                             owner: self.ic_env.id(),
                             subaccount: Some(to_subaccount(link.id.clone())),
