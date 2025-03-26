@@ -16,6 +16,7 @@ import { parseResultResponse } from "../utils/parser";
 import { TokenHelper } from "../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
+import { fromNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -46,7 +47,7 @@ describe("Tip Link claim create user", () => {
     const assetInfoTest = {
         chain: "IC",
         address: "x5qut-viaaa-aaaar-qajda-cai",
-        amount_per_claim: BigInt(100),
+        amount_per_claim: BigInt(10_0000_0000),
         total_amount: BigInt(10_0000_0000),
     };
 
@@ -242,6 +243,7 @@ describe("Tip Link claim create user", () => {
     });
 
     describe("With Bob", () => {
+        let claimActionId: string;
         beforeAll(async () => {
             actor.setIdentity(bob);
         });
@@ -263,10 +265,13 @@ describe("Tip Link claim create user", () => {
 
         it("Should call process_action success", async () => {
             const res = await actor.process_action({
-                action_id: createLinkActionId,
+                action_id: "",
                 link_id: linkId,
                 action_type: "Claim",
             });
+
+            const parsedRes = parseResultResponse(res);
+            claimActionId = parsedRes.id;
 
             expect(res).toHaveProperty("Ok");
         });
@@ -288,6 +293,59 @@ describe("Tip Link claim create user", () => {
                 throw new Error("Expected Ok in response");
             }
         });
+
+        it("Should change be success after call process_action", async () => {
+            const tokenHelper = new TokenHelper(pic);
+            const bobAccount = {
+                owner: bob.getPrincipal(),
+                subaccount: [] as any,
+            };
+            const balanceBefore = await tokenHelper.balanceOf(bobAccount);
+            console.log("claimActionId", claimActionId);
+            const res = await actor.process_action({
+                action_id: createLinkActionId,
+                link_id: linkId,
+                action_type: "Claim",
+            });
+            const parsedRes = parseResultResponse(res);
+            const balanceAfter = await tokenHelper.balanceOf(bobAccount);
+            const get_link_res = await actor.get_link(linkId, []);
+            const parsed_res = parseResultResponse(get_link_res);
+
+            expect(res).toHaveProperty("Ok");
+            expect(parsedRes.state).toEqual("Action_state_success");
+            expect(parsedRes.intents[0].state).toEqual("Intent_state_success");
+            expect(balanceBefore).toEqual(BigInt(0));
+            // minus fee
+            expect(balanceAfter).toEqual(assetInfoTest.amount_per_claim - BigInt(10_000));
+            const asset_info = fromNullable(parsed_res.link.asset_info);
+            expect(asset_info).toHaveLength(1);
+            // Add a null check before accessing array element
+            if (asset_info && asset_info.length > 0) {
+                expect(asset_info[0].total_claim).toEqual(BigInt(1));
+            } else {
+                throw new Error("Expected asset_info to have length > 0");
+            }
+        });
+    });
+
+    it("Should update to complete claim", async () => {
+        const res = await actor.link_update_user_state({
+            link_id: linkId,
+            action_type: "Claim",
+            goto: "Continue",
+            anonymous_wallet_address: [],
+        });
+        const parsedRes = parseResultResponse(res);
+
+        expect(res).toHaveProperty("Ok");
+        if (parsedRes[0]) {
+            expect(parsedRes[0].link_user_state).toEqual("User_state_completed_link");
+            expect(parsedRes[0].action.state).toEqual("Action_state_success");
+            expect(parsedRes[0].action.type).toEqual("Claim");
+        } else {
+            throw new Error("Expected Ok in response");
+        }
     });
 });
 //

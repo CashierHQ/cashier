@@ -11,11 +11,14 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error,
+    error, info,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
-        transaction_manager::{action::ActionService, TransactionManagerService, UpdateActionArgs},
+        transaction_manager::{
+            action::ActionService, validate::ValidateService, TransactionManagerService,
+            UpdateActionArgs,
+        },
         user::v2::UserService,
     },
     types::{api::PaginateInput, error::CanisterError, temp_action::TemporaryAction},
@@ -24,7 +27,7 @@ use crate::{
 
 use super::types::{
     CreateLinkInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
-    UserStateMachineGoto,
+    UpdateActionInput, UserStateMachineGoto,
 };
 
 #[query(guard = "is_not_anonymous")]
@@ -202,12 +205,19 @@ pub async fn link_update_user_state(
     api.link_update_user_state(input)
 }
 
+#[update(guard = "is_not_anonymous")]
+pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.update_action(input).await
+}
+
 pub struct LinkApi<E: IcEnvironment + Clone> {
     link_service: LinkService<E>,
     user_service: UserService,
     tx_manager_service: TransactionManagerService<E>,
     action_service: ActionService<E>,
     ic_env: E,
+    validate_service: ValidateService,
 }
 
 impl<E: IcEnvironment + Clone> LinkApi<E> {
@@ -218,6 +228,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             tx_manager_service: TransactionManagerService::get_instance(),
             action_service: ActionService::get_instance(),
             ic_env: E::new(),
+            validate_service: ValidateService::get_instance(),
         }
     }
 
@@ -227,6 +238,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         tx_manager_service: TransactionManagerService<E>,
         action_service: ActionService<E>,
         ic_env: E,
+        validate_service: ValidateService,
     ) -> Self {
         Self {
             link_service,
@@ -234,6 +246,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             tx_manager_service,
             action_service,
             ic_env,
+            validate_service,
         }
     }
 
@@ -250,14 +263,14 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
 
         // check wallet address
-        match Principal::from_text(input.wallet_address.clone()) {
-            Ok(_) => (),
+        let wallet_address = match Principal::from_text(input.wallet_address.clone()) {
+            Ok(wa) => wa,
             Err(_) => {
                 return Err(CanisterError::ValidationErrors(
                     "Invalid wallet address".to_string(),
                 ));
             }
-        }
+        };
 
         let action_type = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
@@ -305,7 +318,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // fill the intent info
             let intents = self
                 .link_service
-                .link_assemble_intents(&temp_action.link_id, &temp_action.r#type)
+                .link_assemble_intents(&temp_action.link_id, &temp_action.r#type, &wallet_address)
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!(
                         "[process_action] Failed to assemble intents: {}",
@@ -324,14 +337,25 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id, &caller)
                 .await?;
 
+            let action_id = action.unwrap().id.clone();
+
             // execute action
-            self.tx_manager_service
+            let update_action_res = self
+                .tx_manager_service
                 .update_action(UpdateActionArgs {
-                    action_id: action.unwrap().id,
-                    link_id: input.link_id,
+                    action_id: action_id.clone(),
+                    link_id: input.link_id.clone(),
                     execute_wallet_tx: false,
                 })
-                .await
+                .await;
+
+            self.link_service
+                .update_link_properties(input.link_id.clone(), action_id.clone())
+                .map_err(|e| {
+                    CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
+                })?;
+
+            update_action_res
         }
     }
 
@@ -389,10 +413,12 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 default_link_user_state,
             };
 
+            let caller = self.ic_env.caller();
+
             // fill the intent info
             let intents = self
                 .link_service
-                .link_assemble_intents(&temp_action.link_id, &temp_action.r#type)
+                .link_assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller)
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!(
                         "[process_action] Failed to assemble intents: {}",
@@ -415,14 +441,25 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 )
                 .await?;
 
+            let action_id = action.unwrap().id.clone();
+
             // execute action
-            self.tx_manager_service
+            let update_action_res = self
+                .tx_manager_service
                 .update_action(UpdateActionArgs {
-                    action_id: action.unwrap().id,
-                    link_id: input.link_id,
+                    action_id: action_id.clone(),
+                    link_id: input.link_id.clone(),
                     execute_wallet_tx: false,
                 })
-                .await
+                .await;
+
+            self.link_service
+                .update_link_properties(input.link_id.clone(), action_id.clone())
+                .map_err(|e| {
+                    CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
+                })?;
+
+            update_action_res
         }
     }
 
@@ -569,7 +606,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         // if anonymous_wallet_address not null, temp_user_id = anonymous_wallet_address
         if input.anonymous_wallet_address.is_some() {
-            temp_user_id = Some(input.anonymous_wallet_address.unwrap());
+            temp_user_id = Some(format!(
+                "ANON#{}",
+                input.anonymous_wallet_address.clone().unwrap().to_string()
+            ));
         }
 
         let goto = UserStateMachineGoto::from_str(&input.goto.clone())
@@ -603,5 +643,48 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             action: ActionDto::from_with_tx(action.action, action.intents, action.intent_txs),
             link_user_state: link_user_state.unwrap().to_string(),
         }));
+    }
+
+    pub async fn update_action(
+        &self,
+        input: UpdateActionInput,
+    ) -> Result<ActionDto, CanisterError> {
+        let caller = ic_cdk::api::caller();
+
+        let is_creator = self
+            .validate_service
+            .is_action_creator(caller.to_text(), input.action_id.clone())
+            .map_err(|e| {
+                CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
+            })?;
+
+        if !is_creator {
+            return Err(CanisterError::ValidationErrors(
+                "User is not the creator of the action".to_string(),
+            ));
+        }
+
+        let args = UpdateActionArgs {
+            action_id: input.action_id.clone(),
+            link_id: input.link_id.clone(),
+            execute_wallet_tx: true,
+        };
+
+        let update_action_res = self
+            .tx_manager_service
+            .update_action(args)
+            .await
+            .map_err(|e| {
+                CanisterError::HandleLogicError(format!("Failed to update action: {}", e))
+            });
+
+        // update link prop
+        self.link_service
+            .update_link_properties(input.link_id.clone(), input.action_id.clone())
+            .map_err(|e| {
+                CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
+            })?;
+
+        update_action_res
     }
 }

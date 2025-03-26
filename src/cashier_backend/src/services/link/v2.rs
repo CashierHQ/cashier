@@ -1,7 +1,7 @@
 use candid::Principal;
 use cashier_types::{
-    Action, ActionState, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType,
-    Link, LinkAction, LinkState, LinkType, LinkUserState, Wallet,
+    action, Action, ActionState, ActionType, Asset, Chain, Intent, IntentState, IntentTask,
+    IntentType, Link, LinkAction, LinkState, LinkType, LinkUserState, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -10,7 +10,9 @@ use crate::{
     constant::{ICP_CANISTER_ID, INTENT_LABEL_WALLET_TO_LINK, INTENT_LABEL_WALLET_TO_TREASURY},
     core::link::types::UserStateMachineGoto,
     info,
-    repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
+    repositories::{
+        self, action::ActionRepository, link_action::LinkActionRepository, user_wallet,
+    },
     services::transaction_manager::fee::Fee,
     types::error::CanisterError,
     utils::{helper::to_subaccount, icrc::IcrcService, runtime::IcEnvironment},
@@ -124,6 +126,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         &self,
         link_id: &str,
         action_type: &ActionType,
+        user_wallet: &Principal,
     ) -> Result<Vec<Intent>, CanisterError> {
         let link = self.get_link_by_id(link_id.to_string())?;
 
@@ -155,7 +158,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         chain: asset_info.chain.clone(),
                     };
                     let from_account = Account {
-                        owner: self.ic_env.caller(),
+                        owner: user_wallet.clone(),
                         subaccount: None,
                     };
                     transfer_data.from = Wallet {
@@ -176,7 +179,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 IntentTask::TransferWalletToTreasury => {
                     let mut transfer_from_data = intent.r#type.as_transfer_from().unwrap();
                     let caller_account = Account {
-                        owner: self.ic_env.caller(),
+                        owner: user_wallet.clone(),
                         subaccount: None,
                     };
                     let spender_wallet = Wallet {
@@ -214,7 +217,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
                 IntentTask::TransferLinkToWallet => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    info!("intent: {:#?}", intent);
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         CanisterError::HandleLogicError(
                             "[link_assemble_intents] task TransferLinkToWallet Asset not found"
@@ -236,10 +238,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         address: from_account.to_string(),
                         chain: Chain::IC,
                     };
-                    let to_account = Account {
-                        owner: self.ic_env.caller(),
-                        subaccount: None,
-                    };
+                    let to_account = user_wallet.clone();
                     transfer_data.to = Wallet {
                         address: to_account.to_string(),
                         chain: Chain::IC,
@@ -333,11 +332,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 // TODO: validate link's balance
                 return Ok(());
-            }
-            // validate creator and balance
-            _ => {
-                return Ok(());
-            }
+            } // validate creator and balance
+              // _ => {
+              //     return Ok(());
+              // }
         }
     }
 
@@ -519,5 +517,50 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         // Return the updated link_action
         Ok(link_action)
+    }
+
+    /// Updates link properties after an action completes
+    /// Returns true if link properties were updated, false otherwise
+    pub fn update_link_properties(
+        &self,
+        link_id: String,
+        action_id: String,
+    ) -> Result<bool, CanisterError> {
+        // Get the link and action
+        let link = self.get_link_by_id(link_id.clone())?;
+        let action = match self.action_repository.get(action_id.clone()) {
+            Some(action) => action,
+            None => return Ok(false),
+        };
+
+        info!("[update_link_properties] link: {:#?}", link);
+        info!("[update_link_properties] action: {:#?}", action);
+
+        // Early return if not a successful claim on a TipLink
+        if action.state != ActionState::Success {
+            return Ok(false);
+        }
+
+        // At this point we know we have a successful claim on a TipLink
+        // Update link's properties here
+        let mut updated_link = link.clone();
+
+        // update tip link's total_claim
+        if link.link_type == Some(LinkType::TipLink) && action.r#type == ActionType::Claim {
+            info!("[update_link_properties] updating total_claim for TipLink");
+            // Update asset info to track the claim
+            if let Some(mut asset_info) = updated_link.asset_info.clone() {
+                for asset in asset_info.iter_mut() {
+                    asset.total_claim += 1;
+                }
+                updated_link.asset_info = Some(asset_info);
+            }
+        }
+
+        // Save the updated link
+        self.link_repository.update(updated_link);
+
+        // Return true to indicate that we updated the link
+        Ok(true)
     }
 }
