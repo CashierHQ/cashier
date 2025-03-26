@@ -4,6 +4,9 @@ import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import UserService from "@/services/user.service";
+import { resetAllStores } from "@/stores";
+import { useSigners } from "@/contexts/signer-list-context";
+import { InternetIdentity } from "@nfid/identitykit";
 
 export const useConnectToWallet = () => {
     const { connect, disconnect, user } = useAuth();
@@ -18,6 +21,8 @@ export const useConnectToWallet = () => {
         retry: 1,
         enabled: !!identity,
     });
+
+    const { setSigners } = useSigners();
 
     useEffect(() => {
         const createUser = async () => {
@@ -44,14 +49,25 @@ export const useConnectToWallet = () => {
     const connectToWallet = async () => {
         try {
             await connect();
+            resetAllStores();
         } catch (error) {
             console.error("Failed to connect wallet:", error);
         }
     };
 
+    const disconnectWallet = async () => {
+        try {
+            await disconnect();
+            resetAllStores();
+            setSigners([InternetIdentity]);
+        } catch (error) {
+            console.error("Failed to disconnect wallet:", error);
+        }
+    };
+
     return {
         connectToWallet,
-        disconnect,
+        disconnectWallet,
         user,
         appUser,
         identity,

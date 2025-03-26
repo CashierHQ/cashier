@@ -6,6 +6,7 @@ import { convert } from "@/utils/helpers/convert";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { TASK } from "@/services/types/enum";
+import { Spinner } from "../ui/spinner";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -21,13 +22,21 @@ const getItemLabel = (intent: IntentModel) => {
         default:
             return "transaction.confirm_popup.total_cashier_fees_label";
     }
-    return intent.task;
 };
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
 }) => {
     const { t } = useTranslation();
+    const {
+        isLoadingMetadata,
+        assetAmount,
+        assetSrc,
+        feeAmount,
+        feeSymbol,
+        title: intentTitle,
+    } = useIntentMetadata(intents?.[0]);
+
     const { assetSymbol } = useIntentMetadata(intents?.[0]);
     const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
         intents[0]?.asset.address,
@@ -43,6 +52,14 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
         initState();
     }, []);
 
+    const calculateTotalCashierFee = () => {
+        if (intents[0].task === TASK.TRANSFER_LINK_TO_WALLET && totalCashierFee && feeAmount) {
+            return totalCashierFee - feeAmount;
+        } else {
+            return totalCashierFee;
+        }
+    };
+
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
             <div className="flex flex-col gap-3 rounded-xl p-4 bg-lightgreen">
@@ -50,10 +67,15 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     <div>{t(getItemLabel(intents[0]))}</div>
 
                     <div className="flex items-center">
-                        {!isLoadingConversionRates &&
-                            conversionRates?.tokenToUsd !== undefined &&
-                            `($${convert(totalCashierFee, conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
-                        {totalCashierFee} {assetSymbol}
+                        {isLoadingConversionRates || !totalCashierFee ? (
+                            <Spinner width={22} />
+                        ) : (
+                            <>
+                                {conversionRates?.tokenToUsd !== undefined &&
+                                    `($${convert(calculateTotalCashierFee(), conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}
+                                {calculateTotalCashierFee()} {assetSymbol}
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
