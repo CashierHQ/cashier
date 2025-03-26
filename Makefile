@@ -19,8 +19,7 @@ setup-test:
 	bash scripts/setup_test.sh
 	
 test:
-	make build-backend
-	@npm run test
+	@npm run test:integration-backend
 
 # have to run local-setup before running this, need create did file in .dfx
 g: 

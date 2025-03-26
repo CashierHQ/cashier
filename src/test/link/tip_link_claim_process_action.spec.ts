@@ -328,5 +328,24 @@ describe("Tip Link claim create user", () => {
             }
         });
     });
+
+    it("Should update to complete claim", async () => {
+        const res = await actor.link_update_user_state({
+            link_id: linkId,
+            action_type: "Claim",
+            goto: "Continue",
+            anonymous_wallet_address: [],
+        });
+        const parsedRes = parseResultResponse(res);
+
+        expect(res).toHaveProperty("Ok");
+        if (parsedRes[0]) {
+            expect(parsedRes[0].link_user_state).toEqual("User_state_completed_link");
+            expect(parsedRes[0].action.state).toEqual("Action_state_success");
+            expect(parsedRes[0].action.type).toEqual("Claim");
+        } else {
+            throw new Error("Expected Ok in response");
+        }
+    });
 });
 //
