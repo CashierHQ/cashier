@@ -115,7 +115,7 @@ export default function LinkPage() {
     return (
         <div
             className={cn(
-                "w-screen h-dvh max-h-dvh flex flex-col items-center py-3",
+                "w-screen h-screen flex flex-col items-center py-3",
                 "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
             )}
         >
