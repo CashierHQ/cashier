@@ -330,7 +330,25 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
 
-                // TODO: validate link's balance
+                // validate link balance
+                let link_balance = self
+                    .icrc_service
+                    .balance_of(
+                        Principal::from_text(ICP_CANISTER_ID).unwrap(),
+                        Account {
+                            owner: self.ic_env.id(),
+                            subaccount: Some(to_subaccount(link.id.clone())),
+                        },
+                    )
+                    .await
+                    .map_err(|e| e)?;
+
+                if link_balance <= 0 {
+                    return Err(CanisterError::ValidationErrors(
+                        "Not enough asset".to_string(),
+                    ));
+                }
+
                 return Ok(());
             } // validate creator and balance
               // _ => {
