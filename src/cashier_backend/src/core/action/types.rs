@@ -15,29 +15,17 @@ pub struct CreateActionInput {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct UpdateActionInput {
-    pub link_id: String,
-    pub action_id: String,
-    pub external: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct TriggerTransactionInput {
     pub link_id: String,
     pub action_id: String,
     pub transaction_id: String,
 }
 
-// #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-// pub struct UpdateActionInput {
-//     pub link_id: String,
-//     pub action_id: String,
-// }
-
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ProcessActionInput {
     pub link_id: String,
     pub action_type: String,
+    // TODO: remove action_id
     pub action_id: String,
 }
 

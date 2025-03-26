@@ -28,7 +28,7 @@ impl Link {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LinkType {
     NftCreateAndAirdrop,
     TipLink,
