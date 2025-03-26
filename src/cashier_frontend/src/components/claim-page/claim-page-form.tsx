@@ -398,6 +398,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 actionText="Disconnect"
                 onSubmit={() => {
                     disconnect();
+                    setSigners([InternetIdentity]);
                     form.setValue("address", "");
                     form.clearErrors();
                     hideDialog();

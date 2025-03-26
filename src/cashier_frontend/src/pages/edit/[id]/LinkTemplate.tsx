@@ -71,7 +71,7 @@ export default function LinkTemplate({
     return (
         <div className="w-full flex flex-col flex-1">
             <Form {...form}>
-                <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                <form onSubmit={handleSubmit} className="flex flex-col h-full mb-[70px]">
                     <FormField
                         control={form.control}
                         name="title"
@@ -113,7 +113,7 @@ export default function LinkTemplate({
                         type="submit"
                         variant="default"
                         size="lg"
-                        className="mt-4"
+                        className="absolute bottom-[0px] left-1/2 -translate-x-1/2"
                         disabled={isButtonDisabled}
                     >
                         {t("continue")}

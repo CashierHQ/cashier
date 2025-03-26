@@ -19,7 +19,7 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
         return null;
     }
     return (
-        <div className="my-5">
+        <div className="mt-5 mb-[100px]">
             <div className="flex justify-between items-center">
                 <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
                     {t("link.preview.fees.label")}

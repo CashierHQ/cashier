@@ -86,7 +86,7 @@ export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
     }, [step, children]);
 
     return (
-        <div className="relative w-full flex-1 flex flex-col overflow-hidden">
+        <div className="relative w-full flex-1 flex flex-col">
             <div
                 key={step}
                 className={cn(
