@@ -1,5 +1,5 @@
 use super::TransactionBuilder;
-use crate::core::action::types::UpdateActionInput;
+use crate::core::link::types::UpdateActionInput;
 use crate::types::icrc_112_transaction::Icrc112Request;
 use base64::engine::general_purpose;
 use base64::Engine;

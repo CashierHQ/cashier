@@ -243,6 +243,7 @@ describe("Tip Link claim create user", () => {
     });
 
     describe("With Bob", () => {
+        let claimActionId: string;
         beforeAll(async () => {
             actor.setIdentity(bob);
         });
@@ -264,10 +265,13 @@ describe("Tip Link claim create user", () => {
 
         it("Should call process_action success", async () => {
             const res = await actor.process_action({
-                action_id: createLinkActionId,
+                action_id: "",
                 link_id: linkId,
                 action_type: "Claim",
             });
+
+            const parsedRes = parseResultResponse(res);
+            claimActionId = parsedRes.id;
 
             expect(res).toHaveProperty("Ok");
         });
@@ -297,6 +301,7 @@ describe("Tip Link claim create user", () => {
                 subaccount: [] as any,
             };
             const balanceBefore = await tokenHelper.balanceOf(bobAccount);
+            console.log("claimActionId", claimActionId);
             const res = await actor.process_action({
                 action_id: createLinkActionId,
                 link_id: linkId,
@@ -306,8 +311,6 @@ describe("Tip Link claim create user", () => {
             const balanceAfter = await tokenHelper.balanceOf(bobAccount);
             const get_link_res = await actor.get_link(linkId, []);
             const parsed_res = parseResultResponse(get_link_res);
-
-            console.log("link", parsed_res.link.asset_info);
 
             expect(res).toHaveProperty("Ok");
             expect(parsedRes.state).toEqual("Action_state_success");
