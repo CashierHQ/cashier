@@ -1,10 +1,8 @@
-import AssetButton from "@/components/asset-button";
 import AssetDrawer from "@/components/asset-drawer";
 import { AssetSelectItem } from "@/components/asset-select";
 import { useConfirmButtonState } from "@/components/confirmation-drawer/confirmation-drawer.hooks";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
-import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { BackHeader } from "@/components/ui/back-header";
@@ -22,66 +20,57 @@ import {
     useWalletSendAssetFormActions,
     WalletSendAssetFormSchema,
 } from "@/components/wallet/send/send-asset-form.hooks";
-import { MOCK_TOKENS_LIST } from "@/constants/mock-data";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import useToast from "@/hooks/useToast";
-import { useTokenMetadataList } from "@/hooks/useTokenMetadataQuery";
-import CanisterUtilsService from "@/services/canisterUtils.service";
-import { TokenUtilService } from "@/services/tokenUtils.service";
 import { ACTION_STATE } from "@/services/types/enum";
-import { convertTokenAmountToNumber } from "@/utils";
-import { AccountIdentifier } from "@dfinity/ledger-icp";
-import { useAuth, useIdentity } from "@nfid/identitykit/react";
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { useIdentity } from "@nfid/identitykit/react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
+import { SelectToken } from "@/components/receive/SelectToken";
+import { z } from "zod";
+import { convertDecimalBigIntToNumber } from "@/utils";
 
 export default function SendTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const identity = useIdentity();
     const goBack = () => navigate("/wallet");
-    const { tokenId } = useParams<{ tokenId: string }>();
+    const { tokenId } = useParams<{ tokenId?: string }>();
     const { metadata } = useTokenMetadata(tokenId);
-    const { data: metadataList } = useTokenMetadataList();
-    const { user } = useAuth();
     const { toastData, showToast, hideToast } = useToast();
+    const { assets: tokenList } = useUserAssets();
 
-    const [accountId, setAccountId] = useState<string>("");
+    const selectedToken = tokenList
+        ? tokenId
+            ? tokenList.find((token) => token.tokenAddress === tokenId) || {
+                  name: metadata?.symbol || "",
+                  tokenAddress: tokenId,
+                  amount: 0,
+              }
+            : tokenList[0]
+        : undefined;
+
+    const handleTokenSelect = (token: AssetSelectItem) => {
+        navigate(`/wallet/send/${token.tokenAddress}`);
+    };
+
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
+    const [addressType, setAddressType] = useState<"principal" | "account">("principal");
 
     const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
         ACTION_STATE.CREATED,
         t,
     );
 
-    const { isLoadingAssets, isLoadingBalance, assets: defaultAssetList } = useUserAssets();
-
-    const assetSelectedItem: AssetSelectItem = {
-        name: metadata?.symbol || "",
-        tokenAddress: tokenId ?? "",
-        amount: undefined,
-    };
-
-    // const defaultAssetList = useMemo(() => {
-    //     return MOCK_TOKENS_LIST.map((token) => ({
-    //         name: token.name,
-    //         tokenAddress: token.address,
-    //         amount: TokenUtilService.getHumanReadableAmountFromMetadata(
-    //             token.amount,
-    //             metadataList?.find((metadata) => metadata.canisterId === token.address)?.metadata,
-    //         ),
-    //     }));
-    // }, [assetSelectedItem.name, assetSelectedItem.tokenAddress, metadataList]);
-
-    const form = useWalletSendAssetForm(defaultAssetList ?? [], {
+    const form = useWalletSendAssetForm(tokenList ?? [], {
         tokenAddress: tokenId ?? "",
         amount: BigInt(0),
         assetNumber: 0,
     });
 
-    const selectedAsset = useSelectedWalletSendAsset(defaultAssetList, form);
+    const selectedAsset = useSelectedWalletSendAsset(tokenList, form);
     const { setTokenAmount, setTokenAddress, setWalletAddress } =
         useWalletSendAssetFormActions(form);
 
@@ -93,6 +82,20 @@ export default function SendTokenPage() {
     const handleAmountInputChange = (event: ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setTokenAmount(value);
+
+        // Validate amount against available balance (considering network fee)
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+            const maxAvailable = getMaxAvailableAmount();
+            if (numericValue > maxAvailable) {
+                form.setError("assetNumber", {
+                    type: "manual",
+                    message: `Amount must be less than available balance (${maxAvailable})`,
+                });
+            } else {
+                form.clearErrors("assetNumber");
+            }
+        }
     };
 
     const handleSetWalletAddress = (event: ChangeEvent<HTMLInputElement>) => {
@@ -100,35 +103,67 @@ export default function SendTokenPage() {
         setWalletAddress(value);
     };
 
+    const getMaxAvailableAmount = () => {
+        if (
+            selectedToken?.amount !== undefined &&
+            metadata?.fee !== undefined &&
+            metadata.decimals !== undefined
+        ) {
+            const tokenAmount = Number(selectedToken.amount);
+            // Convert fee using the token's decimals
+            const feeAmount = convertDecimalBigIntToNumber(metadata.fee, metadata.decimals);
+            const maxAvailable = Math.max(0, tokenAmount - feeAmount);
+            return maxAvailable;
+        }
+        return Number(selectedToken?.amount ?? 0);
+    };
+
+    const handleMaxAmount = () => {
+        const maxAmount = getMaxAvailableAmount();
+        if (maxAmount > 0) {
+            setTokenAmount(maxAmount.toString());
+            form.clearErrors("assetNumber");
+        } else {
+            form.setError("assetNumber", {
+                type: "manual",
+                message: "Insufficient balance to cover amount plus network fee",
+            });
+        }
+    };
+
+    // Clear amount error when token changes
+    useEffect(() => {
+        form.clearErrors("assetNumber");
+    }, [selectedToken]);
+
     const onSubmitSend = async (data: WalletSendAssetFormSchema) => {
         console.log(data);
-        setButtonText("Sending...");
-        setIsDisabled(true);
-        try {
-            if (metadata) {
-                const canisterUtils = new CanisterUtilsService(identity);
-                await canisterUtils.transferTo(
-                    data.walletAddress,
-                    data.tokenAddress,
-                    convertTokenAmountToNumber(data.assetNumber ?? 0, metadata.decimals),
-                );
-                showToast("Success", "Transfer successful", "default");
-            } else {
-                console.log("Can not get token metadata");
-                showToast("Error", "Can not get token metadata", "error");
-            }
-        } catch (e) {
-            console.log(e);
-            showToast("Error", "Unexpected", "error");
-        } finally {
-            setButtonText("Confirm");
-            setIsDisabled(false);
-        }
+        // setButtonText("Sending...");
+        // setIsDisabled(true);
+        // try {
+        //     if (metadata) {
+        //         const canisterUtils = new CanisterUtilsService(identity);
+        //         await canisterUtils.transferTo(
+        //             data.walletAddress,
+        //             data.tokenAddress,
+        //             convertTokenAmountToNumber(data.assetNumber ?? 0, metadata.decimals),
+        //         );
+        //         showToast("Success", "Transfer successful", "default");
+        //     } else {
+        //         console.log("Can not get token metadata");
+        //         showToast("Error", "Can not get token metadata", "error");
+        //     }
+        // } catch (e) {
+        //     console.log(e);
+        //         showToast("Error", "Unexpected", "error");
+        // } finally {
+        //     setButtonText("Confirm");
+        //     setIsDisabled(false);
+        // }
     };
 
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
         try {
-            console.log("Paste");
             // Check principal format
             const text = await navigator.clipboard.readText();
             field.onChange(text);
@@ -137,21 +172,14 @@ export default function SendTokenPage() {
         }
     };
 
-    useEffect(() => {
-        if (user?.principal) {
-            const account = AccountIdentifier.fromPrincipal({
-                principal: user.principal,
-            });
-            if (account) {
-                setAccountId(account.toHex());
-            }
-        }
-    }, [user]);
+    const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
+    const isIcpToken = selectedToken?.tokenAddress === ICP_ADDRESS;
 
     return (
         <div className="h-full overflow-auto px-4 py-2">
             <BackHeader onBack={goBack}>
-                <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
+                <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader>
             <div id="content" className="mx-2 my-5">
                 <>
@@ -167,17 +195,13 @@ export default function SendTokenPage() {
                                 control={form.control}
                                 render={() => (
                                     <FormItem>
-                                        <FormLabel>{t("create.asset")}</FormLabel>
-                                        <AssetButton
-                                            handleClick={() => setShowAssetDrawer(true)}
-                                            text="Choose Asset"
-                                            childrenNode={
-                                                <SelectedAssetButtonInfo
-                                                    selectedToken={selectedAsset}
-                                                    isLoadingBalance={false}
-                                                />
-                                            }
-                                        />
+                                        <FormLabel>{t("wallet.send.sendToken")}</FormLabel>
+                                        <FormControl>
+                                            <SelectToken
+                                                selectedToken={selectedToken}
+                                                onSelect={handleTokenSelect}
+                                            />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -190,21 +214,32 @@ export default function SendTokenPage() {
                                     <FormItem>
                                         <div className="flex justify-between items-center">
                                             <FormLabel>{t("create.amount")}</FormLabel>
+                                            {selectedToken?.amount !== undefined && (
+                                                <div className="text-sm text-gray-500">
+                                                    Available: {getMaxAvailableAmount()} (includes
+                                                    network fee)
+                                                </div>
+                                            )}
                                         </div>
                                         <FormControl>
                                             <IconInput
                                                 type="number"
+                                                placeholder="Enter amount"
                                                 step="any"
-                                                isCurrencyInput={true}
-                                                currencySymbol={selectedAsset?.name}
+                                                isCurrencyInput={false}
+                                                rightIcon={
+                                                    <div className="font-semibold text-[#36A18B]">
+                                                        {t("wallet.send.max")}
+                                                    </div>
+                                                }
+                                                onRightIconClick={handleMaxAmount}
                                                 {...field}
                                                 value={form.getValues("assetNumber") ?? ""}
                                                 onChange={handleAmountInputChange}
                                                 className="pl-3 py-5 h-14 text-md rounded-xl appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                             />
                                         </FormControl>
-
-                                        <FormMessage />
+                                        <FormMessage className="text-[#36A18B]" />
                                     </FormItem>
                                 )}
                             />
@@ -215,17 +250,50 @@ export default function SendTokenPage() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <div className="flex justify-between items-center">
-                                            <FormLabel>Wallet address</FormLabel>
+                                            <FormLabel>
+                                                {t("wallet.send.destinationAddress")}
+                                            </FormLabel>
                                         </div>
+                                        {isIcpToken && (
+                                            <div className="flex gap-2 mb-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAddressType("principal")}
+                                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                                                        addressType === "principal"
+                                                            ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
+                                                            : "border border-gray-200 text-gray-600 bg-white"
+                                                    }`}
+                                                >
+                                                    Principal ID
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAddressType("account")}
+                                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                                                        addressType === "account"
+                                                            ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
+                                                            : "border border-gray-200 text-gray-600 bg-white"
+                                                    }`}
+                                                >
+                                                    Account ID
+                                                </button>
+                                            </div>
+                                        )}
                                         <FormControl>
                                             <IconInput
                                                 type="text"
                                                 step="any"
+                                                placeholder={
+                                                    isIcpToken
+                                                        ? `Enter ${addressType === "principal" ? "Principal" : "Account"} ID`
+                                                        : "Enter address"
+                                                }
                                                 isCurrencyInput={false}
                                                 rightIcon={
                                                     <MdOutlineContentPaste
                                                         size={20}
-                                                        color="green"
+                                                        color="#36A18B"
                                                     />
                                                 }
                                                 onRightIconClick={() => handlePasteClick(field)}
@@ -235,8 +303,18 @@ export default function SendTokenPage() {
                                                 className="pl-3 py-5 h-14 text-md rounded-xl appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                             />
                                         </FormControl>
-
                                         <FormMessage />
+                                        {isIcpToken &&
+                                            (addressType === "principal" ? (
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Example: sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-...
+                                                </div>
+                                            ) : (
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Example:
+                                                    6cff4a63eae8621c3dbc1040e6d25136e207b0b...
+                                                </div>
+                                            ))}
                                     </FormItem>
                                 )}
                             />
@@ -249,19 +327,10 @@ export default function SendTokenPage() {
                                 className="fixed bottom-[30px] left-1/2 -translate-x-1/2"
                                 onClick={() => console.log(form.formState.errors)}
                             >
-                                {buttonText}
+                                {t("continue")}
                             </FixedBottomButton>
                         </form>
                     </Form>
-
-                    <AssetDrawer
-                        title="Select Asset"
-                        open={showAssetDrawer}
-                        handleClose={() => setShowAssetDrawer(false)}
-                        handleChange={handleSetTokenAddress}
-                        assetList={defaultAssetList ?? []}
-                        isLoadingBalance={false}
-                    />
                 </>
             </div>
 

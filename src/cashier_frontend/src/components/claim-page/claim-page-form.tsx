@@ -18,7 +18,7 @@ import { FixedBottomButton } from "../fix-bottom-button";
 import { Spinner } from "../ui/spinner";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
-import { useSigners } from "@/contexts/signer-list-context";
+import { useSigners, WALLET_OPTIONS } from "@/contexts/signer-list-context";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import { Principal } from "@dfinity/principal";
 import { FaCheck } from "react-icons/fa6";
@@ -41,13 +41,6 @@ interface ClaimPageFormProps {
     buttonText?: string;
 }
 
-enum WALLET_OPTIONS {
-    GOOGLE = "Google login",
-    INTERNET_IDENTITY = "Internet Identity",
-    OTHER = "Other wallets",
-    TYPING = "Typing",
-}
-
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     onSubmit,
@@ -61,12 +54,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { user, disconnect } = useAuth();
     const identity = useIdentity();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
-    const { setSigners } = useSigners();
+    const { currentConnectOption, setSigners, setCurrentConnectOption } = useSigners();
 
     const { connectToWallet: connect } = useConnectToWallet();
 
     const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
-    const [currentSelectOptionWallet, setCurrentSelectOptionWallet] = useState<WALLET_OPTIONS>();
 
     // Check if the address is valid
     const isAddressValid = () => {
@@ -112,7 +104,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             return;
         }
 
-        if (identity && selectOption !== currentSelectOptionWallet) {
+        if (identity && selectOption !== currentConnectOption) {
             showDialog({
                 title: "Are you sure?",
                 description:
@@ -121,8 +113,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             return;
         }
         if (selectOption === WALLET_OPTIONS.OTHER) {
+            setCurrentConnectOption(WALLET_OPTIONS.OTHER);
             setSigners([NFIDW, Stoic]);
         } else if (selectOption === WALLET_OPTIONS.INTERNET_IDENTITY) {
+            setCurrentConnectOption(WALLET_OPTIONS.INTERNET_IDENTITY);
             setSigners([InternetIdentity]);
         }
         connect();
@@ -166,7 +160,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     useEffect(() => {
         if (identity && selectOptionWallet) {
-            setCurrentSelectOptionWallet(selectOptionWallet);
+            setCurrentConnectOption(selectOptionWallet);
         }
         // If user already connect wallet, then use the connected wallet address
         if (identity) {
@@ -175,14 +169,14 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     }, [selectOptionWallet, identity]);
 
     useEffect(() => {
-        console.log(currentSelectOptionWallet);
-    }, [currentSelectOptionWallet]);
+        console.log(currentConnectOption);
+    }, [currentConnectOption]);
 
     useEffect(() => {
-        if (identity) {
-            setCurrentSelectOptionWallet(WALLET_OPTIONS.INTERNET_IDENTITY);
+        if (identity && !currentConnectOption && setCurrentConnectOption) {
+            setCurrentConnectOption(WALLET_OPTIONS.INTERNET_IDENTITY);
         }
-    }, []);
+    }, [setCurrentConnectOption]);
 
     // Ensure we immediately update the button state when isDisabled prop changes
     useEffect(() => {
@@ -254,7 +248,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
                             {/* Internet Identity */}
                             {identity &&
-                            currentSelectOptionWallet === WALLET_OPTIONS.INTERNET_IDENTITY ? (
+                            currentConnectOption === WALLET_OPTIONS.INTERNET_IDENTITY ? (
                                 <CustomConnectedWalletButton
                                     connectedAccount={user?.principal.toString()}
                                     postfixText="Connected"
@@ -277,7 +271,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             )}
 
                             {/* Other wallets */}
-                            {identity && currentSelectOptionWallet === WALLET_OPTIONS.OTHER ? (
+                            {identity && currentConnectOption === WALLET_OPTIONS.OTHER ? (
                                 <CustomConnectedWalletButton
                                     connectedAccount={user?.principal.toString()}
                                     postfixText="Connected"

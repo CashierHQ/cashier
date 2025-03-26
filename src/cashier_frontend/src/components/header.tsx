@@ -8,6 +8,8 @@ import { SheetTrigger } from "./ui/sheet";
 import { RiMenu2Line } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { useConnectToWallet } from "@/hooks/useConnectToWallet";
+import { useSigners } from "@/contexts/signer-list-context";
+import { InternetIdentity } from "@nfid/identitykit";
 
 interface HeaderProps {
     onConnect: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -18,6 +20,12 @@ const Header: React.FC<HeaderProps> = ({ openTestForm }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { connectToWallet } = useConnectToWallet();
+    const { setSigners } = useSigners();
+
+    const handleConnect = async () => {
+        setSigners([InternetIdentity]);
+        await connectToWallet();
+    };
 
     if (!user) {
         return (
@@ -28,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({ openTestForm }) => {
                     className="max-w-[130px]"
                     onClick={() => navigate("/")}
                 />
-                <LoginButton onClick={connectToWallet}>Login</LoginButton>
+                <LoginButton onClick={handleConnect}>Login</LoginButton>
             </div>
         );
     } else {
