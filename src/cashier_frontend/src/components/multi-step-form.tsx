@@ -15,7 +15,7 @@ interface MultiStepFormProps {
 export function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps) {
     return (
         <MultiStepFormProvider initialStep={initialStep}>
-            <div className="w-full flex-grow flex flex-col h-full">{children}</div>
+            <div className="w-full flex flex-col flex-grow items-center">{children}</div>
         </MultiStepFormProvider>
     );
 }
@@ -85,28 +85,7 @@ export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
         setStepName(stepComponent.props.name);
     }, [step, children]);
 
-    return (
-        <div className="relative w-full flex-1 flex flex-col overflow-hidden">
-            <div
-                key={step}
-                className={cn(
-                    "w-full h-full flex flex-col flex-grow transition-all duration-300 ease-in-out",
-                    direction === "forward" && [
-                        "animate-in slide-in-from-right",
-                        "data-[state=entering]:translate-x-full",
-                        "data-[state=entered]:translate-x-0",
-                    ],
-                    direction === "backward" && [
-                        "animate-in slide-in-from-left",
-                        "data-[state=entering]:translate-x-[-100%]",
-                        "data-[state=entered]:translate-x-0",
-                    ],
-                )}
-            >
-                {stepComponent}
-            </div>
-        </div>
-    );
+    return stepComponent;
 }
 
 interface MultiStepFormItemProps {

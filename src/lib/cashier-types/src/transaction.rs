@@ -3,14 +3,14 @@ use cashier_macros::storable;
 use icrc_ledger_types::{
     icrc1::{
         account::{Account, ICRC1TextReprError},
-        transfer::Memo,
+        transfer::{Memo, TransferArg},
     },
     icrc2::transfer_from::TransferFromArgs,
 };
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::{common::Wallet, Asset};
+use crate::{common::Wallet, Asset, Chain};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[storable]
@@ -61,8 +61,6 @@ impl Transaction {
     }
 
     pub fn set_from(&mut self, from_account: Account) -> () {
-        use crate::Chain;
-
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
                 icrc1_transfer.from = Wallet {
@@ -82,6 +80,24 @@ impl Transaction {
                     chain: Chain::IC,
                 }
             }
+        }
+    }
+
+    pub fn set_to(&mut self, to_account: Account) -> () {
+        match &mut self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
+                icrc1_transfer.to = Wallet {
+                    address: to_account.to_string(),
+                    chain: Chain::IC,
+                }
+            }
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
+                icrc2_transfer_from.to = Wallet {
+                    address: to_account.to_string(),
+                    chain: Chain::IC,
+                }
+            }
+            _ => {}
         }
     }
 }
@@ -146,6 +162,34 @@ pub struct Icrc1Transfer {
     pub amount: u64,
     pub memo: Option<Memo>,
     pub ts: Option<u64>,
+}
+
+impl TryFrom<Icrc1Transfer> for TransferArg {
+    type Error = String;
+
+    fn try_from(value: Icrc1Transfer) -> Result<Self, Self::Error> {
+        let from = value
+            .from
+            .get_account()
+            .map_err(|e| format!("Failed to parse from account: {}", e.to_string()))?;
+
+        let to = value
+            .to
+            .get_account()
+            .map_err(|e| format!("Failed to parse to account: {}", e.to_string()))?;
+
+        let amount = Nat::from(value.amount);
+        let memo = value.memo;
+
+        Ok(TransferArg {
+            from_subaccount: from.subaccount,
+            to,
+            amount,
+            fee: None,
+            memo,
+            created_at_time: value.ts,
+        })
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

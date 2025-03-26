@@ -1,7 +1,7 @@
 use candid::Principal;
 use cashier_types::{
-    Action, ActionState, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType,
-    Link, LinkAction, LinkState, LinkType, LinkUserState, Wallet,
+    action, Action, ActionState, ActionType, Asset, Chain, Intent, IntentState, IntentTask,
+    IntentType, Link, LinkAction, LinkState, LinkType, LinkUserState, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -333,11 +333,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 // TODO: validate link's balance
                 return Ok(());
-            }
-            // validate creator and balance
-            _ => {
-                return Ok(());
-            }
+            } // validate creator and balance
+              // _ => {
+              //     return Ok(());
+              // }
         }
     }
 
@@ -519,5 +518,50 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         // Return the updated link_action
         Ok(link_action)
+    }
+
+    /// Updates link properties after an action completes
+    /// Returns true if link properties were updated, false otherwise
+    pub fn update_link_properties(
+        &self,
+        link_id: String,
+        action_id: String,
+    ) -> Result<bool, CanisterError> {
+        // Get the link and action
+        let link = self.get_link_by_id(link_id.clone())?;
+        let action = match self.action_repository.get(action_id.clone()) {
+            Some(action) => action,
+            None => return Ok(false),
+        };
+
+        info!("[update_link_properties] link: {:#?}", link);
+        info!("[update_link_properties] action: {:#?}", action);
+
+        // Early return if not a successful claim on a TipLink
+        if action.state != ActionState::Success {
+            return Ok(false);
+        }
+
+        // At this point we know we have a successful claim on a TipLink
+        // Update link's properties here
+        let mut updated_link = link.clone();
+
+        // update tip link's total_claim
+        if link.link_type == Some(LinkType::TipLink) && action.r#type == ActionType::Claim {
+            info!("[update_link_properties] updating total_claim for TipLink");
+            // Update asset info to track the claim
+            if let Some(mut asset_info) = updated_link.asset_info.clone() {
+                for asset in asset_info.iter_mut() {
+                    asset.total_claim += 1;
+                }
+                updated_link.asset_info = Some(asset_info);
+            }
+        }
+
+        // Save the updated link
+        self.link_repository.update(updated_link);
+
+        // Return true to indicate that we updated the link
+        Ok(true)
     }
 }

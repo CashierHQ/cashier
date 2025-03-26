@@ -6,7 +6,6 @@ mod tests {
 
     use crate::{
         core::link::{api::LinkApi, types::LinkGetUserStateInput},
-        info,
         services::{
             __tests__::tests::{generate_random_principal, MockIcEnvironment},
             link::v2::LinkService,
@@ -22,6 +21,7 @@ mod tests {
         let mut action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
         let tx_manager_service = TransactionManagerService::faux();
+        let 
 
         let link_id = Uuid::new_v4().to_string();
         let action_type = "Claim".to_string();

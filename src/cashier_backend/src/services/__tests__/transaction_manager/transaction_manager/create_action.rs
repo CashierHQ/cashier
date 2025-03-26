@@ -28,7 +28,7 @@ mod tests {
     };
 
     #[tokio::test]
-    async fn should_success_convert_intent_to_tx() {
+    async fn should_success_convert_intent_to_tx_wallet_to_link() {
         let mut action_service = ActionService::faux();
         let mut ic_env = MockIcEnvironment::faux();
         let execute_transaction_service = ExecuteTransactionService::faux();
@@ -113,8 +113,6 @@ mod tests {
             );
 
         let result = transaction_manager_service.tx_man_create_action(&temp_action);
-
-        println!("{:#?}", result);
 
         assert!(result.is_ok());
 
@@ -218,6 +216,7 @@ mod tests {
         );
         assert_eq!(tx3.dependency, Some(vec![tx2.id.clone()]));
     }
+
     #[tokio::test]
     async fn should_success_convert_intent_have_dependency_to_tx() {
         let mut action_service = ActionService::faux();
@@ -521,5 +520,116 @@ mod tests {
         let result = transaction_manager_service.tx_man_create_action(&temp_action);
 
         assert!(matches!(result, Err(CanisterError::HandleLogicError(_))));
+    }
+
+    #[tokio::test]
+    async fn should_success_convert_intent_to_tx_link_to_wallet() {
+        let mut action_service = ActionService::faux();
+        let mut ic_env = MockIcEnvironment::faux();
+        let execute_transaction_service = ExecuteTransactionService::faux();
+        let transaction_service: TransactionService<MockIcEnvironment> = TransactionService::faux();
+        let manual_check_status_service = ManualCheckStatusService::faux();
+
+        let action_id = Uuid::new_v4().to_string();
+        let link_id = Uuid::new_v4().to_string();
+        let creator = generate_random_principal().to_text();
+
+        // Create link vault account
+        let link_vault_account = Account {
+            owner: Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap(),
+            subaccount: Some(to_subaccount(link_id.clone())),
+        };
+
+        let mut intent = create_dummy_intent(IntentState::Created);
+        intent.id = Uuid::new_v4().to_string();
+        intent.task = IntentTask::TransferLinkToWallet;
+        let transfer_data: TransferData = TransferData {
+            // From is the link vault account
+            from: Wallet {
+                address: link_vault_account.to_string(),
+                chain: Chain::IC,
+            },
+            // To is the creator's wallet
+            to: Wallet {
+                address: creator.clone(),
+                chain: Chain::IC,
+            },
+            asset: Asset {
+                address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+                chain: Chain::IC,
+            },
+            amount: 5_0000_0000,
+        };
+        intent.r#type = IntentType::Transfer(transfer_data);
+
+        let intents = vec![intent.clone()];
+
+        let temp_action = TemporaryAction {
+            id: action_id.clone(),
+            r#type: ActionType::Claim,
+            state: ActionState::Created,
+            creator: creator.clone(),
+            link_id: link_id.clone(),
+            intents: intents.clone(),
+            default_link_user_state: None,
+        };
+
+        when!(action_service.get_action_by_id).then_return(None);
+        when!(ic_env.time).then_return(generate_timestamp());
+        when!(action_service.store_action_records).then_return(Ok(()));
+
+        let transaction_manager_service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::new(
+                transaction_service,
+                action_service,
+                manual_check_status_service,
+                ic_env,
+                execute_transaction_service,
+            );
+
+        let result = transaction_manager_service.tx_man_create_action(&temp_action);
+
+        println!("{:#?}", result);
+
+        assert!(result.is_ok());
+
+        let action_dto = result.unwrap();
+        assert_eq!(action_dto.id, action_id);
+        assert_eq!(action_dto.creator, creator);
+        assert_eq!(action_dto.state, ActionState::Created.to_string());
+        assert_eq!(action_dto.intents.len(), intents.len());
+        assert_eq!(action_dto.intents[0].transactions.len(), 1);
+
+        let tx = &action_dto.intents[0].transactions[0];
+
+        assert_eq!(tx.protocol, "Icrc1Transfer".to_string());
+        assert_eq!(tx.state, TransactionState::Created.to_string());
+        assert_eq!(tx.from_call_type, "Canister".to_string());
+
+        assert_eq!(
+            tx.protocol_metadata.get("from"),
+            Some(&MetadataValue::Wallet(WalletDto {
+                address: link_vault_account.to_string(),
+                chain: "IC".to_string(),
+            }))
+        );
+        assert_eq!(
+            tx.protocol_metadata.get("to"),
+            Some(&MetadataValue::Wallet(WalletDto {
+                address: creator.clone(),
+                chain: "IC".to_string(),
+            }))
+        );
+        assert_eq!(
+            tx.protocol_metadata.get("asset"),
+            Some(&MetadataValue::Asset(AssetDto {
+                address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+                chain: "IC".to_string(),
+            }))
+        );
+        assert_eq!(
+            tx.protocol_metadata.get("amount"),
+            Some(&MetadataValue::U64(5_0000_0000))
+        );
     }
 }
