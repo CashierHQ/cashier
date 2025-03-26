@@ -144,6 +144,12 @@
             "receiveWarning2": "Ensure that you are only sending assets that are ",
             "boldReceiveWarning": "meant for this address,",
             "receiveWarning3": " otherwise you may lose them forever."
+        },
+        "send": {
+            "header": "Send",
+            "sendToken": "Send token",
+            "max": "Max",
+            "destinationAddress": "Destination address"
         }
     },
     "manage": {

@@ -18,9 +18,18 @@ export type SignerConfig = {
     description?: string;
 };
 
+export enum WALLET_OPTIONS {
+    GOOGLE = "Google login",
+    INTERNET_IDENTITY = "Internet Identity",
+    OTHER = "Other wallets",
+    TYPING = "Typing",
+}
+
 type SignersContextType = {
     signers: SignerConfig[];
+    currentConnectOption: WALLET_OPTIONS;
     setSigners: (signers: SignerConfig[]) => void;
+    setCurrentConnectOption: (option: WALLET_OPTIONS) => void;
 };
 
 const SignersContext = createContext<SignersContextType | undefined>(undefined);
@@ -29,9 +38,14 @@ export const SignersProvider = ({ children }: { children: ReactNode }) => {
     const [signers, setSigners] = useState<SignerConfig[]>(
         isMobile() ? [InternetIdentity] : [InternetIdentity],
     );
+    const [currentConnectOption, setCurrentConnectOption] = useState<WALLET_OPTIONS>(
+        WALLET_OPTIONS.INTERNET_IDENTITY,
+    );
 
     return (
-        <SignersContext.Provider value={{ signers, setSigners }}>
+        <SignersContext.Provider
+            value={{ signers, currentConnectOption, setSigners, setCurrentConnectOption }}
+        >
             {children}
         </SignersContext.Provider>
     );

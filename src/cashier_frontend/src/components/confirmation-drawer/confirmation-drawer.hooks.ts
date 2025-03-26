@@ -37,7 +37,11 @@ export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
     return cashierFeeIntents;
 };
 
-export const useConfirmButtonState = (actionState: string | undefined, t: TFunction) => {
+export const useConfirmButtonState = (
+    actionState: string | undefined,
+    t: TFunction,
+    defaultText?: string,
+) => {
     const [isDisabled, setIsDisabled] = useState(false);
     const [buttonText, setButtonText] = useState("");
     const mapActionStateToButtonText = () => {
@@ -52,7 +56,7 @@ export const useConfirmButtonState = (actionState: string | undefined, t: TFunct
             case ACTION_STATE.SUCCESS:
                 return t("continue");
             default:
-                return t("transaction.confirm_popup.confirm_button");
+                return defaultText ?? t("transaction.confirm_popup.confirm_button");
         }
     };
 

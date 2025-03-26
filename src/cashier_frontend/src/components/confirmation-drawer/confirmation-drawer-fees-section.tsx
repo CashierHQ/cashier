@@ -28,6 +28,15 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     intents,
 }) => {
     const { t } = useTranslation();
+    const {
+        isLoadingMetadata,
+        assetAmount,
+        assetSrc,
+        feeAmount,
+        feeSymbol,
+        title: intentTitle,
+    } = useIntentMetadata(intents?.[0]);
+
     const { assetSymbol } = useIntentMetadata(intents?.[0]);
     const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
         intents[0]?.asset.address,
@@ -43,6 +52,14 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
         initState();
     }, []);
 
+    const calculateTotalCashierFee = () => {
+        if (intents[0].task === TASK.TRANSFER_LINK_TO_WALLET && totalCashierFee && feeAmount) {
+            return totalCashierFee - feeAmount;
+        } else {
+            return totalCashierFee;
+        }
+    };
+
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
             <div className="flex flex-col gap-3 rounded-xl p-4 bg-lightgreen">
@@ -55,8 +72,8 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                         ) : (
                             <>
                                 {conversionRates?.tokenToUsd !== undefined &&
-                                    `($${convert(totalCashierFee, conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}
-                                {totalCashierFee} {assetSymbol}
+                                    `($${convert(calculateTotalCashierFee(), conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}
+                                {calculateTotalCashierFee()} {assetSymbol}
                             </>
                         )}
                     </div>
