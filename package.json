@@ -14,6 +14,8 @@
         "build:artifact": "bash scripts/compress_build_wasm.sh",
         "setup:test": "bash scripts/setup_test.sh",
         "test": "jest",
+        "pretest:integration-backend": "make setup-test",
+        "test:integration-backend": "npx jest -- src/test",
         "prepare": "npx husky",
         "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
         "lint": "eslint src/cashier_frontend --config eslint.config.js"

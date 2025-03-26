@@ -10,7 +10,9 @@ use crate::{
     constant::{ICP_CANISTER_ID, INTENT_LABEL_WALLET_TO_LINK, INTENT_LABEL_WALLET_TO_TREASURY},
     core::link::types::UserStateMachineGoto,
     info,
-    repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
+    repositories::{
+        self, action::ActionRepository, link_action::LinkActionRepository, user_wallet,
+    },
     services::transaction_manager::fee::Fee,
     types::error::CanisterError,
     utils::{helper::to_subaccount, icrc::IcrcService, runtime::IcEnvironment},
@@ -124,6 +126,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         &self,
         link_id: &str,
         action_type: &ActionType,
+        user_wallet: &Principal,
     ) -> Result<Vec<Intent>, CanisterError> {
         let link = self.get_link_by_id(link_id.to_string())?;
 
@@ -155,7 +158,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         chain: asset_info.chain.clone(),
                     };
                     let from_account = Account {
-                        owner: self.ic_env.caller(),
+                        owner: user_wallet.clone(),
                         subaccount: None,
                     };
                     transfer_data.from = Wallet {
@@ -176,7 +179,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 IntentTask::TransferWalletToTreasury => {
                     let mut transfer_from_data = intent.r#type.as_transfer_from().unwrap();
                     let caller_account = Account {
-                        owner: self.ic_env.caller(),
+                        owner: user_wallet.clone(),
                         subaccount: None,
                     };
                     let spender_wallet = Wallet {
@@ -214,7 +217,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
                 IntentTask::TransferLinkToWallet => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    info!("intent: {:#?}", intent);
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         CanisterError::HandleLogicError(
                             "[link_assemble_intents] task TransferLinkToWallet Asset not found"
@@ -236,10 +238,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         address: from_account.to_string(),
                         chain: Chain::IC,
                     };
-                    let to_account = Account {
-                        owner: self.ic_env.caller(),
-                        subaccount: None,
-                    };
+                    let to_account = user_wallet.clone();
                     transfer_data.to = Wallet {
                         address: to_account.to_string(),
                         chain: Chain::IC,
