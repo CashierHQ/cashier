@@ -50,7 +50,8 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const [showInfo, setShowInfo] = useState(false);
     const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.CLAIM_LINK);
     const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous(ACTION_TYPE.CLAIM_LINK);
-    const { action, setAction, setAnonymousWalletAddress } = useCreateLinkStore();
+    const { action, anonymousWalletAddress, setAction, setAnonymousWalletAddress } =
+        useCreateLinkStore();
     const [isDisabledButton, setIsDisabledButton] = useState(true);
     const [buttonText, setButtonText] = useState(t("claim.claim"));
 
@@ -150,7 +151,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                 action_type: ACTION_TYPE.CLAIM_LINK,
                 link_id: linkId ?? "",
                 isContinue: true,
-                anonymous_wallet_address: "",
+                anonymous_wallet_address: anonymousWalletAddress,
             },
         });
         if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
