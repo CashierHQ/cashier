@@ -83,12 +83,14 @@ export enum TASK {
     TRANSFER_WALLET_TO_TREASURY = "transfer_wallet_to_treasury",
     TRANSFER_WALLET_TO_LINK = "transfer_wallet_to_link",
     TRANSFER_LINK_TO_WALLET = "transfer_link_to_wallet",
+    TRANSFER_WALLET_TO_WALLET = "transfer_wallet_to_wallet",
 }
 
 export enum ACTION_TYPE {
     CREATE_LINK = "CreateLink",
     WITHDRAW_LINK = "Withdraw",
     CLAIM_LINK = "Claim",
+    SEND_ASSET = "SendAsset",
 }
 
 export enum IC_TRANSACTION_PROTOCAL {

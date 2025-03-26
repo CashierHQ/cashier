@@ -32,11 +32,6 @@ export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
                 ctx.addIssue({
                     code: "custom",
                     message: "Must input number",
-                    path: ["usdNumber"],
-                });
-                ctx.addIssue({
-                    code: "custom",
-                    message: "Must input number",
                     path: ["assetNumber"],
                 });
             }
@@ -53,11 +48,6 @@ export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
                     code: "custom",
                     message: "Your balance is not enough",
                     path: ["assetNumber"],
-                });
-                ctx.addIssue({
-                    code: "custom",
-                    message: "Your balance is not enough",
-                    path: ["usdNumber"],
                 });
             }
         });
