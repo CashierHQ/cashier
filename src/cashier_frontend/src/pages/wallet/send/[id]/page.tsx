@@ -15,7 +15,6 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import {
-    useSelectedWalletSendAsset,
     useWalletSendAssetForm,
     useWalletSendAssetFormActions,
     WalletSendAssetFormSchema,
@@ -31,7 +30,7 @@ import {
     TASK,
 } from "@/services/types/enum";
 import { useIdentity } from "@nfid/identitykit/react";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
@@ -56,6 +55,8 @@ export default function SendTokenPage() {
     const { assets: tokenList } = useUserAssets();
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
+    const [isDisabled, setIsDisabled] = useState(true);
+
     const [sendAssetInfo, setSendAssetInfo] = useState<SendAssetInfo | null>(null);
     const { setAction } = useCreateLinkStore();
 
@@ -69,22 +70,35 @@ export default function SendTokenPage() {
             : tokenList[0]
         : undefined;
 
-    const handleTokenSelect = (token: AssetSelectItem) => {
-        navigate(`/wallet/send/${token.tokenAddress}`);
-    };
-
-    const [addressType, setAddressType] = useState<"principal" | "account">("principal");
-
-    const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
-        ACTION_STATE.CREATED,
-        t,
-    );
-
     const form = useWalletSendAssetForm(tokenList ?? [], {
         tokenAddress: tokenId ?? "",
         amount: BigInt(0),
         assetNumber: 0,
     });
+
+    // Add effect to update form when token changes
+    useEffect(() => {
+        if (selectedToken && !tokenId) {
+            form.setValue("tokenAddress", selectedToken.tokenAddress);
+            form.setValue("assetNumber", 0);
+            form.setValue("walletAddress", "");
+        }
+    }, [selectedToken, tokenId, form]);
+
+    // Add effect to control button disabled state
+    useEffect(() => {
+        const amount = form.getValues("assetNumber");
+        const walletAddress = form.getValues("walletAddress");
+        const hasAmountError = form.formState.errors.assetNumber !== undefined;
+
+        setIsDisabled(!walletAddress || hasAmountError || !amount || amount <= 0);
+    }, [form.watch("assetNumber"), form.watch("walletAddress"), form.formState.errors.assetNumber]);
+
+    const handleTokenSelect = (token: AssetSelectItem) => {
+        navigate(`/wallet/send/${token.tokenAddress}`);
+    };
+
+    const [addressType, setAddressType] = useState<"principal" | "account">("principal");
 
     const { setTokenAmount, setWalletAddress } = useWalletSendAssetFormActions(form);
 
@@ -94,13 +108,11 @@ export default function SendTokenPage() {
 
         // Validate amount against available balance (considering network fee)
         const numericValue = parseFloat(value);
-        console.log("🚀 ~ handleAmountInputChange ~ numericValue:", numericValue);
         if (!isNaN(numericValue)) {
-            const maxAvailable = getMaxAvailableAmount();
-            if (numericValue > maxAvailable) {
+            if (numericValue > getMaxAvailableAmount) {
                 form.setError("assetNumber", {
                     type: "manual",
-                    message: `Amount must be less than available balance (${maxAvailable})`,
+                    message: `Amount must be less than available balance (${getMaxAvailableAmount})`,
                 });
             } else {
                 form.clearErrors("assetNumber");
@@ -113,7 +125,7 @@ export default function SendTokenPage() {
         setWalletAddress(value);
     };
 
-    const getMaxAvailableAmount = () => {
+    const getMaxAvailableAmount = useMemo(() => {
         if (
             selectedToken?.amount !== undefined &&
             metadata?.fee !== undefined &&
@@ -126,12 +138,11 @@ export default function SendTokenPage() {
             return maxAvailable;
         }
         return Number(selectedToken?.amount ?? 0);
-    };
+    }, [selectedToken?.amount, metadata?.fee, metadata?.decimals]);
 
     const handleMaxAmount = () => {
-        const maxAmount = getMaxAvailableAmount();
-        if (maxAmount > 0) {
-            setTokenAmount(maxAmount.toString());
+        if (getMaxAvailableAmount > 0) {
+            setTokenAmount(getMaxAvailableAmount.toString());
             form.clearErrors("assetNumber");
         } else {
             form.setError("assetNumber", {
@@ -147,7 +158,6 @@ export default function SendTokenPage() {
     }, [selectedToken]);
 
     const onSubmitSend = async (data: WalletSendAssetFormSchema) => {
-        console.log(data);
         // Build action
         const action: ActionModel = {
             id: "",
@@ -263,7 +273,7 @@ export default function SendTokenPage() {
                                             <FormLabel>{t("create.amount")}</FormLabel>
                                             {selectedToken?.amount !== undefined && (
                                                 <div className="text-sm text-gray-500">
-                                                    Available: {getMaxAvailableAmount()} (includes
+                                                    Available: {getMaxAvailableAmount} (includes
                                                     network fee)
                                                 </div>
                                             )}

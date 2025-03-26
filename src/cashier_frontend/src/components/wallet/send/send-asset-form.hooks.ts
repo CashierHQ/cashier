@@ -35,21 +35,6 @@ export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
                     path: ["assetNumber"],
                 });
             }
-
-            const asset = assets.find((asset) => asset.tokenAddress === val.tokenAddress);
-
-            if (
-                !asset ||
-                val.assetNumber === null ||
-                asset.amount === undefined ||
-                val.assetNumber > asset.amount
-            ) {
-                ctx.addIssue({
-                    code: "custom",
-                    message: "Your balance is not enough",
-                    path: ["assetNumber"],
-                });
-            }
         });
 };
 
