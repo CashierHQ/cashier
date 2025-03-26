@@ -221,6 +221,25 @@ export function useCreateActionAnonymous(actionType?: ACTION_TYPE) {
     return mutation;
 }
 
+export function useProcessActionAnonymous(actionType?: ACTION_TYPE) {
+    const identity = useIdentity();
+
+    const mutation = useMutation({
+        mutationFn: async (vars: { actionId: string; linkId: string; walletAddress: string }) => {
+            const linkService = new LinkService(identity);
+
+            return linkService.processActionAnonymous({
+                linkId: vars.linkId,
+                actionType: actionType ?? ACTION_TYPE.CREATE_LINK,
+                actionId: vars.actionId,
+                walletAddress: vars.walletAddress,
+            });
+        },
+    });
+
+    return mutation;
+}
+
 export function useIcrc112Execute() {
     const identity = useIdentity();
 

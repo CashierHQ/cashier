@@ -35,16 +35,19 @@ import { create } from "zustand";
 export interface CreateLinkStoreData {
     link: LinkDetailModel | undefined;
     action: ActionModel | undefined;
+    anonymousWalletAddress: string | undefined;
 
     setLink(data: LinkDetailModel | undefined): void;
     updateLink(data: Partial<LinkDetailModel>): void;
 
     setAction(action: ActionModel | undefined): void;
+    setAnonymousWalletAddress(walletAddress: string): void;
 }
 
 export const useCreateLinkStore = create<CreateLinkStoreData>((set, get) => ({
     link: undefined,
     action: undefined,
+    anonymousWalletAddress: undefined,
 
     setLink: (data) => set({ link: data }),
     updateLink: (data) => {
@@ -53,4 +56,5 @@ export const useCreateLinkStore = create<CreateLinkStoreData>((set, get) => ({
     },
 
     setAction: (action) => set({ action }),
+    setAnonymousWalletAddress: (walletAddress) => set({ anonymousWalletAddress: walletAddress }),
 }));

@@ -13,10 +13,17 @@ import {
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { ACTION_STATE, ACTION_TYPE, INTENT_STATE } from "@/services/types/enum";
-import { useIcrc112Execute, useProcessAction, useUpdateAction } from "@/hooks/linkHooks";
+import {
+    useCreateActionAnonymous,
+    useIcrc112Execute,
+    useProcessAction,
+    useProcessActionAnonymous,
+    useUpdateAction,
+} from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
+import { useIdentity } from "@nfid/identitykit/react";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -36,11 +43,16 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     onSuccessContinue = async () => {},
 }) => {
     const { t } = useTranslation();
-    const { link, action, setAction } = useCreateLinkStore();
+    const { link, action, anonymousWalletAddress, setAction } = useCreateLinkStore();
+    const identity = useIdentity();
 
     const [isUsd, setIsUsd] = useState(false);
 
     const { mutateAsync: processAction } = useProcessAction();
+    const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous(
+        ACTION_TYPE.CLAIM_LINK,
+    );
+
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
 
@@ -52,35 +64,66 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         t,
     );
 
-    const startTransaction = async () => {
-        try {
-            const firstUpdatedAction = await processAction({
+    const handleProcessClaimAction = async () => {
+        if (identity) {
+            // Process action for logged in user to claim
+            const processActionResult = await processAction({
                 linkId: link!.id,
                 actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
                 actionId: action!.id,
             });
-            console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
-            setAction(firstUpdatedAction);
-            if (firstUpdatedAction) {
-                console.log("🚀 ~ startTransaction ~ firstUpdatedAction:", firstUpdatedAction);
-                const response = await icrc112Execute({
-                    transactions: firstUpdatedAction!.icrc112Requests,
-                    linkTitle: link?.title || "",
-                });
-                console.log("🚀 ~ icrc112Execute ~ response:", response);
-                if (response) {
-                    const secondUpdatedAction = await updateAction({
-                        actionId: action!.id,
-                        linkId: link!.id,
-                        external: true,
-                    });
-                    console.log("🚀 ~ secondUpdatedAction ~ response:", secondUpdatedAction);
+            if (processActionResult) {
+                setAction(processActionResult);
+                onActionResult(processActionResult);
+            }
+        } else {
+            //Process action for anonymous user to claim
+            const processActionResult = await processActionAnonymous({
+                linkId: link!.id,
+                actionId: action!.id,
+                walletAddress: anonymousWalletAddress ?? "",
+            });
+            if (processActionResult) {
+                setAction(processActionResult);
+                onActionResult(processActionResult);
+            }
+        }
+    };
 
-                    if (secondUpdatedAction) {
-                        setAction(secondUpdatedAction);
-                        onActionResult(secondUpdatedAction);
-                    }
+    const handleProcessCreateAction = async () => {
+        const firstUpdatedAction = await processAction({
+            linkId: link!.id,
+            actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
+            actionId: action!.id,
+        });
+        setAction(firstUpdatedAction);
+        if (firstUpdatedAction) {
+            const response = await icrc112Execute({
+                transactions: firstUpdatedAction!.icrc112Requests,
+                linkTitle: link?.title || "",
+            });
+            console.log("🚀 ~ icrc112Execute ~ response:", response);
+            if (response) {
+                const secondUpdatedAction = await updateAction({
+                    actionId: action!.id,
+                    linkId: link!.id,
+                    external: true,
+                });
+
+                if (secondUpdatedAction) {
+                    setAction(secondUpdatedAction);
+                    onActionResult(secondUpdatedAction);
                 }
+            }
+        }
+    };
+
+    const startTransaction = async () => {
+        try {
+            if (action?.type === ACTION_TYPE.CLAIM_LINK) {
+                await handleProcessClaimAction();
+            } else {
+                handleProcessCreateAction();
             }
         } catch (error) {
             console.log("🚀 ~ startTransaction ~ error:", error);
