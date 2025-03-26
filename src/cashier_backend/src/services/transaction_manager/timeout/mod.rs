@@ -4,6 +4,7 @@ use crate::{
     constant::get_tx_timeout_nano_seconds,
     error, info,
     services::transaction_manager::manual_check_status::ManualCheckStatusService,
+    types::error::CanisterError,
     utils::{
         icrc::IcrcService,
         runtime::{IcEnvironment, RealIcEnvironment},
@@ -12,7 +13,7 @@ use crate::{
 
 use super::transaction::TransactionService;
 
-pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
+pub async fn tx_timeout_task(tx_id: String) -> Result<(), CanisterError> {
     let transaction_service: TransactionService<RealIcEnvironment> =
         TransactionService::get_instance();
 
@@ -24,7 +25,9 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
 
     if tx.start_ts.is_none() {
         error!("Transaction start_ts is None");
-        return Err("Transaction start_ts is None".to_string());
+        return Err(CanisterError::HandleLogicError(
+            "Transaction start_ts is None".to_string(),
+        ));
     }
 
     let current_ts = ic_cdk::api::time();
@@ -38,10 +41,7 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
 
         let manual_check_status_service = ManualCheckStatusService::new(icrc_service, ic_env);
 
-        let state = manual_check_status_service
-            .execute(&tx, vec![])
-            .await
-            .map_err(|e| format!("Error in manual check status: {:?}", e))?;
+        let state = manual_check_status_service.execute(&tx, vec![]).await?;
 
         let _ = transaction_service.update_tx_state(&mut tx, state.clone());
 
@@ -54,6 +54,8 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), String> {
 
         Ok(())
     } else {
-        return Err("Transaction is not timeout".to_string());
+        return Err(CanisterError::ValidationErrors(
+            "Transaction is not timeout".to_string(),
+        ));
     }
 }

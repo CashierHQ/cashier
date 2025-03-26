@@ -204,7 +204,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         &self,
         tx: &mut Transaction,
         state: TransactionState,
-    ) -> Result<(), String> {
+    ) -> Result<(), CanisterError> {
         self.transaction_service.update_tx_state(tx, state)
     }
 
@@ -284,10 +284,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     }
 
     pub async fn has_dependency(&self, tx_id: String) -> Result<bool, CanisterError> {
-        let tx: Transaction = self
-            .transaction_service
-            .get_tx_by_id(&tx_id)
-            .map_err(|e| CanisterError::NotFound(e))?;
+        let tx: Transaction = self.transaction_service.get_tx_by_id(&tx_id)?;
 
         // checks if tx has other dependent txs that were not completed yet
         let is_all_dependencies_success = self._is_all_depdendency_success(&tx, true)?;
@@ -342,10 +339,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     }
 
     pub async fn execute_tx_by_id(&self, tx_id: String) -> Result<(), CanisterError> {
-        let mut tx = self
-            .transaction_service
-            .get_tx_by_id(&tx_id)
-            .map_err(|e| CanisterError::NotFound(e))?;
+        let mut tx = self.transaction_service.get_tx_by_id(&tx_id)?;
 
         self.execute_canister_tx(&mut tx).await
     }
@@ -444,8 +438,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             }
 
             self.transaction_service
-                .update_tx_state(&mut tx, new_state)
-                .map_err(|e| CanisterError::UnknownError(e))?;
+                .update_tx_state(&mut tx, new_state)?
         }
 
         let mut request = None;

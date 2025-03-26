@@ -51,7 +51,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
         &self,
         tx: &mut Transaction,
         state: TransactionState,
-    ) -> Result<(), String> {
+    ) -> Result<(), CanisterError> {
         if tx.state == state {
             return Ok(());
         }
@@ -66,15 +66,20 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
 
         self.action_service
             .roll_up_state(tx.id.clone())
-            .map_err(|e| format!("roll_up_state failed: {}", e))?;
+            .map_err(|e| {
+                CanisterError::HandleLogicError(format!(
+                    "Failed to roll up state for action: {}",
+                    e
+                ))
+            })?;
 
         Ok(())
     }
 
-    pub fn get_tx_by_id(&self, tx_id: &String) -> Result<Transaction, String> {
+    pub fn get_tx_by_id(&self, tx_id: &String) -> Result<Transaction, CanisterError> {
         self.transaction_repository
             .get(tx_id)
-            .ok_or_else(|| format!("Transaction with id {} not found", tx_id))
+            .ok_or(CanisterError::NotFound("Transaction not found".to_string()))
     }
 
     pub fn batch_get(&self, tx_ids: Vec<String>) -> Result<Vec<Transaction>, CanisterError> {
