@@ -11,7 +11,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error, info,
+    error,
     services::{
         self,
         link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
@@ -113,7 +113,7 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
         Ok(id) => Ok(id),
         Err(e) => {
             error!("Failed to create link: {}", e);
-            Err(CanisterError::HandleApiError(e))
+            Err(CanisterError::HandleLogicError(e))
         }
     }
 }
@@ -122,7 +122,7 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
 async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
     match input.validate() {
         Ok(_) => (),
-        Err(e) => return Err(CanisterError::HandleApiError(e)),
+        Err(e) => return Err(CanisterError::HandleLogicError(e)),
     }
 
     let creator = ic_cdk::api::caller();
@@ -132,14 +132,14 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
         Ok(rsp) => rsp,
         Err(e) => {
             error!("Failed to get link: {:#?}", e);
-            return Err(CanisterError::HandleApiError("Link not found".to_string()));
+            return Err(CanisterError::NotFound("Link not found".to_string()));
         }
     };
 
     match is_link_creator(creator.to_text(), &input.id) {
         true => (),
         false => {
-            return Err(CanisterError::HandleApiError(
+            return Err(CanisterError::Unauthorized(
                 "Caller are not the creator of this link".to_string(),
             ))
         }
@@ -148,7 +148,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
     let link_type = link.link_type.clone();
 
     if link_type.is_none() {
-        return Err(CanisterError::HandleApiError(
+        return Err(CanisterError::ValidationErrors(
             "Link type is missing".to_string(),
         ));
     }
@@ -545,7 +545,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let action = self
             .action_service
-            .get(action_id)
+            .get_action_data(action_id)
             .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
 
         return Ok(Some(LinkGetUserStateOutput {
@@ -636,7 +636,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             link_action.link_user_state.clone();
         let action = self
             .action_service
-            .get(link_action.action_id.clone())
+            .get_action_data(link_action.action_id.clone())
             .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
 
         return Ok(Some(LinkGetUserStateOutput {

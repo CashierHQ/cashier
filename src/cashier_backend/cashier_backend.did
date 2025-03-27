@@ -16,16 +16,31 @@ type AssetInfoDto = record {
 };
 type CanisterError = variant {
   InvalidDataError : text;
+  InvalidStateTransition : record { to : text; from : text };
+  TransactionTimeout : text;
+  InvalidInput : text;
   HandleLogicError : text;
-  CanisterCallRejectError : record { text; text; RejectionCode; text };
+  CanisterCallRejectError : record {
+    method : text;
+    code : RejectionCode;
+    canister_id : text;
+    message : text;
+  };
   ParsePrincipalError : text;
   UnknownError : text;
+  InsufficientBalance : record { available : nat64; required : nat64 };
   NotFound : text;
   ValidationErrors : text;
   ParseAccountError : text;
+  Unauthorized : text;
+  AlreadyExists : text;
+  DependencyError : text;
   AnonymousCall;
-  CanisterCallError : record { text; text; text };
-  HandleApiError : text;
+  CanisterCallError : record {
+    method : text;
+    canister_id : text;
+    message : text;
+  };
 };
 type CreateLinkInput = record { link_type : text };
 type GetLinkOptions = record { action_type : text };

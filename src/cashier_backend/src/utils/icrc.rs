@@ -11,7 +11,7 @@ use crate::{
         Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg as ExtTransferArg,
         TransferFromArgs as ExtTransferFromArgs, TransferFromError,
     },
-    types::error::{CanisterError, DisplayRejectionCode},
+    types::error::{self, CanisterError, DisplayRejectionCode},
 };
 
 #[cfg_attr(test, faux::create)]
@@ -30,12 +30,12 @@ impl IcrcService {
 
         match res {
             Ok((fee,)) => Ok(fee.0.to_u64_digits().first().unwrap_or(&0).clone()),
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
-                "icrc_1_fee".to_string(),
-                token_service.get_canister_id().to_string(),
-                DisplayRejectionCode(code),
-                error,
-            )),
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
+                method: "icrc1_fee".to_string(),
+                canister_id: token_service.get_canister_id().to_string(),
+                code: DisplayRejectionCode(code),
+                message: error.to_string(),
+            }),
         }
     }
 
@@ -55,12 +55,12 @@ impl IcrcService {
 
         match res {
             Ok((balance,)) => Ok(balance.0.to_u64_digits().first().unwrap_or(&0).clone()),
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
-                "icrc_1_balance_of".to_string(),
-                token_service.get_canister_id().to_string(),
-                DisplayRejectionCode(code),
-                error,
-            )),
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
+                method: "icrc1_balance_of".to_string(),
+                canister_id: token_service.get_canister_id().to_string(),
+                code: DisplayRejectionCode(code),
+                message: error.to_string(),
+            }),
         }
     }
 
@@ -92,12 +92,12 @@ impl IcrcService {
 
         match res {
             Ok((allowance,)) => Ok(allowance),
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
-                "icrc_2_allowance".to_string(),
-                token_service.get_canister_id().to_string(),
-                DisplayRejectionCode(code),
-                error,
-            )),
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
+                method: "icrc2_allowance".to_string(),
+                canister_id: token_service.get_canister_id().to_string(),
+                code: DisplayRejectionCode(code),
+                message: error.to_string(),
+            }),
         }
     }
 
@@ -135,18 +135,18 @@ impl IcrcService {
         match res {
             Ok((call_res,)) => match call_res {
                 Ok(_block_id) => Ok(_block_id),
-                Err(error) => Err(CanisterError::CanisterCallError(
-                    "icrc_2_transfer_from".to_string(),
-                    token_service.get_canister_id().to_string(),
-                    error.to_string(),
-                )),
+                Err(error) => Err(CanisterError::CanisterCallError {
+                    method: "icrc2_transfer_from".to_string(),
+                    canister_id: token_service.get_canister_id().to_string(),
+                    message: error.to_string(),
+                }),
             },
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
-                "icrc_2_transfer_from".to_string(),
-                token_service.get_canister_id().to_string(),
-                DisplayRejectionCode(code),
-                error,
-            )),
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
+                method: "icrc2_transfer_from".to_string(),
+                canister_id: token_service.get_canister_id().to_string(),
+                code: DisplayRejectionCode(code),
+                message: error.to_string(),
+            }),
         }
     }
 
@@ -179,18 +179,19 @@ impl IcrcService {
         match res {
             Ok((call_res,)) => match call_res {
                 Ok(_block_id) => Ok(_block_id),
-                Err(error) => Err(CanisterError::CanisterCallError(
-                    "icrc_1_transfer".to_string(),
-                    token_service.get_canister_id().to_string(),
-                    error.to_string(),
-                )),
+                Err(error) => Err(CanisterError::CanisterCallError {
+                    method: "icrc1_transfer".to_string(),
+                    canister_id: token_service.get_canister_id().to_string(),
+                    message: error.to_string(),
+                }),
             },
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError(
-                "icrc_1_transfer".to_string(),
-                token_service.get_canister_id().to_string(),
-                DisplayRejectionCode(code),
-                error,
-            )),
+
+            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
+                method: "icrc1_transfer".to_string(),
+                canister_id: token_service.get_canister_id().to_string(),
+                code: DisplayRejectionCode(code),
+                message: error.to_string(),
+            }),
         }
     }
 }
