@@ -43,6 +43,7 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
     return useQuery({
         queryKey: queryKeys.links.userState(input, identity).queryKey,
         queryFn: async () => {
+            console.log("🚀 ~ queryFn: ~ input:", input);
             const linkService = new LinkService(identity);
             const userState = await linkService.getLinkUserState(input);
             return userState;

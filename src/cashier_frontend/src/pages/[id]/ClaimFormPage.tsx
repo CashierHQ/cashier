@@ -1,7 +1,7 @@
 import ClaimPageForm, { ClaimLinkDetail } from "@/components/claim-page/claim-page-form";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from ".";
 import { z } from "zod";
@@ -158,13 +158,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
             nextStep();
         }
     };
-
-    // Create link user state if not exist when logged in user land on this page
-    useEffect(() => {
-        if (!linkUserState && identity) {
-            console.log("Creating link user state");
-        }
-    }, [linkUserState, identity]);
 
     return isLoadingLinkUserState ? (
         renderSkeleton()

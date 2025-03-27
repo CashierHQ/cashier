@@ -129,12 +129,14 @@ export function useUserAssets() {
     const walletAddress = useWalletAddress();
     const queryClient = useQueryClient();
 
+    // Fetch user tokens from IC Explorer
     const { data: assets, isLoading: isLoadingAssets } = useQuery({
         queryKey: ["userTokens", walletAddress],
         queryFn: () => fetchUserTokens(walletAddress),
         enabled: !!walletAddress,
     });
 
+    // Fetch amount for each token from Canister
     const { data: assetListWithAmounts, isLoading: isLoadingBalance } = useQuery({
         queryKey: ["assetListAmounts", assets],
         queryFn: () =>
@@ -148,7 +150,6 @@ export function useUserAssets() {
             queryClient.invalidateQueries({ queryKey: ["userTokens", walletAddress] });
         }
     }, [walletAddress, queryClient]);
-    console.log("assetListWithAmounts", assetListWithAmounts);
 
     return {
         assets: assetListWithAmounts,
