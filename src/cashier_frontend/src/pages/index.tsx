@@ -35,6 +35,7 @@ export default function HomePage() {
     } = useQuery({
         ...queryKeys.links.list(identity),
         enabled: !!appUser,
+        refetchOnWindowFocus: false,
     });
     const queryClient = useQueryClient();
     useUserAssets();

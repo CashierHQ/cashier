@@ -91,7 +91,6 @@ export function useTipLinkAssetForm(
 
 const fetchAssetListAmounts = async (identity: Identity, assetList: AssetSelectItem[]) => {
     const canisterUtilService = new CanisterUtilsService(identity);
-
     const assetListWithAmounts = await Promise.all(
         assetList.map(async (asset) => {
             const amountFetched = await canisterUtilService.checkAccountBalance(
@@ -141,6 +140,7 @@ export function useUserAssets() {
         queryFn: () =>
             identity ? fetchAssetListAmounts(identity, assets || []) : Promise.resolve([]),
         enabled: !!assets,
+        refetchOnWindowFocus: false,
     });
 
     useEffect(() => {
@@ -148,6 +148,7 @@ export function useUserAssets() {
             queryClient.invalidateQueries({ queryKey: ["userTokens", walletAddress] });
         }
     }, [walletAddress, queryClient]);
+    console.log("assetListWithAmounts", assetListWithAmounts);
 
     return {
         assets: assetListWithAmounts,
