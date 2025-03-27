@@ -25,7 +25,7 @@ impl<'a, E: IcEnvironment + Clone> IntentBuilder for TransferWalletToLinkIntentB
 
         let deposit_account = Account {
             owner: self.ic_env.id(),
-            subaccount: Some(to_subaccount(self.link_id.clone())),
+            subaccount: Some(to_subaccount(&self.link_id.clone())),
         };
 
         let deposit_wallet = Wallet {

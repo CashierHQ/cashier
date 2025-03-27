@@ -1,21 +1,20 @@
+pub mod domain;
 use std::collections::HashMap;
-
-use cashier_types::{
-    Action, ActionIntent, ActionState, Intent, IntentState, IntentTransaction, LinkAction,
-    Transaction, TransactionState, UserAction,
-};
 
 use crate::{
     info,
     repositories::{self},
-    types::{error::CanisterError, transaction_manager::ActionResp},
+    types::{error::CanisterError, transaction_manager::ActionData},
     utils::runtime::IcEnvironment,
 };
+use cashier_types::{
+    Action, ActionIntent, Intent, IntentTransaction, LinkAction, Transaction, UserAction,
+};
+use domain::ActionDomainLogic;
 
-use super::validate::ValidateService;
-
-#[cfg_attr(test, faux::create)]
+// Without traits/interfaces for repositories
 pub struct ActionService<E: IcEnvironment + Clone> {
+    // Concrete repository implementations
     action_repository: repositories::action::ActionRepository,
     intent_repository: repositories::intent::IntentRepository,
     action_intent_repository: repositories::action_intent::ActionIntentRepository,
@@ -25,29 +24,17 @@ pub struct ActionService<E: IcEnvironment + Clone> {
     link_action_repository: repositories::link_action::LinkActionRepository,
     user_action_repository: repositories::user_action::UserActionRepository,
     user_wallet_repository: repositories::user_wallet::UserWalletRepository,
-    validate_service: ValidateService,
+
+    // Domain logic
+    domain_logic: ActionDomainLogic,
     ic_env: E,
 }
 
-#[cfg_attr(test, faux::methods)]
-impl<E: IcEnvironment + Clone> ActionService<E> {
-    pub fn get_instance() -> Self {
-        Self {
-            action_repository: repositories::action::ActionRepository::new(),
-            intent_repository: repositories::intent::IntentRepository::new(),
-            action_intent_repository: repositories::action_intent::ActionIntentRepository::new(),
-            transaction_repository: repositories::transaction::TransactionRepository::new(),
-            intent_transaction_repository:
-                repositories::intent_transaction::IntentTransactionRepository::new(),
-            link_repository: repositories::link::LinkRepository::new(),
-            link_action_repository: repositories::link_action::LinkActionRepository::new(),
-            user_action_repository: repositories::user_action::UserActionRepository::new(),
-            user_wallet_repository: repositories::user_wallet::UserWalletRepository::new(),
-            validate_service: ValidateService::get_instance(),
-            ic_env: E::new(),
-        }
-    }
-
+// Implementation of the service cordinates the repositories and domain logic
+impl<E> ActionService<E>
+where
+    E: IcEnvironment + Clone,
+{
     pub fn new(
         action_repository: repositories::action::ActionRepository,
         intent_repository: repositories::intent::IntentRepository,
@@ -58,7 +45,6 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
         link_action_repository: repositories::link_action::LinkActionRepository,
         user_action_repository: repositories::user_action::UserActionRepository,
         user_wallet_repository: repositories::user_wallet::UserWalletRepository,
-        validate_service: ValidateService,
         ic_env: E,
     ) -> Self {
         Self {
@@ -71,40 +57,27 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
             link_action_repository,
             user_action_repository,
             user_wallet_repository,
-            validate_service,
+            domain_logic: ActionDomainLogic::new(),
             ic_env,
         }
     }
 
-    pub fn get_action_by_tx_id(&self, tx_id: String) -> Result<ActionResp, String> {
-        let get_intent_tx_res = self
-            .intent_transaction_repository
-            .get_by_transaction_id(tx_id);
-        let intent_tx_belong = get_intent_tx_res
-            .first()
-            .ok_or("intent_transaction not found")?;
-        let intent_id = intent_tx_belong.intent_id.clone();
-
-        let get_action_intent_res = self.action_intent_repository.get_by_intent_id(intent_id);
-
-        let action_intent = get_action_intent_res
-            .first()
-            .ok_or("action_intent not found")?;
-
-        let action_id = action_intent.action_id.clone();
-
-        self._get_action_resp(action_id)
+    pub fn get_instance() -> Self {
+        Self::new(
+            repositories::action::ActionRepository::new(),
+            repositories::intent::IntentRepository::new(),
+            repositories::action_intent::ActionIntentRepository::new(),
+            repositories::transaction::TransactionRepository::new(),
+            repositories::intent_transaction::IntentTransactionRepository::new(),
+            repositories::link::LinkRepository::new(),
+            repositories::link_action::LinkActionRepository::new(),
+            repositories::user_action::UserActionRepository::new(),
+            repositories::user_wallet::UserWalletRepository::new(),
+            IcEnvironment::new(),
+        )
     }
 
-    pub fn get(&self, action_id: String) -> Result<ActionResp, String> {
-        self._get_action_resp(action_id)
-    }
-
-    pub fn get_action_by_id(&self, action_id: String) -> Option<Action> {
-        self.action_repository.get(action_id)
-    }
-
-    fn _get_action_resp(&self, action_id: String) -> Result<ActionResp, String> {
+    pub fn get_action_data(&self, action_id: String) -> Result<ActionData, String> {
         let action = self
             .action_repository
             .get(action_id.clone())
@@ -142,218 +115,74 @@ impl<E: IcEnvironment + Clone> ActionService<E> {
             intent_txs_hashmap.insert(action_intent.intent_id, txs);
         }
 
-        Ok(ActionResp {
+        Ok(ActionData {
             action,
             intents,
             intent_txs: intent_txs_hashmap,
         })
     }
 
-    pub fn flatten_tx_hashmap(
-        &self,
-        intent_txs: &HashMap<String, Vec<cashier_types::Transaction>>,
-    ) -> Vec<cashier_types::Transaction> {
-        let mut txs = vec![];
-
-        for (_, transactions) in intent_txs {
-            for tx in transactions {
-                txs.push(tx.clone());
-            }
-        }
-
-        txs
+    pub fn get_action_by_id(&self, action_id: String) -> Option<Action> {
+        self.action_repository.get(action_id)
     }
 
-    pub fn roll_up_intent_state(
-        &self,
-        intents: &mut Vec<cashier_types::Intent>,
-        intent_txs: &HashMap<String, Vec<cashier_types::Transaction>>,
-    ) -> Result<(), String> {
-        for intent in intents {
-            if let Some(transactions) = intent_txs.get(&intent.id) {
-                if transactions
-                    .iter()
-                    .all(|tx| tx.state == TransactionState::Created)
-                {
-                    intent.state = IntentState::Created;
-                } else if transactions
-                    .iter()
-                    .any(|tx| tx.state == TransactionState::Fail)
-                {
-                    intent.state = IntentState::Fail;
-                } else if transactions
-                    .iter()
-                    .all(|tx| tx.state == TransactionState::Success)
-                {
-                    intent.state = IntentState::Success;
-                } else {
-                    intent.state = IntentState::Processing;
-                }
-            }
-        }
-        Ok(())
+    pub fn get_action_by_tx_id(&self, tx_id: String) -> Result<ActionData, String> {
+        let get_intent_tx_res = self
+            .intent_transaction_repository
+            .get_by_transaction_id(tx_id);
+        let intent_tx_belong = get_intent_tx_res
+            .first()
+            .ok_or("intent_transaction not found")?;
+        let intent_id = intent_tx_belong.intent_id.clone();
+
+        let get_action_intent_res = self.action_intent_repository.get_by_intent_id(intent_id);
+
+        let action_intent = get_action_intent_res
+            .first()
+            .ok_or("action_intent not found")?;
+
+        let action_id = action_intent.action_id.clone();
+
+        self.get_action_data(action_id)
     }
 
-    pub fn roll_up_action_state(
-        &self,
-        action: &mut cashier_types::Action,
-        intents: &Vec<cashier_types::Intent>,
-    ) -> Result<(), String> {
-        if intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Created)
-        {
-            action.state = ActionState::Created;
-        } else if intents
-            .iter()
-            .any(|intent| intent.state == IntentState::Fail)
-        {
-            action.state = ActionState::Fail;
-        } else if intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Success)
-        {
-            action.state = ActionState::Success;
-        } else {
-            action.state = ActionState::Processing;
-        }
-        Ok(())
-    }
-
-    pub fn roll_up_state(&self, tx_id: String) -> Result<ActionResp, String> {
-        let action_resp = self
+    pub fn roll_up_state(&self, tx_id: String) -> Result<ActionData, String> {
+        let action_data = self
             .get_action_by_tx_id(tx_id)
             .map_err(|e| format!("get_action_by_tx_id failed: {}", e))?;
 
-        let mut intents = action_resp.intents;
-        let intent_txs = action_resp.intent_txs;
-        let mut action = action_resp.action;
+        let mut intents = action_data.intents;
+        let intent_txs = action_data.intent_txs;
+        let mut action = action_data.action;
 
-        self.roll_up_intent_state(&mut intents, &intent_txs)?;
-        self.roll_up_action_state(&mut action, &intents)?;
+        for intent in &mut intents {
+            let txs = intent_txs.get(&intent.id).unwrap();
+            let intent_state = self.domain_logic.calculate_intent_state(txs);
+            info!(
+                "[roll_up_state] intent: {:#?} {:?}",
+                intent.id, intent_state
+            );
 
-        for intent in intents.clone() {
-            self.intent_repository.update(intent.clone());
-            info!("Updated intent state: {:?}", intent.state);
+            intent.state = intent_state;
         }
 
-        self.action_repository.update(action.clone());
-        info!("Updated action state: {:?}", action.state);
+        action.state = self.domain_logic.calculate_action_state(&intents);
+        info!(
+            "[roll_up_state] action: {:#?} {:?}",
+            action.id, action.state
+        );
 
-        Ok(ActionResp {
+        self.intent_repository.batch_update(intents.clone());
+        self.action_repository.update(action.clone());
+
+        Ok(ActionData {
             action,
             intents,
             intent_txs,
         })
     }
 
-    // Deprecated
-    // pub async fn deperated_create_link_action(
-    //     &self,
-    //     input: CreateActionInput,
-    // ) -> Result<ActionDto, CanisterError> {
-    //     let caller = self.ic_env.caller();
-    //     let link = self
-    //         .link_repository
-    //         .get(&input.link_id)
-    //         .ok_or_else(|| CanisterError::ValidationErrors("Link not found".to_string()))?;
-
-    //     // Validate the user's balance
-    //     match self
-    //         .validate_service
-    //         .validate_balance_with_asset_info(&link.clone(), &caller)
-    //         .await
-    //     {
-    //         Ok(_) => {
-    //             info!("User balance validated");
-    //         }
-    //         Err(e) => return Err(CanisterError::ValidationErrors(e)),
-    //     }
-
-    //     // Get the user ID from the user wallet store
-    //     let user_wallet = self
-    //         .user_wallet_repository
-    //         .get(&caller.to_text())
-    //         .ok_or_else(|| CanisterError::ValidationErrors("User wallet not found".to_string()))?;
-
-    //     // Parse the intent typex
-    //     let action_type = ActionType::from_str(&input.action_type)
-    //         .map_err(|_| CanisterError::ValidationErrors(format!("Invalid inteactionnt type ")))?;
-
-    //     let action = Action {
-    //         id: Uuid::new_v4().to_string(),
-    //         r#type: action_type,
-    //         state: ActionState::Created,
-    //         creator: user_wallet.user_id.clone(),
-    //         link_id: input.link_id.clone(),
-    //     };
-
-    //     let link_action = LinkAction {
-    //         link_id: link.id.clone(),
-    //         action_type: input.action_type.clone(),
-    //         action_id: action.id.clone(),
-    //     };
-
-    //     let create_intent_input = ConvertToIntentInput {
-    //         action: action.clone(),
-    //         link: link.clone(),
-    //     };
-
-    //     let adapter: action_adapter::ic_adapter::IcAdapter<E> =
-    //         action_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
-
-    //     let intents = adapter
-    //         .convert(create_intent_input)
-    //         .map_err(|e| {
-    //             CanisterError::ValidationErrors(format!(
-    //                 "Failed to convert action to intent: {}",
-    //                 e
-    //             ))
-    //         })
-    //         .map_err(|e| {
-    //             CanisterError::ValidationErrors(format!(
-    //                 "Failed to convert action to intent: {:?}",
-    //                 e
-    //             ))
-    //         })?;
-
-    //     let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
-
-    //     let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
-
-    //     for intent in intents.clone() {
-    //         let transactions = intent_adapter
-    //             .convert(&intent)
-    //             .map_err(|e| {
-    //                 CanisterError::ValidationErrors(format!(
-    //                     "Failed to convert intent to transaction: {}",
-    //                     e
-    //                 ))
-    //             })
-    //             .map_err(|e| {
-    //                 CanisterError::ValidationErrors(format!(
-    //                     "Failed to convert intent to transaction: {:?}",
-    //                     e
-    //                 ))
-    //             })?;
-
-    //         intent_tx_hashmap.insert(intent.id.clone(), transactions);
-    //     }
-
-    //     let _ = self.store_action_records(
-    //         link_action,
-    //         action.clone(),
-    //         intents.clone(),
-    //         intent_tx_hashmap,
-    //         user_wallet.user_id.clone(),
-    //     )?;
-
-    //     Ok(ActionDto::from(action, intents))
-
-    //     // Retrieve and return the created intent
-    // }
-
-    pub fn store_action_records(
+    pub fn store_action_data(
         &self,
         link_action: LinkAction,
         action: Action,

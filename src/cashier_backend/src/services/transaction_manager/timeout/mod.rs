@@ -2,7 +2,6 @@ use cashier_types::TransactionState;
 
 use crate::{
     constant::get_tx_timeout_nano_seconds,
-    error, info,
     services::transaction_manager::manual_check_status::ManualCheckStatusService,
     types::error::CanisterError,
     utils::{
@@ -11,11 +10,13 @@ use crate::{
     },
 };
 
-use super::transaction::TransactionService;
+use super::{action::ActionService, transaction::TransactionService};
 
 pub async fn tx_timeout_task(tx_id: String) -> Result<(), CanisterError> {
     let transaction_service: TransactionService<RealIcEnvironment> =
         TransactionService::get_instance();
+
+    let action_service: ActionService<RealIcEnvironment> = ActionService::get_instance();
 
     let mut tx = transaction_service.get_tx_by_id(&tx_id)?;
 
@@ -24,7 +25,6 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), CanisterError> {
     }
 
     if tx.start_ts.is_none() {
-        error!("Transaction start_ts is None");
         return Err(CanisterError::HandleLogicError(
             "Transaction start_ts is None".to_string(),
         ));
@@ -43,14 +43,11 @@ pub async fn tx_timeout_task(tx_id: String) -> Result<(), CanisterError> {
 
         let state = manual_check_status_service.execute(&tx, vec![]).await?;
 
-        let _ = transaction_service.update_tx_state(&mut tx, state.clone());
+        let _ = transaction_service.update_tx_state(&mut tx, &state.clone());
 
-        info!(
-            "[tx_timeout_task] Transaction {} {} is timeout, state is updated to {:?}",
-            tx_id,
-            tx.protocol.as_ic_transaction().unwrap().to_str(),
-            state
-        );
+        action_service.roll_up_state(tx.id.clone()).map_err(|e| {
+            CanisterError::HandleLogicError(format!("Failed to roll up state for action: {}", e))
+        })?;
 
         Ok(())
     } else {

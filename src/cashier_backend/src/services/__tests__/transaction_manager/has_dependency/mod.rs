@@ -17,7 +17,7 @@ mod tests {
                 TransactionManagerService,
             },
         },
-        types::{error::CanisterError, transaction_manager::ActionResp},
+        types::{error::CanisterError, transaction_manager::ActionData},
     };
 
     //TS1: Should return fail if there is no dependency
@@ -52,7 +52,7 @@ mod tests {
 
         when!(action_service.get_action_by_tx_id(tx1.id.clone()))
             .once()
-            .then_return(Ok(ActionResp {
+            .then_return(Ok(ActionData {
                 action: action.clone(),
                 intents: vec![intent1.clone(), intent2.clone()],
                 intent_txs: intent_txs.clone(),
@@ -63,7 +63,7 @@ mod tests {
             .then_return(Ok(tx2.clone()));
         when!(action_service.get_action_by_tx_id(tx2.id.clone()))
             .once()
-            .then_return(Ok(ActionResp {
+            .then_return(Ok(ActionData {
                 action: action.clone(),
                 intents: vec![intent1.clone(), intent2.clone()],
                 intent_txs: intent_txs.clone(),
@@ -134,7 +134,7 @@ mod tests {
 
         when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
             .once()
-            .then_return(Ok(ActionResp {
+            .then_return(Ok(ActionData {
                 action: action.clone(),
                 intents: vec![intent1.clone(), intent2.clone()],
                 intent_txs: intent_txs.clone(),
@@ -205,7 +205,7 @@ mod tests {
 
         when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
             .once()
-            .then_return(Ok(ActionResp {
+            .then_return(Ok(ActionData {
                 action: action.clone(),
                 intents: vec![intent1.clone(), intent2.clone()],
                 intent_txs: intent_txs.clone(),
@@ -271,7 +271,7 @@ mod tests {
 
         when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
             .once()
-            .then_return(Ok(ActionResp {
+            .then_return(Ok(ActionData {
                 action: action.clone(),
                 intents: vec![intent1.clone(), intent2.clone()],
                 intent_txs: intent_txs.clone(),
@@ -375,7 +375,7 @@ mod tests {
 
         when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
             .once()
-            .then_return(Ok(ActionResp {
+            .then_return(Ok(ActionData {
                 action: action.clone(),
                 intents: vec![intent1.clone(), intent2.clone()],
                 intent_txs: intent_txs.clone(),
@@ -468,7 +468,7 @@ mod tests {
 
         when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
             .once()
-            .then_return(Ok(ActionResp {
+            .then_return(Ok(ActionData {
                 action: action.clone(),
                 intents: vec![intent1.clone(), intent2.clone()],
                 intent_txs: intent_txs.clone(),
@@ -572,7 +572,7 @@ mod tests {
 
         when!(action_service.get_action_by_tx_id(tx_a.id.clone()))
             .once()
-            .then_return(Ok(ActionResp {
+            .then_return(Ok(ActionData {
                 action: action.clone(),
                 intents: vec![intent1.clone(), intent2.clone()],
                 intent_txs: intent_txs.clone(),
