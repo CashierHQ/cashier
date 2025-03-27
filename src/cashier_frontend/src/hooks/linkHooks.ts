@@ -246,10 +246,8 @@ export function useIcrc112Execute() {
     const mutation = useMutation({
         mutationFn: async ({
             transactions,
-            linkTitle,
         }: {
             transactions: Icrc112RequestModel[][] | undefined;
-            linkTitle: string;
         }) => {
             const identityProvided = !!identity;
             const transactionsProvided = transactions && transactions.length > 0;
@@ -260,10 +258,7 @@ export function useIcrc112Execute() {
 
             const signerService = new CallSignerService(identity);
 
-            return await signerService.tesstExecute(
-                transactions as unknown as SequenceRequest,
-                linkTitle,
-            );
+            return await signerService.execute(transactions as unknown as SequenceRequest);
         },
     });
 

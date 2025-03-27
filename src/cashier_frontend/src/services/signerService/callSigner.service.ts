@@ -34,15 +34,6 @@ class CallSignerService {
         return this.parseResponse<Icrc112Response>(response);
     }
 
-    async tesstExecute(input: Icrc112Requests, linkTitle: string): Promise<Icrc112Response> {
-        const icrc112Service = new ICRC112Service({
-            callCanisterService: callCanisterService,
-            agent: this.agent,
-        });
-        const response = await icrc112Service.testICRC112Execute(input, linkTitle);
-        return response;
-    }
-
     private parseResponse<T>(jsonObj: JsonResponse): T {
         if ("result" in jsonObj) {
             return jsonObj.result as unknown as T;
