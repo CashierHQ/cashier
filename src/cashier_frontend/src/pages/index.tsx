@@ -167,8 +167,7 @@ export default function HomePage() {
                     <Button
                         type="button"
                         onClick={connectToWallet}
-                        size="lg"
-                        className="fixed text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
+                        className="fixed h-11 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
                     >
                         Get started
                     </Button>
