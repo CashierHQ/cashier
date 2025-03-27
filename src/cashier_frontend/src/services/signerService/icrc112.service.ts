@@ -110,7 +110,7 @@ export class ICRC112Service {
     public async icrc112Execute(input: Icrc112Requests): Promise<Icrc112Response> {
         const arg = {
             jsonrpc: "2.0",
-            method: "icrc_112_batch_call_canisters",
+            method: "icrc112_batch_call_canister",
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input,
@@ -348,6 +348,6 @@ export class ICRC112Service {
     }
 
     public getMethod(): string {
-        return "icrc_112_batch_call_canister";
+        return "icrc112_batch_call_canister";
     }
 }

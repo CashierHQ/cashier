@@ -23,7 +23,7 @@ class CallSignerService {
         const request: JsonRequest = {
             id: "1",
             jsonrpc: "2.0",
-            method: "icrc_112_batch_call_canisters",
+            method: "icrc112_batch_call_canister",
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input as unknown as JsonObject,
