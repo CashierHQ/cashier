@@ -19,7 +19,7 @@ export function AmountActionButtons({ data }: AmountActionButtons) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-[75px] rounded-[8px]"
+                    className="w-[75px] rounded-[8px] hover:text-destructive hover:border-destructive hover:bg-white"
                     onClick={action}
                 >
                     {content}

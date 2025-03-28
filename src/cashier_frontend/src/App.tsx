@@ -12,6 +12,7 @@ import { SignersProvider, useSigners } from "./contexts/signer-list-context";
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
 console.log("ENV", import.meta.env.VITE_IC_EXPLORER_BASE_URL);
+console.log(import.meta.env.MODE);
 
 function App() {
     const queryClient = new QueryClient();

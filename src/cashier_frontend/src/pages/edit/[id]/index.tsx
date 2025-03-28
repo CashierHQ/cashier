@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useUpdateLinkSelfContained } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { ACTION_STATE, LINK_STATE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { Spinner } from "@/components/ui/spinner";
@@ -35,7 +35,10 @@ export default function LinkPage() {
 
     const { link, setLink, action, setAction } = useCreateLinkStore();
 
-    const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(linkId);
+    const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
+        linkId,
+        ACTION_TYPE.CREATE_LINK,
+    );
     const { mutateAsync: updateLink } = useUpdateLinkSelfContained();
 
     useEffect(() => {

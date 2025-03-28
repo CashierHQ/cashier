@@ -1,5 +1,6 @@
 import icExplorerAxiosClient from "@/axios/axiosClient";
 import {
+    IcExplorerHolderResponse,
     IcExplorerTokenListResponse,
     IcExplorerTokenListResponseItem,
 } from "../types/icExplorer.types";
@@ -81,7 +82,18 @@ export class IcExplorerUsdConversionService implements IUsdConversionService {
         address: string,
     ): Promise<IcExplorerTokenListResponseItem | undefined> {
         const tokens = await this._getTokens(principal);
-        const token = tokens.find((token) => token.ledgerId === address);
-        return token;
+        if (tokens.length > 0) {
+            const token = tokens.find((token) => token.ledgerId === address);
+            return token;
+        } else {
+            const response = await this.client.post<IcExplorerHolderResponse>("/holder/token", {
+                page: 1,
+                size: 1,
+                isDesc: false,
+                ledgerId: address,
+            });
+            console.log("🚀 ~ IcExplorerUsdConversionService ~ response:", response);
+            return response.data.list[0];
+        }
     }
 }
