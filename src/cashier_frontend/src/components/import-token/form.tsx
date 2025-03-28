@@ -100,7 +100,7 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                     />
                 </div>
 
-                <Button>{t("continue")}</Button>
+                <Button size="lg">{t("continue")}</Button>
             </form>
         </Form>
     );

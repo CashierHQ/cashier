@@ -85,7 +85,6 @@ export default function ClaimPage() {
             );
             return;
         }
-        console.log("Claiming");
     };
 
     const handleConnectWallet = () => {
