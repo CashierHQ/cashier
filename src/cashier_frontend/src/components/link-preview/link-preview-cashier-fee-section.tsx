@@ -27,7 +27,7 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
                 <Info className="text-green" size={20} onClick={onInfoClick} />
             </div>
 
-            <ul className="flex flex-col gap-3 border-solid border-inherit border-[1px] rounded-xl mt-3 ml-2 px-4 py-3 overflow-y-auto max-h-[200px]">
+            <ul className="flex flex-col gap-3 border-solid border-inherit border-[1px] rounded-xl mt-3 ml-2 px-4 py-[0.7rem] overflow-y-auto max-h-[200px]">
                 {intents.map((intent, index) => (
                     <li key={`fee-${index}`}>
                         <LinkPreviewCashierFeeItem feeModel={intent} />
