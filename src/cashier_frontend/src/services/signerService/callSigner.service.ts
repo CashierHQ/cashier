@@ -23,7 +23,7 @@ class CallSignerService {
         const request: JsonRequest = {
             id: "1",
             jsonrpc: "2.0",
-            method: "icrc_112_batch_call_canisters",
+            method: "icrc112_batch_call_canister",
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: input as unknown as JsonObject,
@@ -32,15 +32,6 @@ class CallSignerService {
         const response = await signer.sendRequest(request);
         console.log("🚀 ~ CallSignerService ~ executeIcrc112 ~ response:", response);
         return this.parseResponse<Icrc112Response>(response);
-    }
-
-    async tesstExecute(input: Icrc112Requests, linkTitle: string): Promise<Icrc112Response> {
-        const icrc112Service = new ICRC112Service({
-            callCanisterService: callCanisterService,
-            agent: this.agent,
-        });
-        const response = await icrc112Service.testICRC112Execute(input, linkTitle);
-        return response;
     }
 
     private parseResponse<T>(jsonObj: JsonResponse): T {

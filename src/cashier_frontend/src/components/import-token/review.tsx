@@ -66,7 +66,9 @@ export function ImportTokenReview({ data, onImport = () => {} }: ImportTokenRevi
                 </div>
             </div>
 
-            <Button onClick={handleImport}>{t("review.import")}</Button>
+            <Button onClick={handleImport} size="lg">
+                {t("review.import")}
+            </Button>
         </div>
     );
 }

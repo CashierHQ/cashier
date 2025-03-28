@@ -101,37 +101,6 @@ const fetchUserTokens = async (walletAddress: string) => {
     return tokens.map(mapAPITokenModelToAssetSelectModel);
 };
 
-export function useUserAssets() {
-    const identity = useIdentity();
-    const walletAddress = useWalletAddress();
-    const queryClient = useQueryClient();
-
-    const { data: assets, isLoading: isLoadingAssets } = useQuery({
-        queryKey: ["userTokens", walletAddress],
-        queryFn: () => fetchUserTokens(walletAddress),
-        enabled: !!walletAddress,
-    });
-
-    const { data: assetListWithAmounts, isLoading: isLoadingBalance } = useQuery({
-        queryKey: ["assetListAmounts", assets],
-        queryFn: () =>
-            identity ? fetchAssetListAmounts(identity, assets || []) : Promise.resolve([]),
-        enabled: !!assets,
-    });
-
-    useEffect(() => {
-        if (walletAddress) {
-            queryClient.invalidateQueries({ queryKey: ["userTokens", walletAddress] });
-        }
-    }, [walletAddress, queryClient]);
-
-    return {
-        assets: assetListWithAmounts,
-        isLoadingAssets,
-        isLoadingBalance,
-    };
-}
-
 export function useSelectedWalletSendAsset(
     assets: AssetSelectItem[] | undefined,
     form: UseFormReturn<WalletSendAssetFormSchema>,
