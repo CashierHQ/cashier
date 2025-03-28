@@ -9,9 +9,9 @@ use uuid::Uuid;
 use crate::{
     constant::{ICP_CANISTER_ID, INTENT_LABEL_WALLET_TO_LINK, INTENT_LABEL_WALLET_TO_TREASURY},
     core::link::types::UserStateMachineGoto,
+    domains::fee::Fee,
     info,
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
-    services::transaction_manager::fee::Fee,
     types::error::CanisterError,
     utils::{helper::to_subaccount, icrc::IcrcService, runtime::IcEnvironment},
 };

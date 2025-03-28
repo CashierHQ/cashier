@@ -1,7 +1,7 @@
-pub mod domain;
 use std::collections::HashMap;
 
 use crate::{
+    domains::action::ActionDomainLogic,
     info,
     repositories::{self},
     types::{error::CanisterError, transaction_manager::ActionData},
@@ -10,7 +10,6 @@ use crate::{
 use cashier_types::{
     Action, ActionIntent, Intent, IntentTransaction, LinkAction, Transaction, UserAction,
 };
-use domain::ActionDomainLogic;
 
 // Without traits/interfaces for repositories
 pub struct ActionService<E: IcEnvironment + Clone> {

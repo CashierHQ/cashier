@@ -1,9 +1,7 @@
-pub mod domain;
-
 use cashier_types::{Transaction, TransactionState};
-use domain::TransactionDomainLogic;
 
 use crate::{
+    domains::transaction::TransactionDomainLogic,
     repositories::transaction::TransactionRepository,
     types::{error::CanisterError, icrc_112_transaction::Icrc112Requests},
     utils::runtime::IcEnvironment,

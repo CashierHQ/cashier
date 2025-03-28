@@ -3,6 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use action::ActionService;
 use adapter::AdapterRegistry;
 use cashier_types::{Intent, LinkAction, Transaction, TransactionState};
+use execute_transaction::ExecuteTransactionService;
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
 use timeout::tx_timeout_task;
@@ -25,7 +26,6 @@ use crate::{
 pub mod action;
 pub mod adapter;
 pub mod execute_transaction;
-pub mod fee;
 pub mod manual_check_status;
 pub mod timeout;
 pub mod transaction;
@@ -56,7 +56,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         action_service: ActionService<E>,
         manual_check_status_service: ManualCheckStatusService<E>,
         ic_env: E,
-        execute_transaction_service: execute_transaction::ExecuteTransactionService,
+        execute_transaction_service: ExecuteTransactionService,
         adapter_registry: AdapterRegistry<E>,
     ) -> Self {
         Self {
