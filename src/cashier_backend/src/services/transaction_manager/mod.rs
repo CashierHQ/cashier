@@ -1,9 +1,8 @@
 use std::{collections::HashMap, time::Duration};
 
 use action::ActionService;
-use cashier_types::{
-    Chain, Intent, IntentTask, IntentType, LinkAction, Transaction, TransactionState,
-};
+use adapter::AdapterRegistry;
+use cashier_types::{Intent, LinkAction, Transaction, TransactionState};
 use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
 use timeout::tx_timeout_task;
@@ -24,11 +23,9 @@ use crate::{
 };
 
 pub mod action;
-pub mod action_adapter;
-pub mod builder;
+pub mod adapter;
 pub mod execute_transaction;
 pub mod fee;
-pub mod intent_adapter;
 pub mod manual_check_status;
 pub mod timeout;
 pub mod transaction;
@@ -48,6 +45,8 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     manual_check_status_service: ManualCheckStatusService<E>,
     ic_env: E,
     execute_transaction_service: execute_transaction::ExecuteTransactionService,
+    // Adapter registry
+    adapter_registry: AdapterRegistry<E>,
 }
 
 #[cfg_attr(test, faux::methods)]
@@ -58,6 +57,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         manual_check_status_service: ManualCheckStatusService<E>,
         ic_env: E,
         execute_transaction_service: execute_transaction::ExecuteTransactionService,
+        adapter_registry: AdapterRegistry<E>,
     ) -> Self {
         Self {
             transaction_service,
@@ -65,6 +65,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             manual_check_status_service,
             ic_env,
             execute_transaction_service,
+            adapter_registry,
         }
     }
 
@@ -75,34 +76,19 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             ManualCheckStatusService::get_instance(),
             IcEnvironment::new(),
             execute_transaction::ExecuteTransactionService::get_instance(),
+            AdapterRegistry::new(),
         )
     }
 
     pub fn tx_man_assemble_txs(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
-        match intent.chain {
-            Chain::IC => {
-                let intent_adapter = intent_adapter::ic_adapter::IcAdapter::new(&self.ic_env);
+        let adapter = self
+            .adapter_registry
+            .get_intent_adapter(intent.chain.clone())
+            .map_err(|e| CanisterError::HandleLogicError(e))?;
 
-                match (intent.r#type.clone(), intent.task.clone()) {
-                    (IntentType::Transfer(transfer_intent), IntentTask::TransferWalletToLink) => {
-                        intent_adapter.tx_man_ic_assemble_icrc1_wallet_transfer(transfer_intent)
-                    }
-                    (
-                        IntentType::TransferFrom(transfer_intent),
-                        IntentTask::TransferWalletToTreasury,
-                    ) => intent_adapter.tx_man_ic_assemble_icrc2_wallet_transfer(transfer_intent),
-                    (IntentType::Transfer(transfer_intent), IntentTask::TransferLinkToWallet) => {
-                        intent_adapter.tx_man_ic_assemble_icrc1_canister_transfer(transfer_intent)
-                    }
-                    // Add other combinations as needed
-                    _ => Err(CanisterError::InvalidDataError(format!(
-                        "Unsupported intent type or task {:#?} {:#?}",
-                        intent.r#type.clone(),
-                        intent.task.clone()
-                    )))?,
-                }
-            }
-        }
+        adapter
+            .intent_to_transactions(intent)
+            .map_err(|e| CanisterError::HandleLogicError(e))
     }
 
     pub fn tx_man_create_action(
@@ -517,6 +503,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             // Right now there is no tx have from_account is neither caller nor link_vault, so we don't need to handle this case
         }
 
+        // only for ic actions
         if !args.execute_wallet_tx {
             // With the txs that were grouped into a batch, we assemble a icrc_112 request
             let icrc_112_requests = self.create_icrc_112(

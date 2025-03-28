@@ -5,35 +5,21 @@ use cashier_types::{
 };
 use uuid::Uuid;
 
-use crate::{info, types::error::CanisterError, utils::runtime::IcEnvironment};
+use crate::{
+    services::transaction_manager::adapter::IntentAdapter, types::error::CanisterError,
+    utils::runtime::IcEnvironment,
+};
 
-pub struct IcAdapter<'a, E: IcEnvironment + Clone> {
-    pub ic_env: &'a E,
+pub struct IcIntentAdapter<E: IcEnvironment + Clone> {
+    pub ic_env: E,
 }
 
-impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
-    pub fn new(ic_env: &'a E) -> Self {
-        Self { ic_env }
-    }
-    pub fn convert(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
-        match (intent.r#type.clone(), intent.task.clone()) {
-            (IntentType::Transfer(transfer_intent), IntentTask::TransferWalletToLink) => {
-                self.tx_man_ic_assemble_icrc1_wallet_transfer(transfer_intent)
-            }
-            (IntentType::TransferFrom(transfer_intent), IntentTask::TransferWalletToTreasury) => {
-                self.tx_man_ic_assemble_icrc2_wallet_transfer(transfer_intent)
-            }
-            (IntentType::Transfer(transfer_intent), IntentTask::TransferLinkToWallet) => {
-                self.tx_man_ic_assemble_icrc1_canister_transfer(transfer_intent)
-            }
-            // Add other combinations as needed
-            _ => Err(CanisterError::ValidationErrors(
-                "Invalid intent type and task combination".to_string(),
-            )),
-        }
+impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
+    pub fn new() -> Self {
+        Self { ic_env: E::new() }
     }
 
-    pub fn tx_man_ic_assemble_icrc1_wallet_transfer(
+    fn assemble_icrc1_wallet_transfer(
         &self,
         transfer_intent: TransferData,
     ) -> Result<Vec<Transaction>, CanisterError> {
@@ -46,7 +32,6 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
             ts: Some(ts),
-            //TODO: update memo
             memo: None,
         };
 
@@ -66,7 +51,7 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
         Ok(vec![transaction])
     }
 
-    pub fn tx_man_ic_assemble_icrc2_wallet_transfer(
+    fn assemble_icrc2_wallet_transfer(
         &self,
         transfer_intent: TransferFromData,
     ) -> Result<Vec<Transaction>, CanisterError> {
@@ -98,7 +83,6 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
             ts: Some(ts),
-            //TODO: update memo
             memo: None,
         };
         let ic_transfer_from_tx = IcTransaction::Icrc2TransferFrom(icrc2_transfer_from);
@@ -116,7 +100,7 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
         Ok(vec![approve_tx, transfer_from_tx])
     }
 
-    pub fn tx_man_ic_assemble_icrc1_canister_transfer(
+    fn assemble_icrc1_canister_transfer(
         &self,
         transfer_intent: TransferData,
     ) -> Result<Vec<Transaction>, CanisterError> {
@@ -128,12 +112,11 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
             ts: Some(ts),
-            //TODO: update memo
             memo: None,
         };
 
-        info!(
-            "[tx_man_ic_assemble_icrc1_canister_transfer] icrc1_transfer: {:?}",
+        crate::info!(
+            "[assemble_icrc1_canister_transfer] icrc1_transfer: {:?}",
             icrc1_transfer
         );
 
@@ -150,5 +133,26 @@ impl<'a, E: IcEnvironment + Clone> IcAdapter<'a, E> {
         };
 
         Ok(vec![transfer_from_tx])
+    }
+}
+
+impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
+    fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, String> {
+        match (intent.r#type.clone(), intent.task.clone()) {
+            (IntentType::Transfer(transfer_intent), IntentTask::TransferWalletToLink) => self
+                .assemble_icrc1_wallet_transfer(transfer_intent)
+                .map_err(|e| e.to_string()),
+            (IntentType::TransferFrom(transfer_intent), IntentTask::TransferWalletToTreasury) => {
+                self.assemble_icrc2_wallet_transfer(transfer_intent)
+                    .map_err(|e| e.to_string())
+            }
+            (IntentType::Transfer(transfer_intent), IntentTask::TransferLinkToWallet) => self
+                .assemble_icrc1_canister_transfer(transfer_intent)
+                .map_err(|e| e.to_string()),
+            _ => Err(format!(
+                "Invalid intent type and task combination: {:?}, {:?}",
+                intent.r#type, intent.task
+            )),
+        }
     }
 }
