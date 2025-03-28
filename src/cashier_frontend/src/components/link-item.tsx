@@ -1,5 +1,6 @@
-import { getLinkLabel, LINK_STATE } from "@/services/types/enum";
+import { getLinkLabel, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { getLinkDefaultAvatar } from "@/utils";
 
 export function StateBadge({ state }: { state: string | undefined }) {
     const baseLabelClass = "text-xs font-xs rounded-full px-2 py-1";
@@ -53,7 +54,13 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
                 {link.image ? (
                     <img src={link.image} alt="link" className="w-8 h-8 rounded-sm" />
                 ) : (
-                    <img src="/icpToken.png" alt="link" className="w-8 h-8 rounded-sm" />
+                    <img
+                        src={getLinkDefaultAvatar(
+                            (link.linkType as LINK_TYPE) ?? LINK_TYPE.TIP_LINK,
+                        )}
+                        alt="link"
+                        className="w-8 h-8 rounded-sm"
+                    />
                 )}
             </div>
             <div className="flex items-center justify-between grow ml-3">
