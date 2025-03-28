@@ -57,7 +57,7 @@ export const LinkPreviewCashierFeeTotal: FC<LinkPreviewCashierFeeTotalProps> = (
     return (
         <div className="mt-2 flex flex-col gap-3 rounded-xl p-4 bg-lightgreen">
             <div className="flex justify-between items-center font-medium">
-                <h6>{t("link.preview.fees.totalFee")}</h6>
+                <h6 className="text-sm">{t("link.preview.fees.totalFee")}</h6>
                 <div className="flex items-center">
                     <FeeDisplay
                         totalCashierFee={totalCashierFee}
