@@ -1,3 +1,5 @@
+# [Frontend document](./src/cashier_frontend/README.md)
+
 # Integration test
 
 All the test file store in `src/test`
