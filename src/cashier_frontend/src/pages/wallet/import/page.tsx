@@ -25,7 +25,7 @@ export default function ImportTokenPage() {
     }
 
     const onSubmitImportToken = (data: ImportTokenFormData) => {
-        console.log("🚀 ~ onSubmitImportToken ~ data:", data);
+        setImportData(data);
     };
 
     return (

@@ -20,6 +20,7 @@ export const useConnectToWallet = () => {
         ...queryKeys.users.detail(identity),
         retry: 1,
         enabled: !!identity,
+        refetchOnWindowFocus: false,
     });
 
     const { setSigners } = useSigners();

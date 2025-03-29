@@ -168,7 +168,7 @@ export class ClientChannel implements Channel {
                         ),
                     },
                 };
-            case "icrc_112_batch_call_canisters":
+            case "icrc112_batch_call_canister":
                 const icrc112Request = request as JsonICRC112Request;
                 const icrc112Service = new ICRC112Service({
                     agent: this.#options.agent,

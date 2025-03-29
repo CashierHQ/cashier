@@ -12,9 +12,8 @@ import {
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { ACTION_STATE, ACTION_TYPE, INTENT_STATE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
 import {
-    useCreateActionAnonymous,
     useIcrc112Execute,
     useProcessAction,
     useProcessActionAnonymous,
@@ -108,7 +107,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         if (firstUpdatedAction) {
             const response = await icrc112Execute({
                 transactions: firstUpdatedAction!.icrc112Requests,
-                linkTitle: link?.title || "",
             });
             console.log("🚀 ~ icrc112Execute ~ response:", response);
             if (response) {

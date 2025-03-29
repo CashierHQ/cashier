@@ -93,7 +93,6 @@ const mapAssetInfo = (assetInfo: AssetInfoModel): LinkDetailUpdateAssetInfoInput
 export const mapLinkUserStateModel = (
     model: [LinkGetUserStateOutput] | [],
 ): LinkGetUserStateOutputModel => {
-    console.log("🚀 ~ model:", model);
     return {
         action: model[0] ? mapActionModel(model[0]?.action) : undefined,
         link_user_state: model[0]?.link_user_state ?? undefined,

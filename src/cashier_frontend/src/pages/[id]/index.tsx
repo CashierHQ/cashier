@@ -25,6 +25,8 @@ import { useTranslation } from "react-i18next";
 import { IoInformationCircle } from "react-icons/io5";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
+import { getTokenImage } from "@/utils";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -85,7 +87,6 @@ export default function ClaimPage() {
             );
             return;
         }
-        console.log("Claiming");
     };
 
     const handleConnectWallet = () => {
@@ -186,7 +187,9 @@ export default function ClaimPage() {
                                         <MultiStepForm.Item name="Complete">
                                             <LinkCardWithoutPhoneFrame
                                                 label="Claimed"
-                                                src="/icpLogo.png"
+                                                src={getTokenImage(
+                                                    linkData?.link.asset_info?.[0].address ?? "",
+                                                )}
                                                 message={linkData?.link.description ?? ""}
                                                 title={linkData?.link.title ?? ""}
                                                 disabled={true}

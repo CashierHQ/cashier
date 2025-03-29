@@ -66,7 +66,7 @@ describe("ICRC-112 service", () => {
 
     it("should get method success", () => {
         const result = service.getMethod();
-        expect(result).toBe("icrc_112_batch_call_canister");
+        expect(result).toBe("icrc112_batch_call_canister");
     });
 
     it("should execute icrc112 requests return success for all response", async () => {
