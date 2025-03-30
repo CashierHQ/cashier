@@ -45,6 +45,7 @@ class CanisterUtilsService {
             agent: this.agent,
             canisterId: Principal.fromText(tokenAddress),
         });
+
         await ledgerCanister.transfer({
             to: {
                 owner: Principal.fromText(receiverAddress),

@@ -1,119 +1,99 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
 import { Button } from "@/components/ui/button";
-
-import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { ACTION_STATE, ACTION_TYPE, INTENT_STATE } from "@/services/types/enum";
-import {
-    useIcrc112Execute,
-    useProcessAction,
-    useProcessActionAnonymous,
-    useUpdateAction,
-} from "@/hooks/linkHooks";
-import { ActionModel } from "@/services/types/action.service.types";
-import { useIdentity } from "@nfid/identitykit/react";
-import { ConfirmationPopupFeesSection } from "@/components/confirmation-drawer/confirmation-drawer-fees-section";
-import { ConfirmationPopupLegalSection } from "@/components/confirmation-drawer/confirmation-drawer-legal-section";
-import { ConfirmationPopupSkeleton } from "@/components/confirmation-drawer/confirmation-drawer-skeleton";
-import {
-    useCashierFeeIntents,
-    useConfirmButtonState,
-    usePrimaryIntents,
-} from "@/components/confirmation-drawer/confirmation-drawer.hooks";
 import { SendAssetConfirmationPopupAssetsSection } from "./send-asset-confirmation-drawer-assets-section";
 import { SendTransactionStatus } from "./send-transaction-status";
+import { ConfirmationPopupLegalSection } from "@/components/confirmation-drawer/confirmation-drawer-legal-section";
+import { useIdentity } from "@nfid/identitykit/react";
 import CanisterUtilsService from "@/services/canisterUtils.service";
+import { useSendAssetStore } from "@/stores/sendAssetStore";
+import { TransactionStatus } from "@/services/types/wallet.types";
 
-export interface SendAssetInfo {
-    amountNumber: number;
-    asset: {
-        address: string;
-        chain: string;
-        decimals: number;
-        symbol: string;
-    };
-    destinationAddress: string;
-}
-
-interface ConfirmationDrawerProps {
-    open: boolean;
-    sendAssetInfo?: SendAssetInfo;
-    onClose?: () => void;
-    onInfoClick?: () => void;
-    onCashierError?: (error: Error) => void;
-    onActionResult?: (action: ActionModel) => void;
-    onSuccessContinue?: () => Promise<void>;
-}
-
-export const SendAssetConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
-    open,
-    sendAssetInfo,
-    onClose = () => {},
-    onInfoClick = () => {},
-    onActionResult = () => {},
-    onCashierError = () => {},
-    onSuccessContinue = async () => {},
-}) => {
+export const SendAssetConfirmationDrawer: FC = () => {
     const { t } = useTranslation();
-    const { link, action, anonymousWalletAddress, setAction } = useCreateLinkStore();
     const identity = useIdentity();
 
+    // Use the new sendAssetStore
+    const {
+        sendAssetInfo,
+        transactionStatus,
+        error,
+        isConfirmationOpen,
+        setTransactionStatus,
+        setError,
+        closeConfirmation,
+        setTransactionHash,
+    } = useSendAssetStore();
+
     const [isUsd, setIsUsd] = useState(false);
+    const [buttonText, setButtonText] = useState(t("transaction.confirm_popup.confirm_button"));
+    const [isDisabled, setIsDisabled] = useState(false);
 
-    const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous(
-        ACTION_TYPE.CLAIM_LINK,
-    );
-
-    const { mutateAsync: updateAction } = useUpdateAction();
-    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
-
-    const primaryIntents = usePrimaryIntents(action?.intents);
-    const cashierFeeIntents = useCashierFeeIntents(action?.intents);
-
-    const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
-        action?.state,
-        t,
-    );
+    // Update button text based on transaction status
+    useEffect(() => {
+        switch (transactionStatus) {
+            case TransactionStatus.PROCESSING:
+                setButtonText(t("transaction.confirm_popup.inprogress_button"));
+                setIsDisabled(true);
+                break;
+            case TransactionStatus.SUCCESS:
+                setButtonText(t("transaction.confirm_popup.info.close"));
+                setIsDisabled(false);
+                break;
+            case TransactionStatus.FAILED:
+                setButtonText(t("transaction.confirm_popup.retry_button"));
+                setIsDisabled(false);
+                break;
+            default:
+                setButtonText(t("transaction.confirm_popup.confirm_button"));
+                setIsDisabled(false);
+        }
+    }, [transactionStatus, t]);
 
     const onClickSubmit = async () => {
-        console.log(action);
-        setButtonText(t("transaction.confirm_popup.inprogress_button"));
-        setIsDisabled(true);
-        if (action?.state === ACTION_STATE.FAIL || action?.state === ACTION_STATE.CREATED) {
-            action.state = ACTION_STATE.PROCESSING;
-            setAction(action);
+        if (transactionStatus === TransactionStatus.SUCCESS) {
+            closeConfirmation();
+            return;
+        }
+
+        if (
+            transactionStatus === TransactionStatus.IDLE ||
+            transactionStatus === TransactionStatus.FAILED
+        ) {
+            setTransactionStatus(TransactionStatus.PROCESSING);
+
             try {
-                const canisterUtils = new CanisterUtilsService(identity);
                 if (!sendAssetInfo?.destinationAddress) {
                     throw new Error("Destination address is required");
                 }
+
+                const canisterUtils = new CanisterUtilsService(identity);
+
                 await canisterUtils.transferTo(
                     sendAssetInfo.destinationAddress,
                     sendAssetInfo.asset.address,
-                    Number(action?.intents[0].amount),
+                    sendAssetInfo.amountNumber,
                 );
-                action.state = ACTION_STATE.SUCCESS;
-                setAction(action);
-                setButtonText(t("transaction.confirm_popup.info.close"));
+
+                // Generate a mock transaction hash - in a real app this would come from the blockchain
+                const mockTxHash = `tx_${Date.now().toString(36)}`;
+                setTransactionHash(mockTxHash);
+                setTransactionStatus(TransactionStatus.SUCCESS);
             } catch (e) {
-                console.log(e);
-                action.state = ACTION_STATE.FAIL;
-                setAction(action);
-                setButtonText(t("transaction.confirm_popup.retry_button"));
-                onCashierError(e as Error);
-            } finally {
-                setIsDisabled(false);
+                console.error(e);
+                setError(e as Error);
             }
-        } else if (action?.state === ACTION_STATE.SUCCESS) {
-            onSuccessContinue();
         }
     };
 
+    if (!sendAssetInfo) {
+        return null;
+    }
+
     return (
-        <Drawer open={open}>
+        <Drawer open={isConfirmationOpen}>
             <DrawerContent className="max-w-[400px] mx-auto p-3 rounded-t-[1.5rem]">
                 <DrawerHeader>
                     <DrawerTitle className="relative flex items-center justify-center">
@@ -122,63 +102,54 @@ export const SendAssetConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         </div>
 
                         <IoIosClose
-                            onClick={onClose}
+                            onClick={closeConfirmation}
                             className="absolute right-0 cursor-pointer"
                             size={42}
                         />
                     </DrawerTitle>
                 </DrawerHeader>
 
-                {action ? (
-                    <>
-                        {action.state === ACTION_STATE.PROCESSING && (
-                            <SendTransactionStatus status={action.state} />
-                        )}
-
-                        {action.state === ACTION_STATE.SUCCESS && (
-                            <SendTransactionStatus status={action.state} />
-                        )}
-
-                        {action.state === ACTION_STATE.FAIL ||
-                            (action.state === ACTION_STATE.CREATED && (
-                                <>
-                                    <div className="flex flex-col items-center justify-center mt-4 mb-6">
-                                        <div>You will send</div>
-                                        <div className="text-[2rem] font-semibold mt-2">
-                                            {sendAssetInfo?.amountNumber}{" "}
-                                            {sendAssetInfo?.asset.symbol}
-                                        </div>
-                                    </div>
-
-                                    <SendAssetConfirmationPopupAssetsSection
-                                        intents={primaryIntents}
-                                        onInfoClick={onInfoClick}
-                                        isUsd={isUsd}
-                                        onUsdClick={() => setIsUsd((old) => !old)}
-                                    />
-
-                                    {cashierFeeIntents && cashierFeeIntents.length > 0 && (
-                                        <ConfirmationPopupFeesSection
-                                            intents={cashierFeeIntents}
-                                            isUsd={isUsd}
-                                        />
-                                    )}
-
-                                    <ConfirmationPopupLegalSection />
-                                </>
-                            ))}
-
-                        <Button
-                            className="my-3 mx-auto py-6 w-[95%]"
-                            disabled={isDisabled}
-                            onClick={onClickSubmit}
-                        >
-                            {buttonText}
-                        </Button>
-                    </>
-                ) : (
-                    <ConfirmationPopupSkeleton />
+                {transactionStatus === TransactionStatus.PROCESSING && (
+                    <SendTransactionStatus status={TransactionStatus.PROCESSING} />
                 )}
+
+                {transactionStatus === TransactionStatus.SUCCESS && (
+                    <SendTransactionStatus status={TransactionStatus.SUCCESS} />
+                )}
+
+                {(transactionStatus === TransactionStatus.IDLE ||
+                    transactionStatus === TransactionStatus.FAILED) && (
+                    <>
+                        <div className="flex flex-col items-center justify-center mt-4 mb-6">
+                            <div>You will send</div>
+                            <div className="text-[2rem] font-semibold mt-2">
+                                {sendAssetInfo.amountNumber} {sendAssetInfo.asset.symbol}
+                            </div>
+                        </div>
+
+                        <SendAssetConfirmationPopupAssetsSection
+                            sendAssetInfo={sendAssetInfo}
+                            isUsd={isUsd}
+                            onUsdClick={() => setIsUsd((old) => !old)}
+                        />
+
+                        <ConfirmationPopupLegalSection />
+                    </>
+                )}
+
+                {error && (
+                    <div className="my-3 p-3 bg-red-50 text-red-500 rounded-lg">
+                        {error.message || "Transaction failed. Please try again."}
+                    </div>
+                )}
+
+                <Button
+                    className="my-3 mx-auto py-6 w-[95%]"
+                    disabled={isDisabled}
+                    onClick={onClickSubmit}
+                >
+                    {buttonText}
+                </Button>
             </DrawerContent>
         </Drawer>
     );

@@ -9,5 +9,7 @@ export const resetAllStores = () => {
     useCreateLinkStore.getState().clearStore();
     useButtonStateStore.getState().clearStore();
 
+    useSendAssetStore.getState().resetSendAsset();
+
     // Add any future stores here when they are created
 };
