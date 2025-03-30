@@ -36,7 +36,6 @@ thiserror = "2.0.11"
 async-trait = "0.1.86"
 tokio =  {version = "1.43.0", features = ["full"]}
 faux = { version = "0.1.12" }
-mockall = "0.13.1"
 
 # [features]
 # test = ["faux"]
