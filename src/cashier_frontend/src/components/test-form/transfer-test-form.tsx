@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { convertTokenAmountToNumber } from "@/utils";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
+import { TokenUtilService } from "@/services/tokenUtils.service";
 interface TestFormProps {
     onCancel?: () => void;
 }
@@ -43,8 +43,8 @@ export function TransferTestForm(props: TestFormProps) {
         try {
             if (metadata) {
                 setStatus("Processing");
-                const canisterUtils = new CanisterUtilsService(identity);
-                await canisterUtils.transferTo(
+                const tokenUtils = new TokenUtilService(identity);
+                await tokenUtils.transferTo(
                     receiver,
                     tokenAddress,
                     convertTokenAmountToNumber(amount, metadata.decimals),
