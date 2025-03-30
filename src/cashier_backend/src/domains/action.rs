@@ -13,37 +13,6 @@ impl ActionDomainLogic {
         Self {}
     }
 
-    // Core domain logic for calculating action state based on its intents
-    pub fn calculate_state(&self, intents: &[Intent]) -> ActionState {
-        if intents.is_empty() {
-            return ActionState::Created;
-        }
-
-        if intents
-            .iter()
-            .any(|intent| intent.state == IntentState::Fail)
-        {
-            return ActionState::Fail;
-        }
-
-        if intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Success)
-        {
-            return ActionState::Success;
-        }
-
-        if intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Created)
-        {
-            return ActionState::Created;
-        }
-
-        // Otherwise, action is in progress
-        ActionState::Processing
-    }
-
     // Validate action creation
     pub fn validate_action(&self, action: &Action, link: &Link) -> Result<(), CanisterError> {
         // Validate action creator
@@ -64,8 +33,6 @@ impl ActionDomainLogic {
                 }
             }
         }
-
-        // Add other validation rules...
 
         Ok(())
     }
@@ -92,7 +59,7 @@ impl ActionDomainLogic {
     }
 
     // Domain logic for checking if an intent is valid for an action
-    fn validate_intent_for_action(
+    pub fn validate_intent_for_action(
         &self,
         action: &Action,
         intent: &Intent,
