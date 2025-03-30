@@ -26,7 +26,6 @@ export default function ManageTokensPage() {
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("manage.header")}</h1>
             </BackHeader>
-
             <Search.Root className="mt-6">
                 <Search.Icon />
                 <Search.Input
