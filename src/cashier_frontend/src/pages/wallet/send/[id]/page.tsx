@@ -1,6 +1,4 @@
-import AssetDrawer from "@/components/asset-drawer";
 import { AssetSelectItem } from "@/components/asset-select";
-import { useConfirmButtonState } from "@/components/confirmation-drawer/confirmation-drawer.hooks";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
@@ -19,30 +17,18 @@ import {
     useWalletSendAssetFormActions,
     WalletSendAssetFormSchema,
 } from "@/components/wallet/send/send-asset-form.hooks";
+import { SendAssetConfirmationDrawer } from "@/components/wallet/send/confirm-send-asset-drawer";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import useToast from "@/hooks/useToast";
-import {
-    ACTION_STATE,
-    ACTION_TYPE,
-    CHAIN,
-    INTENT_STATE,
-    INTENT_TYPE,
-    TASK,
-} from "@/services/types/enum";
+import { CHAIN } from "@/services/types/enum";
+import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ChangeEvent, useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { SelectToken } from "@/components/receive/SelectToken";
-import { z } from "zod";
-import { convertDecimalBigIntToNumber, convertTokenAmountToNumber } from "@/utils";
-import {
-    SendAssetConfirmationDrawer,
-    SendAssetInfo,
-} from "@/components/wallet/send/confirm-send-asset-drawer";
-import { ActionModel } from "@/services/types/action.service.types";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { TransactionStatus } from "@/services/types/wallet.types";
 
 export default function SendTokenPage() {
     const navigate = useNavigate();
@@ -53,12 +39,20 @@ export default function SendTokenPage() {
     const { metadata } = useTokenMetadata(tokenId);
     const { toastData, showToast, hideToast } = useToast();
     const { assets: tokenList } = useUserAssets();
-    const [showConfirmation, setShowConfirmation] = useState(false);
-    const [showInfo, setShowInfo] = useState(false);
     const [isDisabled, setIsDisabled] = useState(true);
 
-    const [sendAssetInfo, setSendAssetInfo] = useState<SendAssetInfo | null>(null);
-    const { setAction } = useCreateLinkStore();
+    // Use the new sendAssetStore
+    const {
+        // sendAssetInfo,
+        transactionStatus,
+        // isConfirmationOpen,
+        setSendAssetInfo,
+        setTransactionStatus,
+        openConfirmation,
+        closeConfirmation,
+        resetSendAsset,
+        // resetError
+    } = useSendAssetStore();
 
     const selectedToken = tokenList
         ? tokenId
@@ -133,7 +127,7 @@ export default function SendTokenPage() {
         ) {
             const tokenAmount = Number(selectedToken.amount);
             // Convert fee using the token's decimals
-            const feeAmount = convertDecimalBigIntToNumber(metadata.fee, metadata.decimals);
+            const feeAmount = Number(metadata.fee) / 10 ** metadata.decimals;
             const maxAvailable = Math.max(0, tokenAmount - feeAmount);
             return maxAvailable;
         }
@@ -158,66 +152,51 @@ export default function SendTokenPage() {
     }, [selectedToken]);
 
     const onSubmitSend = async (data: WalletSendAssetFormSchema) => {
-        // Build action
-        const action: ActionModel = {
-            id: "",
-            state: ACTION_STATE.CREATED,
-            type: ACTION_TYPE.SEND_ASSET,
-            intents: [
-                {
-                    id: "",
-                    amount: BigInt(
-                        convertTokenAmountToNumber(data.assetNumber ?? 0, metadata?.decimals ?? 8),
-                    ),
-                    chain: CHAIN.IC,
-                    state: INTENT_STATE.CREATED,
-                    type: INTENT_TYPE.TRANSFER,
-                    task: TASK.TRANSFER_WALLET_TO_WALLET,
-                    from: {
-                        address: identity?.getPrincipal().toString() ?? "",
-                        chain: CHAIN.IC,
-                    },
-                    to: {
-                        address: data.walletAddress,
-                        chain: CHAIN.IC,
-                    },
-                    asset: {
-                        address: selectedToken?.tokenAddress ?? "",
-                        chain: CHAIN.IC,
-                    },
-                    createdAt: new Date(),
-                },
-            ],
-            creator: "",
-        };
-        // Build send asset info
-        const sendAssetInfo: SendAssetInfo = {
+        // Build send asset info for the store
+        setSendAssetInfo({
             amountNumber: data.assetNumber ?? 0,
             asset: {
                 address: selectedToken?.tokenAddress ?? "",
                 chain: CHAIN.IC,
                 symbol: metadata?.symbol ?? "",
                 decimals: metadata?.decimals ?? 8,
+                // logo: selectedToken?.logo
             },
             destinationAddress: data.walletAddress,
-        };
-        setSendAssetInfo(sendAssetInfo);
-        setAction(action);
-        setShowConfirmation(true);
+            // Optionally add fee information if available
+            feeAmount: metadata?.fee
+                ? Number(metadata.fee) / 10 ** (metadata?.decimals ?? 8)
+                : undefined,
+            feeSymbol: metadata?.symbol,
+        });
+
+        // Reset transaction status to IDLE and open confirmation
+        setTransactionStatus(TransactionStatus.IDLE);
+        openConfirmation();
     };
 
-    const onCashierError = () => {
-        showToast(
-            t("transaction.confirm_popup.transaction_failed"),
-            t("transaction.confirm_popup.transaction_failed_message"),
-            "error",
-        );
-    };
+    useEffect(() => {
+        // Show toast messages based on transaction status
+        if (transactionStatus === TransactionStatus.FAILED) {
+            showToast(
+                t("transaction.confirm_popup.transaction_failed"),
+                t("transaction.confirm_popup.transaction_failed_message"),
+                "error",
+            );
+        } else if (transactionStatus === TransactionStatus.SUCCESS) {
+            showToast(
+                t("transaction.confirm_popup.transaction_success"),
+                t("transaction.confirm_popup.transaction_success_message"),
+                "default",
+            );
 
-    const onSuccessContinue = async () => {
-        setAction(undefined);
-        setShowConfirmation(false);
-    };
+            // Close the confirmation drawer after success
+            setTimeout(() => {
+                closeConfirmation();
+                resetSendAsset();
+            }, 1500);
+        }
+    }, [transactionStatus]);
 
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
         try {
@@ -382,7 +361,6 @@ export default function SendTokenPage() {
                                 size="lg"
                                 disabled={isDisabled}
                                 className="fixed bottom-[30px] left-1/2 -translate-x-1/2"
-                                onClick={() => console.log(form.formState.errors)}
                             >
                                 {t("continue")}
                             </FixedBottomButton>
@@ -399,14 +377,8 @@ export default function SendTokenPage() {
                 variant={toastData?.variant ?? "default"}
             />
 
-            <SendAssetConfirmationDrawer
-                open={showConfirmation && !showInfo}
-                onClose={() => setShowConfirmation(false)}
-                onInfoClick={() => setShowInfo(true)}
-                sendAssetInfo={sendAssetInfo ?? undefined}
-                onCashierError={onCashierError}
-                onSuccessContinue={onSuccessContinue}
-            />
+            {/* Use the updated SendAssetConfirmationDrawer with the new store */}
+            <SendAssetConfirmationDrawer />
         </div>
     );
 }

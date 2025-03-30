@@ -14,3 +14,18 @@ export const Link = forwardRef<HTMLAnchorElement, ComponentProps<typeof RouterLi
     },
 );
 Link.displayName = "Link";
+
+export const ExternalLink = forwardRef<HTMLAnchorElement, ComponentProps<typeof RouterLink>>(
+    ({ className, ...props }, ref) => {
+        return (
+            <RouterLink
+                ref={ref}
+                className={cn("text-green font-medium hover:underline", className)}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+            />
+        );
+    },
+);
+ExternalLink.displayName = "ExternalLink";
