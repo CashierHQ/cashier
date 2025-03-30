@@ -43,6 +43,14 @@ local-setup:
 	@bash scripts/local/setup_icp_ledger.sh
 
 local:
-	make local-setup
+	@bash scripts/local/setup_icp_ledger.sh
 	@bash scripts/deploy.sh --skip
 	make g
+
+frontend-setup:
+	cp .env.example .env.local
+	dfx start --background --clean
+	@bash scripts/deploy.sh --skip
+	@bash scripts/local/setup_icp_ledger.sh
+	make g
+	dfx stop

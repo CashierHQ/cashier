@@ -8,6 +8,8 @@ identity=""
 # Check for --skip flag
 if [[ "$1" == "--skip" ]]; then
     echo "Skipping configuration. Using default values."
+    network="local"
+    env_file=".env.local"
 else
     # Prompt for network
     read -p "Enter network (ic, staging, local): " network_input
