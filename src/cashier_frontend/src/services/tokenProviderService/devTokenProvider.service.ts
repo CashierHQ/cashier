@@ -51,6 +51,13 @@ export const ASSET_LIST: UserToken[] = [
         accountId: "",
         valueUSD: "",
     },
+    {
+        symbol: "BOOM DAO",
+        amount: "0",
+        ledgerId: "vtrom-gqaaa-aaaaq-aabia-cai",
+        accountId: "",
+        valueUSD: "",
+    },
 ];
 
 export class DevTokenProviderService implements ITokenProviderService {
