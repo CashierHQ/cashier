@@ -140,30 +140,61 @@ export default function HomePage() {
 
     if (!walletUser) {
         return (
-            <div className="w-screen flex justify-center py-5 h-[90%]">
-                <div className="w-11/12 max-w-[400px] flex flex-col items-center">
-                    <div className="w-11/12 max-w-[400px] flex flex-col items-center">
-                        <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
+            <div className="w-screen flex justify-center py-5 h-full">
+                <div className="flex w-full flex-col items-center gap-4">
+                    <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
+                    <p className="text-yellow text-center text-sm font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow mt-4 mb-2">
+                        Cashier is still in development.
+                        {responsive.isSmallDevice ? <br /> : <span> </span>}
+                        Use with caution.
+                    </p>
 
-                        <div className="w-11/12 max-w-[400px] flex flex-col items-center mt-8">
-                            <p className="text-yellow text-center text-sm font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow">
-                                Cashier is still in development. Use with caution.
-                            </p>
-                            <span className="font-semibold mt-3 text-2xl md:text-2xl 2xl:text-3xl text-center">
+                    <div
+                        className={`flex ${responsive.isSmallDevice ? "flex-col" : "flex-row gap-16 mt-[10vh]"}`}
+                    >
+                        <div
+                            className={`flex flex-col w-full justify-center gap-2 ${
+                                responsive.isSmallDevice
+                                    ? "items-center gap-2"
+                                    : "items-start gap-6 mt-4"
+                            }`}
+                        >
+                            <span
+                                className={`font-semibold ${responsive.isSmallDevice ? "text-center text-3xl" : "text-left text-6xl"}`}
+                            >
                                 Cashier Links - <br />
-                                fast, easy, and safe{" "}
+                                fast, easy, and <span className="text-green">safe</span>{" "}
                             </span>
-                            <p className="text-gray-500 text-sm md:text-sm 2xl:text-md text-center mt-3">
-                                Start creating transaction links with Cashier: create & airdrop
-                                NFTs, and more features coming!
-                            </p>
-                            <img
-                                src="./landingPage.png"
-                                alt="Cashier illustration"
-                                className="w-[90%] md:w-[20vw] 2xl:w-[100%] max-w-[300px] mt-5"
-                            />
+                            <span
+                                className={`text-gray-500 ${
+                                    responsive.isSmallDevice
+                                        ? "text-center text-sm"
+                                        : "text-left text-base"
+                                }`}
+                            >
+                                Start creating transaction links with Cashier:
+                                <br />
+                                create & airdrop NFTs, and more features coming!
+                            </span>
+                            {!responsive.isSmallDevice && (
+                                <Button
+                                    type="button"
+                                    onClick={connectToWallet}
+                                    className="h-11 mt-8 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full"
+                                >
+                                    Get started
+                                </Button>
+                            )}
                         </div>
+                        {/* TODO: Replace with actual component or better image, this looks blurry */}
+                        <img
+                            src="./landingPage.png"
+                            alt="Cashier illustration"
+                            className={`${responsive.isSmallDevice ? "w-[100%] mt-8" : "w-[50%]"}`}
+                        />
                     </div>
+                </div>
+                {responsive.isSmallDevice && (
                     <Button
                         type="button"
                         onClick={connectToWallet}
@@ -171,7 +202,7 @@ export default function HomePage() {
                     >
                         Get started
                     </Button>
-                </div>
+                )}
             </div>
         );
     } else {

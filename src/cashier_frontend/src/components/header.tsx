@@ -8,6 +8,7 @@ import { SheetTrigger } from "./ui/sheet";
 import { RiMenu2Line } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { useConnectToWallet } from "@/hooks/useConnectToWallet";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 interface HeaderProps {
     onConnect: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -18,10 +19,13 @@ const Header: React.FC<HeaderProps> = ({ openTestForm }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { connectToWallet } = useConnectToWallet();
+    const responsive = useResponsive();
 
     if (!user) {
         return (
-            <div className="w-full flex justify-between items-center">
+            <div
+                className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4" : "px-8"}`}
+            >
                 <img
                     src="./logo.svg"
                     alt="Cashier logo"
@@ -34,7 +38,9 @@ const Header: React.FC<HeaderProps> = ({ openTestForm }) => {
     } else {
         return (
             <>
-                <div className="w-full flex justify-between items-center">
+                <div
+                    className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4" : "px-8"}`}
+                >
                     <img
                         src="./logo.svg"
                         alt="Cashier logo"
