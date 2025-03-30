@@ -11,7 +11,7 @@ use crate::{
         Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg as ExtTransferArg,
         TransferFromArgs as ExtTransferFromArgs, TransferFromError,
     },
-    types::error::{self, CanisterError, DisplayRejectionCode},
+    types::error::{CanisterError, DisplayRejectionCode},
 };
 
 #[cfg_attr(test, faux::create)]

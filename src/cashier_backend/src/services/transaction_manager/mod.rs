@@ -23,7 +23,6 @@ pub struct UpdateActionArgs {
 pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     transaction_service: TransactionService<E>,
     action_service: ActionService<E>,
-    manual_check_status_service: ManualCheckStatusService<E>,
     ic_env: E,
     icrc_service: IcrcService,
     // Adapter registry
@@ -34,7 +33,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
         transaction_service: TransactionService<E>,
         action_service: ActionService<E>,
-        manual_check_status_service: ManualCheckStatusService<E>,
         ic_env: E,
         icrc_service: IcrcService,
         adapter_registry: AdapterRegistry<E>,
@@ -42,7 +40,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         Self {
             transaction_service,
             action_service,
-            manual_check_status_service,
             ic_env,
             icrc_service,
             adapter_registry,
@@ -53,7 +50,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         Self::new(
             TransactionService::get_instance(),
             ActionService::get_instance(),
-            ManualCheckStatusService::get_instance(),
             IcEnvironment::new(),
             IcrcService::new(),
             AdapterRegistry::new(),

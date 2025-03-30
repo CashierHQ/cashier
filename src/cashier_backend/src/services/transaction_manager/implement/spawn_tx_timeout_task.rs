@@ -57,10 +57,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         let tx_timeout: u64 = get_tx_timeout_nano_seconds();
 
         if current_ts - tx.start_ts.unwrap() >= tx_timeout {
-            let state = self
-                .manual_check_status_service
-                .execute(&tx, vec![])
-                .await?;
+            let state = self.manual_check_status(&tx, vec![]).await?;
 
             let _ = self
                 .transaction_service

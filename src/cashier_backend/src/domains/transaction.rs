@@ -13,6 +13,7 @@ use icrc_ledger_types::{
     icrc2::approve::ApproveArgs,
 };
 
+#[derive(Clone)]
 pub struct TransactionDomainLogic {}
 
 // Domain logic for business rules related to actions

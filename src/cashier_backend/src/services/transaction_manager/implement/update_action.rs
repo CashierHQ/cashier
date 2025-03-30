@@ -20,10 +20,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // manually check the status of the tx of the action
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
-            let new_state = self
-                .manual_check_status_service
-                .execute(&tx, txs.clone())
-                .await?;
+            let new_state = self.manual_check_status(&tx, txs.clone()).await?;
             if tx.state == new_state.clone() {
                 continue;
             }
