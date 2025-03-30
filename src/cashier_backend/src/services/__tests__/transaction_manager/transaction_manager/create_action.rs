@@ -112,7 +112,7 @@ mod tests {
                 execute_transaction_service,
             );
 
-        let result = transaction_manager_service.tx_man_create_action(&temp_action);
+        let result = transaction_manager_service.create_action(&temp_action);
 
         assert!(result.is_ok());
 
@@ -323,7 +323,7 @@ mod tests {
                 execute_transaction_service,
             );
 
-        let result = transaction_manager_service.tx_man_create_action(&temp_action);
+        let result = transaction_manager_service.create_action(&temp_action);
 
         println!("{:#?}", result);
 
@@ -517,7 +517,7 @@ mod tests {
                 execute_transaction_service,
             );
 
-        let result = transaction_manager_service.tx_man_create_action(&temp_action);
+        let result = transaction_manager_service.create_action(&temp_action);
 
         assert!(matches!(result, Err(CanisterError::HandleLogicError(_))));
     }
@@ -587,7 +587,7 @@ mod tests {
                 execute_transaction_service,
             );
 
-        let result = transaction_manager_service.tx_man_create_action(&temp_action);
+        let result = transaction_manager_service.create_action(&temp_action);
 
         println!("{:#?}", result);
 

@@ -328,7 +328,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             temp_action.intents = intents;
 
             // create real action
-            let res = self.tx_manager_service.tx_man_create_action(&temp_action)?;
+            let res = self.tx_manager_service.create_action(&temp_action)?;
 
             Ok(res)
         } else {
@@ -428,7 +428,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             temp_action.intents = intents;
 
             // create real action
-            let res = self.tx_manager_service.tx_man_create_action(&temp_action)?;
+            let res = self.tx_manager_service.create_action(&temp_action)?;
 
             Ok(res)
         } else {
