@@ -7,9 +7,10 @@ import { SendAssetConfirmationPopupAssetsSection } from "./send-asset-confirmati
 import { SendTransactionStatus } from "./send-transaction-status";
 import { ConfirmationPopupLegalSection } from "@/components/confirmation-drawer/confirmation-drawer-legal-section";
 import { useIdentity } from "@nfid/identitykit/react";
-import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { TransactionStatus } from "@/services/types/wallet.types";
+import { useQueryClient } from "@tanstack/react-query";
+import { TokenUtilService } from "@/services/tokenUtils.service";
 
 export const SendAssetConfirmationDrawer: FC = () => {
     const { t } = useTranslation();
@@ -52,6 +53,12 @@ export const SendAssetConfirmationDrawer: FC = () => {
         }
     }, [transactionStatus, t]);
 
+    // Import at the top of the file:
+    // import { useQueryClient } from "@tanstack/react-query";
+
+    // Add this near other hooks
+    const queryClient = useQueryClient();
+
     const onClickSubmit = async () => {
         if (transactionStatus === TransactionStatus.SUCCESS) {
             closeConfirmation();
@@ -69,18 +76,27 @@ export const SendAssetConfirmationDrawer: FC = () => {
                     throw new Error("Destination address is required");
                 }
 
-                const canisterUtils = new CanisterUtilsService(identity);
+                console.log("Sending asset info:", sendAssetInfo);
 
-                await canisterUtils.transferTo(
+                const canisterUtils = new TokenUtilService(identity);
+
+                const block_id = await canisterUtils.transferTo(
                     sendAssetInfo.destinationAddress,
                     sendAssetInfo.asset.address,
                     sendAssetInfo.amountNumber,
                 );
 
                 // Generate a mock transaction hash - in a real app this would come from the blockchain
-                const mockTxHash = `tx_${Date.now().toString(36)}`;
-                setTransactionHash(mockTxHash);
+                console.log("Transaction Hash:", block_id);
+                setTransactionHash(block_id.toString());
                 setTransactionStatus(TransactionStatus.SUCCESS);
+
+                // Invalidate all token-related queries to force a refresh
+                queryClient.invalidateQueries({ queryKey: ["tokens"] });
+
+                // If you know the exact query key for user assets
+                // This would depend on how useUserAssets is implemented
+                queryClient.invalidateQueries({ queryKey: ["userAssets"] });
             } catch (e) {
                 console.error(e);
                 setError(e as Error);
