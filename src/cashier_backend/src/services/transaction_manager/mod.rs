@@ -1,27 +1,14 @@
-use std::time::Duration;
-
 use action::ActionService;
 use adapter::AdapterRegistry;
-use cashier_types::{Intent, Transaction};
-use icrc_ledger_types::icrc1::account::Account;
 use manual_check_status::ManualCheckStatusService;
-use timeout::tx_timeout_task;
 use transaction::TransactionService;
 
-use crate::{
-    info,
-    types::{error::CanisterError, icrc_112_transaction::Icrc112Requests},
-    utils::{
-        icrc::IcrcService,
-        runtime::{IcEnvironment, RealIcEnvironment},
-    },
-};
+use crate::utils::{icrc::IcrcService, runtime::IcEnvironment};
 
 pub mod action;
 pub mod adapter;
 pub mod implement;
 pub mod manual_check_status;
-pub mod timeout;
 pub mod transaction;
 pub mod validate;
 #[derive(Debug, Clone)]
