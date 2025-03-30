@@ -1,4 +1,6 @@
+import { ExternalLink } from "@/components/ui/link";
 import { TransactionStatus } from "@/services/types/wallet.types";
+import { useIdentity } from "@nfid/identitykit/react";
 import { FaCheck } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
 
@@ -7,6 +9,8 @@ interface SendTransactionStatusProps {
 }
 
 export const SendTransactionStatus = ({ status }: SendTransactionStatusProps) => {
+    const identity = useIdentity();
+
     return (
         <div className="flex flex-col items-center justify-center px-4 text-center">
             <div className="bg-[#E8F2EE] rounded-full p-6 mb-6">
@@ -30,9 +34,11 @@ export const SendTransactionStatus = ({ status }: SendTransactionStatusProps) =>
                 <p className="mb-8">Congratulations,your transactions was successful!</p>
             )}
 
-            <div className="text-[#36A18B] hover:text-[#2C8571] text-lg font-light underline underline-offset-4">
+            <ExternalLink
+                to={`https://www.icexplorer.io/address/details/${identity?.getPrincipal()}`}
+            >
                 View transaction
-            </div>
+            </ExternalLink>
         </div>
     );
 };
