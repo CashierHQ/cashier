@@ -22,7 +22,7 @@ export default function ManageTokensPage() {
     const isNoTokens = tokens.length === 0;
 
     return (
-        <div className="flex-grow overflow-auto px-4 py-2">
+        <div className="flex-grow overflow-auto bg-purple-400 px-4 py-2">
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("manage.header")}</h1>
             </BackHeader>
