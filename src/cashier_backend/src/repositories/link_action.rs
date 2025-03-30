@@ -2,6 +2,8 @@ use super::LINK_ACTION_STORE;
 use cashier_types::{keys::ActionTypeKey, LinkAction, LinkActionKey, LinkKey};
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 pub struct LinkActionRepository {}
 
 #[cfg_attr(test, faux::methods)]

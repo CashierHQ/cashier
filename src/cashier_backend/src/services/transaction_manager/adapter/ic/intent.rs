@@ -10,10 +10,13 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 
+#[cfg_attr(test, faux::create)]
+#[derive(Clone)]
 pub struct IcIntentAdapter<E: IcEnvironment + Clone> {
     pub ic_env: E,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     pub fn new() -> Self {
         Self { ic_env: E::new() }

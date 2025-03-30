@@ -8,6 +8,7 @@ use crate::{
 };
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
 pub struct TransactionService<E: IcEnvironment + Clone> {
     transaction_repository: TransactionRepository,
     ic_env: E,

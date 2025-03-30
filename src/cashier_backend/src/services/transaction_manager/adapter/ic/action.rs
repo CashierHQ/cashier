@@ -12,10 +12,13 @@ use crate::{
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 
+#[cfg_attr(test, faux::create)]
+#[derive(Clone)]
 pub struct IcActionAdapter<E: IcEnvironment + Clone> {
     pub ic_env: E,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
     pub fn new() -> Self {
         Self { ic_env: E::new() }

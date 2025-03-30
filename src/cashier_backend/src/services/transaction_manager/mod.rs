@@ -28,7 +28,7 @@ use crate::{
     },
 };
 
-mod adapter;
+pub mod adapter;
 pub mod validate;
 #[derive(Debug, Clone)]
 pub struct UpdateActionArgs {

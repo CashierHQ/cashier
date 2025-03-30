@@ -32,11 +32,14 @@ pub trait IntentAdapter {
 }
 
 /// Adapter registry for managing different adapter implementations
+#[cfg_attr(test, faux::create)]
+#[derive(Clone)]
 pub struct AdapterRegistry<E: IcEnvironment + Clone> {
     ic_action_adapter: Option<super::adapter::ic::action::IcActionAdapter<E>>,
     ic_intent_adapter: Option<super::adapter::ic::intent::IcIntentAdapter<E>>,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E> AdapterRegistry<E>
 where
     E: crate::utils::runtime::IcEnvironment + Clone,
@@ -48,17 +51,11 @@ where
         }
     }
 
-    pub fn register_ic_action_adapter(
-        &mut self,
-        adapter: super::adapter::ic::action::IcActionAdapter<E>,
-    ) {
+    pub fn register_ic_action_adapter(&mut self, adapter: IcActionAdapter<E>) {
         self.ic_action_adapter = Some(adapter);
     }
 
-    pub fn register_ic_intent_adapter(
-        &mut self,
-        adapter: super::adapter::ic::intent::IcIntentAdapter<E>,
-    ) {
+    pub fn register_ic_intent_adapter(&mut self, adapter: IcIntentAdapter<E>) {
         self.ic_intent_adapter = Some(adapter);
     }
 

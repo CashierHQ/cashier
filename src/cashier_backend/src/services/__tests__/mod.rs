@@ -4,6 +4,9 @@
 // pub mod new_tx_manager;
 
 #[cfg(test)]
+pub mod fixture;
+
+#[cfg(test)]
 pub mod tests {
 
     use std::{collections::HashMap, future::Future, time::Duration};

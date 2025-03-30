@@ -2,6 +2,8 @@ use super::{base_repository::Store, INTENT_STORE};
 use cashier_types::Intent;
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 pub struct IntentRepository {}
 
 #[cfg_attr(test, faux::methods)]

@@ -29,6 +29,9 @@ pub fn is_action_exist(action_id: String) -> bool {
 
 use std::collections::HashMap;
 
+#[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 // Without traits/interfaces for repositories
 pub struct ActionService<E: IcEnvironment + Clone> {
     // Concrete repository implementations
@@ -47,6 +50,7 @@ pub struct ActionService<E: IcEnvironment + Clone> {
     ic_env: E,
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E> ActionService<E>
 where
     E: IcEnvironment + Clone,

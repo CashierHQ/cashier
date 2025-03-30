@@ -15,6 +15,7 @@ use crate::{
 };
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
 pub struct IcrcService {}
 
 #[cfg_attr(test, faux::methods)]
