@@ -30,13 +30,13 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
 
     return (
         <div className="flex flex-col items-center px-4 pt-6 pb-5">
-            <h1 className="text-center text-lg font-semibold leading-none">
+            <h1 className="text-center text-[18px] font-regular leading-none">
                 {t("wallet.details.header")}
             </h1>
 
-            <div className="relative mt-2.5 flex items-center gap-2">
+            <div className="relative flex items-center gap-2">
                 <span className="text-[32px] font-semibold">
-                    ${isVisible ? usdEquivalentAmount : usdEquivalentAmount.replace(/\d/g, "∗")}
+                    ${isVisible ? usdEquivalentAmount : "∗∗∗∗"}
                 </span>
 
                 <button className="" onClick={() => setIsVisible(!isVisible)}>
