@@ -47,7 +47,6 @@ pub struct ActionService<E: IcEnvironment + Clone> {
     ic_env: E,
 }
 
-// Implementation of the service cordinates the repositories and domain logic
 impl<E> ActionService<E>
 where
     E: IcEnvironment + Clone,
