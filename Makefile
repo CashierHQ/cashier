@@ -24,10 +24,10 @@ test:
 # have to run local-setup before running this, need create did file in .dfx
 g: 
 	@dfx generate cashier_backend
-	@dfx generate token_storage
-	@dfx generate icp_ledger_canister
 	rm src/declarations/cashier_backend/cashier_backend.did
+	@dfx generate token_storage
 	rm src/declarations/token_storage/token_storage.did
+	@dfx generate icp_ledger_canister
 	rm src/declarations/icp_ledger_canister/icp_ledger_canister.did
 
 predeploy:
@@ -43,6 +43,15 @@ local-setup:
 	@bash scripts/local/setup_icp_ledger.sh
 
 local:
-	make local-setup
+	@bash scripts/local/setup_icp_ledger.sh
 	@bash scripts/deploy.sh --skip
 	make g
+
+frontend-setup:
+	cp .env.example .env
+	cp .env.example .env.local
+	# dfx start --background --clean
+	# @bash scripts/deploy.sh --skip
+	# @bash scripts/local/setup_icp_ledger.sh
+	make g
+	# dfx stop
