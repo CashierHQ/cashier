@@ -1,8 +1,9 @@
-// import { Eye } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
 import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 interface WalletHeroProps {
     totalUsdEquivalent: number;
@@ -11,6 +12,18 @@ interface WalletHeroProps {
 export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+
+    const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
+    const [isVisible, setIsVisible] = useState(() => {
+        const savedVisibility = localStorage.getItem(WALLET_BALANCE_VISIBILITY_KEY);
+        return savedVisibility ? JSON.parse(savedVisibility) : false;
+    });
+
+    useEffect(() => {
+        localStorage.setItem(WALLET_BALANCE_VISIBILITY_KEY, JSON.stringify(isVisible));
+    }, [isVisible]);
+
+    const usdEquivalentAmount = prettyNumber(totalUsdEquivalent);
 
     const navigateReceivePage = () => navigate(`/wallet/receive`);
     const navigateSendPage = () => navigate(`/wallet/send`);
@@ -21,15 +34,18 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
                 {t("wallet.details.header")}
             </h1>
 
-            <div className="relative mt-2.5">
+            <div className="relative mt-2.5 flex items-center gap-2">
                 <span className="text-[32px] font-semibold">
-                    ${prettyNumber(totalUsdEquivalent)}
+                    ${isVisible ? usdEquivalentAmount : usdEquivalentAmount.replace(/\d/g, "∗")}
                 </span>
 
-                {/* TODO: future release */}
-                {/* <button className="absolute ml-2.5 top-1/2 -translate-y-1/2 rounded-full">
-                    <Eye size={24} className="stroke-grey" />
-                </button> */}
+                <button className="" onClick={() => setIsVisible(!isVisible)}>
+                    {isVisible ? (
+                        <EyeOff size={24} className="stroke-grey" />
+                    ) : (
+                        <Eye size={24} className="stroke-grey" />
+                    )}
+                </button>
             </div>
 
             <SendReceive onSend={navigateSendPage} onReceive={navigateReceivePage} />
