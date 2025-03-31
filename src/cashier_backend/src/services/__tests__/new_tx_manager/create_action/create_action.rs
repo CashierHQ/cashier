@@ -55,10 +55,18 @@ mod tests {
         // Mock intent adapter to return transactions
         let tx1 = create_dummy_transaction(TransactionState::Created);
         let tx2 = create_dummy_transaction(TransactionState::Created);
-
         let transactions = vec![tx1.clone(), tx2.clone()];
 
-        when!(ic_intent_adapter.intent_to_transactions).then_return(Ok(transactions));
+        let tx3 = create_dummy_transaction(TransactionState::Created);
+        let tx4 = create_dummy_transaction(TransactionState::Created);
+        let transactions2 = vec![tx3.clone(), tx4.clone()];
+
+        when!(ic_intent_adapter.intent_to_transactions)
+            .times(1)
+            .then_return(Ok(transactions));
+        when!(ic_intent_adapter.intent_to_transactions)
+            .times(1)
+            .then_return(Ok(transactions2));
         when!(action_service.store_action_data).then_return(Ok(()));
 
         let tx_manager_service = TransactionManagerService::new(
