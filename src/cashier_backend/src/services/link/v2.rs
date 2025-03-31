@@ -120,7 +120,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return Some(intents);
     }
 
-    pub fn link_assemble_intents(
+    pub fn assemble_intents(
         &self,
         link_id: &str,
         action_type: &ActionType,

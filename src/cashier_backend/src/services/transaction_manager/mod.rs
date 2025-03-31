@@ -1,9 +1,8 @@
 use std::{collections::HashMap, str::FromStr, time::Duration};
 
-use adapter::AdapterRegistry;
 use candid::Nat;
 use cashier_types::{
-    FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
+    Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
     LinkAction, Protocol, Transaction, TransactionState,
 };
 use icrc_ledger_types::{
@@ -11,7 +10,7 @@ use icrc_ledger_types::{
     icrc2::transfer_from::TransferFromArgs,
 };
 
-use super::{action::ActionService, transaction::TransactionService};
+use super::{action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService};
 use crate::{
     constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
     core::action::types::ActionDto,
@@ -28,7 +27,6 @@ use crate::{
     },
 };
 
-pub mod adapter;
 pub mod validate;
 #[derive(Debug, Clone)]
 pub struct UpdateActionArgs {
@@ -45,7 +43,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     ic_env: E,
     icrc_service: IcrcService,
     // Adapter registry
-    adapter_registry: AdapterRegistry<E>,
+    intent_adapter: IntentAdapterImpl<E>,
 }
 
 #[cfg_attr(test, faux::methods)]
@@ -55,14 +53,14 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         action_service: ActionService<E>,
         ic_env: E,
         icrc_service: IcrcService,
-        adapter_registry: AdapterRegistry<E>,
+        intent_adapter: IntentAdapterImpl<E>,
     ) -> Self {
         Self {
             transaction_service,
             action_service,
             ic_env,
             icrc_service,
-            adapter_registry,
+            intent_adapter,
         }
     }
 
@@ -72,18 +70,18 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             ActionService::get_instance(),
             IcEnvironment::new(),
             IcrcService::new(),
-            AdapterRegistry::new(),
+            IntentAdapterImpl::new(),
         )
     }
 
-    pub fn tx_man_assemble_txs(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
-        let adapter = self
-            .adapter_registry
-            .get_intent_adapter(intent.chain.clone())
-            .map_err(|e| CanisterError::HandleLogicError(e))?;
-
-        adapter
-            .intent_to_transactions(intent)
+    pub fn assemble_txs(
+        &self,
+        chain: &Chain,
+        intent: &Intent,
+    ) -> Result<Vec<Transaction>, CanisterError> {
+        // using intent adapter to get the txs by chain
+        self.intent_adapter
+            .intent_to_transactions(chain, intent)
             .map_err(|e| CanisterError::HandleLogicError(e))
     }
 
@@ -102,8 +100,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // fill in tx info
         // enrich each intent with chain-level txs needed to achieve the intent
         for intent in temp_action.intents.iter() {
-            // store txs in hashmap
-            let txs = self.tx_man_assemble_txs(intent)?;
+            let chain = intent.chain.clone();
+            // assemble txs
+            let txs = self.assemble_txs(&chain, intent)?;
             intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
 
             // store tx ids in hashmap

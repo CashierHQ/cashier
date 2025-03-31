@@ -6,8 +6,7 @@ use cashier_types::{
 use uuid::Uuid;
 
 use crate::{
-    services::transaction_manager::adapter::IntentAdapter, types::error::CanisterError,
-    utils::runtime::IcEnvironment,
+    services::adapter::IntentAdapter, types::error::CanisterError, utils::runtime::IcEnvironment,
 };
 
 #[cfg_attr(test, faux::create)]
@@ -139,6 +138,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     }
 }
 
+#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
     fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, String> {
         match (intent.r#type.clone(), intent.task.clone()) {

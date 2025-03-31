@@ -318,7 +318,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // fill the intent info
             let intents = self
                 .link_service
-                .link_assemble_intents(&temp_action.link_id, &temp_action.r#type, &wallet_address)
+                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &wallet_address)
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!(
                         "[process_action] Failed to assemble intents: {}",
@@ -418,7 +418,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // fill the intent info
             let intents = self
                 .link_service
-                .link_assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller)
+                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller)
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!(
                         "[process_action] Failed to assemble intents: {}",

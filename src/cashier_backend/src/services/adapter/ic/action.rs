@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::{
     constant::ICP_CANISTER_ID,
     domains::fee::Fee,
-    services::transaction_manager::adapter::{ActionAdapter, ActionToIntentInput},
+    services::adapter::{ActionAdapter, ActionToIntentInput},
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 
