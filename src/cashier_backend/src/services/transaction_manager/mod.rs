@@ -462,7 +462,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         }
     }
 
-    async fn validate_balance_transfer(
+    pub async fn validate_balance_transfer(
         &self,
         icrc1_transfer_info: &Icrc1Transfer,
     ) -> Result<bool, CanisterError> {
@@ -485,7 +485,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         Ok(true)
     }
 
-    async fn validate_allowance(
+    pub async fn validate_allowance(
         &self,
         icrc2_transfer_from_info: &Icrc2Approve,
     ) -> Result<bool, CanisterError> {
@@ -808,12 +808,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         tx: &mut Transaction,
         state: &TransactionState,
     ) -> Result<(), CanisterError> {
-        info!(
-            "Updating tx {} state from {:?} to {:?}",
-            tx.id.clone(),
-            tx.state.clone(),
-            state.clone()
-        );
         // update tx state
         self.transaction_service.update_tx_state(tx, state)?;
         // roll up
