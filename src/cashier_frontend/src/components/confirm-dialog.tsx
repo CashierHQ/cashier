@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FC } from "react";
 import { IoIosClose } from "react-icons/io";
+import { X } from "lucide-react";
 
 export interface ConfirmDialogProps {
     open: boolean;
@@ -29,14 +30,15 @@ const ConfirmDialog: FC<ConfirmDialogProps> = ({
 }) => {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="rounded-[24px] w-[90%]">
+            <AlertDialogContent className="rounded-3xl w-[95%] p-4">
                 <AlertDialogHeader className="text-left">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between">
                         <AlertDialogTitle className="text-2xl">{title}</AlertDialogTitle>{" "}
-                        <IoIosClose
+                        <X
                             onClick={() => onOpenChange(false)}
                             className="cursor-pointer"
-                            size={38}
+                            size={28}
+                            strokeWidth={1.5}
                         />
                     </div>
 

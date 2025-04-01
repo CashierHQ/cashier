@@ -36,13 +36,9 @@ export function WalletTabs({ fungibleTokens }: WalletTabsProps) {
     }
 
     return (
-        <>
-            <Tabs.Root
-                value={tab}
-                onValueChange={handleTabChange}
-                className="flex flex-col flex-grow"
-            >
-                <Tabs.List>
+        <div className="flex flex-col h-full">
+            <Tabs.Root value={tab} onValueChange={handleTabChange} className="flex flex-col h-full">
+                <Tabs.List className="flex-none">
                     <Tabs.Trigger value={WalletTab.Tokens}>
                         {t("wallet.tabs.tokens.header")}
                     </Tabs.Trigger>
@@ -51,11 +47,11 @@ export function WalletTabs({ fungibleTokens }: WalletTabsProps) {
                     </Tabs.Trigger>
                 </Tabs.List>
 
-                <Tabs.Content value={WalletTab.Tokens}>
+                <Tabs.Content value={WalletTab.Tokens} className="flex-1 overflow-hidden p-0">
                     <WalletTokensTab tokens={fungibleTokens} />
                 </Tabs.Content>
 
-                <Tabs.Content value={WalletTab.Nfts}>
+                <Tabs.Content value={WalletTab.Nfts} className="flex-1 overflow-hidden p-0">
                     <WalletNftsTab />
                 </Tabs.Content>
             </Tabs.Root>
@@ -71,6 +67,6 @@ export function WalletTabs({ fungibleTokens }: WalletTabsProps) {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 }

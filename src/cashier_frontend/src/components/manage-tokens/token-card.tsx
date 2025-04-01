@@ -28,9 +28,11 @@ export function ManageTokensToken({ token }: ManageTokensToken) {
                     />
                 </div>
 
-                <div className="flex flex-col">
-                    <span>{token.name}</span>
-                    <span className="text-grey">{token.symbol}</span>
+                <div className="flex flex-col gap-1">
+                    <span className="leading-4">{token.name}</span>
+                    <span className="text-grey text-xs font-light leading-none">
+                        {token.symbol}
+                    </span>
                 </div>
             </div>
 

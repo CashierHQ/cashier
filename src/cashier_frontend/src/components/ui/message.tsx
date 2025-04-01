@@ -6,9 +6,9 @@ export interface MessageProps extends HTMLAttributes<HTMLDivElement> {}
 
 export function Message({ children, className, ...props }: MessageProps) {
     return (
-        <div className={cn("flex gap-1.5", className)} {...props}>
-            <Info className="stroke-green min-w-4 min-h-4" size={16} />
-            <p className="text-green">{children}</p>
+        <div className={cn("flex place-items-start", className)} {...props}>
+            <Info className="text-green mr-2" size={22} />
+            <p className="text-green w-fit text-[14px]">{children}</p>
         </div>
     );
 }

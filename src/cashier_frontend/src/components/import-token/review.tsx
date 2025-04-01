@@ -6,6 +6,8 @@ import { Button } from "../ui/button";
 import { ImportTokenFormData } from "@/hooks/import-token.hooks";
 import { mapChainToLogo, mapChainToPrettyName } from "@/utils/map/chain.map";
 import { MOCK_TOKEN_DATA } from "@/constants/mock-data";
+import { Label } from "../ui/label";
+import { IconInput } from "../icon-input";
 
 interface ImportTokenReviewProps {
     data: ImportTokenFormData;
@@ -22,10 +24,10 @@ export function ImportTokenReview({ data, onImport = () => {} }: ImportTokenRevi
     const token = MOCK_TOKEN_DATA;
 
     return (
-        <div className="flex flex-col flex-grow pt-6 pb-2">
+        <div className="flex flex-col flex-grow pt-6 pb-2 px-1">
             <div className="flex flex-col gap-6 flex-grow">
                 <div>
-                    <h2 className="font-semibold">{t("review.token")}</h2>
+                    <Label>{t("review.token")}</Label>
 
                     <div className="flex mt-2.5 gap-4">
                         <AssetAvatar
@@ -41,32 +43,40 @@ export function ImportTokenReview({ data, onImport = () => {} }: ImportTokenRevi
                 </div>
 
                 <div>
-                    <h2 className="font-semibold">{t("import.form.chain.label")}</h2>
+                    <Label>{t("import.form.chain.label")}</Label>
 
-                    <div className="relative mt-2.5">
-                        <Input
-                            disabled
+                    <div className="flex flex-col items-center gap-2">
+                        <IconInput
+                            isCurrencyInput={false}
+                            placeholder={t("claim.addressPlaceholder")}
+                            className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                             value={mapChainToPrettyName(token.chain)}
-                            className="pl-12 disabled:opacity-100"
-                        />
-                        <AssetAvatar
-                            className="w-6 h-6 absolute top-1/2 -translate-y-1/2"
-                            src={mapChainToLogo(token.chain)}
-                            symbol={token.chain}
+                            disabled={true}
+                            icon={
+                                <AssetAvatar
+                                    className="w-6 h-6"
+                                    src={mapChainToLogo(token.chain)}
+                                    symbol={token.chain}
+                                />
+                            }
                         />
                     </div>
                 </div>
 
                 <div>
-                    <h2 className="font-semibold">{t("import.form.ledgerCanisterId.label")}</h2>
+                    <Label>{t("import.form.ledgerCanisterId.label")}</Label>
 
-                    <Input disabled value={token.address} className="mt-2.5 disabled:opacity-100" />
+                    <Input
+                        disabled
+                        value={token.address}
+                        className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
+                    />
 
                     <Message className="mt-3">{t("review.message")}</Message>
                 </div>
             </div>
 
-            <Button onClick={handleImport} size="lg">
+            <Button className="mt-2" onClick={handleImport} size="lg">
                 {t("review.import")}
             </Button>
         </div>

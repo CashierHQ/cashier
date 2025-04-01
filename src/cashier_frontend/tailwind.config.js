@@ -16,6 +16,9 @@ module.exports = {
             },
         },
         extend: {
+            fontFamily: {
+                sans: ["Inter", "sans-serif"],
+            },
             colors: {
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
@@ -64,6 +67,7 @@ module.exports = {
                 lightpurple: "#e8e8f2",
                 lightblack: "#475467",
                 grey: "#8d8d8d",
+                lightgrey: "#667085",
                 sidebar: {
                     DEFAULT: "hsl(var(--sidebar-background))",
                     foreground: "hsl(var(--sidebar-foreground))",

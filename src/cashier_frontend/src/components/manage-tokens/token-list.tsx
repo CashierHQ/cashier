@@ -7,7 +7,7 @@ interface ManageTokensListProps {
 
 export function ManageTokensList({ items }: ManageTokensListProps) {
     return (
-        <ul className="flex flex-col gap-4">
+        <ul className="flex flex-col gap-5">
             {items.map((token, index) => (
                 <li key={index}>
                     <ManageTokensToken token={token} />

@@ -32,7 +32,7 @@ export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
 
     return (
         <Select value={selectedToken?.tokenAddress} onValueChange={handleValueChange}>
-            <SelectTrigger className="w-full py-6">
+            <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Token">
                     {selectedToken && (
                         <div className="flex items-center gap-2">
@@ -45,18 +45,14 @@ export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
                                     {selectedToken.name.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            <span className="font-medium">{selectedToken.name}</span>
+                            <span className="font-normal">{selectedToken.name}</span>
                         </div>
                     )}
                 </SelectValue>
             </SelectTrigger>
             <SelectContent>
                 {tokenList?.map((token) => (
-                    <SelectItem
-                        key={token.tokenAddress}
-                        value={token.tokenAddress}
-                        className="py-3"
-                    >
+                    <SelectItem key={token.tokenAddress} value={token.tokenAddress} className="">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage
@@ -67,7 +63,7 @@ export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
                                     {token.name.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            <span className="font-medium">{token.name}</span>
+                            <span className="font-normal">{token.name}</span>
                         </div>
                     </SelectItem>
                 ))}

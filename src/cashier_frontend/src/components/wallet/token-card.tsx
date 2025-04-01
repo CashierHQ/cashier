@@ -15,13 +15,13 @@ export function WalletToken({ token }: WalletTokenProps) {
 
     return (
         <article className="flex justify-between" onClick={navigateToDetailsPage}>
-            <div className="flex flex-row items-center gap-2 ">
+            <div className="flex flex-row items-center gap-2">
                 <AssetAvatar src={token.logo} symbol={token.symbol} className="w-9 h-9" />
 
                 <div className="flex flex-col gap-1.5">
                     <span className="leading-4">{token.symbol}</span>
 
-                    <span className="text-grey text-xs leading-none">
+                    <span className="text-grey text-xs font-light leading-none">
                         {token.usdConversionRate === null
                             ? "-"
                             : `$${prettyNumber(token.usdConversionRate)}`}
@@ -34,7 +34,7 @@ export function WalletToken({ token }: WalletTokenProps) {
                     {prettyNumber(convertDecimalBigIntToNumber(token.amount, token.decimals))}
                 </span>
 
-                <span className="text-grey text-right text-xs leading-none">
+                <span className="text-grey font-light text-right text-xs leading-none">
                     {token.usdEquivalent === null ? "-" : `$${prettyNumber(token.usdEquivalent)}`}
                 </span>
             </div>
