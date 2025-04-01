@@ -2,7 +2,7 @@ import { parseResultResponse } from "@/utils";
 import { createActor } from "../../../declarations/cashier_backend";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { BACKEND_CANISTER_ID } from "@/const";
+import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
 import { _SERVICE } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 class UserService {
@@ -10,7 +10,7 @@ class UserService {
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         this.actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
+            agent: HttpAgent.createSync({ identity, host: IC_HOST }),
         });
     }
 

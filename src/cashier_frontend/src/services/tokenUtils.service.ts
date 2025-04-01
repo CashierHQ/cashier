@@ -1,3 +1,4 @@
+import { IC_HOST } from "@/const";
 import { Agent, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { IcrcLedgerCanister, IcrcTokenMetadata, mapTokenMetadata } from "@dfinity/ledger-icrc";
@@ -8,7 +9,7 @@ export class TokenUtilService {
     private agent: Agent;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        this.agent = HttpAgent.createSync({ identity, host: "https://icp0.io" });
+        this.agent = HttpAgent.createSync({ identity, host: IC_HOST });
     }
     public static async getTokenMetadata(tokenAddres: string) {
         const { metadata } = IcrcLedgerCanister.create({
