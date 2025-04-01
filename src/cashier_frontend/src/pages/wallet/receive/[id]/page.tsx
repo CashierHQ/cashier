@@ -54,7 +54,7 @@ function AccountIdContent({ accountId }: { accountId: string }) {
                 >
                     {accountId}
                 </div>
-                <Clipboard className="text-green" size={48} />
+                <Clipboard className="text-green h-fit" size={36} />
             </div>
         </>
     );
