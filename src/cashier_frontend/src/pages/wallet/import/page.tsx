@@ -29,7 +29,7 @@ export default function ImportTokenPage() {
     };
 
     return (
-        <div className="flex flex-col h-full px-4 pt-2 pb-6">
+        <div className="flex flex-col h-full px-2 pt-2 pb-6">
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">
                     {t(importData ? "review.header" : "import.header")}

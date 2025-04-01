@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
+import { IconInput } from "@/components/icon-input";
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import { ImportTokenFormData, useImportTokenForm } from "@/hooks/import-token.hooks";
@@ -27,7 +28,7 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                         render={({ field: { ref, ...field } }) => {
                             return (
                                 <FormItem>
-                                    <FormLabel>{t("import.form.chain.label")}:</FormLabel>
+                                    <FormLabel>{t("import.form.chain.label")}</FormLabel>
                                     <Select {...field}>
                                         <SelectTrigger ref={ref}>
                                             <SelectValue />
@@ -54,14 +55,22 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                             <FormItem>
                                 <FormLabel>{t("import.form.ledgerCanisterId.label")}:</FormLabel>
                                 <div className="relative">
-                                    <Input
-                                        {...field}
-                                        className="placeholder:text-grey pr-9"
+                                    <IconInput
+                                        type="text"
+                                        step="any"
                                         placeholder={"_____-_____-_____-_____-cai"}
-                                    />
-                                    <Clipboard
-                                        className="absolute top-1/2 -translate-y-1/2 right-3 stroke-green "
-                                        size={16}
+                                        isCurrencyInput={false}
+                                        rightIcon={<Clipboard color="#36A18B" size={20} />}
+                                        onRightIconClick={async () => {
+                                            try {
+                                                const text = await navigator.clipboard.readText();
+                                                field.onChange(text);
+                                            } catch (err) {
+                                                console.error("Failed to read clipboard:", err);
+                                            }
+                                        }}
+                                        {...field}
+                                        className="pl-3 py-5 font-light rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                                     />
                                 </div>
 
@@ -84,14 +93,22 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                                 </div>
 
                                 <div className="relative">
-                                    <Input
-                                        {...field}
-                                        className="placeholder:text-grey pr-9"
+                                    <IconInput
+                                        type="text"
+                                        step="any"
                                         placeholder={"_____-_____-_____-_____-cai"}
-                                    />
-                                    <Clipboard
-                                        className="absolute top-1/2 -translate-y-1/2 right-3 stroke-green "
-                                        size={16}
+                                        isCurrencyInput={false}
+                                        rightIcon={<Clipboard color="#36A18B" size={20} />}
+                                        onRightIconClick={async () => {
+                                            try {
+                                                const text = await navigator.clipboard.readText();
+                                                field.onChange(text);
+                                            } catch (err) {
+                                                console.error("Failed to read clipboard:", err);
+                                            }
+                                        }}
+                                        {...field}
+                                        className="pl-3 py-5 font-light rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                                     />
                                 </div>
                                 <FormMessage />
