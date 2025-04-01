@@ -4,6 +4,7 @@ import { IconInput } from "@/components/icon-input";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { BackHeader } from "@/components/ui/back-header";
+import { Clipboard } from "lucide-react";
 import {
     Form,
     FormControl,
@@ -28,7 +29,16 @@ import { useTranslation } from "react-i18next";
 import { MdOutlineContentPaste } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { SelectToken } from "@/components/receive/SelectToken";
-import { TransactionStatus } from "@/services/types/wallet.types";
+import { z } from "zod";
+import { convertDecimalBigIntToNumber, convertTokenAmountToNumber } from "@/utils";
+import {
+    SendAssetConfirmationDrawer,
+    SendAssetInfo,
+} from "@/components/wallet/send/confirm-send-asset-drawer";
+import { ActionModel } from "@/services/types/action.service.types";
+import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { Separator } from "@/components/ui/separator";
+import { TransactionStatus } from "@/services/types/transaction.service.types";
 
 export default function SendTokenPage() {
     const navigate = useNavigate();
@@ -213,18 +223,18 @@ export default function SendTokenPage() {
     const isIcpToken = selectedToken?.tokenAddress === ICP_ADDRESS;
 
     return (
-        <div className="h-full overflow-auto px-4 py-2">
+        <div className="h-full overflow-auto px-2 py-2">
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader>
-            <div id="content" className="mx-2 my-5">
+            <div id="content" className="my-5">
                 <>
                     <Form {...form}>
                         <form
                             onSubmit={form.handleSubmit((data) => {
                                 onSubmitSend(data);
                             })}
-                            className="space-y-8 mb-[100px]"
+                            className="mb-[100px]"
                         >
                             <FormField
                                 name="tokenAddress"
@@ -243,117 +253,135 @@ export default function SendTokenPage() {
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name={"assetNumber"}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <div className="flex justify-between items-center">
-                                            <FormLabel>{t("create.amount")}</FormLabel>
-                                            {selectedToken?.amount !== undefined && (
-                                                <div className="text-sm text-gray-500">
-                                                    Available: {getMaxAvailableAmount} (includes
-                                                    network fee)
+                            <Separator className="mt-5 mb-6 max-w-[97%] mx-auto" />
+
+                            <div className="flex flex-col w-full gap-5">
+                                <FormField
+                                    control={form.control}
+                                    name={"assetNumber"}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <div className="flex gap-2 items-center mb-2">
+                                                <FormLabel>{t("create.amount")}</FormLabel>
+                                                {selectedToken?.amount !== undefined && (
+                                                    <div className="text-xs text-grey/60">
+                                                        (includes network fee)
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <FormControl>
+                                                <IconInput
+                                                    type="number"
+                                                    placeholder="Enter amount"
+                                                    step="any"
+                                                    isCurrencyInput={false}
+                                                    rightIcon={
+                                                        <div className="font-semibold text-[#36A18B]">
+                                                            {t("wallet.send.max")}
+                                                        </div>
+                                                    }
+                                                    onRightIconClick={handleMaxAmount}
+                                                    {...field}
+                                                    value={form.getValues("assetNumber") ?? ""}
+                                                    onChange={handleAmountInputChange}
+                                                    className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
+                                                />
+                                            </FormControl>
+                                            <div className="flex justify-between items-center">
+                                                <div className="text-xs text-grey/60">≈ $0.00</div>
+
+                                                {selectedToken?.amount !== undefined && (
+                                                    <div className="text-xs text-grey/60">
+                                                        Available: {getMaxAvailableAmount}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <FormMessage className="text-[#36A18B]" />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name={"walletAddress"}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <FormLabel>
+                                                    {t("wallet.send.destinationAddress")}
+                                                </FormLabel>
+                                            </div>
+                                            {isIcpToken && (
+                                                <div className="flex gap-2 mb-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAddressType("principal")}
+                                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                                                            addressType === "principal"
+                                                                ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
+                                                                : "border border-gray-200 text-gray-600 bg-white"
+                                                        }`}
+                                                    >
+                                                        Principal ID
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAddressType("account")}
+                                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                                                            addressType === "account"
+                                                                ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
+                                                                : "border border-gray-200 text-gray-600 bg-white"
+                                                        }`}
+                                                    >
+                                                        Account ID
+                                                    </button>
                                                 </div>
                                             )}
-                                        </div>
-                                        <FormControl>
-                                            <IconInput
-                                                type="number"
-                                                placeholder="Enter amount"
-                                                step="any"
-                                                isCurrencyInput={false}
-                                                rightIcon={
-                                                    <div className="font-semibold text-[#36A18B]">
-                                                        {t("wallet.send.max")}
+                                            <FormControl>
+                                                <IconInput
+                                                    type="text"
+                                                    step="any"
+                                                    placeholder={
+                                                        isIcpToken
+                                                            ? `Enter ${addressType === "principal" ? "Principal" : "Account"} ID`
+                                                            : "Enter address"
+                                                    }
+                                                    isCurrencyInput={false}
+                                                    rightIcon={
+                                                        <Clipboard color="#36A18B" size={20} />
+                                                    }
+                                                    onRightIconClick={() => handlePasteClick(field)}
+                                                    {...field}
+                                                    value={form.getValues("walletAddress") ?? ""}
+                                                    onChange={handleSetWalletAddress}
+                                                    className="pl-3 py-5 font-light rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                            {isIcpToken ? (
+                                                addressType === "principal" ? (
+                                                    <div className="text-xs text-grey/60">
+                                                        {" "}
+                                                        Example:
+                                                        sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-...
                                                     </div>
-                                                }
-                                                onRightIconClick={handleMaxAmount}
-                                                {...field}
-                                                value={form.getValues("assetNumber") ?? ""}
-                                                onChange={handleAmountInputChange}
-                                                className="pl-3 py-5 h-14 text-md rounded-xl appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-[#36A18B]" />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name={"walletAddress"}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <div className="flex justify-between items-center">
-                                            <FormLabel>
-                                                {t("wallet.send.destinationAddress")}
-                                            </FormLabel>
-                                        </div>
-                                        {isIcpToken && (
-                                            <div className="flex gap-2 mb-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setAddressType("principal")}
-                                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                                                        addressType === "principal"
-                                                            ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
-                                                            : "border border-gray-200 text-gray-600 bg-white"
-                                                    }`}
-                                                >
-                                                    Principal ID
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setAddressType("account")}
-                                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                                                        addressType === "account"
-                                                            ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
-                                                            : "border border-gray-200 text-gray-600 bg-white"
-                                                    }`}
-                                                >
-                                                    Account ID
-                                                </button>
-                                            </div>
-                                        )}
-                                        <FormControl>
-                                            <IconInput
-                                                type="text"
-                                                step="any"
-                                                placeholder={
-                                                    isIcpToken
-                                                        ? `Enter ${addressType === "principal" ? "Principal" : "Account"} ID`
-                                                        : "Enter address"
-                                                }
-                                                isCurrencyInput={false}
-                                                rightIcon={
-                                                    <MdOutlineContentPaste
-                                                        size={20}
-                                                        color="#36A18B"
-                                                    />
-                                                }
-                                                onRightIconClick={() => handlePasteClick(field)}
-                                                {...field}
-                                                value={form.getValues("walletAddress") ?? ""}
-                                                onChange={handleSetWalletAddress}
-                                                className="pl-3 py-5 h-14 text-md rounded-xl appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                        {isIcpToken &&
-                                            (addressType === "principal" ? (
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                    Example: sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-...
-                                                </div>
+                                                ) : (
+                                                    <div className="text-xs text-grey/60">
+                                                        {" "}
+                                                        Example:
+                                                        6cff4a63eae8621c3dbc1040e6d25136e207b0b...
+                                                    </div>
+                                                )
                                             ) : (
-                                                <div className="text-xs text-gray-500 mt-1">
+                                                <div className="text-xs text-grey/60">
                                                     Example:
                                                     6cff4a63eae8621c3dbc1040e6d25136e207b0b...
                                                 </div>
-                                            ))}
-                                    </FormItem>
-                                )}
-                            />
+                                            )}
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
                             <FixedBottomButton
                                 type="submit"

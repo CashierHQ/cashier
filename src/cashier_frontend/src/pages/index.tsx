@@ -210,19 +210,9 @@ export default function HomePage() {
             return <TestForm onCancel={() => setOpenTestForm(false)} />;
         } else {
             return (
-                <div
-                    className={
-                        responsive.isSmallDevice
-                            ? "w-screen flex justify-center py-3 px-3"
-                            : "bg-[white] h-[90%] w-[30%] flex justify-center py-5 px-5 rounded-md drop-shadow-md"
-                    }
-                >
+                <div className="w-screen flex justify-center py-5 h-full">
                     <SheetWrapper>
-                        <div
-                            className={
-                                responsive.isSmallDevice ? "w-11/12 max-w-[400px]" : "w-11/12"
-                            }
-                        >
+                        <div className="flex w-full flex-col gap-4">
                             <Header onConnect={connectToWallet} openTestForm={handleOpenTestForm} />
                             {showGuide && (
                                 <div className="my-3">
@@ -238,20 +228,25 @@ export default function HomePage() {
                                     </button>
                                 </div>
                             )}
-                            <h2 className="text-base font-semibold mt-7 mb-2">
-                                Links created by me
-                            </h2>
-                            {isLoading
-                                ? Array.from({ length: 5 }).map((_, index) => (
-                                      <div className="flex items-center space-x-4 my-3" key={index}>
-                                          <Skeleton className="h-10 w-10 rounded-sm" />
-                                          <div className="space-y-2">
-                                              <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                                              <Skeleton className="h-3 w-[200px]" />
+                            <div className="flex flex-col gap-4 px-4">
+                                <h2 className="text-base font-semibold mt-7 mb-2">
+                                    Links created by me
+                                </h2>
+                                {isLoading
+                                    ? Array.from({ length: 5 }).map((_, index) => (
+                                          <div
+                                              className="flex items-center space-x-4 my-3"
+                                              key={index}
+                                          >
+                                              <Skeleton className="h-10 w-10 rounded-sm" />
+                                              <div className="space-y-2">
+                                                  <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                                                  <Skeleton className="h-3 w-[200px]" />
+                                              </div>
                                           </div>
-                                      </div>
-                                  ))
-                                : renderLinkList(linkData)}
+                                      ))
+                                    : renderLinkList(linkData)}
+                            </div>
                         </div>
                         <button
                             className={`fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[3rem] h-[3rem] ${
