@@ -1,5 +1,3 @@
-# export WASM32_UNKNOWN_UNKNOWN_OPENSSL_DIR=/opt/homebrew/opt/openssl@1.1
-
 build-backend:
 	bash ./scripts/build_package.sh cashier_backend
 

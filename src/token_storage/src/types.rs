@@ -55,6 +55,15 @@ pub enum Chain {
     IC,
 }
 
+impl Chain {
+    pub fn from_str(chain: &str) -> Result<Self, String> {
+        match chain {
+            "IC" => Ok(Chain::IC),
+            _ => Err(format!("Unsupported chain: {}", chain)),
+        }
+    }
+}
+
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 pub struct UserToken {
@@ -62,10 +71,53 @@ pub struct UserToken {
     pub icrc_index_id: Option<IndexId>,
     pub symbol: Option<String>,
     pub decimals: Option<u8>,
-    pub enabled: Option<bool>,
+    pub enabled: bool,
+    pub unknown: bool,
     pub chain: Chain,
 }
 
+#[storable]
+#[derive(Clone, Eq, PartialEq, Debug, CandidType)]
+pub struct UserPreference {
+    pub hide_zero_balance: bool,
+    pub hide_unknown_token: bool,
+    pub selected_chain: Vec<Chain>,
+}
+
+impl Default for UserPreference {
+    fn default() -> Self {
+        Self {
+            hide_zero_balance: false,
+            hide_unknown_token: false,
+            selected_chain: vec![Chain::IC],
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct UserPreferenceInput {
+    pub hide_zero_balance: bool,
+    pub hide_unknown_token: bool,
+    pub selected_chain: Vec<String>,
+}
+
+impl TryFrom<UserPreferenceInput> for UserPreference {
+    type Error = String;
+
+    fn try_from(input: UserPreferenceInput) -> Result<Self, Self::Error> {
+        let chains = input
+            .selected_chain
+            .iter()
+            .map(|chain| Chain::from_str(chain))
+            .collect::<Result<Vec<Chain>, String>>()?;
+
+        Ok(Self {
+            hide_zero_balance: input.hide_zero_balance,
+            hide_unknown_token: input.hide_unknown_token,
+            selected_chain: chains,
+        })
+    }
+}
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct AddTokenInput {
     pub chain: Chain,
@@ -74,6 +126,7 @@ pub struct AddTokenInput {
     pub symbol: Option<String>,
     pub decimals: Option<u8>,
     pub enabled: Option<bool>,
+    pub unknown: Option<bool>,
 }
 
 impl From<AddTokenInput> for UserToken {
@@ -83,13 +136,12 @@ impl From<AddTokenInput> for UserToken {
             icrc_index_id: input.index_id,
             symbol: input.symbol,
             decimals: input.decimals,
-            enabled: input.enabled,
+            enabled: input.enabled.unwrap_or(false),
+            unknown: input.unknown.unwrap_or(false),
             chain: input.chain,
         }
     }
 }
-
-
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct RemoveTokenInput {

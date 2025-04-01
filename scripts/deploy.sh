@@ -20,7 +20,7 @@ else
         network="staging"
         env_file=".env.staging"
     elif [ "$network_input" == "local" ]; then
-        network=""
+        network="local"
         env_file=".env.local"
     else
         echo "Invalid network. Please enter ic, staging, or local."
