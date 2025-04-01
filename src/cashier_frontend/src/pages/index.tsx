@@ -107,7 +107,7 @@ export default function HomePage() {
             return (
                 <div className="max-h-[60vh] md:max-h-[30%] xl:max-h-[40%] 2xl:max-h-[60%] overflow-y-auto custom-scrollbar">
                     {Object.entries(links).map(([date, items]) => (
-                        <div key={date} className="my-6">
+                        <div key={date} className="my-4">
                             <h3 className="text-lightblack font-normal mb-2">
                                 {formatDateString(date)}
                             </h3>
@@ -212,10 +212,10 @@ export default function HomePage() {
             return (
                 <div className="w-screen flex justify-center py-5 h-full">
                     <SheetWrapper>
-                        <div className="flex w-full flex-col gap-4">
+                        <div className="flex w-full flex-col">
                             <Header onConnect={connectToWallet} openTestForm={handleOpenTestForm} />
                             {showGuide && (
-                                <div className="my-3">
+                                <div className="mt-8 px-4">
                                     <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
                                     <p className="text-sm text-gray-500 mt-3">
                                         {t("home.guide.body")}
@@ -228,8 +228,8 @@ export default function HomePage() {
                                     </button>
                                 </div>
                             )}
-                            <div className="flex flex-col gap-4 px-4">
-                                <h2 className="text-base font-semibold mt-7 mb-2">
+                            <div className="flex flex-col px-4">
+                                <h2 className="text-base font-semibold mt-7">
                                     Links created by me
                                 </h2>
                                 {isLoading
