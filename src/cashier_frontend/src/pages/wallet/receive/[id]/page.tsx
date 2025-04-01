@@ -17,6 +17,9 @@ import { FiCopy } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import { AssetSelectItem } from "@/components/asset-select";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
+import { Label } from "@/components/ui/label";
+import { Clipboard } from "lucide-react";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
     const handleCopyAccountId = (e: React.SyntheticEvent) => {
@@ -32,25 +35,27 @@ function AccountIdContent({ accountId }: { accountId: string }) {
     };
     return (
         <>
-            <div className="my-3">
-                ICP uses two address formats, account id and principle id. Centralized exchanges use
-                the account id, so we encourage you to use the account id to avoid sending or
-                receiving to wallets that do not support principle ids.
+            <div className="text-[14px]">
+                ICP uses two address formats, Account Id and Principal Id. Centralized exchanges use
+                the Account Id, so we encourage you to use the account id to avoid sending or
+                receiving to wallets that do not support Principal Ids.
             </div>
-            <div>In case you'd like to use a Account ID, you can use the address below.</div>
+            <div className="text-[14px] mt-4">
+                In case you'd like to use a Account ID, you can use the address below.
+            </div>
             <div
                 id="account-id-display"
-                className="my-3 text-green flex items-center"
+                className="mt-6 text-green flex items-start"
                 style={{ wordBreak: "break-all" }}
                 onClick={handleCopyAccountId}
             >
                 <div
-                    className="break-words overflow-hidden mr-2"
+                    className="break-words text-[14px] overflow-hidden mr-2"
                     style={{ wordBreak: "break-all" }}
                 >
                     {accountId}
                 </div>
-                <FaRegCopy color="green" size={32} />
+                <Clipboard className="text-green h-fit" size={36} />
             </div>
         </>
     );
@@ -59,6 +64,7 @@ function AccountIdContent({ accountId }: { accountId: string }) {
 export default function ReceiveTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const responsive = useResponsive();
     const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId?: string }>();
     const { metadata } = useTokenMetadata(tokenId);
@@ -122,15 +128,17 @@ export default function ReceiveTokenPage() {
     }, [selectedToken]);
 
     return (
-        <div className="h-full overflow-auto px-4 py-2">
+        <div
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+        >
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
             </BackHeader>
             <div id="content" className="mx-2">
-                <div className="mt-5">
+                <div className="mt-8">
                     <div id="warning-section" className="text-green flex place-items-start">
                         <Info className="text-green mr-2" size={22} />
-                        <div className="w-fit">
+                        <div className="w-fit text-[14px]">
                             {`Send ${currentSelectedToken?.name} to this wallet to begin using Cashier.`}{" "}
                             {`Ensure that you are only sending assets that are `}
                             <span className="font-bold">meant for this address</span>
@@ -140,23 +148,19 @@ export default function ReceiveTokenPage() {
                 </div>
 
                 <div id="token-details" className="my-5">
-                    <h2 className="font-medium leading-6 text-gray-900 mb-2">
-                        {t("wallet.receive.receiveToken")}
-                    </h2>
+                    <Label>{t("wallet.receive.receiveToken")}</Label>
                     <SelectToken selectedToken={selectedToken} onSelect={handleTokenSelect} />
                 </div>
 
                 <div id="address-detail" className="my-3">
-                    <h2 className="font-medium leading-6 text-gray-900 mb-2">
-                        Receive {currentSelectedToken?.name} adrress
-                    </h2>
+                    <Label>Receive {currentSelectedToken?.name} adress</Label>
                     <IconInput
                         isCurrencyInput={false}
                         placeholder={t("claim.addressPlaceholder")}
-                        className="pl-3 py-5 h-12 text-md"
+                        className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                         value={transformShortAddress(user?.principal?.toString() ?? "")}
                         disabled={true}
-                        rightIcon={<FiCopy color="#36A18B" size={18} />}
+                        rightIcon={<Clipboard color="#36A18B" size={18} />}
                         onRightIconClick={handleCopy}
                     />
                 </div>
