@@ -18,7 +18,6 @@ import {
     useWalletSendAssetFormActions,
     WalletSendAssetFormSchema,
 } from "@/components/wallet/send/send-asset-form.hooks";
-import { SendAssetConfirmationDrawer } from "@/components/wallet/send/confirm-send-asset-drawer";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import useToast from "@/hooks/useToast";
 import { CHAIN } from "@/services/types/enum";
@@ -31,14 +30,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { SelectToken } from "@/components/receive/SelectToken";
 import { z } from "zod";
 import { convertDecimalBigIntToNumber, convertTokenAmountToNumber } from "@/utils";
-import {
-    SendAssetConfirmationDrawer,
-    SendAssetInfo,
-} from "@/components/wallet/send/confirm-send-asset-drawer";
+import { SendAssetConfirmationDrawer } from "@/components/wallet/send/confirm-send-asset-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { Separator } from "@/components/ui/separator";
-import { useResponsive } from "@/hooks/useResponsive";
+import { useResponsive } from "@/hooks/responsive-hook";
 import { TransactionStatus } from "@/services/types/wallet.types";
 
 export default function SendTokenPage() {
