@@ -2,8 +2,13 @@ use candid::Principal;
 use ic_cdk::{query, update};
 
 use crate::{
-    repository::TokenRepository,
-    types::{AddTokenInput, Chain, RemoveTokenInput, UserToken},
+    repository::{
+        token::TokenRepository,
+        user_preference::{self, UserPreferenceRepository},
+    },
+    types::{
+        AddTokenInput, Chain, RemoveTokenInput, UserPreference, UserPreferenceInput, UserToken,
+    },
 };
 
 #[update]
@@ -61,6 +66,38 @@ pub fn list_tokens() -> Result<Vec<UserToken>, String> {
     let result = repository.list_tokens(&caller.to_text());
 
     Ok(result)
+}
+
+#[query]
+pub fn get_user_preference() -> Result<UserPreference, String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allow anonymous call".to_string());
+    }
+
+    let user_preference = UserPreferenceRepository::new();
+    let result = user_preference.get(&caller.to_text());
+
+    Ok(result)
+}
+
+#[update]
+pub fn update_user_preference(input: UserPreferenceInput) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allow anonymous call".to_string());
+    }
+
+    let user_preference = UserPreferenceRepository::new();
+
+    let record = UserPreference::try_from(input.clone())
+        .map_err(|e| format!("Failed to convert UserPreferenceInput: {}", e))?;
+
+    user_preference.update(caller.to_text(), record);
+
+    Ok(())
 }
 
 ic_cdk::export_candid!();
