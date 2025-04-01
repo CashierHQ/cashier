@@ -4,6 +4,7 @@ use cashier_types::{Action, ActionKey};
 use super::base_repository::Store;
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
 pub struct ActionRepository {}
 
 #[cfg_attr(test, faux::methods)]

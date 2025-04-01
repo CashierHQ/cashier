@@ -3,7 +3,7 @@ use serde_bytes::ByteBuf;
 use uuid::Uuid;
 
 // apply for link id only
-pub fn to_subaccount(id: String) -> Subaccount {
+pub fn to_subaccount(id: &str) -> Subaccount {
     let uuid = Uuid::parse_str(&id).expect("Invalid UUID format");
     let uuid_bytes = uuid.as_bytes();
 
@@ -14,7 +14,7 @@ pub fn to_subaccount(id: String) -> Subaccount {
     subaccount
 }
 
-pub fn to_memo(id: String) -> Memo {
+pub fn to_memo(id: &str) -> Memo {
     let uuid = Uuid::parse_str(&id).expect("Invalid UUID format");
     let uuid_bytes = uuid.as_bytes();
 

@@ -3,6 +3,8 @@ use cashier_types::User;
 use super::USER_STORE;
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 pub struct UserRepository {}
 
 #[cfg_attr(test, faux::methods)]

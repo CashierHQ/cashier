@@ -3,6 +3,8 @@ use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
 use cashier_types::{UserLink, UserLinkKey};
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 pub struct UserLinkRepository {}
 
 #[cfg_attr(test, faux::methods)]

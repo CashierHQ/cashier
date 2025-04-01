@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
-pub struct ActionResp {
+pub struct ActionData {
     pub action: cashier_types::Action,
     pub intents: Vec<cashier_types::Intent>,
     pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
 }
 
-impl ActionResp {
+impl ActionData {
     pub fn get_tx(&self, tx_id: &str) -> Result<&cashier_types::Transaction, String> {
         for (_intent_id, txs) in &self.intent_txs {
             for tx in txs {

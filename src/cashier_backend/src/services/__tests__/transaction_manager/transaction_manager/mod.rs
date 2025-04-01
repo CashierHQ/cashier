@@ -26,7 +26,7 @@ mod tests {
                 TransactionManagerService, UpdateActionArgs,
             },
         },
-        types::{error::CanisterError, transaction_manager::ActionResp},
+        types::{error::CanisterError, transaction_manager::ActionData},
         utils::helper::to_subaccount,
     };
 
@@ -58,7 +58,7 @@ mod tests {
         intent_txs.insert(intent1.id.clone(), vec![tx1.clone()]);
         intent_txs.insert(intent2.id.clone(), vec![tx2.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: action.clone(),
             intents: vec![intent1.clone(), intent2.clone()],
             intent_txs,
@@ -116,7 +116,7 @@ mod tests {
         new_intent_txs.insert(intent1.id.clone(), vec![tx1.clone()]);
         new_intent_txs.insert(intent2.id.clone(), vec![tx2.clone()]);
 
-        let action_resp_updated = ActionResp {
+        let action_resp_updated = ActionData {
             action: action.clone(),
             intents: vec![intent1.clone(), intent2.clone()],
             intent_txs: new_intent_txs,
@@ -189,7 +189,7 @@ mod tests {
         intent_txs.insert(intent1.id.clone(), vec![tx1.clone()]);
         intent_txs.insert(intent2.id.clone(), vec![tx2.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: action.clone(),
             intents: vec![intent1.clone(), intent2.clone()],
             intent_txs,
@@ -250,7 +250,7 @@ mod tests {
         new_intent_txs.insert(intent1.id.clone(), vec![tx1.clone()]);
         new_intent_txs.insert(intent2.id.clone(), vec![tx2.clone()]);
 
-        let action_resp_updated = ActionResp {
+        let action_resp_updated = ActionData {
             action: action.clone(),
             intents: vec![intent1.clone(), intent2.clone()],
             intent_txs: new_intent_txs,
@@ -320,7 +320,7 @@ mod tests {
         intent_txs.insert(intent1.id.clone(), vec![tx1.clone()]);
         intent_txs.insert(intent2.id.clone(), vec![tx2.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: action.clone(),
             intents: vec![intent1.clone(), intent2.clone()],
             intent_txs,
@@ -441,7 +441,7 @@ mod tests {
         let mut intent_txs = HashMap::new();
         intent_txs.insert(intent.id.clone(), vec![tx.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: action.clone(),
             intents: vec![intent.clone()],
             intent_txs,
@@ -535,7 +535,7 @@ mod tests {
         let mut intent_txs = HashMap::new();
         intent_txs.insert(intent.id.clone(), vec![tx.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: action.clone(),
             intents: vec![intent.clone()],
             intent_txs,
@@ -593,7 +593,7 @@ mod tests {
         let mut updated_intent_txs = HashMap::new();
         updated_intent_txs.insert(intent.id.clone(), vec![tx.clone()]);
 
-        let action_resp_updated = ActionResp {
+        let action_resp_updated = ActionData {
             action: action.clone(),
             intents: vec![intent.clone()],
             intent_txs: updated_intent_txs,

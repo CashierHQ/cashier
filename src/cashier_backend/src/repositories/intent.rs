@@ -2,6 +2,8 @@ use super::{base_repository::Store, INTENT_STORE};
 use cashier_types::Intent;
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 pub struct IntentRepository {}
 
 #[cfg_attr(test, faux::methods)]
@@ -18,6 +20,15 @@ impl IntentRepository {
     }
 
     pub fn batch_create(&self, intents: Vec<Intent>) {
+        INTENT_STORE.with_borrow_mut(|store| {
+            for intent in intents {
+                let id = intent.id.clone();
+                store.insert(id, intent);
+            }
+        });
+    }
+
+    pub fn batch_update(&self, intents: Vec<Intent>) {
         INTENT_STORE.with_borrow_mut(|store| {
             for intent in intents {
                 let id = intent.id.clone();

@@ -345,7 +345,7 @@ mod tests {
             execute_transaction_service,
         );
 
-        let result = tx_manager.execute_tx(&mut tx).await;
+        let result = tx_manager.deprecate_execute_tx(&mut tx).await;
         assert!(result.is_ok());
     }
 
@@ -378,7 +378,7 @@ mod tests {
             execute_transaction_service,
         );
 
-        let result = tx_manager.execute_tx(&mut tx).await;
+        let result = tx_manager.deprecate_execute_tx(&mut tx).await;
         assert!(result.is_ok());
     }
 
@@ -411,7 +411,7 @@ mod tests {
             execute_transaction_service,
         );
 
-        let result = tx_manager.execute_tx(&mut tx).await;
+        let result = tx_manager.deprecate_execute_tx(&mut tx).await;
         assert!(result.is_ok());
     }
 }

@@ -2,6 +2,8 @@ use super::USER_ACTION_STORE;
 use cashier_types::{UserAction, UserActionKey};
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 pub struct UserActionRepository {}
 
 #[cfg_attr(test, faux::methods)]
