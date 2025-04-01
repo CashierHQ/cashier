@@ -15,12 +15,6 @@ export function WalletTokensTab({ tokens }: WalletTokensTab) {
             {tokens.map((token) => (
                 <WalletToken key={token.address} token={token} />
             ))}
-            {tokens.map((token) => (
-                <WalletToken key={token.address + "-dup1"} token={token} />
-            ))}
-            {tokens.map((token) => (
-                <WalletToken key={token.address + "-dup2"} token={token} />
-            ))}
             <Link to="/wallet/manage" className="mx-auto font-normal whitespace-nowrap py-2">
                 + {t("wallet.tabs.tokens.manage")}
             </Link>
