@@ -5,10 +5,12 @@ import { ImportTokenForm } from "@/components/import-token/form";
 import { ImportTokenFormData } from "@/hooks/import-token.hooks";
 import { ImportTokenReview } from "@/components/import-token/review";
 import { useNavigate } from "react-router-dom";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 export default function ImportTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const responsive = useResponsive();
 
     const [importData, setImportData] = useState<ImportTokenFormData>();
 
@@ -29,13 +31,15 @@ export default function ImportTokenPage() {
     };
 
     return (
-        <div className="flex flex-col h-full px-2 pt-2 pb-6">
+        <div
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+        >
+            {" "}
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">
                     {t(importData ? "review.header" : "import.header")}
                 </h1>
             </BackHeader>
-
             {importData ? (
                 <ImportTokenReview data={importData} onImport={goToDetails} />
             ) : (

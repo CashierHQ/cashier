@@ -19,6 +19,7 @@ import { AssetSelectItem } from "@/components/asset-select";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import { Label } from "@/components/ui/label";
 import { Clipboard } from "lucide-react";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
     const handleCopyAccountId = (e: React.SyntheticEvent) => {
@@ -63,6 +64,7 @@ function AccountIdContent({ accountId }: { accountId: string }) {
 export default function ReceiveTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const responsive = useResponsive();
     const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId?: string }>();
     const { metadata } = useTokenMetadata(tokenId);
@@ -126,7 +128,9 @@ export default function ReceiveTokenPage() {
     }, [selectedToken]);
 
     return (
-        <div className="h-full overflow-auto px-2 py-2">
+        <div
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+        >
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
             </BackHeader>

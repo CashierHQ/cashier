@@ -38,12 +38,14 @@ import {
 import { ActionModel } from "@/services/types/action.service.types";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { Separator } from "@/components/ui/separator";
-import { TransactionStatus } from "@/services/types/transaction.service.types";
+import { useResponsive } from "@/hooks/useResponsive";
+import { TransactionStatus } from "@/services/types/wallet.types";
 
 export default function SendTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const identity = useIdentity();
+    const responsive = useResponsive();
     const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId?: string }>();
     const { metadata } = useTokenMetadata(tokenId);
@@ -223,18 +225,20 @@ export default function SendTokenPage() {
     const isIcpToken = selectedToken?.tokenAddress === ICP_ADDRESS;
 
     return (
-        <div className="h-full overflow-auto px-2 py-2">
+        <div
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+        >
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader>
-            <div id="content" className="my-5">
+            <div id="content" className="my-5 h-full">
                 <>
                     <Form {...form}>
                         <form
                             onSubmit={form.handleSubmit((data) => {
                                 onSubmitSend(data);
                             })}
-                            className="mb-[100px]"
+                            className="h-full flex flex-col"
                         >
                             <FormField
                                 name="tokenAddress"
@@ -388,7 +392,8 @@ export default function SendTokenPage() {
                                 variant="default"
                                 size="lg"
                                 disabled={isDisabled}
-                                className="fixed bottom-[30px] left-1/2 -translate-x-1/2"
+                                className={`mx-auto ${responsive.isSmallDevice ? "mt-auto" : "mt-12"}`}
+                                onClick={() => console.log(form.formState.errors)}
                             >
                                 {t("continue")}
                             </FixedBottomButton>
