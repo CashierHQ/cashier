@@ -52,7 +52,7 @@ export function prettyNumber(num: number, options: PrettyNumberOptions = {}) {
         decimals: maxDecimalDigits,
         pad: wantPad = false,
         decimalSeparator = ".",
-        readabilitySeparator = " ",
+        readabilitySeparator = ",",
     } = options;
 
     const [whole, decimal] = num.toString().split(".");

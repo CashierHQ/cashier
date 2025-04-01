@@ -2,6 +2,7 @@ import * as React from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { FaCheck } from "react-icons/fa";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { IoMdCheckmark } from "react-icons/io";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
@@ -21,19 +22,15 @@ const SelectTrigger = React.forwardRef<
     <SelectPrimitive.Trigger
         ref={ref}
         className={cn(
-            "flex h-11 rounded-lg w-full items-center justify-between whitespace-nowrap border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:border-[#36A18B] disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 group data-[state=open]:border-[#36A18B]",
+            "flex h-11 rounded-lg w-full items-center justify-between whitespace-nowrap border border-input bg-transparent px-3 py-2 text-sm shadow-xs ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:border-[#36A18B] disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 group data-[state=open]:border-[#36A18B]",
             className,
         )}
         {...props}
     >
         {children}
         <SelectPrimitive.Icon>
-            <FaChevronDown
-                className="group-data-[state=open]:hidden"
-                color="#36A18B"
-                fontSize={18}
-            />
-            <FaChevronUp
+            <ChevronDown className="group-data-[state=open]:hidden" color="#36A18B" fontSize={18} />
+            <ChevronUp
                 className="hidden group-data-[state=open]:block"
                 color="#36A18B"
                 fontSize={18}

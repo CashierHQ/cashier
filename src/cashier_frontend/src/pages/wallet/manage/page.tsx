@@ -8,9 +8,11 @@ import { useState } from "react";
 import { MOCK_TOKENS_LIST } from "@/constants/mock-data";
 import { useTokensBySearchQuery } from "@/hooks/manage-tokens.hooks";
 import { Link } from "@/components/ui/link";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 export default function ManageTokensPage() {
     const { t } = useTranslation();
+    const responsive = useResponsive();
 
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
@@ -22,11 +24,12 @@ export default function ManageTokensPage() {
     const isNoTokens = tokens.length === 0;
 
     return (
-        <div className="flex-grow overflow-auto px-4 py-2">
+        <div
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+        >
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("manage.header")}</h1>
             </BackHeader>
-
             <Search.Root className="mt-6">
                 <Search.Icon />
                 <Search.Input
