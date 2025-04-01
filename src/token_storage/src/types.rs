@@ -62,6 +62,12 @@ impl Chain {
             _ => Err(format!("Unsupported chain: {}", chain)),
         }
     }
+
+    pub fn to_str(&self) -> String {
+        match self {
+            Chain::IC => "IC".to_string(),
+        }
+    }
 }
 
 #[storable]
@@ -147,4 +153,43 @@ impl From<AddTokenInput> for UserToken {
 pub struct RemoveTokenInput {
     pub chain: Chain,
     pub ledger_id: Option<LedgerId>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct UserTokenDto {
+    pub icrc_ledger_id: Option<LedgerId>,
+    pub icrc_index_id: Option<IndexId>,
+    pub symbol: Option<String>,
+    pub decimals: Option<u8>,
+    pub enabled: bool,
+    pub unknown: bool,
+    pub chain: String,
+}
+
+impl From<UserToken> for UserTokenDto {
+    fn from(user_token: UserToken) -> Self {
+        Self {
+            icrc_ledger_id: user_token.icrc_ledger_id,
+            icrc_index_id: user_token.icrc_index_id,
+            symbol: user_token.symbol.clone(),
+            decimals: user_token.decimals,
+            enabled: user_token.enabled,
+            unknown: user_token.unknown,
+            chain: user_token.chain.to_str(),
+        }
+    }
+}
+
+impl From<UserTokenDto> for UserToken {
+    fn from(user_token_dto: UserTokenDto) -> Self {
+        Self {
+            icrc_ledger_id: user_token_dto.icrc_ledger_id,
+            icrc_index_id: user_token_dto.icrc_index_id,
+            symbol: user_token_dto.symbol,
+            decimals: user_token_dto.decimals,
+            enabled: user_token_dto.enabled,
+            unknown: user_token_dto.unknown,
+            chain: Chain::from_str(&user_token_dto.chain).unwrap(),
+        }
+    }
 }

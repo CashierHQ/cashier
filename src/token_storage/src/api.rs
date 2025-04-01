@@ -8,6 +8,7 @@ use crate::{
     },
     types::{
         AddTokenInput, Chain, RemoveTokenInput, UserPreference, UserPreferenceInput, UserToken,
+        UserTokenDto,
     },
 };
 
@@ -55,7 +56,7 @@ pub fn remove_token(input: RemoveTokenInput) -> Result<(), String> {
 }
 
 #[query]
-pub fn list_tokens() -> Result<Vec<UserToken>, String> {
+pub fn list_tokens() -> Result<Vec<UserTokenDto>, String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
@@ -63,7 +64,11 @@ pub fn list_tokens() -> Result<Vec<UserToken>, String> {
     }
 
     let repository = TokenRepository::new();
-    let result = repository.list_tokens(&caller.to_text());
+    let result = repository
+        .list_tokens(&caller.to_text())
+        .iter()
+        .map(|token| UserTokenDto::from(token.clone()))
+        .collect();
 
     Ok(result)
 }

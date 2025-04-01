@@ -11,7 +11,7 @@ type Chain = variant { IC };
 type RemoveTokenInput = record { chain : Chain; ledger_id : opt principal };
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : UserPreference; Err : text };
-type Result_2 = variant { Ok : vec UserToken; Err : text };
+type Result_2 = variant { Ok : vec UserTokenDto; Err : text };
 type UserPreference = record {
   hide_zero_balance : bool;
   selected_chain : vec Chain;
@@ -22,9 +22,9 @@ type UserPreferenceInput = record {
   selected_chain : vec text;
   hide_unknown_token : bool;
 };
-type UserToken = record {
+type UserTokenDto = record {
   decimals : opt nat8;
-  chain : Chain;
+  chain : text;
   enabled : bool;
   icrc_ledger_id : opt principal;
   icrc_index_id : opt principal;

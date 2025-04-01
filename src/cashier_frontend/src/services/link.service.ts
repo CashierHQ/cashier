@@ -16,7 +16,6 @@ import { PartialIdentity } from "@dfinity/identity";
 import {
     LinkDetailModel,
     LinkGetUserStateInputModel,
-    LinkGetUserStateOutputModel,
     LinkModel,
     LinkUpdateUserStateInputModel,
 } from "./types/link.service.types";
@@ -29,16 +28,7 @@ import {
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
-import {
-    ACTION_STATE,
-    ACTION_TYPE,
-    CHAIN,
-    FEE_TYPE,
-    INTENT_STATE,
-    INTENT_TYPE,
-    LINK_USER_STATE,
-    TASK,
-} from "./types/enum";
+import { FEE_TYPE } from "./types/enum";
 
 interface ResponseLinksModel {
     data: LinkModel[];

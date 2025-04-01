@@ -6,7 +6,7 @@ import {
     RemoveTokenInput,
     UserPreference,
     UserPreferenceInput,
-    UserToken,
+    UserTokenDto,
 } from "../../../declarations/token_storage/token_storage.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
@@ -21,7 +21,7 @@ class TokenService {
         });
     }
 
-    async listTokens(): Promise<UserToken[]> {
+    async listTokens(): Promise<UserTokenDto[]> {
         const response = parseResultResponse(await this.actor.list_tokens());
         return response;
     }
@@ -32,15 +32,15 @@ class TokenService {
     }
 
     async addToken(input: AddTokenInput): Promise<void> {
-        await parseResultResponse(await this.actor.add_token(input));
+        parseResultResponse(await this.actor.add_token(input));
     }
 
     async removeToken(input: RemoveTokenInput): Promise<void> {
-        await parseResultResponse(await this.actor.remove_token(input));
+        parseResultResponse(await this.actor.remove_token(input));
     }
 
     async updateUserPreference(input: UserPreferenceInput): Promise<void> {
-        await parseResultResponse(await this.actor.update_user_preference(input));
+        parseResultResponse(await this.actor.update_user_preference(input));
     }
 }
 

@@ -11,7 +11,6 @@ import { formatDateString } from "@/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { useUpdateLink } from "@/hooks/linkHooks";
-import { UserDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import TransactionToast from "@/components/transaction/transaction-toast";
