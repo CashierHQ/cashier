@@ -153,10 +153,10 @@ export default function ReceiveTokenPage() {
                     <IconInput
                         isCurrencyInput={false}
                         placeholder={t("claim.addressPlaceholder")}
-                        className="pl-3 py-5 h-12 text-md"
+                        className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                         value={transformShortAddress(user?.principal?.toString() ?? "")}
                         disabled={true}
-                        rightIcon={<FiCopy color="#36A18B" size={18} />}
+                        rightIcon={<Clipboard color="#36A18B" size={18} />}
                         onRightIconClick={handleCopy}
                     />
                 </div>
