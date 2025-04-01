@@ -4,21 +4,37 @@ type AddTokenInput = record {
   ledger_id : opt principal;
   enabled : opt bool;
   index_id : opt principal;
+  unknown : opt bool;
   symbol : opt text;
 };
 type Chain = variant { IC };
 type RemoveTokenInput = record { chain : Chain; ledger_id : opt principal };
 type Result = variant { Ok; Err : text };
+type Result_1 = variant { Ok : UserPreference; Err : text };
+type Result_2 = variant { Ok : vec UserToken; Err : text };
+type UserPreference = record {
+  hide_zero_balance : bool;
+  selected_chain : vec Chain;
+  hide_unknown_token : bool;
+};
+type UserPreferenceInput = record {
+  hide_zero_balance : bool;
+  selected_chain : vec text;
+  hide_unknown_token : bool;
+};
 type UserToken = record {
   decimals : opt nat8;
   chain : Chain;
-  enabled : opt bool;
+  enabled : bool;
   icrc_ledger_id : opt principal;
   icrc_index_id : opt principal;
+  unknown : bool;
   symbol : opt text;
 };
 service : {
   add_token : (AddTokenInput) -> (Result);
-  list_tokens : () -> (vec UserToken) query;
+  get_user_preference : () -> (Result_1) query;
+  list_tokens : () -> (Result_2) query;
   remove_token : (RemoveTokenInput) -> (Result);
+  update_user_preference : (UserPreferenceInput) -> (Result);
 }

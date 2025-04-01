@@ -1,26 +1,6 @@
-use std::cell::RefCell;
-
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
-
 use crate::types::{Candid, UserToken};
 
-pub type Memory = VirtualMemory<DefaultMemoryImpl>;
-
-const UPGRADES: MemoryId = MemoryId::new(0);
-
-const TOKEN_MEMORY_ID: MemoryId = MemoryId::new(1);
-
-thread_local! {
-    pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-
-    pub static TOKEN_STORE: RefCell<StableBTreeMap<String, Candid<Vec<UserToken>>, Memory>> =
-        RefCell::new(
-            StableBTreeMap::init(
-                MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_MEMORY_ID)),
-            )
-        );
-}
+use super::TOKEN_STORE;
 
 pub struct TokenRepository {}
 
@@ -58,10 +38,4 @@ impl TokenRepository {
             .unwrap_or_default()
             .into_inner()
     }
-}
-
-pub fn load() {
-    TOKEN_STORE.with_borrow_mut(|store| {
-        *store = StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_MEMORY_ID)));
-    });
 }
