@@ -53,7 +53,7 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                         name="ledgerCanisterId"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>{t("import.form.ledgerCanisterId.label")}:</FormLabel>
+                                <FormLabel>{t("import.form.ledgerCanisterId.label")}</FormLabel>
                                 <div className="relative">
                                     <IconInput
                                         type="text"
@@ -86,8 +86,8 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                         render={({ field }) => (
                             <FormItem>
                                 <div className="flex justify-between">
-                                    <FormLabel>{t("import.form.indexCanisterId.label")}:</FormLabel>
-                                    <p className="text-green text-sm leading-none">
+                                    <FormLabel>{t("import.form.indexCanisterId.label")}</FormLabel>
+                                    <p className="text-green text-xs leading-none">
                                         {t("optional")}
                                     </p>
                                 </div>
