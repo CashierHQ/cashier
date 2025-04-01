@@ -210,7 +210,9 @@ export default function HomePage() {
             return <TestForm onCancel={() => setOpenTestForm(false)} />;
         } else {
             return (
-                <div className="w-screen bg-lightgreen flex justify-center py-5 h-full">
+                <div
+                    className={`w-screen flex justify-center py-5 h-full ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
+                >
                     <SheetWrapper>
                         <div className="flex w-full flex-col">
                             <Header onConnect={connectToWallet} openTestForm={handleOpenTestForm} />
