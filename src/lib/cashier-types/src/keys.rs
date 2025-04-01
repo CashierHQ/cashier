@@ -51,6 +51,7 @@ impl LinkActionKey {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ActionIntentKey {
     pub action_id: String,
     pub intent_id: String,

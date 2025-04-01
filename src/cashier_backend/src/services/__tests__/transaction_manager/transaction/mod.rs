@@ -20,7 +20,7 @@ mod tests {
             },
             transaction_manager::{action::ActionService, transaction::TransactionService},
         },
-        types::transaction_manager::ActionResp,
+        types::transaction_manager::ActionData,
         utils::helper::to_subaccount,
     };
 
@@ -45,7 +45,7 @@ mod tests {
         );
         intent_txs.insert(intent2.id.clone(), vec![changed_tx.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: create_dummy_action(cashier_types::ActionState::Created),
             intents: vec![intent1.clone(), intent2.clone()],
             intent_txs,
@@ -87,7 +87,7 @@ mod tests {
         );
         intent_txs.insert(intent2.id.clone(), vec![changed_tx.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: create_dummy_action(cashier_types::ActionState::Processing),
             intents: vec![intent1.clone(), intent2.clone()],
             intent_txs,
@@ -129,7 +129,7 @@ mod tests {
         );
         intent_txs.insert(intent2.id.clone(), vec![changed_tx.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: create_dummy_action(cashier_types::ActionState::Processing),
             intents: vec![intent1.clone(), intent2.clone()],
             intent_txs,

@@ -1,7 +1,7 @@
 use candid::Principal;
 use cashier_types::{
-    action, Action, ActionState, ActionType, Asset, Chain, Intent, IntentState, IntentTask,
-    IntentType, Link, LinkAction, LinkState, LinkType, LinkUserState, Wallet,
+    Action, ActionState, ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType,
+    Link, LinkAction, LinkState, LinkType, LinkUserState, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -9,11 +9,9 @@ use uuid::Uuid;
 use crate::{
     constant::{ICP_CANISTER_ID, INTENT_LABEL_WALLET_TO_LINK, INTENT_LABEL_WALLET_TO_TREASURY},
     core::link::types::UserStateMachineGoto,
+    domains::fee::Fee,
     info,
-    repositories::{
-        self, action::ActionRepository, link_action::LinkActionRepository, user_wallet,
-    },
-    services::transaction_manager::fee::Fee,
+    repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
     types::error::CanisterError,
     utils::{helper::to_subaccount, icrc::IcrcService, runtime::IcEnvironment},
 };
@@ -122,7 +120,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return Some(intents);
     }
 
-    pub fn link_assemble_intents(
+    pub fn assemble_intents(
         &self,
         link_id: &str,
         action_type: &ActionType,
@@ -167,7 +165,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     };
                     let to_account = Account {
                         owner: self.ic_env.id(),
-                        subaccount: Some(to_subaccount(link.id.clone())),
+                        subaccount: Some(to_subaccount(&link.id.clone())),
                     };
                     transfer_data.to = Wallet {
                         address: to_account.to_string(),
@@ -232,7 +230,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                     let from_account = Account {
                         owner: self.ic_env.id(),
-                        subaccount: Some(to_subaccount(link.id.clone())),
+                        subaccount: Some(to_subaccount(&link.id.clone())),
                     };
                     transfer_data.from = Wallet {
                         address: from_account.to_string(),
@@ -342,7 +340,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         Principal::from_text(asset_address).unwrap(),
                         Account {
                             owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(link.id.clone())),
+                            subaccount: Some(to_subaccount(&link.id.clone())),
                         },
                     )
                     .await

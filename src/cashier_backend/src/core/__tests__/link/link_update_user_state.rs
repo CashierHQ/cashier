@@ -17,7 +17,7 @@ mod tests {
             transaction_manager::{action::ActionService, TransactionManagerService},
             user::v2::UserService,
         },
-        types::{error::CanisterError, transaction_manager::ActionResp},
+        types::{error::CanisterError, transaction_manager::ActionData},
     };
 
     #[tokio::test]
@@ -63,7 +63,7 @@ mod tests {
         intent_txs.insert(intent1.id.clone(), vec![tx1.clone(), tx2.clone()]);
         intent_txs.insert(intent2.id.clone(), vec![tx3.clone()]);
 
-        let action_resp = ActionResp {
+        let action_resp = ActionData {
             action: action.clone(),
             intents,
             intent_txs,

@@ -2,6 +2,8 @@ use super::INTENT_TRANSACTION_STORE;
 use cashier_types::{IntentTransaction, IntentTransactionKey};
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 pub struct IntentTransactionRepository {}
 
 #[cfg_attr(test, faux::methods)]

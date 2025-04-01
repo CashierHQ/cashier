@@ -2,6 +2,8 @@ use super::USER_WALLET_STORE;
 use cashier_types::{UserWallet, UserWalletKey};
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
+
 pub struct UserWalletRepository {}
 
 #[cfg_attr(test, faux::methods)]

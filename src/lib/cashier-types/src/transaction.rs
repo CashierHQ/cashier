@@ -255,10 +255,7 @@ impl FromCallType {
     pub fn to_str(&self) -> &str {
         match self {
             FromCallType::Canister => "Canister",
-            FromCallType::Wallet => {
-                "Wallet
-            "
-            }
+            FromCallType::Wallet => "Wallet",
         }
     }
 
