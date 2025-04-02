@@ -113,7 +113,6 @@ pub struct UserToken {
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 pub struct TokenBalance {
-    pub token_id: TokenId,
     pub balance: String,   // Storing as string to handle large numbers
     pub last_updated: u64, // Timestamp
 }

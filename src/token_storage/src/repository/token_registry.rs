@@ -1,8 +1,8 @@
 use candid::Principal;
 
-// File: src/token_storage/src/repository/token_registry.rs
-use super::TOKEN_REGISTRY_STORE;
 use crate::types::{Chain, RegisterTokenInput, RegistryToken, TokenId};
+
+use super::TOKEN_REGISTRY_STORE;
 
 pub struct TokenRegistryRepository {}
 
@@ -37,6 +37,17 @@ impl TokenRegistryRepository {
         });
 
         Ok(token_id)
+    }
+
+    pub fn add_bulk_tokens(&self, tokens: Vec<RegisterTokenInput>) -> Result<Vec<TokenId>, String> {
+        let mut token_ids = Vec::new();
+
+        for input in tokens {
+            let token_id = self.register_token(input)?;
+            token_ids.push(token_id);
+        }
+
+        Ok(token_ids)
     }
 
     pub fn get_token(&self, token_id: &TokenId) -> Option<RegistryToken> {
@@ -81,73 +92,5 @@ impl TokenRegistryRepository {
                 Err(format!("Token with ID {} not found", token_id))
             }
         })
-    }
-
-    // Initialize default tokens if registry is empty
-    pub fn initialize_default_tokens(&self) {
-        TOKEN_REGISTRY_STORE.with_borrow(|store| {
-            if store.is_empty() {
-                self.add_default_tokens();
-            }
-        });
-    }
-
-    fn add_default_tokens(&self) {
-        let default_tokens = vec![
-            RegisterTokenInput {
-                chain: "IC".to_string(),
-                ledger_id: Some(Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()),
-                index_id: Some(Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap()),
-                symbol: "ICP".to_string(),
-                name: "Internet Computer".to_string(),
-                decimals: 8,
-                logo_url: None,
-                is_default: Some(true),
-            },
-            RegisterTokenInput {
-                chain: "IC".to_string(),
-                ledger_id: Some(Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap()),
-                index_id: Some(Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap()),
-                symbol: "ckBTC".to_string(),
-                name: "Chain Key Bitcoin".to_string(),
-                decimals: 8,
-                logo_url: None,
-                is_default: Some(true),
-            },
-            RegisterTokenInput {
-                chain: "IC".to_string(),
-                ledger_id: Some(Principal::from_text("ss2fx-dyaaa-aaaar-qacoq-cai").unwrap()),
-                index_id: Some(Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap()),
-                symbol: "ckETH".to_string(),
-                name: "Chain Key Ethereum".to_string(),
-                decimals: 18,
-                logo_url: None,
-                is_default: Some(true),
-            },
-            RegisterTokenInput {
-                chain: "IC".to_string(),
-                ledger_id: Some(Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap()),
-                index_id: Some(Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap()),
-                symbol: "ckUSDC".to_string(),
-                name: "Chain Key USD Coin".to_string(),
-                decimals: 8,
-                logo_url: None,
-                is_default: Some(true),
-            },
-            RegisterTokenInput {
-                chain: "IC".to_string(),
-                ledger_id: Some(Principal::from_text("x5qut-viaaa-aaaar-qajda-cai").unwrap()),
-                index_id: None,
-                symbol: "tICP".to_string(),
-                name: "Test Internet Computer".to_string(),
-                decimals: 8,
-                logo_url: None,
-                is_default: Some(true),
-            },
-        ];
-
-        for token in default_tokens {
-            let _ = self.register_token(token);
-        }
     }
 }

@@ -4,6 +4,7 @@ pub mod user_preference;
 pub mod user_token;
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
@@ -48,7 +49,7 @@ thread_local! {
         );
 
     // Balance cache for users
-    pub static BALANCE_CACHE_STORE: RefCell<StableBTreeMap<String, Candid<Vec<TokenBalance>>, Memory>> =
+    pub static BALANCE_CACHE_STORE: RefCell<StableBTreeMap<String, Candid<HashMap<String, TokenBalance>>, Memory>> =
         RefCell::new(
             StableBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(BALANCE_CACHE_MEMORY_ID)),

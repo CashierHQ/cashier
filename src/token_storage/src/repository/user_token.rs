@@ -10,12 +10,6 @@ impl TokenRepository {
     }
 
     pub fn add_token(&self, user_id: String, token_id: TokenId) -> Result<(), String> {
-        // Verify token exists in registry
-        let registry = TokenRegistryRepository::new();
-        if registry.get_token(&token_id).is_none() {
-            return Err(format!("Token with ID {} not found in registry", token_id));
-        }
-
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let user_tokens = store.get(&user_id).unwrap_or_default();
             let mut tokens = user_tokens.into_inner();
@@ -26,6 +20,23 @@ impl TokenRepository {
                 store.insert(user_id, Candid(tokens));
             }
 
+            Ok(())
+        })
+    }
+
+    pub fn add_bulk_tokens(&self, user_id: String, token_ids: Vec<TokenId>) -> Result<(), String> {
+        USER_TOKEN_STORE.with_borrow_mut(|store| {
+            let user_tokens = store.get(&user_id).unwrap_or_default();
+            let mut tokens = user_tokens.into_inner();
+
+            for token_id in token_ids {
+                // Check if token already exists in user's list
+                if !tokens.contains(&token_id) {
+                    tokens.push(token_id);
+                }
+            }
+
+            store.insert(user_id, Candid(tokens));
             Ok(())
         })
     }

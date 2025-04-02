@@ -2,6 +2,7 @@
 use super::BALANCE_CACHE_STORE;
 use crate::types::{Candid, TokenBalance, TokenId};
 use ic_cdk::api::time;
+use std::collections::HashMap;
 
 const CACHE_EXPIRY_NANOS: u64 = 60_000_000_000; // 1 minute in nanoseconds
 
@@ -12,28 +13,51 @@ impl BalanceCacheRepository {
         Self {}
     }
 
-    pub fn update_balance(&self, user_id: String, token_id: TokenId, balance: String) {
+    pub fn update_bulk_balances(&self, user_id: String, token_balances: Vec<(TokenId, String)>) {
         BALANCE_CACHE_STORE.with_borrow_mut(|store| {
-            let balances = store.get(&user_id).unwrap_or_default();
-            let mut balance_list = balances.into_inner();
+            // Get existing balances or create new HashMap
+            let mut balance_map = store
+                .get(&user_id)
+                .map(|candid| candid.into_inner())
+                .unwrap_or_else(|| HashMap::new());
 
-            // Find and update existing balance or add new one
+            // Update or add new balances
             let now = time();
-            if let Some(pos) = balance_list.iter().position(|b| b.token_id == token_id) {
-                balance_list[pos] = TokenBalance {
-                    token_id: token_id.clone(),
-                    balance,
-                    last_updated: now,
-                };
-            } else {
-                balance_list.push(TokenBalance {
-                    token_id: token_id.clone(),
-                    balance,
-                    last_updated: now,
-                });
+            for (token_id, balance) in token_balances {
+                balance_map.insert(
+                    token_id,
+                    TokenBalance {
+                        balance,
+                        last_updated: now,
+                    },
+                );
             }
 
-            store.insert(user_id, Candid(balance_list));
+            // Store the updated map
+            store.insert(user_id, Candid(balance_map));
+        });
+    }
+
+    pub fn update_balance(&self, user_id: String, token_id: TokenId, balance: String) {
+        BALANCE_CACHE_STORE.with_borrow_mut(|store| {
+            // Get existing balances or create new HashMap
+            let mut balance_map = store
+                .get(&user_id)
+                .map(|candid| candid.into_inner())
+                .unwrap_or_else(|| HashMap::new());
+
+            // Add or update the balance
+            let now = time();
+            balance_map.insert(
+                token_id,
+                TokenBalance {
+                    balance,
+                    last_updated: now,
+                },
+            );
+
+            // Store the updated map
+            store.insert(user_id, Candid(balance_map));
         });
     }
 
@@ -41,10 +65,14 @@ impl BalanceCacheRepository {
         BALANCE_CACHE_STORE.with_borrow(|store| {
             let now = time();
             store.get(user_id).and_then(|Candid(balances)| {
-                balances
-                    .into_iter()
-                    .find(|b| &b.token_id == token_id && now - b.last_updated < CACHE_EXPIRY_NANOS)
-                    .map(|b| b.balance)
+                balances.get(token_id).and_then(|balance| {
+                    // Check if the cache is still valid
+                    if now - balance.last_updated < CACHE_EXPIRY_NANOS {
+                        Some(balance.balance.clone())
+                    } else {
+                        None
+                    }
+                })
             })
         })
     }
@@ -57,24 +85,24 @@ impl BalanceCacheRepository {
                 .map(|Candid(balances)| {
                     balances
                         .into_iter()
-                        .filter(|b| now - b.last_updated < CACHE_EXPIRY_NANOS)
-                        .map(|b| (b.token_id, b.balance))
+                        .filter(|(_, balance)| now - balance.last_updated < CACHE_EXPIRY_NANOS)
+                        .map(|(token_id, balance)| (token_id, balance.balance))
                         .collect()
                 })
                 .unwrap_or_default()
         })
     }
 
-    pub fn clear_expired_balances(&self, user_id: &String) {
+    // New method to clean expired entries (optional but recommended)
+    pub fn clean_expired_entries(&self, user_id: &String) {
         BALANCE_CACHE_STORE.with_borrow_mut(|store| {
-            if let Some(Candid(balances)) = store.get(user_id) {
-                let now = time();
-                let valid_balances: Vec<TokenBalance> = balances
-                    .into_iter()
-                    .filter(|b| now - b.last_updated < CACHE_EXPIRY_NANOS)
-                    .collect();
+            let now = time();
+            if let Some(Candid(mut balances)) = store.get(user_id) {
+                // Remove expired entries
+                balances.retain(|_, balance| now - balance.last_updated < CACHE_EXPIRY_NANOS);
 
-                store.insert(user_id.clone(), Candid(valid_balances));
+                // Update the store if there are changes
+                store.insert(user_id.clone(), Candid(balances));
             }
         });
     }

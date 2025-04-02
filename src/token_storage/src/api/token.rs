@@ -57,6 +57,11 @@ pub fn add_token(input: AddTokenInput) -> Result<(), String> {
         }
     };
 
+    let registry = TokenRegistryRepository::new();
+    if registry.get_token(&token_id).is_none() {
+        return Err(format!("Token with ID {} not found in registry", token_id));
+    }
+
     let repository = TokenRepository::new();
     repository.add_token(caller.to_text(), token_id)
 }
@@ -175,10 +180,6 @@ pub fn get_token_balance(token_id: String) -> Result<Option<String>, String> {
 #[query]
 pub fn default_list_tokens() -> Result<Vec<TokenDto>, String> {
     let registry = TokenRegistryRepository::new();
-
-    // Make sure default tokens are initialized
-    registry.initialize_default_tokens();
-
     let tokens = registry.list_default_tokens();
 
     let result = tokens
