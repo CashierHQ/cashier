@@ -144,7 +144,7 @@ pub fn update_user_preference(input: UserPreferenceInput) -> Result<(), String> 
 
 // Balance Cache APIs
 #[update]
-pub fn update_token_balance(token_id: String, balance: String) -> Result<(), String> {
+pub fn update_token_balance(token_id: String, balance: u128) -> Result<(), String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
@@ -163,8 +163,8 @@ pub fn update_token_balance(token_id: String, balance: String) -> Result<(), Str
     Ok(())
 }
 
-#[query]
-pub fn get_token_balance(token_id: String) -> Result<Option<String>, String> {
+#[update]
+pub fn update_bulk_balances(token_balances: Vec<(String, u128)>) -> Result<(), String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
@@ -172,9 +172,9 @@ pub fn get_token_balance(token_id: String) -> Result<Option<String>, String> {
     }
 
     let balance_cache = BalanceCacheRepository::new();
-    let balance = balance_cache.get_balance(&caller.to_text(), &token_id);
+    balance_cache.update_bulk_balances(caller.to_text(), token_balances);
 
-    Ok(balance)
+    Ok(())
 }
 
 #[query]

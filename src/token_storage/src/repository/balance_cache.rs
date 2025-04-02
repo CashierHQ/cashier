@@ -4,8 +4,6 @@ use crate::types::{Candid, TokenBalance, TokenId};
 use ic_cdk::api::time;
 use std::collections::HashMap;
 
-const CACHE_EXPIRY_NANOS: u64 = 60_000_000_000; // 1 minute in nanoseconds
-
 pub struct BalanceCacheRepository {}
 
 impl BalanceCacheRepository {
@@ -13,7 +11,7 @@ impl BalanceCacheRepository {
         Self {}
     }
 
-    pub fn update_bulk_balances(&self, user_id: String, token_balances: Vec<(TokenId, String)>) {
+    pub fn update_bulk_balances(&self, user_id: String, token_balances: Vec<(String, u128)>) {
         BALANCE_CACHE_STORE.with_borrow_mut(|store| {
             // Get existing balances or create new HashMap
             let mut balance_map = store
@@ -38,7 +36,7 @@ impl BalanceCacheRepository {
         });
     }
 
-    pub fn update_balance(&self, user_id: String, token_id: TokenId, balance: String) {
+    pub fn update_balance(&self, user_id: String, token_id: TokenId, balance: u128) {
         BALANCE_CACHE_STORE.with_borrow_mut(|store| {
             // Get existing balances or create new HashMap
             let mut balance_map = store
@@ -61,49 +59,27 @@ impl BalanceCacheRepository {
         });
     }
 
-    pub fn get_balance(&self, user_id: &String, token_id: &TokenId) -> Option<String> {
+    pub fn get_balance(&self, user_id: &String, token_id: &TokenId) -> Option<u128> {
         BALANCE_CACHE_STORE.with_borrow(|store| {
-            let now = time();
             store.get(user_id).and_then(|Candid(balances)| {
-                balances.get(token_id).and_then(|balance| {
-                    // Check if the cache is still valid
-                    if now - balance.last_updated < CACHE_EXPIRY_NANOS {
-                        Some(balance.balance.clone())
-                    } else {
-                        None
-                    }
-                })
+                balances
+                    .get(token_id)
+                    .map(|balance| balance.balance.clone())
             })
         })
     }
 
-    pub fn get_all_balances(&self, user_id: &String) -> Vec<(TokenId, String)> {
+    pub fn get_all_balances(&self, user_id: &String) -> Vec<(TokenId, u128)> {
         BALANCE_CACHE_STORE.with_borrow(|store| {
-            let now = time();
             store
                 .get(user_id)
                 .map(|Candid(balances)| {
                     balances
                         .into_iter()
-                        .filter(|(_, balance)| now - balance.last_updated < CACHE_EXPIRY_NANOS)
                         .map(|(token_id, balance)| (token_id, balance.balance))
                         .collect()
                 })
                 .unwrap_or_default()
         })
-    }
-
-    // New method to clean expired entries (optional but recommended)
-    pub fn clean_expired_entries(&self, user_id: &String) {
-        BALANCE_CACHE_STORE.with_borrow_mut(|store| {
-            let now = time();
-            if let Some(Candid(mut balances)) = store.get(user_id) {
-                // Remove expired entries
-                balances.retain(|_, balance| now - balance.last_updated < CACHE_EXPIRY_NANOS);
-
-                // Update the store if there are changes
-                store.insert(user_id.clone(), Candid(balances));
-            }
-        });
     }
 }

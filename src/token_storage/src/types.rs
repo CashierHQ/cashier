@@ -113,7 +113,7 @@ pub struct UserToken {
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 pub struct TokenBalance {
-    pub balance: String,   // Storing as string to handle large numbers
+    pub balance: u128,
     pub last_updated: u64, // Timestamp
 }
 
@@ -223,5 +223,10 @@ pub struct TokenDto {
     pub decimals: u8,
     pub chain: String,
     pub enabled: bool,
-    pub balance: Option<String>,
+    pub balance: Option<u128>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct UpdateBulkBalancesInput {
+    pub token_balances: Vec<(String, u128)>,
 }
