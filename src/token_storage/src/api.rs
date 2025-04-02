@@ -140,6 +140,15 @@ pub fn default_list_tokens() -> Result<Vec<UserTokenDto>, String> {
             unknown: true,
             chain: Chain::IC,
         },
+        UserToken {
+            icrc_ledger_id: Some(Principal::from_text("x5qut-viaaa-aaaar-qajda-cai").unwrap()),
+            icrc_index_id: None,
+            symbol: Some("tICP".to_string()),
+            decimals: Some(8),
+            enabled: true,
+            unknown: true,
+            chain: Chain::IC,
+        },
     ];
 
     let tokens: Vec<UserTokenDto> = tokens

@@ -20,6 +20,7 @@ import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hoo
 import Header from "@/components/header";
 import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
+import { useTokens } from "@/hooks/useToken";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -47,6 +48,8 @@ export default function HomePage() {
     const { toastData, showToast, hideToast } = useToast();
     const navigate = useNavigate();
     const responsive = useResponsive();
+
+    useTokens(identity, { refetchInterval: 30000, enabled: true });
 
     /* TODO:: Remove after complete testing */
     const handleOpenTestForm = () => {

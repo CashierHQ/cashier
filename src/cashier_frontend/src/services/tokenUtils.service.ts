@@ -59,7 +59,6 @@ export class TokenUtilService {
         try {
             const balance = await ledgerCanister.balance({
                 owner: Principal.fromText(pid),
-                subaccount: [],
             });
             return balance;
         } catch (error) {

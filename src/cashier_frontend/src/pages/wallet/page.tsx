@@ -1,51 +1,26 @@
 import { WalletHero } from "@/components/wallet/hero";
 import { WalletTabs } from "@/components/wallet/tabs";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { useTokenStore } from "@/stores/tokenStore";
-import { useMemo, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIdentity } from "@nfid/identitykit/react";
+import { useMemo } from "react";
+import { useTokens } from "@/hooks/useToken";
 
 export default function WalletPage() {
     const responsive = useResponsive();
     const identity = useIdentity();
 
-    // Use the combined token store directly
-    const {
-        getDisplayTokens,
-        rawDefaultTokenList,
-        rawTokenList,
-        updateTokenListInit,
-        updateTokenBalanceAmountAll,
-        isLoading,
-    } = useTokenStore();
-
-    // Initialize tokens when component mounts
-    useEffect(() => {
-        const initTokens = async () => {
-            if (identity) {
-                await updateTokenListInit(identity);
-                await updateTokenBalanceAmountAll(identity);
-            }
-        };
-
-        initTokens();
-    }, [identity]);
-
-    // Get the filtered tokens
-    const filteredTokens = useMemo(() => {
-        const tokens = getDisplayTokens();
-        return tokens;
-    }, [getDisplayTokens, rawDefaultTokenList, rawTokenList]);
+    // Use unified tokens hook with automatic 30s refresh
+    const { tokens, isLoading } = useTokens(identity, { refetchInterval: 30000, enabled: true });
 
     // Calculate the total USD equivalent from the tokens
     const totalUsdEquivalent = useMemo(() => {
-        if (!filteredTokens || filteredTokens.length === 0) return 0;
+        if (!tokens || tokens.length === 0) return 0;
 
-        return filteredTokens.reduce((total, token) => {
+        return tokens.reduce((total, token) => {
             return total + (token.usdEquivalent || 0);
         }, 0);
-    }, [filteredTokens]);
+    }, [tokens]);
 
     // Show loading skeleton when tokens are loading
     if (isLoading) {
@@ -89,7 +64,7 @@ export default function WalletPage() {
                 <WalletHero totalUsdEquivalent={totalUsdEquivalent} />
             </div>
             <div className="flex-1 overflow-hidden">
-                <WalletTabs fungibleTokens={filteredTokens} />
+                <WalletTabs fungibleTokens={tokens} />
             </div>
         </div>
     );
