@@ -10,4 +10,6 @@ export type FungibleToken = {
     amount: bigint;
     usdEquivalent: number | null;
     usdConversionRate: number | null;
+    enabled: boolean;
+    default: boolean;
 };

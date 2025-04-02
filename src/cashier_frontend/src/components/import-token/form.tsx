@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import { IconInput } from "@/components/icon-input";
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { Input } from "../ui/input";
 import { ImportTokenFormData, useImportTokenForm } from "@/hooks/import-token.hooks";
 import { Message } from "../ui/message";
 import { Clipboard } from "lucide-react";

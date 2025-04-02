@@ -37,5 +37,6 @@ service : {
   get_user_preference : () -> (Result_2) query;
   list_tokens : () -> (Result_1) query;
   remove_token : (RemoveTokenInput) -> (Result);
+  reset : (text) -> (Result);
   update_user_preference : (UserPreferenceInput) -> (Result);
 }

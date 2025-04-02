@@ -42,9 +42,13 @@ export function useTokens(
             if (!identity) throw new Error("Not authenticated");
             _setLoading(true);
 
+            console.log("Fetching tokens and preferences...");
+
             try {
                 const tokenService = new TokenService(identity);
                 const result = await tokenService.fetchTokensAndPreferences();
+
+                console.log("Fetched tokens and preferences:", result);
 
                 // Update Zustand store
                 _setRawDefaultTokenList(result.defaultTokens);
@@ -64,34 +68,29 @@ export function useTokens(
         enabled: !!identity && options.enabled,
     });
 
-    // Get display tokens from Zustand or from default tokens if none available
-    const displayTokens =
-        filteredTokenList.length > 0
-            ? filteredTokenList
-            : rawDefaultTokenList.map((token) => mapUserTokenToFungibleToken(token));
-
     // Secondary query to fetch and update balances periodically
     const balancesQuery = useQuery({
         queryKey: [TOKEN_QUERY_KEYS.TOKEN_BALANCES],
         queryFn: async () => {
-            if (!identity || displayTokens.length === 0) return displayTokens;
+            if (!identity) throw new Error("Not authenticated");
 
             _setBalanceLoading(true);
 
             try {
                 const tokenService = new TokenService(identity);
-                const updatedTokens = await tokenService.updateAllBalances(displayTokens);
+                const updatedTokens = await tokenService.updateAllBalances(filteredTokenList);
+                console.log("Updated token balances:", updatedTokens);
                 _setFilteredTokenList(updatedTokens);
                 return updatedTokens;
             } catch (error) {
                 console.error("Failed to update token balances:", error);
                 _setError(error instanceof Error ? error : new Error(String(error)));
-                return displayTokens; // Return existing tokens on error to prevent UI issues
+                return filteredTokenList; // Return existing tokens on error to prevent UI issues
             } finally {
                 _setBalanceLoading(false);
             }
         },
-        enabled: !!identity && displayTokens.length > 0 && options.enabled,
+        enabled: !!identity && filteredTokenList.length > 0 && options.enabled,
         refetchInterval: options.refetchInterval,
     });
 
@@ -103,7 +102,8 @@ export function useTokens(
 
             try {
                 const tokenService = new TokenService(identity);
-                await tokenService.addToken(input);
+                const res = await tokenService.addToken(input);
+                console.log("Token added:", res);
                 return true;
             } catch (error) {
                 console.error("Failed to add token:", error);
@@ -141,7 +141,7 @@ export function useTokens(
         onSuccess: () => {
             // Invalidate queries to refetch data
             queryClient.invalidateQueries({ queryKey: [TOKEN_QUERY_KEYS.TOKENS] });
-            queryClient.invalidateQueries({ queryKey: [TOKEN_QUERY_KEYS.TOKEN_BALANCES] });
+            // queryClient.invalidateQueries({ queryKey: [TOKEN_QUERY_KEYS.TOKEN_BALANCES] });
         },
     });
 
@@ -156,12 +156,12 @@ export function useTokens(
                 const tokenService = new TokenService(identity);
                 const updatedToken = await tokenService.updateSingleTokenBalance(
                     tokenAddress,
-                    displayTokens,
+                    filteredTokenList,
                 );
 
                 if (updatedToken) {
                     // Update the token in the filtered list
-                    const updatedTokens = displayTokens.map((token) =>
+                    const updatedTokens = filteredTokenList.map((token) =>
                         token.address === tokenAddress ? updatedToken : token,
                     );
 
@@ -187,7 +187,7 @@ export function useTokens(
 
     // Helper function to search tokens
     const searchTokens = (query: string) => {
-        return searchTokensFunction(query, displayTokens);
+        return searchTokensFunction(query, filteredTokenList);
     };
 
     // Calculate loading state
@@ -199,7 +199,10 @@ export function useTokens(
     // Return everything the consumer might need
     return {
         // Data
-        tokens: balancesQuery.data || displayTokens,
+        tokens:
+            filteredTokenList.length > 0
+                ? filteredTokenList
+                : rawDefaultTokenList.map((token) => mapUserTokenToFungibleToken(token)),
 
         // Loading states
         isLoading,

@@ -101,6 +101,13 @@ pub fn update_user_preference(input: UserPreferenceInput) -> Result<(), String> 
     Ok(())
 }
 
+#[update]
+pub fn reset(address: String) -> Result<(), String> {
+    let token_repository = TokenRepository::new();
+    token_repository.reset_token_list(&address);
+    Ok(())
+}
+
 #[query]
 pub fn default_list_tokens() -> Result<Vec<UserTokenDto>, String> {
     let tokens: Vec<UserToken> = vec![

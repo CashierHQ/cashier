@@ -3,25 +3,45 @@ import { AssetAvatar } from "../ui/asset-avatar";
 import { Input } from "../ui/input";
 import { Message } from "../ui/message";
 import { Button } from "../ui/button";
-import { ImportTokenFormData } from "@/hooks/import-token.hooks";
 import { mapChainToLogo, mapChainToPrettyName } from "@/utils/map/chain.map";
-import { MOCK_TOKEN_DATA } from "@/constants/mock-data";
 import { Label } from "../ui/label";
 import { IconInput } from "../icon-input";
+import { useTokens } from "@/hooks/useToken";
+import { useIdentity } from "@nfid/identitykit/react";
+import { AddTokenInput } from "../../../../declarations/token_storage/token_storage.did";
+import { Principal } from "@dfinity/principal";
 
 interface ImportTokenReviewProps {
-    data: ImportTokenFormData;
-    onImport?: (data: ImportTokenFormData) => void;
+    token: {
+        name: string;
+        symbol: string;
+        logo?: string;
+        chain: string;
+        address: string;
+        decimals: number;
+    };
+    // onImport?: (data: ImportTokenFormData) => void;
 }
 
-export function ImportTokenReview({ data, onImport = () => {} }: ImportTokenReviewProps) {
+export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
 
-    function handleImport() {
-        onImport(data);
-    }
+    const identity = useIdentity();
+    const { addToken } = useTokens(identity);
 
-    const token = MOCK_TOKEN_DATA;
+    function handleImport() {
+        const addTokenInput: AddTokenInput = {
+            symbol: [token.symbol],
+            chain: token.chain,
+            decimals: [token.decimals],
+            ledger_id: [Principal.fromText(token.address)],
+            index_id: [Principal.fromText(token.address)],
+            enabled: [true],
+            unknown: [true],
+        };
+
+        addToken(addTokenInput);
+    }
 
     return (
         <div className="flex flex-col flex-grow pt-6 pb-2 px-1">

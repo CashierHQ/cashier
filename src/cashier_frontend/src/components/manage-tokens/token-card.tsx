@@ -1,19 +1,49 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AssetAvatar } from "../ui/asset-avatar";
 import Switch from "../ui/switch";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { mapChainToLogo } from "@/utils/map/chain.map";
+import { useTokens } from "@/hooks/useToken";
+import { useIdentity } from "@nfid/identitykit/react";
 
-export interface ManageTokensToken {
+export interface ManageTokensTokenProps {
     token: FungibleToken;
 }
 
-export function ManageTokensToken({ token }: ManageTokensToken) {
-    const [isVisible, setIsVisible] = useState<boolean>(true);
-    const toggleVisible = () => setIsVisible((old) => !old);
+export function ManageTokensToken({ token }: ManageTokensTokenProps) {
+    const identity = useIdentity();
+    const { toggleTokenEnabled, isTogglingToken } = useTokens(identity);
+
+    // Use token's enabled status from the API instead of local state
+    const [isVisible, setIsVisible] = useState<boolean>(token.enabled ?? true);
+
+    // Check if the token is a default token
+    const isDefaultToken = token.default === true;
+
+    // Update local state if token props change
+    useEffect(() => {
+        setIsVisible(token.enabled ?? true);
+    }, [token.enabled]);
+
+    const handleToggle = (e: React.MouseEvent) => {
+        // Stop propagation to prevent the article onClick from firing
+        e.stopPropagation();
+
+        // Only proceed if it's not a default token
+        if (isDefaultToken) {
+            return;
+        }
+
+        // Toggle the visibility state locally for immediate feedback
+        const newVisibility = !isVisible;
+        setIsVisible(newVisibility);
+
+        // Call the API to update the token visibility
+        toggleTokenEnabled(token.address, newVisibility);
+    };
 
     return (
-        <article className="flex justify-between items-center" onClick={toggleVisible}>
+        <article className="flex justify-between items-center">
             <div className="flex gap-1.5 items-center">
                 <div className="relative">
                     <AssetAvatar
@@ -32,11 +62,19 @@ export function ManageTokensToken({ token }: ManageTokensToken) {
                     <span className="leading-4">{token.name}</span>
                     <span className="text-grey text-xs font-light leading-none">
                         {token.symbol}
+                        {isDefaultToken && (
+                            <span className="ml-1 text-[10px] text-green">(Default)</span>
+                        )}
                     </span>
                 </div>
             </div>
 
-            <Switch.Root checked={isVisible}>
+            <Switch.Root
+                checked={isVisible}
+                onClick={handleToggle}
+                disabled={isTogglingToken || isDefaultToken}
+                className={isDefaultToken ? "opacity-70 cursor-not-allowed" : ""}
+            >
                 <Switch.Thumb />
             </Switch.Root>
         </article>

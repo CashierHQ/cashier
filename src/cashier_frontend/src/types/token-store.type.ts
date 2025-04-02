@@ -83,6 +83,7 @@ export const mapStringToBackendChain = (chain: string): BackendChain => {
 export const mapUserTokenToFungibleToken = (
     token: UserTokenDto,
     prices: Record<string, number> = {},
+    defaultToken: boolean = false,
 ): FungibleToken => {
     const tokenId = token.icrc_ledger_id?.toString() || "";
     const price = prices[tokenId] || null;
@@ -97,5 +98,6 @@ export const mapUserTokenToFungibleToken = (
         amount: BigInt(0), // Default to zero, would be updated from balance info
         usdEquivalent: null, // Would be calculated based on amount and price
         usdConversionRate: price,
+        default: defaultToken,
     };
 };

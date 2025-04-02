@@ -76,6 +76,10 @@ class TokenService {
             this.defaultListTokens(),
         ]);
 
+        console.log("Fetched tokens:", tokens);
+        console.log("Fetched default tokens:", defaultTokens);
+        console.log("Fetched preferences:", preferences);
+
         // Process the data
         const filters = mapUserPreferenceToFilters(preferences);
         const fungibleTokens = tokens.map((token) => mapUserTokenToFungibleToken(token));
