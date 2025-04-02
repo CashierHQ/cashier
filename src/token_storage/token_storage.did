@@ -18,13 +18,12 @@ type RemoveTokenInput = record { token_id : text };
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : vec TokenDto; Err : text };
 type Result_2 = variant { Ok : TokenDto; Err : text };
-type Result_3 = variant { Ok : opt text; Err : text };
-type Result_4 = variant { Ok : UserPreference; Err : text };
-type Result_5 = variant { Ok : text; Err : text };
+type Result_3 = variant { Ok : UserPreference; Err : text };
+type Result_4 = variant { Ok : text; Err : text };
 type TokenDto = record {
   id : text;
   decimals : nat8;
-  balance : opt text;
+  balance : opt nat;
   chain : text;
   name : text;
   enabled : bool;
@@ -48,15 +47,15 @@ service : {
   add_token : (AddTokenInput) -> (Result);
   default_list_tokens : () -> (Result_1) query;
   get_token : (text) -> (Result_2) query;
-  get_token_balance : (text) -> (Result_3) query;
-  get_user_preference : () -> (Result_4) query;
+  get_user_preference : () -> (Result_3) query;
   initialize_registry : () -> (Result);
   initialize_user_tokens : () -> (Result);
   list_registry_tokens : () -> (Result_1) query;
   list_tokens : () -> (Result_1) query;
-  register_token : (RegisterTokenInput) -> (Result_5);
+  register_token : (RegisterTokenInput) -> (Result_4);
   remove_token : (RemoveTokenInput) -> (Result);
   reset_user_tokens : (text) -> (Result);
-  update_token_balance : (text, text) -> (Result);
+  update_bulk_balances : (vec record { text; nat }) -> (Result);
+  update_token_balance : (text, nat) -> (Result);
   update_user_preference : (UserPreferenceInput) -> (Result);
 }
