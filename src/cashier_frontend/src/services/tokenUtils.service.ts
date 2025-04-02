@@ -7,9 +7,11 @@ import { defaultAgent, Token, TokenAmountV2 } from "@dfinity/utils";
 
 export class TokenUtilService {
     private agent: Agent;
+    private identity: Identity | undefined;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         this.agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        this.identity = identity;
     }
     public static async getTokenMetadata(tokenAddres: string) {
         const { metadata } = IcrcLedgerCanister.create({
@@ -44,6 +46,26 @@ export class TokenUtilService {
         const tokenV2 = TokenAmountV2.fromUlps({ amount, token: tokenMetadata as Token });
         const upls = tokenV2.toUlps();
         return Number(upls) / 10 ** tokenV2.token.decimals;
+    }
+
+    async balanceOf(tokenAddress: string) {
+        const ledgerCanister = IcrcLedgerCanister.create({
+            agent: this.agent,
+            canisterId: Principal.fromText(tokenAddress),
+        });
+
+        const pid = this.identity?.getPrincipal().toString() ?? "";
+
+        try {
+            const balance = await ledgerCanister.balance({
+                owner: Principal.fromText(pid),
+                subaccount: [],
+            });
+            return balance;
+        } catch (error) {
+            console.error("Error fetching balance:", error);
+            return BigInt(0);
+        }
     }
 
     // the amount is in human readable format

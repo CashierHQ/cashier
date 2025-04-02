@@ -21,6 +21,11 @@ class TokenService {
         });
     }
 
+    async defaultListTokens(): Promise<UserTokenDto[]> {
+        const response = parseResultResponse(await this.actor.default_list_tokens());
+        return response;
+    }
+
     async listTokens(): Promise<UserTokenDto[]> {
         const response = parseResultResponse(await this.actor.list_tokens());
         return response;

@@ -22,7 +22,7 @@ export function useTokens() {
     const {
         rawTokenList,
         rawTokenFilters,
-        displayTokens,
+        filteredTokenList: displayTokens,
         setRawTokenList,
         setTokensError,
         setIsLoadingTokens,

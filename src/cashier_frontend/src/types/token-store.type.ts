@@ -7,52 +7,12 @@ import {
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
 import { fromDefinedNullable } from "@dfinity/utils";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 export interface TokenFilters {
     hideZeroBalance: boolean;
     hideUnknownToken: boolean;
-    selectedChain: Chain[];
-}
-
-export interface TokenState {
-    // Raw data from backend
-    rawTokenList: UserTokenDto[];
-    rawTokenFilters: TokenFilters;
-
-    // Processed tokens using FungibleToken type
-    displayTokens: FungibleToken[];
-
-    // Price data for tokens
-    tokenPrices: Record<string, number>;
-
-    // Loading states
-    isLoadingTokens: boolean;
-    isLoadingPreferences: boolean;
-
-    // Error states
-    tokensError: Error | null;
-    preferencesError: Error | null;
-
-    // Actions
-    setRawTokenList: (tokens: UserTokenDto[]) => void;
-    setRawTokenFilters: (filters: TokenFilters) => void;
-    setDisplayTokens: (tokens: FungibleToken[]) => void;
-    updateTokenPrice: (tokenId: string, price: number) => void;
-    updateTokenPrices: (prices: Record<string, number>) => void;
-
-    setIsLoadingTokens: (isLoading: boolean) => void;
-    setIsLoadingPreferences: (isLoading: boolean) => void;
-
-    setTokensError: (error: Error | null) => void;
-    setPreferencesError: (error: Error | null) => void;
-
-    // Filter actions
-    setHideZeroBalance: (hide: boolean) => void;
-    setHideUnknownToken: (hide: boolean) => void;
-    setSelectedChain: (chains: Chain[]) => void;
-
-    // Reset functions
-    clearStore: () => void;
+    selectedChain: string[];
 }
 
 // Helper function to create a key for token balances
@@ -79,9 +39,7 @@ export const mapFiltersToUserPreferenceInput = (filters: TokenFilters): UserPref
     return {
         hide_zero_balance: filters.hideZeroBalance,
         hide_unknown_token: filters.hideUnknownToken,
-        selected_chain: filters.selectedChain.map((chain) => {
-            return mapChainToString(chain);
-        }),
+        selected_chain: filters.selectedChain,
     };
 };
 
@@ -134,7 +92,7 @@ export const mapUserTokenToFungibleToken = (
         chain: mapStringToFrontendChain(token.chain),
         name: token.symbol?.toString() || "Unknown Token",
         symbol: token.symbol?.toString() || "???",
-        logo: "", // Would need to be populated from elsewhere
+        logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
         decimals: fromDefinedNullable(token.decimals) || 8,
         amount: BigInt(0), // Default to zero, would be updated from balance info
         usdEquivalent: null, // Would be calculated based on amount and price

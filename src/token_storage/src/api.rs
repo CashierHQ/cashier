@@ -2,10 +2,7 @@ use candid::Principal;
 use ic_cdk::{query, update};
 
 use crate::{
-    repository::{
-        token::TokenRepository,
-        user_preference::{self, UserPreferenceRepository},
-    },
+    repository::{token::TokenRepository, user_preference::UserPreferenceRepository},
     types::{
         AddTokenInput, Chain, RemoveTokenInput, UserPreference, UserPreferenceInput, UserToken,
         UserTokenDto,
@@ -20,15 +17,11 @@ pub fn add_token(input: AddTokenInput) -> Result<(), String> {
         return Err("Not allow anonymous call".to_string());
     }
 
-    // validate required fields
-    if input.chain == Chain::IC {
-        if input.ledger_id.is_none() {
-            return Err("Ledger ID is required for IC chain".to_string());
-        }
-    }
+    let record = UserToken::try_from(input.clone())
+        .map_err(|e| format!("Failed to convert AddTokenInput: {}", e))?;
 
     let repository = TokenRepository::new();
-    repository.add_token(caller.to_text(), UserToken::from(input));
+    repository.add_token(caller.to_text(), record);
     Ok(())
 }
 
@@ -39,7 +32,10 @@ pub fn remove_token(input: RemoveTokenInput) -> Result<(), String> {
         return Err("Not allow anonymous call".to_string());
     }
 
-    if input.chain == Chain::IC {
+    let chain =
+        Chain::from_str(&input.chain).map_err(|e| format!("Failed to convert chain: {}", e))?;
+
+    if chain == Chain::IC {
         if input.ledger_id.is_none() {
             return Err("Ledger ID is required for IC chain".to_string());
         } else {
@@ -103,6 +99,55 @@ pub fn update_user_preference(input: UserPreferenceInput) -> Result<(), String> 
     user_preference.update(caller.to_text(), record);
 
     Ok(())
+}
+
+#[query]
+pub fn default_list_tokens() -> Result<Vec<UserTokenDto>, String> {
+    let tokens: Vec<UserToken> = vec![
+        UserToken {
+            icrc_ledger_id: Some(Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()),
+            icrc_index_id: Some(Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap()),
+            symbol: Some("ICP".to_string()),
+            decimals: Some(8),
+            enabled: true,
+            unknown: true,
+            chain: Chain::IC,
+        },
+        UserToken {
+            icrc_ledger_id: Some(Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap()),
+            icrc_index_id: Some(Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap()),
+            symbol: Some("ckBTC".to_string()),
+            decimals: Some(8),
+            enabled: true,
+            unknown: true,
+            chain: Chain::IC,
+        },
+        UserToken {
+            icrc_ledger_id: Some(Principal::from_text("ss2fx-dyaaa-aaaar-qacoq-cai").unwrap()),
+            icrc_index_id: Some(Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap()),
+            symbol: Some("ckETH".to_string()),
+            decimals: Some(18),
+            enabled: true,
+            unknown: true,
+            chain: Chain::IC,
+        },
+        UserToken {
+            icrc_ledger_id: Some(Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap()),
+            icrc_index_id: Some(Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap()),
+            symbol: Some("ckUSDC".to_string()),
+            decimals: Some(8),
+            enabled: true,
+            unknown: true,
+            chain: Chain::IC,
+        },
+    ];
+
+    let tokens: Vec<UserTokenDto> = tokens
+        .iter()
+        .map(|token| UserTokenDto::from(token.clone()))
+        .collect();
+
+    Ok(tokens)
 }
 
 ic_cdk::export_candid!();

@@ -126,7 +126,7 @@ impl TryFrom<UserPreferenceInput> for UserPreference {
 }
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct AddTokenInput {
-    pub chain: Chain,
+    pub chain: String,
     pub ledger_id: Option<LedgerId>,
     pub index_id: Option<IndexId>,
     pub symbol: Option<String>,
@@ -135,23 +135,27 @@ pub struct AddTokenInput {
     pub unknown: Option<bool>,
 }
 
-impl From<AddTokenInput> for UserToken {
-    fn from(input: AddTokenInput) -> Self {
-        Self {
+impl TryFrom<AddTokenInput> for UserToken {
+    type Error = String;
+
+    fn try_from(input: AddTokenInput) -> Result<Self, Self::Error> {
+        let chain = Chain::from_str(&input.chain)?;
+
+        Ok(Self {
             icrc_ledger_id: input.ledger_id,
             icrc_index_id: input.index_id,
             symbol: input.symbol,
             decimals: input.decimals,
             enabled: input.enabled.unwrap_or(false),
             unknown: input.unknown.unwrap_or(false),
-            chain: input.chain,
-        }
+            chain,
+        })
     }
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct RemoveTokenInput {
-    pub chain: Chain,
+    pub chain: String,
     pub ledger_id: Option<LedgerId>,
 }
 
