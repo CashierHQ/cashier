@@ -1,42 +1,62 @@
 type AddTokenInput = record {
-  decimals : opt nat8;
+  token_id : opt text;
   chain : text;
   ledger_id : opt principal;
-  enabled : opt bool;
-  index_id : opt principal;
-  unknown : opt bool;
-  symbol : opt text;
 };
 type Chain = variant { IC };
-type RemoveTokenInput = record { chain : text; ledger_id : opt principal };
+type RegisterTokenInput = record {
+  decimals : nat8;
+  chain : text;
+  name : text;
+  ledger_id : opt principal;
+  is_default : opt bool;
+  logo_url : opt text;
+  index_id : opt principal;
+  symbol : text;
+};
+type RemoveTokenInput = record { token_id : text };
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : vec UserTokenDto; Err : text };
-type Result_2 = variant { Ok : UserPreference; Err : text };
+type Result_1 = variant { Ok : vec TokenDto; Err : text };
+type Result_2 = variant { Ok : TokenDto; Err : text };
+type Result_3 = variant { Ok : opt text; Err : text };
+type Result_4 = variant { Ok : UserPreference; Err : text };
+type Result_5 = variant { Ok : text; Err : text };
+type TokenDto = record {
+  id : text;
+  decimals : nat8;
+  balance : opt text;
+  chain : text;
+  name : text;
+  enabled : bool;
+  icrc_ledger_id : opt principal;
+  icrc_index_id : opt principal;
+  symbol : text;
+};
 type UserPreference = record {
   hide_zero_balance : bool;
+  hidden_tokens : vec text;
   selected_chain : vec Chain;
   hide_unknown_token : bool;
 };
 type UserPreferenceInput = record {
-  hide_zero_balance : bool;
-  selected_chain : vec text;
-  hide_unknown_token : bool;
-};
-type UserTokenDto = record {
-  decimals : opt nat8;
-  chain : text;
-  enabled : bool;
-  icrc_ledger_id : opt principal;
-  icrc_index_id : opt principal;
-  unknown : bool;
-  symbol : opt text;
+  hide_zero_balance : opt bool;
+  hidden_tokens : opt vec text;
+  selected_chain : opt vec text;
+  hide_unknown_token : opt bool;
 };
 service : {
   add_token : (AddTokenInput) -> (Result);
   default_list_tokens : () -> (Result_1) query;
-  get_user_preference : () -> (Result_2) query;
+  get_token : (text) -> (Result_2) query;
+  get_token_balance : (text) -> (Result_3) query;
+  get_user_preference : () -> (Result_4) query;
+  initialize_registry : () -> (Result);
+  initialize_user_tokens : () -> (Result);
+  list_registry_tokens : () -> (Result_1) query;
   list_tokens : () -> (Result_1) query;
+  register_token : (RegisterTokenInput) -> (Result_5);
   remove_token : (RemoveTokenInput) -> (Result);
-  reset : (text) -> (Result);
+  reset_user_tokens : (text) -> (Result);
+  update_token_balance : (text, text) -> (Result);
   update_user_preference : (UserPreferenceInput) -> (Result);
 }
