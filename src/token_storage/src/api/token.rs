@@ -99,7 +99,7 @@ pub fn list_tokens() -> Result<Vec<TokenDto>, String> {
     let result = tokens
         .into_iter()
         .map(|mut token| {
-            if let Some(balance) = balances.get(&token.id) {
+            if let Some(balance) = balances.get(&token.get_address_from_id()) {
                 token.balance = Some(balance.clone());
             }
             token
@@ -170,6 +170,8 @@ pub fn update_bulk_balances(token_balances: Vec<(String, u128)>) -> Result<(), S
     if caller == Principal::anonymous() {
         return Err("Not allowed for anonymous calls".to_string());
     }
+
+    ic_cdk::println!("Updating bulk balances for caller: {:#?}", token_balances);
 
     let balance_cache = BalanceCacheRepository::new();
     balance_cache.update_bulk_balances(caller.to_text(), token_balances);

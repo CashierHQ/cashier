@@ -6,7 +6,7 @@ import {
 } from "../../../declarations/token_storage/token_storage.did";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
-import { fromDefinedNullable } from "@dfinity/utils";
+import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 export interface TokenFilters {
@@ -95,7 +95,7 @@ export const mapUserTokenToFungibleToken = (
         symbol: token.symbol?.toString() || "???",
         logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
         decimals: token.decimals || 8,
-        amount: BigInt(0), // Default to zero, would be updated from balance info
+        amount: fromNullable(token.balance) ? fromNullable(token.balance)! : BigInt(0),
         usdEquivalent: null, // Would be calculated based on amount and price
         usdConversionRate: price,
         default: defaultToken,

@@ -16,7 +16,7 @@ export function WalletToken({ token }: WalletTokenProps) {
     return (
         <article className="flex justify-between" onClick={navigateToDetailsPage}>
             <div className="flex flex-row items-center gap-2">
-                <AssetAvatar src={token.logo} symbol={token.symbol} className="w-9 h-9" />
+                <AssetAvatar src={token.logo} symbol={token.chain} className="w-9 h-9" />
 
                 <div className="flex flex-col gap-1.5">
                     <span className="leading-4">{token.symbol}</span>

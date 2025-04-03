@@ -226,6 +226,17 @@ pub struct TokenDto {
     pub balance: Option<u128>,
 }
 
+impl TokenDto {
+    pub fn get_address_from_id(&self) -> String {
+        // Extract the address from the token ID
+        if let Some(pos) = self.id.find(':') {
+            self.id[pos + 1..].to_string()
+        } else {
+            self.id.clone() // Return the full ID if no ':' is found
+        }
+    }
+}
+
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct UpdateBulkBalancesInput {
     pub token_balances: Vec<(String, u128)>,

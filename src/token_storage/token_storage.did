@@ -52,6 +52,7 @@ service : {
   initialize_user_tokens : () -> (Result);
   list_registry_tokens : () -> (Result_1) query;
   list_tokens : () -> (Result_1) query;
+  query_user_token : (text) -> (Result_1);
   register_token : (RegisterTokenInput) -> (Result_4);
   remove_token : (RemoveTokenInput) -> (Result);
   reset_user_tokens : (text) -> (Result);

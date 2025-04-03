@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@/components/ui/link";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { useIdentity } from "@nfid/identitykit/react";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { debounce } from "lodash";
 import { useTokenStore } from "@/stores/tokenStore";

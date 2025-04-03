@@ -12,7 +12,7 @@ export default function WalletPage() {
         tokens,
         isLoading,
         // TODO: add skeleton loading for balances
-        isLoadingBalances,
+        // isLoadingBalances,
     } = useTokens();
 
     // Calculate the total USD equivalent from the tokens

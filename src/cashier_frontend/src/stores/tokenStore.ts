@@ -28,6 +28,7 @@ interface TokenState {
     toggleTokenEnabled: (tokenId: string, enabled: boolean) => Promise<void>;
     refreshTokens: () => Promise<void>;
     refreshBalances: () => Promise<void>;
+    cacheBalances: (tokens: FungibleToken[]) => Promise<void>;
 }
 
 // Create the Zustand store
@@ -71,6 +72,9 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         throw new Error("Not implemented");
     },
     refreshBalances: async () => {
+        throw new Error("Not implemented");
+    },
+    cacheBalances: async () => {
         throw new Error("Not implemented");
     },
 }));

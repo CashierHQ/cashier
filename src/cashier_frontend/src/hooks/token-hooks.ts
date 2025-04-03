@@ -30,6 +30,8 @@ export function useTokenListQuery(identity: Identity | undefined) {
                 return tokenService.listTokens();
             }
 
+            console.log("Fetched tokens from backend", tokens);
+
             return tokens;
         },
         select: (data) => {
@@ -46,6 +48,13 @@ export function useTokenBalancesQuery(
     tokens: FungibleToken[] | undefined,
     identity: Identity | undefined,
 ) {
+    const updateBalanceMutation = useUpdateBalanceMutation(identity);
+
+    // Constants for localStorage
+    const LAST_CACHE_TIME_KEY = "lastTokenBalanceCacheTime";
+    const LAST_CACHED_BALANCES_KEY = "lastCachedTokenBalances";
+    const CACHE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes in milliseconds
+
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.balances(identity?.getPrincipal().toString()),
         queryFn: async () => {
@@ -55,7 +64,7 @@ export function useTokenBalancesQuery(
 
             const tokenUtilService = new TokenUtilService(identity);
 
-            // Fetch balances in parallel
+            // Fetch balances in parallel (unchanged)
             const tokenPromises = tokens.map(async (token) => {
                 try {
                     const balance = await tokenUtilService.balanceOf(token.address);
@@ -70,10 +79,72 @@ export function useTokenBalancesQuery(
                 }
             });
 
-            return Promise.all(tokenPromises);
+            const tokensWithBalances = await Promise.all(tokenPromises);
+
+            // Get the last cache time from localStorage
+            const lastCacheTimeString = localStorage.getItem(LAST_CACHE_TIME_KEY);
+            const lastCacheTime = lastCacheTimeString ? parseInt(lastCacheTimeString, 10) : 0;
+
+            // Get the last cached balances
+            const lastCachedBalancesString = localStorage.getItem(LAST_CACHED_BALANCES_KEY);
+            const lastCachedBalances = lastCachedBalancesString
+                ? JSON.parse(lastCachedBalancesString)
+                : {};
+
+            // Check if any balances have changed
+            const balancesChanged = tokensWithBalances.some((token) => {
+                const tokenId = token.address;
+                const currentAmount = token.amount ? token.amount.toString() : "0";
+                const lastAmount = lastCachedBalances[tokenId] || "0";
+
+                return currentAmount !== lastAmount;
+            });
+
+            const currentTime = Date.now();
+            const timeThresholdMet = currentTime - lastCacheTime > CACHE_THRESHOLD_MS;
+
+            // Cache if either balances changed OR time threshold met
+            if (balancesChanged || timeThresholdMet) {
+                try {
+                    const balancesToCache = tokensWithBalances
+                        .filter((token) => token.amount !== undefined)
+                        .map((token) => ({
+                            tokenId: token.address,
+                            balance: token.amount,
+                        }));
+
+                    if (balancesToCache.length > 0) {
+                        // Update the backend
+                        updateBalanceMutation.mutate(balancesToCache);
+
+                        // Save the current time
+                        localStorage.setItem(LAST_CACHE_TIME_KEY, currentTime.toString());
+
+                        // Save the current balances
+                        const balancesMap = balancesToCache.reduce(
+                            (acc, { tokenId, balance }) => {
+                                acc[tokenId] = balance.toString();
+                                return acc;
+                            },
+                            {} as Record<string, string>,
+                        );
+
+                        localStorage.setItem(LAST_CACHED_BALANCES_KEY, JSON.stringify(balancesMap));
+
+                        console.log(
+                            `Caching balances to backend (${balancesChanged ? "balances changed" : "time threshold reached"})`,
+                        );
+                    }
+                } catch (error) {
+                    console.error("Failed to cache balances:", error);
+                    // Continue even if caching fails
+                }
+            }
+
+            return tokensWithBalances;
         },
         enabled: !!identity && !!tokens && tokens.length > 0,
-        staleTime: 60 * 1000, // 1 minute (balances change more frequently)
+        staleTime: 60 * 1000, // 1 minute (balances fetching frequency stays the same)
     });
 }
 
@@ -91,6 +162,24 @@ export function useAddTokenMutation(identity: Identity | undefined) {
         },
         onSuccess: () => {
             // Invalidate token queries
+            queryClient.invalidateQueries({ queryKey: TOKEN_QUERY_KEYS.all });
+        },
+    });
+}
+
+export function useUpdateBalanceMutation(identity: Identity | undefined) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (balances: { tokenId: string; balance: bigint }[]) => {
+            if (!identity) throw new Error("Not authenticated");
+
+            const tokenService = new TokenStorageService(identity);
+            await tokenService.updateBulkTokenBalance(balances);
+            return true;
+        },
+        onSuccess: () => {
+            // Optionally invalidate queries if needed
             queryClient.invalidateQueries({ queryKey: TOKEN_QUERY_KEYS.all });
         },
     });

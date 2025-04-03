@@ -6,8 +6,10 @@ import {
     useToggleTokenEnabledMutation,
     useTokenBalancesQuery,
     useTokenListQuery,
+    useUpdateBalanceMutation,
 } from "./token-hooks";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 // Main hook that components should use
 export function useTokens() {
@@ -22,6 +24,7 @@ export function useTokens() {
     const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data, identity);
     const addTokenMutation = useAddTokenMutation(identity);
     const toggleTokenEnabledMutation = useToggleTokenEnabledMutation(identity);
+    const updateBalanceMutation = useUpdateBalanceMutation(identity);
 
     // Sync React Query to Zustand
     useEffect(() => {
@@ -56,6 +59,22 @@ export function useTokens() {
         await addTokenMutation.mutateAsync(input);
     };
 
+    // Add a new method to manually update balances in the backend
+    const cacheBalances = async (tokens: FungibleToken[]) => {
+        if (!tokens || tokens.length === 0) return;
+
+        const balancesToCache = tokens
+            .filter((token) => token.amount !== undefined)
+            .map((token) => ({
+                tokenId: token.address,
+                balance: token.amount,
+            }));
+
+        if (balancesToCache.length > 0) {
+            await updateBalanceMutation.mutateAsync(balancesToCache);
+        }
+    };
+
     const toggleTokenEnabled = async (tokenId: string, enabled: boolean) => {
         await toggleTokenEnabledMutation.mutateAsync({ tokenId, enabled });
     };
@@ -75,6 +94,7 @@ export function useTokens() {
             toggleTokenEnabled,
             refreshTokens,
             refreshBalances,
+            cacheBalances,
         });
     }, []);
 
