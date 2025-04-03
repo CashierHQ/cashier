@@ -18,9 +18,8 @@ export default function ManageTokensPage() {
 
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
-    const identity = useIdentity();
 
-    const { tokens, searchTokens, isLoading } = useTokenStore(identity);
+    const { tokens, searchTokens, isLoading } = useTokenStore();
 
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [displayedTokens, setDisplayedTokens] = useState<FungibleToken[]>(tokens);

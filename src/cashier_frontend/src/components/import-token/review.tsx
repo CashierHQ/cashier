@@ -26,7 +26,6 @@ interface ImportTokenReviewProps {
 export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
 
-    const identity = useIdentity();
     const { addToken } = useTokenStore();
 
     function handleImport() {
