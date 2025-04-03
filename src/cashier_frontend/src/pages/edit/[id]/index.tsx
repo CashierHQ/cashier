@@ -118,11 +118,11 @@ export default function LinkPage() {
     return (
         <div
             className={cn(
-                "w-screen h-screen flex flex-col items-center py-3",
-                "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
+                "w-screen h-screen flex flex-col items-center py-3 overflow-hidden",
+                "md:h-[90vh] md:w-[40%] md:max-w-[600px] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
             )}
         >
-            <div className="w-11/12 h-full flex flex-col sm:max-w-[400px] md:max-w-[100%]">
+            <div className="w-11/12 h-full flex flex-col relative overflow-hidden">
                 <MultiStepForm initialStep={getInitialStep(linkData?.link?.state)}>
                     <MultiStepForm.Header onClickBack={handleBackstep} />
 
