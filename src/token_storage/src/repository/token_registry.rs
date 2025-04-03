@@ -1,5 +1,3 @@
-use candid::Principal;
-
 use crate::types::{Chain, RegisterTokenInput, RegistryToken, TokenId};
 
 use super::TOKEN_REGISTRY_STORE;
@@ -28,7 +26,6 @@ impl TokenRegistryRepository {
             name: input.name,
             decimals: input.decimals,
             chain,
-            logo_url: input.logo_url,
             is_default: input.is_default.unwrap_or(false),
         };
 

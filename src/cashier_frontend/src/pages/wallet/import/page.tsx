@@ -23,11 +23,7 @@ export default function ImportTokenPage() {
     }>();
 
     function goBack() {
-        if (importData) {
-            navigate(-1);
-        } else {
-            navigate(-1);
-        }
+        navigate(-1);
     }
 
     const onSubmitImportToken = async (data: ImportTokenFormData) => {

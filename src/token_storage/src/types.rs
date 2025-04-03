@@ -88,7 +88,6 @@ pub struct RegistryToken {
     pub name: String,
     pub decimals: u8,
     pub chain: Chain,
-    pub logo_url: Option<String>,
     pub is_default: bool,
 }
 
@@ -192,8 +191,8 @@ pub struct UserPreferenceInput {
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct AddTokenInput {
     pub chain: String,
-    pub token_id: Option<String>,
     pub ledger_id: Option<LedgerId>,
+    pub index_id: Option<IndexId>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -209,7 +208,6 @@ pub struct RegisterTokenInput {
     pub symbol: String,
     pub name: String,
     pub decimals: u8,
-    pub logo_url: Option<String>,
     pub is_default: Option<bool>,
 }
 

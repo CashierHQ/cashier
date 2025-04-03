@@ -1,7 +1,7 @@
 type AddTokenInput = record {
-  token_id : opt text;
   chain : text;
   ledger_id : opt principal;
+  index_id : opt principal;
 };
 type Chain = variant { IC };
 type RegisterTokenInput = record {
@@ -10,7 +10,6 @@ type RegisterTokenInput = record {
   name : text;
   ledger_id : opt principal;
   is_default : opt bool;
-  logo_url : opt text;
   index_id : opt principal;
   symbol : text;
 };

@@ -3,6 +3,7 @@ use candid::Principal;
 use ic_cdk::{query, update};
 
 use crate::{
+    ext::icrc::Service,
     repository::{
         balance_cache::BalanceCacheRepository, token_registry::TokenRegistryRepository,
         user_preference::UserPreferenceRepository, user_token::TokenRepository,
@@ -37,16 +38,17 @@ pub fn list_registry_tokens() -> Result<Vec<TokenDto>, String> {
 }
 
 // User Token Management APIs
+// if token is not found, add it to registry
 #[update]
-pub fn add_token(input: AddTokenInput) -> Result<(), String> {
+pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
         return Err("Not allowed for anonymous calls".to_string());
     }
 
-    let token_id = match input.token_id {
-        Some(id) => id,
+    let token_id = match input.ledger_id.clone() {
+        Some(id) => id.to_string(),
         None => {
             // Generate token ID if not provided
             let chain = crate::types::Chain::from_str(&input.chain)
@@ -58,8 +60,43 @@ pub fn add_token(input: AddTokenInput) -> Result<(), String> {
     };
 
     let registry = TokenRegistryRepository::new();
+
     if registry.get_token(&token_id).is_none() {
-        return Err(format!("Token with ID {} not found in registry", token_id));
+        let ledger_pid = input
+            .ledger_id
+            .ok_or("Ledger ID is required for IC chain")?;
+        let service = Service::new(ledger_pid);
+
+        let (symbol,) = service.icrc_1_symbol().await.map_err(|(code, msg)| {
+            format!(
+                "Failed to get token symbol from ledger: {:#?} , {:#?}",
+                code, msg
+            )
+        })?;
+        let (name,) = service.icrc_1_name().await.map_err(|(code, msg)| {
+            format!(
+                "Failed to get token name from ledger: {:#?} , {:#?}",
+                code, msg
+            )
+        })?;
+        let (decimals,) = service.icrc_1_decimals().await.map_err(|(code, msg)| {
+            format!(
+                "Failed to get token decimals from ledger: {:#?} , {:#?}",
+                code, msg
+            )
+        })?;
+
+        registry
+            .register_token(RegisterTokenInput {
+                chain: input.chain,
+                ledger_id: Some(ledger_pid),
+                index_id: input.index_id,
+                symbol,
+                name,
+                decimals,
+                is_default: Some(false),
+            })
+            .map_err(|e| format!("Failed to register token: {}", e))?;
     }
 
     let repository = TokenRepository::new();

@@ -1,5 +1,5 @@
 use candid::Principal;
-use ic_cdk::{query, update};
+use ic_cdk::update;
 
 use crate::{
     repository::{
@@ -87,7 +87,6 @@ pub fn initialize_registry() -> Result<(), String> {
             symbol: "ICP".to_string(),
             name: "Internet Computer".to_string(),
             decimals: 8,
-            logo_url: None,
             is_default: Some(true),
         },
         RegisterTokenInput {
@@ -97,7 +96,6 @@ pub fn initialize_registry() -> Result<(), String> {
             symbol: "ckBTC".to_string(),
             name: "Chain Key Bitcoin".to_string(),
             decimals: 8,
-            logo_url: None,
             is_default: Some(true),
         },
         RegisterTokenInput {
@@ -107,7 +105,6 @@ pub fn initialize_registry() -> Result<(), String> {
             symbol: "ckETH".to_string(),
             name: "Chain Key Ethereum".to_string(),
             decimals: 18,
-            logo_url: None,
             is_default: Some(true),
         },
         RegisterTokenInput {
@@ -117,7 +114,6 @@ pub fn initialize_registry() -> Result<(), String> {
             symbol: "ckUSDC".to_string(),
             name: "Chain Key USD Coin".to_string(),
             decimals: 8,
-            logo_url: None,
             is_default: Some(true),
         },
         RegisterTokenInput {
@@ -127,7 +123,6 @@ pub fn initialize_registry() -> Result<(), String> {
             symbol: "tICP".to_string(),
             name: "Test Internet Computer".to_string(),
             decimals: 8,
-            logo_url: None,
             is_default: Some(true),
         },
     ];
