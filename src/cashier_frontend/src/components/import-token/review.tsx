@@ -6,10 +6,11 @@ import { Button } from "../ui/button";
 import { mapChainToLogo, mapChainToPrettyName } from "@/utils/map/chain.map";
 import { Label } from "../ui/label";
 import { IconInput } from "../icon-input";
-import { useIdentity } from "@nfid/identitykit/react";
 import { AddTokenInput } from "../../../../declarations/token_storage/token_storage.did";
 import { Principal } from "@dfinity/principal";
-import { useTokenStore } from "@/stores/tokenStore";
+import { toNullable } from "@dfinity/utils";
+import { useTokens } from "@/hooks/useTokens";
+import { useNavigate } from "react-router-dom";
 
 interface ImportTokenReviewProps {
     token: {
@@ -19,6 +20,7 @@ interface ImportTokenReviewProps {
         chain: string;
         address: string;
         decimals: number;
+        index_id?: string;
     };
     // onImport?: (data: ImportTokenFormData) => void;
 }
@@ -26,20 +28,20 @@ interface ImportTokenReviewProps {
 export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
 
-    const { addToken } = useTokenStore();
+    const navigate = useNavigate();
+
+    const { addToken } = useTokens();
 
     function handleImport() {
         const addTokenInput: AddTokenInput = {
-            symbol: [token.symbol],
             chain: token.chain,
-            decimals: [token.decimals],
-            ledger_id: [Principal.fromText(token.address)],
-            index_id: [Principal.fromText(token.address)],
-            enabled: [true],
-            unknown: [true],
+            ledger_id: toNullable(Principal.fromText(token.address)),
+            index_id: toNullable(token.index_id ? Principal.fromText(token.index_id) : undefined),
         };
 
         addToken(addTokenInput);
+
+        navigate(-2);
     }
 
     return (

@@ -57,6 +57,8 @@ export function useTokens() {
     // Implement operation functions
     const addToken = async (input: AddTokenInput) => {
         await addTokenMutation.mutateAsync(input);
+        await tokenListQuery.refetch();
+        await tokenBalancesQuery.refetch();
     };
 
     // Add a new method to manually update balances in the backend
@@ -86,6 +88,17 @@ export function useTokens() {
     const refreshBalances = async () => {
         await tokenBalancesQuery.refetch();
     };
+
+    useEffect(() => {
+        // Update tokens - use tokens with balances if available
+        if (tokenListQuery.data) {
+            setTokens(tokenListQuery.data);
+        }
+        // Log for debugging
+    }, [
+        tokenListQuery.data,
+        // other dependencies
+    ]);
 
     // Update operation functions in Zustand
     useEffect(() => {

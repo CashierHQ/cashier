@@ -48,14 +48,16 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     }
 
     let token_id = match input.ledger_id.clone() {
-        Some(id) => id.to_string(),
-        None => {
+        Some(id) => {
             // Generate token ID if not provided
             let chain = crate::types::Chain::from_str(&input.chain)
                 .map_err(|e| format!("Invalid chain: {}", e))?;
 
-            crate::types::RegistryToken::generate_id(&chain, input.ledger_id.as_ref())
+            crate::types::RegistryToken::generate_id(&chain, Some(&id))
                 .map_err(|e| format!("Failed to generate token ID: {}", e))?
+        }
+        None => {
+            return Err("Ledger ID is required for IC chain".to_string());
         }
     };
 
@@ -86,6 +88,14 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
             )
         })?;
 
+        ic_cdk::println!(
+            "Registering token with ID: {}, symbol: {}, name: {}, decimals: {}",
+            token_id,
+            symbol,
+            name,
+            decimals
+        );
+
         registry
             .register_token(RegisterTokenInput {
                 chain: input.chain,
@@ -100,6 +110,11 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     }
 
     let repository = TokenRepository::new();
+    ic_cdk::println!(
+        "Adding token with ID: {} to user: {}",
+        token_id,
+        caller.to_text()
+    );
     repository.add_token(caller.to_text(), token_id)
 }
 

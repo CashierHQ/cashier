@@ -157,12 +157,20 @@ export function useAddTokenMutation(identity: Identity | undefined) {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            await tokenService.addToken(input);
+            const res = await tokenService.addToken(input);
+            console.log("Token added", res);
             return true;
         },
         onSuccess: () => {
-            // Invalidate token queries
-            queryClient.invalidateQueries({ queryKey: TOKEN_QUERY_KEYS.all });
+            // Properly invalidate token queries
+            queryClient.invalidateQueries({
+                queryKey: TOKEN_QUERY_KEYS.all, // Invalidate all token-related queries
+            });
+
+            // Or more specifically:
+            queryClient.invalidateQueries({
+                queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
+            });
         },
     });
 }

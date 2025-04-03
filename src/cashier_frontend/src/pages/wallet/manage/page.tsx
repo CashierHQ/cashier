@@ -9,7 +9,7 @@ import { Link } from "@/components/ui/link";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { debounce } from "lodash";
-import { useTokenStore } from "@/stores/tokenStore";
+import { useTokens } from "@/hooks/useTokens";
 
 export default function ManageTokensPage() {
     const { t } = useTranslation();
@@ -18,7 +18,7 @@ export default function ManageTokensPage() {
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
 
-    const { tokens, searchTokens, isLoading } = useTokenStore();
+    const { tokens, searchTokens, isLoading } = useTokens();
 
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [displayedTokens, setDisplayedTokens] = useState<FungibleToken[]>(tokens);
@@ -41,6 +41,7 @@ export default function ManageTokensPage() {
 
     // Update displayed tokens when tokens change
     useEffect(() => {
+        console.log("[ManageTokensPage] Tokens loaded:", tokens);
         if (searchQuery.trim()) {
             debouncedSearch(searchQuery);
         } else {
