@@ -25,6 +25,7 @@ import { useButtonState } from "@/hooks/useButtonState";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
 }
@@ -83,7 +84,9 @@ export default function LinkTemplate({
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{t("create.linkName")}</FormLabel>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <FormLabel>{t("create.linkName")}</FormLabel>
+                                    </div>
                                     <FormControl>
                                         <Input
                                             placeholder={t("create.linkNamePlaceholder")}
@@ -95,8 +98,11 @@ export default function LinkTemplate({
                             )}
                         />
 
-                        <div className="w-full h-[1px] bg-gray-200 my-3" />
-                        <FormLabel className="mx-1 mb-2">{t("create.linkType")}</FormLabel>
+                        <Separator className="mt-3 mb-4 max-w-[97%] mx-auto" />
+
+                        <div className="flex justify-between items-center mb-2">
+                            <FormLabel>{t("create.linkType")}</FormLabel>
+                        </div>
                     </div>
 
                     <div className="flex flex-col items-center justify-center bg-lightgreen flex-1 rounded-md py-4 mb-4 h-full">
