@@ -5,7 +5,7 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
     {
         label: "Claim",
         header: "Tip",
-        src: "/icpLogo.png",
+        src: "/link_tipping.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
         title: "Tipping crypto",
     },

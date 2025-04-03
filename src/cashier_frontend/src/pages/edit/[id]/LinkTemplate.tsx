@@ -25,6 +25,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
+import { useMemo } from "react";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
 }
@@ -44,6 +45,10 @@ export default function LinkTemplate({
     const { link, setLink, updateLink } = useCreateLinkStore();
     const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
     const { isButtonDisabled, setButtonDisabled } = useButtonState();
+
+    const selectedTemplate = useMemo(() => {
+        return LINK_TEMPLATES.find((template) => template.label === link?.linkType);
+    }, [link?.linkType]);
 
     const carousel = useCarousel();
 
