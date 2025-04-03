@@ -1,8 +1,8 @@
 import {
     Chain as BackendChain,
+    TokenDto,
     UserPreference,
     UserPreferenceInput,
-    UserTokenDto,
 } from "../../../declarations/token_storage/token_storage.did";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
@@ -16,7 +16,7 @@ export interface TokenFilters {
 }
 
 // Helper function to create a key for token balances
-export const createTokenKey = (token: UserTokenDto): string => {
+export const createTokenKey = (token: TokenDto): string => {
     if (token.icrc_ledger_id) {
         return token.icrc_ledger_id.toString();
     }
@@ -81,7 +81,7 @@ export const mapStringToBackendChain = (chain: string): BackendChain => {
 
 // Helper function to map UserToken to FungibleToken
 export const mapUserTokenToFungibleToken = (
-    token: UserTokenDto,
+    token: TokenDto,
     prices: Record<string, number> = {},
     defaultToken: boolean = false,
 ): FungibleToken => {
@@ -94,10 +94,11 @@ export const mapUserTokenToFungibleToken = (
         name: token.symbol?.toString() || "Unknown Token",
         symbol: token.symbol?.toString() || "???",
         logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
-        decimals: fromDefinedNullable(token.decimals) || 8,
+        decimals: token.decimals || 8,
         amount: BigInt(0), // Default to zero, would be updated from balance info
         usdEquivalent: null, // Would be calculated based on amount and price
         usdConversionRate: price,
         default: defaultToken,
+        enabled: token.enabled,
     };
 };

@@ -6,10 +6,10 @@ import { Button } from "../ui/button";
 import { mapChainToLogo, mapChainToPrettyName } from "@/utils/map/chain.map";
 import { Label } from "../ui/label";
 import { IconInput } from "../icon-input";
-import { useTokens } from "@/hooks/useToken";
 import { useIdentity } from "@nfid/identitykit/react";
 import { AddTokenInput } from "../../../../declarations/token_storage/token_storage.did";
 import { Principal } from "@dfinity/principal";
+import { useTokenStore } from "@/stores/tokenStore";
 
 interface ImportTokenReviewProps {
     token: {
@@ -27,7 +27,7 @@ export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
 
     const identity = useIdentity();
-    const { addToken } = useTokens(identity);
+    const { addToken } = useTokenStore();
 
     function handleImport() {
         const addTokenInput: AddTokenInput = {

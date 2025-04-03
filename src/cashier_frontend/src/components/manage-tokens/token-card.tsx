@@ -3,16 +3,13 @@ import { AssetAvatar } from "../ui/asset-avatar";
 import Switch from "../ui/switch";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { mapChainToLogo } from "@/utils/map/chain.map";
-import { useTokens } from "@/hooks/useToken";
-import { useIdentity } from "@nfid/identitykit/react";
 
 export interface ManageTokensTokenProps {
     token: FungibleToken;
 }
 
 export function ManageTokensToken({ token }: ManageTokensTokenProps) {
-    const identity = useIdentity();
-    const { toggleTokenEnabled, isTogglingToken } = useTokens(identity);
+    // const { toggleTokenEnabled, isTogglingToken } = useTokenStore(identity);
 
     // Use token's enabled status from the API instead of local state
     const [isVisible, setIsVisible] = useState<boolean>(token.enabled ?? true);
@@ -39,7 +36,7 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
         setIsVisible(newVisibility);
 
         // Call the API to update the token visibility
-        toggleTokenEnabled(token.address, newVisibility);
+        // toggleTokenEnabled(token.address, newVisibility);
     };
 
     return (
@@ -72,7 +69,7 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
             <Switch.Root
                 checked={isVisible}
                 onClick={handleToggle}
-                disabled={isTogglingToken || isDefaultToken}
+                disabled={false || isDefaultToken}
                 className={isDefaultToken ? "opacity-70 cursor-not-allowed" : ""}
             >
                 <Switch.Thumb />

@@ -67,6 +67,45 @@ export class TokenUtilService {
         }
     }
 
+    async batchBalanceOf(tokenAddresses: Principal[]) {
+        const tasks = tokenAddresses.map(async (tokenAddress) => {
+            const ledgerCanister = IcrcLedgerCanister.create({
+                agent: this.agent,
+                canisterId: tokenAddress,
+            });
+
+            const pid = this.identity?.getPrincipal().toString() ?? "";
+
+            try {
+                const balance = await ledgerCanister.balance({
+                    owner: Principal.fromText(pid),
+                });
+                return { tokenAddress, balance };
+            } catch (error) {
+                console.error(`Error fetching balance for ${tokenAddress.toString()}:`, error);
+                // Return the original token address with zero balance when there's an error
+                return { tokenAddress, balance: BigInt(0) };
+            }
+        });
+
+        const results = await Promise.allSettled(tasks);
+
+        // Process results, preserving the original tokenAddress even for rejected promises
+        const balances = results.map((result, index) => {
+            if (result.status === "fulfilled") {
+                return result.value;
+            } else {
+                // For rejected promises, use the original tokenAddress from our input array
+                return {
+                    tokenAddress: tokenAddresses[index],
+                    balance: BigInt(0),
+                };
+            }
+        });
+
+        return balances;
+    }
+
     // the amount is in human readable format
     async transferTo(receiverAddress: string, tokenAddress: string, amount: number) {
         const ledgerCanister = IcrcLedgerCanister.create({

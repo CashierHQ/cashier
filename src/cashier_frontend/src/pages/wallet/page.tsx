@@ -2,16 +2,18 @@ import { WalletHero } from "@/components/wallet/hero";
 import { WalletTabs } from "@/components/wallet/tabs";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIdentity } from "@nfid/identitykit/react";
-import { useMemo } from "react";
-import { useTokens } from "@/hooks/useToken";
+import { useEffect, useMemo } from "react";
+import { useTokens } from "@/hooks/useTokens";
 
 export default function WalletPage() {
     const responsive = useResponsive();
-    const identity = useIdentity();
 
-    // Use unified tokens hook with automatic 30s refresh
-    const { tokens, isLoading } = useTokens(identity, { refetchInterval: 30000, enabled: true });
+    const {
+        tokens,
+        isLoading,
+        // TODO: add skeleton loading for balances
+        isLoadingBalances,
+    } = useTokens();
 
     // Calculate the total USD equivalent from the tokens
     const totalUsdEquivalent = useMemo(() => {
@@ -20,6 +22,10 @@ export default function WalletPage() {
         return tokens.reduce((total, token) => {
             return total + (token.usdEquivalent || 0);
         }, 0);
+    }, [tokens]);
+
+    useEffect(() => {
+        console.log("Tokens loaded:", tokens);
     }, [tokens]);
 
     // Show loading skeleton when tokens are loading

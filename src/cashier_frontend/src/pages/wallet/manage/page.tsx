@@ -7,10 +7,10 @@ import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@/components/ui/link";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { useTokens } from "@/hooks/useToken";
 import { useIdentity } from "@nfid/identitykit/react";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { debounce } from "lodash";
+import { useTokenStore } from "@/stores/tokenStore";
 
 export default function ManageTokensPage() {
     const { t } = useTranslation();
@@ -20,10 +20,7 @@ export default function ManageTokensPage() {
     const goBack = () => navigate("/wallet");
     const identity = useIdentity();
 
-    const { tokens, searchTokens, isLoading } = useTokens(identity, {
-        refetchInterval: 30000,
-        enabled: true,
-    });
+    const { tokens, searchTokens, isLoading } = useTokenStore(identity);
 
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [displayedTokens, setDisplayedTokens] = useState<FungibleToken[]>(tokens);
