@@ -34,7 +34,7 @@ export class PriceService {
             const priceMap: Record<string, number> = {};
             for (const token of response.data.data.list) {
                 try {
-                    priceMap[token.ledgerId] = parseFloat(token.price);
+                    priceMap[token.ledgerId] = Number(parseFloat(token.price).toFixed(7));
                 } catch (e) {
                     console.warn(
                         `Failed to parse price for ${token.symbol} (${token.ledgerId})`,

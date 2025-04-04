@@ -24,7 +24,7 @@ export function WalletToken({ token }: WalletTokenProps) {
                     <span className="text-grey text-xs font-light leading-none">
                         {token.usdConversionRate === null
                             ? "-"
-                            : `$${token.usdConversionRate.toFixed(6)}`}
+                            : `$${prettyNumber(token.usdConversionRate)}`}
                     </span>
                 </div>
             </div>

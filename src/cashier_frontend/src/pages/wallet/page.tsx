@@ -19,9 +19,11 @@ export default function WalletPage() {
     const totalUsdEquivalent = useMemo(() => {
         if (!filteredTokens || filteredTokens.length === 0) return 0;
 
-        return filteredTokens.reduce((total, token) => {
+        const total = filteredTokens.reduce((total, token) => {
             return total + (token.usdEquivalent || 0);
         }, 0);
+
+        return Number(total.toFixed(2));
     }, [filteredTokens]);
 
     // Show loading skeleton when tokens are loading
