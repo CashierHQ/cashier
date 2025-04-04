@@ -19,6 +19,7 @@ import { getTokenImage } from "@/utils";
 import { FormLabel } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { useResponsive } from "@/hooks/responsive-hook";
+import PhonePreview from "@/components/ui/phone-preview";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -93,26 +94,7 @@ export default function LinkPreview({
                 ? getTokenImage(link?.asset_info?.[0].address ?? "")
                 : link.image;
 
-        return (
-            <div className="flex flex-col items-center justify-center mb-6 mt-4">
-                <div className="relative h-[320px] aspect-[9/16]">
-                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-5 bg-gray-700 rounded-b-lg z-10"></div>
-                    <div className="h-full w-full border-[6px] border-gray-700 rounded-3xl bg-white overflow-hidden flex flex-col p-2">
-                        <img src="logo.svg" className="w-[50%] mx-auto mt-6 mb-2" />
-                        <div className="bg-lightgreen px-2 py-4 rounded-xl flex flex-col items-center justify-center">
-                            <img src={src} alt={link.title} className="w-[50%] object-contain" />
-                            <div className="flex-1 p-4 flex flex-col">
-                                <h3 className="font-semibold mb-2 text-center">{link.title}</h3>
-                                <p className="text-[10px] text-gray-600 text-center">{message}</p>
-                            </div>
-                            <button className="bg-green text-white rounded-full w-full py-1 text-[10px]">
-                                Claim
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        return <PhonePreview src={src} title={link.title} message={message} />;
     };
 
     const handleSetLinkToActive = async () => {
@@ -126,10 +108,12 @@ export default function LinkPreview({
         <div
             className={`w-full flex flex-col h-full ${responsive.isSmallDevice ? "justify-between" : "gap-4"}`}
         >
-            <div className="flex justify-between items-center mb-2">
-                <Label>{t("create.preview")}</Label>
+            <div className="flex flex-col">
+                <div className="flex justify-between items-center mb-2">
+                    <Label>{t("create.preview")}</Label>
+                </div>
+                {renderLinkCard()}
             </div>
-            {renderLinkCard()}
 
             <LinkPreviewCashierFeeSection
                 intents={feeData ?? []}
