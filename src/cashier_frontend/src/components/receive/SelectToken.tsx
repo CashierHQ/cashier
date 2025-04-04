@@ -5,11 +5,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import { Spinner } from "@/components/ui/spinner";
 import { AssetSelectItem } from "@/components/asset-select";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTokens } from "@/hooks/useTokens";
 
 interface SelectTokenProps {
     onSelect: (token: AssetSelectItem) => void;
@@ -17,28 +17,34 @@ interface SelectTokenProps {
 }
 
 export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
-    const { isLoadingAssets, assets: tokenList } = useUserAssets();
+    const { isLoading, filteredTokens } = useTokens();
+
+    console.log("[SelectToken] selectedToken", selectedToken);
 
     const handleValueChange = (value: string) => {
-        const token = tokenList?.find((t) => t.tokenAddress === value);
+        const token = filteredTokens?.find((t) => t.id === value);
+
+        console.log("[selectedToken] token", token);
+        console.log("[selectedToken] value", value);
+
         if (token) {
             onSelect(token);
         }
     };
 
-    if (isLoadingAssets) {
+    if (isLoading) {
         return <Spinner width={26} height={26} />;
     }
 
     return (
-        <Select value={selectedToken?.tokenAddress} onValueChange={handleValueChange}>
+        <Select value={selectedToken?.id} onValueChange={handleValueChange}>
             <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Token">
                     {selectedToken && (
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage
-                                    src={`${IC_EXPLORER_IMAGES_PATH}${selectedToken.tokenAddress.toLowerCase()}`}
+                                    src={`${IC_EXPLORER_IMAGES_PATH}${selectedToken.address.toLowerCase()}`}
                                     alt={selectedToken.name}
                                 />
                                 <AvatarFallback>
@@ -51,12 +57,12 @@ export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
                 </SelectValue>
             </SelectTrigger>
             <SelectContent>
-                {tokenList?.map((token) => (
-                    <SelectItem key={token.tokenAddress} value={token.tokenAddress} className="">
+                {filteredTokens?.map((token) => (
+                    <SelectItem key={token.address} value={token.id} className="">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage
-                                    src={`${IC_EXPLORER_IMAGES_PATH}${token.tokenAddress.toLowerCase()}`}
+                                    src={`${IC_EXPLORER_IMAGES_PATH}${token.address.toLowerCase()}`}
                                     alt={token.name}
                                 />
                                 <AvatarFallback>

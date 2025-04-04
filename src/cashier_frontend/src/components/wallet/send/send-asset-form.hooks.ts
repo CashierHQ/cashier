@@ -7,19 +7,16 @@ import { useCallback, useEffect, useMemo } from "react";
 import { AssetSelectItem } from "@/components/asset-select";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { mapAPITokenModelToAssetSelectModel, UserToken } from "@/services/icExplorer.service";
-import { useIdentity } from "@nfid/identitykit/react";
 import * as z from "zod";
 import { TokenProviderService } from "@/services/tokenProviderService";
-import { useWalletAddress } from "@/hooks/useWalletAddress";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { Identity } from "@dfinity/agent";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ASSET_LIST } from "@/services/tokenProviderService/devTokenProvider.service";
 
 export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
     return z
         .object({
-            tokenAddress: z.string().min(1, { message: "Asset is required" }),
+            address: z.string().min(1, { message: "Asset is required" }),
             amount: z.bigint(),
             assetNumber: z
                 .number({ message: "Must input number" })
@@ -49,7 +46,7 @@ export function useWalletSendAssetForm(
         defaultValues: defaultValues,
     });
 
-    const { data: tokenData } = useTokenMetadataQuery(form.getValues("tokenAddress"));
+    const { data: tokenData } = useTokenMetadataQuery(form.getValues("address"));
 
     const assetNumber = form.watch("assetNumber");
 
@@ -71,7 +68,7 @@ const fetchAssetListAmounts = async (identity: Identity, assetList: AssetSelectI
     const assetListWithAmounts = await Promise.all(
         assetList.map(async (asset) => {
             const amountFetched = await canisterUtilService.checkAccountBalance(
-                asset.tokenAddress,
+                asset.address,
                 identity?.getPrincipal().toString(),
             );
 
@@ -81,7 +78,7 @@ const fetchAssetListAmounts = async (identity: Identity, assetList: AssetSelectI
 
             const parsedAmount = await TokenUtilService.getHumanReadableAmount(
                 amountFetched,
-                asset.tokenAddress,
+                asset.address,
             );
 
             return {
@@ -105,24 +102,24 @@ export function useSelectedWalletSendAsset(
     assets: AssetSelectItem[] | undefined,
     form: UseFormReturn<WalletSendAssetFormSchema>,
 ) {
-    const tokenAddress = form.watch("tokenAddress");
-    const defaultTokenAddress = form.formState.defaultValues?.tokenAddress;
+    const tokenAddress = form.watch("address");
+    const defaultTokenAddress = form.formState.defaultValues?.address;
 
     useEffect(() => {
         if (assets && assets.length > 0) {
-            form.setValue("tokenAddress", defaultTokenAddress || assets[0].tokenAddress);
+            form.setValue("address", defaultTokenAddress || assets[0].address);
         }
     }, [assets]);
 
     const selectedAsset = useMemo(() => {
-        return assets?.find((asset) => asset.tokenAddress === tokenAddress);
+        return assets?.find((asset) => asset.address === tokenAddress);
     }, [assets, tokenAddress]);
 
     return selectedAsset;
 }
 
 export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAssetFormSchema>) {
-    const tokenAddress = form.watch("tokenAddress");
+    const tokenAddress = form.watch("address");
     const { data: rates } = useConversionRatesQuery(tokenAddress);
 
     const setTokenAmount = useCallback(
@@ -154,7 +151,7 @@ export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAsse
     );
 
     const setTokenAddress = useCallback((address: string) => {
-        form.setValue("tokenAddress", address, { shouldTouch: true });
+        form.setValue("address", address, { shouldTouch: true });
         form.clearErrors("amount");
         form.clearErrors("assetNumber");
         //form.clearErrors("usdNumber");

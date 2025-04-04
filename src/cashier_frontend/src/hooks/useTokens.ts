@@ -89,6 +89,7 @@ export function useTokens() {
         await updateToken();
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const removeToken = async (tokenId: string) => {
         // await removeTokenMutation.mutateAsync(tokenId);
         await tokenListQuery.refetch();
@@ -113,7 +114,6 @@ export function useTokens() {
 
     // Toggle a single token's visibility in preferences
     const toggleTokenVisibility = async (tokenId: string, hidden: boolean) => {
-        console.log("Toggling token visibility:", tokenId, hidden);
         setIsSyncPreferences(true);
         await toggleTokenVisibilityMutation.mutateAsync({ tokenId, hidden });
         await tokenListQuery.refetch();

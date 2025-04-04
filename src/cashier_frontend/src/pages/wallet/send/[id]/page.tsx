@@ -1,7 +1,6 @@
 import { AssetSelectItem } from "@/components/asset-select";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
-import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { BackHeader } from "@/components/ui/back-header";
 import { Clipboard } from "lucide-react";
@@ -22,58 +21,87 @@ import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import useToast from "@/hooks/useToast";
 import { CHAIN } from "@/services/types/enum";
 import { useSendAssetStore } from "@/stores/sendAssetStore";
-import { useIdentity } from "@nfid/identitykit/react";
 import { ChangeEvent, useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { MdOutlineContentPaste } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { SelectToken } from "@/components/receive/SelectToken";
-import { z } from "zod";
-import { convertDecimalBigIntToNumber, convertTokenAmountToNumber } from "@/utils";
 import { SendAssetConfirmationDrawer } from "@/components/wallet/send/confirm-send-asset-drawer";
-import { ActionModel } from "@/services/types/action.service.types";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
-import { Separator } from "@/components/ui/separator";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { TransactionStatus } from "@/services/types/wallet.types";
+import { useTokens } from "@/hooks/useTokens"; // Import the useTokens hook
 
 export default function SendTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const identity = useIdentity();
     const responsive = useResponsive();
     const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId?: string }>();
     const { metadata } = useTokenMetadata(tokenId);
     const { toastData, showToast, hideToast } = useToast();
-    const { assets: tokenList } = useUserAssets();
+
+    // Use the token store instead of useUserAssets
+    const { filteredTokens, refreshBalances } = useTokens();
     const [isDisabled, setIsDisabled] = useState(true);
 
     // Use the new sendAssetStore
     const {
-        // sendAssetInfo,
         transactionStatus,
-        // isConfirmationOpen,
         setSendAssetInfo,
         setTransactionStatus,
         openConfirmation,
         closeConfirmation,
         resetSendAsset,
-        // resetError
     } = useSendAssetStore();
 
-    const selectedToken = tokenList
-        ? tokenId
-            ? tokenList.find((token) => token.tokenAddress === tokenId) || {
-                  name: metadata?.symbol || "",
-                  tokenAddress: tokenId,
-                  amount: 0,
-              }
-            : tokenList[0]
-        : undefined;
+    // Ensure we refresh token balances when the page loads
+    useEffect(() => {
+        refreshBalances();
+    }, [refreshBalances]);
 
-    const form = useWalletSendAssetForm(tokenList ?? [], {
-        tokenAddress: tokenId ?? "",
+    // Map the token from filteredTokens - adjusting for property name differences
+    const selectedToken = useMemo(() => {
+        if (!filteredTokens || filteredTokens.length === 0) {
+            return tokenId
+                ? { name: metadata?.symbol || "", address: tokenId, amount: BigInt(0) }
+                : undefined;
+        }
+
+        if (tokenId) {
+            // Find token by address (which is stored as 'address' in FungibleToken)
+            const found = filteredTokens.find((token) => token.address === tokenId);
+            if (found) return found;
+
+            // If not found but we have tokenId, create a placeholder
+            return {
+                name: metadata?.symbol || "",
+                address: tokenId,
+                amount: BigInt(0),
+                symbol: metadata?.symbol || "",
+                chain: "IC",
+                decimals: metadata?.decimals || 8,
+                id: tokenId,
+            };
+        }
+
+        // Default to first token if no tokenId
+        return filteredTokens[0];
+    }, [filteredTokens, tokenId, metadata]);
+
+    // Convert the filteredTokens format to what the form expects
+    const mappedTokensForForm = useMemo(() => {
+        return (
+            filteredTokens?.map((token) => ({
+                address: token.address,
+                name: token.name,
+                symbol: token.symbol,
+                amount: token.amount,
+                id: token.id,
+            })) || []
+        );
+    }, [filteredTokens]);
+
+    const form = useWalletSendAssetForm(mappedTokensForForm, {
+        address: tokenId ?? "",
         amount: BigInt(0),
         assetNumber: 0,
     });
@@ -81,7 +109,7 @@ export default function SendTokenPage() {
     // Add effect to update form when token changes
     useEffect(() => {
         if (selectedToken && !tokenId) {
-            form.setValue("tokenAddress", selectedToken.tokenAddress);
+            form.setValue("address", selectedToken.address);
             form.setValue("assetNumber", 0);
             form.setValue("walletAddress", "");
         }
@@ -97,7 +125,7 @@ export default function SendTokenPage() {
     }, [form.watch("assetNumber"), form.watch("walletAddress"), form.formState.errors.assetNumber]);
 
     const handleTokenSelect = (token: AssetSelectItem) => {
-        navigate(`/wallet/send/${token.tokenAddress}`);
+        navigate(`/wallet/send/${token.address}`);
     };
 
     const [addressType, setAddressType] = useState<"principal" | "account">("principal");
@@ -131,12 +159,15 @@ export default function SendTokenPage() {
         if (
             selectedToken?.amount !== undefined &&
             metadata?.fee !== undefined &&
-            metadata.decimals !== undefined
+            selectedToken.decimals !== undefined
         ) {
-            const tokenAmount = Number(selectedToken.amount);
-            // Convert fee using the token's decimals
-            const feeAmount = Number(metadata.fee) / 10 ** metadata.decimals;
+            console.log("Selected token amount:", selectedToken);
+            const tokenAmount = Number(selectedToken.amount) / 10 ** selectedToken.decimals;
+            const feeAmount = Number(metadata.fee) / 10 ** selectedToken.decimals;
+
             const maxAvailable = Math.max(0, tokenAmount - feeAmount);
+
+            console.log("Max available amount:", maxAvailable);
             return maxAvailable;
         }
         return Number(selectedToken?.amount ?? 0);
@@ -164,11 +195,10 @@ export default function SendTokenPage() {
         setSendAssetInfo({
             amountNumber: data.assetNumber ?? 0,
             asset: {
-                address: selectedToken?.tokenAddress ?? "",
+                address: selectedToken?.address ?? "",
                 chain: CHAIN.IC,
                 symbol: metadata?.symbol ?? "",
                 decimals: metadata?.decimals ?? 8,
-                // logo: selectedToken?.logo
             },
             destinationAddress: data.walletAddress,
             // Optionally add fee information if available
@@ -218,7 +248,18 @@ export default function SendTokenPage() {
 
     const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
-    const isIcpToken = selectedToken?.tokenAddress === ICP_ADDRESS;
+    const isIcpToken = selectedToken?.address === ICP_ADDRESS;
+
+    // Map selectedToken to the format expected by SelectToken component
+    const mappedSelectedToken = selectedToken
+        ? ({
+              id: selectedToken.id,
+              address: selectedToken.address,
+              name: selectedToken.name,
+              symbol: selectedToken.symbol,
+              amount: selectedToken.amount,
+          } as unknown as AssetSelectItem)
+        : undefined;
 
     return (
         <div
@@ -228,174 +269,167 @@ export default function SendTokenPage() {
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader>
             <div id="content" className="my-5 h-full">
-                <>
-                    <Form {...form}>
-                        <form
-                            onSubmit={form.handleSubmit((data) => {
-                                onSubmitSend(data);
-                            })}
-                            className="h-full flex flex-col"
-                        >
+                <Form {...form}>
+                    <form
+                        onSubmit={form.handleSubmit((data) => {
+                            onSubmitSend(data);
+                        })}
+                        className="h-full flex flex-col"
+                    >
+                        <FormField
+                            name="address"
+                            control={form.control}
+                            render={() => (
+                                <FormItem>
+                                    <FormLabel>{t("wallet.send.sendToken")}</FormLabel>
+                                    <FormControl>
+                                        <SelectToken
+                                            selectedToken={mappedSelectedToken}
+                                            onSelect={handleTokenSelect}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="mt-5 mb-6 h-px bg-gray-200 w-full max-w-[97%] mx-auto" />
+
+                        <div className="flex flex-col w-full gap-5">
                             <FormField
-                                name="tokenAddress"
                                 control={form.control}
-                                render={() => (
+                                name={"assetNumber"}
+                                render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>{t("wallet.send.sendToken")}</FormLabel>
+                                        <div className="flex gap-2 items-center mb-2">
+                                            <FormLabel>{t("create.amount")}</FormLabel>
+                                            {selectedToken?.amount !== undefined && (
+                                                <div className="text-xs text-grey/60">
+                                                    (includes network fee)
+                                                </div>
+                                            )}
+                                        </div>
                                         <FormControl>
-                                            <SelectToken
-                                                selectedToken={selectedToken}
-                                                onSelect={handleTokenSelect}
+                                            <IconInput
+                                                type="number"
+                                                placeholder="Enter amount"
+                                                step="any"
+                                                isCurrencyInput={false}
+                                                rightIcon={
+                                                    <div className="font-semibold text-[#36A18B]">
+                                                        {t("wallet.send.max")}
+                                                    </div>
+                                                }
+                                                onRightIconClick={handleMaxAmount}
+                                                {...field}
+                                                value={form.getValues("assetNumber") ?? ""}
+                                                onChange={handleAmountInputChange}
+                                                className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                                             />
                                         </FormControl>
-                                        <FormMessage />
+                                        <div className="flex justify-between items-center">
+                                            <div className="text-xs text-grey/60">≈ $0.00</div>
+
+                                            {selectedToken?.amount !== undefined && (
+                                                <div className="text-xs text-grey/60">
+                                                    Available: {getMaxAvailableAmount}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <FormMessage className="text-[#36A18B]" />
                                     </FormItem>
                                 )}
                             />
 
-                            <Separator className="mt-5 mb-6 max-w-[97%] mx-auto" />
-
-                            <div className="flex flex-col w-full gap-5">
-                                <FormField
-                                    control={form.control}
-                                    name={"assetNumber"}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <div className="flex gap-2 items-center mb-2">
-                                                <FormLabel>{t("create.amount")}</FormLabel>
-                                                {selectedToken?.amount !== undefined && (
-                                                    <div className="text-xs text-grey/60">
-                                                        (includes network fee)
-                                                    </div>
-                                                )}
+                            <FormField
+                                control={form.control}
+                                name={"walletAddress"}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <FormLabel>
+                                                {t("wallet.send.destinationAddress")}
+                                            </FormLabel>
+                                        </div>
+                                        {isIcpToken && (
+                                            <div className="flex gap-2 mb-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAddressType("principal")}
+                                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                                                        addressType === "principal"
+                                                            ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
+                                                            : "border border-gray-200 text-gray-600 bg-white"
+                                                    }`}
+                                                >
+                                                    Principal ID
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAddressType("account")}
+                                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                                                        addressType === "account"
+                                                            ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
+                                                            : "border border-gray-200 text-gray-600 bg-white"
+                                                    }`}
+                                                >
+                                                    Account ID
+                                                </button>
                                             </div>
-                                            <FormControl>
-                                                <IconInput
-                                                    type="number"
-                                                    placeholder="Enter amount"
-                                                    step="any"
-                                                    isCurrencyInput={false}
-                                                    rightIcon={
-                                                        <div className="font-semibold text-[#36A18B]">
-                                                            {t("wallet.send.max")}
-                                                        </div>
-                                                    }
-                                                    onRightIconClick={handleMaxAmount}
-                                                    {...field}
-                                                    value={form.getValues("assetNumber") ?? ""}
-                                                    onChange={handleAmountInputChange}
-                                                    className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
-                                                />
-                                            </FormControl>
-                                            <div className="flex justify-between items-center">
-                                                <div className="text-xs text-grey/60">≈ $0.00</div>
-
-                                                {selectedToken?.amount !== undefined && (
-                                                    <div className="text-xs text-grey/60">
-                                                        Available: {getMaxAvailableAmount}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <FormMessage className="text-[#36A18B]" />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name={"walletAddress"}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <FormLabel>
-                                                    {t("wallet.send.destinationAddress")}
-                                                </FormLabel>
-                                            </div>
-                                            {isIcpToken && (
-                                                <div className="flex gap-2 mb-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setAddressType("principal")}
-                                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                                                            addressType === "principal"
-                                                                ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
-                                                                : "border border-gray-200 text-gray-600 bg-white"
-                                                        }`}
-                                                    >
-                                                        Principal ID
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setAddressType("account")}
-                                                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                                                            addressType === "account"
-                                                                ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
-                                                                : "border border-gray-200 text-gray-600 bg-white"
-                                                        }`}
-                                                    >
-                                                        Account ID
-                                                    </button>
+                                        )}
+                                        <FormControl>
+                                            <IconInput
+                                                type="text"
+                                                step="any"
+                                                placeholder={
+                                                    isIcpToken
+                                                        ? `Enter ${addressType === "principal" ? "Principal" : "Account"} ID`
+                                                        : "Enter address"
+                                                }
+                                                isCurrencyInput={false}
+                                                rightIcon={<Clipboard color="#36A18B" size={20} />}
+                                                onRightIconClick={() => handlePasteClick(field)}
+                                                {...field}
+                                                value={form.getValues("walletAddress") ?? ""}
+                                                onChange={handleSetWalletAddress}
+                                                className="pl-3 py-5 font-light rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                        {isIcpToken ? (
+                                            addressType === "principal" ? (
+                                                <div className="text-xs text-grey/60">
+                                                    {" "}
+                                                    Example: sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-...
                                                 </div>
-                                            )}
-                                            <FormControl>
-                                                <IconInput
-                                                    type="text"
-                                                    step="any"
-                                                    placeholder={
-                                                        isIcpToken
-                                                            ? `Enter ${addressType === "principal" ? "Principal" : "Account"} ID`
-                                                            : "Enter address"
-                                                    }
-                                                    isCurrencyInput={false}
-                                                    rightIcon={
-                                                        <Clipboard color="#36A18B" size={20} />
-                                                    }
-                                                    onRightIconClick={() => handlePasteClick(field)}
-                                                    {...field}
-                                                    value={form.getValues("walletAddress") ?? ""}
-                                                    onChange={handleSetWalletAddress}
-                                                    className="pl-3 py-5 font-light rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                            {isIcpToken ? (
-                                                addressType === "principal" ? (
-                                                    <div className="text-xs text-grey/60">
-                                                        {" "}
-                                                        Example:
-                                                        sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-...
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-xs text-grey/60">
-                                                        {" "}
-                                                        Example:
-                                                        6cff4a63eae8621c3dbc1040e6d25136e207b0b...
-                                                    </div>
-                                                )
                                             ) : (
                                                 <div className="text-xs text-grey/60">
+                                                    {" "}
                                                     Example:
                                                     6cff4a63eae8621c3dbc1040e6d25136e207b0b...
                                                 </div>
-                                            )}
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                                            )
+                                        ) : (
+                                            <div className="text-xs text-grey/60">
+                                                Example: 6cff4a63eae8621c3dbc1040e6d25136e207b0b...
+                                            </div>
+                                        )}
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
-                            <FixedBottomButton
-                                type="submit"
-                                variant="default"
-                                size="lg"
-                                disabled={isDisabled}
-                                className={`mx-auto ${responsive.isSmallDevice ? "mt-auto" : "mt-12"}`}
-                                onClick={() => console.log(form.formState.errors)}
-                            >
-                                {t("continue")}
-                            </FixedBottomButton>
-                        </form>
-                    </Form>
-                </>
+                        <FixedBottomButton
+                            type="submit"
+                            variant="default"
+                            size="lg"
+                            disabled={isDisabled}
+                            className={`mx-auto ${responsive.isSmallDevice ? "mt-auto" : "mt-12"}`}
+                        >
+                            {t("continue")}
+                        </FixedBottomButton>
+                    </form>
+                </Form>
             </div>
 
             <TransactionToast
