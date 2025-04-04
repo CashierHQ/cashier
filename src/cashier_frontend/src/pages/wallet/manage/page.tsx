@@ -4,11 +4,9 @@ import { Search } from "@/components/ui/search";
 import { ManageTokensList } from "@/components/manage-tokens/token-list";
 import { ManageTokensMissingTokenMessage } from "@/components/manage-tokens/missing-token-message";
 import { useTranslation } from "react-i18next";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@/components/ui/link";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { FungibleToken } from "@/types/fungible-token.speculative";
-import { debounce } from "lodash";
 import { useTokens } from "@/hooks/useTokens";
 
 export default function ManageTokensPage() {
@@ -18,46 +16,33 @@ export default function ManageTokensPage() {
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
 
-    const { tokens, searchTokens, isLoading } = useTokens();
+    const { tokens, isLoading } = useTokens();
 
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [displayedTokens, setDisplayedTokens] = useState<FungibleToken[]>(tokens);
 
     // Add debouncing to search
-    const debouncedSearch = useCallback(
-        debounce((query: string) => {
-            const results = query.trim() ? searchTokens(query) : tokens;
-            setDisplayedTokens(results);
-        }, 300),
-        [searchTokens, tokens],
-    );
+    // const debouncedSearch = useCallback(
+    //     debounce((query: string) => {
+    //         const results = query.trim() ? searchTokens(query) : tokens;
+    //         setDisplayedTokens(results);
+    //     }, 300),
+    //     [searchTokens, tokens],
+    // );
 
-    // Handle search input changes
+    // // Handle search input changes
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const query = e.target.value;
-        setSearchQuery(query);
-        debouncedSearch(query);
+        // const query = e.target.value;
+        // setSearchQuery(query);
+        // debouncedSearch(query);
     };
 
-    // Update displayed tokens when tokens change
     useEffect(() => {
-        console.log("[ManageTokensPage] Tokens loaded:", tokens);
-        if (searchQuery.trim()) {
-            debouncedSearch(searchQuery);
-        } else {
-            setDisplayedTokens(tokens);
-        }
+        // Reset search when tokens change
+        console.log("Tokens changed:", tokens);
     }, [tokens]);
 
-    // Cancel debounce on unmount
-    useEffect(() => {
-        return () => {
-            debouncedSearch.cancel();
-        };
-    }, [debouncedSearch]);
-
     const isNoTokens = tokens.length === 0;
-    const noSearchResults = !isNoTokens && searchQuery && displayedTokens.length === 0;
+    const noSearchResults = !isNoTokens && searchQuery && tokens.length === 0;
 
     return (
         <div
@@ -78,7 +63,6 @@ export default function ManageTokensPage() {
                         className="text-xs text-blue-500"
                         onClick={() => {
                             setSearchQuery("");
-                            setDisplayedTokens(tokens);
                         }}
                     >
                         {t("common.clear")}
@@ -98,7 +82,7 @@ export default function ManageTokensPage() {
                         <p>{t("manage.search.noResults")}</p>
                     </div>
                 ) : (
-                    <ManageTokensList items={displayedTokens} />
+                    <ManageTokensList items={tokens} />
                 )}
 
                 <div className="flex justify-center gap-4 mt-4">

@@ -24,6 +24,7 @@ export function useTokens() {
         setTokens,
         setIsLoading,
         setIsLoadingBalances,
+        setIsSyncPreferences,
         setError,
         setHasBalances,
         setFilters,
@@ -110,15 +111,19 @@ export function useTokens() {
     // Toggle a single token's visibility in preferences
     const toggleTokenVisibility = async (tokenId: string, hidden: boolean) => {
         console.log("Toggling token visibility:", tokenId, hidden);
+        setIsSyncPreferences(true);
         await toggleTokenVisibilityMutation.mutateAsync({ tokenId, hidden });
-        await userPreferencesQuery.refetch();
         await tokenListQuery.refetch();
+        setIsSyncPreferences(false);
+        await userPreferencesQuery.refetch();
         await tokenBalancesQuery.refetch();
     };
 
     // Toggle multiple tokens' visibility for better performance
     const batchToggleTokenVisibility = async (toggles: Array<[string, boolean]>) => {
         await batchToggleTokenVisibilityMutation.mutateAsync(toggles);
+        await userPreferencesQuery.refetch();
+        await tokenListQuery.refetch();
         await userPreferencesQuery.refetch();
     };
 

@@ -18,6 +18,7 @@ interface TokenState {
     // Status
     isLoading: boolean;
     isLoadingBalances: boolean;
+    isSyncPreferences: boolean;
     error: Error | null;
     hasBalances: boolean;
 
@@ -27,6 +28,7 @@ interface TokenState {
     setFilters: (filters: TokenFilters) => void;
     setIsLoading: (isLoading: boolean) => void;
     setIsLoadingBalances: (isLoading: boolean) => void;
+    setIsSyncPreferences: (isSyncPreferences: boolean) => void;
     setError: (error: Error | null) => void;
     setHasBalances: (hasBalances: boolean) => void;
 
@@ -65,6 +67,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     },
     isLoading: false,
     isLoadingBalances: false,
+    isSyncPreferences: false,
     error: null,
     hasBalances: false,
 
@@ -82,6 +85,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     },
     setIsLoading: (isLoading) => set({ isLoading }),
     setIsLoadingBalances: (isLoadingBalances) => set({ isLoadingBalances }),
+    setIsSyncPreferences: (isSyncPreferences) => set({ isSyncPreferences }),
     setError: (error) => set({ error }),
     setHasBalances: (hasBalances) => set({ hasBalances }),
 
