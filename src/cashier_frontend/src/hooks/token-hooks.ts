@@ -37,8 +37,6 @@ export function useTokenListQuery(identity: Identity | undefined) {
                 return tokenService.listTokens();
             }
 
-            console.log("[useTokenListQuery] Fetched tokens:", tokens);
-
             return tokens;
         },
         select: (data) => {

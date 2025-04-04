@@ -235,17 +235,15 @@ export function useTokens() {
     };
 
     const refreshTokens = async () => {
-        await tokenListQuery.refetch();
-        await tokenPricesQuery.refetch(); // Also refresh prices
+        updateToken();
     };
 
     const refreshBalances = async () => {
-        await tokenBalancesQuery.refetch();
+        updateToken();
     };
 
     const refreshPrices = async () => {
-        await tokenBalancesQuery.refetch();
-        await tokenPricesQuery.refetch();
+        updateToken();
     };
 
     const updateTokenInit = async () => {

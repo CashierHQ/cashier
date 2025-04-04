@@ -83,7 +83,8 @@
             "processing": "Processing...",
             "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
             "info": {
-                "button_text": "Close"
+                "button_text": "Close",
+                "close": "Close"
             }
         }
     },

@@ -65,7 +65,7 @@ export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
             </SelectTrigger>
             <SelectContent>
                 {filteredTokens?.map((token) => (
-                    <SelectItem key={token.address} value={token.id} className="">
+                    <SelectItem key={token.id} value={token.id} className="">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage
