@@ -28,7 +28,7 @@ export default function DetailPage() {
     const { toastData, showToast, hideToast } = useToast();
     const { renderSkeleton } = useSkeletonLoading();
 
-    const [showOverlay, setShowOverlay] = React.useState(true);
+    const [showOverlay, setShowOverlay] = React.useState(false);
 
     //TODO: Update to apply asset_info as the list of assets
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
@@ -47,6 +47,20 @@ export default function DetailPage() {
     React.useEffect(() => {
         if (!linkId) return;
         if (!identity) return;
+
+        // Check if this link has been viewed before
+        const viewedLinks = JSON.parse(localStorage.getItem("viewedLinks") || "[]");
+        const hasBeenViewed = viewedLinks.includes(linkId);
+
+        // Only show overlay for links that haven't been viewed before
+        setShowOverlay(!hasBeenViewed);
+
+        // If this is a new link, add it to viewed links in localStorage
+        if (!hasBeenViewed) {
+            const updatedViewedLinks = [...viewedLinks, linkId];
+            localStorage.setItem("viewedLinks", JSON.stringify(updatedViewedLinks));
+        }
+
         const fetchData = async () => {
             const link = await new LinkService(identity).getLink(linkId, ACTION_TYPE.WITHDRAW_LINK);
             setLinkData(link);
