@@ -14,8 +14,9 @@ import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useNavigate } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
-import { useResponsive } from "@/hooks/responsive-hook";
 import PhonePreview from "@/components/ui/phone-preview";
+import { FormLabel } from "@/components/ui/form";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
