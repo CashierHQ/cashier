@@ -10,6 +10,7 @@ import {
     useUserPreferencesQuery,
     useBatchToggleTokenVisibilityMutation,
     useUpdateUserFiltersMutation,
+    useTokenMetadataQuery,
 } from "./token-hooks";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
 import { FungibleToken } from "@/types/fungible-token.speculative";
@@ -35,6 +36,7 @@ export function useTokens() {
 
     // Use React Query hooks
     const tokenListQuery = useTokenListQuery(identity);
+    const tokenMetadataQuery = useTokenMetadataQuery(tokenListQuery.data, identity);
     const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data, identity);
     const userPreferencesQuery = useUserPreferencesQuery(identity);
 
@@ -154,6 +156,7 @@ export function useTokens() {
         await tokenListQuery.refetch();
         await userPreferencesQuery.refetch();
         applyFilters();
+        await tokenMetadataQuery.refetch();
         await tokenBalancesQuery.refetch();
     };
 
@@ -169,7 +172,7 @@ export function useTokens() {
     };
 
     const updateTokenBalance = async () => {
-        await tokenListQuery.refetch();
+        await tokenBalancesQuery.refetch();
     };
 
     // Update operation functions in Zustand

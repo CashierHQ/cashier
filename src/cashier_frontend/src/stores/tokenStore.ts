@@ -127,8 +127,6 @@ export const useTokenStore = create<TokenState>((set, get) => ({
             filtered = filtered.filter((token) => !filters.hidden_tokens.includes(token.id));
         }
 
-        console.log("Filtered tokens:", filtered);
-
         set({ filteredTokens: filtered });
     },
 

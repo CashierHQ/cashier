@@ -1,9 +1,14 @@
-import { AssetSelectItem } from "@/components/asset-select";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Clipboard } from "lucide-react";
+
+// UI Components
+import { SelectToken } from "@/components/receive/SelectToken";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import { BackHeader } from "@/components/ui/back-header";
-import { Clipboard } from "lucide-react";
+import TransactionToast from "@/components/transaction/transaction-toast";
 import {
     Form,
     FormControl,
@@ -12,38 +17,41 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { SendAssetConfirmationDrawer } from "@/components/wallet/send/confirm-send-asset-drawer";
+
+// Hooks
+import { useResponsive } from "@/hooks/responsive-hook";
+import { useTokens } from "@/hooks/useTokens";
+import useToast from "@/hooks/useToast";
 import {
     useWalletSendAssetForm,
     useWalletSendAssetFormActions,
     WalletSendAssetFormSchema,
 } from "@/components/wallet/send/send-asset-form.hooks";
-import useTokenMetadata from "@/hooks/tokenUtilsHooks";
-import useToast from "@/hooks/useToast";
-import { CHAIN } from "@/services/types/enum";
+
+// Store
 import { useSendAssetStore } from "@/stores/sendAssetStore";
-import { ChangeEvent, useEffect, useState, useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
-import { SelectToken } from "@/components/receive/SelectToken";
-import { SendAssetConfirmationDrawer } from "@/components/wallet/send/confirm-send-asset-drawer";
-import { useResponsive } from "@/hooks/responsive-hook";
+
+// Types & Constants
+import { CHAIN } from "@/services/types/enum";
 import { TransactionStatus } from "@/services/types/wallet.types";
-import { useTokens } from "@/hooks/useTokens"; // Import the useTokens hook
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 export default function SendTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const responsive = useResponsive();
-    const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId?: string }>();
-    const { metadata } = useTokenMetadata(tokenId);
-    const { toastData, showToast, hideToast } = useToast();
+    const goBack = () => navigate("/wallet");
 
-    // Use the token store instead of useUserAssets
-    const { filteredTokens, refreshBalances } = useTokens();
+    // Hooks for UI state
+    const { toastData, showToast, hideToast } = useToast();
     const [isDisabled, setIsDisabled] = useState(true);
 
-    // Use the new sendAssetStore
+    // Get tokens from useTokens hook
+    const { filteredTokens, refreshBalances, isLoadingBalances } = useTokens();
+
+    // Get transaction state from store
     const {
         transactionStatus,
         setSendAssetInfo,
@@ -53,60 +61,60 @@ export default function SendTokenPage() {
         resetSendAsset,
     } = useSendAssetStore();
 
-    // Ensure we refresh token balances when the page loads
+    // Refresh balances when component mounts
     useEffect(() => {
         refreshBalances();
     }, [refreshBalances]);
 
-    // Map the token from filteredTokens - adjusting for property name differences
+    // Find and map the selected token
     const selectedToken = useMemo(() => {
         if (!filteredTokens || filteredTokens.length === 0) {
             return tokenId
-                ? { name: metadata?.symbol || "", address: tokenId, amount: BigInt(0) }
+                ? {
+                      name: "",
+                      symbol: "",
+                      address: tokenId,
+                      amount: BigInt(0),
+                      chain: "IC",
+                      decimals: 8,
+                      id: tokenId,
+                      fee: undefined,
+                  }
                 : undefined;
         }
 
         if (tokenId) {
-            // Find token by address (which is stored as 'address' in FungibleToken)
             const found = filteredTokens.find((token) => token.address === tokenId);
             if (found) return found;
 
-            // If not found but we have tokenId, create a placeholder
+            // If not found but tokenId exists, create placeholder
             return {
-                name: metadata?.symbol || "",
+                name: "",
+                symbol: "",
                 address: tokenId,
                 amount: BigInt(0),
-                symbol: metadata?.symbol || "",
                 chain: "IC",
-                decimals: metadata?.decimals || 8,
+                decimals: 8,
                 id: tokenId,
+                fee: undefined,
             };
         }
 
         // Default to first token if no tokenId
         return filteredTokens[0];
-    }, [filteredTokens, tokenId, metadata]);
+    }, [filteredTokens, tokenId]);
 
-    // Convert the filteredTokens format to what the form expects
-    const mappedTokensForForm = useMemo(() => {
-        return (
-            filteredTokens?.map((token) => ({
-                address: token.address,
-                name: token.name,
-                symbol: token.symbol,
-                amount: token.amount,
-                id: token.id,
-            })) || []
-        );
-    }, [filteredTokens]);
-
-    const form = useWalletSendAssetForm(mappedTokensForForm, {
+    // Init form
+    const form = useWalletSendAssetForm(filteredTokens, {
         address: tokenId ?? "",
         amount: BigInt(0),
         assetNumber: 0,
     });
 
-    // Add effect to update form when token changes
+    // Form action handlers
+    const { setTokenAmount, setWalletAddress } = useWalletSendAssetFormActions(form);
+
+    // Update form when token changes
     useEffect(() => {
         if (selectedToken && !tokenId) {
             form.setValue("address", selectedToken.address);
@@ -115,7 +123,7 @@ export default function SendTokenPage() {
         }
     }, [selectedToken, tokenId, form]);
 
-    // Add effect to control button disabled state
+    // Track form validation state
     useEffect(() => {
         const amount = form.getValues("assetNumber");
         const walletAddress = form.getValues("walletAddress");
@@ -124,19 +132,33 @@ export default function SendTokenPage() {
         setIsDisabled(!walletAddress || hasAmountError || !amount || amount <= 0);
     }, [form.watch("assetNumber"), form.watch("walletAddress"), form.formState.errors.assetNumber]);
 
-    const handleTokenSelect = (token: AssetSelectItem) => {
-        navigate(`/wallet/send/${token.address}`);
-    };
+    // Calculate max available amount (balance minus network fee)
+    const getMaxAvailableAmount = useMemo(() => {
+        if (
+            selectedToken?.amount !== undefined &&
+            selectedToken.fee !== undefined &&
+            selectedToken.decimals !== undefined
+        ) {
+            const tokenAmount = Number(selectedToken.amount) / 10 ** selectedToken.decimals;
+            const feeAmount = Number(selectedToken.fee) / 10 ** selectedToken.decimals;
+            const maxAvailable = Math.max(0, tokenAmount - feeAmount);
+            return maxAvailable;
+        }
 
-    const [addressType, setAddressType] = useState<"principal" | "account">("principal");
+        // If no fee defined, just return the amount
+        if (selectedToken?.amount !== undefined && selectedToken.decimals !== undefined) {
+            return Number(selectedToken.amount) / 10 ** selectedToken.decimals;
+        }
 
-    const { setTokenAmount, setWalletAddress } = useWalletSendAssetFormActions(form);
+        return 0;
+    }, [selectedToken]);
 
-    const handleAmountInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    // Handle input changes
+    const handleAmountInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setTokenAmount(value);
 
-        // Validate amount against available balance (considering network fee)
+        // Validate amount against available balance
         const numericValue = parseFloat(value);
         if (!isNaN(numericValue)) {
             if (numericValue > getMaxAvailableAmount) {
@@ -150,29 +172,11 @@ export default function SendTokenPage() {
         }
     };
 
-    const handleSetWalletAddress = (event: ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        setWalletAddress(value);
+    const handleSetWalletAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setWalletAddress(event.target.value);
     };
 
-    const getMaxAvailableAmount = useMemo(() => {
-        if (
-            selectedToken?.amount !== undefined &&
-            metadata?.fee !== undefined &&
-            selectedToken.decimals !== undefined
-        ) {
-            console.log("Selected token amount:", selectedToken);
-            const tokenAmount = Number(selectedToken.amount) / 10 ** selectedToken.decimals;
-            const feeAmount = Number(metadata.fee) / 10 ** selectedToken.decimals;
-
-            const maxAvailable = Math.max(0, tokenAmount - feeAmount);
-
-            console.log("Max available amount:", maxAvailable);
-            return maxAvailable;
-        }
-        return Number(selectedToken?.amount ?? 0);
-    }, [selectedToken?.amount, metadata?.fee, metadata?.decimals]);
-
+    // Handle max amount button click
     const handleMaxAmount = () => {
         if (getMaxAvailableAmount > 0) {
             setTokenAmount(getMaxAvailableAmount.toString());
@@ -190,6 +194,12 @@ export default function SendTokenPage() {
         form.clearErrors("assetNumber");
     }, [selectedToken]);
 
+    // Handle token selection
+    const handleTokenSelect = (token: FungibleToken) => {
+        navigate(`/wallet/send/${token.address}`);
+    };
+
+    // Handle form submission
     const onSubmitSend = async (data: WalletSendAssetFormSchema) => {
         // Build send asset info for the store
         setSendAssetInfo({
@@ -197,15 +207,14 @@ export default function SendTokenPage() {
             asset: {
                 address: selectedToken?.address ?? "",
                 chain: CHAIN.IC,
-                symbol: metadata?.symbol ?? "",
-                decimals: metadata?.decimals ?? 8,
+                symbol: selectedToken?.symbol ?? "",
+                decimals: selectedToken?.decimals ?? 8,
             },
             destinationAddress: data.walletAddress,
-            // Optionally add fee information if available
-            feeAmount: metadata?.fee
-                ? Number(metadata.fee) / 10 ** (metadata?.decimals ?? 8)
+            feeAmount: selectedToken?.fee
+                ? Number(selectedToken.fee) / 10 ** (selectedToken?.decimals ?? 8)
                 : undefined,
-            feeSymbol: metadata?.symbol,
+            feeSymbol: selectedToken?.symbol,
         });
 
         // Reset transaction status to IDLE and open confirmation
@@ -213,32 +222,35 @@ export default function SendTokenPage() {
         openConfirmation();
     };
 
+    // Handle transaction status changes
     useEffect(() => {
-        // Show toast messages based on transaction status
-        if (transactionStatus === TransactionStatus.FAILED) {
-            showToast(
-                t("transaction.confirm_popup.transaction_failed"),
-                t("transaction.confirm_popup.transaction_failed_message"),
-                "error",
-            );
-        } else if (transactionStatus === TransactionStatus.SUCCESS) {
-            showToast(
-                t("transaction.confirm_popup.transaction_success"),
-                t("transaction.confirm_popup.transaction_success_message"),
-                "default",
-            );
+        switch (transactionStatus) {
+            case TransactionStatus.FAILED:
+                showToast(
+                    t("transaction.confirm_popup.transaction_failed"),
+                    t("transaction.confirm_popup.transaction_failed_message"),
+                    "error",
+                );
+                break;
+            case TransactionStatus.SUCCESS:
+                showToast(
+                    t("transaction.confirm_popup.transaction_success"),
+                    t("transaction.confirm_popup.transaction_success_message"),
+                    "default",
+                );
 
-            // Close the confirmation drawer after success
-            setTimeout(() => {
-                closeConfirmation();
-                resetSendAsset();
-            }, 1500);
+                // Close the confirmation drawer after success
+                setTimeout(() => {
+                    closeConfirmation();
+                    resetSendAsset();
+                }, 1500);
+                break;
         }
-    }, [transactionStatus]);
+    }, [transactionStatus, t, closeConfirmation, resetSendAsset, showToast]);
 
+    // Handle clipboard paste
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
         try {
-            // Check principal format
             const text = await navigator.clipboard.readText();
             field.onChange(text);
         } catch (err) {
@@ -246,20 +258,10 @@ export default function SendTokenPage() {
         }
     };
 
+    // Check if token is ICP
     const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-
     const isIcpToken = selectedToken?.address === ICP_ADDRESS;
-
-    // Map selectedToken to the format expected by SelectToken component
-    const mappedSelectedToken = selectedToken
-        ? ({
-              id: selectedToken.id,
-              address: selectedToken.address,
-              name: selectedToken.name,
-              symbol: selectedToken.symbol,
-              amount: selectedToken.amount,
-          } as unknown as AssetSelectItem)
-        : undefined;
+    const [addressType, setAddressType] = useState<"principal" | "account">("principal");
 
     return (
         <div
@@ -268,14 +270,14 @@ export default function SendTokenPage() {
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader>
+
             <div id="content" className="my-5 h-full">
                 <Form {...form}>
                     <form
-                        onSubmit={form.handleSubmit((data) => {
-                            onSubmitSend(data);
-                        })}
+                        onSubmit={form.handleSubmit(onSubmitSend)}
                         className="h-full flex flex-col"
                     >
+                        {/* Token Selection */}
                         <FormField
                             name="address"
                             control={form.control}
@@ -284,7 +286,7 @@ export default function SendTokenPage() {
                                     <FormLabel>{t("wallet.send.sendToken")}</FormLabel>
                                     <FormControl>
                                         <SelectToken
-                                            selectedToken={mappedSelectedToken}
+                                            selectedToken={selectedToken}
                                             onSelect={handleTokenSelect}
                                         />
                                     </FormControl>
@@ -296,14 +298,15 @@ export default function SendTokenPage() {
                         <div className="mt-5 mb-6 h-px bg-gray-200 w-full max-w-[97%] mx-auto" />
 
                         <div className="flex flex-col w-full gap-5">
+                            {/* Amount Input */}
                             <FormField
                                 control={form.control}
-                                name={"assetNumber"}
+                                name="assetNumber"
                                 render={({ field }) => (
                                     <FormItem>
                                         <div className="flex gap-2 items-center mb-2">
                                             <FormLabel>{t("create.amount")}</FormLabel>
-                                            {selectedToken?.amount !== undefined && (
+                                            {selectedToken?.fee !== undefined && (
                                                 <div className="text-xs text-grey/60">
                                                     (includes network fee)
                                                 </div>
@@ -325,11 +328,11 @@ export default function SendTokenPage() {
                                                 value={form.getValues("assetNumber") ?? ""}
                                                 onChange={handleAmountInputChange}
                                                 className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
+                                                disabled={isLoadingBalances}
                                             />
                                         </FormControl>
                                         <div className="flex justify-between items-center">
                                             <div className="text-xs text-grey/60">≈ $0.00</div>
-
                                             {selectedToken?.amount !== undefined && (
                                                 <div className="text-xs text-grey/60">
                                                     Available: {getMaxAvailableAmount}
@@ -341,9 +344,10 @@ export default function SendTokenPage() {
                                 )}
                             />
 
+                            {/* Wallet Address Input */}
                             <FormField
                                 control={form.control}
-                                name={"walletAddress"}
+                                name="walletAddress"
                                 render={({ field }) => (
                                     <FormItem>
                                         <div className="flex justify-between items-center mb-2">
@@ -351,6 +355,8 @@ export default function SendTokenPage() {
                                                 {t("wallet.send.destinationAddress")}
                                             </FormLabel>
                                         </div>
+
+                                        {/* ICP address type selector */}
                                         {isIcpToken && (
                                             <div className="flex gap-2 mb-2">
                                                 <button
@@ -377,10 +383,10 @@ export default function SendTokenPage() {
                                                 </button>
                                             </div>
                                         )}
+
                                         <FormControl>
                                             <IconInput
                                                 type="text"
-                                                step="any"
                                                 placeholder={
                                                     isIcpToken
                                                         ? `Enter ${addressType === "principal" ? "Principal" : "Account"} ID`
@@ -395,25 +401,17 @@ export default function SendTokenPage() {
                                                 className="pl-3 py-5 font-light rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                                             />
                                         </FormControl>
+
                                         <FormMessage />
-                                        {isIcpToken ? (
-                                            addressType === "principal" ? (
-                                                <div className="text-xs text-grey/60">
-                                                    {" "}
-                                                    Example: sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-...
-                                                </div>
-                                            ) : (
-                                                <div className="text-xs text-grey/60">
-                                                    {" "}
-                                                    Example:
-                                                    6cff4a63eae8621c3dbc1040e6d25136e207b0b...
-                                                </div>
-                                            )
-                                        ) : (
-                                            <div className="text-xs text-grey/60">
-                                                Example: 6cff4a63eae8621c3dbc1040e6d25136e207b0b...
-                                            </div>
-                                        )}
+
+                                        {/* Address examples */}
+                                        <div className="text-xs text-grey/60">
+                                            {isIcpToken && addressType === "principal"
+                                                ? "Example: sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-..."
+                                                : isIcpToken && addressType === "account"
+                                                  ? "Example: 6cff4a63eae8621c3dbc1040e6d25136e207b0b..."
+                                                  : "Example: 6cff4a63eae8621c3dbc1040e6d25136e207b0b..."}
+                                        </div>
                                     </FormItem>
                                 )}
                             />
@@ -432,6 +430,7 @@ export default function SendTokenPage() {
                 </Form>
             </div>
 
+            {/* Toast notifications */}
             <TransactionToast
                 open={toastData?.open ?? false}
                 onOpenChange={hideToast}
@@ -440,7 +439,7 @@ export default function SendTokenPage() {
                 variant={toastData?.variant ?? "default"}
             />
 
-            {/* Use the updated SendAssetConfirmationDrawer with the new store */}
+            {/* Confirmation drawer */}
             <SendAssetConfirmationDrawer />
         </div>
     );

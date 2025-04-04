@@ -6,26 +6,33 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { AssetSelectItem } from "@/components/asset-select";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 interface SelectTokenProps {
-    onSelect: (token: AssetSelectItem) => void;
-    selectedToken?: AssetSelectItem;
+    onSelect: (token: FungibleToken) => void;
+    selectedToken?:
+        | FungibleToken
+        | {
+              name: string;
+              symbol: string;
+              address: string;
+              amount: bigint;
+              chain: string;
+              decimals: number;
+              id: string;
+              fee: undefined;
+          }
+        | undefined;
 }
 
 export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
     const { isLoading, filteredTokens } = useTokens();
 
-    console.log("[SelectToken] selectedToken", selectedToken);
-
     const handleValueChange = (value: string) => {
         const token = filteredTokens?.find((t) => t.id === value);
-
-        console.log("[selectedToken] token", token);
-        console.log("[selectedToken] value", value);
 
         if (token) {
             onSelect(token);

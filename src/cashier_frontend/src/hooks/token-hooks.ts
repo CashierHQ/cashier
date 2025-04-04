@@ -35,8 +35,6 @@ export function useTokenListQuery(identity: Identity | undefined) {
                 return tokenService.listTokens();
             }
 
-            console.log("Fetched tokens from backend", tokens);
-
             return tokens;
         },
         select: (data) => {
@@ -45,6 +43,38 @@ export function useTokenListQuery(identity: Identity | undefined) {
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         enabled: !!identity,
+    });
+}
+
+export function useTokenMetadataQuery(
+    tokens: FungibleToken[] | undefined,
+    identity: Identity | undefined,
+) {
+    return useQuery({
+        queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
+        queryFn: async () => {
+            if (!identity || !tokens) throw new Error("Not authenticated");
+
+            const tokenPromises = tokens.map(async (token) => {
+                try {
+                    const metadata = await TokenUtilService.getTokenMetadata(token.address);
+
+                    return {
+                        ...token,
+                        fee: metadata?.fee,
+                    };
+                } catch (error) {
+                    console.error(`Error fetching metadata for ${token.address}:`, error);
+                    return token; // Return token unchanged on error
+                }
+            });
+
+            const tokensWithMetadata = await Promise.all(tokenPromises);
+
+            return tokensWithMetadata;
+        },
+        enabled: !!identity && !!tokens,
+        staleTime: 5 * 60 * 1000, // 5 minutes
     });
 }
 
@@ -66,6 +96,8 @@ export function useTokenBalancesQuery(
             if (!identity || !tokens || tokens.length === 0) {
                 return [];
             }
+
+            console.log("Fetching token balances...", tokens);
 
             const tokenUtilService = new TokenUtilService(identity);
 

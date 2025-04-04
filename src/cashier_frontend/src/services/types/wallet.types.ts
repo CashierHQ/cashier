@@ -12,7 +12,6 @@ export interface SendAssetInfo {
         chain: string;
         decimals: number;
         symbol: string;
-        logo?: string;
     };
     destinationAddress: string;
     feeAmount?: number; // Optional network fee amount

@@ -13,4 +13,5 @@ export type FungibleToken = {
     enabled: boolean;
     default: boolean;
     id: string;
+    fee: number;
 };

@@ -2,8 +2,8 @@ import { WalletHero } from "@/components/wallet/hero";
 import { WalletTabs } from "@/components/wallet/tabs";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useMemo } from "react";
 import { useTokens } from "@/hooks/useTokens";
+import { useMemo } from "react";
 
 export default function WalletPage() {
     const responsive = useResponsive();
@@ -22,10 +22,6 @@ export default function WalletPage() {
         return filteredTokens.reduce((total, token) => {
             return total + (token.usdEquivalent || 0);
         }, 0);
-    }, [filteredTokens]);
-
-    useEffect(() => {
-        console.log("Tokens loaded:", filteredTokens);
     }, [filteredTokens]);
 
     // Show loading skeleton when tokens are loading
