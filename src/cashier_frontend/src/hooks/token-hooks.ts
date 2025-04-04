@@ -10,6 +10,7 @@ import {
 } from "@/types/token-store.type";
 import TokenStorageService from "@/services/backend/tokenStorage.service";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
+import tokenPriceService from "@/services/price/icExplorer.service";
 
 // Centralized query keys for consistent caching
 export const TOKEN_QUERY_KEYS = {
@@ -18,6 +19,7 @@ export const TOKEN_QUERY_KEYS = {
     balances: (principalId?: string) => [...TOKEN_QUERY_KEYS.all, "balances", principalId] as const,
     preferences: (principalId?: string) =>
         [...TOKEN_QUERY_KEYS.all, "preferences", principalId] as const,
+    prices: () => [...TOKEN_QUERY_KEYS.all, "prices"] as const,
 };
 // Hook 1: Fetch basic token list
 export function useTokenListQuery(identity: Identity | undefined) {
@@ -306,4 +308,38 @@ export function useUpdateUserFiltersMutation(identity: Identity | undefined) {
             });
         },
     });
+}
+
+// New hook to fetch token prices
+export function useTokenPricesQuery() {
+    return useQuery({
+        queryKey: TOKEN_QUERY_KEYS.prices(),
+        queryFn: async () => {
+            return await tokenPriceService.getAllPrices();
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes cache
+    });
+}
+
+// Hook to enrich tokens with price data
+export function useEnrichTokensWithPrices(tokens: FungibleToken[] | undefined) {
+    const { data: prices, isLoading: isPricesLoading } = useTokenPricesQuery();
+
+    const tokensWithPrices = tokens?.map((token) => {
+        const price = prices?.[token.address] || null;
+
+        return {
+            ...token,
+            usdConversionRate: price,
+            usdEquivalent:
+                price && token.amount
+                    ? (Number(token.amount) * price) / Math.pow(10, token.decimals)
+                    : null,
+        };
+    });
+
+    return {
+        tokensWithPrices,
+        isPricesLoading,
+    };
 }

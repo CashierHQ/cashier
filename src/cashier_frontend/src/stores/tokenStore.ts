@@ -48,6 +48,7 @@ interface TokenState {
     updateUserFilters: (filterUpdates: Partial<TokenFilters>) => Promise<void>;
     refreshTokens: () => Promise<void>;
     refreshBalances: () => Promise<void>;
+    refreshPrices: () => Promise<void>;
     cacheBalances: (tokens: FungibleToken[]) => Promise<void>;
 
     updateTokenInit: () => Promise<void>;
@@ -164,6 +165,9 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         throw new Error("Not implemented - will be set by useTokens hook");
     },
     refreshBalances: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    refreshPrices: async () => {
         throw new Error("Not implemented - will be set by useTokens hook");
     },
     cacheBalances: async () => {

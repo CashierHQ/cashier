@@ -29,12 +29,12 @@ export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({
     return (
         <div className="flex font-normal items-center">
             <Avatar className="mr-3">
-                <AvatarImage src={getTokenAvatar(selectedToken.tokenAddress)} />
+                <AvatarImage src={getTokenAvatar(selectedToken.address)} />
                 <AvatarFallback>{selectedToken.name}</AvatarFallback>
             </Avatar>
             <div id="asset-info" className="text-md text-left">
                 <div>{selectedToken.name}</div>
-                {selectedToken.amount && (
+                {selectedToken.amount?.toString() && (
                     <div>
                         {isLoadingBalance ? (
                             <Skeleton className="w-[130px] h-4 mt-1" />

@@ -49,7 +49,7 @@ export default function HomePage() {
     const navigate = useNavigate();
     const responsive = useResponsive();
 
-    useTokens();
+    const { updateTokenInit } = useTokens();
 
     /* TODO:: Remove after complete testing */
     const handleOpenTestForm = () => {
@@ -88,6 +88,8 @@ export default function HomePage() {
         } else {
             setShowGuide(true);
         }
+
+        updateTokenInit();
     }, []);
 
     useEffect(() => {
