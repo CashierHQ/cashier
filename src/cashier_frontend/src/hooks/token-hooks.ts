@@ -35,6 +35,8 @@ export function useTokenListQuery(identity: Identity | undefined) {
                 return tokenService.listTokens();
             }
 
+            console.log("[useTokenListQuery] Fetched tokens:", tokens);
+
             return tokens;
         },
         select: (data) => {
@@ -97,13 +99,12 @@ export function useTokenBalancesQuery(
                 return [];
             }
 
-            console.log("Fetching token balances...", tokens);
-
             const tokenUtilService = new TokenUtilService(identity);
 
             // Fetch balances in parallel (unchanged)
             const tokenPromises = tokens.map(async (token) => {
                 try {
+                    // TODO: Fix the issue address = empty after sending token
                     const balance = await tokenUtilService.balanceOf(token.address);
 
                     return {

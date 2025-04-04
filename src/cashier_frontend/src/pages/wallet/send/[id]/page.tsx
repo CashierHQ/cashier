@@ -64,7 +64,7 @@ export default function SendTokenPage() {
     // Refresh balances when component mounts
     useEffect(() => {
         refreshBalances();
-    }, [refreshBalances]);
+    }, []);
 
     // Find and map the selected token
     const selectedToken = useMemo(() => {
@@ -238,12 +238,6 @@ export default function SendTokenPage() {
                     t("transaction.confirm_popup.transaction_success_message"),
                     "default",
                 );
-
-                // Close the confirmation drawer after success
-                setTimeout(() => {
-                    closeConfirmation();
-                    resetSendAsset();
-                }, 1500);
                 break;
         }
     }, [transactionStatus, t, closeConfirmation, resetSendAsset, showToast]);

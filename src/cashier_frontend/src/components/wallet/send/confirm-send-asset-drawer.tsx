@@ -31,7 +31,7 @@ export const SendAssetConfirmationDrawer: FC = () => {
     const [isUsd, setIsUsd] = useState(false);
     const [buttonText, setButtonText] = useState(t("transaction.confirm_popup.confirm_button"));
     const [isDisabled, setIsDisabled] = useState(false);
-    const { refreshBalances } = useTokens();
+    const { updateTokenBalance } = useTokens();
 
     // Update button text based on transaction status
     useEffect(() => {
@@ -86,7 +86,7 @@ export const SendAssetConfirmationDrawer: FC = () => {
                 setTransactionHash(block_id.toString());
                 setTransactionStatus(TransactionStatus.SUCCESS);
 
-                refreshBalances();
+                updateTokenBalance();
             } catch (e) {
                 console.error(e);
                 setError(e as Error);
