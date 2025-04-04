@@ -81,24 +81,21 @@ export default function ManageTokensPage() {
             </BackHeader>
 
             <div className="mt-6 relative">
-                {/* Search container with border */}
-                <div className="w-full flex items-center rounded-lg border border-gray-300 focus-within:border-green">
-                    {/* Search icon */}
-                    <div className="ml-3">
-                        <Search.Icon />
-                    </div>
-
-                    {/* Input field */}
+                <div className="w-full relative">
                     <input
-                        className="ml-6 flex-1 py-2 px-3 outline-none bg-transparent text-sm"
+                        className="w-full py-3 px-10 border border-gray-200 rounded-md outline-none text-sm"
                         placeholder={t("manage.search.placeholder")}
                         value={searchQuery}
                         onChange={handleSearchChange}
                     />
-
-                    {/* Clear button */}
+                    <div className="absolute top-1/2 -translate-y-1/2 text-gray-400">
+                        <Search.Icon />
+                    </div>
                     {searchQuery && (
-                        <button className="text-sm text-blue-500 mr-3" onClick={handleClearSearch}>
+                        <button
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 text-sm"
+                            onClick={handleClearSearch}
+                        >
                             {t("common.clear")}
                         </button>
                     )}
@@ -126,15 +123,40 @@ export default function ManageTokensPage() {
                 ) : isNoTokens ? (
                     <ManageTokensMissingTokenMessage />
                 ) : noSearchResults ? (
-                    <div className="text-center py-4">
-                        <p>{t("manage.search.noResults")}</p>
+                    <div className="flex flex-col items-center justify-center mt-8">
+                        <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
+                                    stroke="#9CA3AF"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                                <path
+                                    d="M21 21L16.65 16.65"
+                                    stroke="#9CA3AF"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                        </div>
+                        <p className="text-gray-700 font-medium">
+                            {t("manage.search.missingToken", "Missing a token?")}
+                        </p>
                     </div>
                 ) : (
                     <ManageTokensList items={displayedTokens} />
                 )}
-
                 <div className="flex justify-center gap-4 mt-4">
-                    <Link to="/wallet/import" className="text-blue-500">
+                    <Link to="/wallet/import" className="text-green text-sm">
                         + {t("manage.import")}
                     </Link>
                 </div>

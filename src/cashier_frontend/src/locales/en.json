@@ -158,7 +158,8 @@
         "header": "Manage tokens",
         "search": {
             "placeholder": "Search a token",
-            "noResults": "No results found"
+            "noResults": "No results found",
+            "missingToken": "Missing a token?"
         },
         "import": "Import token",
         "missing": "Missing a token?"
