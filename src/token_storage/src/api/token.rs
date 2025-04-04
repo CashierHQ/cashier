@@ -9,8 +9,8 @@ use crate::{
         user_preference::UserPreferenceRepository, user_token::TokenRepository,
     },
     types::{
-        AddTokenInput, RegisterTokenInput, RemoveTokenInput, TokenDto, TokenId, UserPreference,
-        UserPreferenceInput,
+        AddTokenInput, Chain, RegisterTokenInput, RemoveTokenInput, TokenDto, TokenId,
+        UserFiltersInput, UserPreference,
     },
 };
 
@@ -177,7 +177,7 @@ pub fn get_user_preference() -> Result<UserPreference, String> {
 }
 
 #[update]
-pub fn update_user_preference(input: UserPreferenceInput) -> Result<(), String> {
+pub fn update_user_filters(input: UserFiltersInput) -> Result<(), String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
@@ -185,12 +185,88 @@ pub fn update_user_preference(input: UserPreferenceInput) -> Result<(), String> 
     }
 
     let user_preference = UserPreferenceRepository::new();
-
     let old_record = user_preference.get(&caller.to_text());
-    let updated_record = UserPreference::from_input(&input, Some(&old_record))?;
+
+    // Update only the filter-related fields
+    let mut updated_record = old_record.clone();
+
+    if let Some(hide_zero) = input.hide_zero_balance {
+        updated_record.hide_zero_balance = hide_zero;
+    }
+
+    if let Some(hide_unknown) = input.hide_unknown_token {
+        updated_record.hide_unknown_token = hide_unknown;
+    }
+
+    if let Some(chains) = input.selected_chain {
+        let mut chain_enums = Vec::with_capacity(chains.len());
+        for chain_str in chains {
+            match Chain::from_str(&chain_str) {
+                Ok(chain) => chain_enums.push(chain),
+                Err(e) => return Err(e),
+            }
+        }
+
+        // Only update if at least one valid chain is provided
+        if !chain_enums.is_empty() {
+            updated_record.selected_chain = chain_enums;
+        }
+    }
 
     user_preference.update(caller.to_text(), updated_record);
+    Ok(())
+}
 
+#[update]
+pub fn toggle_token_visibility(token_id: String, hidden: bool) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let user_preference = UserPreferenceRepository::new();
+    let mut preferences = user_preference.get(&caller.to_text());
+
+    if hidden {
+        // Add token to hidden list if not already there (deduplicate)
+        if !preferences.hidden_tokens.contains(&token_id) {
+            preferences.hidden_tokens.push(token_id);
+        }
+    } else {
+        // Remove token from hidden list
+        preferences.hidden_tokens.retain(|id| id != &token_id);
+    }
+
+    user_preference.update(caller.to_text(), preferences);
+    Ok(())
+}
+
+// Batch toggle multiple tokens at once for efficiency
+#[update]
+pub fn batch_toggle_token_visibility(tokens: Vec<(String, bool)>) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let user_preference = UserPreferenceRepository::new();
+    let mut preferences = user_preference.get(&caller.to_text());
+
+    for (token_id, hidden) in tokens {
+        if hidden {
+            // Add token to hidden list if not already there (deduplicate)
+            if !preferences.hidden_tokens.contains(&token_id) {
+                preferences.hidden_tokens.push(token_id);
+            }
+        } else {
+            // Remove token from hidden list
+            preferences.hidden_tokens.retain(|id| id != &token_id);
+        }
+    }
+
+    user_preference.update(caller.to_text(), preferences);
     Ok(())
 }
 

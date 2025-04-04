@@ -137,55 +137,11 @@ impl Default for UserPreference {
     }
 }
 
-impl UserPreference {
-    /// Updates the user preference with new values from input, preserving existing values when input is None
-    pub fn from_input(
-        input: &UserPreferenceInput,
-        existing: Option<&Self>,
-    ) -> Result<Self, String> {
-        // Start with the existing preference or default
-        let mut preference = existing.cloned().unwrap_or_default();
-
-        // Update fields if provided in the input
-        if let Some(hide_zero) = input.hide_zero_balance {
-            preference.hide_zero_balance = hide_zero;
-        }
-
-        if let Some(hide_unknown) = input.hide_unknown_token {
-            preference.hide_unknown_token = hide_unknown;
-        }
-
-        if let Some(chains) = &input.selected_chain {
-            // Convert string chains to Chain enum
-            let mut chain_enums = Vec::with_capacity(chains.len());
-            for chain_str in chains {
-                match Chain::from_str(chain_str) {
-                    Ok(chain) => chain_enums.push(chain),
-                    Err(e) => return Err(e),
-                }
-            }
-
-            // Only update if at least one valid chain is provided
-            if !chain_enums.is_empty() {
-                preference.selected_chain = chain_enums;
-            }
-        }
-
-        if let Some(hidden) = &input.hidden_tokens {
-            preference.hidden_tokens = hidden.clone();
-        }
-
-        Ok(preference)
-    }
-}
-
-// Input/output DTOs
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct UserPreferenceInput {
+pub struct UserFiltersInput {
     pub hide_zero_balance: Option<bool>,
     pub hide_unknown_token: Option<bool>,
     pub selected_chain: Option<Vec<String>>,
-    pub hidden_tokens: Option<Vec<TokenId>>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
