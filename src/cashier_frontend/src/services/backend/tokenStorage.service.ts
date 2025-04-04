@@ -5,7 +5,7 @@ import {
     AddTokenInput,
     RemoveTokenInput,
     UserPreference,
-    UserPreferenceInput,
+    UserFiltersInput,
     TokenDto,
 } from "../../../../declarations/token_storage/token_storage.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
@@ -72,10 +72,24 @@ class TokenStorageService {
     }
 
     /**
-     * Updates user preferences
+     * Updates user filter preferences
      */
-    async updateUserPreference(input: UserPreferenceInput): Promise<void> {
-        parseResultResponse(await this.actor.update_user_preference(input));
+    async updateUserFilters(input: UserFiltersInput): Promise<void> {
+        parseResultResponse(await this.actor.update_user_filters(input));
+    }
+
+    /**
+     * Toggles a single token's visibility
+     */
+    async toggleTokenVisibility(tokenId: string, hidden: boolean): Promise<void> {
+        parseResultResponse(await this.actor.toggle_token_visibility(tokenId, hidden));
+    }
+
+    /**
+     * Batch toggles multiple tokens' visibility for efficiency
+     */
+    async batchToggleTokenVisibility(toggles: Array<[string, boolean]>): Promise<void> {
+        parseResultResponse(await this.actor.batch_toggle_token_visibility(toggles));
     }
 
     /**
@@ -92,6 +106,9 @@ class TokenStorageService {
         parseResultResponse(await this.actor.update_token_balance(tokenId, balance));
     }
 
+    /**
+     * Updates multiple token balances at once
+     */
     async updateBulkTokenBalance(
         balances: {
             tokenId: string;
@@ -104,6 +121,13 @@ class TokenStorageService {
         ]);
 
         parseResultResponse(await this.actor.update_bulk_balances(input));
+    }
+
+    /**
+     * Gets a specific token by ID
+     */
+    async getToken(tokenId: string): Promise<TokenDto> {
+        return parseResultResponse(await this.actor.get_token(tokenId));
     }
 }
 

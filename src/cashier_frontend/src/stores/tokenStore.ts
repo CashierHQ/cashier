@@ -5,7 +5,6 @@ import { mapChainToString, TokenFilters } from "@/types/token-store.type";
 import { Chain } from "@/services/types/link.service.types";
 
 // Define the token store state and actions
-// In tokenStore.ts - Update the store interface
 interface TokenState {
     // Original data
     tokens: FungibleToken[];
@@ -36,11 +35,21 @@ interface TokenState {
 
     // Token operations
     searchTokens: (query: string) => FungibleToken[];
+
+    // Backend operations - these get implemented by useTokens
     addToken: (input: AddTokenInput) => Promise<void>;
-    toggleTokenEnabled: (tokenId: string, enabled: boolean) => Promise<void>;
+    removeToken: (tokenId: string) => Promise<void>;
+    toggleTokenVisibility: (tokenId: string, hidden: boolean) => Promise<void>;
+    batchToggleTokenVisibility: (toggles: Array<[string, boolean]>) => Promise<void>;
+    updateUserFilters: (filterUpdates: Partial<TokenFilters>) => Promise<void>;
     refreshTokens: () => Promise<void>;
     refreshBalances: () => Promise<void>;
     cacheBalances: (tokens: FungibleToken[]) => Promise<void>;
+
+    updateTokenInit: () => Promise<void>;
+    updateToken: () => Promise<void>;
+    updateTokenExplorer: () => Promise<void>;
+    updateTokenBalance: () => Promise<void>;
 }
 
 // Create the Zustand store with updated implementation
@@ -80,38 +89,48 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     applyFilters: () => {
         const { tokens, filters } = get();
 
-        const filtered = tokens.filter((token) => {
-            // Apply hide zero balance filter
-            if (filters.hideZeroBalance && (!token.amount || token.amount === BigInt(0))) {
-                return false;
-            }
+        let filtered = tokens.slice();
 
-            // Apply hide unknown token filter (you'll need to define what makes a token "unknown")
-            if (filters.hideUnknownToken && !token.name) {
-                return false;
-            }
+        // Apply hide zero balance filter
+        if (filters.hideZeroBalance) {
+            filtered = filtered.filter((token) => token.amount && token.amount > BigInt(0));
+        }
 
-            // Apply chain filter if any chains are selected
-            if (
-                filters.selectedChain.length > 0 &&
-                !filters.selectedChain.includes(mapChainToString(token.chain))
-            ) {
-                return false;
-            }
+        // Apply hide unknown token filter
+        if (filters.hideUnknownToken) {
+            filtered = filtered.filter(
+                (token) =>
+                    token.name &&
+                    token.name.trim() !== "" &&
+                    token.symbol &&
+                    token.symbol.trim() !== "",
+            );
+        }
 
-            return true;
-        });
+        // Apply chain filter if any chains are selected
+        if (filters.selectedChain.length > 0) {
+            filtered = filtered.filter((token) =>
+                filters.selectedChain.includes(mapChainToString(token.chain)),
+            );
+        }
+
+        // Apply hidden tokens filter
+        if (filters.hidden_tokens && filters.hidden_tokens.length > 0) {
+            filtered = filtered.filter((token) => !filters.hidden_tokens.includes(token.id));
+        }
+
+        console.log("Filtered tokens:", filtered);
 
         set({ filteredTokens: filtered });
     },
 
     // Search operations - now operating on filteredTokens
     searchTokens: (query) => {
-        const { filteredTokens } = get();
-        if (!query.trim()) return filteredTokens;
+        const { tokens } = get();
+        if (!query.trim()) return tokens;
 
         const lcQuery = query.toLowerCase().trim();
-        return filteredTokens.filter((token) => {
+        return tokens.filter((token) => {
             return (
                 token.name.toLowerCase().includes(lcQuery) ||
                 token.symbol.toLowerCase().includes(lcQuery)
@@ -119,20 +138,41 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         });
     },
 
-    // Placeholders for operations to be implemented in the integration hook
+    // These functions will be implemented by the useTokens hook
     addToken: async () => {
-        throw new Error("Not implemented");
+        throw new Error("Not implemented - will be set by useTokens hook");
     },
-    toggleTokenEnabled: async () => {
-        throw new Error("Not implemented");
+    removeToken: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    toggleTokenVisibility: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    batchToggleTokenVisibility: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    updateUserFilters: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
     },
     refreshTokens: async () => {
-        throw new Error("Not implemented");
+        throw new Error("Not implemented - will be set by useTokens hook");
     },
     refreshBalances: async () => {
-        throw new Error("Not implemented");
+        throw new Error("Not implemented - will be set by useTokens hook");
     },
     cacheBalances: async () => {
-        throw new Error("Not implemented");
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    updateTokenInit: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    updateToken: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    updateTokenExplorer: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    updateTokenBalance: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
     },
 }));

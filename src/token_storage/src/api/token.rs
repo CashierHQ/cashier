@@ -228,6 +228,13 @@ pub fn toggle_token_visibility(token_id: String, hidden: bool) -> Result<(), Str
     let user_preference = UserPreferenceRepository::new();
     let mut preferences = user_preference.get(&caller.to_text());
 
+    ic_cdk::println!(
+        "Toggling token visibility for user: {}, token_id: {}, hidden: {}",
+        caller.to_text(),
+        token_id,
+        hidden
+    );
+
     if hidden {
         // Add token to hidden list if not already there (deduplicate)
         if !preferences.hidden_tokens.contains(&token_id) {
@@ -237,6 +244,12 @@ pub fn toggle_token_visibility(token_id: String, hidden: bool) -> Result<(), Str
         // Remove token from hidden list
         preferences.hidden_tokens.retain(|id| id != &token_id);
     }
+
+    ic_cdk::println!(
+        "Toggling token visibility for user: {}, preferences: {:#?}",
+        caller.to_text(),
+        preferences
+    );
 
     user_preference.update(caller.to_text(), preferences);
     Ok(())

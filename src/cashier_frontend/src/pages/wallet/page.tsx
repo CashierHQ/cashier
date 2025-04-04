@@ -9,7 +9,7 @@ export default function WalletPage() {
     const responsive = useResponsive();
 
     const {
-        tokens,
+        filteredTokens,
         isLoading,
         // TODO: add skeleton loading for balances
         // isLoadingBalances,
@@ -17,16 +17,16 @@ export default function WalletPage() {
 
     // Calculate the total USD equivalent from the tokens
     const totalUsdEquivalent = useMemo(() => {
-        if (!tokens || tokens.length === 0) return 0;
+        if (!filteredTokens || filteredTokens.length === 0) return 0;
 
-        return tokens.reduce((total, token) => {
+        return filteredTokens.reduce((total, token) => {
             return total + (token.usdEquivalent || 0);
         }, 0);
-    }, [tokens]);
+    }, [filteredTokens]);
 
     useEffect(() => {
-        console.log("Tokens loaded:", tokens);
-    }, [tokens]);
+        console.log("Tokens loaded:", filteredTokens);
+    }, [filteredTokens]);
 
     // Show loading skeleton when tokens are loading
     if (isLoading) {
@@ -70,7 +70,7 @@ export default function WalletPage() {
                 <WalletHero totalUsdEquivalent={totalUsdEquivalent} />
             </div>
             <div className="flex-1 overflow-hidden">
-                <WalletTabs fungibleTokens={tokens} />
+                <WalletTabs fungibleTokens={filteredTokens} />
             </div>
         </div>
     );

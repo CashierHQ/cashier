@@ -1,5 +1,5 @@
 // File: src/token_storage/src/repository/token.rs
-use super::{token_registry::TokenRegistryRepository, USER_TOKEN_STORE};
+use super::{token_registry::TokenRegistryRepository, user_preference, USER_TOKEN_STORE};
 use crate::types::{Candid, TokenDto, TokenId};
 
 pub struct TokenRepository {}
@@ -74,11 +74,18 @@ impl TokenRepository {
     pub fn list_tokens(&self, user_id: &String) -> Vec<TokenDto> {
         let token_ids = self.list_token_ids(user_id);
         let registry = TokenRegistryRepository::new();
+        let user_preference = user_preference::UserPreferenceRepository::new();
+        let user_preference = user_preference.get(user_id);
+
+        let list_hidden_tokens = user_preference.hidden_tokens;
 
         token_ids
             .into_iter()
             .filter_map(|token_id| {
                 registry.get_token(&token_id).map(|token| {
+                    // Check if this token is in the hidden list
+                    let is_hidden = list_hidden_tokens.contains(&token.id);
+
                     TokenDto {
                         id: token.id,
                         icrc_ledger_id: token.icrc_ledger_id,
@@ -87,7 +94,7 @@ impl TokenRepository {
                         name: token.name,
                         decimals: token.decimals,
                         chain: token.chain.to_str(),
-                        enabled: true, // User has added this token, so it's enabled
+                        enabled: !is_hidden, // Set to false if token is in hidden list
                         balance: None, // Balance would be filled in by the balance cache system
                     }
                 })

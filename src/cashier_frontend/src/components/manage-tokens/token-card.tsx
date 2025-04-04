@@ -3,6 +3,7 @@ import { AssetAvatar } from "../ui/asset-avatar";
 import Switch from "../ui/switch";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { mapChainToLogo } from "@/utils/map/chain.map";
+import { useTokens } from "@/hooks/useTokens";
 
 export interface ManageTokensTokenProps {
     token: FungibleToken;
@@ -22,21 +23,16 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
         setIsVisible(token.enabled ?? true);
     }, [token.enabled]);
 
+    const { toggleTokenVisibility } = useTokens();
+
     const handleToggle = (e: React.MouseEvent) => {
         // Stop propagation to prevent the article onClick from firing
         e.stopPropagation();
 
-        // Only proceed if it's not a default token
-        if (isDefaultToken) {
-            return;
-        }
-
         // Toggle the visibility state locally for immediate feedback
         const newVisibility = !isVisible;
         setIsVisible(newVisibility);
-
-        // Call the API to update the token visibility
-        // toggleTokenEnabled(token.address, newVisibility);
+        toggleTokenVisibility(token.id, !newVisibility);
     };
 
     return (
@@ -59,9 +55,6 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
                     <span className="leading-4">{token.name}</span>
                     <span className="text-grey text-xs font-light leading-none">
                         {token.symbol}
-                        {isDefaultToken && (
-                            <span className="ml-1 text-[10px] text-green">(Default)</span>
-                        )}
                     </span>
                 </div>
             </div>
@@ -70,7 +63,6 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
                 checked={isVisible}
                 onClick={handleToggle}
                 disabled={false || isDefaultToken}
-                className={isDefaultToken ? "opacity-70 cursor-not-allowed" : ""}
             >
                 <Switch.Thumb />
             </Switch.Root>

@@ -12,4 +12,5 @@ export type FungibleToken = {
     usdConversionRate: number | null;
     enabled: boolean;
     default: boolean;
+    id: string;
 };

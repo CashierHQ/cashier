@@ -5,29 +5,44 @@ import {
     useAddTokenMutation,
     useTokenBalancesQuery,
     useTokenListQuery,
+    useToggleTokenVisibilityMutation,
     useUpdateBalanceMutation,
-    useUpdateUserPreferencesMutation,
     useUserPreferencesQuery,
+    useBatchToggleTokenVisibilityMutation,
+    useUpdateUserFiltersMutation,
 } from "./token-hooks";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
 import { FungibleToken } from "@/types/fungible-token.speculative";
+import { TokenFilters } from "@/types/token-store.type";
 
 // Main hook that components should use
 export function useTokens() {
     const identity = useIdentity();
 
     // Get Zustand store actions
-    const { setTokens, setIsLoading, setIsLoadingBalances, setError, setHasBalances, setFilters } =
-        useTokenStore();
+    const {
+        setTokens,
+        setIsLoading,
+        setIsLoadingBalances,
+        setError,
+        setHasBalances,
+        setFilters,
+        filters,
+        applyFilters,
+    } = useTokenStore();
 
     // Use React Query hooks
     const tokenListQuery = useTokenListQuery(identity);
     const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data, identity);
     const userPreferencesQuery = useUserPreferencesQuery(identity);
 
+    // Mutations
     const addTokenMutation = useAddTokenMutation(identity);
+    // const removeTokenMutation = useRemoveTokenMutation(identity);
     const updateBalanceMutation = useUpdateBalanceMutation(identity);
-    const toggleTokenEnabledMutation = useUpdateBalanceMutation(identity);
+    const toggleTokenVisibilityMutation = useToggleTokenVisibilityMutation(identity);
+    const batchToggleTokenVisibilityMutation = useBatchToggleTokenVisibilityMutation(identity);
+    const updateUserFiltersMutation = useUpdateUserFiltersMutation(identity);
 
     // Sync React Query to Zustand
     useEffect(() => {
@@ -45,6 +60,7 @@ export function useTokens() {
             setTokens(tokenListQuery.data);
         }
 
+        // Update preference filters if available
         if (userPreferencesQuery.data) {
             setFilters(userPreferencesQuery.data);
         }
@@ -59,6 +75,7 @@ export function useTokens() {
         tokenBalancesQuery.isLoading,
         tokenBalancesQuery.isFetching,
         tokenBalancesQuery.error,
+        userPreferencesQuery.data,
     ]);
 
     // Implement operation functions
@@ -68,7 +85,12 @@ export function useTokens() {
         await tokenBalancesQuery.refetch();
     };
 
-    // Add a new method to manually update balances in the backend
+    const removeToken = async (tokenId: string) => {
+        // await removeTokenMutation.mutateAsync(tokenId);
+        await tokenListQuery.refetch();
+    };
+
+    // Cache token balances in the backend
     const cacheBalances = async (tokens: FungibleToken[]) => {
         if (!tokens || tokens.length === 0) return;
 
@@ -85,8 +107,31 @@ export function useTokens() {
         await tokenBalancesQuery.refetch();
     };
 
-    const toggleTokenEnabled = async (tokenId: string, enabled: boolean) => {
-        await toggleTokenEnabledMutation.mutateAsync({ tokenId, enabled });
+    // Toggle a single token's visibility in preferences
+    const toggleTokenVisibility = async (tokenId: string, hidden: boolean) => {
+        console.log("Toggling token visibility:", tokenId, hidden);
+        await toggleTokenVisibilityMutation.mutateAsync({ tokenId, hidden });
+        await userPreferencesQuery.refetch();
+        await tokenListQuery.refetch();
+        await tokenBalancesQuery.refetch();
+    };
+
+    // Toggle multiple tokens' visibility for better performance
+    const batchToggleTokenVisibility = async (toggles: Array<[string, boolean]>) => {
+        await batchToggleTokenVisibilityMutation.mutateAsync(toggles);
+        await userPreferencesQuery.refetch();
+    };
+
+    // Update user filter preferences
+    const updateUserFilters = async (filterUpdates: Partial<TokenFilters>) => {
+        // Merge with current filters to ensure we have complete data
+        const updatedFilters = {
+            ...filters,
+            ...filterUpdates,
+        };
+
+        await updateUserFiltersMutation.mutateAsync(updatedFilters);
+        await userPreferencesQuery.refetch();
     };
 
     const refreshTokens = async () => {
@@ -97,28 +142,46 @@ export function useTokens() {
         await tokenBalancesQuery.refetch();
     };
 
-    useEffect(() => {
-        // Update tokens - use tokens with balances if available
-        if (tokenListQuery.data) {
-            setTokens(tokenListQuery.data);
-        }
-        // Log for debugging
-    }, [
-        tokenListQuery.data,
-        // other dependencies
-    ]);
+    const updateTokenInit = async () => {
+        await tokenListQuery.refetch();
+        await userPreferencesQuery.refetch();
+        applyFilters();
+        await tokenBalancesQuery.refetch();
+    };
+
+    const updateToken = async () => {
+        await tokenListQuery.refetch();
+        await userPreferencesQuery.refetch();
+        applyFilters();
+        await tokenBalancesQuery.refetch();
+    };
+
+    const updateTokenExplorer = async () => {
+        await tokenListQuery.refetch();
+    };
+
+    const updateTokenBalance = async () => {
+        await tokenListQuery.refetch();
+    };
 
     // Update operation functions in Zustand
     useEffect(() => {
         useTokenStore.setState({
             addToken,
-            toggleTokenEnabled,
+            removeToken,
+            toggleTokenVisibility,
+            batchToggleTokenVisibility,
+            updateUserFilters,
             refreshTokens,
             refreshBalances,
             cacheBalances,
+            updateTokenInit,
+            updateToken,
+            updateTokenExplorer,
+            updateTokenBalance,
         });
-    }, []);
+    }, [identity]);
 
-    // Just return the store - all data and operations are in there
+    // Return the store with all data and operations
     return useTokenStore();
 }

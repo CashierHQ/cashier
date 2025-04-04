@@ -3,7 +3,7 @@ import { Identity } from "@dfinity/agent";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import {
-    mapFiltersToUserPreferenceInput,
+    mapFiltersToUserFiltersInput,
     mapUserPreferenceToFilters,
     mapUserTokenToFungibleToken,
     TokenFilters,
@@ -198,18 +198,17 @@ export function useUpdateBalanceMutation(identity: Identity | undefined) {
     });
 }
 
-// Toggle token enabled mutation
-export function useToggleTokenEnabledMutation(identity: Identity | undefined) {
+// Improved hook for toggling token visibility
+export function useToggleTokenVisibilityMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (filters: TokenFilters) => {
+        mutationFn: async ({ tokenId, hidden }: { tokenId: string; hidden: boolean }) => {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            const input = mapFiltersToUserPreferenceInput(filters);
-            await tokenService.updateUserPreference(input);
-            return filters;
+            await tokenService.toggleTokenVisibility(tokenId, hidden);
+            return { tokenId, hidden };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
@@ -219,6 +218,27 @@ export function useToggleTokenEnabledMutation(identity: Identity | undefined) {
     });
 }
 
+// Implement batch toggle for performance
+export function useBatchToggleTokenVisibilityMutation(identity: Identity | undefined) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (toggles: Array<[string, boolean]>) => {
+            if (!identity) throw new Error("Not authenticated");
+
+            const tokenService = new TokenStorageService(identity);
+            await tokenService.batchToggleTokenVisibility(toggles);
+            return toggles;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
+            });
+        },
+    });
+}
+
+// Updated user preferences query hook
 export function useUserPreferencesQuery(identity: Identity | undefined) {
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
@@ -234,8 +254,8 @@ export function useUserPreferencesQuery(identity: Identity | undefined) {
     });
 }
 
-// Add a mutation hook for updating preferences
-export function useUpdateUserPreferencesMutation(identity: Identity | undefined) {
+// Updated mutation hook for updating user filters
+export function useUpdateUserFiltersMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -243,8 +263,8 @@ export function useUpdateUserPreferencesMutation(identity: Identity | undefined)
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            const input = mapFiltersToUserPreferenceInput(filters);
-            await tokenService.updateUserPreference(input);
+            const input = mapFiltersToUserFiltersInput(filters);
+            await tokenService.updateUserFilters(input);
             return filters;
         },
         onSuccess: () => {

@@ -1,8 +1,8 @@
 import {
     Chain as BackendChain,
     TokenDto,
+    UserFiltersInput,
     UserPreference,
-    UserPreferenceInput,
 } from "../../../declarations/token_storage/token_storage.did";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
@@ -37,12 +37,11 @@ export const mapUserPreferenceToFilters = (preference: UserPreference): TokenFil
 };
 
 // Helper function to map TokenFilters to UserPreferenceInput
-export const mapFiltersToUserPreferenceInput = (filters: TokenFilters): UserPreferenceInput => {
+export const mapFiltersToUserFiltersInput = (filters: TokenFilters): UserFiltersInput => {
     return {
         hide_zero_balance: toNullable(filters.hideZeroBalance),
         hide_unknown_token: toNullable(filters.hideUnknownToken),
         selected_chain: toNullable(filters.selectedChain),
-        hidden_tokens: toNullable(filters.hidden_tokens),
     };
 };
 
@@ -92,6 +91,7 @@ export const mapUserTokenToFungibleToken = (
     const price = prices[tokenId] || null;
 
     return {
+        id: token.id,
         address: tokenId,
         chain: mapStringToFrontendChain(token.chain),
         name: token.symbol?.toString() || "Unknown Token",
