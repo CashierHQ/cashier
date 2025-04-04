@@ -4,6 +4,7 @@ import { Info } from "lucide-react";
 import { LinkPreviewCashierFeeItem } from "./link-preview-cashier-fee-item";
 import { LinkPreviewCashierFeeTotal } from "./link-preview-cashier-fee-total";
 import { FeeModel } from "@/services/types/intent.service.types";
+import { Label } from "../ui/label";
 
 type LinkPreviewCashierFeeSectionProps = {
     intents: FeeModel[];
@@ -19,15 +20,15 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
         return null;
     }
     return (
-        <div className="mt-5 mb-[100px]">
+        <div className="">
             <div className="flex justify-between items-center">
-                <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
-                    {t("link.preview.fees.label")}
-                </h2>
+                <div className="flex justify-between items-center mb-2">
+                    <Label>{t("link.preview.fees.label")}</Label>
+                </div>
                 <Info className="text-green" size={20} onClick={onInfoClick} />
             </div>
 
-            <ul className="flex flex-col gap-3 border-solid border-inherit border-[1px] rounded-xl mt-3 ml-2 px-4 py-[0.7rem] overflow-y-auto max-h-[200px]">
+            <ul className="flex flex-col gap-3 border-solid border-inherit border-[1px] rounded-xl mt-3 px-4 py-[0.4rem] overflow-y-auto max-h-[200px]">
                 {intents.map((intent, index) => (
                     <li key={`fee-${index}`}>
                         <LinkPreviewCashierFeeItem feeModel={intent} />
@@ -35,7 +36,7 @@ export const LinkPreviewCashierFeeSection: FC<LinkPreviewCashierFeeSectionProps>
                 ))}
             </ul>
 
-            <div className="ml-2">
+            <div className="text-sm">
                 <LinkPreviewCashierFeeTotal intents={intents} />
             </div>
         </div>

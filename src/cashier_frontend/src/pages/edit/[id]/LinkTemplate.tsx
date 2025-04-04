@@ -89,8 +89,9 @@ export default function LinkTemplate({
                                     </div>
                                     <FormControl>
                                         <Input
-                                            placeholder={t("create.linkNamePlaceholder")}
                                             {...field}
+                                            className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
+                                            placeholder={t("create.linkNamePlaceholder")}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -137,11 +138,11 @@ export default function LinkTemplate({
                                                 {template.isComingSoon && " (Coming soon)"}
                                             </p>
                                         </div>
-                                        <div className="relative h-[90%]">
+                                        <div className="relative h-[90%] aspect-[9/16]">
                                             <img
                                                 src={template.src}
                                                 alt={template.title}
-                                                className="w-full h-auto object-contain max-h-full rounded-3xl mb-4 border-[6px] border-gray-700 aspect-[9/16] bg-white"
+                                                className="w-full h-auto object-contain max-h-full rounded-3xl mb-4 border-[6px] border-gray-700 bg-white"
                                             />
                                             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-5 bg-gray-700 rounded-b-lg z-10"></div>
                                         </div>
