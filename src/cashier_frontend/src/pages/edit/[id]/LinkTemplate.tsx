@@ -26,6 +26,8 @@ import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import PhonePreview from "@/components/ui/phone-preview";
+import { useResponsive } from "@/hooks/responsive-hook";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
 }
@@ -39,6 +41,8 @@ export default function LinkTemplate({
 }: LinkTemplateProps) {
     const { t } = useTranslation();
     const { nextStep } = useMultiStepFormContext();
+
+    const responsive = useResponsive();
 
     const { link, setLink, updateLink } = useCreateLinkStore();
     const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
@@ -106,7 +110,7 @@ export default function LinkTemplate({
                         </div>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center bg-lightgreen flex-1 rounded-md py-4 mb-4 h-full">
+                    <div className="flex flex-col items-center justify-center bg-lightgreen rounded-md py-4 mb-4 h-fit">
                         <div className="relative w-full overflow-hidden h-full">
                             <button
                                 type="button"
@@ -129,22 +133,22 @@ export default function LinkTemplate({
                                 {LINK_TEMPLATES.map((template, index) => (
                                     <div
                                         key={`custom-template-${index}`}
-                                        className="flex-shrink-0 flex flex-col justify-center items-center p-4 h-[100%]"
+                                        className="flex-shrink-0 flex flex-col justify-center items-center p-2 h-[100%]"
                                         style={{ width: `${100 / LINK_TEMPLATES.length}%` }}
                                     >
-                                        <div className="flex flex-col items-center justify-center mb-4">
+                                        <div className="flex flex-col items-center justify-center mb-2 gap-0">
                                             <p className="text-xl font-bold">{template.header}</p>
                                             <p className="text-sm text-gray-500">
                                                 {template.isComingSoon && " (Coming soon)"}
                                             </p>
                                         </div>
                                         <div className="relative h-[90%] aspect-[9/16]">
-                                            <img
+                                            <PhonePreview
                                                 src={template.src}
-                                                alt={template.title}
-                                                className="w-full h-auto object-contain max-h-full rounded-3xl mb-4 border-[6px] border-gray-700 bg-white"
+                                                title={template.title}
+                                                message={template.message}
+                                                small={responsive.isSmallDevice}
                                             />
-                                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-5 bg-gray-700 rounded-b-lg z-10"></div>
                                         </div>
                                     </div>
                                 ))}
@@ -162,19 +166,21 @@ export default function LinkTemplate({
                             >
                                 <ChevronRight className="text-green" strokeWidth={3} />
                             </button>
-                        </div>
 
-                        <div className="flex gap-4 mt-4 bg-white/50 px-2 py-2 rounded-full">
-                            {LINK_TEMPLATES.map((_, index) => (
-                                <button
-                                    key={`dot-${index}`}
-                                    type="button"
-                                    className={`w-2 h-2 rounded-full ${
-                                        index === carousel.current ? "bg-green" : "bg-white"
-                                    }`}
-                                    onClick={() => carousel.setCurrent(index)}
-                                />
-                            ))}
+                            <div className="flex gap-4 mt-4 items-center justify-center w-full">
+                                <div className="flex gap-4 bg-white/50 px-2 py-2 rounded-full">
+                                    {LINK_TEMPLATES.map((_, index) => (
+                                        <button
+                                            key={`dot-${index}`}
+                                            type="button"
+                                            className={`w-2 h-2 rounded-full ${
+                                                index === carousel.current ? "bg-green" : "bg-white"
+                                            }`}
+                                            onClick={() => carousel.setCurrent(index)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
