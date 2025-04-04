@@ -25,6 +25,7 @@ export function useTokens() {
         setIsLoading,
         setIsLoadingBalances,
         setIsSyncPreferences,
+        setIsImporting,
         setError,
         setHasBalances,
         setFilters,
@@ -81,9 +82,11 @@ export function useTokens() {
 
     // Implement operation functions
     const addToken = async (input: AddTokenInput) => {
+        setIsImporting(true);
         await addTokenMutation.mutateAsync(input);
-        await tokenListQuery.refetch();
-        await tokenBalancesQuery.refetch();
+        setIsImporting(false);
+
+        await updateToken();
     };
 
     const removeToken = async (tokenId: string) => {

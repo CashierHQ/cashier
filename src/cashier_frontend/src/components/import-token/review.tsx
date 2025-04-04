@@ -11,6 +11,8 @@ import { Principal } from "@dfinity/principal";
 import { toNullable } from "@dfinity/utils";
 import { useTokens } from "@/hooks/useTokens";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Spinner } from "../ui/spinner";
 
 interface ImportTokenReviewProps {
     token: {
@@ -22,30 +24,55 @@ interface ImportTokenReviewProps {
         decimals: number;
         index_id?: string;
     };
-    // onImport?: (data: ImportTokenFormData) => void;
 }
 
 export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
-
     const navigate = useNavigate();
-
     const { addToken } = useTokens();
+    const [isImporting, setIsImporting] = useState(false);
+    const [importError, setImportError] = useState<string | null>(null);
 
-    function handleImport() {
-        const addTokenInput: AddTokenInput = {
-            chain: token.chain,
-            ledger_id: toNullable(Principal.fromText(token.address)),
-            index_id: toNullable(token.index_id ? Principal.fromText(token.index_id) : undefined),
-        };
+    async function handleImport() {
+        setIsImporting(true);
+        setImportError(null);
 
-        addToken(addTokenInput);
+        try {
+            const addTokenInput: AddTokenInput = {
+                chain: token.chain,
+                ledger_id: toNullable(Principal.fromText(token.address)),
+                index_id: toNullable(
+                    token.index_id ? Principal.fromText(token.index_id) : undefined,
+                ),
+            };
 
-        navigate(-2);
+            await addToken(addTokenInput);
+            navigate(-2);
+        } catch (error) {
+            console.error("Failed to import token:", error);
+            setImportError(error instanceof Error ? error.message : "Failed to import token");
+            setIsImporting(false);
+        }
     }
 
     return (
-        <div className="flex flex-col flex-grow pt-6 pb-2 px-1">
+        <div className="flex flex-col flex-grow relative pt-6 pb-2 px-1">
+            {/* Loading Overlay */}
+            {isImporting && (
+                <div className="absolute inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center rounded-md">
+                    <div className="flex flex-col items-center">
+                        <Spinner width={40} height={40} />
+                        <p className="mt-4 text-gray-700">
+                            {t("review.importing", "Adding token to your wallet...")}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {importError && (
+                <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-md">{importError}</div>
+            )}
+
             <div className="flex flex-col gap-6 flex-grow">
                 <div>
                     <Label>{t("review.token")}</Label>
@@ -97,7 +124,7 @@ export function ImportTokenReview({ token }: ImportTokenReviewProps) {
                 </div>
             </div>
 
-            <Button className="mt-2" onClick={handleImport} size="lg">
+            <Button className="mt-2" onClick={handleImport} size="lg" disabled={isImporting}>
                 {t("review.import")}
             </Button>
         </div>

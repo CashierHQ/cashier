@@ -7,6 +7,7 @@ import { ImportTokenReview } from "@/components/import-token/review";
 import { useNavigate } from "react-router-dom";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { TokenUtilService } from "@/services/tokenUtils.service";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ImportTokenPage() {
     const navigate = useNavigate();
@@ -21,12 +22,17 @@ export default function ImportTokenPage() {
         address: string;
         decimals: number;
     }>();
+    const [isImporting, setIsImporting] = useState(false);
+    const [importError, setImportError] = useState<string | null>(null);
 
     function goBack() {
         navigate(-1);
     }
 
     const onSubmitImportToken = async (data: ImportTokenFormData) => {
+        setIsImporting(true);
+        setImportError(null);
+
         try {
             const metadata = await TokenUtilService.getTokenMetadata(data.ledgerCanisterId);
 
@@ -45,29 +51,48 @@ export default function ImportTokenPage() {
             };
 
             setTokenMetadata(tokenMetadata);
-
             setImportData(data);
-        } catch {
-            throw new Error("Failed to fetch token metadata");
+        } catch (error) {
+            console.error("Failed to fetch token metadata:", error);
+            setImportError(
+                error instanceof Error ? error.message : "Failed to fetch token metadata",
+            );
+        } finally {
+            setIsImporting(false);
         }
     };
 
-    // TODO: implement loading
     return (
         <div
-            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+            className={`flex flex-col relative ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
         >
-            {" "}
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">
                     {t(importData ? "review.header" : "import.header")}
                 </h1>
             </BackHeader>
-            {tokenMetadata ? (
-                <ImportTokenReview token={tokenMetadata} />
-            ) : (
-                <ImportTokenForm onSubmit={onSubmitImportToken} />
+
+            {importError && (
+                <div className="mt-4 p-3 bg-red-100 text-red-800 rounded-md">{importError}</div>
             )}
+
+            <div className="relative flex-grow">
+                {/* Loading Overlay */}
+                {isImporting && (
+                    <div className="absolute inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center rounded-md">
+                        <div className="flex flex-col items-center">
+                            <Spinner width={40} height={40} />
+                            <p className="mt-4 text-gray-700">{t("import.loading.fetchMetdata")}</p>
+                        </div>
+                    </div>
+                )}
+
+                {tokenMetadata ? (
+                    <ImportTokenReview token={tokenMetadata} />
+                ) : (
+                    <ImportTokenForm onSubmit={onSubmitImportToken} />
+                )}
+            </div>
         </div>
     );
 }
