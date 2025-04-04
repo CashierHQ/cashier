@@ -3,10 +3,11 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { useTokenStore } from "@/stores/tokenStore";
 import {
     useAddTokenMutation,
-    useToggleTokenEnabledMutation,
     useTokenBalancesQuery,
     useTokenListQuery,
     useUpdateBalanceMutation,
+    useUpdateUserPreferencesMutation,
+    useUserPreferencesQuery,
 } from "./token-hooks";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
 import { FungibleToken } from "@/types/fungible-token.speculative";
@@ -16,15 +17,17 @@ export function useTokens() {
     const identity = useIdentity();
 
     // Get Zustand store actions
-    const { setTokens, setIsLoading, setIsLoadingBalances, setError, setHasBalances } =
+    const { setTokens, setIsLoading, setIsLoadingBalances, setError, setHasBalances, setFilters } =
         useTokenStore();
 
     // Use React Query hooks
     const tokenListQuery = useTokenListQuery(identity);
     const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data, identity);
+    const userPreferencesQuery = useUserPreferencesQuery(identity);
+
     const addTokenMutation = useAddTokenMutation(identity);
-    const toggleTokenEnabledMutation = useToggleTokenEnabledMutation(identity);
     const updateBalanceMutation = useUpdateBalanceMutation(identity);
+    const toggleTokenEnabledMutation = useUpdateBalanceMutation(identity);
 
     // Sync React Query to Zustand
     useEffect(() => {
@@ -40,6 +43,10 @@ export function useTokens() {
             setHasBalances(true);
         } else if (tokenListQuery.data) {
             setTokens(tokenListQuery.data);
+        }
+
+        if (userPreferencesQuery.data) {
+            setFilters(userPreferencesQuery.data);
         }
 
         // Update balance loading state
@@ -75,6 +82,7 @@ export function useTokens() {
         if (balancesToCache.length > 0) {
             await updateBalanceMutation.mutateAsync(balancesToCache);
         }
+        await tokenBalancesQuery.refetch();
     };
 
     const toggleTokenEnabled = async (tokenId: string, enabled: boolean) => {

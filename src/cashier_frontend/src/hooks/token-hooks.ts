@@ -2,7 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Identity } from "@dfinity/agent";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import { mapUserTokenToFungibleToken } from "@/types/token-store.type";
+import {
+    mapFiltersToUserPreferenceInput,
+    mapUserPreferenceToFilters,
+    mapUserTokenToFungibleToken,
+    TokenFilters,
+} from "@/types/token-store.type";
 import TokenStorageService from "@/services/backend/tokenStorage.service";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
 
@@ -198,16 +203,54 @@ export function useToggleTokenEnabledMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ tokenId, enabled }: { tokenId: string; enabled: boolean }) => {
-            if (!identity) throw new Error("Not authentiated");
+        mutationFn: async (filters: TokenFilters) => {
+            if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            // await tokenService.toggleTokenEnabled(tokenId, enabled);
-            return true;
+            const input = mapFiltersToUserPreferenceInput(filters);
+            await tokenService.updateUserPreference(input);
+            return filters;
         },
         onSuccess: () => {
-            // Invalidate token queries
-            queryClient.invalidateQueries({ queryKey: TOKEN_QUERY_KEYS.all });
+            queryClient.invalidateQueries({
+                queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
+            });
+        },
+    });
+}
+
+export function useUserPreferencesQuery(identity: Identity | undefined) {
+    return useQuery({
+        queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
+        queryFn: async () => {
+            if (!identity) throw new Error("Not authenticated");
+
+            const tokenService = new TokenStorageService(identity);
+            const preferences = await tokenService.getUserPreference();
+            return mapUserPreferenceToFilters(preferences);
+        },
+        enabled: !!identity,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+}
+
+// Add a mutation hook for updating preferences
+export function useUpdateUserPreferencesMutation(identity: Identity | undefined) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (filters: TokenFilters) => {
+            if (!identity) throw new Error("Not authenticated");
+
+            const tokenService = new TokenStorageService(identity);
+            const input = mapFiltersToUserPreferenceInput(filters);
+            await tokenService.updateUserPreference(input);
+            return filters;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
+            });
         },
     });
 }

@@ -6,13 +6,14 @@ import {
 } from "../../../declarations/token_storage/token_storage.did";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
-import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
+import { fromNullable, toNullable } from "@dfinity/utils";
 
 export interface TokenFilters {
     hideZeroBalance: boolean;
     hideUnknownToken: boolean;
     selectedChain: string[];
+    hidden_tokens: string[];
 }
 
 // Helper function to create a key for token balances
@@ -31,15 +32,17 @@ export const mapUserPreferenceToFilters = (preference: UserPreference): TokenFil
         selectedChain: preference.selected_chain.map((chain) => {
             return mapBackendChainToFrontend(chain);
         }),
+        hidden_tokens: preference.hidden_tokens,
     };
 };
 
 // Helper function to map TokenFilters to UserPreferenceInput
 export const mapFiltersToUserPreferenceInput = (filters: TokenFilters): UserPreferenceInput => {
     return {
-        hide_zero_balance: filters.hideZeroBalance,
-        hide_unknown_token: filters.hideUnknownToken,
-        selected_chain: filters.selectedChain,
+        hide_zero_balance: toNullable(filters.hideZeroBalance),
+        hide_unknown_token: toNullable(filters.hideUnknownToken),
+        selected_chain: toNullable(filters.selectedChain),
+        hidden_tokens: toNullable(filters.hidden_tokens),
     };
 };
 
