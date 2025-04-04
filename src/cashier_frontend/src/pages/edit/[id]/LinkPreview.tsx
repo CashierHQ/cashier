@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import PhonePreview from "@/components/ui/phone-preview";
 import { FormLabel } from "@/components/ui/form";
 import { useResponsive } from "@/hooks/responsive-hook";
+import PhonePreview from "@/components/ui/phone-preview";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
