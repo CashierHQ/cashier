@@ -19,6 +19,9 @@ import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { PartyPopper } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import SocialButtons from "@/components/link-details/social-buttons";
+import { useResponsive } from "@/hooks/responsive-hook";
+import { Helmet } from "react-helmet-async";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -27,6 +30,7 @@ export default function DetailPage() {
     const navigate = useNavigate();
     const { toastData, showToast, hideToast } = useToast();
     const { renderSkeleton } = useSkeletonLoading();
+    const responsive = useResponsive();
 
     const [showOverlay, setShowOverlay] = React.useState(false);
 
@@ -43,6 +47,17 @@ export default function DetailPage() {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
     };
+
+    const shareUrl = window.location.href.replace("details/", "");
+    const tokenName = metadata?.name === "CUTE" ? "tCHAT" : metadata?.name;
+    const tokenAmount = linkData?.link?.asset_info[0].amount
+        ? TokenUtilService.getHumanReadableAmountFromMetadata(
+              linkData?.link?.asset_info[0].amount,
+              metadata,
+          )
+        : "";
+    const pageTitle = linkData?.link?.title || "Cashier Link";
+    const pageDescription = `Claim ${tokenAmount} ${tokenName} tokens via this Cashier link!`;
 
     React.useEffect(() => {
         if (!linkId) return;
@@ -75,6 +90,25 @@ export default function DetailPage() {
                 "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
             )}
         >
+            <Helmet>
+                {/* Primary Meta Tags */}
+                <title>{pageTitle}</title>
+                <meta name="title" content={pageTitle} />
+                <meta name="description" content={pageDescription} />
+
+                {/* Open Graph / Facebook */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={shareUrl} />
+                <meta property="og:title" content={pageTitle} />
+                <meta property="og:description" content={pageDescription} />
+
+                {/* Twitter */}
+                <meta property="twitter:card" content="summary_large_image" />
+                <meta property="twitter:url" content={shareUrl} />
+                <meta property="twitter:title" content={pageTitle} />
+                <meta property="twitter:description" content={pageDescription} />
+            </Helmet>
+
             {showOverlay && (
                 <CopyLinkOverlay
                     showOverlay={showOverlay}
@@ -101,15 +135,30 @@ export default function DetailPage() {
                                     {linkData?.link?.title}
                                 </h4>
                             </div>
-                            <div id="qr-code-section" className="flex flex-col my-2">
-                                <div className="flex items-center justify-center grow">
+                            <div
+                                className={`flex ${responsive.isSmallDevice ? "flex-col gap-2" : "flex-row justify-start items-between gap-8 mb-4"}`}
+                            >
+                                <div
+                                    className={`flex items-center justify-center ${responsive.isSmallDevice ? "" : "hidden"}`}
+                                >
                                     <StateBadge state={linkData?.link?.state} />
                                 </div>
-                                <div className="flex items-center justify-center grow mt-3">
+                                <div
+                                    className={`flex items-center justify-center ${responsive.isSmallDevice ? " my-3" : "order-1"}`}
+                                >
                                     <QRCode
-                                        size={100}
+                                        size={responsive.isSmallDevice ? 100 : 130}
                                         value={window.location.href.replace("details/", "")}
                                     />
+                                </div>
+
+                                <div
+                                    className={`${responsive.isSmallDevice ? "" : "order-2 flex flex-col items-start justify-between w-full"}`}
+                                >
+                                    <div className={`${responsive.isSmallDevice ? "hidden" : ""}`}>
+                                        <StateBadge state={linkData?.link?.state} />
+                                    </div>
+                                    <SocialButtons handleCopyLink={handleCopyLink} />
                                 </div>
                             </div>
 
