@@ -22,14 +22,14 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({ isUsd, onToggle, amount, symbol,
                     className="flex  items-center text-destructive"
                     onClick={() => onToggle(!isUsd)}
                 >
-                    <span className="text-sm leading-none">
+                    <span className="text-xs text-grey/60 leading-none">
                         {isUsd ? `${amount?.toFixed(3)} ${symbol}` : `${amountUsd?.toFixed(3)} USD`}
                     </span>
 
                     <ArrowUpDown className="ml-1" size={16} />
                 </button>
             ) : (
-                <span className="text-sm leading-none text-muted-foreground">
+                <span className="text-xs text-grey/60 leading-none">
                     {t("transaction.usd_conversion.no_price_available")}
                 </span>
             )}

@@ -16,6 +16,10 @@ import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useNavigate } from "react-router-dom";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { getTokenImage } from "@/utils";
+import { FormLabel } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { useResponsive } from "@/hooks/responsive-hook";
+import PhonePreview from "@/components/ui/phone-preview";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -30,6 +34,7 @@ export default function LinkPreview({
 }: LinkPreviewProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const responsive = useResponsive();
 
     const { link, action, setAction, setLink } = useCreateLinkStore();
 
@@ -79,25 +84,17 @@ export default function LinkPreview({
     const renderLinkCard = () => {
         if (!link) return null;
 
-        if (link.linkType === LINK_TYPE.TIP_LINK) {
-            return (
-                <LinkCard
-                    label="Tip"
-                    src={getTokenImage(link?.asset_info?.[0].address ?? "")}
-                    message={LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP}
-                    title={link.title}
-                />
-            );
-        }
+        const label = link.linkType === LINK_TYPE.TIP_LINK ? "Tip" : "Claim";
+        const message =
+            link.linkType === LINK_TYPE.TIP_LINK
+                ? LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP
+                : link.description;
+        const src =
+            link.linkType === LINK_TYPE.TIP_LINK
+                ? getTokenImage(link?.asset_info?.[0].address ?? "")
+                : link.image;
 
-        return (
-            <LinkCard
-                label="Claim"
-                src={link.image}
-                message={link.description}
-                title={link.title}
-            />
-        );
+        return <PhonePreview src={src} title={link.title} message={message} />;
     };
 
     const handleSetLinkToActive = async () => {
@@ -108,11 +105,15 @@ export default function LinkPreview({
     };
 
     return (
-        <div className="w-full flex flex-col flex-grow relative">
-            <h2 className="text-sm font-medium leading-6 text-gray-900 ml-2">
-                {t("create.preview")}
-            </h2>
-            {renderLinkCard()}
+        <div
+            className={`w-full flex flex-col h-full ${responsive.isSmallDevice ? "justify-between" : "gap-4"}`}
+        >
+            <div className="flex flex-col">
+                <div className="flex justify-between items-center mb-2">
+                    <Label>{t("create.preview")}</Label>
+                </div>
+                {renderLinkCard()}
+            </div>
 
             <LinkPreviewCashierFeeSection
                 intents={feeData ?? []}
@@ -123,7 +124,7 @@ export default function LinkPreview({
                 type="submit"
                 variant="default"
                 size="lg"
-                className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
+                className=""
                 onClick={handleSubmit}
                 disabled={isDisabled}
             >

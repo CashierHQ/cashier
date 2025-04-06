@@ -11,16 +11,18 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
     },
     {
         label: "Claim",
-        header: "Airdrop (Coming soon)",
+        header: "Airdrop",
         src: "/chatToken.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
         title: "Airdrop",
+        isComingSoon: true,
     },
     {
         label: "Claim",
-        header: "Token basket (Coming soon)",
+        header: "Token basket",
         src: "/tokenBasket.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
         title: "Token basket",
+        isComingSoon: true,
     },
 ];

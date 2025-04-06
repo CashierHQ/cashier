@@ -4,4 +4,5 @@ export interface TEMPLATE {
     message: string;
     title: string;
     src: string;
+    isComingSoon?: boolean;
 }

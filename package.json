@@ -57,6 +57,8 @@
         "@nfid/identitykit": "^1.0.7",
         "@slide-computer/signer": "^3.11.0",
         "@slide-computer/signer-agent": "^3.11.0",
+        "react-helmet": "^6.1.0",
+        "react-helmet-async": "^2.0.5",
         "tsx": "^4.19.1"
     }
 }

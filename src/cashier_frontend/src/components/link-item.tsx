@@ -1,3 +1,4 @@
+import { useResponsive } from "@/hooks/responsive-hook";
 import { getLinkLabel, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { getLinkDefaultAvatar } from "@/utils";
@@ -15,7 +16,7 @@ export function StateBadge({ state }: { state: string | undefined }) {
 
     if (state === LINK_STATE.CHOOSE_TEMPLATE) {
         return (
-            <div className={`${baseLabelClass} bg-lightpurple text-[#3648A1]`}>
+            <div className={`${baseLabelClass} bg-lightyellow text-yellow`}>
                 {getLinkLabel(LINK_STATE.CHOOSE_TEMPLATE)}
             </div>
         );
@@ -39,7 +40,7 @@ export function StateBadge({ state }: { state: string | undefined }) {
 
     if (state === LINK_STATE.CREATE_LINK) {
         return (
-            <div className={`${baseLabelClass} text-green bg-lightgreen`}>
+            <div className={`${baseLabelClass} text-yellow bg-lightyellow`}>
                 {getLinkLabel(LINK_STATE.CREATE_LINK)}
             </div>
         );
@@ -48,8 +49,11 @@ export function StateBadge({ state }: { state: string | undefined }) {
 }
 
 export default function LinkItem({ link }: { link: LinkDetailModel }) {
+    const responsive = useResponsive();
     return (
-        <div className="w-full flex justify-between items-center my-3">
+        <div
+            className={`w-full flex justify-between items-center my-3 ${responsive.isSmallDevice ? "" : "p-2 hover:bg-gray-50 rounded-2xl"}`}
+        >
             <div className="flex gap-x-5 items-center">
                 {link.image ? (
                     <img src={link.image} alt="link" className="w-8 h-8 rounded-sm" />

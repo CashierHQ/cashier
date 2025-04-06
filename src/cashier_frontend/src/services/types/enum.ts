@@ -54,11 +54,11 @@ export enum FEE_TYPE {
 export function getLinkLabel(state: LINK_STATE): string {
     switch (state) {
         case LINK_STATE.CHOOSE_TEMPLATE:
-            return "New";
+            return "Draft"; // User left on step 1
         case LINK_STATE.ADD_ASSET:
-            return "Pending details";
+            return "Draft"; // User left on step 2
         case LINK_STATE.CREATE_LINK:
-            return "Pending preview";
+            return "Draft"; // User left on step 3
         case LINK_STATE.ACTIVE:
             return "Active";
         case LINK_STATE.INACTIVE:

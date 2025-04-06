@@ -32,12 +32,12 @@ export default function LinkCard({
     };
 
     return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center max-h-[60%]">
             <div className="text-lg md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
                 {renderHeaderTitle()}
             </div>
 
-            <Phone.Frame className="min-h-[300px] lg:min-h-[250px] max-h-[50dvh] lg:min-w-[calc(350px*(9/16))] max-w-[calc(50dvh*(9/16))] lg:max-w-[calc(35dvh*(9/16))]">
+            <Phone.Frame className="max-h-[60%] max-w-[calc(45dvh*(9/16))] lg:max-w-[calc(35dvh*(9/16))]">
                 <Phone.Notch />
 
                 <div className="w-full flex justify-center items-center mt-3 md:mt-1 2xl:mt-3">

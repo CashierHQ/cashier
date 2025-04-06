@@ -8,6 +8,7 @@ import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SignersProvider, useSigners } from "./contexts/signer-list-context";
+import { HelmetProvider } from "react-helmet-async";
 
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
@@ -36,8 +37,10 @@ function App() {
             }}
         >
             <QueryClientProvider client={queryClient}>
-                <AppRouter />
-                <Toaster />
+                <HelmetProvider>
+                    <AppRouter />
+                    <Toaster />
+                </HelmetProvider>
             </QueryClientProvider>
         </IdentityKitProvider>
     );
