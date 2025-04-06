@@ -3,7 +3,7 @@ import { WalletTabs } from "@/components/wallet/tabs";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTokens } from "@/hooks/useTokens";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 export default function WalletPage() {
     const responsive = useResponsive();

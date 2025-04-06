@@ -6,7 +6,41 @@ import { useCallback, useEffect, useMemo } from "react";
 import * as z from "zod";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { FungibleToken } from "@/types/fungible-token.speculative";
+import { Principal } from "@dfinity/principal";
 
+const isValidWalletAddress = (address: string): { valid: boolean; message: string } => {
+    // Empty string handling
+    if (!address.trim()) {
+        return { valid: false, message: "Wallet address is required" };
+    }
+
+    // ICP Principal ID validation
+    if (/^[a-z0-9\-]+$/.test(address)) {
+        try {
+            Principal.fromText(address);
+            return { valid: true, message: "" };
+        } catch {
+            return { valid: false, message: "Invalid ICP Principal ID format" };
+        }
+    }
+
+    // ETH-style address validation (0x followed by 40 hex characters)
+    // if (tokenAddress?.startsWith("0x") || address.startsWith("0x")) {
+    //     if (/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    //         return { valid: true, message: "" };
+    //     }
+    //     return { valid: false, message: "Invalid ETH address format" };
+    // }
+
+    // Default length check (basic validation)
+    if (address.length < 10) {
+        return { valid: false, message: "Wallet address is too short" };
+    }
+
+    return { valid: false, message: "Unknown error" };
+};
+
+// Now modify your schema
 export const walletSendAssetFormSchema = (assets: FungibleToken[]) => {
     return z
         .object({
@@ -19,11 +53,23 @@ export const walletSendAssetFormSchema = (assets: FungibleToken[]) => {
             walletAddress: z.string().min(1, { message: "Wallet address is required" }),
         })
         .superRefine((val, ctx) => {
+            console.log("val", val);
+            // Existing validation for assetNumber
             if (val.assetNumber === null) {
                 ctx.addIssue({
                     code: "custom",
                     message: "Must input number",
                     path: ["assetNumber"],
+                });
+            }
+
+            // Add custom wallet address validation
+            const addressValidation = isValidWalletAddress(val.walletAddress);
+            if (!addressValidation.valid) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: addressValidation.message,
+                    path: ["walletAddress"],
                 });
             }
         });

@@ -153,11 +153,15 @@ export function useTokens() {
                 const priceMap = tokenPricesQuery.data;
                 const price = priceMap[token.address];
 
-                if (price && enrichedToken.amount) {
-                    const amountInNumber =
-                        Number(enrichedToken.amount) / Math.pow(10, enrichedToken.decimals);
-                    enrichedToken.usdEquivalent = price * amountInNumber;
+                if (price) {
                     enrichedToken.usdConversionRate = price;
+                    if (enrichedToken.amount) {
+                        const amountInNumber =
+                            Number(enrichedToken.amount) / Math.pow(10, enrichedToken.decimals);
+                        enrichedToken.usdEquivalent = price * amountInNumber;
+                    } else {
+                        enrichedToken.usdEquivalent = 0;
+                    }
                 }
             }
 

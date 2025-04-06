@@ -108,7 +108,8 @@ export default function SendTokenPage() {
     });
 
     // Get form actions
-    const { setTokenAmount, setWalletAddress } = useWalletSendAssetFormActions(form);
+    const { setTokenAddress, setTokenAmount, setWalletAddress } =
+        useWalletSendAssetFormActions(form);
 
     // Check if selected token is ICP
     const isIcpToken = selectedToken?.address === ICP_ADDRESS;
@@ -189,8 +190,12 @@ export default function SendTokenPage() {
     /**
      * Handle token selection
      */
-    const handleTokenSelect = (token: FungibleToken) => {
+    const handleTokenSelect = async (token: FungibleToken) => {
         navigate(`/wallet/send/${token.address}`);
+        setTokenAddress(token.address);
+        // setIsLoadingBalances(true);
+        // await updateTokenBalance();
+        // setIsLoadingBalances(false);
     };
 
     /**
@@ -255,6 +260,8 @@ export default function SendTokenPage() {
      */
     const handleSubmit = async (data: WalletSendAssetFormSchema) => {
         if (!selectedToken) return;
+
+        console.log("Submitting form with data:", data);
 
         // Build send asset info for the store
         setSendAssetInfo({
