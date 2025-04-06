@@ -32,7 +32,7 @@ export const linkDetailsFormSchema = (assets: AssetSelectItem[]) => {
                 });
             }
 
-            const asset = assets.find((asset) => asset.tokenAddress === val.tokenAddress);
+            const asset = assets.find((asset) => asset.address === val.tokenAddress);
 
             if (
                 !asset ||

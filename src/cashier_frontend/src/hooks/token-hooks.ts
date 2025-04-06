@@ -17,6 +17,7 @@ import { AddTokenInput } from "../../../declarations/token_storage/token_storage
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import TokenCacheService from "@/services/backend/tokenCache.service";
+import { useEffect } from "react";
 
 // Centralized query keys for consistent caching
 export const TOKEN_QUERY_KEYS = {
@@ -239,15 +240,19 @@ export function useUpdateUserFiltersMutation(identity: Identity | undefined) {
 }
 
 export function useTokenPricesQuery() {
-    return useQuery({
+    const queryClient = useQueryClient();
+
+    // Create the base query
+    const query = useQuery({
         queryKey: TOKEN_QUERY_KEYS.prices(),
-        queryFn: async () => {
+        queryFn: async ({ signal }) => {
             try {
                 const prices = await tokenPriceService.getAllPrices();
-                return prices;
+                // Return null instead of empty object if no prices are fetched
+                return Object.keys(prices).length > 0 ? prices : null;
             } catch (error) {
                 console.error("Failed to fetch token prices:", error);
-                throw error; // Rethrow to let React Query handle the error
+                throw error;
             }
         },
         staleTime: 5 * 60 * 1000, // 5 minutes cache
@@ -255,4 +260,20 @@ export function useTokenPricesQuery() {
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff (30 seconds max)
     });
+
+    // Add custom retry logic for empty responses (not error responses)
+    useEffect(() => {
+        // If we have no data but the query is successful (empty response)
+        // and not already fetching, trigger a retry
+        if (query.isSuccess && !query.data && !query.isFetching) {
+            const timeoutId = setTimeout(() => {
+                console.log("No price data received, retrying...");
+                queryClient.invalidateQueries({ queryKey: TOKEN_QUERY_KEYS.prices() });
+            }, 3000); // Retry after 3 seconds
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [query.isSuccess, query.data, query.isFetching, queryClient]);
+
+    return query;
 }

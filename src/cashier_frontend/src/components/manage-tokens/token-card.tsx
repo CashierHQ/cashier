@@ -15,9 +15,6 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
     // Use token's enabled status from the API instead of local state
     const [isVisible, setIsVisible] = useState<boolean>(token.enabled ?? true);
 
-    // Check if the token is a default token
-    const isDefaultToken = token.default === true;
-
     // Update local state if token props change
     useEffect(() => {
         setIsVisible(token.enabled ?? true);
@@ -59,11 +56,7 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
                 </div>
             </div>
 
-            <Switch.Root
-                checked={isVisible}
-                onClick={handleToggle}
-                disabled={false || isDefaultToken}
-            >
+            <Switch.Root checked={isVisible} onClick={handleToggle}>
                 <Switch.Thumb />
             </Switch.Root>
         </article>

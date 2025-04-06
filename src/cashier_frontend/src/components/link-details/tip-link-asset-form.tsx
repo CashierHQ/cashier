@@ -18,16 +18,15 @@ import { SelectedAssetButtonInfo } from "./selected-asset-button-info";
 import { UsdSwitch } from "./usd-switch";
 import {
     useSelectedAsset,
-    useUserAssets,
     TipLinkAssetFormSchema,
     useFormActions,
 } from "./tip-link-asset-form.hooks";
 import { useTipLinkAssetForm } from "./tip-link-asset-form.hooks";
 import { AmountActionButtons } from "./amount-action-buttons";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
-import { useTokenMetadataList } from "@/hooks/useTokenMetadataQuery";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useTokens } from "@/hooks/useTokens";
 
 type TipLinkAssetFormProps = {
     onSubmit: SubmitHandler<TipLinkAssetFormSchema>;
@@ -39,36 +38,36 @@ const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 75, 100];
 
 export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButtonDisabled }) => {
     const { t } = useTranslation();
-    const { data: metadataList } = useTokenMetadataList();
     const { link } = useCreateLinkStore();
 
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [isUsd, setIsUsd] = useState<boolean>(false);
 
-    const { isLoadingAssets, isLoadingBalance, assets } = useUserAssets();
+    const { filteredTokenList, isLoading, isLoadingBalances, getToken } = useTokens();
+
+    const token = link?.asset_info[0]?.address ? getToken(link?.asset_info[0]?.address) : null;
 
     // Initialize form with values from link state if they exist
     const defaultValues = {
         tokenAddress: link?.asset_info[0]?.address ?? "",
         amount: link?.asset_info[0]?.amount ?? BigInt(0),
-        assetNumber: link?.asset_info[0]?.amount
-            ? TokenUtilService.getHumanReadableAmountFromMetadata(
-                  link.asset_info[0].amount,
-                  metadataList?.find(
-                      (metadata) => metadata.canisterId === link.asset_info[0].address,
-                  )?.metadata,
-              )
-            : null,
+        assetNumber:
+            token && link?.asset_info[0].amount
+                ? TokenUtilService.getHumanReadableAmountFromToken(
+                      link?.asset_info[0].amount,
+                      token,
+                  )
+                : null,
         usdNumber: null,
     };
 
-    const form = useTipLinkAssetForm(assets ?? [], defaultValues);
+    const form = useTipLinkAssetForm(filteredTokenList ?? [], defaultValues);
 
-    const selectedAsset = useSelectedAsset(assets, form);
+    const selectedAsset = useSelectedAsset(filteredTokenList, form);
     const { setUsdAmount, setTokenAmount, setTokenAddress } = useFormActions(form);
 
     const { data: rates, isFetching: isFetchingConversionRates } = useConversionRatesQuery(
-        selectedAsset?.tokenAddress,
+        selectedAsset?.address,
     );
 
     const createUsdAmountPresetData = (amount: number) => {
@@ -79,7 +78,10 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
     };
 
     const createPercentageAmountPresetData = (percentage: number) => {
-        const availableAmount = selectedAsset?.amount;
+        // Update to work with the toke en amount from FungibleToken
+        const availableAmount = selectedAsset?.amount
+            ? Number(selectedAsset.amount) / 10 ** (selectedAsset.decimals || 8)
+            : undefined;
         const factor = percentage / 100;
 
         return {
@@ -134,7 +136,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
 
     return (
         <div className="w-full h-full flex flex-col flex-grow relative">
-            {isLoadingAssets ? (
+            {isLoading ? (
                 <AssetFormSkeleton />
             ) : (
                 <>
@@ -159,7 +161,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                             childrenNode={
                                                 <SelectedAssetButtonInfo
                                                     selectedToken={selectedAsset}
-                                                    isLoadingBalance={isLoadingBalance}
+                                                    isLoadingBalance={isLoadingBalances}
                                                 />
                                             }
                                         />
@@ -194,7 +196,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                                 {...field}
                                                 value={getAmountInputValue()}
                                                 onChange={handleAmountInputChange}
-                                                disabled={isLoadingBalance}
+                                                disabled={isLoadingBalances}
                                                 className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                                             />
                                         </FormControl>
@@ -242,8 +244,8 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                         open={showAssetDrawer}
                         handleClose={() => setShowAssetDrawer(false)}
                         handleChange={handleSetTokenAddress}
-                        assetList={assets ?? []}
-                        isLoadingBalance={isLoadingBalance}
+                        assetList={filteredTokenList ?? []}
+                        isLoadingBalance={isLoadingBalances}
                     />
                 </>
             )}

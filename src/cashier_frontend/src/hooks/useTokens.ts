@@ -94,6 +94,7 @@ export function useTokens() {
     };
 
     const updateToken = async () => {
+        console.log("call updateToken");
         await tokenListQuery.refetch();
         await userPreferencesQuery.refetch();
         applyFilters();
@@ -101,11 +102,13 @@ export function useTokens() {
         await tokenPricesQuery.refetch(); // Also refresh prices
     };
 
+    // TODO: finish this
     const updateTokenExplorer = async () => {
         await tokenListQuery.refetch();
     };
 
     const updateTokenBalance = async () => {
+        console.log("call updateTokenBalance");
         await tokenBalancesQuery.refetch();
     };
 

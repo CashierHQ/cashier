@@ -18,7 +18,7 @@ const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect, isLoadingBalance 
             <ul className="w-[100%]">
                 {assetList?.map((asset) => (
                     <ListItem
-                        key={asset.tokenAddress}
+                        key={asset.address}
                         onSelected={onSelect}
                         asset={asset}
                         isLoadingBalance={isLoadingBalance}
@@ -53,7 +53,7 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalanc
 
     return (
         <li>
-            <NavigationMenuLink onSelect={() => onSelected(asset.tokenAddress)} asChild>
+            <NavigationMenuLink onSelect={() => onSelected(asset.address)} asChild>
                 <a
                     className={cn(
                         "w-[100%] block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
@@ -61,7 +61,7 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalanc
                 >
                     <div className="flex items-center">
                         <Avatar className="mr-3">
-                            <AvatarImage src={getTokenAvatar(asset.tokenAddress)} />
+                            <AvatarImage src={getTokenAvatar(asset.address)} />
                             <AvatarFallback>{getTokenName(asset.name)}</AvatarFallback>
                         </Avatar>
                         <div id="asset-info" className="text-md text-left">

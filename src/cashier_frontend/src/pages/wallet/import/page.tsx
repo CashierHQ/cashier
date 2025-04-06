@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { Spinner } from "@/components/ui/spinner";
+import { useTokens } from "@/hooks/useTokens";
 
 export default function ImportTokenPage() {
     const navigate = useNavigate();
@@ -24,6 +25,8 @@ export default function ImportTokenPage() {
     }>();
     const [isImporting, setIsImporting] = useState(false);
     const [importError, setImportError] = useState<string | null>(null);
+
+    const { updateToken } = useTokens();
 
     function goBack() {
         navigate(-1);
@@ -59,6 +62,7 @@ export default function ImportTokenPage() {
             );
         } finally {
             setIsImporting(false);
+            updateToken();
         }
     };
 

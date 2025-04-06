@@ -1,4 +1,3 @@
-import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
 import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
@@ -7,6 +6,7 @@ import * as z from "zod";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Principal } from "@dfinity/principal";
+import { useTokens } from "@/hooks/useTokens";
 
 const isValidWalletAddress = (address: string): { valid: boolean; message: string } => {
     // Empty string handling
@@ -40,7 +40,7 @@ const isValidWalletAddress = (address: string): { valid: boolean; message: strin
     return { valid: false, message: "Unknown error" };
 };
 
-// Now modify your schema
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const walletSendAssetFormSchema = (assets: FungibleToken[]) => {
     return z
         .object({
@@ -86,18 +86,21 @@ export function useWalletSendAssetForm(
         defaultValues: defaultValues,
     });
 
-    const { data: tokenData } = useTokenMetadataQuery(form.getValues("address"));
+    const { getToken } = useTokens();
+
+    const tokenAddress = form.watch("address");
+    const token = getToken(tokenAddress);
 
     const assetNumber = form.watch("assetNumber");
 
-    // update amount after assetNumber change
     useEffect(() => {
-        if (assetNumber && tokenData) {
-            const decimals = tokenData?.metadata.decimals;
-
-            form.setValue("amount", BigInt(convertTokenAmountToNumber(assetNumber, decimals)));
+        if (assetNumber && token && token.decimals !== undefined) {
+            form.setValue(
+                "amount",
+                BigInt(convertTokenAmountToNumber(assetNumber, token.decimals)),
+            );
         }
-    }, [assetNumber, tokenData]);
+    }, [assetNumber, token, form]);
 
     return form;
 }
