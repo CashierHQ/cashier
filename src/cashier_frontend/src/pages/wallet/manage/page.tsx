@@ -19,7 +19,7 @@ export default function ManageTokensPage() {
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
 
-    const { tokens, isLoading, isSyncPreferences } = useTokens();
+    const { rawTokenList: tokens, isLoading, isSyncPreferences } = useTokens();
 
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [filteredTokens, setFilteredTokens] = useState<FungibleToken[]>([]);

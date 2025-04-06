@@ -78,7 +78,7 @@ export default function ReceiveTokenPage() {
 
     const selectedToken = tokenList
         ? tokenId
-            ? tokenList.find((token) => token.tokenAddress === tokenId) || {
+            ? tokenList.find((token) => token.address === tokenId) || {
                   name: metadata?.symbol || "",
                   tokenAddress: tokenId,
                   amount: undefined,
@@ -88,7 +88,7 @@ export default function ReceiveTokenPage() {
 
     const handleTokenSelect = (token: AssetSelectItem) => {
         setCurrentSelectedToken(token);
-        navigate(`/wallet/receive/${token.tokenAddress}`);
+        navigate(`/wallet/receive/${token.address}`);
     };
 
     const handleShowAccountId = () => {
@@ -165,7 +165,7 @@ export default function ReceiveTokenPage() {
                     />
                 </div>
 
-                {currentSelectedToken?.tokenAddress === "ryjl3-tyaaa-aaaaa-aaaba-cai" && (
+                {currentSelectedToken?.address === "ryjl3-tyaaa-aaaaa-aaaba-cai" && (
                     <div
                         id="account-id"
                         className="flex justify-center mt-4"

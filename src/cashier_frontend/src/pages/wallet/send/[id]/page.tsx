@@ -38,191 +38,102 @@ import { TransactionStatus } from "@/services/types/wallet.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 
 export default function SendTokenPage() {
+    // Routing and locale
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const responsive = useResponsive();
     const { tokenId } = useParams<{ tokenId?: string }>();
-    const goBack = () => navigate("/wallet");
+    const responsive = useResponsive();
 
-    // Hooks for UI state
+    // UI state
     const { toastData, showToast, hideToast } = useToast();
     const [isDisabled, setIsDisabled] = useState(true);
+    const [addressType, setAddressType] = useState<"principal" | "account">("principal");
 
-    // Get tokens from useTokens hook
-    const { filteredTokens, refreshBalances, isLoadingBalances } = useTokens();
+    // Token data from global store
+    const { filteredTokenList, isLoadingBalances, setIsLoadingBalances } = useTokens();
 
-    // Get transaction state from store
-    const {
-        transactionStatus,
-        setSendAssetInfo,
-        setTransactionStatus,
-        openConfirmation,
-        closeConfirmation,
-        resetSendAsset,
-    } = useSendAssetStore();
+    // Transaction state from store
+    const { transactionStatus, setSendAssetInfo, setTransactionStatus, openConfirmation } =
+        useSendAssetStore();
 
-    // Refresh balances when component mounts
-    useEffect(() => {
-        refreshBalances();
-    }, []);
+    // Constants
+    const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
-    // Find and map the selected token
+    /**
+     * Find the selected token from token list based on URL param
+     */
     const selectedToken = useMemo(() => {
-        if (!filteredTokens || filteredTokens.length === 0) {
-            return tokenId
-                ? {
-                      name: "",
-                      symbol: "",
-                      address: tokenId,
-                      amount: BigInt(0),
-                      chain: "IC",
-                      decimals: 8,
-                      id: tokenId,
-                      fee: undefined,
-                  }
-                : undefined;
+        // Skip if data is loading or no token list available
+        if (isLoadingBalances || !filteredTokenList?.length) {
+            return undefined;
         }
 
+        // Find token by tokenId if provided
         if (tokenId) {
-            const found = filteredTokens.find((token) => token.address === tokenId);
-            if (found) return found;
-
-            // If not found but tokenId exists, create placeholder
-            return {
-                name: "",
-                symbol: "",
-                address: tokenId,
-                amount: BigInt(0),
-                chain: "IC",
-                decimals: 8,
-                id: tokenId,
-                fee: undefined,
-            };
+            return filteredTokenList.find((token) => token.address === tokenId);
         }
 
-        // Default to first token if no tokenId
-        return filteredTokens[0];
-    }, [filteredTokens, tokenId]);
+        return undefined;
+    }, [filteredTokenList, tokenId, isLoadingBalances]);
 
-    // Init form
-    const form = useWalletSendAssetForm(filteredTokens, {
-        address: tokenId ?? "",
+    /**
+     * Calculate the maximum available amount considering network fees
+     */
+    const maxAvailableAmount = useMemo(() => {
+        if (!selectedToken) return 0;
+
+        const { amount, fee, decimals } = selectedToken;
+
+        if (amount === undefined || decimals === undefined) {
+            return 0;
+        }
+
+        const tokenAmount = Number(amount) / 10 ** decimals;
+
+        // If fee is defined, subtract it from the available amount
+        if (fee !== undefined) {
+            const feeAmount = Number(fee) / 10 ** decimals;
+            return Math.max(0, tokenAmount - feeAmount);
+        }
+
+        return tokenAmount;
+    }, [selectedToken]);
+
+    // Init form with default values
+    const form = useWalletSendAssetForm(filteredTokenList, {
+        address: selectedToken?.address ?? "",
         amount: BigInt(0),
         assetNumber: 0,
+        walletAddress: "",
     });
 
-    // Form action handlers
+    // Get form actions
     const { setTokenAmount, setWalletAddress } = useWalletSendAssetFormActions(form);
 
-    // Update form when token changes
-    useEffect(() => {
-        if (selectedToken && !tokenId) {
-            form.setValue("address", selectedToken.address);
-            form.setValue("assetNumber", 0);
-            form.setValue("walletAddress", "");
-        }
-    }, [selectedToken, tokenId, form]);
+    // Check if selected token is ICP
+    const isIcpToken = selectedToken?.address === ICP_ADDRESS;
 
-    // Track form validation state
+    /**
+     * Update form validation status whenever relevant fields change
+     */
     useEffect(() => {
         const amount = form.getValues("assetNumber");
         const walletAddress = form.getValues("walletAddress");
-        const hasAmountError = form.formState.errors.assetNumber !== undefined;
+        const hasAmountError = !!form.formState.errors.assetNumber;
 
-        setIsDisabled(!walletAddress || hasAmountError || !amount || amount <= 0);
-    }, [form.watch("assetNumber"), form.watch("walletAddress"), form.formState.errors.assetNumber]);
+        setIsDisabled(
+            !walletAddress || hasAmountError || !amount || amount <= 0 || isLoadingBalances,
+        );
+    }, [
+        form.watch("assetNumber"),
+        form.watch("walletAddress"),
+        form.formState.errors.assetNumber,
+        isLoadingBalances,
+    ]);
 
-    // Calculate max available amount (balance minus network fee)
-    const getMaxAvailableAmount = useMemo(() => {
-        if (
-            selectedToken?.amount !== undefined &&
-            selectedToken.fee !== undefined &&
-            selectedToken.decimals !== undefined
-        ) {
-            const tokenAmount = Number(selectedToken.amount) / 10 ** selectedToken.decimals;
-            const feeAmount = Number(selectedToken.fee) / 10 ** selectedToken.decimals;
-            const maxAvailable = Math.max(0, tokenAmount - feeAmount);
-            return maxAvailable;
-        }
-
-        // If no fee defined, just return the amount
-        if (selectedToken?.amount !== undefined && selectedToken.decimals !== undefined) {
-            return Number(selectedToken.amount) / 10 ** selectedToken.decimals;
-        }
-
-        return 0;
-    }, [selectedToken]);
-
-    // Handle input changes
-    const handleAmountInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        setTokenAmount(value);
-
-        // Validate amount against available balance
-        const numericValue = parseFloat(value);
-        if (!isNaN(numericValue)) {
-            if (numericValue > getMaxAvailableAmount) {
-                form.setError("assetNumber", {
-                    type: "manual",
-                    message: `Amount must be less than available balance (${getMaxAvailableAmount})`,
-                });
-            } else {
-                form.clearErrors("assetNumber");
-            }
-        }
-    };
-
-    const handleSetWalletAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setWalletAddress(event.target.value);
-    };
-
-    // Handle max amount button click
-    const handleMaxAmount = () => {
-        if (getMaxAvailableAmount > 0) {
-            setTokenAmount(getMaxAvailableAmount.toString());
-            form.clearErrors("assetNumber");
-        } else {
-            form.setError("assetNumber", {
-                type: "manual",
-                message: "Insufficient balance to cover amount plus network fee",
-            });
-        }
-    };
-
-    // Clear amount error when token changes
-    useEffect(() => {
-        form.clearErrors("assetNumber");
-    }, [selectedToken]);
-
-    // Handle token selection
-    const handleTokenSelect = (token: FungibleToken) => {
-        navigate(`/wallet/send/${token.address}`);
-    };
-
-    // Handle form submission
-    const onSubmitSend = async (data: WalletSendAssetFormSchema) => {
-        // Build send asset info for the store
-        setSendAssetInfo({
-            amountNumber: data.assetNumber ?? 0,
-            asset: {
-                address: selectedToken?.address ?? "",
-                chain: CHAIN.IC,
-                symbol: selectedToken?.symbol ?? "",
-                decimals: selectedToken?.decimals ?? 8,
-            },
-            destinationAddress: data.walletAddress,
-            feeAmount: selectedToken?.fee
-                ? Number(selectedToken.fee) / 10 ** (selectedToken?.decimals ?? 8)
-                : undefined,
-            feeSymbol: selectedToken?.symbol,
-        });
-
-        // Reset transaction status to IDLE and open confirmation
-        setTransactionStatus(TransactionStatus.IDLE);
-        openConfirmation();
-    };
-
-    // Handle transaction status changes
+    /**
+     * Handle transaction status changes
+     */
     useEffect(() => {
         switch (transactionStatus) {
             case TransactionStatus.FAILED:
@@ -232,43 +143,164 @@ export default function SendTokenPage() {
                     "error",
                 );
                 break;
+
             case TransactionStatus.SUCCESS:
                 showToast(
                     t("transaction.confirm_popup.transaction_success"),
                     t("transaction.confirm_popup.transaction_success_message"),
                     "default",
                 );
+
+                // Reset form after successful transaction
+                form.reset({
+                    address: selectedToken?.address ?? "",
+                    amount: BigInt(0),
+                    assetNumber: 0,
+                    walletAddress: "",
+                });
                 break;
         }
-    }, [transactionStatus, t, closeConfirmation, resetSendAsset, showToast]);
+    }, [transactionStatus, t, showToast, form, selectedToken]);
 
-    // Handle clipboard paste
+    /**
+     * Clear amount errors when selected token changes
+     */
+    useEffect(() => {
+        form.clearErrors("assetNumber");
+    }, [selectedToken, form]);
+
+    useEffect(() => {
+        setIsLoadingBalances(false);
+
+        const init = async () => {
+            // setIsLoadingBalances(true);
+            // await updateTokenBalance();
+            // setIsLoadingBalances(false);
+        };
+
+        init();
+    }, []);
+
+    /**
+     * Handle navigation back to wallet
+     */
+    const handleGoBack = () => navigate("/wallet");
+
+    /**
+     * Handle token selection
+     */
+    const handleTokenSelect = (token: FungibleToken) => {
+        navigate(`/wallet/send/${token.address}`);
+    };
+
+    /**
+     * Handle amount input changes
+     */
+    const handleAmountInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        setTokenAmount(value);
+
+        // Validate amount against available balance
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+            if (numericValue > maxAvailableAmount) {
+                form.setError("assetNumber", {
+                    type: "manual",
+                    message: `Amount must be less than available balance (${maxAvailableAmount})`,
+                });
+            } else {
+                form.clearErrors("assetNumber");
+            }
+        }
+    };
+
+    /**
+     * Handle wallet address input changes
+     */
+    const handleSetWalletAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setWalletAddress(event.target.value);
+    };
+
+    /**
+     * Handle max amount button click
+     */
+    const handleMaxAmount = () => {
+        if (!selectedToken) return;
+
+        if (maxAvailableAmount > 0) {
+            setTokenAmount(maxAvailableAmount.toString());
+            form.clearErrors("assetNumber");
+        } else {
+            form.setError("assetNumber", {
+                type: "manual",
+                message: "Insufficient balance to cover amount plus network fee",
+            });
+        }
+    };
+
+    /**
+     * Handle clipboard paste
+     */
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
         try {
             const text = await navigator.clipboard.readText();
             field.onChange(text);
         } catch (err) {
-            console.error("Failed to read clipboard contents: ", err);
+            console.error("Failed to read clipboard contents:", err);
         }
     };
 
-    // Check if token is ICP
-    const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-    const isIcpToken = selectedToken?.address === ICP_ADDRESS;
-    const [addressType, setAddressType] = useState<"principal" | "account">("principal");
+    /**
+     * Handle form submission
+     */
+    const handleSubmit = async (data: WalletSendAssetFormSchema) => {
+        if (!selectedToken) return;
+
+        // Build send asset info for the store
+        setSendAssetInfo({
+            amountNumber: data.assetNumber ?? 0,
+            asset: {
+                address: selectedToken.address,
+                chain: CHAIN.IC,
+                symbol: selectedToken.symbol,
+                decimals: selectedToken.decimals ?? 8,
+            },
+            destinationAddress: data.walletAddress,
+            feeAmount: selectedToken.fee
+                ? Number(selectedToken.fee) / 10 ** (selectedToken.decimals ?? 8)
+                : undefined,
+            feeSymbol: selectedToken.symbol,
+        });
+
+        // Reset transaction status to IDLE and open confirmation
+        setTransactionStatus(TransactionStatus.IDLE);
+        openConfirmation();
+    };
+
+    /**
+     * Handle address type toggle (for ICP tokens)
+     */
+    const handleAddressTypeChange = (type: "principal" | "account") => {
+        setAddressType(type);
+        form.setValue("walletAddress", "");
+    };
 
     return (
         <div
-            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+            className={`flex flex-col ${
+                responsive.isSmallDevice
+                    ? "px-2 py-4 h-full"
+                    : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"
+            }`}
         >
-            <BackHeader onBack={goBack}>
+            <BackHeader onBack={handleGoBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader>
 
             <div id="content" className="my-5 h-full">
                 <Form {...form}>
                     <form
-                        onSubmit={form.handleSubmit(onSubmitSend)}
+                        onSubmit={form.handleSubmit(handleSubmit)}
                         className="h-full flex flex-col"
                     >
                         {/* Token Selection */}
@@ -301,7 +333,7 @@ export default function SendTokenPage() {
                                         <div className="flex gap-2 items-center mb-2">
                                             <FormLabel>{t("create.amount")}</FormLabel>
                                             {selectedToken?.fee !== undefined && (
-                                                <div className="text-xs text-grey/60">
+                                                <div className="text-xs text-gray-500">
                                                     (includes network fee)
                                                 </div>
                                             )}
@@ -322,14 +354,18 @@ export default function SendTokenPage() {
                                                 value={form.getValues("assetNumber") ?? ""}
                                                 onChange={handleAmountInputChange}
                                                 className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
-                                                disabled={isLoadingBalances}
+                                                disabled={isLoadingBalances || !selectedToken}
                                             />
                                         </FormControl>
                                         <div className="flex justify-between items-center">
-                                            <div className="text-xs text-grey/60">≈ $0.00</div>
+                                            <div className="text-xs text-gray-500">
+                                                {selectedToken?.usdEquivalent
+                                                    ? `≈ $${(form.getValues("assetNumber") || 0) * selectedToken.usdEquivalent}`
+                                                    : "≈ $0.00"}
+                                            </div>
                                             {selectedToken?.amount !== undefined && (
-                                                <div className="text-xs text-grey/60">
-                                                    Available: {getMaxAvailableAmount}
+                                                <div className="text-xs text-gray-500">
+                                                    Available: {maxAvailableAmount}
                                                 </div>
                                             )}
                                         </div>
@@ -355,7 +391,9 @@ export default function SendTokenPage() {
                                             <div className="flex gap-2 mb-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => setAddressType("principal")}
+                                                    onClick={() =>
+                                                        handleAddressTypeChange("principal")
+                                                    }
                                                     className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                                                         addressType === "principal"
                                                             ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
@@ -366,7 +404,9 @@ export default function SendTokenPage() {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setAddressType("account")}
+                                                    onClick={() =>
+                                                        handleAddressTypeChange("account")
+                                                    }
                                                     className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                                                         addressType === "account"
                                                             ? "border-2 border-[#36A18B] text-[#36A18B] bg-white"
@@ -392,14 +432,15 @@ export default function SendTokenPage() {
                                                 {...field}
                                                 value={form.getValues("walletAddress") ?? ""}
                                                 onChange={handleSetWalletAddress}
-                                                className="pl-3 py-5 font-light rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
+                                                className="pl-3 py-5 font-light rounded-lg appearance-none shadow-xs border border-input"
+                                                disabled={!selectedToken}
                                             />
                                         </FormControl>
 
                                         <FormMessage />
 
                                         {/* Address examples */}
-                                        <div className="text-xs text-grey/60">
+                                        <div className="text-xs text-gray-500">
                                             {isIcpToken && addressType === "principal"
                                                 ? "Example: sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-..."
                                                 : isIcpToken && addressType === "account"

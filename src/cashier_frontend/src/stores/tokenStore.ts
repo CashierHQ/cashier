@@ -7,10 +7,10 @@ import { Chain } from "@/services/types/link.service.types";
 // Define the token store state and actions
 interface TokenState {
     // Original data
-    tokens: FungibleToken[];
+    rawTokenList: FungibleToken[];
 
     // Filtered data
-    filteredTokens: FungibleToken[];
+    filteredTokenList: FungibleToken[];
 
     // Filter settings
     filters: TokenFilters;
@@ -24,7 +24,7 @@ interface TokenState {
     hasBalances: boolean;
 
     // Setters
-    setTokens: (tokens: FungibleToken[]) => void;
+    setRawTokenList: (tokens: FungibleToken[]) => void;
     setFilteredTokens: (tokens: FungibleToken[]) => void;
     setFilters: (filters: TokenFilters) => void;
     setIsLoading: (isLoading: boolean) => void;
@@ -32,7 +32,6 @@ interface TokenState {
     setIsSyncPreferences: (isSyncPreferences: boolean) => void;
     setIsImporting: (isImporting: boolean) => void;
     setError: (error: Error | null) => void;
-    setHasBalances: (hasBalances: boolean) => void;
 
     // Filter operations
     applyFilters: () => void;
@@ -46,11 +45,6 @@ interface TokenState {
     toggleTokenVisibility: (tokenId: string, hidden: boolean) => Promise<void>;
     batchToggleTokenVisibility: (toggles: Array<[string, boolean]>) => Promise<void>;
     updateUserFilters: (filterUpdates: Partial<TokenFilters>) => Promise<void>;
-    refreshTokens: () => Promise<void>;
-    refreshBalances: () => Promise<void>;
-    refreshPrices: () => Promise<void>;
-    cacheBalances: (tokens: FungibleToken[]) => Promise<void>;
-
     updateTokenInit: () => Promise<void>;
     updateToken: () => Promise<void>;
     updateTokenExplorer: () => Promise<void>;
@@ -60,8 +54,8 @@ interface TokenState {
 // Create the Zustand store with updated implementation
 export const useTokenStore = create<TokenState>((set, get) => ({
     // Initial state
-    tokens: [],
-    filteredTokens: [],
+    rawTokenList: [],
+    filteredTokenList: [],
     filters: {
         hideZeroBalance: false,
         hideUnknownToken: false,
@@ -76,12 +70,12 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     hasBalances: false,
 
     // Setters
-    setTokens: (tokens) => {
-        set({ tokens });
+    setRawTokenList: (tokens) => {
+        set({ rawTokenList: tokens });
         // Auto-apply filters when tokens change
         get().applyFilters();
     },
-    setFilteredTokens: (filteredTokens) => set({ filteredTokens }),
+    setFilteredTokens: (filteredTokens) => set({ filteredTokenList: filteredTokens }),
     setFilters: (filters) => {
         set({ filters });
         // Auto-apply filters when filters change
@@ -92,11 +86,10 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     setIsSyncPreferences: (isSyncPreferences) => set({ isSyncPreferences }),
     setIsImporting: (isImporting) => set({ isImporting }),
     setError: (error) => set({ error }),
-    setHasBalances: (hasBalances) => set({ hasBalances }),
 
     // Filter operations
     applyFilters: () => {
-        const { tokens, filters } = get();
+        const { rawTokenList: tokens, filters } = get();
 
         let filtered = tokens.slice();
 
@@ -128,12 +121,12 @@ export const useTokenStore = create<TokenState>((set, get) => ({
             filtered = filtered.filter((token) => !filters.hidden_tokens.includes(token.id));
         }
 
-        set({ filteredTokens: filtered });
+        set({ filteredTokenList: filtered });
     },
 
     // Search operations - now operating on filteredTokens
     searchTokens: (query) => {
-        const { tokens } = get();
+        const { rawTokenList: tokens } = get();
         if (!query.trim()) return tokens;
 
         const lcQuery = query.toLowerCase().trim();
@@ -159,18 +152,6 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         throw new Error("Not implemented - will be set by useTokens hook");
     },
     updateUserFilters: async () => {
-        throw new Error("Not implemented - will be set by useTokens hook");
-    },
-    refreshTokens: async () => {
-        throw new Error("Not implemented - will be set by useTokens hook");
-    },
-    refreshBalances: async () => {
-        throw new Error("Not implemented - will be set by useTokens hook");
-    },
-    refreshPrices: async () => {
-        throw new Error("Not implemented - will be set by useTokens hook");
-    },
-    cacheBalances: async () => {
         throw new Error("Not implemented - will be set by useTokens hook");
     },
     updateTokenInit: async () => {

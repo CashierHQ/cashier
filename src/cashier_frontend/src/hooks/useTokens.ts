@@ -1,21 +1,23 @@
 import { useEffect } from "react";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useTokenStore } from "@/stores/tokenStore";
+import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
+import { TokenFilters } from "@/types/token-store.type";
 import {
     useAddTokenMutation,
+    useToggleTokenVisibilityMutation,
     useTokenBalancesQuery,
     useTokenListQuery,
-    useToggleTokenVisibilityMutation,
-    useUpdateBalanceMutation,
-    useUserPreferencesQuery,
-    useBatchToggleTokenVisibilityMutation,
-    useUpdateUserFiltersMutation,
     useTokenMetadataQuery,
-    useTokenPricesQuery, // Import the new price hook
+    useTokenPricesQuery,
+    useUpdateUserFiltersMutation,
+    useUserPreferencesQuery,
 } from "./token-hooks";
-import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
-import { FungibleToken } from "@/types/fungible-token.speculative";
-import { TokenFilters } from "@/types/token-store.type";
+import {
+    FungibleToken,
+    mapTokenModelToFungibleToken,
+    TokenModel,
+} from "@/types/fungible-token.speculative";
 
 // Main hook that components should use
 export function useTokens() {
@@ -23,114 +25,27 @@ export function useTokens() {
 
     // Get Zustand store actions
     const {
-        setTokens,
+        setRawTokenList,
+        setFilters,
         setIsLoading,
         setIsLoadingBalances,
         setIsSyncPreferences,
         setIsImporting,
-        setError,
-        setHasBalances,
-        setFilters,
         filters,
         applyFilters,
     } = useTokenStore();
 
     // Use React Query hooks
     const tokenListQuery = useTokenListQuery(identity);
-    const tokenMetadataQuery = useTokenMetadataQuery(tokenListQuery.data, identity);
-    const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data, identity);
     const userPreferencesQuery = useUserPreferencesQuery(identity);
+    const tokenMetadataQuery = useTokenMetadataQuery(tokenListQuery.data);
+    const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data);
     const tokenPricesQuery = useTokenPricesQuery(); // Add the prices query
 
     // Mutations
     const addTokenMutation = useAddTokenMutation(identity);
-    const updateBalanceMutation = useUpdateBalanceMutation(identity);
     const toggleTokenVisibilityMutation = useToggleTokenVisibilityMutation(identity);
-    const batchToggleTokenVisibilityMutation = useBatchToggleTokenVisibilityMutation(identity);
     const updateUserFiltersMutation = useUpdateUserFiltersMutation(identity);
-
-    // Sync React Query to Zustand
-    useEffect(() => {
-        // Update loading state
-        setIsLoading(tokenListQuery.isLoading || tokenPricesQuery.isLoading);
-
-        // Update error state
-        setError(
-            (tokenBalancesQuery.error ||
-                tokenListQuery.error ||
-                tokenPricesQuery.error) as Error | null,
-        );
-
-        // Process tokens with combined balance and price data
-        if (tokenBalancesQuery.data && tokenBalancesQuery.data.length > 0) {
-            const tokensWithBalances = tokenBalancesQuery.data;
-            const prices = tokenPricesQuery.data || {};
-
-            // Always enrich with prices (which might be empty if not loaded yet)
-            const enrichedTokens = tokensWithBalances.map((token) => {
-                const price = prices[token.address] || null;
-
-                return {
-                    ...token,
-                    usdConversionRate: price,
-                    usdEquivalent:
-                        price && token.amount
-                            ? (Number(token.amount) * price) / Math.pow(10, token.decimals)
-                            : null,
-                };
-            });
-
-            setTokens(enrichedTokens);
-            setHasBalances(true);
-        } else if (tokenListQuery.data) {
-            // Get basic token list if balances aren't available
-            const tokenList = tokenListQuery.data;
-            const prices = tokenPricesQuery.data || {};
-
-            // Always enrich with prices (which might be empty if not loaded yet)
-            const enrichedTokens = tokenList.map((token) => {
-                const price = prices[token.address] || null;
-
-                return {
-                    ...token,
-                    usdConversionRate: price,
-                    usdEquivalent:
-                        price && token.amount
-                            ? (Number(token.amount) * price) / Math.pow(10, token.decimals)
-                            : null,
-                };
-            });
-
-            setTokens(enrichedTokens);
-        }
-
-        // Update preference filters if available
-        if (userPreferencesQuery.data) {
-            setFilters(userPreferencesQuery.data);
-        }
-
-        // Update balance loading state
-        setIsLoadingBalances(
-            tokenBalancesQuery.isLoading ||
-                tokenBalancesQuery.isFetching ||
-                tokenPricesQuery.isLoading ||
-                tokenPricesQuery.isFetching,
-        );
-    }, [
-        // Dependencies remain the same
-        tokenListQuery.data,
-        tokenListQuery.isLoading,
-        tokenListQuery.error,
-        tokenBalancesQuery.data,
-        tokenBalancesQuery.isLoading,
-        tokenBalancesQuery.isFetching,
-        tokenBalancesQuery.error,
-        tokenPricesQuery.data,
-        tokenPricesQuery.isLoading,
-        tokenPricesQuery.isFetching,
-        tokenPricesQuery.error,
-        userPreferencesQuery.data,
-    ]);
 
     // Implement operation functions
     const addToken = async (input: AddTokenInput) => {
@@ -146,23 +61,6 @@ export function useTokens() {
         await tokenListQuery.refetch();
     };
 
-    // Cache token balances in the backend
-    const cacheBalances = async (tokens: FungibleToken[]) => {
-        if (!tokens || tokens.length === 0) return;
-
-        const balancesToCache = tokens
-            .filter((token) => token.amount !== undefined)
-            .map((token) => ({
-                tokenId: token.address,
-                balance: token.amount,
-            }));
-
-        if (balancesToCache.length > 0) {
-            await updateBalanceMutation.mutateAsync(balancesToCache);
-        }
-        await tokenBalancesQuery.refetch();
-    };
-
     // Toggle a single token's visibility in preferences
     const toggleTokenVisibility = async (tokenId: string, hidden: boolean) => {
         setIsSyncPreferences(true);
@@ -171,14 +69,6 @@ export function useTokens() {
         setIsSyncPreferences(false);
         await userPreferencesQuery.refetch();
         await tokenBalancesQuery.refetch();
-    };
-
-    // Toggle multiple tokens' visibility for better performance
-    const batchToggleTokenVisibility = async (toggles: Array<[string, boolean]>) => {
-        await batchToggleTokenVisibilityMutation.mutateAsync(toggles);
-        await userPreferencesQuery.refetch();
-        await tokenListQuery.refetch();
-        await userPreferencesQuery.refetch();
     };
 
     // Update user filter preferences
@@ -191,59 +81,6 @@ export function useTokens() {
 
         await updateUserFiltersMutation.mutateAsync(updatedFilters);
         await userPreferencesQuery.refetch();
-    };
-
-    // Create a combined refresh function
-    const refreshTokenData = async () => {
-        setIsLoadingBalances(true);
-
-        try {
-            // Parallel fetch of balances and prices for maximum efficiency
-            const [balancesResult, pricesResult] = await Promise.all([
-                tokenBalancesQuery.refetch(),
-                tokenPricesQuery.refetch(),
-            ]);
-
-            // If we have both data sets, combine them
-            if (balancesResult.data && pricesResult.data) {
-                const tokens = balancesResult.data;
-                const prices = pricesResult.data;
-
-                // Create enriched tokens with both balance and price data
-                const enrichedTokens = tokens.map((token) => {
-                    const price = prices[token.address] || null;
-
-                    return {
-                        ...token,
-                        usdConversionRate: price,
-                        usdEquivalent:
-                            price && token.amount
-                                ? (Number(token.amount) * price) / Math.pow(10, token.decimals)
-                                : null,
-                    };
-                });
-
-                // Update the store with combined data
-                setTokens(enrichedTokens);
-                setHasBalances(tokens.some((token) => token.amount && Number(token.amount) > 0));
-            }
-        } catch (error) {
-            setError(error as Error);
-        } finally {
-            setIsLoadingBalances(false);
-        }
-    };
-
-    const refreshTokens = async () => {
-        updateToken();
-    };
-
-    const refreshBalances = async () => {
-        updateToken();
-    };
-
-    const refreshPrices = async () => {
-        updateToken();
     };
 
     const updateTokenInit = async () => {
@@ -272,18 +109,91 @@ export function useTokens() {
         await tokenBalancesQuery.refetch();
     };
 
+    // Enrich tokens with balances, metadata, and prices
+    useEffect(() => {
+        // Update loading states
+        setIsLoading(tokenListQuery.isLoading || userPreferencesQuery.isLoading);
+
+        setIsLoadingBalances(tokenBalancesQuery.isLoading || tokenBalancesQuery.isFetching);
+
+        // Only process data when tokenList is available
+        if (!tokenListQuery.data) return;
+
+        // Get the raw token list
+        const rawTokens: FungibleToken[] = tokenListQuery.data.map((token: TokenModel) => {
+            return mapTokenModelToFungibleToken(token);
+        });
+
+        // Create an enriched token list by merging all data sources
+        const enrichedTokens = rawTokens.map((token) => {
+            // Basic token model
+            const enrichedToken = { ...token };
+
+            // 1. Enrich with balance data
+            if (tokenBalancesQuery.data) {
+                const balanceData = tokenBalancesQuery.data.find(
+                    (t) => t.address === token.address,
+                );
+                if (balanceData?.amount !== undefined) {
+                    enrichedToken.amount = balanceData.amount;
+                }
+            }
+
+            // 2. Enrich with metadata
+            if (tokenMetadataQuery.data) {
+                const metadataMap = tokenMetadataQuery.data;
+                const metadata = metadataMap[token.address];
+                if (metadata?.fee !== undefined) {
+                    enrichedToken.fee = metadata.fee;
+                }
+            }
+
+            // 3. Enrich with price data
+            if (tokenPricesQuery.data) {
+                const priceMap = tokenPricesQuery.data;
+                const price = priceMap[token.address];
+
+                if (price && enrichedToken.amount) {
+                    const amountInNumber =
+                        Number(enrichedToken.amount) / Math.pow(10, enrichedToken.decimals);
+                    enrichedToken.usdEquivalent = price * amountInNumber;
+                    enrichedToken.usdConversionRate = price;
+                }
+            }
+
+            applyFilters();
+            return enrichedToken;
+        });
+
+        // Update the token store with enriched tokens
+        setRawTokenList(enrichedTokens);
+
+        if (userPreferencesQuery.data) {
+            setFilters(userPreferencesQuery.data);
+        }
+    }, [
+        identity,
+        tokenListQuery.data,
+        tokenListQuery.isLoading,
+        userPreferencesQuery.isLoading,
+        userPreferencesQuery.data,
+        tokenBalancesQuery.data,
+        tokenBalancesQuery.isLoading,
+        tokenBalancesQuery.isFetching,
+        tokenMetadataQuery.data,
+        tokenMetadataQuery.isLoading,
+        tokenMetadataQuery.isFetching,
+        tokenPricesQuery.data,
+        tokenPricesQuery.isLoading,
+    ]);
+
     // Update operation functions in Zustand
     useEffect(() => {
         useTokenStore.setState({
             addToken,
             removeToken,
             toggleTokenVisibility,
-            batchToggleTokenVisibility,
             updateUserFilters,
-            refreshTokens,
-            refreshBalances,
-            refreshPrices, // Add the new function
-            cacheBalances,
             updateTokenInit,
             updateToken,
             updateTokenExplorer,

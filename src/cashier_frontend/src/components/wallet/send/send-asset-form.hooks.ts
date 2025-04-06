@@ -2,18 +2,12 @@ import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
 import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
-import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useCallback, useEffect, useMemo } from "react";
-import { AssetSelectItem } from "@/components/asset-select";
-import { TokenUtilService } from "@/services/tokenUtils.service";
-import { mapAPITokenModelToAssetSelectModel, UserToken } from "@/services/icExplorer.service";
 import * as z from "zod";
-import { TokenProviderService } from "@/services/tokenProviderService";
 import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
-import { Identity } from "@dfinity/agent";
-import { ASSET_LIST } from "@/services/tokenProviderService/devTokenProvider.service";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
-export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
+export const walletSendAssetFormSchema = (assets: FungibleToken[]) => {
     return z
         .object({
             address: z.string().min(1, { message: "Asset is required" }),
@@ -38,7 +32,7 @@ export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
 export type WalletSendAssetFormSchema = z.infer<ReturnType<typeof walletSendAssetFormSchema>>;
 
 export function useWalletSendAssetForm(
-    assets: AssetSelectItem[],
+    assets: FungibleToken[],
     defaultValues?: DefaultValues<WalletSendAssetFormSchema>,
 ): UseFormReturn<WalletSendAssetFormSchema> {
     const form = useForm<WalletSendAssetFormSchema>({
@@ -62,44 +56,8 @@ export function useWalletSendAssetForm(
     return form;
 }
 
-const fetchAssetListAmounts = async (identity: Identity, assetList: AssetSelectItem[]) => {
-    const canisterUtilService = new CanisterUtilsService(identity);
-
-    const assetListWithAmounts = await Promise.all(
-        assetList.map(async (asset) => {
-            const amountFetched = await canisterUtilService.checkAccountBalance(
-                asset.address,
-                identity?.getPrincipal().toString(),
-            );
-
-            if (amountFetched === null) {
-                return asset;
-            }
-
-            const parsedAmount = await TokenUtilService.getHumanReadableAmount(
-                amountFetched,
-                asset.address,
-            );
-
-            return {
-                ...asset,
-                amount: parsedAmount,
-            };
-        }),
-    );
-    return assetListWithAmounts;
-};
-
-const fetchUserTokens = async (walletAddress: string) => {
-    const tokens = await TokenProviderService.getUserTokens(walletAddress);
-    if (tokens.length === 0) {
-        tokens.push(...(ASSET_LIST as UserToken[]));
-    }
-    return tokens.map(mapAPITokenModelToAssetSelectModel);
-};
-
 export function useSelectedWalletSendAsset(
-    assets: AssetSelectItem[] | undefined,
+    assets: FungibleToken[] | undefined,
     form: UseFormReturn<WalletSendAssetFormSchema>,
 ) {
     const tokenAddress = form.watch("address");
@@ -130,7 +88,6 @@ export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAsse
 
             if (!rates || !rates.canConvert) return;
 
-            const convertedValue = value * rates.tokenToUsd;
             //form.setValue("usdNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
         },
         [rates],

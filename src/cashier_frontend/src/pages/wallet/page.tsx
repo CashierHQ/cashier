@@ -3,13 +3,13 @@ import { WalletTabs } from "@/components/wallet/tabs";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTokens } from "@/hooks/useTokens";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 export default function WalletPage() {
     const responsive = useResponsive();
 
     const {
-        filteredTokens,
+        filteredTokenList: filteredTokens,
         isLoading,
         // TODO: add skeleton loading for balances
         // isLoadingBalances,

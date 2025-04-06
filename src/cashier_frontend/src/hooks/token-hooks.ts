@@ -1,21 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Identity } from "@dfinity/agent";
-import { FungibleToken } from "@/types/fungible-token.speculative";
+import {
+    FungibleToken,
+    TokenBalanceMap,
+    TokenMetadataMap,
+} from "@/types/fungible-token.speculative";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import {
     mapFiltersToUserFiltersInput,
     mapUserPreferenceToFilters,
-    mapUserTokenToFungibleToken,
     TokenFilters,
+    mapTokenDtoToTokenModel,
 } from "@/types/token-store.type";
 import TokenStorageService from "@/services/backend/tokenStorage.service";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
+import { useIdentity } from "@nfid/identitykit/react";
+import TokenCacheService from "@/services/backend/tokenCache.service";
 
 // Centralized query keys for consistent caching
 export const TOKEN_QUERY_KEYS = {
     all: ["tokens"] as const,
     list: (principalId?: string) => [...TOKEN_QUERY_KEYS.all, "list", principalId] as const,
+    metadata: () => [...TOKEN_QUERY_KEYS.all, "metadata"] as const,
     balances: (principalId?: string) => [...TOKEN_QUERY_KEYS.all, "balances", principalId] as const,
     preferences: (principalId?: string) =>
         [...TOKEN_QUERY_KEYS.all, "preferences", principalId] as const,
@@ -41,151 +48,110 @@ export function useTokenListQuery(identity: Identity | undefined) {
         },
         select: (data) => {
             // Transform to frontend model
-            return data.map((token) => mapUserTokenToFungibleToken(token));
+            const res = data.map((token) => mapTokenDtoToTokenModel(token));
+            return res;
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         enabled: !!identity,
     });
 }
 
-export function useTokenMetadataQuery(
-    tokens: FungibleToken[] | undefined,
-    identity: Identity | undefined,
-) {
+export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
+    const identity = useIdentity();
+
     return useQuery({
-        queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
+        queryKey: TOKEN_QUERY_KEYS.metadata(),
         queryFn: async () => {
-            if (!identity || !tokens) throw new Error("Not authenticated");
+            if (!identity) throw new Error("Not authenticated");
 
-            const tokenPromises = tokens.map(async (token) => {
-                try {
-                    const metadata = await TokenUtilService.getTokenMetadata(token.address);
+            if (!tokens || tokens.length === 0) return {};
 
-                    return {
-                        ...token,
-                        fee: metadata?.fee,
-                    };
-                } catch (error) {
-                    console.error(`Error fetching metadata for ${token.address}:`, error);
-                    return token; // Return token unchanged on error
-                }
-            });
+            // Create a map of token address to metadata
+            const metadataMap: TokenMetadataMap = {};
 
-            const tokensWithMetadata = await Promise.all(tokenPromises);
+            // Process tokens in batches to avoid overwhelming the network
+            const batchSize = 5;
+            for (let i = 0; i < tokens.length; i += batchSize) {
+                const batch = tokens.slice(i, i + batchSize);
+                const batchPromises = batch.map(async (token) => {
+                    try {
+                        const metadata = await TokenUtilService.getTokenMetadata(token.address);
+                        if (metadata) {
+                            metadataMap[token.address] = {
+                                fee: metadata.fee,
+                            };
+                        }
+                        return { tokenId: token.address, metadata };
+                    } catch (error) {
+                        console.error(`Error fetching metadata for ${token.address}:`, error);
+                        return { tokenId: token.address, metadata: null };
+                    }
+                });
 
-            return tokensWithMetadata;
+                await Promise.all(batchPromises);
+            }
+
+            return metadataMap;
         },
+        staleTime: 30 * 60 * 1000, // 30 minutes
         enabled: !!identity && !!tokens,
-        staleTime: 5 * 60 * 1000, // 5 minutes
     });
 }
-
 // Hook 2: Fetch token balances
-export function useTokenBalancesQuery(
-    tokens: FungibleToken[] | undefined,
-    identity: Identity | undefined,
-) {
-    const updateBalanceMutation = useUpdateBalanceMutation(identity);
-
-    // Constants for localStorage
-    const LAST_CACHE_TIME_KEY = "lastTokenBalanceCacheTime";
-    const LAST_CACHED_BALANCES_KEY = "lastCachedTokenBalances";
-    const CACHE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes in milliseconds
+export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
+    const identity = useIdentity();
 
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.balances(identity?.getPrincipal().toString()),
         queryFn: async () => {
-            if (!identity || !tokens || tokens.length === 0) {
+            if (!identity) {
+                return [];
+            }
+
+            if (!tokens) {
                 return [];
             }
 
             const tokenUtilService = new TokenUtilService(identity);
 
-            // Fetch balances in parallel (unchanged)
+            // Create a balance map to track results
+            const balanceMap: TokenBalanceMap = {};
+
+            // Fetch balances in parallel
             const tokenPromises = tokens.map(async (token) => {
                 try {
-                    // TODO: Fix the issue address = empty after sending token
                     const balance = await tokenUtilService.balanceOf(token.address);
 
+                    // Update the balance map
+                    balanceMap[token.address] = { amount: balance };
+
                     return {
-                        ...token,
+                        id: token.id,
+                        address: token.address,
                         amount: balance,
                     };
                 } catch (error) {
                     console.error(`Error fetching balance for ${token.address}:`, error);
-                    return token; // Return token unchanged on error
+                    return {
+                        id: token.id,
+                        address: token.address,
+                        amount: 0n,
+                    };
                 }
             });
 
             const tokensWithBalances = await Promise.all(tokenPromises);
 
-            // Get the last cache time from localStorage
-            const lastCacheTimeString = localStorage.getItem(LAST_CACHE_TIME_KEY);
-            const lastCacheTime = lastCacheTimeString ? parseInt(lastCacheTimeString, 10) : 0;
-
-            // Get the last cached balances
-            const lastCachedBalancesString = localStorage.getItem(LAST_CACHED_BALANCES_KEY);
-            const lastCachedBalances = lastCachedBalancesString
-                ? JSON.parse(lastCachedBalancesString)
-                : {};
-
-            // Check if any balances have changed
-            const balancesChanged = tokensWithBalances.some((token) => {
-                const tokenId = token.address;
-                const currentAmount = token.amount ? token.amount.toString() : "0";
-                const lastAmount = lastCachedBalances[tokenId] || "0";
-
-                return currentAmount !== lastAmount;
-            });
-
-            const currentTime = Date.now();
-            const timeThresholdMet = currentTime - lastCacheTime > CACHE_THRESHOLD_MS;
-
-            // Cache if either balances changed OR time threshold met
-            if (balancesChanged || timeThresholdMet) {
-                try {
-                    const balancesToCache = tokensWithBalances
-                        .filter((token) => token.amount !== undefined)
-                        .map((token) => ({
-                            tokenId: token.address,
-                            balance: token.amount,
-                        }));
-
-                    if (balancesToCache.length > 0) {
-                        // Update the backend
-                        updateBalanceMutation.mutate(balancesToCache);
-
-                        // Save the current time
-                        localStorage.setItem(LAST_CACHE_TIME_KEY, currentTime.toString());
-
-                        // Save the current balances
-                        const balancesMap = balancesToCache.reduce(
-                            (acc, { tokenId, balance }) => {
-                                acc[tokenId] = balance.toString();
-                                return acc;
-                            },
-                            {} as Record<string, string>,
-                        );
-
-                        localStorage.setItem(LAST_CACHED_BALANCES_KEY, JSON.stringify(balancesMap));
-
-                        console.log(
-                            `Caching balances to backend (${balancesChanged ? "balances changed" : "time threshold reached"})`,
-                        );
-                    }
-                } catch (error) {
-                    console.error("Failed to cache balances:", error);
-                    // Continue even if caching fails
-                }
-            }
+            // store the balance map in local storage and backend if changed or time threshold met
+            new TokenCacheService(identity).cacheTokenBalances(balanceMap);
 
             return tokensWithBalances;
         },
-        enabled: !!identity && !!tokens && tokens.length > 0,
-        staleTime: 60 * 1000, // 1 minute (balances fetching frequency stays the same)
+        enabled: !!identity && !!tokens,
+        staleTime: 30 * 1000, // 30 seconds
+        refetchInterval: 30 * 1000, // 30 seconds
     });
 }
-
 // Add token mutation
 export function useAddTokenMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
@@ -213,24 +179,6 @@ export function useAddTokenMutation(identity: Identity | undefined) {
     });
 }
 
-export function useUpdateBalanceMutation(identity: Identity | undefined) {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (balances: { tokenId: string; balance: bigint }[]) => {
-            if (!identity) throw new Error("Not authenticated");
-
-            const tokenService = new TokenStorageService(identity);
-            await tokenService.updateBulkTokenBalance(balances);
-            return true;
-        },
-        onSuccess: () => {
-            // Optionally invalidate queries if needed
-            queryClient.invalidateQueries({ queryKey: TOKEN_QUERY_KEYS.all });
-        },
-    });
-}
-
 // Improved hook for toggling token visibility
 export function useToggleTokenVisibilityMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
@@ -251,26 +199,6 @@ export function useToggleTokenVisibilityMutation(identity: Identity | undefined)
     });
 }
 
-// Implement batch toggle for performance
-export function useBatchToggleTokenVisibilityMutation(identity: Identity | undefined) {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (toggles: Array<[string, boolean]>) => {
-            if (!identity) throw new Error("Not authenticated");
-
-            const tokenService = new TokenStorageService(identity);
-            await tokenService.batchToggleTokenVisibility(toggles);
-            return toggles;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
-            });
-        },
-    });
-}
-
 // Updated user preferences query hook
 export function useUserPreferencesQuery(identity: Identity | undefined) {
     return useQuery({
@@ -280,10 +208,12 @@ export function useUserPreferencesQuery(identity: Identity | undefined) {
 
             const tokenService = new TokenStorageService(identity);
             const preferences = await tokenService.getUserPreference();
+
+            console.log("User preferences:", preferences);
             return mapUserPreferenceToFilters(preferences);
         },
         enabled: !!identity,
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 60 * 60 * 1000, // 1 hour
     });
 }
 
@@ -308,36 +238,21 @@ export function useUpdateUserFiltersMutation(identity: Identity | undefined) {
     });
 }
 
-// New hook to fetch token prices
 export function useTokenPricesQuery() {
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.prices(),
         queryFn: async () => {
-            return await tokenPriceService.getAllPrices();
+            try {
+                const prices = await tokenPriceService.getAllPrices();
+                return prices;
+            } catch (error) {
+                console.error("Failed to fetch token prices:", error);
+                throw error; // Rethrow to let React Query handle the error
+            }
         },
         staleTime: 5 * 60 * 1000, // 5 minutes cache
+        refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+        retry: 3, // Retry failed requests up to 3 times
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff (30 seconds max)
     });
-}
-
-// Hook to enrich tokens with price data
-export function useEnrichTokensWithPrices(tokens: FungibleToken[] | undefined) {
-    const { data: prices, isLoading: isPricesLoading } = useTokenPricesQuery();
-
-    const tokensWithPrices = tokens?.map((token) => {
-        const price = prices?.[token.address] || null;
-
-        return {
-            ...token,
-            usdConversionRate: price,
-            usdEquivalent:
-                price && token.amount
-                    ? (Number(token.amount) * price) / Math.pow(10, token.decimals)
-                    : null,
-        };
-    });
-
-    return {
-        tokensWithPrices,
-        isPricesLoading,
-    };
 }

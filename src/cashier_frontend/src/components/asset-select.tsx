@@ -9,14 +9,9 @@ import {
 } from "@/components/ui/select";
 import { FormControl } from "./ui/form";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
-export interface AssetSelectItem {
-    id: string;
-    name: string;
-    amount: bigint | undefined;
-    address: string;
-}
-
+export type AssetSelectItem = Pick<FungibleToken, "id" | "name" | "address" | "amount">;
 export default function AssetSelect({
     assetList,
     defaultValue,

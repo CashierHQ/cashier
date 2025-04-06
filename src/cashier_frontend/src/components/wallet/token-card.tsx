@@ -24,18 +24,32 @@ export function WalletToken({ token }: WalletTokenProps) {
                     <span className="text-grey text-xs font-light leading-none">
                         {token.usdConversionRate === null
                             ? "-"
-                            : `$${prettyNumber(token.usdConversionRate)}`}
+                            : `$${
+                                  token.usdConversionRate
+                                      ? prettyNumber(token.usdConversionRate)
+                                      : "0"
+                              }`}
                     </span>
                 </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
                 <span className="text-right leading-4">
-                    {prettyNumber(convertDecimalBigIntToNumber(token.amount, token.decimals))}
+                    {token.amount === null
+                        ? "-"
+                        : `${
+                              token.amount
+                                  ? prettyNumber(
+                                        convertDecimalBigIntToNumber(token.amount, token.decimals),
+                                    )
+                                  : "0"
+                          }`}
                 </span>
 
                 <span className="text-grey font-light text-right text-xs leading-none">
-                    {token.usdEquivalent === null ? "-" : `$${prettyNumber(token.usdEquivalent)}`}
+                    {token.usdEquivalent === null
+                        ? "-"
+                        : `$${token.usdEquivalent ? prettyNumber(token.usdEquivalent) : "0"}`}
                 </span>
             </div>
         </article>

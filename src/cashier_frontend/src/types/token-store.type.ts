@@ -4,10 +4,10 @@ import {
     UserFiltersInput,
     UserPreference,
 } from "../../../declarations/token_storage/token_storage.did";
-import { FungibleToken } from "@/types/fungible-token.speculative";
+import { TokenModel } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
-import { fromNullable, toNullable } from "@dfinity/utils";
+import { toNullable } from "@dfinity/utils";
 
 export interface TokenFilters {
     hideZeroBalance: boolean;
@@ -26,6 +26,7 @@ export const createTokenKey = (token: TokenDto): string => {
 
 // Helper function to map UserPreference to TokenFilters
 export const mapUserPreferenceToFilters = (preference: UserPreference): TokenFilters => {
+    console.log("[mapUserPreferenceToFilters] User preference", preference);
     return {
         hideZeroBalance: preference.hide_zero_balance,
         hideUnknownToken: preference.hide_unknown_token,
@@ -82,13 +83,8 @@ export const mapStringToBackendChain = (chain: string): BackendChain => {
 };
 
 // Helper function to map UserToken to FungibleToken
-export const mapUserTokenToFungibleToken = (
-    token: TokenDto,
-    prices: Record<string, number> = {},
-    defaultToken: boolean = false,
-): FungibleToken => {
+export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
     const tokenId = token.icrc_ledger_id?.toString() || "";
-    const price = prices[tokenId] || null;
 
     return {
         id: token.id,
@@ -98,10 +94,6 @@ export const mapUserTokenToFungibleToken = (
         symbol: token.symbol?.toString() || "???",
         logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
         decimals: token.decimals || 8,
-        amount: fromNullable(token.balance) ? fromNullable(token.balance)! : BigInt(0),
-        usdEquivalent: null, // Would be calculated based on amount and price
-        usdConversionRate: price,
-        default: defaultToken,
-        enabled: token.enabled,
+        enabled: token.enabled || false,
     };
 };
