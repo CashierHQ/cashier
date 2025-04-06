@@ -133,7 +133,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
     };
 
     return (
-        <div className="w-full flex flex-col flex-grow relative">
+        <div className="w-full h-full flex flex-col flex-grow relative">
             {isLoadingAssets ? (
                 <AssetFormSkeleton />
             ) : (
@@ -143,14 +143,16 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                             onSubmit={form.handleSubmit((data) => {
                                 onSubmit(data);
                             })}
-                            className="space-y-8"
+                            className="space-y-8 flex flex-col h-full"
                         >
                             <FormField
                                 name="tokenAddress"
                                 control={form.control}
                                 render={() => (
                                     <FormItem>
-                                        <FormLabel>{t("create.asset")}</FormLabel>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <FormLabel>{t("create.asset")}</FormLabel>
+                                        </div>
                                         <AssetButton
                                             handleClick={() => setShowAssetDrawer(true)}
                                             text="Choose Asset"
@@ -172,7 +174,9 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                 render={({ field }) => (
                                     <FormItem>
                                         <div className="flex justify-between items-center">
-                                            <FormLabel>{t("create.amount")}</FormLabel>
+                                            <div className="flex gap-2 items-center justify-between mb-2">
+                                                <FormLabel>{t("create.amount")}</FormLabel>
+                                            </div>
                                             <UsdSwitch
                                                 amount={getCurrencySwitchTokenAmount()}
                                                 amountUsd={getCurrencySwitchUsdAmount()}
@@ -191,7 +195,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                                 value={getAmountInputValue()}
                                                 onChange={handleAmountInputChange}
                                                 disabled={isLoadingBalance}
-                                                className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                                className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                                             />
                                         </FormControl>
 
@@ -218,16 +222,18 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                 )}
                             />
 
-                            <FixedBottomButton
-                                type="submit"
-                                variant="default"
-                                size="lg"
-                                className="absolute bottom-[20px] left-1/2 -translate-x-1/2"
-                                onClick={() => console.log(form.formState.errors)}
-                                disabled={isButtonDisabled}
-                            >
-                                {t("continue")}
-                            </FixedBottomButton>
+                            <div className="flex-grow mt-auto flex items-end">
+                                <FixedBottomButton
+                                    type="submit"
+                                    variant="default"
+                                    size="lg"
+                                    className="w-full"
+                                    onClick={() => console.log(form.formState.errors)}
+                                    disabled={isButtonDisabled}
+                                >
+                                    {t("continue")}
+                                </FixedBottomButton>
+                            </div>
                         </form>
                     </Form>
 

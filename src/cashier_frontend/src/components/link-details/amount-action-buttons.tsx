@@ -12,14 +12,14 @@ interface AmountActionButtons {
 
 export function AmountActionButtons({ data }: AmountActionButtons) {
     return (
-        <div className="flex justify-between mx-auto">
+        <div className="flex justify-between mx-auto pt-1">
             {data.map(({ content, action }, index) => (
                 <Button
                     key={index}
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-[75px] rounded-[8px] hover:text-destructive hover:border-destructive hover:bg-white"
+                    className="w-fit font-light rounded-[8px] shadow-xs border border-input hover:text-destructive hover:border-destructive hover:bg-white"
                     onClick={action}
                 >
                     {content}

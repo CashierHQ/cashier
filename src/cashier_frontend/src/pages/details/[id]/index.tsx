@@ -17,6 +17,11 @@ import { useTranslation } from "react-i18next";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
+import { PartyPopper } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import SocialButtons from "@/components/link-details/social-buttons";
+import { useResponsive } from "@/hooks/responsive-hook";
+import { Helmet } from "react-helmet-async";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -25,6 +30,9 @@ export default function DetailPage() {
     const navigate = useNavigate();
     const { toastData, showToast, hideToast } = useToast();
     const { renderSkeleton } = useSkeletonLoading();
+    const responsive = useResponsive();
+
+    const [showOverlay, setShowOverlay] = React.useState(false);
 
     //TODO: Update to apply asset_info as the list of assets
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
@@ -40,9 +48,34 @@ export default function DetailPage() {
         }
     };
 
+    const shareUrl = window.location.href.replace("details/", "");
+    const tokenName = metadata?.name === "CUTE" ? "tCHAT" : metadata?.name;
+    const tokenAmount = linkData?.link?.asset_info[0].amount
+        ? TokenUtilService.getHumanReadableAmountFromMetadata(
+              linkData?.link?.asset_info[0].amount,
+              metadata,
+          )
+        : "";
+    const pageTitle = linkData?.link?.title || "Cashier Link";
+    const pageDescription = `Claim ${tokenAmount} ${tokenName} tokens via this Cashier link!`;
+
     React.useEffect(() => {
         if (!linkId) return;
         if (!identity) return;
+
+        // Check if this link has been viewed before
+        const viewedLinks = JSON.parse(localStorage.getItem("viewedLinks") || "[]");
+        const hasBeenViewed = viewedLinks.includes(linkId);
+
+        // Only show overlay for links that haven't been viewed before
+        setShowOverlay(!hasBeenViewed);
+
+        // If this is a new link, add it to viewed links in localStorage
+        if (!hasBeenViewed) {
+            const updatedViewedLinks = [...viewedLinks, linkId];
+            localStorage.setItem("viewedLinks", JSON.stringify(updatedViewedLinks));
+        }
+
         const fetchData = async () => {
             const link = await new LinkService(identity).getLink(linkId, ACTION_TYPE.WITHDRAW_LINK);
             setLinkData(link);
@@ -57,6 +90,32 @@ export default function DetailPage() {
                 "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
             )}
         >
+            <Helmet>
+                {/* Primary Meta Tags */}
+                <title>{pageTitle}</title>
+                <meta name="title" content={pageTitle} />
+                <meta name="description" content={pageDescription} />
+
+                {/* Open Graph / Facebook */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={shareUrl} />
+                <meta property="og:title" content={pageTitle} />
+                <meta property="og:description" content={pageDescription} />
+
+                {/* Twitter */}
+                <meta property="twitter:card" content="summary_large_image" />
+                <meta property="twitter:url" content={shareUrl} />
+                <meta property="twitter:title" content={pageTitle} />
+                <meta property="twitter:description" content={pageDescription} />
+            </Helmet>
+
+            {showOverlay && (
+                <CopyLinkOverlay
+                    showOverlay={showOverlay}
+                    setShowOverlay={setShowOverlay}
+                    handleCopyLink={handleCopyLink}
+                />
+            )}
             <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
                 <div className="w-full flex flex-grow flex-col">
                     {!linkData ? (
@@ -76,29 +135,44 @@ export default function DetailPage() {
                                     {linkData?.link?.title}
                                 </h4>
                             </div>
-                            <div id="qr-code-section" className="flex flex-col my-2">
-                                <div className="flex items-center justify-center grow">
+                            <div
+                                className={`flex ${responsive.isSmallDevice ? "flex-col gap-2" : "flex-row justify-start items-between gap-8 mb-4"}`}
+                            >
+                                <div
+                                    className={`flex items-center justify-center ${responsive.isSmallDevice ? "" : "hidden"}`}
+                                >
                                     <StateBadge state={linkData?.link?.state} />
                                 </div>
-                                <div className="flex items-center justify-center grow mt-3">
+                                <div
+                                    className={`flex items-center justify-center ${responsive.isSmallDevice ? " my-3" : "order-1"}`}
+                                >
                                     <QRCode
-                                        size={100}
+                                        size={responsive.isSmallDevice ? 100 : 130}
                                         value={window.location.href.replace("details/", "")}
                                     />
                                 </div>
+
+                                <div
+                                    className={`${responsive.isSmallDevice ? "" : "order-2 flex flex-col items-start justify-between w-full"}`}
+                                >
+                                    <div className={`${responsive.isSmallDevice ? "hidden" : ""}`}>
+                                        <StateBadge state={linkData?.link?.state} />
+                                    </div>
+                                    <SocialButtons handleCopyLink={handleCopyLink} />
+                                </div>
                             </div>
 
-                            <h2 className="font-medium leading-6 text-gray-900 ml-2">
-                                {t("details.linkInfo")}
-                            </h2>
+                            <div className="flex gap-2 items-center mb-2">
+                                <Label>{t("details.linkInfo")}</Label>
+                            </div>
                             <div
                                 id="link-detail-section"
-                                className="flex flex-col my-3 border-[1px] rounded-xl border-lightgreen"
+                                className="flex flex-col border-[1px] rounded-xl border-lightgreen"
                             >
                                 <Table className="text-base">
                                     <TableHeader></TableHeader>
                                     <TableBody>
-                                        <TableRow>
+                                        <TableRow className="border-b border-lightgreen">
                                             <TableCell className="font-medium px-5">
                                                 Link Type
                                             </TableCell>
@@ -108,7 +182,7 @@ export default function DetailPage() {
                                                 Tip link
                                             </TableCell>
                                         </TableRow>
-                                        <TableRow>
+                                        <TableRow className="border-b border-lightgreen">
                                             <TableCell className="font-medium px-5">
                                                 Chain
                                             </TableCell>
@@ -118,7 +192,7 @@ export default function DetailPage() {
                                                 ICP
                                             </TableCell>
                                         </TableRow>
-                                        <TableRow>
+                                        <TableRow className="border-b border-lightgreen">
                                             <TableCell className="font-medium px-5">
                                                 Token
                                             </TableCell>
@@ -203,6 +277,7 @@ export default function DetailPage() {
                         </Table>
                     </div> */}
                             <Button
+                                id="copy-link-button"
                                 onClick={handleCopyLink}
                                 size="lg"
                                 className="fixed text-[1rem] bottom-[30px] w-[90%] max-w-[350px] left-1/2 -translate-x-1/2"
@@ -219,6 +294,62 @@ export default function DetailPage() {
                             />
                         </>
                     )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function CopyLinkOverlay({
+    showOverlay,
+    setShowOverlay,
+    handleCopyLink,
+}: {
+    showOverlay: boolean;
+    setShowOverlay: (showOverlay: boolean) => void;
+    handleCopyLink: (e: React.SyntheticEvent) => void;
+}) {
+    function handleCopyAndCloseOverlay(e: React.SyntheticEvent) {
+        handleCopyLink(e);
+        setShowOverlay(false);
+    }
+
+    function handleCloseOverlay() {
+        setShowOverlay(false);
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 bg-black/50" onClick={handleCloseOverlay}>
+            <div className="absolute bottom-0 left-0 right-0 flex justify-center sm:items-center sm:bottom-auto sm:inset-24">
+                <div
+                    className="bg-white p-5 rounded-t-3xl rounded-b-none w-full sm:rounded-3xl sm:w-auto sm:max-w-sm shadow-lg text-center relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex justify-center items-center mb-2">
+                        <div className="bg-teal-50 rounded-full flex items-center justify-center p-3">
+                            <PartyPopper className="h-7 w-7 text-teal-500" />
+                        </div>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">Congratulations!</h3>
+                    <p className="text-gray-700 font-light text-sm">
+                        You've created a link. Copy the link address, and share it with others.
+                    </p>
+
+                    <Button
+                        id="copy-link-button"
+                        onClick={handleCopyAndCloseOverlay}
+                        size="lg"
+                        className="w-full mt-8"
+                    >
+                        Copy Link
+                    </Button>
+
+                    <button
+                        onClick={handleCloseOverlay}
+                        className="w-full mt-4 text-sm text-gray-500"
+                    >
+                        Continue
+                    </button>
                 </div>
             </div>
         </div>
