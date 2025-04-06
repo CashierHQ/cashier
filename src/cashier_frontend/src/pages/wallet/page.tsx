@@ -62,7 +62,7 @@ export default function WalletPage() {
 
     return (
         <div
-            className={`flex flex-col h-full ${!responsive.isSmallDevice && "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+            className={`flex flex-col h-dvh ${!responsive.isSmallDevice && "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
         >
             <div className="flex-none">
                 <WalletHero totalUsdEquivalent={totalUsdEquivalent} />

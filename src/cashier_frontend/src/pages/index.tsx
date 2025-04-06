@@ -21,6 +21,7 @@ import Header from "@/components/header";
 import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
+import { Plus } from "lucide-react";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -109,7 +110,7 @@ export default function HomePage() {
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {
             return (
-                <div className="overflow-y-auto custom-scrollbar">
+                <div className="overflow-y-auto h-full custom-scrollbar">
                     {Object.entries(links).map(([date, items]) => (
                         <div key={date} className="my-4">
                             <h3 className="text-lightblack font-normal mb-2">
@@ -215,10 +216,10 @@ export default function HomePage() {
         } else {
             return (
                 <div
-                    className={`w-screen flex justify-center py-5 h-full ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
+                    className={`w-screen flex justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
                 >
                     <SheetWrapper>
-                        <div className="flex w-full flex-col">
+                        <div className="flex w-full flex-col h-full">
                             <Header onConnect={connectToWallet} openTestForm={handleOpenTestForm} />
                             <div
                                 className={`flex h-full min-w-[50%] flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
@@ -239,29 +240,33 @@ export default function HomePage() {
                                         </button>
                                     </div>
                                 )}
-                                <div className="flex flex-col px-4">
+                                <div className="flex h-full flex-col px-4">
                                     <h2 className="text-base font-semibold mt-7">
                                         Links created by me
                                     </h2>
-                                    {isLoading
-                                        ? Array.from({ length: 5 }).map((_, index) => (
-                                              <div
-                                                  className="flex items-center space-x-4 my-3"
-                                                  key={index}
-                                              >
-                                                  <Skeleton className="h-10 w-10 rounded-sm" />
-                                                  <div className="space-y-2">
-                                                      <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                                                      <Skeleton className="h-3 w-[200px]" />
+                                    <div
+                                        className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-[85%]" : "h-full"}`}
+                                    >
+                                        {isLoading
+                                            ? Array.from({ length: 5 }).map((_, index) => (
+                                                  <div
+                                                      className="flex items-center space-x-4 my-3"
+                                                      key={index}
+                                                  >
+                                                      <Skeleton className="h-10 w-10 rounded-sm" />
+                                                      <div className="space-y-2">
+                                                          <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                                                          <Skeleton className="h-3 w-[200px]" />
+                                                      </div>
                                                   </div>
-                                              </div>
-                                          ))
-                                        : renderLinkList(linkData)}
+                                              ))
+                                            : renderLinkList(linkData)}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <button
-                            className={`fixed bottom-[30px] right-[30px] text-[2rem] rounded-full w-[3rem] h-[3rem] ${
+                            className={`fixed flex items-center justify-center bottom-[30px] right-[30px] text-[2rem] rounded-full w-[3rem] h-[3rem] border-2 border-white ${
                                 disableCreateButton
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-green hover:bg-green/90"
@@ -269,7 +274,7 @@ export default function HomePage() {
                             onClick={handleCreateLink}
                             disabled={disableCreateButton}
                         >
-                            +
+                            <Plus strokeWidth={3} />
                         </button>
                         <TransactionToast
                             open={toastData?.open ?? false}

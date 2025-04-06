@@ -55,8 +55,8 @@ export const Asset: FC<AssetProps> = ({
                     </>
                 )}
 
-                <span className="ml-1">{amount}</span>
-                <span className="ml-1">{getSymbol(symbol)}</span>
+                <span className="ml-1 font-light text-sm">{amount}</span>
+                <span className="ml-1 font-light text-sm">{getSymbol(symbol)}</span>
                 <AssetAvatar
                     className="ml-1"
                     src={getAvatarSrc(title ?? "", src ?? "")}
@@ -68,7 +68,7 @@ export const Asset: FC<AssetProps> = ({
 
     return (
         <div className="flex justify-between items-center font-normal">
-            <h6 className="text-sm">{title}</h6>
+            <h6 className="text-sm font-light">{title}</h6>
 
             {renderAmount()}
             {/* {isLoading ? (

@@ -9,7 +9,7 @@ export default function WalletLayout() {
     const closeWallet = () => navigate("/");
 
     return (
-        <div className="flex flex-col h-screen min-w-[280px] flex-1 mx-auto">
+        <div className="flex flex-col h-dvh min-w-[280px] flex-1 mx-auto">
             <WalletHeader onClose={closeWallet} />
 
             <div
