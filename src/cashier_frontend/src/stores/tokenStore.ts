@@ -33,6 +33,9 @@ interface TokenState {
     setIsImporting: (isImporting: boolean) => void;
     setError: (error: Error | null) => void;
 
+    // Getters
+    getToken(tokenAddress: string): FungibleToken | undefined;
+
     // Filter operations
     applyFilters: () => void;
 
@@ -86,6 +89,12 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     setIsSyncPreferences: (isSyncPreferences) => set({ isSyncPreferences }),
     setIsImporting: (isImporting) => set({ isImporting }),
     setError: (error) => set({ error }),
+
+    // Getters
+    getToken: (tokenAddress) => {
+        const { rawTokenList } = get();
+        return rawTokenList.find((token) => token.address === tokenAddress);
+    },
 
     // Filter operations
     applyFilters: () => {

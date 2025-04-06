@@ -1,4 +1,5 @@
 import { IC_HOST } from "@/const";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Agent, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { IcrcLedgerCanister, IcrcTokenMetadata, mapTokenMetadata } from "@dfinity/ledger-icrc";
@@ -30,6 +31,27 @@ export class TokenUtilService {
         if (!amount || !tokenAddress) {
             return 0;
         }
+
+        const tokenMetadata = await this.getTokenMetadata(tokenAddress);
+        const tokenV2 = TokenAmountV2.fromUlps({ amount, token: tokenMetadata as Token });
+        const upls = tokenV2.toUlps();
+        return Number(upls) / 10 ** tokenV2.token.decimals;
+    }
+
+    // For token objects (sync)
+    public static getHumanReadableAmountFromToken(amount: bigint, token: FungibleToken): number {
+        if (!amount || !token || token.decimals === undefined) {
+            return 0;
+        }
+
+        return Number(amount) / 10 ** token.decimals;
+    }
+
+    // Helper method to keep the implementation clean
+    private static async getHumanReadableAmountFromAddress(
+        amount: bigint,
+        tokenAddress: string,
+    ): Promise<number> {
         const tokenMetadata = await this.getTokenMetadata(tokenAddress);
         const tokenV2 = TokenAmountV2.fromUlps({ amount, token: tokenMetadata as Token });
         const upls = tokenV2.toUlps();
