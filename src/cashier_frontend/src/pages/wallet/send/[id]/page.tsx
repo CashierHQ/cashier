@@ -50,7 +50,7 @@ export default function SendTokenPage() {
     const [addressType, setAddressType] = useState<"principal" | "account">("principal");
 
     // Token data from global store
-    const { filteredTokenList, isLoadingBalances, setIsLoadingBalances } = useTokens();
+    const { filteredTokenList } = useTokens();
 
     // Transaction state from store
     const { transactionStatus, setSendAssetInfo, setTransactionStatus, openConfirmation } =
@@ -63,8 +63,8 @@ export default function SendTokenPage() {
      * Find the selected token from token list based on URL param
      */
     const selectedToken = useMemo(() => {
-        // Skip if data is loading or no token list available
-        if (isLoadingBalances || !filteredTokenList?.length) {
+        // Skip if no token list available
+        if (!filteredTokenList?.length) {
             return undefined;
         }
 
@@ -74,7 +74,7 @@ export default function SendTokenPage() {
         }
 
         return undefined;
-    }, [filteredTokenList, tokenId, isLoadingBalances]);
+    }, [filteredTokenList, tokenId]);
 
     /**
      * Calculate the maximum available amount considering network fees
@@ -122,15 +122,8 @@ export default function SendTokenPage() {
         const walletAddress = form.getValues("walletAddress");
         const hasAmountError = !!form.formState.errors.assetNumber;
 
-        setIsDisabled(
-            !walletAddress || hasAmountError || !amount || amount <= 0 || isLoadingBalances,
-        );
-    }, [
-        form.watch("assetNumber"),
-        form.watch("walletAddress"),
-        form.formState.errors.assetNumber,
-        isLoadingBalances,
-    ]);
+        setIsDisabled(!walletAddress || hasAmountError || !amount || amount <= 0);
+    }, [form.watch("assetNumber"), form.watch("walletAddress"), form.formState.errors.assetNumber]);
 
     /**
      * Handle transaction status changes
@@ -170,18 +163,6 @@ export default function SendTokenPage() {
         form.clearErrors("assetNumber");
     }, [selectedToken, form]);
 
-    useEffect(() => {
-        setIsLoadingBalances(false);
-
-        const init = async () => {
-            // setIsLoadingBalances(true);
-            // await updateTokenBalance();
-            // setIsLoadingBalances(false);
-        };
-
-        init();
-    }, []);
-
     /**
      * Handle navigation back to wallet
      */
@@ -193,9 +174,6 @@ export default function SendTokenPage() {
     const handleTokenSelect = async (token: FungibleToken) => {
         navigate(`/wallet/send/${token.address}`);
         setTokenAddress(token.address);
-        // setIsLoadingBalances(true);
-        // await updateTokenBalance();
-        // setIsLoadingBalances(false);
     };
 
     /**
@@ -361,7 +339,7 @@ export default function SendTokenPage() {
                                                 value={form.getValues("assetNumber") ?? ""}
                                                 onChange={handleAmountInputChange}
                                                 className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
-                                                disabled={isLoadingBalances || !selectedToken}
+                                                disabled={!selectedToken}
                                             />
                                         </FormControl>
                                         <div className="flex justify-between items-center">

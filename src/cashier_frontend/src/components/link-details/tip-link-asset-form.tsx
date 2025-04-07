@@ -39,14 +39,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
         link?.asset_info[0]?.address,
     );
 
-    const {
-        filteredTokenList,
-        isLoading,
-        isLoadingBalances,
-        getToken,
-        isLoadingPrices,
-        getTokenPrice,
-    } = useTokens();
+    const { filteredTokenList, isLoading, getToken, isLoadingPrices, getTokenPrice } = useTokens();
 
     // Get existing token from link state or maintain the selected one
     const token = useMemo(() => {
@@ -188,10 +181,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                             handleClick={() => setShowAssetDrawer(true)}
                                             text="Choose Asset"
                                             childrenNode={
-                                                <SelectedAssetButtonInfo
-                                                    selectedToken={token}
-                                                    isLoadingBalance={isLoadingBalances}
-                                                />
+                                                <SelectedAssetButtonInfo selectedToken={token} />
                                             }
                                         />
                                         <FormMessage />
@@ -226,7 +216,6 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                                 {...field}
                                                 value={getAmountInputValue()}
                                                 onChange={handleAmountInputChange}
-                                                disabled={isLoadingBalances}
                                                 className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                                             />
                                         </FormControl>
@@ -261,7 +250,6 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                         handleClose={() => setShowAssetDrawer(false)}
                         handleChange={handleSetTokenAddress}
                         assetList={filteredTokenList ?? []}
-                        isLoadingBalance={isLoadingBalances}
                     />
                 </>
             )}

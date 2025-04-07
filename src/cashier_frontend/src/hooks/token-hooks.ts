@@ -19,6 +19,21 @@ import { useIdentity } from "@nfid/identitykit/react";
 import TokenCacheService from "@/services/backend/tokenCache.service";
 import { useEffect } from "react";
 
+// Centralized time constants (in milliseconds)
+const TIME_CONSTANTS = {
+    // Cache durations
+    FIVE_MINUTES: 5 * 60 * 1000,
+    THIRTY_MINUTES: 30 * 60 * 1000,
+    ONE_HOUR: 60 * 60 * 1000,
+    THIRTY_SECONDS: 30 * 1000,
+
+    // Retry intervals
+    THREE_SECONDS: 3000,
+
+    // Maximum retry delay
+    MAX_RETRY_DELAY: 30000,
+};
+
 // Centralized query keys for consistent caching
 export const TOKEN_QUERY_KEYS = {
     all: ["tokens"] as const,
@@ -52,7 +67,7 @@ export function useTokenListQuery(identity: Identity | undefined) {
             const res = data.map((token) => mapTokenDtoToTokenModel(token));
             return res;
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: TIME_CONSTANTS.FIVE_MINUTES,
         enabled: !!identity,
     });
 }
@@ -94,7 +109,7 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
 
             return metadataMap;
         },
-        staleTime: 30 * 60 * 1000, // 30 minutes
+        staleTime: TIME_CONSTANTS.THIRTY_MINUTES,
         enabled: !!identity && !!tokens,
     });
 }
@@ -152,8 +167,8 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
             return tokensWithBalances;
         },
         enabled: !!identity && !!tokens,
-        staleTime: 30 * 1000, // 30 seconds
-        refetchInterval: 30 * 1000, // 30 seconds
+        staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
+        refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
     });
 }
 // Add token mutation
@@ -217,7 +232,7 @@ export function useUserPreferencesQuery(identity: Identity | undefined) {
             return mapUserPreferenceToFilters(preferences);
         },
         enabled: !!identity,
-        staleTime: 60 * 60 * 1000, // 1 hour
+        staleTime: TIME_CONSTANTS.ONE_HOUR,
     });
 }
 
@@ -258,10 +273,11 @@ export function useTokenPricesQuery() {
                 throw error;
             }
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes cache
-        refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+        staleTime: TIME_CONSTANTS.FIVE_MINUTES,
+        refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
         retry: 3, // Retry failed requests up to 3 times
-        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff (30 seconds max)
+        retryDelay: (attemptIndex) =>
+            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff (30 seconds max)
     });
 
     // Add custom retry logic for empty responses (not error responses)
@@ -272,7 +288,7 @@ export function useTokenPricesQuery() {
             const timeoutId = setTimeout(() => {
                 console.log("No price data received, retrying...");
                 queryClient.invalidateQueries({ queryKey: TOKEN_QUERY_KEYS.prices() });
-            }, 3000); // Retry after 3 seconds
+            }, TIME_CONSTANTS.THREE_SECONDS); // Retry after 3 seconds
 
             return () => clearTimeout(timeoutId);
         }

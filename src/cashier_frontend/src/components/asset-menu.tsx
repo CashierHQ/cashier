@@ -3,27 +3,20 @@ import { cn } from "@/lib/utils";
 import { NavigationMenu, NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 
 interface AssetMenuProps {
     assetList: FungibleToken[];
     onSelect: (val: string) => void;
-    isLoadingBalance?: boolean;
 }
 
-const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect, isLoadingBalance }) => {
+const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect }) => {
     return (
         <NavigationMenu className="w-[100%] max-w-[100%] justify-start">
             <ul className="w-[100%]">
                 {assetList?.map((asset) => (
-                    <ListItem
-                        key={asset.address}
-                        onSelected={onSelect}
-                        asset={asset}
-                        isLoadingBalance={isLoadingBalance}
-                    />
+                    <ListItem key={asset.address} onSelected={onSelect} asset={asset} />
                 ))}
             </ul>
         </NavigationMenu>
@@ -36,7 +29,7 @@ interface AssetItemProps {
     isLoadingBalance?: boolean;
 }
 
-const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalance }) => {
+const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
     //TODO: Remove after mid milestone
     const getTokenAvatar = (tokenAddress: string) => {
         if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
@@ -70,13 +63,7 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalanc
                         <div id="asset-info" className="text-md text-left">
                             <div>{asset?.name}</div>
                         </div>
-                        <div className="ml-auto">
-                            {isLoadingBalance ? (
-                                <Skeleton className="w-[130px] h-4" />
-                            ) : (
-                                `${amount}`
-                            )}
-                        </div>
+                        <div className="ml-auto">{`${amount}`}</div>
                     </div>
                 </a>
             </NavigationMenuLink>
