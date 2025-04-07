@@ -1,18 +1,14 @@
 import { FC } from "react";
-import { AssetSelectItem } from "@/components/asset-select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TokenUtilService } from "@/services/tokenUtils.service";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 type SelectedAssetButtonInfoProps = {
-    selectedToken: AssetSelectItem | undefined;
-    isLoadingBalance: boolean;
+    selectedToken?: FungibleToken | null;
 };
 
-export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({
-    selectedToken,
-    isLoadingBalance,
-}) => {
+export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({ selectedToken }) => {
     if (!selectedToken) {
         return null;
     }
@@ -26,23 +22,20 @@ export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({
         } else return `${IC_EXPLORER_IMAGES_PATH}${tokenAddress}`;
     };
 
+    const amount = TokenUtilService.getHumanReadableAmountFromToken(
+        selectedToken.amount ?? 0n,
+        selectedToken,
+    );
+
     return (
         <div className="flex font-normal items-center">
             <Avatar className="mr-3">
-                <AvatarImage src={getTokenAvatar(selectedToken.tokenAddress)} />
+                <AvatarImage src={getTokenAvatar(selectedToken.address)} />
                 <AvatarFallback>{selectedToken.name}</AvatarFallback>
             </Avatar>
             <div id="asset-info" className="text-md text-left">
                 <div>{selectedToken.name}</div>
-                {selectedToken.amount && (
-                    <div>
-                        {isLoadingBalance ? (
-                            <Skeleton className="w-[130px] h-4 mt-1" />
-                        ) : (
-                            `Balance ${selectedToken.amount} ${selectedToken.name}`
-                        )}
-                    </div>
-                )}
+                {selectedToken.amount?.toString() && <div>{`Balance ${amount}`}</div>}
             </div>
         </div>
     );

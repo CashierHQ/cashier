@@ -29,7 +29,7 @@ export const SendAssetConfirmationPopupAssetsSection: FC<ConfirmationPopupAssets
                         <span>{sendAssetInfo.asset.chain}</span>
                         <AssetAvatar
                             className="ml-1 w-5 h-5"
-                            src={sendAssetInfo.asset.logo || "./icpLogo.png"}
+                            src={"./icpLogo.png"}
                             symbol={sendAssetInfo.asset.symbol}
                         />
                     </div>
@@ -44,7 +44,7 @@ export const SendAssetConfirmationPopupAssetsSection: FC<ConfirmationPopupAssets
                         </span>
                         <AssetAvatar
                             className="ml-1 w-5 h-5"
-                            src={sendAssetInfo.asset.logo || "./icpLogo.png"}
+                            src={"./icpLogo.png"}
                             symbol={sendAssetInfo.asset.symbol}
                         />
                     </div>

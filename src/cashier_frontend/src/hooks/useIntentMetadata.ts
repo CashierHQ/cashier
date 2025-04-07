@@ -1,10 +1,9 @@
 import { IntentModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
-import useTokenMetadataQuery from "./useTokenMetadataQuery";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
-import { convertDecimalBigIntToNumber } from "@/utils";
 import { TASK } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
+import { useTokens } from "@/hooks/useTokens";
 
 const getIntentTitle = (intent: IntentModel, t: (key: string) => string) => {
     switch (intent.task) {
@@ -18,36 +17,36 @@ const getIntentTitle = (intent: IntentModel, t: (key: string) => string) => {
 };
 
 export const useIntentMetadata = (intent: IntentModel) => {
-    const { data: tokenData, isLoading: isLoadingMetadata } = useTokenMetadataQuery(
-        intent.asset.address,
-    );
+    const { getToken, isLoadingBalances } = useTokens();
     const { t } = useTranslation();
 
-    const metadata = tokenData?.metadata;
+    // Get token data directly from useTokens
+    const token = getToken(intent.asset.address);
 
     const [assetAmount, setAssetAmount] = useState<number>();
     const [feeAmount, setFeeAmount] = useState<number>();
 
     useEffect(() => {
-        if (metadata) {
-            const decimals = metadata.decimals;
-
+        if (token && token.decimals !== undefined) {
+            // Calculate amounts using token data
             const rawAmount = intent.amount;
-            setAssetAmount(convertDecimalBigIntToNumber(rawAmount, decimals));
+            setAssetAmount(Number(rawAmount) / 10 ** token.decimals);
 
-            const rawFee = metadata?.fee;
-            setFeeAmount(convertDecimalBigIntToNumber(rawFee, decimals));
+            // Handle fee if present
+            if (token.fee !== undefined) {
+                setFeeAmount(Number(token.fee) / 10 ** token.decimals);
+            }
         }
-    }, [metadata]);
+    }, [token, intent.amount]);
 
     return {
         assetAmount,
-        assetSymbol: metadata?.symbol,
+        assetSymbol: token?.symbol,
         assetSrc: `${IC_EXPLORER_IMAGES_PATH}${intent.asset.address}`,
         feeAmount,
-        feeSymbol: metadata?.symbol,
+        feeSymbol: token?.symbol,
         feeIconSrc: `${IC_EXPLORER_IMAGES_PATH}${intent.asset.address}`,
         title: getIntentTitle(intent, t),
-        isLoadingMetadata,
+        isLoadingMetadata: isLoadingBalances || !token, // Consider it loading if either balances are loading or token isn't found
     };
 };

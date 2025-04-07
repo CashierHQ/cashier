@@ -11,12 +11,11 @@ import {
     UpdateActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
-import { BACKEND_CANISTER_ID } from "@/const";
+import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import {
     LinkDetailModel,
     LinkGetUserStateInputModel,
-    LinkGetUserStateOutputModel,
     LinkModel,
     LinkUpdateUserStateInputModel,
 } from "./types/link.service.types";
@@ -29,16 +28,7 @@ import {
 import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
-import {
-    ACTION_STATE,
-    ACTION_TYPE,
-    CHAIN,
-    FEE_TYPE,
-    INTENT_STATE,
-    INTENT_TYPE,
-    LINK_USER_STATE,
-    TASK,
-} from "./types/enum";
+import { FEE_TYPE } from "./types/enum";
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -81,7 +71,7 @@ class LinkService {
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         this.actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
+            agent: HttpAgent.createSync({ identity, host: IC_HOST }),
         });
     }
 

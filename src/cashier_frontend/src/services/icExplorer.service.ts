@@ -1,5 +1,4 @@
 import icExplorerAxiosClient from "@/axios/axiosClient";
-import { AssetSelectItem } from "@/components/asset-select";
 
 export const IC_EXPLORER_IMAGES_PATH = "https://api.icexplorer.io/images/";
 
@@ -18,23 +17,6 @@ export interface UserToken {
     symbol: string;
     valueUSD: string;
 }
-
-export const initializeDefaultGetUserTokenRequest = (principal: string): GetUserTokensRequest => {
-    return {
-        principal: principal,
-        isDesc: true,
-        page: 1,
-        size: 100,
-    };
-};
-
-export const mapAPITokenModelToAssetSelectModel = (token: UserToken): AssetSelectItem => {
-    return {
-        name: token.symbol,
-        amount: Number.parseFloat(token.amount),
-        tokenAddress: token.ledgerId,
-    };
-};
 
 export const icExplorerService = {
     getUserTokens: (data: GetUserTokensRequest) => {

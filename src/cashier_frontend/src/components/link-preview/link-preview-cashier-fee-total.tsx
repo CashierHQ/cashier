@@ -1,12 +1,11 @@
 import { NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
-import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { useFeeTotal } from "@/hooks/useFeeMetadata";
 import { FeeModel } from "@/services/types/intent.service.types";
 import { convert } from "@/utils/helpers/convert";
 import { useTranslation } from "react-i18next";
 import { Spinner } from "../ui/spinner";
 import { FC } from "react";
-import { ConversionRates } from "@/services/types/usdConversion.service.types";
+import { useTokenStore } from "@/stores/tokenStore";
 
 type LinkPreviewCashierFeeTotalProps = {
     intents: FeeModel[];
@@ -14,13 +13,10 @@ type LinkPreviewCashierFeeTotalProps = {
 
 const FeeDisplay: FC<{
     totalCashierFee: number | undefined;
-    conversionRates: ConversionRates | undefined;
+    tokenUsdPrice: number | undefined;
     isLoading: boolean;
-}> = ({ totalCashierFee, conversionRates, isLoading }) => {
-    if (
-        (conversionRates === undefined || conversionRates.tokenToUsd === undefined) &&
-        totalCashierFee !== undefined
-    ) {
+}> = ({ totalCashierFee, tokenUsdPrice, isLoading }) => {
+    if (tokenUsdPrice === undefined && totalCashierFee !== undefined) {
         return (
             <>
                 <span>{totalCashierFee}</span>
@@ -32,7 +28,7 @@ const FeeDisplay: FC<{
     if (
         totalCashierFee === undefined ||
         isLoading ||
-        convert(totalCashierFee, conversionRates?.tokenToUsd)?.toFixed(3) === undefined
+        convert(totalCashierFee, tokenUsdPrice)?.toFixed(3) === undefined
     ) {
         return <Spinner width={22} />;
     }
@@ -40,8 +36,8 @@ const FeeDisplay: FC<{
     return (
         <span>
             {!isLoading &&
-                conversionRates?.tokenToUsd !== undefined &&
-                `($${convert(totalCashierFee, conversionRates.tokenToUsd)?.toFixed(3)}) ≈ `}{" "}
+                tokenUsdPrice !== undefined &&
+                `($${convert(totalCashierFee, tokenUsdPrice)?.toFixed(3)}) ≈ `}{" "}
             {totalCashierFee} {NETWORK_FEE_DEFAULT_SYMBOL}
         </span>
     );
@@ -50,9 +46,9 @@ const FeeDisplay: FC<{
 export const LinkPreviewCashierFeeTotal: FC<LinkPreviewCashierFeeTotalProps> = ({ intents }) => {
     const { t } = useTranslation();
     const totalCashierFee = useFeeTotal(intents);
-    const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
-        intents[0].address,
-    );
+    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
+    const tokenUsdPrice = getTokenPrice(intents[0].address);
+    const isLoading = useTokenStore((state) => state.isLoading || state.isLoadingBalances);
 
     return (
         <div className="mt-2 flex flex-col gap-3 rounded-xl px-4 py-[0.8rem] bg-lightgreen">
@@ -61,8 +57,8 @@ export const LinkPreviewCashierFeeTotal: FC<LinkPreviewCashierFeeTotalProps> = (
                 <div className="flex items-center">
                     <FeeDisplay
                         totalCashierFee={totalCashierFee}
-                        conversionRates={conversionRates}
-                        isLoading={isLoadingConversionRates}
+                        tokenUsdPrice={tokenUsdPrice}
+                        isLoading={isLoading}
                     />
                 </div>
             </div>

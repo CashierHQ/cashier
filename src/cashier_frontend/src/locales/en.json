@@ -83,7 +83,8 @@
             "processing": "Processing...",
             "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
             "info": {
-                "button_text": "Close"
+                "button_text": "Close",
+                "close": "Close"
             }
         }
     },
@@ -91,7 +92,8 @@
         "error": "Error",
         "commonErrorMessage": "There was a error while creating the link. Please try again later.",
         "creating": "Creating",
-        "creatingLink": "The link is being created. Please wait for seconds."
+        "creatingLink": "The link is being created. Please wait for seconds.",
+        "clear": "Clear"
     },
     "link": {
         "preview": {
@@ -153,9 +155,12 @@
         }
     },
     "manage": {
+        "syncingPreferences": "Syncing preferences",
         "header": "Manage tokens",
         "search": {
-            "placeholder": "Search a token"
+            "placeholder": "Search a token",
+            "noResults": "No results found",
+            "missingToken": "Missing a token?"
         },
         "import": "Import token",
         "missing": "Missing a token?"
@@ -185,6 +190,9 @@
                     "format": "Invalid Index Canister ID"
                 }
             }
+        },
+        "loading": {
+            "fetchMetdata": "Fetching metadata"
         }
     },
     "review": {

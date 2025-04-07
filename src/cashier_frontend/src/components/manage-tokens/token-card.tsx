@@ -1,19 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AssetAvatar } from "../ui/asset-avatar";
 import Switch from "../ui/switch";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { mapChainToLogo } from "@/utils/map/chain.map";
+import { useTokens } from "@/hooks/useTokens";
 
-export interface ManageTokensToken {
+export interface ManageTokensTokenProps {
     token: FungibleToken;
 }
 
-export function ManageTokensToken({ token }: ManageTokensToken) {
-    const [isVisible, setIsVisible] = useState<boolean>(true);
-    const toggleVisible = () => setIsVisible((old) => !old);
+export function ManageTokensToken({ token }: ManageTokensTokenProps) {
+    // const { toggleTokenEnabled, isTogglingToken } = useTokenStore(identity);
+
+    // Use token's enabled status from the API instead of local state
+    const [isVisible, setIsVisible] = useState<boolean>(token.enabled ?? true);
+
+    // Update local state if token props change
+    useEffect(() => {
+        setIsVisible(token.enabled ?? true);
+    }, [token.enabled]);
+
+    const { toggleTokenVisibility } = useTokens();
+
+    const handleToggle = (e: React.MouseEvent) => {
+        // Stop propagation to prevent the article onClick from firing
+        e.stopPropagation();
+
+        // Toggle the visibility state locally for immediate feedback
+        const newVisibility = !isVisible;
+        setIsVisible(newVisibility);
+        toggleTokenVisibility(token.id, !newVisibility);
+    };
 
     return (
-        <article className="flex justify-between items-center" onClick={toggleVisible}>
+        <article className="flex justify-between items-center">
             <div className="flex gap-1.5 items-center">
                 <div className="relative">
                     <AssetAvatar
@@ -36,7 +56,7 @@ export function ManageTokensToken({ token }: ManageTokensToken) {
                 </div>
             </div>
 
-            <Switch.Root checked={isVisible}>
+            <Switch.Root checked={isVisible} onClick={handleToggle}>
                 <Switch.Thumb />
             </Switch.Root>
         </article>

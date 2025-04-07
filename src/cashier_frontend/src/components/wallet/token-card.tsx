@@ -17,7 +17,7 @@ export function WalletToken({ token }: WalletTokenProps) {
     return (
         <article className="flex justify-between" onClick={navigateToDetailsPage}>
             <div className="flex flex-row items-center gap-2">
-                <AssetAvatar src={token.logo} symbol={token.symbol} className="w-9 h-9" />
+                <AssetAvatar src={token.logo} symbol={token.chain} className="w-9 h-9" />
 
                 <div className="flex flex-col gap-1.5">
                     <span className="leading-4">{token.symbol}</span>
@@ -39,7 +39,15 @@ export function WalletToken({ token }: WalletTokenProps) {
 
             <div className="flex flex-col gap-1.5">
                 <span className="text-right leading-4">
-                    {prettyNumber(convertDecimalBigIntToNumber(token.amount, token.decimals))}
+                    {token.amount === null
+                        ? "-"
+                        : `${
+                              token.amount
+                                  ? prettyNumber(
+                                        convertDecimalBigIntToNumber(token.amount, token.decimals),
+                                    )
+                                  : "0"
+                          }`}
                 </span>
 
                 {token.usdConversionRate ? (
@@ -47,12 +55,7 @@ export function WalletToken({ token }: WalletTokenProps) {
                         $
                         <div
                             dangerouslySetInnerHTML={{
-                                __html: formatPrice(
-                                    (
-                                        token.usdConversionRate *
-                                        convertDecimalBigIntToNumber(token.amount, token.decimals)
-                                    ).toString(),
-                                ),
+                                __html: formatPrice(token.usdConversionRate.toString()),
                             }}
                         />
                     </span>

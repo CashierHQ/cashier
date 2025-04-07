@@ -1,13 +1,17 @@
+// File: src/token_storage/src/types.rs
+
 use std::borrow::Cow;
 
 use candid::CandidType;
 use candid::Principal;
 use cashier_macros::storable;
-use ic_stable_structures::{storable::Bound, Storable};
+use ic_stable_structures::storable::Bound;
+use ic_stable_structures::Storable;
 use serde::Deserialize;
 
 pub type LedgerId = Principal;
 pub type IndexId = Principal;
+pub type TokenId = String; // A unique identifier for tokens, e.g. "IC:ryjl3-tyaaa-aaaaa-aaaba-cai"
 
 #[derive(Default)]
 pub struct Candid<T>(pub T)
@@ -49,10 +53,13 @@ where
     }
 }
 
+// ... Keep the existing Candid implementation ...
+
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 #[storable]
 pub enum Chain {
     IC,
+    // Can add more chains in the future
 }
 
 impl Chain {
@@ -62,26 +69,61 @@ impl Chain {
             _ => Err(format!("Unsupported chain: {}", chain)),
         }
     }
+
+    pub fn to_str(&self) -> String {
+        match self {
+            Chain::IC => "IC".to_string(),
+        }
+    }
 }
 
+// Central registry token definition
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct RegistryToken {
+    pub id: TokenId,
+    pub icrc_ledger_id: Option<LedgerId>,
+    pub icrc_index_id: Option<IndexId>,
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub chain: Chain,
+    pub is_default: bool,
+}
+
+impl RegistryToken {
+    pub fn generate_id(chain: &Chain, ledger_id: Option<&LedgerId>) -> Result<TokenId, String> {
+        match (chain, ledger_id) {
+            (Chain::IC, Some(id)) => Ok(format!("IC:{}", id.to_text())),
+            _ => Err("Cannot generate token ID: missing required fields".to_string()),
+        }
+    }
+}
+
+// User's token preference
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 pub struct UserToken {
-    pub icrc_ledger_id: Option<LedgerId>,
-    pub icrc_index_id: Option<IndexId>,
-    pub symbol: Option<String>,
-    pub decimals: Option<u8>,
+    pub token_id: TokenId,
     pub enabled: bool,
-    pub unknown: bool,
-    pub chain: Chain,
 }
 
+// Balance cache for a user's token
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct TokenBalance {
+    pub balance: u128,
+    pub last_updated: u64, // Timestamp
+}
+
+// User preferences (mostly unchanged)
 #[storable]
 #[derive(Clone, Eq, PartialEq, Debug, CandidType)]
 pub struct UserPreference {
     pub hide_zero_balance: bool,
     pub hide_unknown_token: bool,
     pub selected_chain: Vec<Chain>,
+    pub hidden_tokens: Vec<TokenId>,
 }
 
 impl Default for UserPreference {
@@ -90,61 +132,66 @@ impl Default for UserPreference {
             hide_zero_balance: false,
             hide_unknown_token: false,
             selected_chain: vec![Chain::IC],
+            hidden_tokens: vec![],
         }
     }
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct UserPreferenceInput {
-    pub hide_zero_balance: bool,
-    pub hide_unknown_token: bool,
-    pub selected_chain: Vec<String>,
+pub struct UserFiltersInput {
+    pub hide_zero_balance: Option<bool>,
+    pub hide_unknown_token: Option<bool>,
+    pub selected_chain: Option<Vec<String>>,
 }
 
-impl TryFrom<UserPreferenceInput> for UserPreference {
-    type Error = String;
-
-    fn try_from(input: UserPreferenceInput) -> Result<Self, Self::Error> {
-        let chains = input
-            .selected_chain
-            .iter()
-            .map(|chain| Chain::from_str(chain))
-            .collect::<Result<Vec<Chain>, String>>()?;
-
-        Ok(Self {
-            hide_zero_balance: input.hide_zero_balance,
-            hide_unknown_token: input.hide_unknown_token,
-            selected_chain: chains,
-        })
-    }
-}
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct AddTokenInput {
-    pub chain: Chain,
+    pub chain: String,
     pub ledger_id: Option<LedgerId>,
     pub index_id: Option<IndexId>,
-    pub symbol: Option<String>,
-    pub decimals: Option<u8>,
-    pub enabled: Option<bool>,
-    pub unknown: Option<bool>,
-}
-
-impl From<AddTokenInput> for UserToken {
-    fn from(input: AddTokenInput) -> Self {
-        Self {
-            icrc_ledger_id: input.ledger_id,
-            icrc_index_id: input.index_id,
-            symbol: input.symbol,
-            decimals: input.decimals,
-            enabled: input.enabled.unwrap_or(false),
-            unknown: input.unknown.unwrap_or(false),
-            chain: input.chain,
-        }
-    }
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct RemoveTokenInput {
-    pub chain: Chain,
+    pub token_id: String,
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct RegisterTokenInput {
+    pub chain: String,
     pub ledger_id: Option<LedgerId>,
+    pub index_id: Option<IndexId>,
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub is_default: Option<bool>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct TokenDto {
+    pub id: String,
+    pub icrc_ledger_id: Option<LedgerId>,
+    pub icrc_index_id: Option<IndexId>,
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub chain: String,
+    pub enabled: bool,
+    pub balance: Option<u128>,
+}
+
+impl TokenDto {
+    pub fn get_address_from_id(&self) -> String {
+        // Extract the address from the token ID
+        if let Some(pos) = self.id.find(':') {
+            self.id[pos + 1..].to_string()
+        } else {
+            self.id.clone() // Return the full ID if no ':' is found
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct UpdateBulkBalancesInput {
+    pub token_balances: Vec<(String, u128)>,
 }

@@ -1,28 +1,22 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { NavigationMenu, NavigationMenuLink } from "@/components/ui/navigation-menu";
-import { AssetSelectItem } from "./asset-select";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TokenUtilService } from "@/services/tokenUtils.service";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 interface AssetMenuProps {
-    assetList: AssetSelectItem[];
+    assetList: FungibleToken[];
     onSelect: (val: string) => void;
-    isLoadingBalance?: boolean;
 }
 
-const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect, isLoadingBalance }) => {
+const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect }) => {
     return (
         <NavigationMenu className="w-[100%] max-w-[100%] justify-start">
             <ul className="w-[100%]">
                 {assetList?.map((asset) => (
-                    <ListItem
-                        key={asset.tokenAddress}
-                        onSelected={onSelect}
-                        asset={asset}
-                        isLoadingBalance={isLoadingBalance}
-                    />
+                    <ListItem key={asset.address} onSelected={onSelect} asset={asset} />
                 ))}
             </ul>
         </NavigationMenu>
@@ -30,12 +24,12 @@ const Menu: React.FC<AssetMenuProps> = ({ assetList, onSelect, isLoadingBalance 
 };
 
 interface AssetItemProps {
-    asset: AssetSelectItem;
+    asset: FungibleToken;
     onSelected: (val: string) => void;
     isLoadingBalance?: boolean;
 }
 
-const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalance }) => {
+const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
     //TODO: Remove after mid milestone
     const getTokenAvatar = (tokenAddress: string) => {
         if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
@@ -51,9 +45,11 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalanc
         } else return name;
     };
 
+    const amount = TokenUtilService.getHumanReadableAmountFromToken(asset.amount ?? 0n, asset);
+
     return (
         <li>
-            <NavigationMenuLink onSelect={() => onSelected(asset.tokenAddress)} asChild>
+            <NavigationMenuLink onSelect={() => onSelected(asset.address)} asChild>
                 <a
                     className={cn(
                         "w-[100%] block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
@@ -61,19 +57,13 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected, isLoadingBalanc
                 >
                     <div className="flex items-center">
                         <Avatar className="mr-3">
-                            <AvatarImage src={getTokenAvatar(asset.tokenAddress)} />
+                            <AvatarImage src={getTokenAvatar(asset.address)} />
                             <AvatarFallback>{getTokenName(asset.name)}</AvatarFallback>
                         </Avatar>
                         <div id="asset-info" className="text-md text-left">
                             <div>{asset?.name}</div>
                         </div>
-                        <div className="ml-auto">
-                            {isLoadingBalance ? (
-                                <Skeleton className="w-[130px] h-4" />
-                            ) : (
-                                `${asset?.amount}`
-                            )}
-                        </div>
+                        <div className="ml-auto">{`${amount}`}</div>
                     </div>
                 </a>
             </NavigationMenuLink>

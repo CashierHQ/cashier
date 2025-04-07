@@ -1,71 +1,16 @@
-import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
 import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
-import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useCallback, useEffect, useMemo } from "react";
-import { AssetSelectItem } from "@/components/asset-select";
-import { TokenUtilService } from "@/services/tokenUtils.service";
-import { mapAPITokenModelToAssetSelectModel, UserToken } from "@/services/icExplorer.service";
-import { useIdentity } from "@nfid/identitykit/react";
-import * as z from "zod";
-import { TokenProviderService } from "@/services/tokenProviderService";
-import { useWalletAddress } from "@/hooks/useWalletAddress";
-import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
-import { Identity } from "@dfinity/agent";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ASSET_LIST } from "@/services/tokenProviderService/devTokenProvider.service";
 import { linkDetailsFormSchema, LinkDetailsFormSchema } from "./link-details-form";
-
-// export const tipLinkAssetFormSchema = (assets: AssetSelectItem[]) => {
-//     return z
-//         .object({
-//             tokenAddress: z.string().min(1, { message: "Asset is required" }),
-//             amount: z.bigint(),
-//             assetNumber: z
-//                 .number({ message: "Must input number" })
-//                 .positive({ message: "Must be greater than 0" })
-//                 .nullable(),
-//             usdNumber: z
-//                 .number({ message: "Must input number" })
-//                 .positive({ message: "Must be greater than 0" })
-//                 .nullable(),
-//         })
-//         .superRefine((val, ctx) => {
-//             if (val.assetNumber === null) {
-//                 ctx.addIssue({
-//                     code: "custom",
-//                     message: "Must input number",
-//                     path: ["usdNumber"],
-//                 });
-//                 ctx.addIssue({
-//                     code: "custom",
-//                     message: "Must input number",
-//                     path: ["assetNumber"],
-//                 });
-//             }
-
-//             const asset = assets.find((asset) => asset.tokenAddress === val.tokenAddress);
-
-//             if (!asset || val.assetNumber === null || val.assetNumber > asset.amount) {
-//                 ctx.addIssue({
-//                     code: "custom",
-//                     message: "Your balance is not enough",
-//                     path: ["assetNumber"],
-//                 });
-//                 ctx.addIssue({
-//                     code: "custom",
-//                     message: "Your balance is not enough",
-//                     path: ["usdNumber"],
-//                 });
-//             }
-//         });
-// };
+import { FungibleToken } from "@/types/fungible-token.speculative";
+import { useTokens } from "@/hooks/useTokens";
+import { useTokenStore } from "@/stores/tokenStore";
 
 export type TipLinkAssetFormSchema = LinkDetailsFormSchema;
 
 export function useTipLinkAssetForm(
-    assets: AssetSelectItem[],
+    assets: FungibleToken[],
     defaultValues?: DefaultValues<TipLinkAssetFormSchema>,
 ): UseFormReturn<TipLinkAssetFormSchema> {
     const form = useForm<TipLinkAssetFormSchema>({
@@ -73,15 +18,16 @@ export function useTipLinkAssetForm(
         defaultValues: defaultValues,
     });
 
-    const { data: tokenData } = useTokenMetadataQuery(form.getValues("tokenAddress"));
+    const { getToken } = useTokens();
+
+    const tokenData = getToken(form.getValues("tokenAddress"));
 
     const assetNumber = form.watch("assetNumber");
 
     // update amount after assetNumber change
     useEffect(() => {
         if (assetNumber && tokenData) {
-            const decimals = tokenData?.metadata.decimals;
-
+            const decimals = tokenData?.decimals;
             form.setValue("amount", BigInt(convertTokenAmountToNumber(assetNumber, decimals)));
         }
     }, [assetNumber, tokenData]);
@@ -89,77 +35,23 @@ export function useTipLinkAssetForm(
     return form;
 }
 
-const fetchAssetListAmounts = async (identity: Identity, assetList: AssetSelectItem[]) => {
-    const canisterUtilService = new CanisterUtilsService(identity);
-    const assetListWithAmounts = await Promise.all(
-        assetList.map(async (asset) => {
-            const amountFetched = await canisterUtilService.checkAccountBalance(
-                asset.tokenAddress,
-                identity?.getPrincipal().toString(),
-            );
-
-            if (amountFetched === null) {
-                return asset;
-            }
-
-            const parsedAmount = await TokenUtilService.getHumanReadableAmount(
-                amountFetched,
-                asset.tokenAddress,
-            );
-
-            return {
-                ...asset,
-                amount: parsedAmount,
-            };
-        }),
-    );
-    return assetListWithAmounts;
-};
-
-const fetchUserTokens = async (walletAddress: string) => {
-    const tokens = await TokenProviderService.getUserTokens(walletAddress);
-    if (tokens.length === 0) {
-        tokens.push(...(ASSET_LIST as UserToken[]));
-    }
-    return tokens.map(mapAPITokenModelToAssetSelectModel);
-};
-
+/**
+ * Hook that provides token assets using the shared useTokens hook
+ * @returns Token assets and loading states
+ */
 export function useUserAssets() {
-    const identity = useIdentity();
-    const walletAddress = useWalletAddress();
-    const queryClient = useQueryClient();
-
-    // Fetch user tokens from IC Explorer
-    const { data: assets, isLoading: isLoadingAssets } = useQuery({
-        queryKey: ["userTokens", walletAddress],
-        queryFn: () => fetchUserTokens(walletAddress),
-        enabled: !!walletAddress,
-    });
-
-    // Fetch amount for each token from Canister
-    const { data: assetListWithAmounts, isLoading: isLoadingBalance } = useQuery({
-        queryKey: ["assetListAmounts", assets],
-        queryFn: () =>
-            identity ? fetchAssetListAmounts(identity, assets || []) : Promise.resolve([]),
-        enabled: !!assets,
-        refetchOnWindowFocus: false,
-    });
-
-    useEffect(() => {
-        if (walletAddress) {
-            queryClient.invalidateQueries({ queryKey: ["userTokens", walletAddress] });
-        }
-    }, [walletAddress, queryClient]);
+    // Replace the custom queries with useTokens
+    const { filteredTokenList, isLoadingBalances, isLoading } = useTokens();
 
     return {
-        assets: assetListWithAmounts,
-        isLoadingAssets,
-        isLoadingBalance,
+        assets: filteredTokenList,
+        isLoadingAssets: isLoading,
+        isLoadingBalance: isLoadingBalances,
     };
 }
 
 export function useSelectedAsset(
-    assets: AssetSelectItem[] | undefined,
+    assets: FungibleToken[] | undefined,
     form: UseFormReturn<TipLinkAssetFormSchema>,
 ) {
     const tokenAddress = form.watch("tokenAddress");
@@ -167,12 +59,12 @@ export function useSelectedAsset(
 
     useEffect(() => {
         if (assets && assets.length > 0) {
-            form.setValue("tokenAddress", defaultTokenAddress || assets[0].tokenAddress);
+            form.setValue("tokenAddress", defaultTokenAddress || assets[0].address);
         }
     }, [assets]);
 
     const selectedAsset = useMemo(() => {
-        return assets?.find((asset) => asset.tokenAddress === tokenAddress);
+        return assets?.find((asset) => asset.address === tokenAddress);
     }, [assets, tokenAddress]);
 
     return selectedAsset;
@@ -180,7 +72,8 @@ export function useSelectedAsset(
 
 export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
     const tokenAddress = form.watch("tokenAddress");
-    const { data: rates } = useConversionRatesQuery(tokenAddress);
+    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
+    const tokenUsdPrice = getTokenPrice(tokenAddress);
 
     const setTokenAmount = useCallback(
         (input: string | number) => {
@@ -188,12 +81,12 @@ export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
             const isValidValue = !isNaN(value);
             form.setValue("assetNumber", isValidValue ? value : null, { shouldTouch: true });
 
-            if (!rates || !rates.canConvert) return;
+            if (!tokenUsdPrice) return;
 
-            const convertedValue = value * rates.tokenToUsd;
+            const convertedValue = value * tokenUsdPrice;
             form.setValue("usdNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
         },
-        [rates],
+        [tokenUsdPrice],
     );
 
     const setUsdAmount = useCallback(
@@ -202,12 +95,12 @@ export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
             const isValidValue = !isNaN(value);
             form.setValue("usdNumber", isValidValue ? value : 0, { shouldTouch: true });
 
-            if (!rates || !rates.canConvert) return;
+            if (!tokenUsdPrice) return;
 
-            const convertedValue = value * rates.usdToToken;
+            const convertedValue = value / tokenUsdPrice;
             form.setValue("assetNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
         },
-        [rates],
+        [tokenUsdPrice],
     );
 
     const setTokenAddress = useCallback((address: string) => {

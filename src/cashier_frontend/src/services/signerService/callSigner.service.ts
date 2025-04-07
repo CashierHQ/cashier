@@ -1,17 +1,17 @@
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { Icrc112Requests, Icrc112Response, ICRC112Service } from "./icrc112.service";
+import { Icrc112Requests, Icrc112Response } from "./icrc112.service";
 import { Signer } from "./signer";
 import { ClientTransport } from "./transport";
 import { JsonRequest, JsonResponse } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
-import { callCanisterService } from "./callCanister.service";
+import { IC_HOST } from "@/const";
 
 class CallSignerService {
     private agent: HttpAgent;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        this.agent = HttpAgent.createSync({ identity, host: "https://icp0.io" });
+        this.agent = HttpAgent.createSync({ identity, host: IC_HOST });
     }
 
     async execute(input: Icrc112Requests): Promise<Icrc112Response> {

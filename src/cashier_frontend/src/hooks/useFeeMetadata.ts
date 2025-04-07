@@ -1,39 +1,38 @@
 import { FeeModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
-import useTokenMetadataQuery from "./useTokenMetadataQuery";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
-import { convertDecimalBigIntToNumber } from "@/utils";
 import { IntentHelperService } from "@/services/fee.service";
+import { useTokens } from "./useTokens";
 
 export const useFeeMetadata = (feeModel: FeeModel) => {
-    const { data: tokenData, isLoading: isLoadingMetadata } = useTokenMetadataQuery(
-        feeModel.address,
-    );
-    const metadata = tokenData?.metadata;
+    const { getToken, isLoadingBalances } = useTokens();
+
+    // Get token data directly from useTokens
+    const token = getToken(feeModel.address);
 
     const [assetAmount, setAssetAmount] = useState<number>();
     const [feeAmount, setFeeAmount] = useState<number>();
 
     useEffect(() => {
-        if (metadata) {
-            const decimals = metadata.decimals;
+        if (token && token.decimals !== undefined) {
+            // Calculate amounts using token data
+            setAssetAmount(Number(feeModel.amount) / 10 ** token.decimals);
 
-            const rawAmount = feeModel.amount;
-            setAssetAmount(convertDecimalBigIntToNumber(rawAmount, decimals));
-
-            const rawFee = metadata?.fee;
-            setFeeAmount(convertDecimalBigIntToNumber(rawFee, decimals));
+            // Set fee amount if present
+            if (token.fee !== undefined) {
+                setFeeAmount(Number(token.fee) / 10 ** token.decimals);
+            }
         }
-    }, [metadata]);
+    }, [token, feeModel.amount]);
 
     return {
         assetAmount,
-        assetSymbol: metadata?.symbol,
+        assetSymbol: token?.symbol,
         assetSrc: `${IC_EXPLORER_IMAGES_PATH}${feeModel.address}`,
         feeAmount,
-        feeSymbol: metadata?.symbol,
+        feeSymbol: token?.symbol,
         feeIconSrc: `${IC_EXPLORER_IMAGES_PATH}${feeModel.address}`,
-        isLoadingMetadata,
+        isLoadingMetadata: isLoadingBalances || !token,
     };
 };
 
