@@ -367,7 +367,14 @@ export default function SendTokenPage() {
                                         <div className="flex justify-between items-center">
                                             <div className="text-xs text-gray-500">
                                                 {selectedToken?.usdEquivalent
-                                                    ? `≈ $${(form.getValues("assetNumber") || 0) * selectedToken.usdEquivalent}`
+                                                    ? `≈ $${(
+                                                          (parseFloat(
+                                                              form
+                                                                  .getValues("assetNumber")
+                                                                  ?.toString() || "0",
+                                                          ) || 0) *
+                                                          (selectedToken.usdConversionRate || 0)
+                                                      ).toFixed(2)}`
                                                     : "≈ $0.00"}
                                             </div>
                                             {selectedToken?.amount !== undefined && (
