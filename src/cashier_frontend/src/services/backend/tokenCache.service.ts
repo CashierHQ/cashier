@@ -18,14 +18,17 @@ class TokenCacheService {
      * Get the list of tokens from the registry
      */
 
-    async cacheTokenBalances(balanceMap: TokenBalanceMap) {
+    async cacheTokenBalances(balanceMap: TokenBalanceMap, userWallet: string) {
         const currentTime = Date.now();
 
-        const lastCacheTimeString = localStorage.getItem(LAST_CACHE_TIME_KEY);
+        const cacheKey = `${LAST_CACHE_TIME_KEY}_${userWallet}`;
+        const cacheTimeKey = `${LAST_CACHED_BALANCES_KEY}_${userWallet}`;
+
+        const lastCacheTimeString = localStorage.getItem(cacheTimeKey);
         const lastCacheTime = lastCacheTimeString ? parseInt(lastCacheTimeString, 10) : 0;
 
         // Get the last cached balances
-        const lastCachedBalancesString = localStorage.getItem(LAST_CACHED_BALANCES_KEY);
+        const lastCachedBalancesString = localStorage.getItem(cacheKey);
 
         const lastCachedBalances: TokenBalanceMap = lastCachedBalancesString
             ? JSON.parse(lastCachedBalancesString, (key, value) => {
@@ -67,7 +70,7 @@ class TokenCacheService {
 
                 if (balancesToCache.length > 0) {
                     // Save the current time
-                    localStorage.setItem(LAST_CACHE_TIME_KEY, currentTime.toString());
+                    localStorage.setItem(cacheTimeKey, currentTime.toString());
 
                     // Save the current balances with special handling for bigint
                     const balanceMapJson = JSON.stringify(balanceMap, (key, value) => {
@@ -78,7 +81,7 @@ class TokenCacheService {
                         return value;
                     });
 
-                    localStorage.setItem(LAST_CACHED_BALANCES_KEY, balanceMapJson);
+                    localStorage.setItem(cacheKey, balanceMapJson);
 
                     if (balancesChanged) {
                         await this.TokenStorageService.updateBulkTokenBalance(balancesToCache);
