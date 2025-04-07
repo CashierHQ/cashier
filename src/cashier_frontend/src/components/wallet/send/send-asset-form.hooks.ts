@@ -1,25 +1,50 @@
-import useTokenMetadataQuery from "@/hooks/useTokenMetadataQuery";
 import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
-import CanisterUtilsService from "@/services/canisterUtils.service";
 import { useCallback, useEffect, useMemo } from "react";
-import { AssetSelectItem } from "@/components/asset-select";
-import { TokenUtilService } from "@/services/tokenUtils.service";
-import { mapAPITokenModelToAssetSelectModel, UserToken } from "@/services/icExplorer.service";
-import { useIdentity } from "@nfid/identitykit/react";
 import * as z from "zod";
-import { TokenProviderService } from "@/services/tokenProviderService";
-import { useWalletAddress } from "@/hooks/useWalletAddress";
-import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
-import { Identity } from "@dfinity/agent";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ASSET_LIST } from "@/services/tokenProviderService/devTokenProvider.service";
+import { FungibleToken } from "@/types/fungible-token.speculative";
+import { Principal } from "@dfinity/principal";
+import { useTokens } from "@/hooks/useTokens";
+import { useTokenStore } from "@/stores/tokenStore";
 
-export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
+const isValidWalletAddress = (address: string): { valid: boolean; message: string } => {
+    // Empty string handling
+    if (!address.trim()) {
+        return { valid: false, message: "Wallet address is required" };
+    }
+
+    // ICP Principal ID validation
+    if (/^[a-z0-9\-]+$/.test(address)) {
+        try {
+            Principal.fromText(address);
+            return { valid: true, message: "" };
+        } catch {
+            return { valid: false, message: "Invalid ICP Principal ID format" };
+        }
+    }
+
+    // ETH-style address validation (0x followed by 40 hex characters)
+    // if (tokenAddress?.startsWith("0x") || address.startsWith("0x")) {
+    //     if (/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    //         return { valid: true, message: "" };
+    //     }
+    //     return { valid: false, message: "Invalid ETH address format" };
+    // }
+
+    // Default length check (basic validation)
+    if (address.length < 10) {
+        return { valid: false, message: "Wallet address is too short" };
+    }
+
+    return { valid: false, message: "Unknown error" };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const walletSendAssetFormSchema = (assets: FungibleToken[]) => {
     return z
         .object({
-            tokenAddress: z.string().min(1, { message: "Asset is required" }),
+            address: z.string().min(1, { message: "Asset is required" }),
             amount: z.bigint(),
             assetNumber: z
                 .number({ message: "Must input number" })
@@ -28,11 +53,23 @@ export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
             walletAddress: z.string().min(1, { message: "Wallet address is required" }),
         })
         .superRefine((val, ctx) => {
+            console.log("val", val);
+            // Existing validation for assetNumber
             if (val.assetNumber === null) {
                 ctx.addIssue({
                     code: "custom",
                     message: "Must input number",
                     path: ["assetNumber"],
+                });
+            }
+
+            // Add custom wallet address validation
+            const addressValidation = isValidWalletAddress(val.walletAddress);
+            if (!addressValidation.valid) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: addressValidation.message,
+                    path: ["walletAddress"],
                 });
             }
         });
@@ -41,7 +78,7 @@ export const walletSendAssetFormSchema = (assets: AssetSelectItem[]) => {
 export type WalletSendAssetFormSchema = z.infer<ReturnType<typeof walletSendAssetFormSchema>>;
 
 export function useWalletSendAssetForm(
-    assets: AssetSelectItem[],
+    assets: FungibleToken[],
     defaultValues?: DefaultValues<WalletSendAssetFormSchema>,
 ): UseFormReturn<WalletSendAssetFormSchema> {
     const form = useForm<WalletSendAssetFormSchema>({
@@ -49,81 +86,49 @@ export function useWalletSendAssetForm(
         defaultValues: defaultValues,
     });
 
-    const { data: tokenData } = useTokenMetadataQuery(form.getValues("tokenAddress"));
+    const { getToken } = useTokens();
+
+    const tokenAddress = form.watch("address");
+    const token = getToken(tokenAddress);
 
     const assetNumber = form.watch("assetNumber");
 
-    // update amount after assetNumber change
     useEffect(() => {
-        if (assetNumber && tokenData) {
-            const decimals = tokenData?.metadata.decimals;
-
-            form.setValue("amount", BigInt(convertTokenAmountToNumber(assetNumber, decimals)));
+        if (assetNumber && token && token.decimals !== undefined) {
+            form.setValue(
+                "amount",
+                BigInt(convertTokenAmountToNumber(assetNumber, token.decimals)),
+            );
         }
-    }, [assetNumber, tokenData]);
+    }, [assetNumber, token, form]);
 
     return form;
 }
 
-const fetchAssetListAmounts = async (identity: Identity, assetList: AssetSelectItem[]) => {
-    const canisterUtilService = new CanisterUtilsService(identity);
-
-    const assetListWithAmounts = await Promise.all(
-        assetList.map(async (asset) => {
-            const amountFetched = await canisterUtilService.checkAccountBalance(
-                asset.tokenAddress,
-                identity?.getPrincipal().toString(),
-            );
-
-            if (amountFetched === null) {
-                return asset;
-            }
-
-            const parsedAmount = await TokenUtilService.getHumanReadableAmount(
-                amountFetched,
-                asset.tokenAddress,
-            );
-
-            return {
-                ...asset,
-                amount: parsedAmount,
-            };
-        }),
-    );
-    return assetListWithAmounts;
-};
-
-const fetchUserTokens = async (walletAddress: string) => {
-    const tokens = await TokenProviderService.getUserTokens(walletAddress);
-    if (tokens.length === 0) {
-        tokens.push(...(ASSET_LIST as UserToken[]));
-    }
-    return tokens.map(mapAPITokenModelToAssetSelectModel);
-};
-
 export function useSelectedWalletSendAsset(
-    assets: AssetSelectItem[] | undefined,
+    assets: FungibleToken[] | undefined,
     form: UseFormReturn<WalletSendAssetFormSchema>,
 ) {
-    const tokenAddress = form.watch("tokenAddress");
-    const defaultTokenAddress = form.formState.defaultValues?.tokenAddress;
+    const tokenAddress = form.watch("address");
+    const defaultTokenAddress = form.formState.defaultValues?.address;
 
     useEffect(() => {
         if (assets && assets.length > 0) {
-            form.setValue("tokenAddress", defaultTokenAddress || assets[0].tokenAddress);
+            form.setValue("address", defaultTokenAddress || assets[0].address);
         }
     }, [assets]);
 
     const selectedAsset = useMemo(() => {
-        return assets?.find((asset) => asset.tokenAddress === tokenAddress);
+        return assets?.find((asset) => asset.address === tokenAddress);
     }, [assets, tokenAddress]);
 
     return selectedAsset;
 }
 
 export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAssetFormSchema>) {
-    const tokenAddress = form.watch("tokenAddress");
-    const { data: rates } = useConversionRatesQuery(tokenAddress);
+    const tokenAddress = form.watch("address");
+    const { getTokenPrice } = useTokenStore();
+    const tokenUsdPrice = getTokenPrice(tokenAddress);
 
     const setTokenAmount = useCallback(
         (input: string | number) => {
@@ -131,33 +136,30 @@ export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAsse
             const isValidValue = !isNaN(value);
             form.setValue("assetNumber", isValidValue ? value : null, { shouldTouch: true });
 
-            if (!rates || !rates.canConvert) return;
+            if (!tokenUsdPrice) return;
 
-            const convertedValue = value * rates.tokenToUsd;
-            //form.setValue("usdNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
+            // No need to set USD value here as we removed the usdNumber field
         },
-        [rates],
+        [tokenUsdPrice],
     );
 
     const setUsdAmount = useCallback(
         (input: string | number) => {
             const value = parseFloat(input.toString());
             const isValidValue = !isNaN(value);
-            //form.setValue("usdNumber", isValidValue ? value : 0, { shouldTouch: true });
 
-            if (!rates || !rates.canConvert) return;
+            if (!tokenUsdPrice) return;
 
-            const convertedValue = value * rates.usdToToken;
+            const convertedValue = value / tokenUsdPrice; // USD to token conversion
             form.setValue("assetNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
         },
-        [rates],
+        [tokenUsdPrice],
     );
 
     const setTokenAddress = useCallback((address: string) => {
-        form.setValue("tokenAddress", address, { shouldTouch: true });
+        form.setValue("address", address, { shouldTouch: true });
         form.clearErrors("amount");
         form.clearErrors("assetNumber");
-        //form.clearErrors("usdNumber");
     }, []);
 
     const setWalletAddress = useCallback((address: string) => {

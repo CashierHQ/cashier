@@ -29,7 +29,8 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
     return (
         <div className="flex flex-col mt-3 items-center">
             <p className="text-[32px] font-semibold">
-                {convertDecimalBigIntToNumber(token.amount, token.decimals)} {token.name}
+                {token.amount ? convertDecimalBigIntToNumber(token.amount, token.decimals) : 0}{" "}
+                {token.name}
             </p>
             <p className="text-xs text-grey font-semibold">${token.usdEquivalent}</p>
 

@@ -11,7 +11,6 @@ import { formatDateString } from "@/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { useUpdateLink } from "@/hooks/linkHooks";
-import { UserDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import TransactionToast from "@/components/transaction/transaction-toast";
@@ -21,6 +20,7 @@ import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hoo
 import Header from "@/components/header";
 import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
+import { useTokens } from "@/hooks/useTokens";
 import { Plus } from "lucide-react";
 
 export default function HomePage() {
@@ -49,6 +49,8 @@ export default function HomePage() {
     const { toastData, showToast, hideToast } = useToast();
     const navigate = useNavigate();
     const responsive = useResponsive();
+
+    const { updateTokenInit } = useTokens();
 
     /* TODO:: Remove after complete testing */
     const handleOpenTestForm = () => {
@@ -87,6 +89,8 @@ export default function HomePage() {
         } else {
             setShowGuide(true);
         }
+
+        updateTokenInit();
     }, []);
 
     useEffect(() => {

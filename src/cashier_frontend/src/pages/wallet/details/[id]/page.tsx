@@ -1,56 +1,79 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useMemo } from "react";
 import { AssetAvatar } from "@/components/ui/asset-avatar";
 import { BackHeader } from "@/components/ui/back-header";
 import { TokenDetailsHero } from "@/components/token-details/hero";
 import { TransactionHistory } from "@/components/token-details/transaction-history";
-import { MOCK_TOKEN_DATA, MOCK_TOKENS_LIST, MOCK_TX_DATA } from "@/constants/mock-data";
-import useTokenMetadata from "@/hooks/tokenUtilsHooks";
-import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
-import { FungibleToken } from "@/types/fungible-token.speculative";
+import { MOCK_TX_DATA } from "@/constants/mock-data"; // Still using mock transaction data
+import { useTokens } from "@/hooks/useTokens";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 export default function TokenDetailsPage() {
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId: string }>();
-    const { metadata } = useTokenMetadata(tokenId);
-    const { data: conversionRates, isLoading: isLoadingConversionRates } =
-        useConversionRatesQuery(tokenId);
 
-    //TODO: Still using mock token list data
-    const getTokenData = (): FungibleToken | undefined => {
-        const token = MOCK_TOKENS_LIST.find((t) => t.address === tokenId);
-        if (token) {
-            return {
-                address: tokenId ?? "",
-                chain: token.chain,
-                name: metadata?.symbol || token.name,
-                symbol: metadata?.symbol || token.symbol,
-                logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}` || token.logo,
-                decimals: metadata?.decimals || token.decimals,
-                amount: token.amount,
-                usdConversionRate: conversionRates?.tokenToUsd || token.usdConversionRate,
-                usdEquivalent: conversionRates?.tokenToUsd || token.usdEquivalent,
-            };
+    // Use the useTokens hook to get consistent token data
+    const { filteredTokenList, isLoadingBalances } = useTokens();
+
+    // Find the selected token from the list
+    const selectedToken = useMemo(() => {
+        if (!tokenId || isLoadingBalances || !filteredTokenList?.length) {
+            return undefined;
         }
-        return undefined;
-    };
+
+        return filteredTokenList.find((token) => token.address === tokenId);
+    }, [tokenId, filteredTokenList, isLoadingBalances]);
+
+    // Get token logo URL
+    const tokenLogo = useMemo(() => {
+        if (!tokenId) return undefined;
+        return `${IC_EXPLORER_IMAGES_PATH}${tokenId}`;
+    }, [tokenId]);
+
+    // Show loading state while token data is being fetched
+    if (isLoadingBalances) {
+        return (
+            <div className="h-full overflow-auto px-4 py-2">
+                <BackHeader onBack={goBack}>
+                    <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
+                </BackHeader>
+                <div className="mt-4 h-40 bg-gray-100 rounded-lg animate-pulse" />
+                <hr className="my-4" />
+                <div className="h-60 bg-gray-100 rounded-lg animate-pulse" />
+            </div>
+        );
+    }
 
     return (
         <div className="h-full overflow-auto px-4 py-2">
             <BackHeader onBack={goBack}>
-                <AssetAvatar
-                    className="w-10 h-10"
-                    src={getTokenData()?.logo ?? MOCK_TOKEN_DATA.logo}
-                    symbol={getTokenData()?.symbol ?? MOCK_TOKEN_DATA.symbol}
-                />
+                {selectedToken && (
+                    <AssetAvatar
+                        className="w-10 h-10"
+                        src={tokenLogo || selectedToken.logo}
+                        symbol={selectedToken.symbol}
+                    />
+                )}
             </BackHeader>
 
-            <TokenDetailsHero token={getTokenData() ?? MOCK_TOKEN_DATA} />
-
-            <hr className="my-4" />
-
-            <TransactionHistory items={MOCK_TX_DATA} />
+            {selectedToken ? (
+                <>
+                    <TokenDetailsHero token={selectedToken} />
+                    <hr className="my-4" />
+                    <TransactionHistory items={MOCK_TX_DATA} />
+                </>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+                    <h2 className="text-xl font-medium mb-2">Token Not Found</h2>
+                    <p className="text-gray-500 mb-6">
+                        The token you're looking for could not be found.
+                    </p>
+                    <button className="px-4 py-2 bg-primary text-white rounded-lg" onClick={goBack}>
+                        Return to Wallet
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

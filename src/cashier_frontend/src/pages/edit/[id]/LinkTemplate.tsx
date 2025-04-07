@@ -8,8 +8,6 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
-import LinkCard from "@/components/link-card";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import {
     useBindFormAndCarousel,
     useCarousel,
@@ -23,7 +21,6 @@ import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useButtonState } from "@/hooks/useButtonState";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
-import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import PhonePreview from "@/components/ui/phone-preview";
@@ -47,10 +44,6 @@ export default function LinkTemplate({
     const { link, setLink, updateLink } = useCreateLinkStore();
     const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
     const { isButtonDisabled, setButtonDisabled } = useButtonState();
-
-    const selectedTemplate = useMemo(() => {
-        return LINK_TEMPLATES.find((template) => template.label === link?.linkType);
-    }, [link?.linkType]);
 
     const carousel = useCarousel();
 

@@ -9,8 +9,8 @@ import { ConfirmationPopupLegalSection } from "@/components/confirmation-drawer/
 import { useIdentity } from "@nfid/identitykit/react";
 import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { TransactionStatus } from "@/services/types/wallet.types";
-import { useQueryClient } from "@tanstack/react-query";
 import { TokenUtilService } from "@/services/tokenUtils.service";
+import { useTokens } from "@/hooks/useTokens";
 
 export const SendAssetConfirmationDrawer: FC = () => {
     const { t } = useTranslation();
@@ -31,6 +31,7 @@ export const SendAssetConfirmationDrawer: FC = () => {
     const [isUsd, setIsUsd] = useState(false);
     const [buttonText, setButtonText] = useState(t("transaction.confirm_popup.confirm_button"));
     const [isDisabled, setIsDisabled] = useState(false);
+    const { updateTokenBalance } = useTokens();
 
     // Update button text based on transaction status
     useEffect(() => {
@@ -52,12 +53,6 @@ export const SendAssetConfirmationDrawer: FC = () => {
                 setIsDisabled(false);
         }
     }, [transactionStatus, t]);
-
-    // Import at the top of the file:
-    // import { useQueryClient } from "@tanstack/react-query";
-
-    // Add this near other hooks
-    const queryClient = useQueryClient();
 
     const onClickSubmit = async () => {
         if (transactionStatus === TransactionStatus.SUCCESS) {
@@ -91,12 +86,7 @@ export const SendAssetConfirmationDrawer: FC = () => {
                 setTransactionHash(block_id.toString());
                 setTransactionStatus(TransactionStatus.SUCCESS);
 
-                // Invalidate all token-related queries to force a refresh
-                queryClient.invalidateQueries({ queryKey: ["tokens"] });
-
-                // If you know the exact query key for user assets
-                // This would depend on how useUserAssets is implemented
-                queryClient.invalidateQueries({ queryKey: ["userAssets"] });
+                updateTokenBalance();
             } catch (e) {
                 console.error(e);
                 setError(e as Error);

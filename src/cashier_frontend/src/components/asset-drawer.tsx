@@ -2,15 +2,14 @@ import React from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { IoIosClose } from "react-icons/io";
 import Menu from "./asset-menu";
-import { AssetSelectItem } from "./asset-select";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 interface AssetDrawerProps {
     open: boolean;
     title: string;
-    assetList: AssetSelectItem[];
+    assetList: FungibleToken[];
     handleClose: () => void;
     handleChange: (val: string) => void;
-    isLoadingBalance?: boolean;
 }
 
 const AssetDrawer: React.FC<AssetDrawerProps> = ({
@@ -19,7 +18,6 @@ const AssetDrawer: React.FC<AssetDrawerProps> = ({
     handleClose,
     handleChange,
     assetList,
-    isLoadingBalance,
 }) => {
     return (
         <Drawer open={open} onClose={handleClose}>
@@ -35,11 +33,7 @@ const AssetDrawer: React.FC<AssetDrawerProps> = ({
                     </DrawerTitle>
                 </DrawerHeader>
                 <div className="font-semibold mb-3">Your asset</div>
-                <Menu
-                    assetList={assetList}
-                    onSelect={handleChange}
-                    isLoadingBalance={isLoadingBalance}
-                />
+                <Menu assetList={assetList} onSelect={handleChange} />
             </DrawerContent>
         </Drawer>
     );

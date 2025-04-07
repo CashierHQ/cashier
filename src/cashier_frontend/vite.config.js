@@ -14,6 +14,7 @@ export default defineConfig((mode) => {
     dotenv.config({ path: envPath });
 
     console.log("cashier backend ", process.env.CANISTER_ID_CASHIER_BACKEND);
+    console.log("cashier backend ", process.env.CANISTER_ID_CASHIER_BACKEND);
 
     return {
         build: {

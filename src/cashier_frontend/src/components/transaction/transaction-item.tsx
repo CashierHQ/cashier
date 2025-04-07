@@ -6,7 +6,7 @@ import { Fee } from "@/components/ui/fee";
 import { useTranslation } from "react-i18next";
 import { Asset } from "@/components/ui/asset";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
-import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
+import { useTokenStore } from "@/stores/tokenStore";
 import { convert } from "@/utils/helpers/convert";
 import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
@@ -29,7 +29,8 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
         title: intentTitle,
     } = useIntentMetadata(intent);
 
-    const { data: conversionRates } = useConversionRatesQuery(intent.asset.address);
+    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
+    const tokenUsdPrice = getTokenPrice(intent.asset.address);
 
     //TODO: Remove after mid milestone
     const getTokenAvatar = (tokenAddress: string) => {
@@ -53,7 +54,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
                     title={intentTitle}
                     isLoading={isLoading || isLoadingMetadata}
                     amount={assetAmount}
-                    usdAmount={convert(assetAmount, conversionRates?.tokenToUsd)}
+                    usdAmount={convert(assetAmount, tokenUsdPrice)}
                     src={getTokenAvatar(intent.asset.address)}
                     symbol={assetSymbol}
                     isUsd={isUsd}
@@ -63,7 +64,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
                     title={t("transaction.confirm_popup.network_fee_label")}
                     isLoading={isLoading || isLoadingMetadata}
                     amount={feeAmount}
-                    usdAmount={convert(feeAmount, conversionRates?.tokenToUsd)}
+                    usdAmount={convert(feeAmount, tokenUsdPrice)}
                     symbol={feeSymbol}
                     isUsd={isUsd}
                 />

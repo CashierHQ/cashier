@@ -301,7 +301,6 @@ export default function DetailPage() {
 }
 
 function CopyLinkOverlay({
-    showOverlay,
     setShowOverlay,
     handleCopyLink,
 }: {

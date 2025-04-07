@@ -26,7 +26,6 @@ function App() {
             }}
             onConnectSuccess={() => {}}
             onDisconnect={() => {
-                console.log("Log out");
                 queryClient.clear();
             }}
             authType={IdentityKitAuthType.DELEGATION}

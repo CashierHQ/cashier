@@ -9,17 +9,15 @@ import { transformShortAddress } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { useAuth } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
-import { Info, Send } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Info } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FaRegCopy } from "react-icons/fa";
-import { FiCopy } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import { AssetSelectItem } from "@/components/asset-select";
-import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import { Label } from "@/components/ui/label";
 import { Clipboard } from "lucide-react";
 import { useResponsive } from "@/hooks/responsive-hook";
+import { useTokens } from "@/hooks/useTokens";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
     const handleCopyAccountId = (e: React.SyntheticEvent) => {
@@ -71,24 +69,28 @@ export default function ReceiveTokenPage() {
     const { user } = useAuth();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
     const [accountId, setAccountId] = useState<string>("");
-    const { assets: tokenList } = useUserAssets();
     const [currentSelectedToken, setCurrentSelectedToken] = useState<AssetSelectItem | undefined>(
         undefined,
     );
 
-    const selectedToken = tokenList
-        ? tokenId
-            ? tokenList.find((token) => token.tokenAddress === tokenId) || {
-                  name: metadata?.symbol || "",
-                  tokenAddress: tokenId,
-                  amount: undefined,
-              }
-            : tokenList[0]
-        : undefined;
+    const { filteredTokenList: tokenList } = useTokens();
+
+    const selectedToken = useMemo(() => {
+        // If no token list, return undefined
+        if (!tokenList) return undefined;
+
+        // If tokenId is provided, find that token or create a placeholder
+        if (tokenId) {
+            return tokenList.find((token) => token.address === tokenId);
+        }
+
+        // If no tokenId provided, return undefined instead of defaulting to first token
+        return undefined;
+    }, [tokenList, tokenId, metadata]);
 
     const handleTokenSelect = (token: AssetSelectItem) => {
         setCurrentSelectedToken(token);
-        navigate(`/wallet/receive/${token.tokenAddress}`);
+        navigate(`/wallet/receive/${token.address}`);
     };
 
     const handleShowAccountId = () => {
@@ -165,7 +167,7 @@ export default function ReceiveTokenPage() {
                     />
                 </div>
 
-                {currentSelectedToken?.tokenAddress === "ryjl3-tyaaa-aaaaa-aaaba-cai" && (
+                {currentSelectedToken?.address === "ryjl3-tyaaa-aaaaa-aaaba-cai" && (
                     <div
                         id="account-id"
                         className="flex justify-center mt-4"

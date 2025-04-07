@@ -3,28 +3,76 @@ import { AssetAvatar } from "../ui/asset-avatar";
 import { Input } from "../ui/input";
 import { Message } from "../ui/message";
 import { Button } from "../ui/button";
-import { ImportTokenFormData } from "@/hooks/import-token.hooks";
 import { mapChainToLogo, mapChainToPrettyName } from "@/utils/map/chain.map";
-import { MOCK_TOKEN_DATA } from "@/constants/mock-data";
 import { Label } from "../ui/label";
 import { IconInput } from "../icon-input";
+import { AddTokenInput } from "../../../../declarations/token_storage/token_storage.did";
+import { Principal } from "@dfinity/principal";
+import { toNullable } from "@dfinity/utils";
+import { useTokens } from "@/hooks/useTokens";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Spinner } from "../ui/spinner";
 
 interface ImportTokenReviewProps {
-    data: ImportTokenFormData;
-    onImport?: (data: ImportTokenFormData) => void;
+    token: {
+        name: string;
+        symbol: string;
+        logo?: string;
+        chain: string;
+        address: string;
+        decimals: number;
+        index_id?: string;
+    };
 }
 
-export function ImportTokenReview({ data, onImport = () => {} }: ImportTokenReviewProps) {
+export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { addToken } = useTokens();
+    const [isImporting, setIsImporting] = useState(false);
+    const [importError, setImportError] = useState<string | null>(null);
 
-    function handleImport() {
-        onImport(data);
+    async function handleImport() {
+        setIsImporting(true);
+        setImportError(null);
+
+        try {
+            const addTokenInput: AddTokenInput = {
+                chain: token.chain,
+                ledger_id: toNullable(Principal.fromText(token.address)),
+                index_id: toNullable(
+                    token.index_id ? Principal.fromText(token.index_id) : undefined,
+                ),
+            };
+
+            await addToken(addTokenInput);
+            navigate(-2);
+        } catch (error) {
+            console.error("Failed to import token:", error);
+            setImportError(error instanceof Error ? error.message : "Failed to import token");
+            setIsImporting(false);
+        }
     }
 
-    const token = MOCK_TOKEN_DATA;
-
     return (
-        <div className="flex flex-col flex-grow pt-6 pb-2 px-1">
+        <div className="flex flex-col flex-grow relative pt-6 pb-2 px-1">
+            {/* Loading Overlay */}
+            {isImporting && (
+                <div className="absolute inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center rounded-md">
+                    <div className="flex flex-col items-center">
+                        <Spinner width={40} height={40} />
+                        <p className="mt-4 text-gray-700">
+                            {t("review.importing", "Adding token to your wallet...")}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {importError && (
+                <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-md">{importError}</div>
+            )}
+
             <div className="flex flex-col gap-6 flex-grow">
                 <div>
                     <Label>{t("review.token")}</Label>
@@ -76,7 +124,7 @@ export function ImportTokenReview({ data, onImport = () => {} }: ImportTokenRevi
                 </div>
             </div>
 
-            <Button className="mt-2" onClick={handleImport} size="lg">
+            <Button className="mt-2" onClick={handleImport} size="lg" disabled={isImporting}>
                 {t("review.import")}
             </Button>
         </div>

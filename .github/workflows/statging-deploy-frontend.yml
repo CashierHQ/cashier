@@ -52,6 +52,8 @@ jobs:
               run: |
                   echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
                   rustup target add wasm32-unknown-unknown
+                  dfx generate cashier_backend 
+                  dfx generate token_storage
                   npm run build
 
             - name: deploy to staging env
