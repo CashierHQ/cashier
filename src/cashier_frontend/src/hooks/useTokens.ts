@@ -29,6 +29,7 @@ export function useTokens() {
         setFilters,
         setIsLoading,
         setIsLoadingBalances,
+        setIsLoadingPrices,
         setIsSyncPreferences,
         setIsImporting,
         filters,
@@ -118,6 +119,8 @@ export function useTokens() {
         setIsLoading(tokenListQuery.isLoading || userPreferencesQuery.isLoading);
 
         setIsLoadingBalances(tokenBalancesQuery.isLoading || tokenBalancesQuery.isFetching);
+
+        setIsLoadingPrices(tokenPricesQuery.isLoading || tokenPricesQuery.isFetching);
 
         // Only process data when tokenList is available
         if (!tokenListQuery.data) return;

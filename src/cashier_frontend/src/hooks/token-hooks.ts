@@ -144,7 +144,10 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
             const tokensWithBalances = await Promise.all(tokenPromises);
 
             // store the balance map in local storage and backend if changed or time threshold met
-            new TokenCacheService(identity).cacheTokenBalances(balanceMap);
+            new TokenCacheService(identity).cacheTokenBalances(
+                balanceMap,
+                identity.getPrincipal().toString(),
+            );
 
             return tokensWithBalances;
         },
@@ -273,7 +276,7 @@ export function useTokenPricesQuery() {
 
             return () => clearTimeout(timeoutId);
         }
-    }, [query.isSuccess, query.data, query.isFetching, queryClient]);
+    }, [query.isSuccess, query.data, query.isFetching]);
 
     return query;
 }

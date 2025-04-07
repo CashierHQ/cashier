@@ -2,12 +2,12 @@ import React from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { IoIosClose } from "react-icons/io";
 import Menu from "./asset-menu";
-import { AssetSelectItem } from "./asset-select";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 interface AssetDrawerProps {
     open: boolean;
     title: string;
-    assetList: AssetSelectItem[];
+    assetList: FungibleToken[];
     handleClose: () => void;
     handleChange: (val: string) => void;
     isLoadingBalance?: boolean;

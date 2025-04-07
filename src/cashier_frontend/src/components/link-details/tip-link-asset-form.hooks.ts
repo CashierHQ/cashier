@@ -2,10 +2,10 @@ import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import { useCallback, useEffect, useMemo } from "react";
-import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { linkDetailsFormSchema, LinkDetailsFormSchema } from "./link-details-form";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
+import { useTokenStore } from "@/stores/tokenStore";
 
 export type TipLinkAssetFormSchema = LinkDetailsFormSchema;
 
@@ -72,7 +72,8 @@ export function useSelectedAsset(
 
 export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
     const tokenAddress = form.watch("tokenAddress");
-    const { data: rates } = useConversionRatesQuery(tokenAddress);
+    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
+    const tokenUsdPrice = getTokenPrice(tokenAddress);
 
     const setTokenAmount = useCallback(
         (input: string | number) => {
@@ -80,12 +81,12 @@ export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
             const isValidValue = !isNaN(value);
             form.setValue("assetNumber", isValidValue ? value : null, { shouldTouch: true });
 
-            if (!rates || !rates.canConvert) return;
+            if (!tokenUsdPrice) return;
 
-            const convertedValue = value * rates.tokenToUsd;
+            const convertedValue = value * tokenUsdPrice;
             form.setValue("usdNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
         },
-        [rates],
+        [tokenUsdPrice],
     );
 
     const setUsdAmount = useCallback(
@@ -94,12 +95,12 @@ export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
             const isValidValue = !isNaN(value);
             form.setValue("usdNumber", isValidValue ? value : 0, { shouldTouch: true });
 
-            if (!rates || !rates.canConvert) return;
+            if (!tokenUsdPrice) return;
 
-            const convertedValue = value * rates.usdToToken;
+            const convertedValue = value / tokenUsdPrice;
             form.setValue("assetNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
         },
-        [rates],
+        [tokenUsdPrice],
     );
 
     const setTokenAddress = useCallback((address: string) => {

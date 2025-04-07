@@ -1,7 +1,5 @@
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
-import { useCashierFeeIntents } from "@/components/confirmation-drawer/confirmation-drawer.hooks";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
-import LinkCard from "@/components/link-card";
 import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-preview-cashier-fee-section";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
@@ -14,9 +12,7 @@ import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useNavigate } from "react-router-dom";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { getTokenImage } from "@/utils";
-import { FormLabel } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { useResponsive } from "@/hooks/responsive-hook";
 import PhonePreview from "@/components/ui/phone-preview";

@@ -18,6 +18,7 @@ interface TokenState {
     // Status
     isLoading: boolean;
     isLoadingBalances: boolean;
+    isLoadingPrices: boolean;
     isSyncPreferences: boolean;
     isImporting: boolean;
     error: Error | null;
@@ -29,12 +30,14 @@ interface TokenState {
     setFilters: (filters: TokenFilters) => void;
     setIsLoading: (isLoading: boolean) => void;
     setIsLoadingBalances: (isLoading: boolean) => void;
+    setIsLoadingPrices: (isLoadingPrices: boolean) => void;
     setIsSyncPreferences: (isSyncPreferences: boolean) => void;
     setIsImporting: (isImporting: boolean) => void;
     setError: (error: Error | null) => void;
 
     // Getters
     getToken(tokenAddress: string): FungibleToken | undefined;
+    getTokenPrice(tokenAddress: string): number | undefined;
 
     // Filter operations
     applyFilters: () => void;
@@ -68,6 +71,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     isLoading: false,
     isLoadingBalances: false,
     isSyncPreferences: false,
+    isLoadingPrices: false,
     isImporting: false,
     error: null,
     hasBalances: false,
@@ -86,6 +90,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     },
     setIsLoading: (isLoading) => set({ isLoading }),
     setIsLoadingBalances: (isLoadingBalances) => set({ isLoadingBalances }),
+    setIsLoadingPrices: (isLoadingPrices) => set({ isLoadingPrices }),
     setIsSyncPreferences: (isSyncPreferences) => set({ isSyncPreferences }),
     setIsImporting: (isImporting) => set({ isImporting }),
     setError: (error) => set({ error }),
@@ -94,6 +99,12 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     getToken: (tokenAddress) => {
         const { rawTokenList } = get();
         return rawTokenList.find((token) => token.address === tokenAddress);
+    },
+
+    getTokenPrice: (tokenAddress) => {
+        const { rawTokenList } = get();
+        const token = rawTokenList.find((token) => token.address === tokenAddress);
+        return token?.usdEquivalent;
     },
 
     // Filter operations
@@ -129,6 +140,28 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         if (filters.hidden_tokens && filters.hidden_tokens.length > 0) {
             filtered = filtered.filter((token) => !filters.hidden_tokens.includes(token.id));
         }
+
+        // Sort tokens by USD equivalent, then by balance
+        filtered.sort((a, b) => {
+            // First sort tokens with USD value to the top
+            const aHasPrice = a.usdEquivalent !== undefined && !isNaN(a.usdEquivalent);
+            const bHasPrice = b.usdEquivalent !== undefined && !isNaN(b.usdEquivalent);
+
+            if (aHasPrice && !bHasPrice) return -1;
+            if (!aHasPrice && bHasPrice) return 1;
+
+            // For tokens that both have prices, sort by value (highest first)
+            if (aHasPrice && bHasPrice) {
+                return (b.usdEquivalent as number) - (a.usdEquivalent as number);
+            }
+
+            // For tokens without prices, sort by balance (highest first)
+            // Convert BigInt to number safely for comparison
+            const aBalance = a.amount ? Number(a.amount) / Math.pow(10, a.decimals || 8) : 0;
+            const bBalance = b.amount ? Number(b.amount) / Math.pow(10, b.decimals || 8) : 0;
+
+            return bBalance - aBalance;
+        });
 
         set({ filteredTokenList: filtered });
     },

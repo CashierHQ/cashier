@@ -3,10 +3,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import { useCallback, useEffect, useMemo } from "react";
 import * as z from "zod";
-import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Principal } from "@dfinity/principal";
 import { useTokens } from "@/hooks/useTokens";
+import { useTokenStore } from "@/stores/tokenStore";
 
 const isValidWalletAddress = (address: string): { valid: boolean; message: string } => {
     // Empty string handling
@@ -127,7 +127,8 @@ export function useSelectedWalletSendAsset(
 
 export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAssetFormSchema>) {
     const tokenAddress = form.watch("address");
-    const { data: rates } = useConversionRatesQuery(tokenAddress);
+    const { getTokenPrice } = useTokenStore();
+    const tokenUsdPrice = getTokenPrice(tokenAddress);
 
     const setTokenAmount = useCallback(
         (input: string | number) => {
@@ -135,32 +136,30 @@ export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAsse
             const isValidValue = !isNaN(value);
             form.setValue("assetNumber", isValidValue ? value : null, { shouldTouch: true });
 
-            if (!rates || !rates.canConvert) return;
+            if (!tokenUsdPrice) return;
 
-            //form.setValue("usdNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
+            // No need to set USD value here as we removed the usdNumber field
         },
-        [rates],
+        [tokenUsdPrice],
     );
 
     const setUsdAmount = useCallback(
         (input: string | number) => {
             const value = parseFloat(input.toString());
             const isValidValue = !isNaN(value);
-            //form.setValue("usdNumber", isValidValue ? value : 0, { shouldTouch: true });
 
-            if (!rates || !rates.canConvert) return;
+            if (!tokenUsdPrice) return;
 
-            const convertedValue = value * rates.usdToToken;
+            const convertedValue = value / tokenUsdPrice; // USD to token conversion
             form.setValue("assetNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
         },
-        [rates],
+        [tokenUsdPrice],
     );
 
     const setTokenAddress = useCallback((address: string) => {
         form.setValue("address", address, { shouldTouch: true });
         form.clearErrors("amount");
         form.clearErrors("assetNumber");
-        //form.clearErrors("usdNumber");
     }, []);
 
     const setWalletAddress = useCallback((address: string) => {

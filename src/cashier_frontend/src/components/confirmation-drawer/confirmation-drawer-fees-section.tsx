@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { IntentHelperService } from "@/services/fee.service";
 import { convert } from "@/utils/helpers/convert";
-import { useConversionRatesQuery } from "@/hooks/useConversionRatesQuery";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
+import { useTokenStore } from "@/stores/tokenStore";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -28,20 +28,13 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     intents,
 }) => {
     const { t } = useTranslation();
-    const {
-        isLoadingMetadata,
-        assetAmount,
-        assetSrc,
-        feeAmount,
-        feeSymbol,
-        title: intentTitle,
-    } = useIntentMetadata(intents?.[0]);
+    const { feeAmount } = useIntentMetadata(intents?.[0]);
 
     const { assetSymbol } = useIntentMetadata(intents?.[0]);
-    const { data: conversionRates, isLoading: isLoadingConversionRates } = useConversionRatesQuery(
-        intents[0]?.asset.address,
-    );
+    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
+    const isLoading = useTokenStore((state) => state.isLoading || state.isLoadingBalances);
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
+    const tokenUsdPrice = getTokenPrice(intents[0]?.asset.address);
 
     useEffect(() => {
         const initState = async () => {
@@ -67,12 +60,12 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     <div>{t(getItemLabel(intents[0]))}</div>
 
                     <div className="flex items-center">
-                        {isLoadingConversionRates || !totalCashierFee ? (
+                        {isLoading || !totalCashierFee ? (
                             <Spinner width={22} />
                         ) : (
                             <>
-                                {conversionRates?.tokenToUsd !== undefined &&
-                                    `($${convert(calculateTotalCashierFee(), conversionRates?.tokenToUsd)?.toFixed(3)}) ≈ `}
+                                {tokenUsdPrice !== undefined &&
+                                    `($${convert(calculateTotalCashierFee(), tokenUsdPrice)?.toFixed(3)}) ≈ `}
                                 {calculateTotalCashierFee()} {assetSymbol}
                             </>
                         )}
