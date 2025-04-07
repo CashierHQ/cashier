@@ -30,7 +30,7 @@ dfx deploy icp_ledger_canister --argument "
       token_name = opt \"Local ICP\";
     }
   })
-"
+" --network local
 
 echo "=== TRANSFER 10000 ICP TO DEFAULT ACCOUNT ==="
 
@@ -44,6 +44,6 @@ dfx canister call x5qut-viaaa-aaaar-qajda-cai icrc1_transfer "(record {
     from_subaccount = null;
     amount = 10000_0000_0000;
     fee = null
-})"
+})"  --network local
 
 echo "=== END ==="

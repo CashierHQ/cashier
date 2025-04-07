@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use candid::Principal;
-use cashier_types::{ActionState, ActionType, LinkType, LinkUserState};
+use cashier_types::{ActionState, ActionType, LinkUserState};
 use ic_cdk::{query, update};
 use uuid::Uuid;
 
@@ -15,7 +15,7 @@ use crate::{
     services::{
         self,
         action::ActionService,
-        link::{create_new, is_link_creator, update::handle_update_link, v2::LinkService},
+        link::v2::LinkService,
         transaction_manager::{
             validate::ValidateService, TransactionManagerService, UpdateActionArgs,
         },
@@ -32,147 +32,26 @@ use super::types::{
 
 #[query(guard = "is_not_anonymous")]
 async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
-    let caller = ic_cdk::api::caller();
-
-    match services::link::get_links_by_principal(caller.to_text(), input.unwrap_or_default()) {
-        Ok(links) => return Ok(links.map(|link| return LinkDto::from(link))),
-        Err(e) => {
-            return {
-                error!("Failed to get links: {}", e);
-                Err(e)
-            }
-        }
-    }
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.get_links(input)
 }
 
 #[query]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
-    let caller = ic_cdk::api::caller();
-
-    let user_id = services::user::v2::UserService::get_instance().get_user_id_by_wallet(&caller);
-
-    // Allow both anonymous callers and non-anonymous callers without user IDs to proceed
-
-    let is_valid_creator = if !(caller == Principal::anonymous()) {
-        is_link_creator(caller.to_text(), &id)
-    } else {
-        false // Anonymous callers can't be creators
-    };
-
-    // Extract action_type from options
-    let action_type = match options {
-        Some(options) => ActionType::from_str(&options.action_type)
-            .map_err(|_| "Invalid action type".to_string())
-            .map(Some)?,
-        None => None,
-    };
-
-    // Handle different action types based on permissions
-    let action_type = match action_type {
-        // For CreateLink or Withdraw, require creator permission
-        Some(ActionType::CreateLink) | Some(ActionType::Withdraw) => {
-            if !is_valid_creator {
-                return Err("Only creator can access this action type".to_string());
-            }
-            action_type
-        }
-        // For Claim, don't return the action (handled separately)
-        Some(ActionType::Claim) => None,
-        // For other types, pass through
-        _ => action_type,
-    };
-
-    // Get link and action data
-    let link = services::link::get_link_by_id(id.clone())?;
-
-    // Get action data (only if user_id exists)
-    let action = match (action_type, &user_id) {
-        (Some(action_type), Some(user_id)) => {
-            services::link::get_link_action(id, action_type.to_string(), user_id.clone())
-        }
-        _ => None,
-    };
-
-    let action_dto = action.map(|action| {
-        let intents = services::action::get_intents_by_action_id(action.id.clone());
-        ActionDto::from(action, intents)
-    });
-
-    return Ok(GetLinkResp {
-        link: LinkDto::from(link),
-        action: action_dto,
-    });
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.get_link(id, options)
 }
 
 #[update(guard = "is_not_anonymous")]
 async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
-    let creator = ic_cdk::api::caller();
-
-    let id = create_new(creator.to_text(), input);
-    match id {
-        Ok(id) => Ok(id),
-        Err(e) => {
-            error!("Failed to create link: {}", e);
-            Err(CanisterError::HandleLogicError(e))
-        }
-    }
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.create_link(input)
 }
 
 #[update(guard = "is_not_anonymous")]
 async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
-    match input.validate() {
-        Ok(_) => (),
-        Err(e) => return Err(CanisterError::HandleLogicError(e)),
-    }
-
-    let creator = ic_cdk::api::caller();
-
-    // get link type
-    let link = match services::link::get_link_by_id(input.id.clone()) {
-        Ok(rsp) => rsp,
-        Err(e) => {
-            error!("Failed to get link: {:#?}", e);
-            return Err(CanisterError::NotFound("Link not found".to_string()));
-        }
-    };
-
-    match is_link_creator(creator.to_text(), &input.id) {
-        true => (),
-        false => {
-            return Err(CanisterError::Unauthorized(
-                "Caller are not the creator of this link".to_string(),
-            ))
-        }
-    }
-
-    let link_type = link.link_type.clone();
-
-    if link_type.is_none() {
-        return Err(CanisterError::ValidationErrors(
-            "Link type is missing".to_string(),
-        ));
-    }
-
-    let link_type_str = link_type.unwrap();
-    match link_type_str {
-        LinkType::NftCreateAndAirdrop => match handle_update_link(input, link).await {
-            Ok(l) => Ok(LinkDto::from(l)),
-            Err(e) => {
-                error!("Failed to update link: {:#?}", e);
-                Err(e)
-            }
-        },
-        LinkType::TipLink => match handle_update_link(input, link).await {
-            Ok(l) => Ok(LinkDto::from(l)),
-            Err(e) => {
-                error!("Failed to update link: {:#?}", e);
-                Err(e)
-            }
-        },
-        // _ => Err(CanisterError::HandleApiError(
-        //     "Invalid link type".to_string(),
-        // )),
-    }
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.update_link(input).await
 }
 
 #[update(guard = "is_not_anonymous")]
@@ -247,6 +126,104 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             action_service,
             ic_env,
             validate_service,
+        }
+    }
+
+    /// Get links created by the caller
+    pub fn get_links(
+        &self,
+        input: Option<PaginateInput>,
+    ) -> Result<PaginateResult<LinkDto>, String> {
+        let caller = self.ic_env.caller();
+
+        match self
+            .link_service
+            .get_links_by_principal(caller.to_text(), input.unwrap_or_default())
+        {
+            Ok(links) => Ok(links.map(|link| LinkDto::from(link))),
+            Err(e) => {
+                error!("Failed to get links: {}", e);
+                Err(e)
+            }
+        }
+    }
+
+    pub fn get_link(
+        &self,
+        id: String,
+        options: Option<GetLinkOptions>,
+    ) -> Result<GetLinkResp, String> {
+        let caller = self.ic_env.caller();
+
+        let user_id = self.user_service.get_user_id_by_wallet(&caller);
+
+        // Allow both anonymous callers and non-anonymous callers without user IDs to proceed
+
+        let is_valid_creator = if !(caller == Principal::anonymous()) {
+            self.link_service.is_link_creator(caller.to_text(), &id)
+        } else {
+            false // Anonymous callers can't be creators
+        };
+
+        // Extract action_type from options
+        let action_type = match options {
+            Some(options) => ActionType::from_str(&options.action_type)
+                .map_err(|_| "Invalid action type".to_string())
+                .map(Some)?,
+            None => None,
+        };
+
+        // Handle different action types based on permissions
+        let action_type = match action_type {
+            // For CreateLink or Withdraw, require creator permission
+            Some(ActionType::CreateLink) | Some(ActionType::Withdraw) => {
+                if !is_valid_creator {
+                    return Err("Only creator can access this action type".to_string());
+                }
+                action_type
+            }
+            // For Claim, don't return the action (handled separately)
+            Some(ActionType::Claim) => None,
+            // For other types, pass through
+            _ => action_type,
+        };
+
+        // Get link and action data
+        let link = match self.link_service.get_link_by_id(id.clone()) {
+            Ok(link) => link,
+            Err(e) => return Err(e.to_string()),
+        };
+
+        // Get action data (only if user_id exists)
+        let action = match (action_type, &user_id) {
+            (Some(action_type), Some(user_id)) => {
+                self.link_service
+                    .get_link_action(id, action_type.to_string(), user_id.clone())
+            }
+            _ => None,
+        };
+
+        let action_dto = action.map(|action| {
+            let intents = services::action::get_intents_by_action_id(action.id.clone());
+            ActionDto::from(action, intents)
+        });
+
+        Ok(GetLinkResp {
+            link: LinkDto::from(link),
+            action: action_dto,
+        })
+    }
+
+    /// Create a new link
+    pub fn create_link(&self, input: CreateLinkInput) -> Result<String, CanisterError> {
+        let creator = self.ic_env.caller();
+
+        match self.link_service.create_new(creator.to_text(), input) {
+            Ok(id) => Ok(id),
+            Err(e) => {
+                error!("Failed to create link: {}", e);
+                Err(CanisterError::HandleLogicError(e))
+            }
         }
     }
 
@@ -686,5 +663,52 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             })?;
 
         update_action_res
+    }
+
+    /// Update an existing link
+    pub async fn update_link(&self, input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
+        // Validate input
+        match input.validate() {
+            Ok(_) => (),
+            Err(e) => return Err(CanisterError::HandleLogicError(e)),
+        }
+
+        let creator = self.ic_env.caller();
+
+        // Get link
+        let link = match self.link_service.get_link_by_id(input.id.clone()) {
+            Ok(rsp) => rsp,
+            Err(e) => {
+                error!("Failed to get link: {:#?}", e);
+                return Err(e);
+            }
+        };
+
+        // Verify creator
+        if !self
+            .link_service
+            .is_link_creator(creator.to_text(), &input.id)
+        {
+            return Err(CanisterError::Unauthorized(
+                "Caller are not the creator of this link".to_string(),
+            ));
+        }
+
+        // Validate link type
+        let link_type = link.link_type.clone();
+        if link_type.is_none() {
+            return Err(CanisterError::ValidationErrors(
+                "Link type is missing".to_string(),
+            ));
+        }
+
+        // Use link_service.handle_link_state_transition instead of handle_update_link
+        let params = input.params.clone();
+        let updated_link = self
+            .link_service
+            .handle_link_state_transition(&input.id, input.action, params)
+            .await?;
+
+        Ok(LinkDto::from(updated_link))
     }
 }
