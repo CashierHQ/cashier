@@ -89,12 +89,13 @@ export default function HomePage() {
         } else {
             setShowGuide(true);
         }
+
+        updateTokenInit();
     }, []);
 
     useEffect(() => {
         if (identity && appUser) {
             refetchLinks();
-            updateTokenInit();
         }
     }, [identity, appUser]);
 

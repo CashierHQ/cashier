@@ -8,7 +8,7 @@
         "prebuild": "dfx generate cashier_backend",
         "build": "npm run build --workspaces --if-present",
         "pretest": "make setup-test",
-        "prestart": "make g",
+        "prestart": "dfx generate cashier_backend",
         "start": "npm start --workspaces --if-present",
         "build:backend": "make build-backend && dfx generate cashier_backend",
         "build:artifact": "bash scripts/compress_build_wasm.sh",
