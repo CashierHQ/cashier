@@ -514,7 +514,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             ));
         }
         //
-        // !Start of state machine logic
+        // !Start of user state machine
         //
         // Check for valid transition: ChooseWallet -> CompletedLink
         else if current_user_state == LinkUserState::ChooseWallet

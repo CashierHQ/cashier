@@ -1,6 +1,5 @@
 use cashier_types::{Action, ActionState, ActionType, Chain, Link, LinkState, LinkType};
 use faux::when;
-use ic_cdk::print;
 use uuid::Uuid;
 
 use crate::{
