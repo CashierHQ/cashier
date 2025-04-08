@@ -3,7 +3,7 @@ use std::str::FromStr;
 use candid::Principal;
 use cashier_types::{
     Action, ActionState, ActionType, Asset, AssetInfo, Chain, Intent, IntentState, IntentTask,
-    IntentType, Link, LinkAction, LinkState, LinkType, LinkUserState, UserLink, Wallet,
+    IntentType, Link, LinkAction, LinkState, LinkType, LinkUserState, Template, UserLink, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -11,7 +11,8 @@ use uuid::Uuid;
 use crate::{
     constant::{ICP_CANISTER_ID, INTENT_LABEL_WALLET_TO_LINK, INTENT_LABEL_WALLET_TO_TREASURY},
     core::link::types::{
-        LinkStateMachineAction, LinkStateMachineActionParams, UserStateMachineGoto,
+        LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput, LinkStateMachineGoto,
+        UserStateMachineGoto,
     },
     domains::fee::Fee,
     info,
@@ -78,7 +79,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     ) -> Option<Vec<Intent>> {
         let mut intents: Vec<Intent> = vec![];
         match (link_type, action_type) {
-            (LinkType::TipLink, ActionType::CreateLink) => {
+            (LinkType::SendTip, ActionType::CreateLink) => {
                 // create intent for transfer asset to link
                 let ts = self.ic_env.time();
                 //TODO: get the intent template from config then map the values
@@ -107,7 +108,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
             }
-            (LinkType::TipLink, ActionType::Claim) => {
+            (LinkType::SendTip, ActionType::Claim) => {
                 // create intent for link asset to user wallet
                 let ts = self.ic_env.time();
                 //TODO: get the intent template from config then map the values
@@ -512,6 +513,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 "current state is final state".to_string(),
             ));
         }
+        //
+        // !Start of state machine logic
+        //
         // Check for valid transition: ChooseWallet -> CompletedLink
         else if current_user_state == LinkUserState::ChooseWallet
             && goto == UserStateMachineGoto::Continue
@@ -530,6 +534,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // Set the new state
             new_state = LinkUserState::CompletedLink;
         }
+        // !End of state machine logic
+
         // Any other transition is invalid
         else {
             return Err(CanisterError::HandleLogicError(format!(
@@ -562,9 +568,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             None => return Ok(false),
         };
 
-        info!("[update_link_properties] link: {:#?}", link);
-        info!("[update_link_properties] action: {:#?}", action);
-
         // Early return if not a successful claim on a TipLink
         if action.state != ActionState::Success {
             return Ok(false);
@@ -575,12 +578,13 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         let mut updated_link = link.clone();
 
         // update tip link's total_claim
-        if link.link_type == Some(LinkType::TipLink) && action.r#type == ActionType::Claim {
+        if link.link_type == Some(LinkType::SendTip) && action.r#type == ActionType::Claim {
             info!("[update_link_properties] updating total_claim for TipLink");
             // Update asset info to track the claim
             if let Some(mut asset_info) = updated_link.asset_info.clone() {
                 for asset in asset_info.iter_mut() {
-                    asset.total_claim += 1;
+                    // Initialize claim_count to 1 or increment it if it already exists
+                    asset.claim_count = Some(asset.claim_count.unwrap_or(0) + 1);
                 }
                 updated_link.asset_info = Some(asset_info);
             }
@@ -593,245 +597,275 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok(true)
     }
 
-    pub async fn handle_link_state_choose_link_type(
-        &self,
-        link: Link,
-        action: LinkStateMachineAction,
-        params: Option<LinkStateMachineActionParams>,
-    ) -> Result<Link, CanisterError> {
-        match action {
-            LinkStateMachineAction::Continue => {
-                let mut updated_link = link.clone();
-                updated_link.state = LinkState::AddAssets;
-
-                if let Some(update_params) = params {
-                    updated_link = self.apply_update_params(updated_link, update_params)?;
+    pub fn link_type_add_asset_validate(&self, link: &Link, asset_infos: &Vec<AssetInfo>) -> bool {
+        if link.link_type == Some(LinkType::SendTip) {
+            if asset_infos.len() == 1
+                && asset_infos[0].amount_per_claim.is_some()
+                && asset_infos[0].amount_per_claim.unwrap() == asset_infos[0].total_amount
+            {
+                return true;
+            } else {
+                return false;
+            }
+        } else if link.link_type == Some(LinkType::SendAirdrop) {
+            if asset_infos.len() == 1
+                && asset_infos[0].amount_per_claim.is_some()
+                && asset_infos[0].amount_per_claim.unwrap() <= asset_infos[0].total_amount
+            {
+                return true;
+            } else {
+                return false;
+            }
+        } else if link.link_type == Some(LinkType::SendTokenBasket) {
+            if asset_infos.len() >= 1 {
+                for asset in asset_infos.iter() {
+                    if asset.amount_per_claim.is_some()
+                        && asset.amount_per_claim.unwrap() == asset.total_amount
+                    {
+                        return true;
+                    }
                 }
 
-                self.link_repository.update(updated_link.clone());
-
-                Ok(updated_link)
+                return false;
+            } else {
+                return false;
             }
-            _ => Err(CanisterError::ValidationErrors(
-                "Invalid action for ChooseLinkType state".to_string(),
-            )),
+        } else {
+            // link type is not supported
+            return false;
         }
     }
 
-    pub async fn handle_link_state_add_assets(
+    // return true if balance > 0 or gas fee
+    // return false if balance == 0
+    pub fn check_link_asset_left(
         &self,
-        link: Link,
-        action: LinkStateMachineAction,
-        params: Option<LinkStateMachineActionParams>,
-    ) -> Result<Link, CanisterError> {
-        match action {
-            LinkStateMachineAction::Continue => {
-                let mut updated_link = link.clone();
-                updated_link.state = LinkState::CreateLink;
-
-                if let Some(update_params) = params {
-                    updated_link = self.apply_update_params(updated_link, update_params)?;
-                }
-
-                self.link_repository.update(updated_link.clone());
-
-                Ok(updated_link)
-            }
-            LinkStateMachineAction::Back => {
-                self.validate_no_create_action(&link.id, &link.creator)?;
-
-                let mut updated_link = link.clone();
-                updated_link.state = LinkState::ChooseLinkType;
-
-                if let Some(update_params) = params {
-                    updated_link = self.apply_update_params(updated_link, update_params)?;
-                }
-
-                self.link_repository.update(updated_link.clone());
-
-                Ok(updated_link)
-            }
-            _ => Err(CanisterError::ValidationErrors(
-                "Invalid action for AddAssets state".to_string(),
-            )),
-        }
+        link: &Link,
+        params: Option<LinkDetailUpdateInput>,
+    ) -> bool {
+        true
     }
 
-    pub async fn handle_link_state_create_link(
+    pub fn prefetch_template(
         &self,
-        link: Link,
-        action: LinkStateMachineAction,
-        params: Option<LinkStateMachineActionParams>,
-    ) -> Result<Link, CanisterError> {
-        match action {
-            LinkStateMachineAction::Continue => {
-                self.validate_link_before_active(&link)?;
+        params: &LinkDetailUpdateInput,
+    ) -> Result<Template, CanisterError> {
+        let template_str = params
+            .template
+            .clone()
+            .ok_or_else(|| CanisterError::ValidationErrors("Template is required".to_string()))?;
 
-                let mut updated_link = link.clone();
-                updated_link.state = LinkState::Active;
+        let template = Template::from_str(template_str.as_str())
+            .map_err(|_| CanisterError::ValidationErrors("Invalid template".to_string()))?;
 
-                if let Some(update_params) = params {
-                    updated_link = self.apply_update_params(updated_link, update_params)?;
-                }
-
-                self.link_repository.update(updated_link.clone());
-
-                Ok(updated_link)
-            }
-            LinkStateMachineAction::Back => {
-                self.validate_no_create_action(&link.id, &link.creator)?;
-
-                let mut updated_link = link.clone();
-                updated_link.state = LinkState::AddAssets;
-
-                if let Some(update_params) = params {
-                    updated_link = self.apply_update_params(updated_link, update_params)?;
-                }
-
-                self.link_repository.update(updated_link.clone());
-
-                Ok(updated_link)
-            }
-            _ => Err(CanisterError::ValidationErrors(
-                "Invalid action for CreateLink state".to_string(),
-            )),
-        }
+        Ok(template)
     }
 
-    pub async fn handle_link_state_active(
+    pub fn prefetch_asset_info(
         &self,
-        link: Link,
-        action: LinkStateMachineAction,
-        params: Option<LinkStateMachineActionParams>,
-    ) -> Result<Link, CanisterError> {
-        match action {
-            LinkStateMachineAction::Continue => {
-                let mut updated_link = link.clone();
-                updated_link.state = LinkState::Inactive;
+        params: &LinkDetailUpdateInput,
+    ) -> Result<Vec<AssetInfo>, CanisterError> {
+        let asset_info_input = params
+            .asset_info
+            .clone()
+            .ok_or_else(|| CanisterError::ValidationErrors("Asset info is required".to_string()))?;
 
-                if let Some(update_params) = params {
-                    updated_link = self.apply_update_params(updated_link, update_params)?;
-                }
-
-                self.link_repository.update(updated_link.clone());
-
-                Ok(updated_link)
-            }
-            _ => Err(CanisterError::ValidationErrors(
-                "Invalid action for Active state".to_string(),
-            )),
-        }
+        Ok(asset_info_input
+            .iter()
+            .map(|asset| asset.to_model())
+            .collect())
     }
 
-    pub async fn handle_link_state_inactive(
-        &self,
-        link: Link,
-        action: LinkStateMachineAction,
-        params: Option<LinkStateMachineActionParams>,
-    ) -> Result<Link, CanisterError> {
-        Err(CanisterError::ValidationErrors(
-            "No valid transitions from Inactive state".to_string(),
-        ))
+    pub fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
+        let link_creation_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
+            link.id.clone(),
+            ActionType::CreateLink.to_string(),
+            link.creator.clone(),
+        );
+        let create_action = self
+            .action_repository
+            .get(link_creation_action[0].action_id.clone());
+
+        return Ok(create_action);
     }
 
+    pub fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
+        let link_withdraw_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
+            link.id.clone(),
+            ActionType::Withdraw.to_string(),
+            link.creator.clone(),
+        );
+        let withdraw_action = self
+            .action_repository
+            .get(link_withdraw_action[0].action_id.clone());
+
+        return Ok(withdraw_action);
+    }
     pub async fn handle_link_state_transition(
         &self,
         link_id: &str,
         action: String,
-        params: Option<LinkStateMachineActionParams>,
+        params: Option<LinkDetailUpdateInput>,
     ) -> Result<Link, CanisterError> {
-        let link = self.get_link_by_id(link_id.to_string())?;
+        let mut link = self.get_link_by_id(link_id.to_string())?;
 
-        let state_action = LinkStateMachineAction::from_string(&action)
+        let link_state_goto = LinkStateMachineGoto::from_string(&action)
             .map_err(|e| CanisterError::ValidationErrors(e))?;
 
-        match link.state {
-            LinkState::ChooseLinkType => {
-                self.handle_link_state_choose_link_type(link, state_action, params)
-                    .await
-            }
-            LinkState::AddAssets => {
-                self.handle_link_state_add_assets(link, state_action, params)
-                    .await
-            }
-            LinkState::CreateLink => {
-                self.handle_link_state_create_link(link, state_action, params)
-                    .await
-            }
-            LinkState::Active => {
-                self.handle_link_state_active(link, state_action, params)
-                    .await
-            }
-            LinkState::Inactive => {
-                self.handle_link_state_inactive(link, state_action, params)
-                    .await
-            }
-        }
-    }
-
-    fn apply_update_params(
-        &self,
-        mut link: Link,
-        params: LinkStateMachineActionParams,
-    ) -> Result<Link, CanisterError> {
-        match params {
-            LinkStateMachineActionParams::Update(input) => {
-                if let Some(title) = input.title {
-                    link.title = Some(title);
-                }
-
-                if let Some(description) = input.description {
-                    link.description = Some(description);
-                }
-
-                if let Some(link_image_url) = input.link_image_url {
-                    link.metadata = Some(link.metadata.unwrap_or_default());
-                    link.metadata
-                        .as_mut()
-                        .unwrap()
-                        .insert("link_image_url".to_string(), link_image_url);
-                }
-
-                if let Some(nft_image) = input.nft_image {
-                    link.metadata = Some(link.metadata.unwrap_or_default());
-                    link.metadata
-                        .as_mut()
-                        .unwrap()
-                        .insert("nft_image".to_string(), nft_image);
-                }
-
-                if let Some(asset_info) = input.asset_info {
-                    link.asset_info = Some(
-                        asset_info
-                            .iter()
-                            .map(|a| {
-                                let chain = std::str::FromStr::from_str(a.chain.as_str())
-                                    .unwrap_or(Chain::IC);
-
-                                AssetInfo {
-                                    address: a.address.clone(),
-                                    chain,
-                                    total_amount: a.total_amount,
-                                    amount_per_claim: a.amount_per_claim,
-                                    label: a.label.clone(),
-                                    total_claim: 0,
-                                }
-                            })
-                            .collect(),
-                    );
-                }
-
-                if let Some(template) = input.template {
-                    link.template = std::str::FromStr::from_str(template.as_str()).ok();
-                }
-
-                if let Some(link_type) = input.link_type {
-                    link.link_type = std::str::FromStr::from_str(link_type.as_str()).ok();
-                }
-            }
+        if params.is_none() {
+            return Err(CanisterError::ValidationErrors(
+                "Update_params is required for ChooseLinkType state".to_string(),
+            ));
         }
 
-        Ok(link)
+        let params = params.unwrap();
+
+        // !Start of link state machine
+        if link.state == LinkState::ChooseLinkType {
+            let template = self.prefetch_template(&params)?;
+
+            if link_state_goto == LinkStateMachineGoto::Continue
+                && params.title.is_some()
+                && params.description.is_none()
+                && params.link_image_url.is_none()
+                && params.nft_image.is_none()
+                && params.asset_info.is_none()
+                && params.template.is_some()
+            {
+                link.title = params.title.clone();
+                link.template = Some(template);
+                link.state = LinkState::AddAssets;
+                self.link_repository.update(link.clone());
+                return Ok(link.clone());
+            } else {
+                return Err(CanisterError::ValidationErrors(
+                    "State transition failed for ChooseLinkType".to_string(),
+                ));
+            }
+        } else if link.state == LinkState::AddAssets {
+            // prefetch 2 method
+            let asset_info = self.prefetch_asset_info(&params)?;
+
+            if link_state_goto == LinkStateMachineGoto::Continue
+                && params.title.is_none()
+                && params.description.is_none()
+                && params.link_image_url.is_none()
+                && params.nft_image.is_none()
+                && params.asset_info.is_some()
+                && params.template.is_none()
+            {
+                if !self.link_type_add_asset_validate(&link, &asset_info) {
+                    return Err(CanisterError::ValidationErrors(
+                        "Link type add asset validate failed".to_string(),
+                    ));
+                }
+
+                link.asset_info = Some(asset_info);
+                link.state = LinkState::CreateLink;
+                self.link_repository.update(link.clone());
+                return Ok(link.clone());
+            } else if link_state_goto == LinkStateMachineGoto::Back {
+                link.state = LinkState::ChooseLinkType;
+                self.link_repository.update(link.clone());
+                return Ok(link.clone());
+            } else {
+                return Err(CanisterError::ValidationErrors(
+                    "State transition failed for AddAssets".to_string(),
+                ));
+            }
+        } else if link.state == LinkState::CreateLink {
+            // prefetch 3 method
+            let create_action = self.prefetch_create_action(&link)?;
+            if link_state_goto == LinkStateMachineGoto::Continue
+                && params.title.is_none()
+                && params.description.is_none()
+                && params.link_image_url.is_none()
+                && params.nft_image.is_none()
+                && params.asset_info.is_none()
+                && params.template.is_none()
+            {
+                if create_action.is_none() {
+                    return Err(CanisterError::ValidationErrors(
+                        "Create action not found".to_string(),
+                    ));
+                } else if create_action.unwrap().state == ActionState::Success {
+                    link.state = LinkState::Active;
+                    self.link_repository.update(link.clone());
+                    return Ok(link.clone());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "Create action not success".to_string(),
+                    ));
+                }
+            } else if link_state_goto == LinkStateMachineGoto::Back {
+                if create_action.is_none() {
+                    link.state = LinkState::AddAssets;
+                    self.link_repository.update(link.clone());
+                    return Ok(link.clone());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "The create action is exist".to_string(),
+                    ));
+                }
+            } else {
+                return Err(CanisterError::ValidationErrors(
+                    "State transition failed for AddAssets".to_string(),
+                ));
+            }
+        } else if link.state == LinkState::Active {
+            if link_state_goto == LinkStateMachineGoto::Continue
+                && params.title.is_none()
+                && params.description.is_none()
+                && params.link_image_url.is_none()
+                && params.nft_image.is_none()
+                && params.asset_info.is_none()
+                && params.template.is_none()
+            {
+                if self.check_link_asset_left(&link, Some(params.clone())) {
+                    link.state = LinkState::Inactive;
+                } else {
+                    link.state = LinkState::InactiveEnded;
+                }
+                self.link_repository.update(link.clone());
+                return Ok(link.clone());
+            } else {
+                return Err(CanisterError::ValidationErrors(
+                    "State transition failed for Active".to_string(),
+                ));
+            }
+        } else if link.state == LinkState::Inactive {
+            let withdraw_action = self.prefetch_withdraw_action(&link)?;
+            if link_state_goto == LinkStateMachineGoto::Continue
+                && params.title.is_none()
+                && params.description.is_none()
+                && params.link_image_url.is_none()
+                && params.nft_image.is_none()
+                && params.asset_info.is_none()
+                && params.template.is_none()
+            {
+                if !self.check_link_asset_left(&link, Some(params.clone()))
+                    && withdraw_action.is_some()
+                    && withdraw_action.unwrap().state == ActionState::Success
+                {
+                    link.state = LinkState::InactiveEnded;
+                    self.link_repository.update(link.clone());
+                    return Ok(link.clone());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "Withdraw action not success".to_string(),
+                    ));
+                }
+            } else {
+                return Err(CanisterError::ValidationErrors(
+                    "State transition failed for Inactive".to_string(),
+                ));
+            }
+        } else if link.state == LinkState::InactiveEnded {
+            return Err(CanisterError::ValidationErrors("Link is ended".to_string()));
+        } else {
+            return Err(CanisterError::ValidationErrors("Invalid state".to_string()));
+        }
+        // !End of link state machine
     }
 
     fn validate_no_create_action(&self, link_id: &str, creator: &str) -> Result<(), CanisterError> {

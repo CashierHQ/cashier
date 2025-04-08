@@ -1,7 +1,7 @@
 use std::{collections::HashMap, str::FromStr};
 
 use candid::{CandidType, Principal};
-use cashier_types::{Chain, IntentType, LinkType, Template};
+use cashier_types::{AssetInfo, Chain, IntentType, LinkType, Template};
 use serde::{Deserialize, Serialize};
 
 use crate::core::action::types::ActionDto;
@@ -20,6 +20,24 @@ pub struct LinkDetailUpdateAssetInfoInput {
     pub total_amount: u64,
     pub amount_per_claim: u64,
     pub label: String,
+}
+
+impl LinkDetailUpdateAssetInfoInput {
+    pub fn to_model(&self) -> AssetInfo {
+        let chain = match Chain::from_str(self.chain.as_str()) {
+            Ok(chain) => chain,
+            Err(_) => Chain::IC,
+        };
+
+        AssetInfo {
+            address: self.address.clone(),
+            chain,
+            total_amount: self.total_amount,
+            amount_per_claim: Some(self.amount_per_claim),
+            label: self.label.clone(),
+            claim_count: Some(0u64), // start with 0
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -44,22 +62,17 @@ pub struct LinkDetailUpdate {
     pub link_type: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq)]
-pub enum LinkStateMachineAction {
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
+pub enum LinkStateMachineGoto {
     Continue,
     Back,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub enum LinkStateMachineActionParams {
-    Update(LinkDetailUpdateInput),
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct UpdateLinkInput {
     pub id: String,
     pub action: String, // goto
-    pub params: Option<LinkStateMachineActionParams>,
+    pub params: Option<LinkDetailUpdateInput>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -86,8 +99,8 @@ pub struct AssetInfoDto {
     pub address: String,
     pub chain: String,
     pub total_amount: u64,
-    pub amount_per_claim: u64,
-    pub total_claim: u64,
+    pub amount_per_claim: Option<u64>,
+    pub total_claim: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -130,10 +143,10 @@ impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
             address: input.address,
             chain,
             total_amount: input.total_amount,
-            amount_per_claim: input.amount_per_claim,
+            amount_per_claim: Some(input.amount_per_claim),
             label: input.label,
             // start with 0
-            total_claim: 0,
+            claim_count: Some(0u64),
         }
     }
 }
@@ -147,7 +160,7 @@ impl From<&cashier_types::AssetInfo> for AssetInfoDto {
             chain,
             total_amount: input.total_amount,
             amount_per_claim: input.amount_per_claim,
-            total_claim: input.total_claim,
+            total_claim: input.claim_count,
         }
     }
 }
@@ -212,8 +225,8 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
             address: input.address.clone(),
             chain,
             total_amount: input.total_amount,
-            amount_per_claim: input.amount_per_claim,
-            total_claim: 0,
+            amount_per_claim: Some(input.amount_per_claim),
+            total_claim: Some(0u64), // start with 0
         }
     }
 }
@@ -238,75 +251,19 @@ impl LinkDetailUpdateInput {
     }
 }
 
-impl LinkStateMachineAction {
+impl LinkStateMachineGoto {
     pub fn to_string(&self) -> String {
         match self {
-            LinkStateMachineAction::Continue => "Continue".to_string(),
-            LinkStateMachineAction::Back => "Back".to_string(),
+            LinkStateMachineGoto::Continue => "Continue".to_string(),
+            LinkStateMachineGoto::Back => "Back".to_string(),
         }
     }
 
-    pub fn from_string(intent: &str) -> Result<LinkStateMachineAction, String> {
+    pub fn from_string(intent: &str) -> Result<LinkStateMachineGoto, String> {
         match intent {
-            "Continue" => Ok(LinkStateMachineAction::Continue),
-            "Back" => Ok(LinkStateMachineAction::Back),
+            "Continue" => Ok(LinkStateMachineGoto::Continue),
+            "Back" => Ok(LinkStateMachineGoto::Back),
             _ => Err("Invalid LinkStateMachineAction. Valid value: Continue, Back".to_string()),
-        }
-    }
-}
-
-impl UpdateLinkInput {
-    pub fn validate(&self) -> Result<(), String> {
-        match LinkStateMachineAction::from_string(self.action.as_str()) {
-            Ok(_) => {}
-            Err(e) => return Err(e),
-        }
-
-        match &self.params {
-            Some(params) => match params {
-                LinkStateMachineActionParams::Update(params) => match params {
-                    LinkDetailUpdateInput {
-                        title,
-                        description,
-                        link_image_url: _,
-                        nft_image: _,
-                        asset_info,
-                        template,
-                        link_type,
-                    } => {
-                        if let Some(template) = template {
-                            Template::from_str(template)
-                                .map_err(|_| format!("Invalid template: "))?;
-                        }
-
-                        if let Some(link_type) = link_type {
-                            LinkType::from_str(link_type)
-                                .map_err(|_| format!("Invalid link type "))?;
-                        }
-
-                        if let Some(asset_info) = asset_info {
-                            for asset_info_input in asset_info {
-                                asset_info_input.validate()?;
-                            }
-                        }
-
-                        if let Some(title) = title {
-                            if title.is_empty() {
-                                return Err("Title should not be empty".to_string());
-                            }
-                        }
-
-                        if let Some(description) = description {
-                            if description.is_empty() {
-                                return Err("Description should not be empty".to_string());
-                            }
-                        }
-
-                        Ok(())
-                    }
-                },
-            },
-            None => Ok(()),
         }
     }
 }
