@@ -6,11 +6,11 @@ import {
     UserPreference,
     UserFiltersInput,
     TokenDto,
+    idlFactory,
 } from "../../../../declarations/token_storage/token_storage.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { IC_HOST, TOKEN_STORAGE_CANISTER_ID } from "@/const";
-import { idlFactory } from "../../../../declarations/cashier_backend/cashier_backend.did";
 
 /**
  * Service for interacting with the token storage canister
@@ -40,6 +40,7 @@ class TokenStorageService {
      */
     async listTokens(): Promise<TokenDto[]> {
         const response = parseResultResponse(await this.actor.list_tokens());
+        console.log("listTokens response:", response);
         return response;
     }
 
