@@ -682,6 +682,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             ActionType::CreateLink.to_string(),
             link.creator.clone(),
         );
+
+        if link_creation_action.is_empty() {
+            return Ok(None);
+        }
+
         let create_action = self
             .action_repository
             .get(link_creation_action[0].action_id.clone());
@@ -695,6 +700,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             ActionType::Withdraw.to_string(),
             link.creator.clone(),
         );
+
+        if link_withdraw_action.is_empty() {
+            return Ok(None);
+        }
+
         let withdraw_action = self
             .action_repository
             .get(link_withdraw_action[0].action_id.clone());

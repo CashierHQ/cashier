@@ -286,10 +286,21 @@ async fn test_handle_link_state_transition_create_link_to_add_assets() {
         create_mock_components();
 
     // Create link with CreateLink state
-    let link = create_link_with_state(LinkState::CreateLink);
-    let link_id = link.id.clone();
+    let mut link = create_link_with_state(LinkState::CreateLink);
+    link.title = Some("Test Link".to_string());
+    link.description = Some("Test Description".to_string());
 
-    // Setup mock repository
+    // Add asset info
+    link.asset_info = Some(vec![cashier_types::AssetInfo {
+        address: "aaaaa-aa".to_string(),
+        chain: Chain::IC,
+        total_amount: 100,
+        amount_per_claim: Some(100),
+        label: "test_label".to_string(),
+        claim_count: None,
+    }]);
+
+    let link_id = link.id.clone();
     when!(link_repository.get(link_id.clone())).then_return(Some(link.clone()));
     when!(link_repository.update).then_return(());
 
@@ -486,4 +497,83 @@ async fn test_handle_link_state_transition_invalid_action() {
         Err(CanisterError::ValidationErrors(_)) => (),
         _ => panic!("Expected ValidationErrors"),
     }
+}
+
+#[tokio::test]
+async fn test_handle_link_state_back_transition_with_exist_create_action() {
+    let (
+        ic_env,
+        mut link_repository,
+        mut link_action_repository,
+        mut action_repository,
+        icrc_service,
+    ) = create_mock_components();
+
+    // Create link with CreateLink state
+    let mut link = create_link_with_state(LinkState::CreateLink);
+    link.title = Some("Test Link".to_string());
+    link.description = Some("Test Description".to_string());
+
+    // Add asset info
+    link.asset_info = Some(vec![cashier_types::AssetInfo {
+        address: "aaaaa-aa".to_string(),
+        chain: Chain::IC,
+        total_amount: 100,
+        amount_per_claim: Some(100),
+        label: "test_label".to_string(),
+        claim_count: None,
+    }]);
+
+    let link_id = link.id.clone();
+    let action_id = Uuid::new_v4().to_string();
+
+    // Setup mock repository
+    when!(link_repository.get).then_return(Some(link.clone()));
+
+    when!(link_repository.update).then_return(());
+
+    // Setup mock action repository to return success action
+    let link_action = cashier_types::LinkAction {
+        link_id: link.id.clone(),
+        action_type: ActionType::CreateLink.to_string(),
+        user_id: link.creator.clone(),
+        action_id: action_id.clone(),
+        link_user_state: None,
+    };
+
+    when!(link_action_repository.get_by_prefix).then_return(vec![link_action]);
+
+    let action = Action {
+        id: action_id,
+        link_id: link.id.clone(),
+        r#type: ActionType::CreateLink,
+        state: ActionState::Success,
+        creator: link.creator.clone(),
+    };
+
+    when!(action_repository.get).then_return(Some(action));
+
+    let params = Some(LinkDetailUpdateInput {
+        title: None,
+        template: None,
+        description: None,
+        link_image_url: None,
+        nft_image: None,
+        asset_info: None,
+        link_type: None,
+    });
+
+    let link_service = LinkService::new(
+        link_repository,
+        link_action_repository,
+        action_repository,
+        icrc_service,
+        ic_env,
+    );
+
+    let result = link_service
+        .handle_link_state_transition(&link_id, "Back".to_string(), params)
+        .await;
+
+    assert!(result.is_err());
 }
