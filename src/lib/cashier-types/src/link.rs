@@ -30,14 +30,8 @@ impl Link {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LinkType {
-    SendTip,
     NftCreateAndAirdrop,
-    SendAirdrop,
-    SendTokenBasket,
-    ReceivePayment,
-    ReceiveMutliPayment,
-    SwapSingleAsset,
-    SwapMultiAsset,
+    TipLink,
 }
 
 #[derive(Debug, Clone)]
@@ -54,13 +48,7 @@ impl LinkType {
     pub fn to_str(&self) -> &str {
         match self {
             LinkType::NftCreateAndAirdrop => "NftCreateAndAirdrop",
-            LinkType::SendTip => "SendTip",
-            LinkType::SendAirdrop => "SendAirdrop",
-            LinkType::SendTokenBasket => "SendTokenBasket",
-            LinkType::ReceivePayment => "ReceivePayment",
-            LinkType::ReceiveMutliPayment => "ReceiveMutliPayment",
-            LinkType::SwapSingleAsset => "SwapSingleAsset",
-            LinkType::SwapMultiAsset => "SwapMultiAsset",
+            LinkType::TipLink => "TipLink",
         }
     }
 
@@ -75,13 +63,7 @@ impl FromStr for LinkType {
     fn from_str(input: &str) -> Result<LinkType, Self::Err> {
         match input {
             "NftCreateAndAirdrop" => Ok(LinkType::NftCreateAndAirdrop),
-            "SendTip" => Ok(LinkType::SendTip),
-            "SendAirdrop" => Ok(LinkType::SendAirdrop),
-            "SendTokenBasket" => Ok(LinkType::SendTokenBasket),
-            "ReceivePayment" => Ok(LinkType::ReceivePayment),
-            "ReceiveMutliPayment" => Ok(LinkType::ReceiveMutliPayment),
-            "SwapSingleAsset" => Ok(LinkType::SwapSingleAsset),
-            "SwapMultiAsset" => Ok(LinkType::SwapMultiAsset),
+            "TipLink" => Ok(LinkType::TipLink),
             _ => Err(()),
         }
     }
@@ -94,7 +76,6 @@ pub enum LinkState {
     CreateLink,
     Active,
     Inactive,
-    InactiveEnded,
 }
 
 impl LinkState {
@@ -105,7 +86,6 @@ impl LinkState {
             LinkState::CreateLink => "Link_state_create_link",
             LinkState::Active => "Link_state_active",
             LinkState::Inactive => "Link_state_inactive",
-            LinkState::InactiveEnded => "Link_state_inactive_ended",
         }
     }
 
@@ -124,7 +104,6 @@ impl FromStr for LinkState {
             "Link_state_create_link" => Ok(LinkState::CreateLink),
             "Link_state_active" => Ok(LinkState::Active),
             "Link_state_inactive" => Ok(LinkState::Inactive),
-            "Link_state_inactive_ended" => Ok(LinkState::InactiveEnded),
             _ => Err(()),
         }
     }

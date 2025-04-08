@@ -25,7 +25,7 @@ mod tests {
             state,
             title: Some("Test Link".to_string()),
             description: Some("A test link".to_string()),
-            link_type: Some(cashier_types::LinkType::SendTip),
+            link_type: Some(cashier_types::LinkType::TipLink),
             asset_info: None,
             template: Some(cashier_types::Template::Central),
             creator: creator.to_string(),

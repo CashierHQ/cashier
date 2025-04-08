@@ -31,7 +31,7 @@ mod tests {
         let link = Link {
             id: link_id.clone(),
             creator: user_id.clone(),
-            link_type: Some(LinkType::SendTip),
+            link_type: Some(LinkType::TipLink),
             state: cashier_types::LinkState::ChooseLinkType,
             title: Some("title".to_string()),
             description: Some("description".to_string()),
@@ -81,7 +81,7 @@ mod tests {
         let link = Link {
             id: link_id.clone(),
             creator: user_id.clone(),
-            link_type: Some(LinkType::SendTip),
+            link_type: Some(LinkType::TipLink),
             state: cashier_types::LinkState::ChooseLinkType,
             title: Some("title".to_string()),
             description: Some("description".to_string()),
