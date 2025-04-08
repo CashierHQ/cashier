@@ -21,11 +21,11 @@ import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useButtonState } from "@/hooks/useButtonState";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
+import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { useMemo } from "react";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.TIP_LINK;
 }
