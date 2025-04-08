@@ -7,6 +7,7 @@ import {
     UserPreference,
     UserFiltersInput,
     TokenDto,
+    idlFactory,
 } from "../../../../declarations/token_storage/token_storage.did";
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
@@ -38,6 +39,7 @@ class TokenStorageService {
      */
     async listTokens(): Promise<TokenDto[]> {
         const response = parseResultResponse(await this.actor.list_tokens());
+        console.log("listTokens response:", response);
         return response;
     }
 
