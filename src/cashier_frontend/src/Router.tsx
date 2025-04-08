@@ -80,7 +80,7 @@ export default function AppRouter() {
         <div
             className={
                 isSmallDevice
-                    ? ""
+                    ? "min-h-screen h-full"
                     : "bg-gradient-to-r h-[100vh] from-[#F4FCF9] to-[#F7FAF8] flex items-center justify-center"
             }
         >
