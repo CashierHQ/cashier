@@ -86,8 +86,8 @@ pub mod tests {
             address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
             chain: Chain::IC,
             total_amount: 100,
-            amount_per_claim: 100,
-            total_claim: 0,
+            amount_per_claim: Some(100),
+            claim_count: Some(0),
             label: "dummy".to_string(),
         };
 
@@ -96,7 +96,7 @@ pub mod tests {
             state: LinkState::ChooseLinkType,
             title: Some("dummy link".to_string()),
             description: Some("dummy link".to_string()),
-            link_type: Some(LinkType::TipLink),
+            link_type: Some(LinkType::SendTip),
             asset_info: Some(vec![asset_info]),
             template: None,
             creator: generate_random_principal().to_text(),
