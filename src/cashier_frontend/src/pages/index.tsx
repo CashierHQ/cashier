@@ -212,13 +212,13 @@ export default function HomePage() {
         } else {
             return (
                 <div
-                    className={`w-screen flex justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
+                    className={`w-screen flexs justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
                 >
                     <SheetWrapper>
                         <div className="flex w-full flex-col h-full">
                             <Header onConnect={connectToWallet} openTestForm={handleOpenTestForm} />
                             <div
-                                className={`flex h-full min-w-[50%] flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+                                className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
                             >
                                 {showGuide && (
                                     <div className="mt-8 px-4">
@@ -236,7 +236,7 @@ export default function HomePage() {
                                         </button>
                                     </div>
                                 )}
-                                <div className="flex h-full flex-col px-4">
+                                <div className="flex h-full flex-col px-4 w-full">
                                     <h2 className="text-base font-semibold mt-7">
                                         Links created by me
                                     </h2>

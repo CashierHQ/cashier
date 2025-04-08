@@ -9,12 +9,11 @@ export default function WalletLayout() {
     const closeWallet = () => navigate("/");
 
     return (
-        <div className="flex flex-col h-dvh min-w-[280px] flex-1 mx-auto">
+        <div
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-dvh" : "max-h-[90%] h-full w-[600px] p-2 mt-8 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
+        >
             <WalletHeader onClose={closeWallet} />
-
-            <div
-                className={`flex-1 overflow-hidden ${responsive.isSmallDevice ? "bg-white" : "bg-lightgreen"}`}
-            >
+            <div className="flex-1 w-full overflow-hidden">
                 <Outlet />
             </div>
         </div>

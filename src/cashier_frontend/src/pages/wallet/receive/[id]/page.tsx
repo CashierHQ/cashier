@@ -18,7 +18,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AssetSelectItem } from "@/components/asset-select";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import { Label } from "@/components/ui/label";
-import { Clipboard } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useResponsive } from "@/hooks/responsive-hook";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
@@ -55,7 +55,7 @@ function AccountIdContent({ accountId }: { accountId: string }) {
                 >
                     {accountId}
                 </div>
-                <Clipboard className="text-green h-fit" size={36} />
+                <Copy className="text-green h-fit" size={36} />
             </div>
         </>
     );
@@ -129,7 +129,7 @@ export default function ReceiveTokenPage() {
 
     return (
         <div
-            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4" : "max-w-[700px] mx-auto bg-white max-h-[80%] rounded-xl shadow-sm p-4"}`}
         >
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
@@ -160,7 +160,7 @@ export default function ReceiveTokenPage() {
                         className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                         value={transformShortAddress(user?.principal?.toString() ?? "")}
                         disabled={true}
-                        rightIcon={<Clipboard color="#36A18B" size={18} />}
+                        rightIcon={<Copy color="#36A18B" size={18} />}
                         onRightIconClick={handleCopy}
                     />
                 </div>

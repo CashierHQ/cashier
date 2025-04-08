@@ -221,9 +221,7 @@ export default function SendTokenPage() {
     const isIcpToken = selectedToken?.tokenAddress === ICP_ADDRESS;
 
     return (
-        <div
-            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
-        >
+        <div className={`flex flex-col h-full ${responsive.isSmallDevice ? "px-2 py-4" : "px-4"}`}>
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader>
@@ -388,7 +386,7 @@ export default function SendTokenPage() {
                                 variant="default"
                                 size="lg"
                                 disabled={isDisabled}
-                                className={`mx-auto ${responsive.isSmallDevice ? "mt-auto" : "mt-12"}`}
+                                className="mx-auto mt-auto"
                                 onClick={() => console.log(form.formState.errors)}
                             >
                                 {t("continue")}

@@ -124,7 +124,7 @@ export default function LinkPreview({
                 type="submit"
                 variant="default"
                 size="lg"
-                className=""
+                className="mt-auto"
                 onClick={handleSubmit}
                 disabled={isDisabled}
             >

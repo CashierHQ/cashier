@@ -7,13 +7,11 @@ export default function WalletPage() {
     const responsive = useResponsive();
 
     return (
-        <div
-            className={`flex flex-col h-dvh ${!responsive.isSmallDevice && "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
-        >
-            <div className="flex-none">
+        <div className={`flex flex-col ${responsive.isSmallDevice ? "py-4" : "px-4 h-full"}`}>
+            <div className="flex-none w-full">
                 <WalletHero totalUsdEquivalent={MOCK_TOTAL_USD_EQUIVALENT} />
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden w-full">
                 <WalletTabs fungibleTokens={MOCK_TOKENS_LIST} />
             </div>
         </div>

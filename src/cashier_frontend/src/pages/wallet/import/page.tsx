@@ -32,7 +32,7 @@ export default function ImportTokenPage() {
 
     return (
         <div
-            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] mt-12 rounded-xl shadow-sm p-4"}`}
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white h-full p-4"}`}
         >
             {" "}
             <BackHeader onBack={goBack}>
