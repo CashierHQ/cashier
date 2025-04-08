@@ -23,8 +23,12 @@ test:
 g: 
 	@dfx generate cashier_backend
 	rm src/declarations/cashier_backend/cashier_backend.did
+	rm src/declarations/cashier_backend/index.d.ts
+	rm src/declarations/cashier_backend/index.js
 	@dfx generate token_storage
 	rm src/declarations/token_storage/token_storage.did
+	rm src/declarations/token_storage/index.d.ts
+	rm src/declarations/token_storage/index.js
 	@dfx generate icp_ledger_canister
 	rm src/declarations/icp_ledger_canister/icp_ledger_canister.did
 

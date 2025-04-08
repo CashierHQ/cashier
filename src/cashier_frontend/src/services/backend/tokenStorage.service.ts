@@ -1,5 +1,4 @@
 import { parseResultResponse } from "@/utils";
-import { createActor } from "../../../../declarations/token_storage";
 import {
     _SERVICE,
     AddTokenInput,
@@ -8,9 +7,10 @@ import {
     UserFiltersInput,
     TokenDto,
 } from "../../../../declarations/token_storage/token_storage.did";
-import { HttpAgent, Identity } from "@dfinity/agent";
+import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { IC_HOST, TOKEN_STORAGE_CANISTER_ID } from "@/const";
+import { idlFactory } from "../../../../declarations/cashier_backend/cashier_backend.did";
 
 /**
  * Service for interacting with the token storage canister
@@ -20,8 +20,10 @@ class TokenStorageService {
     private actor: _SERVICE;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        this.actor = createActor(TOKEN_STORAGE_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: IC_HOST }),
+        const agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        this.actor = Actor.createActor(idlFactory, {
+            agent,
+            canisterId: TOKEN_STORAGE_CANISTER_ID,
         });
     }
 
