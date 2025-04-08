@@ -49,8 +49,12 @@ jobs:
             - name: Build project
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
+                  VITE_BACKEND_CANISTER_ID: ${{ vars.CASHIER_BACKEND_CANISTER_ID }}
+                  VITE_TOKEN_STORAGE_CANISTER_ID: ${{ vars.TOKEN_STORAGE_CANISTER_ID }}
               run: |
                   echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
+                  echo "VITE_BACKEND_CANISTER_ID = $VITE_BACKEND_CANISTER_ID"
+                  echo "VITE_TOKEN_STORAGE_CANISTER_ID = $VITE_TOKEN_STORAGE_CANISTER_ID"
                   rustup target add wasm32-unknown-unknown
                   dfx generate cashier_backend 
                   dfx generate token_storage
@@ -59,7 +63,12 @@ jobs:
             - name: deploy to staging env
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
+                  VITE_BACKEND_CANISTER_ID: ${{ vars.CASHIER_BACKEND_CANISTER_ID }}
+                  VITE_TOKEN_STORAGE_CANISTER_ID: ${{ vars.TOKEN_STORAGE_CANISTER_ID }}
                   DFX_WARNING: -mainnet_plaintext_identity
               run: |
+                  echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
+                  echo "VITE_BACKEND_CANISTER_ID = $VITE_BACKEND_CANISTER_ID"
+                  echo "VITE_TOKEN_STORAGE_CANISTER_ID = $VITE_TOKEN_STORAGE_CANISTER_ID"
                   echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
                   dfx deploy cashier_frontend --network staging
