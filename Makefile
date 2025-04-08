@@ -29,8 +29,6 @@ g:
 	rm src/declarations/token_storage/token_storage.did
 	rm src/declarations/token_storage/index.d.ts
 	rm src/declarations/token_storage/index.js
-	@dfx generate icp_ledger_canister
-	rm src/declarations/icp_ledger_canister/icp_ledger_canister.did
 
 predeploy:
 	make build-backend
