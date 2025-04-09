@@ -20,7 +20,7 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
 
     return (
         <Form {...form}>
-            <form className="flex flex-col flex-grow" onSubmit={handleSubmit}>
+            <form className="flex flex-col flex-grow h-full" onSubmit={handleSubmit}>
                 <div className="flex flex-col gap-6 flex-grow py-6">
                     <FormField
                         name="chain"
@@ -116,7 +116,9 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                     />
                 </div>
 
-                <Button size="lg">{t("continue")}</Button>
+                <Button size="lg" className="mt-auto">
+                    {t("continue")}
+                </Button>
             </form>
         </Form>
     );

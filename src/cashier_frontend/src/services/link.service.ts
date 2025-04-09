@@ -1,8 +1,8 @@
 import { convertTokenAmountToNumber, parseResultResponse } from "@/utils";
-import { createActor } from "../../../declarations/cashier_backend";
 import {
     _SERVICE,
     CreateLinkInput,
+    idlFactory,
     LinkDto,
     LinkGetUserStateInput,
     LinkUpdateUserStateInput,
@@ -10,7 +10,7 @@ import {
     ProcessActionInput,
     UpdateActionInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
-import { HttpAgent, Identity } from "@dfinity/agent";
+import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import {
@@ -70,8 +70,10 @@ class LinkService {
     private actor: _SERVICE;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        this.actor = createActor(BACKEND_CANISTER_ID, {
-            agent: HttpAgent.createSync({ identity, host: IC_HOST }),
+        const agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        this.actor = Actor.createActor(idlFactory, {
+            agent,
+            canisterId: BACKEND_CANISTER_ID,
         });
     }
 
