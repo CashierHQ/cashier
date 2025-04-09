@@ -56,7 +56,7 @@ export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     }
 
     return (
-        <div className="flex flex-col flex-grow relative pt-6 pb-2 px-1">
+        <div className="flex flex-col flex-grow relative pt-4 pb-2 px-1 h-full">
             {/* Loading Overlay */}
             {isImporting && (
                 <div className="absolute inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center rounded-md">
@@ -120,11 +120,11 @@ export function ImportTokenReview({ token }: ImportTokenReviewProps) {
                         className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                     />
 
-                    <Message className="mt-3">{t("review.message")}</Message>
+                    <Message className="mt-3 text-xs">{t("review.message")}</Message>
                 </div>
             </div>
 
-            <Button className="mt-2" onClick={handleImport} size="lg" disabled={isImporting}>
+            <Button className="mt-auto" onClick={handleImport} size="lg" disabled={isImporting}>
                 {t("review.import")}
             </Button>
         </div>

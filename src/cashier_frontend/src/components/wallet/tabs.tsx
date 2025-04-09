@@ -36,9 +36,9 @@ export function WalletTabs({ fungibleTokens }: WalletTabsProps) {
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full relative">
             <Tabs.Root value={tab} onValueChange={handleTabChange} className="flex flex-col h-full">
-                <Tabs.List className="flex-none">
+                <Tabs.List className="flex-none z-10">
                     <Tabs.Trigger value={WalletTab.Tokens}>
                         {t("wallet.tabs.tokens.header")}
                     </Tabs.Trigger>
@@ -47,18 +47,17 @@ export function WalletTabs({ fungibleTokens }: WalletTabsProps) {
                     </Tabs.Trigger>
                 </Tabs.List>
 
-                <Tabs.Content value={WalletTab.Tokens} className="flex-1 overflow-hidden p-0">
+                <Tabs.Content value={WalletTab.Tokens} className="flex-1 h-full">
                     <WalletTokensTab tokens={fungibleTokens} />
                 </Tabs.Content>
 
-                <Tabs.Content value={WalletTab.Nfts} className="flex-1 overflow-hidden p-0">
+                <Tabs.Content value={WalletTab.Nfts} className="flex-1 h-full pb-16">
                     <WalletNftsTab />
                 </Tabs.Content>
             </Tabs.Root>
 
             {showToast && (
-                // TODO: Make an actual toast
-                <div className="flex gap-3 fixed bottom-9 left-5 right-5 p-4 bg-lightyellow rounded-xl">
+                <div className="flex gap-3 fixed bottom-9 left-5 right-5 p-4 bg-lightyellow rounded-xl z-20">
                     <Info className="fill-green stroke-lightyellow" size={32} />
 
                     <div className="flex flex-col gap-1">
