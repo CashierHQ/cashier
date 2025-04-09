@@ -54,10 +54,10 @@ jobs:
                   rustup target add wasm32-unknown-unknown
                   npm run build
 
-            - name: deploy to staging env
+            - name: deploy to prod env
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
                   DFX_WARNING: -mainnet_plaintext_identity
               run: |
                   echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
-                  dfx deploy cashier_frontend_staging --ic
+                  dfx deploy cashier_frontend --ic
