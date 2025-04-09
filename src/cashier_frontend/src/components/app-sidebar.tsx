@@ -11,6 +11,7 @@ import copy from "copy-to-clipboard";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useConnectToWallet } from "@/hooks/useConnectToWallet";
+import { Copy } from "lucide-react";
 
 export interface SidebarMenuItem {
     title: string;
@@ -90,7 +91,7 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
                             </span>
                             {transformShortAddress(user?.principal?.toString() || "")}
                             <span className="ml-2">
-                                <FaRegCopy color="gray" size={20} />
+                                <Copy color="gray" size={20} />
                             </span>
                         </div>
 

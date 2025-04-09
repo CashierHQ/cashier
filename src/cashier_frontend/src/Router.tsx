@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import { useResponsive } from "./hooks/responsive-hook";
 import LinkPage from "./pages/edit/[id]";
 import HomePage from "@/pages";
@@ -13,7 +13,7 @@ import RequireAuth from "./router/RequireAuth";
 import ReceiveTokenPage from "./pages/wallet/receive/[id]/page";
 import SendTokenPage from "./pages/wallet/send/[id]/page";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
     {
         path: "/",
         element: <HomePage />,
@@ -80,7 +80,7 @@ export default function AppRouter() {
         <div
             className={
                 isSmallDevice
-                    ? ""
+                    ? "min-h-screen h-full"
                     : "bg-gradient-to-r h-[100vh] from-[#F4FCF9] to-[#F7FAF8] flex items-center justify-center"
             }
         >

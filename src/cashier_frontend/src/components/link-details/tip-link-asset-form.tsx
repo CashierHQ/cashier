@@ -61,7 +61,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
     const form = useTipLinkAssetForm(filteredTokenList ?? [], {
         tokenAddress: token?.address,
         assetNumber: token?.amount ? Number(token.amount) / 10 ** (token.decimals || 8) : 0,
-        usdNumber: 0,
+        usdNumber: null,
         amount: BigInt(0),
     });
 
@@ -165,6 +165,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                     <Form {...form}>
                         <form
                             onSubmit={form.handleSubmit((data) => {
+                                console.log("Submitted with data: ", data);
                                 onSubmit(data);
                             })}
                             className="space-y-8 flex flex-col h-full"
@@ -235,7 +236,44 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                     variant="default"
                                     size="lg"
                                     className="w-full"
-                                    onClick={() => console.log(form.formState.errors)}
+                                    onClick={() => {
+                                        console.log("Form is valid:", form.formState.isValid);
+                                        console.log("Form values:", form.getValues());
+                                        console.log("Form errors:", form.formState.errors);
+                                        console.log(
+                                            "Validation schema:",
+                                            form.formState.defaultValues,
+                                        );
+                                        console.log("Dirty fields:", form.formState.dirtyFields);
+                                        console.log(
+                                            "Touched fields:",
+                                            form.formState.touchedFields,
+                                        );
+
+                                        // Check token balance validation
+                                        const asset = filteredTokenList?.find(
+                                            (asset) =>
+                                                asset.address === form.getValues("tokenAddress"),
+                                        );
+                                        console.log("Selected token:", token);
+                                        console.log("Asset from list:", asset);
+                                        console.log("Asset amount:", asset?.amount);
+                                        console.log(
+                                            "Requested amount:",
+                                            form.getValues("assetNumber"),
+                                        );
+
+                                        // Manually check validation conditions
+                                        const assetNumber = form.getValues("assetNumber");
+                                        const hasEnoughBalance =
+                                            asset &&
+                                            assetNumber !== null &&
+                                            typeof asset.amount !== "undefined" &&
+                                            assetNumber <=
+                                                Number(asset.amount) / 10 ** (asset.decimals || 8);
+
+                                        console.log("Has enough balance:", hasEnoughBalance);
+                                    }}
                                     disabled={isButtonDisabled}
                                 >
                                     {t("continue")}

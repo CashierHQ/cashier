@@ -2,27 +2,44 @@ import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import { useCallback, useEffect, useMemo } from "react";
-import { linkDetailsFormSchema, LinkDetailsFormSchema } from "./link-details-form";
+import {
+    linkDetailsFormSchema,
+    LinkDetailsFormSchema,
+    LinkDetailsFormUI,
+    validateLinkDetails,
+} from "./link-details-form";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
 import { useTokenStore } from "@/stores/tokenStore";
 
-export type TipLinkAssetFormSchema = LinkDetailsFormSchema;
+// Combined type for the form that includes both core data and UI fields
+export type TipLinkAssetFormSchema = LinkDetailsFormSchema & LinkDetailsFormUI;
 
 export function useTipLinkAssetForm(
     assets: FungibleToken[],
     defaultValues?: DefaultValues<TipLinkAssetFormSchema>,
 ): UseFormReturn<TipLinkAssetFormSchema> {
+    // Create form with core schema
     const form = useForm<TipLinkAssetFormSchema>({
-        resolver: zodResolver(linkDetailsFormSchema(assets)),
+        resolver: zodResolver(linkDetailsFormSchema),
         defaultValues: defaultValues,
     });
 
     const { getToken } = useTokens();
-
     const tokenData = getToken(form.getValues("tokenAddress"));
-
     const assetNumber = form.watch("assetNumber");
+
+    // Validate UI fields separately
+    useEffect(() => {
+        const values = form.getValues();
+        const errors = validateLinkDetails(values, assets);
+
+        // Set errors if any found
+        Object.entries(errors).forEach(([field, message]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            form.setError(field as any, { type: "custom", message });
+        });
+    }, [assets, form.watch("tokenAddress"), assetNumber]);
 
     // update amount after assetNumber change
     useEffect(() => {
@@ -84,7 +101,7 @@ export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
             if (!tokenUsdPrice) return;
 
             const convertedValue = value * tokenUsdPrice;
-            form.setValue("usdNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
+            form.setValue("usdNumber", isValidValue ? convertedValue : null, { shouldTouch: true });
         },
         [tokenUsdPrice],
     );
@@ -93,12 +110,14 @@ export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
         (input: string | number) => {
             const value = parseFloat(input.toString());
             const isValidValue = !isNaN(value);
-            form.setValue("usdNumber", isValidValue ? value : 0, { shouldTouch: true });
+            form.setValue("usdNumber", isValidValue ? value : null, { shouldTouch: true });
 
             if (!tokenUsdPrice) return;
 
             const convertedValue = value / tokenUsdPrice;
-            form.setValue("assetNumber", isValidValue ? convertedValue : 0, { shouldTouch: true });
+            form.setValue("assetNumber", isValidValue ? convertedValue : null, {
+                shouldTouch: true,
+            });
         },
         [tokenUsdPrice],
     );
