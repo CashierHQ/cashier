@@ -14,6 +14,8 @@ const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
 console.log("ENV", import.meta.env.VITE_IC_EXPLORER_BASE_URL);
 console.log(import.meta.env.MODE);
+console.log(import.meta.env.VITE_BACKEND_CANISTER_ID);
+console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
 
 function App() {
     const queryClient = new QueryClient();
