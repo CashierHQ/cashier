@@ -1,6 +1,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { StateBadge } from "@/components/link-item";
+import { Driver, driver } from "driver.js";
+import "driver.js/dist/driver.css";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import useToast from "@/hooks/useToast";
@@ -23,6 +25,49 @@ import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Helmet } from "react-helmet-async";
 
+// Add custom CSS for driver.js popover styling
+const customDriverStyles = `
+.custom-driver-popover-class {
+    border-radius: 16px !important;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1) !important;
+    background-color: white !important;
+    padding: 20px !important;
+    text-align: center !important;
+    max-width: 320px !important;
+}
+
+.custom-driver-popover-class .driver-popover-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+}
+
+.custom-driver-popover-class .driver-popover-description {
+    font-size: 14px !important;
+    color: #6b7280 !important;
+    font-weight: 300 !important;
+}
+
+.custom-driver-popover-class .driver-popover-arrow {
+    border-color: white transparent transparent transparent !important;
+}
+
+.custom-driver-popover-class .icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.custom-driver-popover-class .icon-wrapper {
+    background-color: #e6f7f5;
+    border-radius: 50%;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+`;
+
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
     const { linkId } = useParams();
@@ -32,7 +77,129 @@ export default function DetailPage() {
     const { renderSkeleton } = useSkeletonLoading();
     const responsive = useResponsive();
 
-    const [showOverlay, setShowOverlay] = React.useState(false);
+    const [showOverlay, setShowOverlay] = React.useState(true);
+    const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
+
+    // Add styles to document
+    React.useEffect(() => {
+        const driver = initializeDriver();
+        setDriverObj(driver);
+
+        const styleTag = document.createElement("style");
+        styleTag.innerHTML = customDriverStyles;
+        document.head.appendChild(styleTag);
+
+        return () => {
+            document.head.removeChild(styleTag);
+        };
+    }, []);
+
+    React.useEffect(() => {
+        if (showOverlay && driverObj && document.getElementById("copy-link-button")) {
+            driverObj.highlight({
+                element: "#copy-link-button",
+                popover: {
+                    title: "Congratulations!",
+                    description:
+                        "You've created a link. Copy the link address, and share it with others.",
+                },
+            });
+        }
+    }, [showOverlay, driverObj, linkData]);
+
+    const initializeDriver = () => {
+        const driverObj = driver({
+            popoverClass: "custom-driver-popover-class",
+            animate: false,
+            allowClose: true,
+            onPopoverRender: (popover) => {
+                // Add party popper icon to the popover
+                const iconContainer = document.createElement("div");
+                iconContainer.className = "icon-container";
+
+                const iconWrapper = document.createElement("div");
+                iconWrapper.className = "icon-wrapper";
+
+                const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svgIcon.setAttribute("width", "28");
+                svgIcon.setAttribute("height", "28");
+                svgIcon.setAttribute("viewBox", "0 0 24 24");
+                svgIcon.setAttribute("fill", "none");
+                svgIcon.setAttribute("stroke", "#14b8a6");
+                svgIcon.setAttribute("stroke-width", "2");
+                svgIcon.setAttribute("stroke-linecap", "round");
+                svgIcon.setAttribute("stroke-linejoin", "round");
+
+                const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path1.setAttribute("d", "M5.8 11.3 2 22l10.7-3.79");
+                svgIcon.appendChild(path1);
+
+                const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path2.setAttribute("d", "M4 3h.01");
+                svgIcon.appendChild(path2);
+
+                const path3 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path3.setAttribute("d", "M22 8h.01");
+                svgIcon.appendChild(path3);
+
+                const path4 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path4.setAttribute("d", "M15 2h.01");
+                svgIcon.appendChild(path4);
+
+                const path5 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path5.setAttribute("d", "M22 20h.01");
+                svgIcon.appendChild(path5);
+
+                const path6 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path6.setAttribute(
+                    "d",
+                    "m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10",
+                );
+                svgIcon.appendChild(path6);
+
+                const path7 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path7.setAttribute(
+                    "d",
+                    "m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17",
+                );
+                svgIcon.appendChild(path7);
+
+                const path8 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path8.setAttribute(
+                    "d",
+                    "m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7",
+                );
+                svgIcon.appendChild(path8);
+
+                const path9 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path9.setAttribute(
+                    "d",
+                    "M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z",
+                );
+                svgIcon.appendChild(path9);
+
+                iconWrapper.appendChild(svgIcon);
+                iconContainer.appendChild(iconWrapper);
+
+                // Insert the icon at the beginning of the popover
+                popover.wrapper.insertBefore(iconContainer, popover.wrapper.firstChild);
+
+                // Position the popover above the button
+                setTimeout(() => {
+                    const button = document.getElementById("copy-link-button");
+                    if (button) {
+                        const buttonRect = button.getBoundingClientRect();
+                        const popoverRect = popover.wrapper.getBoundingClientRect();
+
+                        popover.wrapper.style.left = `${buttonRect.left + buttonRect.width / 2 - popoverRect.width / 2}px`;
+                        popover.wrapper.style.top = `${buttonRect.top - popoverRect.height - 20}px`;
+                    }
+                }, 0);
+            },
+        });
+
+        return driverObj;
+    };
 
     //TODO: Update to apply asset_info as the list of assets
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
@@ -41,6 +208,8 @@ export default function DetailPage() {
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
+            setShowOverlay(false);
+            driverObj?.destroy();
             copy(window.location.href.replace("details/", ""));
             showToast("Copied successfully", "", "default", undefined, false);
         } catch (err) {
@@ -109,13 +278,13 @@ export default function DetailPage() {
                 <meta property="twitter:description" content={pageDescription} />
             </Helmet>
 
-            {showOverlay && (
+            {/* {showOverlay && (
                 <CopyLinkOverlay
                     showOverlay={showOverlay}
                     setShowOverlay={setShowOverlay}
                     handleCopyLink={handleCopyLink}
                 />
-            )}
+            )} */}
             <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
                 <div className="w-full flex flex-grow flex-col">
                     {!linkData ? (
@@ -294,61 +463,6 @@ export default function DetailPage() {
                             />
                         </>
                     )}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function CopyLinkOverlay({
-    setShowOverlay,
-    handleCopyLink,
-}: {
-    showOverlay: boolean;
-    setShowOverlay: (showOverlay: boolean) => void;
-    handleCopyLink: (e: React.SyntheticEvent) => void;
-}) {
-    function handleCopyAndCloseOverlay(e: React.SyntheticEvent) {
-        handleCopyLink(e);
-        setShowOverlay(false);
-    }
-
-    function handleCloseOverlay() {
-        setShowOverlay(false);
-    }
-
-    return (
-        <div className="fixed inset-0 z-50 bg-black/50" onClick={handleCloseOverlay}>
-            <div className="absolute bottom-0 left-0 right-0 flex justify-center sm:items-center sm:bottom-auto sm:inset-24">
-                <div
-                    className="bg-white p-5 rounded-t-3xl rounded-b-none w-full sm:rounded-3xl sm:w-auto sm:max-w-sm shadow-lg text-center relative"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="flex justify-center items-center mb-2">
-                        <div className="bg-teal-50 rounded-full flex items-center justify-center p-3">
-                            <PartyPopper className="h-7 w-7 text-teal-500" />
-                        </div>
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">Congratulations!</h3>
-                    <p className="text-gray-700 font-light text-sm">
-                        You've created a link. Copy the link address, and share it with others.
-                    </p>
-
-                    <Button
-                        id="copy-link-button"
-                        onClick={handleCopyAndCloseOverlay}
-                        size="lg"
-                        className="w-full mt-8"
-                    >
-                        Copy Link
-                    </Button>
-
-                    <button
-                        onClick={handleCloseOverlay}
-                        className="w-full mt-4 text-sm text-gray-500"
-                    >
-                        Continue
-                    </button>
                 </div>
             </div>
         </div>
