@@ -1,3 +1,4 @@
+use candid::Principal;
 use cashier_types::{Action, ActionState, ActionType, Chain, Link, LinkState, LinkType};
 use faux::when;
 use uuid::Uuid;
@@ -335,16 +336,31 @@ async fn test_handle_link_state_transition_create_link_to_add_assets() {
 
 #[tokio::test]
 async fn test_handle_link_state_transition_active_to_inactive() {
-    let (ic_env, mut link_repository, link_action_repository, action_repository, icrc_service) =
-        create_mock_components();
+    let (
+        mut ic_env,
+        mut link_repository,
+        link_action_repository,
+        action_repository,
+        mut icrc_service,
+    ) = create_mock_components();
 
     // Create link with Active state
-    let link = create_link_with_state(LinkState::Active);
+    let mut link = create_link_with_state(LinkState::Active);
     let link_id = link.id.clone();
+
+    link.asset_info = Some(vec![cashier_types::AssetInfo {
+        address: "aaaaa-aa".to_string(),
+        chain: Chain::IC,
+        total_amount: 100,
+        amount_per_claim: Some(100),
+        label: "test_label".to_string(),
+        claim_count: None,
+    }]);
 
     // Setup mock repository
     when!(link_repository.get(link_id.clone())).then_return(Some(link.clone()));
-
+    when!(icrc_service.balance_of).then_return(Ok(10000)); // Return a positive balance
+    when!(ic_env.id).then_return(Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap());
     when!(link_repository.update).then_return(());
 
     let params = Some(LinkDetailUpdateInput {
@@ -372,6 +388,62 @@ async fn test_handle_link_state_transition_active_to_inactive() {
     assert!(result.is_ok());
     let updated_link = result.unwrap();
     assert_eq!(updated_link.state, LinkState::Inactive);
+}
+
+#[tokio::test]
+async fn test_handle_link_state_transition_active_to_inactive_if_asset_balance_empty() {
+    let (
+        mut ic_env,
+        mut link_repository,
+        link_action_repository,
+        action_repository,
+        mut icrc_service,
+    ) = create_mock_components();
+
+    // Create link with Active state
+    let mut link = create_link_with_state(LinkState::Active);
+    let link_id = link.id.clone();
+
+    link.asset_info = Some(vec![cashier_types::AssetInfo {
+        address: "aaaaa-aa".to_string(),
+        chain: Chain::IC,
+        total_amount: 100,
+        amount_per_claim: Some(100),
+        label: "test_label".to_string(),
+        claim_count: None,
+    }]);
+
+    // Setup mock repository
+    when!(link_repository.get(link_id.clone())).then_return(Some(link.clone()));
+    when!(icrc_service.balance_of).then_return(Ok(0)); // Return a positive balance
+    when!(ic_env.id).then_return(Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap());
+    when!(link_repository.update).then_return(());
+
+    let params = Some(LinkDetailUpdateInput {
+        title: None,
+        template: None,
+        description: None,
+        link_image_url: None,
+        nft_image: None,
+        asset_info: None,
+        link_type: None,
+    });
+
+    let link_service = LinkService::new(
+        link_repository,
+        link_action_repository,
+        action_repository,
+        icrc_service,
+        ic_env,
+    );
+
+    let result = link_service
+        .handle_link_state_transition(&link_id, "Continue".to_string(), params)
+        .await;
+
+    assert!(result.is_ok());
+    let updated_link = result.unwrap();
+    assert_eq!(updated_link.state, LinkState::InactiveEnded);
 }
 
 #[tokio::test]
@@ -576,4 +648,80 @@ async fn test_handle_link_state_back_transition_with_exist_create_action() {
         .await;
 
     assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_check_link_asset_left_with_balance() {
+    let (mut ic_env, link_repository, link_action_repository, action_repository, mut icrc_service) =
+        create_mock_components();
+
+    // Create a link with asset info
+    let mut link = create_link_with_state(LinkState::Active);
+    link.asset_info = Some(vec![cashier_types::AssetInfo {
+        address: "aaaaa-aa".to_string(),
+        chain: Chain::IC,
+        total_amount: 100,
+        amount_per_claim: Some(100),
+        label: "test_label".to_string(),
+        claim_count: None,
+    }]);
+
+    // Mock the balance_of function to return a positive balance
+    when!(icrc_service.balance_of).then_return(Ok(50)); // Return a positive balance
+    when!(ic_env.id).then_return(Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap());
+    let link_service = LinkService::new(
+        link_repository,
+        link_action_repository,
+        action_repository,
+        icrc_service,
+        ic_env,
+    );
+
+    // Call the function and check the result
+    let result = link_service.check_link_asset_left(&link).await;
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), true); // Should return true since there's a balance
+}
+
+#[tokio::test]
+async fn test_check_link_asset_left_with_error() {
+    let (mut ic_env, link_repository, link_action_repository, action_repository, mut icrc_service) =
+        create_mock_components();
+
+    // Create a link with asset info
+    let mut link = create_link_with_state(LinkState::Active);
+    link.asset_info = Some(vec![cashier_types::AssetInfo {
+        address: "aaaaa-aa".to_string(),
+        chain: Chain::IC,
+        total_amount: 100,
+        amount_per_claim: Some(100),
+        label: "test_label".to_string(),
+        claim_count: None,
+    }]);
+
+    // Mock the balance_of function to return an error
+    when!(icrc_service.balance_of).then_return(Err(CanisterError::HandleLogicError(
+        "Failed to check balance".to_string(),
+    )));
+    when!(ic_env.id).then_return(Principal::from_text("jjio5-5aaaa-aaaam-adhaq-cai").unwrap());
+
+    let link_service = LinkService::new(
+        link_repository,
+        link_action_repository,
+        action_repository,
+        icrc_service,
+        ic_env,
+    );
+
+    // Call the function and check the result
+    let result = link_service.check_link_asset_left(&link).await;
+
+    assert!(result.is_err());
+    match result {
+        Err(CanisterError::HandleLogicError(msg)) => {
+            assert_eq!(msg, "Failed to check balance");
+        }
+        _ => panic!("Expected HandleLogicError"),
+    }
 }

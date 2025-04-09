@@ -10,10 +10,7 @@ use uuid::Uuid;
 
 use crate::{
     constant::{ICP_CANISTER_ID, INTENT_LABEL_WALLET_TO_LINK, INTENT_LABEL_WALLET_TO_TREASURY},
-    core::link::types::{
-        LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput, LinkStateMachineGoto,
-        UserStateMachineGoto,
-    },
+    core::link::types::{LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto},
     domains::fee::Fee,
     info,
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
