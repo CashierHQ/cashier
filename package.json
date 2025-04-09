@@ -5,10 +5,10 @@
     },
     "name": "cashier",
     "scripts": {
-        "prebuild": "dfx generate cashier_backend",
+        "prebuild": "make g",
         "build": "npm run build --workspaces --if-present",
         "pretest": "make setup-test",
-        "prestart": "dfx generate cashier_backend",
+        "prestart": "make g",
         "start": "npm start --workspaces --if-present",
         "build:backend": "make build-backend && dfx generate cashier_backend",
         "build:artifact": "bash scripts/compress_build_wasm.sh",
