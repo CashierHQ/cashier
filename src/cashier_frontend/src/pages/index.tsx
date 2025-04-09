@@ -109,7 +109,7 @@ export default function HomePage() {
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {
             return (
-                <div className="overflow-y-auto h-full custom-scrollbar">
+                <div className="overflow-y-auto h-full scrollbar-hide">
                     {Object.entries(links).map(([date, items]) => (
                         <div key={date} className="my-4">
                             <h3 className="text-lightblack font-normal mb-2">
