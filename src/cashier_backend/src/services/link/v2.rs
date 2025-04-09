@@ -636,14 +636,47 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
     }
 
-    // return true if balance > 0 or gas fee
-    // return false if balance == 0
-    pub fn check_link_asset_left(
-        &self,
-        link: &Link,
-        params: Option<LinkDetailUpdateInput>,
-    ) -> bool {
-        true
+    // this method use for withdraw
+    // return true if any balance > 0 or gas fee
+    // return false if all balance == 0
+    pub async fn check_link_asset_left(&self, link: &Link) -> Result<bool, CanisterError> {
+        let asset_info = link
+            .asset_info
+            .clone()
+            .ok_or_else(|| CanisterError::HandleLogicError("Asset info not found".to_string()))
+            .unwrap();
+
+        if asset_info.len() == 0 {
+            return Err(CanisterError::HandleLogicError(
+                "Asset info not found".to_string(),
+            ));
+        }
+
+        for asset in asset_info.iter() {
+            let token_pid = Principal::from_text(asset.address.as_str()).map_err(|e| {
+                CanisterError::HandleLogicError(format!(
+                    "Error converting token address to principal: {:?}",
+                    e
+                ))
+            })?;
+
+            let account = Account {
+                owner: self.ic_env.id(),
+                subaccount: Some(to_subaccount(&link.id.clone())),
+            };
+
+            let balance = self
+                .icrc_service
+                .balance_of(token_pid, account)
+                .await
+                .map_err(|e| e)?;
+
+            if balance > 0 {
+                return Ok(true);
+            }
+        }
+
+        return Ok(false);
     }
 
     pub fn prefetch_template(
@@ -831,7 +864,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 && params.asset_info.is_none()
                 && params.template.is_none()
             {
-                if self.check_link_asset_left(&link, Some(params.clone())) {
+                if self.check_link_asset_left(&link).await? {
                     link.state = LinkState::Inactive;
                 } else {
                     link.state = LinkState::InactiveEnded;
@@ -853,7 +886,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 && params.asset_info.is_none()
                 && params.template.is_none()
             {
-                if !self.check_link_asset_left(&link, Some(params.clone()))
+                if !self.check_link_asset_left(&link).await?
                     && withdraw_action.is_some()
                     && withdraw_action.unwrap().state == ActionState::Success
                 {
@@ -876,56 +909,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             return Err(CanisterError::ValidationErrors("Invalid state".to_string()));
         }
         // !End of link state machine
-    }
-
-    fn validate_no_create_action(&self, link_id: &str, creator: &str) -> Result<(), CanisterError> {
-        let link_actions = self.link_action_repository.get_by_prefix(
-            link_id.to_string(),
-            ActionType::CreateLink.to_string(),
-            creator.to_string(),
-        );
-
-        if !link_actions.is_empty() {
-            return Err(CanisterError::ValidationErrors(
-                "Action exists, cannot transition back".to_string(),
-            ));
-        }
-
-        Ok(())
-    }
-
-    fn validate_link_before_active(&self, link: &Link) -> Result<(), CanisterError> {
-        let link_actions = self.link_action_repository.get_by_prefix(
-            link.id.clone(),
-            ActionType::CreateLink.to_string(),
-            link.creator.clone(),
-        );
-
-        if link_actions.is_empty() {
-            return Err(CanisterError::ValidationErrors(
-                "Create action not found".to_string(),
-            ));
-        }
-
-        if link.title.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "Title is required".to_string(),
-            ));
-        }
-
-        if link.description.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "Description is required".to_string(),
-            ));
-        }
-
-        if link.asset_info.is_none() || link.asset_info.as_ref().unwrap().is_empty() {
-            return Err(CanisterError::ValidationErrors(
-                "Asset info is required".to_string(),
-            ));
-        }
-
-        Ok(())
     }
 
     /// Create a new link
