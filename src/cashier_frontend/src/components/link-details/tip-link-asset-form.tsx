@@ -165,6 +165,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                     <Form {...form}>
                         <form
                             onSubmit={form.handleSubmit((data) => {
+                                console.log("Submitted with data: ", data);
                                 onSubmit(data);
                             })}
                             className="space-y-8 flex flex-col h-full"
