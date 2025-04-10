@@ -87,7 +87,7 @@ export function useSelectedAsset(
     return selectedAsset;
 }
 
-export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
+export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>, isUsd: boolean) {
     const tokenAddress = form.watch("tokenAddress");
     const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
     const tokenUsdPrice = getTokenPrice(tokenAddress);
@@ -103,7 +103,7 @@ export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
             const convertedValue = value * tokenUsdPrice;
             form.setValue("usdNumber", isValidValue ? convertedValue : null, { shouldTouch: true });
         },
-        [tokenUsdPrice],
+        [tokenUsdPrice, form],
     );
 
     const setUsdAmount = useCallback(
@@ -119,15 +119,38 @@ export function useFormActions(form: UseFormReturn<TipLinkAssetFormSchema>) {
                 shouldTouch: true,
             });
         },
-        [tokenUsdPrice],
+        [tokenUsdPrice, form],
     );
 
-    const setTokenAddress = useCallback((address: string) => {
-        form.setValue("tokenAddress", address, { shouldTouch: true });
-        form.clearErrors("amount");
-        form.clearErrors("assetNumber");
-        form.clearErrors("usdNumber");
-    }, []);
+    const setTokenAddress = useCallback(
+        (address: string) => {
+            form.setValue("tokenAddress", address, { shouldTouch: true });
+            form.clearErrors("amount");
+            form.clearErrors("assetNumber");
+            form.clearErrors("usdNumber");
+
+            const newTokenPrice = getTokenPrice(address);
+            if (!newTokenPrice) return;
+
+            if (isUsd) {
+                // In USD mode: keep USD input value, update token amount display
+                const usdNumber = form.getValues("usdNumber");
+                if (usdNumber !== null) {
+                    const newTokenAmount = usdNumber / newTokenPrice;
+                    form.setValue("assetNumber", newTokenAmount, { shouldTouch: true });
+                }
+            } else {
+                // In token amount mode: keep token amount, update USD display
+                const assetNumber = form.getValues("assetNumber");
+                if (assetNumber !== null) {
+                    const newUsdAmount = assetNumber * newTokenPrice;
+                    form.setValue("usdNumber", newUsdAmount, { shouldTouch: true });
+                    // Don't update assetNumber, keep the original token amount
+                }
+            }
+        },
+        [form, getTokenPrice, isUsd],
+    );
 
     return {
         setTokenAmount,

@@ -63,6 +63,7 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
             ? fromDefinedNullable(link.asset_info).map((asset) => ({
                   address: asset?.address,
                   amount: asset?.total_amount,
+                  totalClaim: asset?.total_claim,
               }))
             : [],
     };
