@@ -20,7 +20,8 @@
         "cashier_frontend": {
             "source": ["src/cashier_frontend/dist"],
             "type": "assets",
-            "workspace": "cashier_frontend"
+            "workspace": "cashier_frontend",
+            "build": "bash scripts/build_frontend.sh"
         },
         "icp_ledger_canister": {
             "type": "custom",

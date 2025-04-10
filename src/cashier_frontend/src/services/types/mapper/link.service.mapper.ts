@@ -29,17 +29,15 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
         action: isContinue ? "Continue" : "Back",
         params: [
             {
-                Update: {
-                    title: [linkDetailModel.title],
-                    asset_info: linkDetailModel.asset_info
-                        ? [linkDetailModel.asset_info.map((asset) => mapAssetInfo(asset))]
-                        : [],
-                    description: [linkDetailModel.description],
-                    template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
-                    nft_image: [linkDetailModel.image],
-                    link_image_url: ["Test"],
-                    link_type: linkDetailModel.linkType ? [linkDetailModel.linkType] : [],
-                },
+                title: [linkDetailModel.title],
+                asset_info: linkDetailModel.asset_info
+                    ? [linkDetailModel.asset_info.map((asset) => mapAssetInfo(asset))]
+                    : [],
+                description: [linkDetailModel.description],
+                template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
+                nft_image: [linkDetailModel.image],
+                link_image_url: ["Test"],
+                link_type: linkDetailModel.linkType ? [linkDetailModel.linkType] : [],
             },
         ],
     };

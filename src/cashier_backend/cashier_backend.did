@@ -11,8 +11,8 @@ type AssetInfoDto = record {
   total_amount : nat64;
   chain : text;
   address : text;
-  total_claim : nat64;
-  amount_per_claim : nat64;
+  total_claim : opt nat64;
+  amount_per_claim : opt nat64;
 };
 type CanisterError = variant {
   InvalidDataError : text;
@@ -133,7 +133,6 @@ type LinkGetUserStateOutput = record {
   action : ActionDto;
   link_user_state : text;
 };
-type LinkStateMachineActionParams = variant { Update : LinkDetailUpdateInput };
 type LinkUpdateUserStateInput = record {
   link_id : text;
   action_type : text;
@@ -213,7 +212,7 @@ type UpdateActionInput = record {
 type UpdateLinkInput = record {
   id : text;
   action : text;
-  params : opt LinkStateMachineActionParams;
+  params : opt LinkDetailUpdateInput;
 };
 type UserDto = record { id : text; email : opt text; wallet : text };
 service : () -> {

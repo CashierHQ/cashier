@@ -149,7 +149,7 @@ impl<E: IcEnvironment + Clone> ActionAdapter for IcActionAdapter<E> {
             input.link.link_type.unwrap().clone(),
             input.action.r#type.clone(),
         ) {
-            (LinkType::TipLink, ActionType::CreateLink) => {
+            (LinkType::SendTip, ActionType::CreateLink) => {
                 let fee_intent = self.build_create_link_fee_intent()?;
                 let tip_intent = self.build_create_tip_link_intent(input)?;
 
@@ -171,7 +171,7 @@ impl<E: IcEnvironment + Clone> ActionAdapter for IcActionAdapter<E> {
     ) -> Result<Vec<Intent>, String> {
         // This is where we'd implement support for different link and action type combinations
         match (link_type, action_type) {
-            (LinkType::TipLink, ActionType::CreateLink) => {
+            (LinkType::SendTip, ActionType::CreateLink) => {
                 // This is a placeholder - in a real implementation, we'd build the intents here
                 let fee_intent = self.build_create_link_fee_intent()?;
                 Ok(fee_intent)
