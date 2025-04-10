@@ -19,11 +19,54 @@ import { useTranslation } from "react-i18next";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
-import { PartyPopper } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Helmet } from "react-helmet-async";
+import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
+
+// Add custom CSS for driver.js popover styling
+const customDriverStyles = `
+.custom-driver-popover-class {
+    border-radius: 16px !important;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1) !important;
+    background-color: white !important;
+    padding: 20px !important;
+    text-align: center !important;
+    max-width: 320px !important;
+}
+
+.custom-driver-popover-class .driver-popover-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+}
+
+.custom-driver-popover-class .driver-popover-description {
+    font-size: 14px !important;
+    color: #6b7280 !important;
+    font-weight: 300 !important;
+}
+
+.custom-driver-popover-class .driver-popover-arrow {
+    border-color: white transparent transparent transparent !important;
+}
+
+.custom-driver-popover-class .icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.custom-driver-popover-class .icon-wrapper {
+    background-color: #e6f7f5;
+    border-radius: 50%;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+`;
 
 // Add custom CSS for driver.js popover styling
 const customDriverStyles = `
@@ -80,6 +123,8 @@ export default function DetailPage() {
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
 
+    const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
+
     // Add styles to document
     React.useEffect(() => {
         const driver = initializeDriver();
@@ -88,6 +133,8 @@ export default function DetailPage() {
         const styleTag = document.createElement("style");
         styleTag.innerHTML = customDriverStyles;
         document.head.appendChild(styleTag);
+
+        console.log("linkData", linkData);
 
         return () => {
             document.head.removeChild(styleTag);
@@ -445,14 +492,24 @@ export default function DetailPage() {
                             </TableBody>
                         </Table>
                     </div> */}
-                            <Button
-                                id="copy-link-button"
-                                onClick={handleCopyLink}
-                                size="lg"
-                                className="fixed text-[1rem] bottom-[30px] w-[90%] max-w-[350px] left-1/2 -translate-x-1/2"
-                            >
-                                {t("details.copyLink")}
-                            </Button>
+                            <div className="flex flex-col items-center gap-4 mt-auto">
+                                <button
+                                    onClick={() => {
+                                        setShowEndLinkDrawer(true);
+                                    }}
+                                    className="text-[#D26060] text-[14px] font-semibold"
+                                >
+                                    End Link
+                                </button>
+                                <Button
+                                    id="copy-link-button"
+                                    onClick={handleCopyLink}
+                                    size="lg"
+                                    className="w-full"
+                                >
+                                    {t("details.copyLink")}
+                                </Button>
+                            </div>
 
                             <TransactionToast
                                 open={toastData?.open ?? false}
@@ -465,6 +522,12 @@ export default function DetailPage() {
                     )}
                 </div>
             </div>
+
+            <EndLinkDrawer
+                open={showEndLinkDrawer}
+                onClose={() => setShowEndLinkDrawer(false)}
+                onDelete={() => {}}
+            />
         </div>
     );
 }
