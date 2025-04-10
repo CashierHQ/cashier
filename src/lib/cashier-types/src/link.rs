@@ -26,6 +26,12 @@ impl Link {
             .and_then(|asset_info| asset_info.iter().find(|asset| asset.label == label))
             .cloned()
     }
+
+    pub fn get_metadata(&self, key: &str) -> Option<String> {
+        self.metadata
+            .as_ref()
+            .and_then(|metadata| metadata.get(key).cloned())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
