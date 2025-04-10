@@ -36,7 +36,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
                 description: [linkDetailModel.description],
                 template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
                 nft_image: [linkDetailModel.image],
-                link_image_url: ["Test"],
+                link_image_url: [],
                 link_type: linkDetailModel.linkType ? [linkDetailModel.linkType] : [],
             },
         ],
@@ -82,7 +82,8 @@ const mapAssetInfo = (assetInfo: AssetInfoModel): LinkDetailUpdateAssetInfoInput
     return {
         address: assetInfo.address,
         chain: CHAIN.IC,
-        amount_per_claim: BigInt(1),
+        // for only tip link amount_per_claim = total_amount
+        amount_per_claim: assetInfo.amount,
         total_amount: assetInfo.amount,
         label: assetInfo.label ?? LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
     };

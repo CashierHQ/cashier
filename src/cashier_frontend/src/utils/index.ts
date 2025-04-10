@@ -174,7 +174,7 @@ export const getTokenImage = (tokenAddress: string) => {
 
 export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
     switch (linkType) {
-        case LINK_TYPE.TIP_LINK:
+        case LINK_TYPE.SEND_TIP:
             return `/tip-link-default.png`;
         case LINK_TYPE.AIRDROP:
             return `/airdrop-default.png`;

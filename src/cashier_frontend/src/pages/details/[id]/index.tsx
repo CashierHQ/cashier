@@ -24,6 +24,7 @@ import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Helmet } from "react-helmet-async";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
+import { useSetLinkInactive } from "@/hooks/linkHooks";
 
 // Add custom CSS for driver.js popover styling
 const customDriverStyles = `
@@ -209,6 +210,8 @@ export default function DetailPage() {
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
     const { t } = useTranslation();
 
+    const { mutateAsync: setLinkInactive } = useSetLinkInactive();
+
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
@@ -255,6 +258,11 @@ export default function DetailPage() {
         };
         fetchData();
     }, [linkId, identity]);
+
+    const setInactiveLink = async () => {
+        const inactiveLink = await setLinkInactive({ link: linkData!.link });
+        console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
+    };
 
     return (
         <div
@@ -483,7 +491,10 @@ export default function DetailPage() {
             <EndLinkDrawer
                 open={showEndLinkDrawer}
                 onClose={() => setShowEndLinkDrawer(false)}
-                onDelete={() => {}}
+                onDelete={() => {
+                    console.log("End link clicked");
+                    setInactiveLink();
+                }}
             />
         </div>
     );

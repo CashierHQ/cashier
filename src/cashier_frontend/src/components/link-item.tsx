@@ -60,7 +60,7 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
                 ) : (
                     <img
                         src={getLinkDefaultAvatar(
-                            (link.linkType as LINK_TYPE) ?? LINK_TYPE.TIP_LINK,
+                            (link.linkType as LINK_TYPE) ?? LINK_TYPE.SEND_TIP,
                         )}
                         alt="link"
                         className="w-8 h-8 rounded-sm"

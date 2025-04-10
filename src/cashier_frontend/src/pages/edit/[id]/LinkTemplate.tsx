@@ -27,7 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
-    return linkType === LINK_TYPE.TIP_LINK;
+    return linkType === LINK_TYPE.SEND_TIP;
 }
 
 export interface LinkTemplateProps {

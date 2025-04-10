@@ -51,7 +51,7 @@ impl TransactionDomainLogic {
                 );
 
                 Icrc112Request {
-                    canister_id: canister_id.to_text(),
+                    canister_id: canister_call.canister_id,
                     method: canister_call.method,
                     arg: canister_call.arg,
                     nonce: Some(tx.id.clone()),
@@ -86,7 +86,7 @@ impl TransactionDomainLogic {
                     nonce: Some(tx.id.clone()),
                 }
             }
-            Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(tx_transfer_from)) => {
                 let input = TriggerTransactionInput {
                     link_id: link_id.to_string(),
                     action_id: action_id.to_string(),

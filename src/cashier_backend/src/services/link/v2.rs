@@ -679,16 +679,24 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     pub fn prefetch_template(
         &self,
         params: &LinkDetailUpdateInput,
-    ) -> Result<Template, CanisterError> {
+    ) -> Result<(Template, LinkType), CanisterError> {
         let template_str = params
             .template
             .clone()
             .ok_or_else(|| CanisterError::ValidationErrors("Template is required".to_string()))?;
 
+        let link_type_str = params
+            .link_type
+            .clone()
+            .ok_or_else(|| CanisterError::ValidationErrors("Link type is required".to_string()))?;
+
         let template = Template::from_str(template_str.as_str())
             .map_err(|_| CanisterError::ValidationErrors("Invalid template".to_string()))?;
 
-        Ok(template)
+        let link_type = LinkType::from_str(link_type_str.as_str())
+            .map_err(|_| CanisterError::ValidationErrors("Invalid link type".to_string()))?;
+
+        Ok((template, link_type))
     }
 
     pub fn prefetch_asset_info(
@@ -747,6 +755,76 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         return Ok(withdraw_action);
     }
+
+    // return false if not whitelist properties changed
+    pub fn validate_props(
+        &self,
+        whitelist_props: Vec<String>,
+        params: &LinkDetailUpdateInput,
+        link: &Link,
+    ) -> bool {
+        let props_list = vec![
+            "title".to_string(),
+            "description".to_string(),
+            "asset_info".to_string(),
+            "template".to_string(),
+            "link_type".to_string(),
+            "link_image_url".to_string(),
+            "nft_image".to_string(),
+        ];
+
+        let check_props = props_list
+            .iter()
+            .filter(|prop| !whitelist_props.contains(prop))
+            .collect::<Vec<_>>();
+
+        for prop in check_props.iter() {
+            match prop.as_str() {
+                "title" => {
+                    if params.title != link.title || params.title.is_some() {
+                        info!("[validate_props] title: {:#?}", params.title);
+                        return false;
+                    }
+                }
+                "description" => {
+                    if params.description != link.description || params.description.is_some() {
+                        info!("[validate_props] title: {:#?}", params.title);
+                        return false;
+                    }
+                }
+                "link_image_url" => {
+                    if params.link_image_url != link.get_metadata("link_image_url")
+                        || params.link_image_url.is_some()
+                    {
+                        return false;
+                    }
+                }
+                "nft_image" => {
+                    if params.nft_image != link.get_metadata("nft_image")
+                        || params.nft_image.is_some()
+                    {
+                        return false;
+                    }
+                }
+                "link_type" => {
+                    let link_link_type_str = link.link_type.as_ref().map(|lt| lt.to_string());
+                    if params.link_type != link_link_type_str || params.link_type.is_some() {
+                        return false;
+                    }
+                }
+                "template" => {
+                    let link_template_str = link.template.as_ref().map(|t| t.to_string());
+                    if params.template != link_template_str || params.template.is_some() {
+                        return false;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        true
+    }
+
     pub async fn handle_link_state_transition(
         &self,
         link_id: &str,
@@ -772,19 +850,33 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         // !Start of link state machine
         if link.state == LinkState::ChooseLinkType {
-            let template = self.prefetch_template(&params)?;
+            let (template, link_type) = self.prefetch_template(&params)?;
 
-            if link_state_goto == LinkStateMachineGoto::Continue
-                && params.title.is_some()
-                && params.description.is_none()
-                && params.link_image_url.is_none()
-                && params.nft_image.is_none()
-                && params.asset_info.is_none()
-                && params.template.is_some()
-            {
+            if self.validate_props(
+                vec![
+                    "title".to_string(),
+                    "template".to_string(),
+                    "link_type".to_string(),
+                ],
+                &params,
+                &link,
+            ) {
+                return Err(CanisterError::ValidationErrors(
+                    "Link properties are not allowed to change".to_string(),
+                ));
+            }
+
+            if link_state_goto == LinkStateMachineGoto::Continue {
                 link.title = params.title.clone();
                 link.template = Some(template);
+                link.link_type = Some(link_type);
                 link.state = LinkState::AddAssets;
+                self.link_repository.update(link.clone());
+                return Ok(link.clone());
+            } else if link_state_goto == LinkStateMachineGoto::Back {
+                link.title = params.title.clone();
+                link.template = Some(template);
+                link.link_type = Some(link_type);
                 self.link_repository.update(link.clone());
                 return Ok(link.clone());
             } else {
@@ -796,14 +888,20 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // prefetch 2 method
             let asset_info = self.prefetch_asset_info(&params, &link_state_goto)?;
 
-            if link_state_goto == LinkStateMachineGoto::Continue
-                && params.title.is_none()
-                && params.description.is_none()
-                && params.link_image_url.is_none()
-                && params.nft_image.is_none()
-                && params.asset_info.is_some()
-                && params.template.is_none()
-            {
+            if self.validate_props(vec!["asset_info".to_string()], &params, &link) {
+                return Err(CanisterError::ValidationErrors(
+                    "Link properties are not allowed to change".to_string(),
+                ));
+            }
+
+            info!("[handle_link_state_transition] link: {:#?}", link);
+            info!(
+                "[handle_link_state_transition] asset_info: {:#?}",
+                asset_info
+            );
+            info!("[handle_link_state_transition] params: {:#?}", params);
+
+            if link_state_goto == LinkStateMachineGoto::Continue {
                 if !self.link_type_add_asset_validate(&link, &asset_info) {
                     return Err(CanisterError::ValidationErrors(
                         "Link type add asset validate failed".to_string(),
@@ -816,6 +914,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 return Ok(link.clone());
             } else if link_state_goto == LinkStateMachineGoto::Back {
                 link.state = LinkState::ChooseLinkType;
+                link.asset_info = Some(asset_info);
                 self.link_repository.update(link.clone());
                 return Ok(link.clone());
             } else {
@@ -826,14 +925,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         } else if link.state == LinkState::CreateLink {
             // prefetch 3 method
             let create_action = self.prefetch_create_action(&link)?;
-            if link_state_goto == LinkStateMachineGoto::Continue
-                && params.title.is_none()
-                && params.description.is_none()
-                && params.link_image_url.is_none()
-                && params.nft_image.is_none()
-                && params.asset_info.is_none()
-                && params.template.is_none()
-            {
+
+            if self.validate_props(vec![], &params, &link) {
+                return Err(CanisterError::ValidationErrors(
+                    "Link properties are not allowed to change".to_string(),
+                ));
+            }
+
+            if link_state_goto == LinkStateMachineGoto::Continue {
                 if create_action.is_none() {
                     return Err(CanisterError::ValidationErrors(
                         "Create action not found".to_string(),
@@ -863,14 +962,13 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
         } else if link.state == LinkState::Active {
-            if link_state_goto == LinkStateMachineGoto::Continue
-                && params.title.is_none()
-                && params.description.is_none()
-                && params.link_image_url.is_none()
-                && params.nft_image.is_none()
-                && params.asset_info.is_none()
-                && params.template.is_none()
-            {
+            if self.validate_props(vec![], &params, &link) {
+                return Err(CanisterError::ValidationErrors(
+                    "Link properties are not allowed to change".to_string(),
+                ));
+            }
+
+            if link_state_goto == LinkStateMachineGoto::Continue {
                 if self.check_link_asset_left(&link).await? {
                     link.state = LinkState::Inactive;
                 } else {
@@ -884,15 +982,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
         } else if link.state == LinkState::Inactive {
+            if self.validate_props(vec![], &params, &link) {
+                return Err(CanisterError::ValidationErrors(
+                    "Link properties are not allowed to change".to_string(),
+                ));
+            }
+
             let withdraw_action = self.prefetch_withdraw_action(&link)?;
-            if link_state_goto == LinkStateMachineGoto::Continue
-                && params.title.is_none()
-                && params.description.is_none()
-                && params.link_image_url.is_none()
-                && params.nft_image.is_none()
-                && params.asset_info.is_none()
-                && params.template.is_none()
-            {
+            if link_state_goto == LinkStateMachineGoto::Continue {
                 if !self.check_link_asset_left(&link).await?
                     && withdraw_action.is_some()
                     && withdraw_action.unwrap().state == ActionState::Success

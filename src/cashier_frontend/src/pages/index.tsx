@@ -67,7 +67,7 @@ export default function HomePage() {
                 setDisableCreateButton(true);
                 showToast(t("common.creating"), t("common.creatingLink"), "default");
                 const response = await new LinkService(identity).createLink({
-                    link_type: LINK_TYPE.TIP_LINK,
+                    link_type: LINK_TYPE.SEND_TIP,
                 });
                 navigate(`/edit/${response}`);
             } catch {
@@ -119,7 +119,8 @@ export default function HomePage() {
                                 {items.map((item) => (
                                     <Link
                                         to={
-                                            item.state === LINK_STATE.ACTIVE
+                                            item.state === LINK_STATE.ACTIVE ||
+                                            item.state === LINK_STATE.INACTIVE
                                                 ? `/details/${item.id}`
                                                 : `/edit/${item.id}`
                                         }

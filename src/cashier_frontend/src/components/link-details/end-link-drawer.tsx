@@ -1,11 +1,7 @@
 import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
 import { Button } from "@/components/ui/button";
-import { ActionModel } from "@/services/types/action.service.types";
-import { isCashierError } from "@/services/errorProcess.service";
-import { useIdentity } from "@nfid/identitykit/react";
 import { Unlink } from "lucide-react";
 import { Input } from "../ui/input";
 
@@ -20,8 +16,22 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
     onClose = () => {},
     onDelete = () => {},
 }) => {
+    const [loading, setLoading] = useState(false);
+    const [confirmText, setConfirmText] = useState("");
+
     const onClickConfirm = async () => {
-        onDelete();
+        if (confirmText !== "Delete") return;
+
+        console.log("Confirm text:", confirmText);
+
+        try {
+            setLoading(true);
+            onDelete();
+        } catch (error) {
+            console.error("Error ending link:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -58,11 +68,18 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                         <Input
                             className="pl-3 placeholder:text-grey/75 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                             placeholder="Delete"
+                            value={confirmText}
+                            onChange={(e) => setConfirmText(e.target.value)}
                         />
                     </div>
 
-                    <Button size="default" className="mt-4 mx-1">
-                        Confirm
+                    <Button
+                        size="default"
+                        className="mt-4 mx-1"
+                        onClick={onClickConfirm}
+                        disabled={confirmText !== "Delete" || loading}
+                    >
+                        {loading ? "Processing..." : "End link"}
                     </Button>
                 </div>
             </DrawerContent>

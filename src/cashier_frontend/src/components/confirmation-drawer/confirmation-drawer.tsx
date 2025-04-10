@@ -63,6 +63,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         t,
     );
 
+    console.log("action", action);
+
     const handleProcessClaimAction = async () => {
         if (identity) {
             // Process action for logged in user to claim

@@ -19,7 +19,7 @@ export function useLinkTemplateForm(defaultValues?: DefaultValues<LinkTemplateSc
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
             title: "",
-            linkType: LINK_TYPE.TIP_LINK,
+            linkType: LINK_TYPE.SEND_TIP,
             ...defaultValues,
         },
     });
@@ -46,7 +46,7 @@ export function useCarousel() {
     };
 }
 
-const TEMPLATE_ORDER = [LINK_TYPE.TIP_LINK, LINK_TYPE.AIRDROP, LINK_TYPE.TOKEN_BASKET];
+const TEMPLATE_ORDER = [LINK_TYPE.SEND_TIP, LINK_TYPE.AIRDROP, LINK_TYPE.TOKEN_BASKET];
 
 export function useBindFormAndCarousel(
     form: UseFormReturn<LinkTemplateSchema>,
