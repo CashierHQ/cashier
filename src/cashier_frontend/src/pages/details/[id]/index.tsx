@@ -24,6 +24,8 @@ import { Label } from "@/components/ui/label";
 import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Helmet } from "react-helmet-async";
+import { isLinkFullyClaimed } from "@/utils/helpers/link";
+import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
 
 // Add custom CSS for driver.js popover styling
 const customDriverStyles = `
@@ -80,6 +82,8 @@ export default function DetailPage() {
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
 
+    const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
+
     // Add styles to document
     React.useEffect(() => {
         const driver = initializeDriver();
@@ -88,6 +92,8 @@ export default function DetailPage() {
         const styleTag = document.createElement("style");
         styleTag.innerHTML = customDriverStyles;
         document.head.appendChild(styleTag);
+
+        console.log("linkData", linkData);
 
         return () => {
             document.head.removeChild(styleTag);
@@ -445,14 +451,24 @@ export default function DetailPage() {
                             </TableBody>
                         </Table>
                     </div> */}
-                            <Button
-                                id="copy-link-button"
-                                onClick={handleCopyLink}
-                                size="lg"
-                                className="fixed text-[1rem] bottom-[30px] w-[90%] max-w-[350px] left-1/2 -translate-x-1/2"
-                            >
-                                {t("details.copyLink")}
-                            </Button>
+                            <div className="flex flex-col items-center gap-4 mt-auto">
+                                <button
+                                    onClick={() => {
+                                        setShowEndLinkDrawer(true);
+                                    }}
+                                    className="text-[#D26060] text-[14px] font-semibold"
+                                >
+                                    End Link
+                                </button>
+                                <Button
+                                    id="copy-link-button"
+                                    onClick={handleCopyLink}
+                                    size="lg"
+                                    className="w-full"
+                                >
+                                    {t("details.copyLink")}
+                                </Button>
+                            </div>
 
                             <TransactionToast
                                 open={toastData?.open ?? false}
@@ -465,6 +481,12 @@ export default function DetailPage() {
                     )}
                 </div>
             </div>
+
+            <EndLinkDrawer
+                open={showEndLinkDrawer}
+                onClose={() => setShowEndLinkDrawer(false)}
+                onDelete={() => {}}
+            />
         </div>
     );
 }

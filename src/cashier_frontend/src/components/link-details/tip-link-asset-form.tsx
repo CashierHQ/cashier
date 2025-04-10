@@ -60,12 +60,12 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
 
     const form = useTipLinkAssetForm(filteredTokenList ?? [], {
         tokenAddress: token?.address,
-        assetNumber: token?.amount ? Number(token.amount) / 10 ** (token.decimals || 8) : 0,
+        assetNumber: 0,
         usdNumber: null,
         amount: BigInt(0),
     });
 
-    const { setUsdAmount, setTokenAmount, setTokenAddress } = useFormActions(form);
+    const { setUsdAmount, setTokenAmount, setTokenAddress } = useFormActions(form, isUsd);
 
     // Update the selected token address when it changes in the form
     useEffect(() => {
@@ -85,14 +85,12 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
         }
     }, [canConvert, isUsd]);
 
+    // Only set token address when token changes, don't touch the token amount
     useEffect(() => {
-        // Set the initial amount based on the token
         if (token) {
-            const amount = token.amount ? Number(token.amount) / 10 ** (token.decimals || 8) : 0;
-            setTokenAmount(amount);
             setTokenAddress(token.address);
         }
-    }, [token, setTokenAmount, setTokenAddress]);
+    }, [token, setTokenAddress]);
 
     // Function to create preset buttons based on the current mode
     const getPresetButtons = () => {

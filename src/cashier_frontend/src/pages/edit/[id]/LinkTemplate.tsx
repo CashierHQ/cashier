@@ -21,7 +21,7 @@ import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useButtonState } from "@/hooks/useButtonState";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import PhonePreview from "@/components/ui/phone-preview";
@@ -54,6 +54,14 @@ export default function LinkTemplate({
 
     const form = useLinkTemplateForm({ title: link?.title || "" });
 
+    useEffect(() => {
+        // This updates the form value when the link is updated,
+        // so that the form is always in sync with the link
+        if (link?.title) {
+            form.setValue("title", link.title);
+        }
+    }, [link?.title, form]);
+
     useBindFormAndCarousel(form, carousel, updateLink);
 
     const handleSubmit = form.handleSubmit(async (data) => {
@@ -67,7 +75,6 @@ export default function LinkTemplate({
                     linkType: data.linkType as LINK_TYPE,
                 },
             });
-
             setLink(updatedLink);
             nextStep();
         } else {
