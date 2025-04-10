@@ -1,20 +1,21 @@
 import { fileURLToPath, URL } from "url";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import environment from "vite-plugin-environment";
 import dotenv from "dotenv";
 import tailwindcss from "tailwindcss";
 import path, { resolve } from "path";
 
-export default defineConfig((mode) => {
-    const envFile = mode === "staging" ? ".env.staging" : ".env.local";
-    const envPath = resolve(__dirname, `../../${envFile}`);
+export default defineConfig(({ command, mode }) => {
+    // Determine which .env file to use based on mode
+    // Supports: .env.local, .env.staging, .env.production
+    const envFile = `.env.${mode}`;
+    const envPath = resolve(__dirname, envFile);
 
     // Load the environment variables from the determined .env file
     dotenv.config({ path: envPath });
 
-    console.log("cashier backend ", process.env.CANISTER_ID_CASHIER_BACKEND);
-    console.log("cashier backend ", process.env.CANISTER_ID_CASHIER_BACKEND);
+    console.log(`Building for ${mode} environment using ${envFile}`);
 
     return {
         build: {

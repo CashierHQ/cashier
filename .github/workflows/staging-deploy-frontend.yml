@@ -46,19 +46,6 @@ jobs:
             - name: Install project dependencies
               run: npm install --force
 
-            - name: Build project
-              env:
-                  VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
-                  VITE_BACKEND_CANISTER_ID: ${{ vars.VITE_BACKEND_CANISTER_ID }}
-                  VITE_TOKEN_STORAGE_CANISTER_ID: ${{ vars.VITE_TOKEN_STORAGE_CANISTER_ID }}
-              run: |
-                  echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
-                  echo "VITE_BACKEND_CANISTER_ID = $VITE_BACKEND_CANISTER_ID"
-                  echo "VITE_TOKEN_STORAGE_CANISTER_ID = $VITE_TOKEN_STORAGE_CANISTER_ID"
-                  rustup target add wasm32-unknown-unknown
-                  make g
-                  npm run build
-
             - name: deploy to staging env
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
@@ -66,8 +53,14 @@ jobs:
                   VITE_TOKEN_STORAGE_CANISTER_ID: ${{ vars.VITE_TOKEN_STORAGE_CANISTER_ID }}
                   DFX_WARNING: -mainnet_plaintext_identity
               run: |
-                  echo "VITE_IC_EXPLORER_BASE_URL = $VITE_IC_EXPLORER_BASE_URL"
-                  echo "VITE_BACKEND_CANISTER_ID = $VITE_BACKEND_CANISTER_ID"
-                  echo "VITE_TOKEN_STORAGE_CANISTER_ID = $VITE_TOKEN_STORAGE_CANISTER_ID"
+                  # Create .env.staging file with the correct values
+                  echo "VITE_IC_EXPLORER_BASE_URL=${VITE_IC_EXPLORER_BASE_URL}" > src/cashier_frontend/.env.staging
+                  echo "VITE_BACKEND_CANISTER_ID=${VITE_BACKEND_CANISTER_ID}" >> src/cashier_frontend/.env.staging
+                  echo "VITE_TOKEN_STORAGE_CANISTER_ID=${VITE_TOKEN_STORAGE_CANISTER_ID}" >> src/cashier_frontend/.env.staging
+                  echo "VITE_ENV=staging" >> src/cashier_frontend/.env.staging
+
+                  echo "Created .env.staging with values:"
+                  cat src/cashier_frontend/.env.staging
+
                   make g
                   dfx deploy cashier_frontend --network staging
