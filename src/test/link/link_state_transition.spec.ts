@@ -3,9 +3,9 @@ import {
     UserDto,
     UpdateLinkInput,
     type _SERVICE,
+    idlFactory,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 
-import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../utils/parser";
@@ -30,7 +30,7 @@ describe("Link state transition", () => {
         description: "tip 20 icp to the user",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "TipLink",
+        link_type: "SendTip",
     };
 
     const assetInfoTest = {
@@ -84,10 +84,13 @@ describe("Link state transition", () => {
         await pic.tick(50);
     });
 
-    describe("With Alice", () => {
+    describe("Happy cases", () => {
+        beforeAll(() => {
+            actor.setIdentity(alice);
+        });
         it("should create link success", async () => {
             const input: CreateLinkInput = {
-                link_type: "TipLink",
+                link_type: "SendTip",
             };
 
             const createLinkRes = await actor.create_link(input);
@@ -97,43 +100,39 @@ describe("Link state transition", () => {
 
             expect(createLinkRes).toHaveProperty("Ok");
         });
-    });
 
-    it("should transition from choose tempalte to add asset success", async () => {
-        const linkInput: UpdateLinkInput = {
-            id: linkId,
-            action: "Continue",
-            params: [
-                {
-                    Update: {
+        it("should transition from choose tempalte to add asset success", async () => {
+            const linkInput: UpdateLinkInput = {
+                id: linkId,
+                action: "Continue",
+                params: [
+                    {
                         title: [testPayload.title],
                         asset_info: [],
-                        description: [testPayload.description],
+                        description: [],
                         template: [testPayload.template],
-                        link_image_url: [testPayload.link_image_url],
+                        link_image_url: [],
                         nft_image: [],
                         link_type: [testPayload.link_type],
                     },
-                },
-            ],
-        };
+                ],
+            };
 
-        const updateLinkRes = await actor.update_link(linkInput);
-        const linkUpdated = parseResultResponse(updateLinkRes);
+            const updateLinkRes = await actor.update_link(linkInput);
+            const linkUpdated = parseResultResponse(updateLinkRes);
 
-        expect(linkUpdated.id).toEqual(linkId);
-        expect(linkUpdated.title).toEqual([testPayload.title]);
-        expect(linkUpdated.link_type).toEqual([testPayload.link_type]);
-        expect(linkUpdated.state).toEqual("Link_state_add_assets");
-    });
+            expect(linkUpdated.id).toEqual(linkId);
+            expect(linkUpdated.title).toEqual([testPayload.title]);
+            expect(linkUpdated.link_type).toEqual([testPayload.link_type]);
+            expect(linkUpdated.state).toEqual("Link_state_add_assets");
+        });
 
-    it("should transition from add asset to create link", async () => {
-        const linkInput: UpdateLinkInput = {
-            id: linkId,
-            action: "Continue",
-            params: [
-                {
-                    Update: {
+        it("should transition from add asset to create link", async () => {
+            const linkInput: UpdateLinkInput = {
+                id: linkId,
+                action: "Continue",
+                params: [
+                    {
                         title: [],
                         asset_info: [
                             [
@@ -152,46 +151,134 @@ describe("Link state transition", () => {
                         nft_image: [],
                         link_type: [],
                     },
-                },
-            ],
-        };
+                ],
+            };
 
-        const updateLinkRes = await actor.update_link(linkInput);
-        const linkUpdated = parseResultResponse(updateLinkRes);
+            const updateLinkRes = await actor.update_link(linkInput);
+            const linkUpdated = parseResultResponse(updateLinkRes);
 
-        expect(linkUpdated.id).toEqual(linkId);
-        expect(linkUpdated.asset_info).toHaveLength(1);
-        expect(linkUpdated.state).toEqual("Link_state_create_link");
+            expect(linkUpdated.id).toEqual(linkId);
+            expect(linkUpdated.asset_info).toHaveLength(1);
+            expect(linkUpdated.state).toEqual("Link_state_create_link");
+        });
+
+        it("should transition back create link to add asset", async () => {
+            const linkInput: UpdateLinkInput = {
+                id: linkId,
+                action: "Back",
+                params: [],
+            };
+
+            const updateLinkRes = await actor.update_link(linkInput);
+            const linkUpdated = parseResultResponse(updateLinkRes);
+
+            expect(linkUpdated.id).toEqual(linkId);
+            expect(linkUpdated.asset_info).toHaveLength(1);
+            expect(linkUpdated.state).toEqual("Link_state_add_assets");
+        });
+
+        it("should transition back create link to add asset", async () => {
+            const linkInput: UpdateLinkInput = {
+                id: linkId,
+                action: "Back",
+                params: [],
+            };
+
+            const updateLinkRes = await actor.update_link(linkInput);
+            const linkUpdated = parseResultResponse(updateLinkRes);
+
+            expect(linkUpdated.id).toEqual(linkId);
+            expect(linkUpdated.asset_info).toHaveLength(1);
+            expect(linkUpdated.state).toEqual("Link_state_choose_link_type");
+        });
     });
 
-    it("should transition back create link to add asset", async () => {
-        const linkInput: UpdateLinkInput = {
-            id: linkId,
-            action: "Back",
-            params: [],
-        };
+    describe("Edge cases", () => {
+        let link2Id = "";
+        it("should create link success", async () => {
+            const input: CreateLinkInput = {
+                link_type: "SendTip",
+            };
 
-        const updateLinkRes = await actor.update_link(linkInput);
-        const linkUpdated = parseResultResponse(updateLinkRes);
+            const createLinkRes = await actor.create_link(input);
+            const res = parseResultResponse(createLinkRes);
 
-        expect(linkUpdated.id).toEqual(linkId);
-        expect(linkUpdated.asset_info).toHaveLength(1);
-        expect(linkUpdated.state).toEqual("Link_state_add_assets");
-    });
+            link2Id = res;
 
-    it("should transition back create link to add asset", async () => {
-        const linkInput: UpdateLinkInput = {
-            id: linkId,
-            action: "Back",
-            params: [],
-        };
+            expect(createLinkRes).toHaveProperty("Ok");
+        });
 
-        const updateLinkRes = await actor.update_link(linkInput);
-        const linkUpdated = parseResultResponse(updateLinkRes);
+        it("should transition fail if params is not valid", async () => {
+            // adding description
+            const linkInput: UpdateLinkInput = {
+                id: link2Id,
+                action: "Continue",
+                params: [
+                    {
+                        title: [testPayload.title],
+                        asset_info: [],
+                        description: [testPayload.description],
+                        template: [testPayload.template],
+                        link_image_url: [],
+                        nft_image: [],
+                        link_type: [testPayload.link_type],
+                    },
+                ],
+            };
 
-        expect(linkUpdated.id).toEqual(linkId);
-        expect(linkUpdated.asset_info).toHaveLength(1);
-        expect(linkUpdated.state).toEqual("Link_state_choose_link_type");
+            const updateLinkRes = await actor.update_link(linkInput);
+
+            expect(updateLinkRes).toHaveProperty("Err");
+        });
+
+        it("should transition fail if params is not valid", async () => {
+            // adding description
+            const linkInput: UpdateLinkInput = {
+                id: link2Id,
+                action: "Continue",
+                params: [
+                    {
+                        title: [testPayload.title],
+                        asset_info: [],
+                        description: [],
+                        template: [testPayload.template],
+                        link_image_url: [],
+                        nft_image: [],
+                        link_type: [testPayload.link_type],
+                    },
+                ],
+            };
+            const linkInput2: UpdateLinkInput = {
+                id: linkId,
+                action: "Continue",
+                params: [
+                    {
+                        title: ["failed"],
+                        asset_info: [
+                            [
+                                {
+                                    chain: assetInfoTest.chain,
+                                    address: assetInfoTest.address,
+                                    amount_per_claim: assetInfoTest.amount_per_claim,
+                                    total_amount: assetInfoTest.total_amount,
+                                    label: "1000",
+                                },
+                            ],
+                        ],
+                        description: [],
+                        template: [],
+                        link_image_url: [],
+                        nft_image: [],
+                        link_type: [],
+                    },
+                ],
+            };
+
+            await actor.update_link(linkInput);
+            const res = await actor.update_link(linkInput2);
+
+            expect(res).toHaveProperty("Err");
+        });
     });
 });
 //

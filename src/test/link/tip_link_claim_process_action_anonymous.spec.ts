@@ -7,9 +7,9 @@ import {
     type _SERVICE,
     GetLinkOptions,
     Icrc112Request,
+    idlFactory,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 
-import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../utils/parser";
@@ -41,7 +41,7 @@ describe("Tip Link claim create user", () => {
         description: "tip 20 icp to the user",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "TipLink",
+        link_type: "SendTip",
     };
 
     const assetInfoTest = {
@@ -103,7 +103,7 @@ describe("Tip Link claim create user", () => {
         });
         it("should complete the entire process from link creation to executing icrc-112", async () => {
             // Step 1: Create link
-            const createLinkInput: CreateLinkInput = { link_type: "TipLink" };
+            const createLinkInput: CreateLinkInput = { link_type: "SendTip" };
             const createLinkRes = await actor.create_link(createLinkInput);
             const createLinkParsed = parseResultResponse(createLinkRes);
             linkId = createLinkParsed;
@@ -114,15 +114,13 @@ describe("Tip Link claim create user", () => {
                 action: "Continue",
                 params: [
                     {
-                        Update: {
-                            title: [testPayload.title],
-                            asset_info: [],
-                            description: [testPayload.description],
-                            template: [testPayload.template],
-                            link_image_url: [testPayload.link_image_url],
-                            nft_image: [],
-                            link_type: [testPayload.link_type],
-                        },
+                        title: [testPayload.title],
+                        asset_info: [],
+                        description: [],
+                        template: [testPayload.template],
+                        link_image_url: [],
+                        nft_image: [],
+                        link_type: [testPayload.link_type],
                     },
                 ],
             };
@@ -137,25 +135,23 @@ describe("Tip Link claim create user", () => {
                 action: "Continue",
                 params: [
                     {
-                        Update: {
-                            title: [],
-                            asset_info: [
-                                [
-                                    {
-                                        chain: assetInfoTest.chain,
-                                        address: assetInfoTest.address,
-                                        amount_per_claim: assetInfoTest.amount_per_claim,
-                                        total_amount: assetInfoTest.total_amount,
-                                        label: "1000",
-                                    },
-                                ],
+                        title: [],
+                        asset_info: [
+                            [
+                                {
+                                    chain: assetInfoTest.chain,
+                                    address: assetInfoTest.address,
+                                    amount_per_claim: assetInfoTest.amount_per_claim,
+                                    total_amount: assetInfoTest.total_amount,
+                                    label: "1000",
+                                },
                             ],
-                            description: [],
-                            template: [],
-                            link_image_url: [],
-                            nft_image: [],
-                            link_type: [],
-                        },
+                        ],
+                        description: [],
+                        template: [],
+                        link_image_url: [],
+                        nft_image: [],
+                        link_type: [],
                     },
                 ],
             };
@@ -306,7 +302,6 @@ describe("Tip Link claim create user", () => {
                 subaccount: [] as any,
             };
             const balanceBefore = await tokenHelper.balanceOf(bobAccount);
-            console.log("claimActionId", claimActionId);
             const res = await anonymous_actor.process_action_anonymous({
                 action_id: claimActionId,
                 link_id: linkId,
@@ -318,8 +313,6 @@ describe("Tip Link claim create user", () => {
             const get_link_res = await actor.get_link(linkId, []);
             const parsed_res = parseResultResponse(get_link_res);
 
-            console.log("balanceAfter", balanceAfter);
-
             expect(res).toHaveProperty("Ok");
             expect(parsedRes.state).toEqual("Action_state_success");
             expect(parsedRes.intents[0].state).toEqual("Intent_state_success");
@@ -330,7 +323,7 @@ describe("Tip Link claim create user", () => {
             expect(asset_info).toHaveLength(1);
             // Add a null check before accessing array element
             if (asset_info && asset_info.length > 0) {
-                expect(asset_info[0].total_claim).toEqual(BigInt(1));
+                expect(asset_info[0].total_claim).toEqual([BigInt(1)]);
             } else {
                 throw new Error("Expected asset_info to have length > 0");
             }

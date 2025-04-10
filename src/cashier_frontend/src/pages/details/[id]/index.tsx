@@ -19,13 +19,54 @@ import { useTranslation } from "react-i18next";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
-import { PartyPopper } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Helmet } from "react-helmet-async";
-import { isLinkFullyClaimed } from "@/utils/helpers/link";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
+
+// Add custom CSS for driver.js popover styling
+const customDriverStyles = `
+.custom-driver-popover-class {
+    border-radius: 16px !important;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1) !important;
+    background-color: white !important;
+    padding: 20px !important;
+    text-align: center !important;
+    max-width: 320px !important;
+}
+
+.custom-driver-popover-class .driver-popover-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+}
+
+.custom-driver-popover-class .driver-popover-description {
+    font-size: 14px !important;
+    color: #6b7280 !important;
+    font-weight: 300 !important;
+}
+
+.custom-driver-popover-class .driver-popover-arrow {
+    border-color: white transparent transparent transparent !important;
+}
+
+.custom-driver-popover-class .icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.custom-driver-popover-class .icon-wrapper {
+    background-color: #e6f7f5;
+    border-radius: 50%;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+`;
 
 // Add custom CSS for driver.js popover styling
 const customDriverStyles = `

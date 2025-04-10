@@ -667,12 +667,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
     /// Update an existing link
     pub async fn update_link(&self, input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
-        // Validate input
-        match input.validate() {
-            Ok(_) => (),
-            Err(e) => return Err(CanisterError::HandleLogicError(e)),
-        }
-
         let creator = self.ic_env.caller();
 
         // Get link
@@ -702,7 +696,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        // Use link_service.handle_link_state_transition instead of handle_update_link
         let params = input.params.clone();
         let updated_link = self
             .link_service
