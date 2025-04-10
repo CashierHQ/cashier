@@ -5,9 +5,9 @@ import {
     ProcessActionInput,
     UpdateLinkInput,
     type _SERVICE,
+    idlFactory,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 
-import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../utils/parser";
@@ -31,13 +31,13 @@ describe("Tip Link validate user not have enough balance", () => {
         description: "tip 20 icp to the user",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "TipLink",
+        link_type: "SendTip",
     };
 
     const assetInfoTest = {
         chain: "IC",
         address: "x5qut-viaaa-aaaar-qajda-cai",
-        amount_per_claim: BigInt(100),
+        amount_per_claim: BigInt(10_0000_0000),
         total_amount: BigInt(10_0000_0000),
     };
 
@@ -87,7 +87,7 @@ describe("Tip Link validate user not have enough balance", () => {
     describe("With Alice", () => {
         it("should create link success", async () => {
             const input: CreateLinkInput = {
-                link_type: "TipLink",
+                link_type: "SendTip",
             };
 
             const createLinkRes = await actor.create_link(input);
@@ -105,15 +105,13 @@ describe("Tip Link validate user not have enough balance", () => {
             action: "Continue",
             params: [
                 {
-                    Update: {
-                        title: [testPayload.title],
-                        asset_info: [],
-                        description: [testPayload.description],
-                        template: [testPayload.template],
-                        link_image_url: [testPayload.link_image_url],
-                        nft_image: [],
-                        link_type: [testPayload.link_type],
-                    },
+                    title: [testPayload.title],
+                    asset_info: [],
+                    description: [],
+                    template: [testPayload.template],
+                    link_image_url: [],
+                    nft_image: [],
+                    link_type: [testPayload.link_type],
                 },
             ],
         };
@@ -133,25 +131,23 @@ describe("Tip Link validate user not have enough balance", () => {
             action: "Continue",
             params: [
                 {
-                    Update: {
-                        title: [],
-                        asset_info: [
-                            [
-                                {
-                                    chain: assetInfoTest.chain,
-                                    address: assetInfoTest.address,
-                                    amount_per_claim: assetInfoTest.amount_per_claim,
-                                    total_amount: assetInfoTest.total_amount,
-                                    label: "1000",
-                                },
-                            ],
+                    title: [],
+                    asset_info: [
+                        [
+                            {
+                                chain: assetInfoTest.chain,
+                                address: assetInfoTest.address,
+                                amount_per_claim: assetInfoTest.amount_per_claim,
+                                total_amount: assetInfoTest.total_amount,
+                                label: "1000",
+                            },
                         ],
-                        description: [],
-                        template: [],
-                        link_image_url: [],
-                        nft_image: [],
-                        link_type: [],
-                    },
+                    ],
+                    description: [],
+                    template: [],
+                    link_image_url: [],
+                    nft_image: [],
+                    link_type: [],
                 },
             ],
         };

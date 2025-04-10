@@ -694,7 +694,13 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     pub fn prefetch_asset_info(
         &self,
         params: &LinkDetailUpdateInput,
+        goto: &LinkStateMachineGoto,
     ) -> Result<Vec<AssetInfo>, CanisterError> {
+        // skip if goto is Back
+        if goto == &LinkStateMachineGoto::Back {
+            return Ok(vec![]);
+        }
+
         let asset_info_input = params
             .asset_info
             .clone()
@@ -752,13 +758,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         let link_state_goto = LinkStateMachineGoto::from_string(&action)
             .map_err(|e| CanisterError::ValidationErrors(e))?;
 
-        if params.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "Update_params is required for ChooseLinkType state".to_string(),
-            ));
-        }
-
-        let params = params.unwrap();
+        // if params is None, all params are None
+        // some goto not required params like Back
+        let params = params.unwrap_or(LinkDetailUpdateInput {
+            title: None,
+            description: None,
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            template: None,
+            link_type: None,
+        });
 
         // !Start of link state machine
         if link.state == LinkState::ChooseLinkType {
@@ -784,7 +794,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
         } else if link.state == LinkState::AddAssets {
             // prefetch 2 method
-            let asset_info = self.prefetch_asset_info(&params)?;
+            let asset_info = self.prefetch_asset_info(&params, &link_state_goto)?;
 
             if link_state_goto == LinkStateMachineGoto::Continue
                 && params.title.is_none()

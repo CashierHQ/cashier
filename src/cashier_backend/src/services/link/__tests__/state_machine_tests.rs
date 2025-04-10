@@ -167,21 +167,7 @@ async fn test_handle_link_state_transition_add_assets_to_choose_link_type() {
 
     when!(link_action_repository.get_by_prefix).then_return(vec![]);
 
-    let params = Some(LinkDetailUpdateInput {
-        title: None,
-        template: None,
-        description: None,
-        link_image_url: None,
-        nft_image: None,
-        asset_info: Some(vec![LinkDetailUpdateAssetInfoInput {
-            address: generate_token_address().to_string(),
-            chain: "IC".to_string(),
-            total_amount: 100,
-            amount_per_claim: 100,
-            label: "test_label".to_string(),
-        }]),
-        link_type: None,
-    });
+    let params = None;
 
     let link_service = LinkService::new(
         link_repository,
