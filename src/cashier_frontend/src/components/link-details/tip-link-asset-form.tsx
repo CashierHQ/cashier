@@ -235,30 +235,10 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                     size="lg"
                                     className="w-full"
                                     onClick={() => {
-                                        console.log("Form is valid:", form.formState.isValid);
-                                        console.log("Form values:", form.getValues());
-                                        console.log("Form errors:", form.formState.errors);
-                                        console.log(
-                                            "Validation schema:",
-                                            form.formState.defaultValues,
-                                        );
-                                        console.log("Dirty fields:", form.formState.dirtyFields);
-                                        console.log(
-                                            "Touched fields:",
-                                            form.formState.touchedFields,
-                                        );
-
                                         // Check token balance validation
                                         const asset = filteredTokenList?.find(
                                             (asset) =>
                                                 asset.address === form.getValues("tokenAddress"),
-                                        );
-                                        console.log("Selected token:", token);
-                                        console.log("Asset from list:", asset);
-                                        console.log("Asset amount:", asset?.amount);
-                                        console.log(
-                                            "Requested amount:",
-                                            form.getValues("assetNumber"),
                                         );
 
                                         // Manually check validation conditions

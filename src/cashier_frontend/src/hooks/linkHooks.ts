@@ -142,10 +142,38 @@ export function useSetLinkActive() {
 
             const linkData = {
                 ...vars.link,
-                state: State.Active,
+                state: State.Inactive,
             } as LinkDetailModel;
 
             const linkDto = await linkService.updateLink(vars.link.id, linkData, true);
+
+            return MapLinkToLinkDetailModel(linkDto);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.links.list(identity).queryKey });
+        },
+    });
+
+    return mutation;
+}
+
+export function useSetLinkInactive() {
+    const identity = useIdentity();
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: async (vars: { link: LinkDetailModel }) => {
+            const linkService = new LinkService(identity);
+
+            const linkData = {
+                ...vars.link,
+            } as LinkDetailModel;
+
+            console.log("🚀 ~ useSetLinkInactive ~ linkData:", linkData);
+
+            const linkDto = await linkService.updateLink(vars.link.id, linkData, true);
+
+            console.log("🚀 ~ useSetLinkInactive ~ linkDto:", linkDto);
 
             return MapLinkToLinkDetailModel(linkDto);
         },

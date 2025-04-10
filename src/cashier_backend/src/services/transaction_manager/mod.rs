@@ -761,6 +761,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 &eligible_wallet_txs,
             )?;
 
+            info!("icrc_112_requests {:#?}", icrc_112_requests);
+
             request = if icrc_112_requests.is_none() {
                 None
             } else if icrc_112_requests.as_ref().unwrap().len() == 0 {

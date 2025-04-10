@@ -70,7 +70,7 @@ export function getLinkLabel(state: LINK_STATE): string {
 
 export enum LINK_TYPE {
     NFT_CREATE_AND_AIRDROP = "NftCreateAndAirdrop",
-    TIP_LINK = "TipLink",
+    SEND_TIP = "SendTip",
     AIRDROP = "Airdrop",
     TOKEN_BASKET = "TokenBasket",
 }

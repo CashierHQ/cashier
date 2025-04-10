@@ -782,33 +782,39 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             match prop.as_str() {
                 "title" => {
                     if params.title != link.title || params.title.is_some() {
+                        info!("[validate_props] title: {:#?}", params.title);
                         return false;
                     }
                 }
                 "description" => {
-                    if params.description != link.description {
+                    if params.description != link.description || params.description.is_some() {
+                        info!("[validate_props] title: {:#?}", params.title);
                         return false;
                     }
                 }
                 "link_image_url" => {
-                    if params.link_image_url != link.get_metadata("link_image_url") {
+                    if params.link_image_url != link.get_metadata("link_image_url")
+                        || params.link_image_url.is_some()
+                    {
                         return false;
                     }
                 }
                 "nft_image" => {
-                    if params.nft_image != link.get_metadata("nft_image") {
+                    if params.nft_image != link.get_metadata("nft_image")
+                        || params.nft_image.is_some()
+                    {
                         return false;
                     }
                 }
                 "link_type" => {
                     let link_link_type_str = link.link_type.as_ref().map(|lt| lt.to_string());
-                    if params.link_type != link_link_type_str {
+                    if params.link_type != link_link_type_str || params.link_type.is_some() {
                         return false;
                     }
                 }
                 "template" => {
                     let link_template_str = link.template.as_ref().map(|t| t.to_string());
-                    if params.template != link_template_str {
+                    if params.template != link_template_str || params.template.is_some() {
                         return false;
                     }
                 }
@@ -887,6 +893,13 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     "Link properties are not allowed to change".to_string(),
                 ));
             }
+
+            info!("[handle_link_state_transition] link: {:#?}", link);
+            info!(
+                "[handle_link_state_transition] asset_info: {:#?}",
+                asset_info
+            );
+            info!("[handle_link_state_transition] params: {:#?}", params);
 
             if link_state_goto == LinkStateMachineGoto::Continue {
                 if !self.link_type_add_asset_validate(&link, &asset_info) {
