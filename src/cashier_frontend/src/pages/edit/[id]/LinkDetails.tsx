@@ -23,6 +23,7 @@ export default function LinkDetails() {
                     address: data.tokenAddress,
                     label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
                     chain: CHAIN.IC,
+                    totalClaim: 0n,
                 },
             ],
         });
