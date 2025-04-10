@@ -8,6 +8,7 @@ export enum State {
     Active = "Active",
     PendingPreview = "PendingPreview",
     PendingDetail = "PendingDetail",
+    InactiveEnded = "InactiveEnded",
 }
 
 export enum Template {
