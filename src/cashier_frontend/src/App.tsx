@@ -4,7 +4,7 @@ import { IdentityKitProvider } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";
-import { IdentityKitAuthType } from "@nfid/identitykit";
+import { IdentityKitAuthType, IdentityKitSignerConfig } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SignersProvider, useSigners } from "./contexts/signer-list-context";
@@ -20,6 +20,10 @@ console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
 function App() {
     const queryClient = new QueryClient();
     const { signers } = useSigners();
+
+    // Convert the signers to the type expected by IdentityKitProvider
+    const compatibleSigners = signers as unknown as IdentityKitSignerConfig[];
+
     return (
         <IdentityKitProvider
             featuredSigner={false}
@@ -31,7 +35,7 @@ function App() {
                 queryClient.clear();
             }}
             authType={IdentityKitAuthType.DELEGATION}
-            signers={signers}
+            signers={compatibleSigners}
             signerClientOptions={{
                 targets,
                 maxTimeToLive: 3_600_000_000_000n,
