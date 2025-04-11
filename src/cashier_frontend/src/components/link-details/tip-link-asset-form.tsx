@@ -19,7 +19,7 @@ import { UsdSwitch } from "./usd-switch";
 import { TipLinkAssetFormSchema, useFormActions } from "./tip-link-asset-form.hooks";
 import { useTipLinkAssetForm } from "./tip-link-asset-form.hooks";
 import { AmountActionButtons } from "./amount-action-buttons";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useTokens } from "@/hooks/useTokens";
 type TipLinkAssetFormProps = {
     onSubmit: SubmitHandler<TipLinkAssetFormSchema>;
@@ -31,7 +31,7 @@ const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 75, 100];
 
 export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButtonDisabled }) => {
     const { t } = useTranslation();
-    const { link } = useCreateLinkStore();
+    const { link } = useLinkActionStore();
 
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [isUsd, setIsUsd] = useState<boolean>(false);
@@ -43,6 +43,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
 
     // Get existing token from link state or maintain the selected one
     const token = useMemo(() => {
+        console.log("useMemo ");
         // First priority: currently selected token address (from state)
         if (selectedTokenAddress) {
             const currentToken = getToken(selectedTokenAddress);
@@ -56,7 +57,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
 
         // Last resort: first token in the list
         return filteredTokenList && filteredTokenList.length > 0 ? filteredTokenList[0] : null;
-    }, [link?.asset_info, filteredTokenList, getToken, selectedTokenAddress]);
+    }, [filteredTokenList]);
 
     const form = useTipLinkAssetForm(filteredTokenList ?? [], {
         tokenAddress: token?.address,
@@ -234,7 +235,10 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                     variant="default"
                                     size="lg"
                                     className="w-full"
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        // Prevent default to handle our own validation
+                                        e.preventDefault();
+
                                         // Check token balance validation
                                         const asset = filteredTokenList?.find(
                                             (asset) =>
@@ -251,8 +255,22 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                                 Number(asset.amount) / 10 ** (asset.decimals || 8);
 
                                         console.log("Has enough balance:", hasEnoughBalance);
+
+                                        if (!hasEnoughBalance) {
+                                            form.setError("assetNumber", {
+                                                type: "manual",
+                                                message: "Insufficient balance",
+                                            });
+                                            return;
+                                        }
+
+                                        // If validation passes, trigger form submission
+                                        form.handleSubmit((data) => {
+                                            console.log("Submitted with data: ", data);
+                                            onSubmit(data);
+                                        })();
                                     }}
-                                    disabled={isButtonDisabled}
+                                    disabled={isButtonDisabled || !form.formState.isValid}
                                 >
                                     {t("continue")}
                                 </FixedBottomButton>

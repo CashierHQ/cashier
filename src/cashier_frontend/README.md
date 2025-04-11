@@ -97,7 +97,7 @@ Backend service integrations:
 
 Zustand stores:
 
--   `createLinkStore.ts`: Link creation state
+-   `linkActionStore.ts`: Link creation state
 -   `buttonStateStore.ts`: UI button states
 
 ## Common Tasks

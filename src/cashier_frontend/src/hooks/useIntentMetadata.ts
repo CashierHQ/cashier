@@ -17,7 +17,7 @@ const getIntentTitle = (intent: IntentModel, t: (key: string) => string) => {
 };
 
 export const useIntentMetadata = (intent: IntentModel) => {
-    const { getToken, isLoadingBalances } = useTokens();
+    const { getToken } = useTokens();
     const { t } = useTranslation();
 
     // Get token data directly from useTokens
@@ -47,6 +47,6 @@ export const useIntentMetadata = (intent: IntentModel) => {
         feeSymbol: token?.symbol,
         feeIconSrc: `${IC_EXPLORER_IMAGES_PATH}${intent.asset.address}`,
         title: getIntentTitle(intent, t),
-        isLoadingMetadata: isLoadingBalances || !token, // Consider it loading if either balances are loading or token isn't found
+        isLoadingMetadata: !!token,
     };
 };

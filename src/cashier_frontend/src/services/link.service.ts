@@ -142,6 +142,7 @@ class LinkService {
         };
         console.log("🚀 ~ LinkService ~ processAction ~ inputModel:", inputModel);
         const response = parseResultResponse(await this.actor.process_action(inputModel));
+        console.log("🚀 ~ LinkService ~ processAction ~ response:", response);
         const action = mapActionModel(response);
         return action;
     }

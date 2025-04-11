@@ -20,7 +20,6 @@ interface TransactionItemProps {
 export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, isUsd }) => {
     const { t } = useTranslation();
     const {
-        isLoadingMetadata,
         assetAmount,
         assetSymbol,
         assetSrc,
@@ -52,7 +51,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
             <div className="flex flex-col w-full">
                 <Asset
                     title={intentTitle}
-                    isLoading={isLoading || isLoadingMetadata}
+                    isLoading={isLoading}
                     amount={assetAmount}
                     usdAmount={convert(assetAmount, tokenUsdPrice)}
                     src={getTokenAvatar(intent.asset.address)}
@@ -62,7 +61,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
 
                 <Fee
                     title={t("transaction.confirm_popup.network_fee_label")}
-                    isLoading={isLoading || isLoadingMetadata}
+                    isLoading={isLoading}
                     amount={feeAmount}
                     usdAmount={convert(feeAmount, tokenUsdPrice)}
                     symbol={feeSymbol}

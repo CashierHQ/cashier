@@ -18,7 +18,7 @@ import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useCreateAction, useCreateActionAnonymous } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { useTranslation } from "react-i18next";
 
@@ -51,7 +51,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.CLAIM_LINK);
     const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous(ACTION_TYPE.CLAIM_LINK);
     const { action, anonymousWalletAddress, setAction, setAnonymousWalletAddress } =
-        useCreateLinkStore();
+        useLinkActionStore();
     const [isDisabledButton, setIsDisabledButton] = useState(true);
     const [buttonText, setButtonText] = useState(t("claim.claim"));
 

@@ -32,8 +32,10 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
     const { assetSymbol } = useIntentMetadata(intents?.[0]);
     const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
-    const isLoading = useTokenStore((state) => state.isLoading || state.isLoadingBalances);
+    const isLoading = useTokenStore((state) => state.isLoading);
+
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
+
     const tokenUsdPrice = getTokenPrice(intents[0]?.asset.address);
 
     useEffect(() => {

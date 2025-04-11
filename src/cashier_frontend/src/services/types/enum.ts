@@ -65,7 +65,7 @@ export function getLinkLabel(state: LINK_STATE): string {
         case LINK_STATE.INACTIVE:
             return "Inactive";
         case LINK_STATE.INACTIVE_ENDED:
-            return "Inactive";
+            return "Inactive ended";
         default:
             return "Unknown state";
     }
@@ -86,7 +86,6 @@ export enum TASK {
     TRANSFER_WALLET_TO_TREASURY = "transfer_wallet_to_treasury",
     TRANSFER_WALLET_TO_LINK = "transfer_wallet_to_link",
     TRANSFER_LINK_TO_WALLET = "transfer_link_to_wallet",
-    TRANSFER_WALLET_TO_WALLET = "transfer_wallet_to_wallet",
 }
 
 export enum ACTION_TYPE {

@@ -22,9 +22,8 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
     const onClickConfirm = async () => {
         if (confirmText !== "Delete") return;
 
-        console.log("Confirm text:", confirmText);
-
         try {
+            console.log("Ending link...");
             setLoading(true);
             onDelete();
         } catch (error) {
@@ -73,14 +72,25 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                         />
                     </div>
 
-                    <Button
-                        size="default"
-                        className="mt-4 mx-1 disabled:opacity-50"
-                        onClick={onClickConfirm}
-                        disabled={confirmText !== "Delete" || loading}
-                    >
-                        {loading ? "Processing..." : "End link"}
-                    </Button>
+                    {loading ? (
+                        <Button
+                            size="default"
+                            className="mt-4 mx-1 disabled:opacity-50"
+                            onClick={onClickConfirm}
+                            disabled={loading}
+                        >
+                            Processing...
+                        </Button>
+                    ) : (
+                        <Button
+                            size="default"
+                            className="mt-4 mx-1 disabled:opacity-50"
+                            onClick={onClickConfirm}
+                            disabled={confirmText !== "Delete"}
+                        >
+                            End link
+                        </Button>
+                    )}
                 </div>
             </DrawerContent>
         </Drawer>

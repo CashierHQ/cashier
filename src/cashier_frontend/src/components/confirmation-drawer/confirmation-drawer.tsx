@@ -11,7 +11,6 @@ import {
     usePrimaryIntents,
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
 import {
     useIcrc112Execute,
@@ -23,6 +22,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -42,7 +42,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     onSuccessContinue = async () => {},
 }) => {
     const { t } = useTranslation();
-    const { link, action, anonymousWalletAddress, setAction } = useCreateLinkStore();
+    const { link, action, anonymousWalletAddress, setAction } = useLinkActionStore();
     const identity = useIdentity();
 
     const [isUsd, setIsUsd] = useState(false);
@@ -63,15 +63,15 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         t,
     );
 
-    console.log("action", action);
-
     const handleProcessClaimAction = async () => {
         if (identity) {
+            if (!link) throw new Error("Link is not defined");
+            if (!action) throw new Error("Action is not defined");
             // Process action for logged in user to claim
             const processActionResult = await processAction({
-                linkId: link!.id,
+                linkId: link.id,
                 actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
-                actionId: action!.id,
+                actionId: action.id,
             });
             console.log(
                 "🚀 ~ handleProcessClaimAction ~ processActionResult:",
@@ -100,10 +100,12 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     };
 
     const handleProcessCreateAction = async () => {
+        if (!link) throw new Error("Link is not defined");
+        if (!action) throw new Error("Action is not defined");
         const firstUpdatedAction = await processAction({
-            linkId: link!.id,
+            linkId: link.id,
             actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
-            actionId: action!.id,
+            actionId: action.id,
         });
         setAction(firstUpdatedAction);
         if (firstUpdatedAction) {

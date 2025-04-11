@@ -38,9 +38,8 @@ export default function HomePage() {
         enabled: !!appUser,
         refetchOnWindowFocus: false,
     });
-    const queryClient = useQueryClient();
     useUserAssets();
-    const { isPending } = useUpdateLink(queryClient, identity);
+    const { isPending } = useUpdateLink();
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);

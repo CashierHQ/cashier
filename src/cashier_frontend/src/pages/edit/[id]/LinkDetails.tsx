@@ -2,14 +2,14 @@ import { CHAIN, LINK_INTENT_LABEL } from "@/services/types/enum";
 //import { NftAssetForm } from "@/components/link-details/nft-asset-form";
 import { TipLinkAssetForm } from "@/components/link-details/tip-link-asset-form";
 import { TipLinkAssetFormSchema } from "@/components/link-details/tip-link-asset-form.hooks";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useSetTipLinkDetails } from "@/hooks/linkHooks";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useButtonState } from "@/hooks/useButtonState";
 
 export default function LinkDetails() {
     const { nextStep } = useMultiStepFormContext();
-    const { link, setLink } = useCreateLinkStore();
+    const { link, setLink } = useLinkActionStore();
     const { mutateAsync: setTipLinkDetails } = useSetTipLinkDetails();
     const { isButtonDisabled, setButtonDisabled } = useButtonState();
 

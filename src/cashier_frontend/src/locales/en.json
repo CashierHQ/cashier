@@ -21,7 +21,8 @@
     },
     "details": {
         "linkInfo": "Link info",
-        "copyLink": "Copy link"
+        "copyLink": "Copy link",
+        "withdrawAssets": "Withdraw assets"
     },
     "claim": {
         "claim": "Claim",

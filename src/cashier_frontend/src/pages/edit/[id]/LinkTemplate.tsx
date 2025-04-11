@@ -13,7 +13,7 @@ import {
     useCarousel,
     useLinkTemplateForm,
 } from "@/components/link-template/link-template.hooks";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
 import { LINK_TYPE } from "@/services/types/enum";
 import { useSetLinkTemplate } from "@/hooks/linkHooks";
@@ -42,7 +42,7 @@ export default function LinkTemplate({
 
     const responsive = useResponsive();
 
-    const { link, setLink, updateLink } = useCreateLinkStore();
+    const { link, setLink, updateLink } = useLinkActionStore();
     const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
     const { isButtonDisabled, setButtonDisabled } = useButtonState();
 
