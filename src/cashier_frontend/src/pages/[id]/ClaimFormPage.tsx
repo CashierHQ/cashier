@@ -19,7 +19,6 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useCreateAction, useCreateActionAnonymous } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useLinkActionStore } from "@/stores/linkActionStore";
-import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { useTranslation } from "react-i18next";
 
 type ClaimFormPageProps = {
@@ -44,7 +43,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const { linkId } = useParams();
     const identity = useIdentity();
     const { t } = useTranslation();
-    const { renderSkeleton } = useSkeletonLoading();
     const { nextStep } = useMultiStepFormContext();
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
@@ -57,13 +55,13 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     const updateLinkUserState = useUpdateLinkUserState();
 
-    const { data: linkUserState, isLoading: isLoadingLinkUserState } = useLinkUserState(
+    const { data: linkUserState } = useLinkUserState(
         {
             action_type: ACTION_TYPE.CLAIM_LINK,
             link_id: linkId ?? "",
-            anonymous_wallet_address: "",
+            anonymous_wallet_address: form.getValues("address") ?? "",
         },
-        !!linkId && !!identity,
+        !!linkId && !!identity && !!form.getValues("address"),
     );
 
     const handleCreateAction = async (): Promise<ActionModel> => {
@@ -101,6 +99,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     // Logged in user
                     const action = await handleCreateAction();
                     if (action) {
+                        console.log("🚀 ~ handleSubmit ~ action:", action);
                         setAction(action);
                         setShowConfirmation(true);
                     }
@@ -119,6 +118,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                         // If action is not exist, then create new one
                         const anonymousAction =
                             await handleCreateActionAnonymous(anonymousWalletAddress);
+                        console.log("🚀 ~ handleSubmit ~ anonymousAction:", anonymousAction);
                         setAction(anonymousAction);
                         setAnonymousWalletAddress(anonymousWalletAddress);
                         setShowConfirmation(true);
@@ -127,6 +127,10 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                         if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
                             nextStep();
                         } else {
+                            console.log(
+                                "🚀 ~ handleSubmit ~ anonymousAction:",
+                                anonymousLinkUserState.action,
+                            );
                             setAction(anonymousLinkUserState.action);
                             setAnonymousWalletAddress(anonymousWalletAddress);
                             setShowConfirmation(true);
@@ -159,9 +163,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         }
     };
 
-    return isLoadingLinkUserState ? (
-        renderSkeleton()
-    ) : (
+    return (
         <>
             <div className="w-full h-full flex flex-grow flex-col">
                 <ClaimPageForm

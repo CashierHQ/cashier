@@ -7,18 +7,14 @@ import { AiOutlineExperiment } from "react-icons/ai";
 import { SheetTrigger } from "./ui/sheet";
 import { RiMenu2Line } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
-import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import { useResponsive } from "@/hooks/responsive-hook";
 
-interface HeaderProps {
-    onConnect: (e: React.MouseEvent<HTMLButtonElement>) => void;
-    openTestForm: (e: React.MouseEvent<HTMLButtonElement>) => void;
-}
+interface HeaderProps {}
 
-const Header: React.FC<HeaderProps> = ({ openTestForm }) => {
+const Header: React.FC<HeaderProps> = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const { connectToWallet } = useConnectToWallet();
+    const { connect } = useAuth();
     const responsive = useResponsive();
 
     if (!user) {
@@ -32,7 +28,13 @@ const Header: React.FC<HeaderProps> = ({ openTestForm }) => {
                     className="max-w-[130px]"
                     onClick={() => navigate("/")}
                 />
-                <LoginButton onClick={connectToWallet}>Login</LoginButton>
+                <LoginButton
+                    onClick={() => {
+                        connect();
+                    }}
+                >
+                    Login
+                </LoginButton>
             </div>
         );
     } else {
@@ -54,14 +56,6 @@ const Header: React.FC<HeaderProps> = ({ openTestForm }) => {
                         onClick={() => navigate("/wallet")}
                     >
                         <Wallet size={16} />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="rounded-sm mr-3"
-                        onClick={(e) => openTestForm(e)}
-                    >
-                        <AiOutlineExperiment />
                     </Button>
 
                     <SheetTrigger asChild>

@@ -7,8 +7,7 @@ import "./index.css";
 import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SignersProvider, useSigners } from "./contexts/signer-list-context";
-import { HelmetProvider } from "react-helmet-async";
+import { useSignerStore } from "./stores/signerStore";
 
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
@@ -19,7 +18,8 @@ console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
 
 function App() {
     const queryClient = new QueryClient();
-    const { signers } = useSigners();
+    const { signers } = useSignerStore();
+
     return (
         <IdentityKitProvider
             featuredSigner={false}
@@ -38,19 +38,11 @@ function App() {
             }}
         >
             <QueryClientProvider client={queryClient}>
-                <HelmetProvider>
-                    <AppRouter />
-                    <Toaster />
-                </HelmetProvider>
+                <AppRouter />
+                <Toaster />
             </QueryClientProvider>
         </IdentityKitProvider>
     );
 }
 
-export default function AppWithProviders() {
-    return (
-        <SignersProvider>
-            <App />
-        </SignersProvider>
-    );
-}
+export default App;

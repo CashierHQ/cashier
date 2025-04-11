@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { IoIosArrowBack, IoMdClose } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
 import { PiWallet } from "react-icons/pi";
@@ -12,18 +12,16 @@ import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { IconInput } from "../icon-input";
 import WalletButton from "./connect-wallet-button";
-import { useAuth, useIdentity } from "@nfid/identitykit/react";
+import { useAuth, useIdentity, useSigner } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import { FixedBottomButton } from "../fix-bottom-button";
 import { Spinner } from "../ui/spinner";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
-import { useSigners, WALLET_OPTIONS } from "@/contexts/signer-list-context";
-import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import { Principal } from "@dfinity/principal";
 import { FaCheck } from "react-icons/fa6";
 import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
-import { useConnectToWallet } from "@/hooks/useConnectToWallet";
+import { useSignerStore, WALLET_OPTIONS } from "@/stores/signerStore";
 
 export interface ClaimLinkDetail {
     title: string;
@@ -53,12 +51,15 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { t } = useTranslation();
     const { user, disconnect } = useAuth();
     const identity = useIdentity();
-    const { open, options, showDialog, hideDialog } = useConfirmDialog();
-    const { currentConnectOption, setSigners, setCurrentConnectOption } = useSigners();
-
-    const { connectToWallet: connect } = useConnectToWallet();
-
-    const [selectOptionWallet, setSelectOptionWallet] = useState<WALLET_OPTIONS>();
+    const { open, options, hideDialog, showDialog } = useConfirmDialog();
+    const signer = useSigner();
+    const { connect } = useAuth();
+    const {
+        currentConnectOption,
+        setCurrentConnectOption,
+        initInternetIdentitySigner,
+        initOtherWalletSigners,
+    } = useSignerStore();
 
     // Check if the address is valid
     const isAddressValid = () => {
@@ -73,6 +74,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         }
     };
 
+    useEffect(() => {
+        console.log("signer", signer);
+    }, [signer]);
+
     // Update disabled state based on identity or address validation
     useEffect(() => {
         if (setDisabled) {
@@ -80,7 +85,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             const shouldEnable = !!identity || isAddressValid();
             setDisabled(!shouldEnable);
         }
-    }, [identity, setDisabled, isAddressValid]);
+    }, [setDisabled, isAddressValid]);
 
     // Watch for address changes to update the disabled state
     useEffect(() => {
@@ -92,9 +97,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         });
 
         return () => subscription.unsubscribe();
-    }, [form, identity, setDisabled]);
+    }, [form, setDisabled]);
 
-    const handleConnectWallet = (selectOption: WALLET_OPTIONS) => {
+    const handleConnectWallet = (walletOption: WALLET_OPTIONS) => {
         if ((form.getValues("address") ?? "").trim().length > 0) {
             showDialog({
                 title: "Are you sure?",
@@ -104,7 +109,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             return;
         }
 
-        if (identity && selectOption !== currentConnectOption) {
+        if (identity && walletOption !== currentConnectOption) {
             showDialog({
                 title: "Are you sure?",
                 description:
@@ -112,15 +117,20 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             });
             return;
         }
-        if (selectOption === WALLET_OPTIONS.OTHER) {
-            setCurrentConnectOption(WALLET_OPTIONS.OTHER);
-            setSigners([NFIDW, Stoic]);
-        } else if (selectOption === WALLET_OPTIONS.INTERNET_IDENTITY) {
-            setCurrentConnectOption(WALLET_OPTIONS.INTERNET_IDENTITY);
-            setSigners([InternetIdentity]);
+
+        setCurrentConnectOption(walletOption);
+
+        if (walletOption === WALLET_OPTIONS.INTERNET_IDENTITY) {
+            initInternetIdentitySigner();
+            if (!identity) {
+                connect("InternetIdentity");
+            }
+        } else if (walletOption === WALLET_OPTIONS.OTHER) {
+            initOtherWalletSigners();
+            if (!identity) {
+                connect();
+            }
         }
-        connect();
-        setSelectOptionWallet(selectOption);
     };
 
     const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
@@ -157,26 +167,6 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             console.error("Failed to read clipboard contents: ", err);
         }
     };
-
-    useEffect(() => {
-        if (identity && selectOptionWallet) {
-            setCurrentConnectOption(selectOptionWallet);
-        }
-        // If user already connect wallet, then use the connected wallet address
-        if (identity) {
-            form.setValue("address", user?.principal.toString());
-        }
-    }, [selectOptionWallet, identity]);
-
-    useEffect(() => {
-        console.log(currentConnectOption);
-    }, [currentConnectOption]);
-
-    useEffect(() => {
-        if (identity && !currentConnectOption && setCurrentConnectOption) {
-            setCurrentConnectOption(WALLET_OPTIONS.INTERNET_IDENTITY);
-        }
-    }, [setCurrentConnectOption]);
 
     // Ensure we immediately update the button state when isDisabled prop changes
     useEffect(() => {
@@ -240,15 +230,14 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             {/* Google login */}
                             <WalletButton
                                 title="Google login"
-                                handleConnect={() => handleConnectWallet(WALLET_OPTIONS.GOOGLE)}
+                                handleConnect={() => {}}
                                 image="/googleIcon.png"
                                 disabled={true}
                                 postfixText="Coming soon"
                             />
 
                             {/* Internet Identity */}
-                            {identity &&
-                            currentConnectOption === WALLET_OPTIONS.INTERNET_IDENTITY ? (
+                            {identity && signer?.id === "InternetIdentity" ? (
                                 <CustomConnectedWalletButton
                                     connectedAccount={user?.principal.toString()}
                                     postfixText="Connected"
@@ -258,6 +247,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                             alt="icp"
                                             className="w-6 h-6 mr-2"
                                         />
+                                    }
+                                    handleConnect={() =>
+                                        handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY)
                                     }
                                 />
                             ) : (
@@ -271,10 +263,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             )}
 
                             {/* Other wallets */}
-                            {identity && currentConnectOption === WALLET_OPTIONS.OTHER ? (
+                            {identity && signer?.id !== "InternetIdentity" ? (
                                 <CustomConnectedWalletButton
                                     connectedAccount={user?.principal.toString()}
                                     postfixText="Connected"
+                                    handleConnect={() => handleConnectWallet(WALLET_OPTIONS.OTHER)}
                                 />
                             ) : (
                                 <WalletButton
@@ -291,7 +284,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             {identity ? (
                                 <WalletButton
                                     title={t("claim.addressPlaceholder")}
-                                    handleConnect={() => handleConnectWallet(WALLET_OPTIONS.TYPING)}
+                                    handleConnect={() => {}}
                                     icon={<PiWallet color="green" className="mr-2 h-6 w-6" />}
                                 />
                             ) : (
@@ -334,6 +327,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                     className="py-5 h-14 text-md rounded-xl"
                                                     onFocusShowIcon={true}
                                                     onFocusText={true}
+                                                    disabled={!!identity}
                                                     {...field}
                                                     onChange={(e) => {
                                                         field.onChange(e);
@@ -398,7 +392,6 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 actionText="Disconnect"
                 onSubmit={() => {
                     disconnect();
-                    setSigners([InternetIdentity]);
                     form.setValue("address", "");
                     form.clearErrors();
                     hideDialog();

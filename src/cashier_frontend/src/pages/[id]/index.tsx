@@ -5,10 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { ACTION_STATE, ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE, LINK_STATE, LINK_USER_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import Header from "@/components/header";
-import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { TokenUtilService } from "@/services/tokenUtils.service";
@@ -25,6 +24,7 @@ import { IoInformationCircle } from "react-icons/io5";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { getTokenImage } from "@/utils";
+import LinkNotFound from "@/components/link-not-found";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -66,7 +66,6 @@ export default function ClaimPage() {
     );
 
     const { toastData, showToast, hideToast } = useToast();
-    const { connectToWallet } = useConnectToWallet();
 
     const form = useForm<z.infer<typeof ClaimSchema>>({
         resolver: zodResolver(ClaimSchema),
@@ -85,10 +84,6 @@ export default function ClaimPage() {
             );
             return;
         }
-    };
-
-    const handleConnectWallet = () => {
-        connectToWallet();
     };
 
     const showCashierErrorToast = (error: Error) => {
@@ -140,13 +135,22 @@ export default function ClaimPage() {
         if (linkData && linkUserState?.link_user_state) {
             setShowDefaultPage(false);
         }
+
+        console.log("🚀 ~ linkData:", linkData);
     }, [linkData, linkUserState?.link_user_state]);
+
+    if (
+        linkData?.link.state === LINK_STATE.INACTIVE ||
+        linkData?.link.state === LINK_STATE.INACTIVE_ENDED
+    ) {
+        return <LinkNotFound />;
+    }
 
     return (
         <div className="w-screen min-h-screen md:min-h-screen flex flex-col items-center overflow-hidden py-5">
             <SheetWrapper>
                 <div className="w-11/12 items-center max-w-[400px] h-full flex flex-col flex-1">
-                    <Header onConnect={handleConnectWallet} openTestForm={connectToWallet} />
+                    <Header />
                     {isLoadingLinkData || isLoadingLinkUserState ? (
                         renderSkeleton()
                     ) : (
