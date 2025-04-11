@@ -16,6 +16,7 @@ const getIntentTitle = (intent: IntentModel, t: (key: string) => string) => {
     }
 };
 
+// TODO: handle for anonymous user
 export const useIntentMetadata = (intent: IntentModel) => {
     const { getToken } = useTokens();
     const { t } = useTranslation();

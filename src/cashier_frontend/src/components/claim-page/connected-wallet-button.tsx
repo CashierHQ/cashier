@@ -7,12 +7,14 @@ interface CustomConnectedWalletButtonProps {
     connectedAccount?: string;
     postfixText?: string;
     postfixIcon?: React.ReactNode;
+    handleConnect: () => void;
 }
 
 const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = ({
     connectedAccount,
     postfixText,
     postfixIcon,
+    handleConnect,
 }) => {
     return (
         <button
@@ -27,6 +29,12 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "flex items-center justify-start",
             )}
+            onClick={(e) => {
+                // Prevent form submission
+                e.preventDefault();
+                e.stopPropagation();
+                handleConnect();
+            }}
         >
             <span className="flex items-center w-full">
                 {postfixIcon ? postfixIcon : <LuWallet2 className="mr-2" color="green" size={22} />}

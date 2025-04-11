@@ -7,29 +7,26 @@ import { Input } from "../ui/input";
 
 interface EndLinkDrawerProps {
     open: boolean;
+    isEnding: boolean;
     onClose?: () => void;
     onDelete: () => void;
 }
 
 export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
     open,
+    isEnding,
     onClose = () => {},
     onDelete = () => {},
 }) => {
-    const [loading, setLoading] = useState(false);
     const [confirmText, setConfirmText] = useState("");
 
     const onClickConfirm = async () => {
         if (confirmText !== "Delete") return;
 
         try {
-            console.log("Ending link...");
-            setLoading(true);
             onDelete();
         } catch (error) {
             console.error("Error ending link:", error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -72,12 +69,12 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                         />
                     </div>
 
-                    {loading ? (
+                    {isEnding ? (
                         <Button
                             size="default"
                             className="mt-4 mx-1 disabled:opacity-50"
                             onClick={onClickConfirm}
-                            disabled={loading}
+                            disabled={isEnding}
                         >
                             Processing...
                         </Button>

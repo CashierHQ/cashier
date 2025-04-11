@@ -8,7 +8,7 @@ import LinkService from "@/services/link.service";
 import { Button } from "@/components/ui/button";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import { useUpdateLink } from "@/hooks/linkHooks";
 import { useResponsive } from "@/hooks/responsive-hook";
@@ -18,7 +18,6 @@ import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
 import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import Header from "@/components/header";
-import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
 import { Plus } from "lucide-react";
@@ -26,8 +25,7 @@ import { Plus } from "lucide-react";
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const { user: walletUser } = useAuth();
-    const { connectToWallet, appUser, isUserLoading } = useConnectToWallet();
+    const { user: walletUser, connect } = useAuth();
 
     const {
         data: linkData,
@@ -35,7 +33,7 @@ export default function HomePage() {
         refetch: refetchLinks,
     } = useQuery({
         ...queryKeys.links.list(identity),
-        enabled: !!appUser,
+        enabled: !!identity,
         refetchOnWindowFocus: false,
     });
     useUserAssets();
@@ -50,11 +48,6 @@ export default function HomePage() {
     const responsive = useResponsive();
 
     const { updateTokenInit } = useTokens();
-
-    /* TODO:: Remove after complete testing */
-    const handleOpenTestForm = () => {
-        setOpenTestForm(true);
-    };
 
     const handleCreateLink = async () => {
         const linkList = linkData ? Object.values(linkData).flat() : [];
@@ -91,19 +84,19 @@ export default function HomePage() {
     }, []);
 
     useEffect(() => {
-        if (identity && appUser) {
+        if (identity) {
             refetchLinks();
             updateTokenInit();
         }
-    }, [identity, appUser]);
+    }, [identity]);
 
     useEffect(() => {
-        if (isUserLoading || isLinksLoading || isPending) {
+        if (isLinksLoading || isPending) {
             setIsLoading(true);
         } else {
             setIsLoading(false);
         }
-    }, [isUserLoading, isLinksLoading, isPending]);
+    }, [isLinksLoading, isPending]);
 
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {
@@ -147,7 +140,7 @@ export default function HomePage() {
         return (
             <div className="w-screen flex justify-center py-5 h-full">
                 <div className="flex w-full flex-col items-center gap-4">
-                    <Header onConnect={connectToWallet} openTestForm={connectToWallet} />
+                    <Header />
                     <p className="text-yellow text-center text-sm font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow mt-4 mb-2">
                         Cashier is still in development.
                         {responsive.isSmallDevice ? <br /> : <span> </span>}
@@ -184,7 +177,9 @@ export default function HomePage() {
                             {!responsive.isSmallDevice && (
                                 <Button
                                     type="button"
-                                    onClick={connectToWallet}
+                                    onClick={() => {
+                                        connect();
+                                    }}
                                     className="h-11 mt-8 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full"
                                 >
                                     Get started
@@ -202,7 +197,9 @@ export default function HomePage() {
                 {responsive.isSmallDevice && (
                     <Button
                         type="button"
-                        onClick={connectToWallet}
+                        onClick={() => {
+                            connect();
+                        }}
                         className="fixed h-11 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
                     >
                         Get started
@@ -220,7 +217,7 @@ export default function HomePage() {
                 >
                     <SheetWrapper>
                         <div className="flex w-full flex-col h-full">
-                            <Header onConnect={connectToWallet} openTestForm={handleOpenTestForm} />
+                            <Header />
                             <div
                                 className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
                             >

@@ -6,11 +6,9 @@ import { IoExitOutline } from "react-icons/io5";
 import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
 import { useAuth } from "@nfid/identitykit/react";
 import { transformShortAddress } from "@/utils";
-import { FaRegCopy } from "react-icons/fa";
 import copy from "copy-to-clipboard";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useConnectToWallet } from "@/hooks/useConnectToWallet";
 import { Copy } from "lucide-react";
 
 export interface SidebarMenuItem {
@@ -25,7 +23,7 @@ interface AppSidebarProps {
 
 const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
     const { user } = useAuth();
-    const { disconnectWallet } = useConnectToWallet();
+    const { disconnect } = useAuth();
     const { toast } = useToast();
     const navigate = useNavigate();
 
@@ -42,7 +40,7 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
     };
 
     const handleDisConnect = () => {
-        disconnectWallet();
+        disconnect();
         navigate("/");
     };
 

@@ -111,7 +111,7 @@ export default function DetailPage() {
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
     const { t } = useTranslation();
 
-    const { mutateAsync: updateLink } = useUpdateLink();
+    const { mutateAsync: updateLink, isPending } = useUpdateLink();
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -366,6 +366,7 @@ export default function DetailPage() {
                 onDelete={() => {
                     setInactiveLink();
                 }}
+                isEnding={isPending}
             />
 
             <ConfirmationDrawer
