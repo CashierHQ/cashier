@@ -24,7 +24,9 @@ import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Helmet } from "react-helmet-async";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
-import { useSetLinkInactive } from "@/hooks/linkHooks";
+import { useCreateAction, useSetLinkInactive } from "@/hooks/linkHooks";
+import { getLinkAssetAmounts, getLinkIsClaimed } from "@/utils/helpers/link";
+import { LINK_STATE } from "@/services/types/enum";
 
 // Add custom CSS for driver.js popover styling
 const customDriverStyles = `
@@ -78,6 +80,8 @@ export default function DetailPage() {
     const { renderSkeleton } = useSkeletonLoading();
     const responsive = useResponsive();
 
+    const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.WITHDRAW_LINK);
+
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
 
@@ -98,6 +102,34 @@ export default function DetailPage() {
             document.head.removeChild(styleTag);
         };
     }, []);
+
+    const [assetAmounts, setAssetAmounts] = React.useState<
+        {
+            address: string;
+            totalAmount: bigint;
+            pendingAmount: bigint;
+            claimsAmount: bigint | undefined;
+            assetClaimed: boolean;
+        }[]
+    >([]);
+    const [linkIsClaimed, setLinkIsClaimed] = React.useState<boolean>(false);
+
+    React.useEffect(() => {
+        const fetchAssetAmounts = async () => {
+            if (linkData) {
+                const assetAmounts = await getLinkAssetAmounts(linkData.link);
+                setAssetAmounts(assetAmounts);
+            }
+        };
+        const fetchLinkIsClaimed = async () => {
+            if (linkData) {
+                const linkIsClaimed = await getLinkIsClaimed(linkData.link);
+                setLinkIsClaimed(linkIsClaimed);
+            }
+        };
+        fetchAssetAmounts();
+        fetchLinkIsClaimed();
+    }, [linkData]);
 
     React.useEffect(() => {
         if (showOverlay && driverObj && document.getElementById("copy-link-button")) {
@@ -262,6 +294,16 @@ export default function DetailPage() {
     const setInactiveLink = async () => {
         const inactiveLink = await setLinkInactive({ link: linkData!.link });
         console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
+        const link = await new LinkService(identity).getLink(
+            linkData!.link.id,
+            ACTION_TYPE.WITHDRAW_LINK,
+        );
+        setLinkData(link);
+        setShowEndLinkDrawer(false);
+    };
+
+    const handleWithdrawAssets = async () => {
+        await createAction({ linkId: linkData!.link.id });
     };
 
     return (
@@ -350,56 +392,45 @@ export default function DetailPage() {
                                 id="link-detail-section"
                                 className="flex flex-col border-[1px] rounded-xl border-lightgreen"
                             >
-                                <Table className="text-base">
-                                    <TableHeader></TableHeader>
-                                    <TableBody>
-                                        <TableRow className="border-b border-lightgreen">
-                                            <TableCell className="font-medium px-5">
-                                                Link Type
-                                            </TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell className="text-right px-5 text-lightblack">
-                                                Tip link
-                                            </TableCell>
-                                        </TableRow>
-                                        <TableRow className="border-b border-lightgreen">
-                                            <TableCell className="font-medium px-5">
-                                                Chain
-                                            </TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell className="text-right px-5 text-lightblack">
-                                                ICP
-                                            </TableCell>
-                                        </TableRow>
-                                        <TableRow className="border-b border-lightgreen">
-                                            <TableCell className="font-medium px-5">
-                                                Token
-                                            </TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell className="text-right px-5 text-lightblack">
-                                                {metadata?.name === "CUTE"
-                                                    ? "tCHAT"
-                                                    : metadata?.name}
-                                            </TableCell>
-                                        </TableRow>
-                                        <TableRow>
-                                            <TableCell className="font-medium px-5">
-                                                Amount
-                                            </TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell></TableCell>
-                                            <TableCell className="text-right px-5 text-lightblack">
-                                                {TokenUtilService.getHumanReadableAmountFromMetadata(
-                                                    linkData?.link?.asset_info[0].amount,
-                                                    metadata,
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
+                                <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
+                                    <p className="font-medium text-sm">Link Type</p>
+                                    <p className="text-sm text-primary/80">Tip Link</p>
+                                </div>
+                                <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
+                                    <p className="font-medium text-sm">Chain</p>
+                                    <p className="text-sm text-primary/80">ICP</p>
+                                </div>
+                                <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
+                                    <p className="font-medium text-sm">Token</p>
+                                    <p className="text-sm text-primary/80">
+                                        {metadata?.name === "CUTE" ? "tCHAT" : metadata?.name}
+                                    </p>
+                                </div>
+                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-2.5">
+                                    <p className="font-medium text-sm">Asset left/added</p>
+                                    <div className="flex items-center gap-1">
+                                        <p className="text-sm text-primary/80">
+                                            {assetAmounts && assetAmounts.length
+                                                ? TokenUtilService.getHumanReadableAmountFromMetadata(
+                                                      assetAmounts[0].pendingAmount,
+                                                      metadata,
+                                                  )
+                                                : "-"}
+                                            /
+                                            {TokenUtilService.getHumanReadableAmountFromMetadata(
+                                                linkData?.link?.asset_info[0].amount,
+                                                metadata,
+                                            )}
+                                        </p>
+                                        {metadata && metadata.icon && (
+                                            <img
+                                                src={metadata?.icon}
+                                                alt="token-icon"
+                                                className="w-4 h-4"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Temporarily comment for grant application */}
@@ -458,22 +489,36 @@ export default function DetailPage() {
                         </Table>
                     </div> */}
                             <div className="flex flex-col items-center gap-4 mt-auto">
-                                <button
-                                    onClick={() => {
-                                        setShowEndLinkDrawer(true);
-                                    }}
-                                    className="text-[#D26060] text-[14px] font-semibold"
-                                >
-                                    End Link
-                                </button>
-                                <Button
-                                    id="copy-link-button"
-                                    onClick={handleCopyLink}
-                                    size="lg"
-                                    className="w-full"
-                                >
-                                    {t("details.copyLink")}
-                                </Button>
+                                {linkData?.link?.state == LINK_STATE.ACTIVE && (
+                                    <button
+                                        onClick={() => {
+                                            setShowEndLinkDrawer(true);
+                                        }}
+                                        className="text-[#D26060] text-[14px] font-semibold"
+                                    >
+                                        End Link
+                                    </button>
+                                )}
+                                {linkData?.link?.state == LINK_STATE.ACTIVE ? (
+                                    <Button
+                                        id="copy-link-button"
+                                        onClick={handleCopyLink}
+                                        size="lg"
+                                        className="w-full"
+                                    >
+                                        {t("details.copyLink")}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        id="copy-link-button"
+                                        disabled={linkIsClaimed}
+                                        onClick={handleWithdrawAssets}
+                                        size="lg"
+                                        className="w-full disabled:bg-gray-300"
+                                    >
+                                        {linkIsClaimed ? "Ended" : "Withdraw Assets"}
+                                    </Button>
+                                )}
                             </div>
 
                             <TransactionToast

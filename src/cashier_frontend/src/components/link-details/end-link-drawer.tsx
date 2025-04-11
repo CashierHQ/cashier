@@ -75,7 +75,7 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
 
                     <Button
                         size="default"
-                        className="mt-4 mx-1"
+                        className="mt-4 mx-1 disabled:opacity-50"
                         onClick={onClickConfirm}
                         disabled={confirmText !== "Delete" || loading}
                     >
