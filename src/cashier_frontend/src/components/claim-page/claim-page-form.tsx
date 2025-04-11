@@ -22,6 +22,7 @@ import { Principal } from "@dfinity/principal";
 import { FaCheck } from "react-icons/fa6";
 import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore, WALLET_OPTIONS } from "@/stores/signerStore";
+import { useConnectToWallet } from "@/hooks/user-hook";
 
 export interface ClaimLinkDetail {
     title: string;
@@ -53,7 +54,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const identity = useIdentity();
     const { open, options, hideDialog, showDialog } = useConfirmDialog();
     const signer = useSigner();
-    const { connect } = useAuth();
+    const { connectToWallet } = useConnectToWallet();
     const {
         currentConnectOption,
         setCurrentConnectOption,
@@ -123,12 +124,12 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         if (walletOption === WALLET_OPTIONS.INTERNET_IDENTITY) {
             initInternetIdentitySigner();
             if (!identity) {
-                connect("InternetIdentity");
+                connectToWallet("InternetIdentity");
             }
         } else if (walletOption === WALLET_OPTIONS.OTHER) {
             initOtherWalletSigners();
             if (!identity) {
-                connect();
+                connectToWallet();
             }
         }
     };
