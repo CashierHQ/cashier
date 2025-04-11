@@ -12,6 +12,7 @@ export enum LINK_STATE {
     // not allow edit
     ACTIVE = "Link_state_active",
     INACTIVE = "Link_state_inactive",
+    INACTIVE_ENDED = "Link_state_inactive_ended",
 }
 
 export enum TRANSACTION_STATE {
@@ -62,6 +63,8 @@ export function getLinkLabel(state: LINK_STATE): string {
         case LINK_STATE.ACTIVE:
             return "Active";
         case LINK_STATE.INACTIVE:
+            return "Inactive";
+        case LINK_STATE.INACTIVE_ENDED:
             return "Inactive";
         default:
             return "Unknown state";
