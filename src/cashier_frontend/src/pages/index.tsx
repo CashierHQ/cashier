@@ -120,7 +120,8 @@ export default function HomePage() {
                                     <Link
                                         to={
                                             item.state === LINK_STATE.ACTIVE ||
-                                            item.state === LINK_STATE.INACTIVE
+                                            item.state === LINK_STATE.INACTIVE ||
+                                            item.state === LINK_STATE.INACTIVE_ENDED
                                                 ? `/details/${item.id}`
                                                 : `/edit/${item.id}`
                                         }

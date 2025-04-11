@@ -38,6 +38,14 @@ export function StateBadge({ state }: { state: string | undefined }) {
         );
     }
 
+    if (state === LINK_STATE.INACTIVE_ENDED) {
+        return (
+            <div className={`${baseLabelClass} bg-gray-200 text-gray-700`}>
+                {getLinkLabel(LINK_STATE.INACTIVE_ENDED)}
+            </div>
+        );
+    }
+
     if (state === LINK_STATE.CREATE_LINK) {
         return (
             <div className={`${baseLabelClass} text-yellow bg-lightyellow`}>
