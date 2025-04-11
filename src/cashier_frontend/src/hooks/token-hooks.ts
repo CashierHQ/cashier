@@ -180,8 +180,7 @@ export function useAddTokenMutation(identity: Identity | undefined) {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            const res = await tokenService.addToken(input);
-            console.log("Token added", res);
+            await tokenService.addToken(input);
             return true;
         },
         onSuccess: () => {
