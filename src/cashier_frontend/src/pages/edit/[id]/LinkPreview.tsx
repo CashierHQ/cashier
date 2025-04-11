@@ -6,7 +6,7 @@ import { LINK_TYPE } from "@/services/types/enum";
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useCreateAction, useFeePreview, useSetLinkActive } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -33,7 +33,7 @@ export default function LinkPreview({
     const navigate = useNavigate();
     const responsive = useResponsive();
 
-    const { link, action, setAction, setLink } = useCreateLinkStore();
+    const { link, action, setAction, setLink } = useLinkActionStore();
 
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);

@@ -1,4 +1,4 @@
-import { useCreateLinkStore } from "./createLinkStore";
+import { useLinkActionStore } from "./linkActionStore";
 import { useButtonStateStore } from "./buttonStateStore";
 import { useSendAssetStore } from "./sendAssetStore";
 
@@ -7,7 +7,7 @@ import { useSendAssetStore } from "./sendAssetStore";
  */
 export const resetAllStores = () => {
     // Reset each store by calling its clearStore method
-    useCreateLinkStore.getState().clearStore();
+    useLinkActionStore.getState().clearStore();
     useButtonStateStore.getState().clearStore();
 
     useSendAssetStore.getState().resetSendAsset();

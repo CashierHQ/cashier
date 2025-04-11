@@ -18,14 +18,12 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { LinkCardPage } from "./LinkCardPage";
 import { ClaimFormPage } from "./ClaimFormPage";
-import { Spinner } from "@/components/ui/spinner";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
 import { IoInformationCircle } from "react-icons/io5";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { getTokenImage } from "@/utils";
 
 export const ClaimSchema = z.object({
@@ -49,7 +47,7 @@ export default function ClaimPage() {
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
     const [assetNumber, setAssetNumber] = useState(0);
-    const { updateLink } = useCreateLinkStore();
+    const { updateLink } = useLinkActionStore();
 
     // Fetch link data
     const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(
