@@ -9,7 +9,7 @@ import { useUpdateLinkSelfContained } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { ACTION_STATE, ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
-import { useCreateLinkStore } from "@/stores/createLinkStore";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 import { Spinner } from "@/components/ui/spinner";
 import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ export default function LinkPage() {
     const { linkId } = useParams();
     const { toastData, showToast, hideToast } = useToast();
 
-    const { link, setLink, action, setAction } = useCreateLinkStore();
+    const { link, setLink, action, setAction } = useLinkActionStore();
 
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
         linkId,

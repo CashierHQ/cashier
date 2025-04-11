@@ -1,9 +1,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { StateBadge } from "@/components/link-item";
-import { Driver, driver } from "driver.js";
+import { Driver } from "driver.js";
 import "driver.js/dist/driver.css";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import useToast from "@/hooks/useToast";
 import { useParams, useNavigate } from "react-router-dom";
@@ -22,54 +21,14 @@ import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { Label } from "@/components/ui/label";
 import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { Helmet } from "react-helmet-async";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
-import { useCreateAction, useSetLinkInactive } from "@/hooks/linkHooks";
+import { useCreateAction, useUpdateLink } from "@/hooks/linkHooks";
 import { getLinkAssetAmounts, getLinkIsClaimed } from "@/utils/helpers/link";
 import { LINK_STATE } from "@/services/types/enum";
-
-// Add custom CSS for driver.js popover styling
-const customDriverStyles = `
-.custom-driver-popover-class {
-    border-radius: 16px !important;
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1) !important;
-    background-color: white !important;
-    padding: 20px !important;
-    text-align: center !important;
-    max-width: 320px !important;
-}
-
-.custom-driver-popover-class .driver-popover-title {
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    margin-bottom: 8px !important;
-}
-
-.custom-driver-popover-class .driver-popover-description {
-    font-size: 14px !important;
-    color: #6b7280 !important;
-    font-weight: 300 !important;
-}
-
-.custom-driver-popover-class .driver-popover-arrow {
-    border-color: white transparent transparent transparent !important;
-}
-
-.custom-driver-popover-class .icon-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 12px;
-}
-
-.custom-driver-popover-class .icon-wrapper {
-    background-color: #e6f7f5;
-    border-radius: 50%;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-`;
+import { customDriverStyles, initializeDriver } from "@/components/onboarding";
+import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
+import { ActionModel } from "@/services/types/action.service.types";
+import { useLinkActionStore } from "@/stores/linkActionStore";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -86,6 +45,10 @@ export default function DetailPage() {
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
 
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
+    const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
+    const { setLink, setAction } = useLinkActionStore();
+
+    const {} = useLinkActionStore();
 
     // Add styles to document
     React.useEffect(() => {
@@ -144,105 +107,11 @@ export default function DetailPage() {
         }
     }, [showOverlay, driverObj, linkData]);
 
-    const initializeDriver = () => {
-        const driverObj = driver({
-            popoverClass: "custom-driver-popover-class",
-            animate: false,
-            allowClose: true,
-            onPopoverRender: (popover) => {
-                // Add party popper icon to the popover
-                const iconContainer = document.createElement("div");
-                iconContainer.className = "icon-container";
-
-                const iconWrapper = document.createElement("div");
-                iconWrapper.className = "icon-wrapper";
-
-                const svgIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svgIcon.setAttribute("width", "28");
-                svgIcon.setAttribute("height", "28");
-                svgIcon.setAttribute("viewBox", "0 0 24 24");
-                svgIcon.setAttribute("fill", "none");
-                svgIcon.setAttribute("stroke", "#14b8a6");
-                svgIcon.setAttribute("stroke-width", "2");
-                svgIcon.setAttribute("stroke-linecap", "round");
-                svgIcon.setAttribute("stroke-linejoin", "round");
-
-                const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path1.setAttribute("d", "M5.8 11.3 2 22l10.7-3.79");
-                svgIcon.appendChild(path1);
-
-                const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path2.setAttribute("d", "M4 3h.01");
-                svgIcon.appendChild(path2);
-
-                const path3 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path3.setAttribute("d", "M22 8h.01");
-                svgIcon.appendChild(path3);
-
-                const path4 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path4.setAttribute("d", "M15 2h.01");
-                svgIcon.appendChild(path4);
-
-                const path5 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path5.setAttribute("d", "M22 20h.01");
-                svgIcon.appendChild(path5);
-
-                const path6 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path6.setAttribute(
-                    "d",
-                    "m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10",
-                );
-                svgIcon.appendChild(path6);
-
-                const path7 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path7.setAttribute(
-                    "d",
-                    "m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17",
-                );
-                svgIcon.appendChild(path7);
-
-                const path8 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path8.setAttribute(
-                    "d",
-                    "m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7",
-                );
-                svgIcon.appendChild(path8);
-
-                const path9 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path9.setAttribute(
-                    "d",
-                    "M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z",
-                );
-                svgIcon.appendChild(path9);
-
-                iconWrapper.appendChild(svgIcon);
-                iconContainer.appendChild(iconWrapper);
-
-                // Insert the icon at the beginning of the popover
-                popover.wrapper.insertBefore(iconContainer, popover.wrapper.firstChild);
-
-                // Position the popover above the button
-                setTimeout(() => {
-                    const button = document.getElementById("copy-link-button");
-                    if (button) {
-                        const buttonRect = button.getBoundingClientRect();
-                        const popoverRect = popover.wrapper.getBoundingClientRect();
-
-                        popover.wrapper.style.left = `${buttonRect.left + buttonRect.width / 2 - popoverRect.width / 2}px`;
-                        popover.wrapper.style.top = `${buttonRect.top - popoverRect.height - 20}px`;
-                    }
-                }, 0);
-            },
-        });
-
-        return driverObj;
-    };
-
     //TODO: Update to apply asset_info as the list of assets
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
     const { t } = useTranslation();
 
-    const { mutateAsync: setLinkInactive } = useSetLinkInactive();
+    const { mutateAsync: updateLink } = useUpdateLink();
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -255,17 +124,6 @@ export default function DetailPage() {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
     };
-
-    const shareUrl = window.location.href.replace("details/", "");
-    const tokenName = metadata?.name === "CUTE" ? "tCHAT" : metadata?.name;
-    const tokenAmount = linkData?.link?.asset_info[0].amount
-        ? TokenUtilService.getHumanReadableAmountFromMetadata(
-              linkData?.link?.asset_info[0].amount,
-              metadata,
-          )
-        : "";
-    const pageTitle = linkData?.link?.title || "Cashier Link";
-    const pageDescription = `Claim ${tokenAmount} ${tokenName} tokens via this Cashier link!`;
 
     React.useEffect(() => {
         if (!linkId) return;
@@ -292,18 +150,64 @@ export default function DetailPage() {
     }, [linkId, identity]);
 
     const setInactiveLink = async () => {
-        const inactiveLink = await setLinkInactive({ link: linkData!.link });
-        console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
-        const link = await new LinkService(identity).getLink(
-            linkData!.link.id,
-            ACTION_TYPE.WITHDRAW_LINK,
-        );
-        setLinkData(link);
-        setShowEndLinkDrawer(false);
+        try {
+            if (!linkData) throw new Error("Link data is not available");
+            const inactiveLink = await updateLink({
+                linkId: linkData.link.id,
+                linkModel: linkData.link,
+                isContinue: true,
+            });
+            console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
+            const link = await new LinkService(identity).getLink(
+                linkData!.link.id,
+                ACTION_TYPE.WITHDRAW_LINK,
+            );
+            setLinkData(link);
+            setShowEndLinkDrawer(false);
+        } catch (error) {
+            console.error("Error setting link inactive:", error);
+        }
+    };
+
+    const setInactiveEndedLink = async () => {
+        try {
+            if (!linkData) throw new Error("Link data is not available");
+            const inactiveLink = await updateLink({
+                linkId: linkData.link.id,
+                linkModel: linkData.link,
+                isContinue: true,
+            });
+            console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
+            const link = await new LinkService(identity).getLink(
+                linkData!.link.id,
+                ACTION_TYPE.WITHDRAW_LINK,
+            );
+            setLinkData(link);
+            setShowConfirmationDrawer(false);
+        } catch (error) {
+            console.error("Error setting link inactive:", error);
+        }
     };
 
     const handleWithdrawAssets = async () => {
-        await createAction({ linkId: linkData!.link.id });
+        try {
+            const actionResult = await createAction({ linkId: linkData!.link.id });
+            console.log("🚀 ~ handleWithdrawAssets ~ actionResult:", actionResult);
+            setLink(linkData?.link);
+            setAction(actionResult);
+        } catch (error) {
+            console.error("Error creating withdraw action:", error);
+        }
+    };
+
+    const handleCashierError = (error: Error) => {
+        showToast("Error", error.message, "error");
+        setShowConfirmationDrawer(false);
+    };
+
+    const handleActionResult = (actionResult: ActionModel) => {
+        setAction(actionResult);
+        setLinkData(linkData);
     };
 
     return (
@@ -313,32 +217,6 @@ export default function DetailPage() {
                 "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
             )}
         >
-            <Helmet>
-                {/* Primary Meta Tags */}
-                <title>{pageTitle}</title>
-                <meta name="title" content={pageTitle} />
-                <meta name="description" content={pageDescription} />
-
-                {/* Open Graph / Facebook */}
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content={shareUrl} />
-                <meta property="og:title" content={pageTitle} />
-                <meta property="og:description" content={pageDescription} />
-
-                {/* Twitter */}
-                <meta property="twitter:card" content="summary_large_image" />
-                <meta property="twitter:url" content={shareUrl} />
-                <meta property="twitter:title" content={pageTitle} />
-                <meta property="twitter:description" content={pageDescription} />
-            </Helmet>
-
-            {/* {showOverlay && (
-                <CopyLinkOverlay
-                    showOverlay={showOverlay}
-                    setShowOverlay={setShowOverlay}
-                    handleCopyLink={handleCopyLink}
-                />
-            )} */}
             <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
                 <div className="w-full flex flex-grow flex-col">
                     {!linkData ? (
@@ -433,61 +311,6 @@ export default function DetailPage() {
                                 </div>
                             </div>
 
-                            {/* Temporarily comment for grant application */}
-                            {/* <div
-                        id="additional-info-section"
-                        className="flex flex-col my-5 border-2 rounded-xl"
-                    >
-                        <Table className="text-base">
-                            <TableHeader></TableHeader>
-                            <TableBody className="flex flex-col">
-                                <TableRow className="flex justify-around">
-                                    <TableCell>
-                                        <div className="flex">
-                                            <img
-                                                src="/trophyIcon.png"
-                                                alt="trophy-icon"
-                                                className="mr-2"
-                                            />{" "}
-                                            <span>23</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex">
-                                            <img
-                                                src="/mouseClickIcon.png"
-                                                alt="mouseClickIcon"
-                                                className="mr-2"
-                                            />{" "}
-                                            <span>40</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex">
-                                            <img
-                                                src="/eyeIcon.png"
-                                                alt="eye-icon"
-                                                className="mr-2"
-                                            />{" "}
-                                            <span>55</span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow className="flex justify-between">
-                                    <TableCell className="font-medium px-5">
-                                        Claims per day
-                                    </TableCell>
-                                    <TableCell className="text-right px-5">5</TableCell>
-                                </TableRow>
-                                <TableRow className="flex justify-between">
-                                    <TableCell className="font-medium px-5">
-                                        Days since last claim
-                                    </TableCell>
-                                    <TableCell className="text-right px-5">2</TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </div> */}
                             <div className="flex flex-col items-center gap-4 mt-auto">
                                 {linkData?.link?.state == LINK_STATE.ACTIVE && (
                                     <button
@@ -499,7 +322,7 @@ export default function DetailPage() {
                                         End Link
                                     </button>
                                 )}
-                                {linkData?.link?.state == LINK_STATE.ACTIVE ? (
+                                {linkData?.link?.state == LINK_STATE.ACTIVE && (
                                     <Button
                                         id="copy-link-button"
                                         onClick={handleCopyLink}
@@ -508,15 +331,19 @@ export default function DetailPage() {
                                     >
                                         {t("details.copyLink")}
                                     </Button>
-                                ) : (
+                                )}{" "}
+                                {linkData?.link?.state == LINK_STATE.INACTIVE && (
                                     <Button
                                         id="copy-link-button"
                                         disabled={linkIsClaimed}
-                                        onClick={handleWithdrawAssets}
+                                        onClick={() => {
+                                            handleWithdrawAssets();
+                                            setShowConfirmationDrawer(true);
+                                        }}
                                         size="lg"
                                         className="w-full disabled:bg-gray-300"
                                     >
-                                        {linkIsClaimed ? "Ended" : "Withdraw Assets"}
+                                        {t("details.withdrawAssets")}
                                     </Button>
                                 )}
                             </div>
@@ -537,8 +364,18 @@ export default function DetailPage() {
                 open={showEndLinkDrawer}
                 onClose={() => setShowEndLinkDrawer(false)}
                 onDelete={() => {
-                    console.log("End link clicked");
                     setInactiveLink();
+                }}
+            />
+
+            <ConfirmationDrawer
+                open={showConfirmationDrawer}
+                onClose={() => setShowConfirmationDrawer(false)}
+                onInfoClick={() => {}}
+                onActionResult={handleActionResult}
+                onCashierError={handleCashierError}
+                onSuccessContinue={async () => {
+                    setInactiveEndedLink();
                 }}
             />
         </div>

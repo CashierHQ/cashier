@@ -32,7 +32,7 @@ import { create } from "zustand";
 
 // export type LinkModel = TipLinkModel | NftLinkModel | TokenBasketLinkModel | AirdropLinkModel;
 
-export interface CreateLinkStoreData {
+export interface LinkActionStoreData {
     link: LinkDetailModel | undefined;
     action: ActionModel | undefined;
     anonymousWalletAddress: string | undefined;
@@ -45,7 +45,7 @@ export interface CreateLinkStoreData {
     clearStore(): void;
 }
 
-export const useCreateLinkStore = create<CreateLinkStoreData>((set, get) => ({
+export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({
     link: undefined,
     action: undefined,
     anonymousWalletAddress: undefined,

@@ -4,13 +4,7 @@ import LinkService, {
     UpdateActionInputModel,
 } from "@/services/link.service";
 import { AssetInfoModel, LinkDetailModel, State } from "@/services/types/link.service.types";
-import {
-    QueryClient,
-    useMutation,
-    UseMutationResult,
-    useQuery,
-    useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, UseMutationResult, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_STATE, ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { MapLinkToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
@@ -20,8 +14,6 @@ import { useEffect } from "react";
 import { ShowToastFn } from "./useToast";
 import { TFunction } from "i18next";
 import { ActionModel } from "@/services/types/action.service.types";
-import { Identity } from "@dfinity/agent";
-import { PartialIdentity } from "@dfinity/identity";
 import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { SequenceRequest } from "@/services/signerService/icrc112.service";
 
@@ -31,10 +23,10 @@ export interface UpdateLinkParams {
     isContinue: boolean;
 }
 
-export function useUpdateLink(
-    queryClient: QueryClient,
-    identity: Identity | PartialIdentity | undefined,
-): UseMutationResult<LinkDto, Error, UpdateLinkParams, unknown> {
+export function useUpdateLink(): UseMutationResult<LinkDto, Error, UpdateLinkParams, unknown> {
+    const identity = useIdentity();
+    const queryClient = useQueryClient();
+
     const mutation = useMutation({
         mutationFn: (data: UpdateLinkParams) => {
             const linkService = new LinkService(identity);
@@ -174,6 +166,34 @@ export function useSetLinkInactive() {
             const linkDto = await linkService.updateLink(vars.link.id, linkData, true);
 
             console.log("🚀 ~ useSetLinkInactive ~ linkDto:", linkDto);
+
+            return MapLinkToLinkDetailModel(linkDto);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.links.list(identity).queryKey });
+        },
+    });
+
+    return mutation;
+}
+
+export function useSetLinkInactiveEnded() {
+    const identity = useIdentity();
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: async (vars: { link: LinkDetailModel }) => {
+            const linkService = new LinkService(identity);
+
+            const linkData = {
+                ...vars.link,
+            } as LinkDetailModel;
+
+            console.log("🚀 ~ useSetLinkInactiveEnded ~ linkData:", linkData);
+
+            const linkDto = await linkService.updateLink(vars.link.id, linkData, true);
+
+            console.log("🚀 ~ useSetLinkInactiveEnded ~ linkDto:", linkDto);
 
             return MapLinkToLinkDetailModel(linkDto);
         },

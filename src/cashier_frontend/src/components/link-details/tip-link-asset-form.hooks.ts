@@ -23,23 +23,39 @@ export function useTipLinkAssetForm(
     const form = useForm<TipLinkAssetFormSchema>({
         resolver: zodResolver(linkDetailsFormSchema),
         defaultValues: defaultValues,
+        mode: "onChange", // This will validate on change instead of just on submit
     });
 
     const { getToken } = useTokens();
-    const tokenData = getToken(form.getValues("tokenAddress"));
+    const tokenAddress = form.watch("tokenAddress");
     const assetNumber = form.watch("assetNumber");
+    const tokenData = getToken(tokenAddress);
 
     // Validate UI fields separately
     useEffect(() => {
         const values = form.getValues();
         const errors = validateLinkDetails(values, assets);
 
+        // Clear previous errors first
+        form.clearErrors(["tokenAddress", "assetNumber", "amount"]);
+
         // Set errors if any found
         Object.entries(errors).forEach(([field, message]) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             form.setError(field as any, { type: "custom", message });
         });
-    }, [assets, form.watch("tokenAddress"), assetNumber]);
+
+        // Additional balance validation
+        if (tokenData && assetNumber !== null && assetNumber > 0) {
+            const tokenAmount = Number(tokenData.amount) / 10 ** (tokenData.decimals || 8);
+            if (assetNumber > tokenAmount) {
+                form.setError("assetNumber", {
+                    type: "custom",
+                    message: "Insufficient balance",
+                });
+            }
+        }
+    }, [assets, tokenAddress, assetNumber, tokenData, form]);
 
     // update amount after assetNumber change
     useEffect(() => {
