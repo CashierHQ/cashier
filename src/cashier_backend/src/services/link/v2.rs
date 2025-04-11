@@ -13,7 +13,10 @@ use crate::{
     core::link::types::{LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto},
     domains::fee::Fee,
     info,
-    repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
+    repositories::{
+        self, action::ActionRepository, link_action::LinkActionRepository,
+        user_wallet::UserWalletRepository,
+    },
     types::{
         api::{PaginateInput, PaginateResult},
         error::CanisterError,
@@ -29,6 +32,7 @@ pub struct LinkService<E: IcEnvironment + Clone> {
     link_action_repository: LinkActionRepository,
     action_repository: ActionRepository,
     icrc_service: IcrcService,
+    user_wallet_repository: UserWalletRepository,
     ic_env: E,
 }
 
@@ -39,6 +43,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         link_action_repository: LinkActionRepository,
         action_repository: ActionRepository,
         icrc_service: IcrcService,
+        user_wallet_repository: UserWalletRepository,
         ic_env: E,
     ) -> Self {
         Self {
@@ -46,6 +51,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             link_action_repository,
             action_repository,
             icrc_service,
+            user_wallet_repository,
             ic_env,
         }
     }
@@ -56,6 +62,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             link_action_repository: LinkActionRepository::new(),
             action_repository: ActionRepository::new(),
             icrc_service: IcrcService::new(),
+            user_wallet_repository: UserWalletRepository::new(),
             ic_env: E::new(),
         }
     }
@@ -106,6 +113,22 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 intents.push(transfer_fee_intent);
             }
             (LinkType::SendTip, ActionType::Claim) => {
+                // create intent for link asset to user wallet
+                let ts = self.ic_env.time();
+                //TODO: get the intent template from config then map the values
+                let mut intent = Intent::default();
+                let transfer_data = IntentType::default_transfer();
+                intent.r#type = transfer_data;
+                intent.task = IntentTask::TransferLinkToWallet;
+                intent.id = Uuid::new_v4().to_string();
+                intent.state = IntentState::Created;
+                intent.created_at = ts;
+                // same label with transfer asset to link
+                intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+
+                intents.push(intent);
+            }
+            (LinkType::SendTip, ActionType::Withdraw) => {
                 // create intent for link asset to user wallet
                 let ts = self.ic_env.time();
                 //TODO: get the intent template from config then map the values
@@ -1021,8 +1044,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         creator: String,
         input: crate::core::link::types::CreateLinkInput,
     ) -> Result<String, String> {
-        let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
-        let user_wallet = user_wallet_repository
+        let user_wallet = self
+            .user_wallet_repository
             .get(&creator)
             .ok_or_else(|| "User not found".to_string())?;
 
@@ -1066,8 +1089,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         principal: String,
         pagination: PaginateInput,
     ) -> Result<PaginateResult<Link>, String> {
-        let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
-        let user_wallet = user_wallet_repository
+        let user_wallet = self
+            .user_wallet_repository
             .get(&principal)
             .ok_or_else(|| "User not found".to_string())?;
 
@@ -1123,8 +1146,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
     /// Check if caller is the creator of a link
     pub fn is_link_creator(&self, caller: String, link_id: &String) -> bool {
-        let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
-        let user_wallet = match user_wallet_repository.get(&caller) {
+        let user_wallet = match self.user_wallet_repository.get(&caller) {
             Some(u) => u,
             None => {
                 warn!("User not found");
