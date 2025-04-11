@@ -21,12 +21,13 @@ import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
 import { Plus } from "lucide-react";
+import { useConnectToWallet } from "@/hooks/user-hook";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const { user: walletUser, connect } = useAuth();
-
+    const { user: walletUser } = useAuth();
+    const { connectToWallet } = useConnectToWallet();
     const {
         data: linkData,
         isLoading: isLinksLoading,
@@ -178,7 +179,7 @@ export default function HomePage() {
                                 <Button
                                     type="button"
                                     onClick={() => {
-                                        connect();
+                                        connectToWallet();
                                     }}
                                     className="h-11 mt-8 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full"
                                 >
@@ -198,7 +199,7 @@ export default function HomePage() {
                     <Button
                         type="button"
                         onClick={() => {
-                            connect();
+                            connectToWallet();
                         }}
                         className="fixed h-11 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
                     >
