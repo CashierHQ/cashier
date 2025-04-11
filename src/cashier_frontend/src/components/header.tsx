@@ -3,19 +3,20 @@ import React from "react";
 import LoginButton from "./login-button";
 import { Wallet } from "lucide-react";
 import { Button } from "./ui/button";
-import { AiOutlineExperiment } from "react-icons/ai";
 import { SheetTrigger } from "./ui/sheet";
 import { RiMenu2Line } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { useResponsive } from "@/hooks/responsive-hook";
+import { useConnectToWallet } from "@/hooks/user-hook";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface HeaderProps {}
 
 const Header: React.FC<HeaderProps> = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const { connect } = useAuth();
     const responsive = useResponsive();
+    const { connectToWallet } = useConnectToWallet();
 
     if (!user) {
         return (
@@ -30,7 +31,7 @@ const Header: React.FC<HeaderProps> = () => {
                 />
                 <LoginButton
                     onClick={() => {
-                        connect();
+                        connectToWallet();
                     }}
                 >
                     Login

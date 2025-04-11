@@ -9,8 +9,6 @@ export const resetAllStores = () => {
     // Reset each store by calling its clearStore method
     useLinkActionStore.getState().clearStore();
     useButtonStateStore.getState().clearStore();
-
     useSendAssetStore.getState().resetSendAsset();
-
     // Add any future stores here when they are created
 };
