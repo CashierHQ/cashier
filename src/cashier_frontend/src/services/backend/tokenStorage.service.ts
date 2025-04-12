@@ -7,6 +7,7 @@ import {
     UserFiltersInput,
     TokenDto,
     idlFactory,
+    RegistryTokenDto,
 } from "../../../../declarations/token_storage/token_storage.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
@@ -47,7 +48,7 @@ class TokenStorageService {
     /**
      * Lists all tokens in the registry
      */
-    async listRegistryTokens(): Promise<TokenDto[]> {
+    async listRegistryTokens(): Promise<RegistryTokenDto[]> {
         const response = parseResultResponse(await this.actor.list_registry_tokens());
         return response;
     }
@@ -124,13 +125,6 @@ class TokenStorageService {
         ]);
 
         parseResultResponse(await this.actor.update_bulk_balances(input));
-    }
-
-    /**
-     * Gets a specific token by ID
-     */
-    async getToken(tokenId: string): Promise<TokenDto> {
-        return parseResultResponse(await this.actor.get_token(tokenId));
     }
 }
 

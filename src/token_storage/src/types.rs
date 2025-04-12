@@ -88,7 +88,6 @@ pub struct RegistryToken {
     pub name: String,
     pub decimals: u8,
     pub chain: Chain,
-    pub is_default: bool,
 }
 
 impl RegistryToken {
@@ -158,13 +157,24 @@ pub struct RemoveTokenInput {
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct RegisterTokenInput {
+    pub id: String,
     pub chain: String,
     pub ledger_id: Option<LedgerId>,
     pub index_id: Option<IndexId>,
     pub symbol: String,
     pub name: String,
     pub decimals: u8,
-    pub is_default: Option<bool>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct RegistryTokenDto {
+    pub id: String,
+    pub icrc_ledger_id: Option<LedgerId>,
+    pub icrc_index_id: Option<IndexId>,
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub chain: String,
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]

@@ -227,7 +227,6 @@ export function useUserPreferencesQuery(identity: Identity | undefined) {
             const tokenService = new TokenStorageService(identity);
             const preferences = await tokenService.getUserPreference();
 
-            console.log("User preferences:", preferences);
             return mapUserPreferenceToFilters(preferences);
         },
         enabled: !!identity,

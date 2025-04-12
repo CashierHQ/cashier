@@ -8,6 +8,7 @@ import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
@@ -38,6 +39,7 @@ function App() {
             }}
         >
             <QueryClientProvider client={queryClient}>
+                <ReactQueryDevtools initialIsOpen={false} />
                 <AppRouter />
                 <Toaster />
             </QueryClientProvider>
