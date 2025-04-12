@@ -11,7 +11,6 @@ export default function WalletPage() {
     const {
         filteredTokenList: filteredTokens,
         isLoading,
-        // TODO: add skeleton loading for balances
         // isLoadingBalances,
     } = useTokens();
 
