@@ -46,7 +46,7 @@ export class PriceService {
             return priceMap;
         } catch (error) {
             console.error("Error fetching prices:", error);
-            return {};
+            throw new Error("Failed to fetch prices from IC Explorer");
         }
     }
 }

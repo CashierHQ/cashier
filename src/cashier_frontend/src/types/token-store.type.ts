@@ -26,7 +26,6 @@ export const createTokenKey = (token: TokenDto): string => {
 
 // Helper function to map UserPreference to TokenFilters
 export const mapUserPreferenceToFilters = (preference: UserPreference): TokenFilters => {
-    console.log("[mapUserPreferenceToFilters] User preference", preference);
     return {
         hideZeroBalance: preference.hide_zero_balance,
         hideUnknownToken: preference.hide_unknown_token,
