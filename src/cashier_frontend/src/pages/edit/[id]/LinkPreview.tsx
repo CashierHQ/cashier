@@ -4,7 +4,7 @@ import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-pre
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { LINK_TYPE } from "@/services/types/enum";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useCreateAction, useFeePreview, useSetLinkActive } from "@/hooks/linkHooks";
@@ -15,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import PhonePreview from "@/components/ui/phone-preview";
-import { FormLabel } from "@/components/ui/form";
 import { useResponsive } from "@/hooks/responsive-hook";
 
 export interface LinkPreviewProps {
@@ -81,7 +80,6 @@ export default function LinkPreview({
     const renderLinkCard = () => {
         if (!link) return null;
 
-        const label = link.linkType === LINK_TYPE.SEND_TIP ? "Tip" : "Claim";
         const message =
             link.linkType === LINK_TYPE.SEND_TIP
                 ? LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP

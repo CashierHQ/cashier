@@ -17,7 +17,6 @@ import { AddTokenInput } from "../../../declarations/token_storage/token_storage
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import TokenCacheService from "@/services/backend/tokenCache.service";
-import { useEffect } from "react";
 
 // Centralized time constants (in milliseconds)
 const TIME_CONSTANTS = {
@@ -69,6 +68,9 @@ export function useTokenListQuery(identity: Identity | undefined) {
         },
         staleTime: TIME_CONSTANTS.FIVE_MINUTES,
         enabled: !!identity,
+        retry: 3, // Retry failed requests up to 3 times
+        retryDelay: (attemptIndex) =>
+            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
 }
 
@@ -111,6 +113,9 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
         },
         staleTime: TIME_CONSTANTS.THIRTY_MINUTES,
         enabled: !!identity && !!tokens,
+        retry: 3, // Retry failed requests up to 3 times
+        retryDelay: (attemptIndex) =>
+            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
 }
 // Hook 2: Fetch token balances
@@ -158,7 +163,7 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
 
             const tokensWithBalances = await Promise.all(tokenPromises);
 
-            // store the balance map in local storage and backend if changed or time threshold met
+            // Store the balance map in local storage and backend if changed or time threshold met
             new TokenCacheService(identity).cacheTokenBalances(
                 balanceMap,
                 identity.getPrincipal().toString(),
@@ -169,6 +174,9 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
         enabled: !!identity && !!tokens,
         staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
         refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
+        retry: 3, // Retry failed requests up to 3 times
+        retryDelay: (attemptIndex) =>
+            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
 }
 // Add token mutation
@@ -227,7 +235,6 @@ export function useUserPreferencesQuery(identity: Identity | undefined) {
             const tokenService = new TokenStorageService(identity);
             const preferences = await tokenService.getUserPreference();
 
-            console.log("User preferences:", preferences);
             return mapUserPreferenceToFilters(preferences);
         },
         enabled: !!identity,
@@ -257,15 +264,13 @@ export function useUpdateUserFiltersMutation(identity: Identity | undefined) {
 }
 
 export function useTokenPricesQuery() {
-    const queryClient = useQueryClient();
-
-    // Create the base query
-    const query = useQuery({
+    return useQuery({
         queryKey: TOKEN_QUERY_KEYS.prices(),
-        queryFn: async ({ signal }) => {
+        queryFn: async () => {
             try {
                 const prices = await tokenPriceService.getAllPrices();
                 // Return null instead of empty object if no prices are fetched
+                console.log(`[${new Date().toISOString()}] Fetched token prices:`, prices);
                 return Object.keys(prices).length > 0 ? prices : null;
             } catch (error) {
                 console.error("Failed to fetch token prices:", error);
@@ -274,24 +279,8 @@ export function useTokenPricesQuery() {
         },
         staleTime: TIME_CONSTANTS.FIVE_MINUTES,
         refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
-        retry: 3, // Retry failed requests up to 3 times
+        retry: 10, // Retry failed requests up to 10 times
         retryDelay: (attemptIndex) =>
-            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff (30 seconds max)
+            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
-
-    // Add custom retry logic for empty responses (not error responses)
-    useEffect(() => {
-        // If we have no data but the query is successful (empty response)
-        // and not already fetching, trigger a retry
-        if (query.isSuccess && !query.data && !query.isFetching) {
-            const timeoutId = setTimeout(() => {
-                console.log("No price data received, retrying...");
-                queryClient.invalidateQueries({ queryKey: TOKEN_QUERY_KEYS.prices() });
-            }, TIME_CONSTANTS.THREE_SECONDS); // Retry after 3 seconds
-
-            return () => clearTimeout(timeoutId);
-        }
-    }, [query.isSuccess, query.data, query.isFetching]);
-
-    return query;
 }

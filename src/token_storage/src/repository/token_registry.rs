@@ -16,24 +16,21 @@ impl TokenRegistryRepository {
             return Err("Ledger ID is required for IC chain".to_string());
         }
 
-        let token_id = RegistryToken::generate_id(&chain, input.ledger_id.as_ref())?;
-
         let token = RegistryToken {
-            id: token_id.clone(),
+            id: input.id.clone(),
             icrc_ledger_id: input.ledger_id,
             icrc_index_id: input.index_id,
             symbol: input.symbol,
             name: input.name,
             decimals: input.decimals,
             chain,
-            is_default: input.is_default.unwrap_or(false),
         };
 
         TOKEN_REGISTRY_STORE.with_borrow_mut(|store| {
-            store.insert(token_id.clone(), token);
+            store.insert(input.id.clone(), token);
         });
 
-        Ok(token_id)
+        Ok(input.id.clone())
     }
 
     pub fn add_bulk_tokens(&self, tokens: Vec<RegisterTokenInput>) -> Result<Vec<TokenId>, String> {
@@ -56,13 +53,7 @@ impl TokenRegistryRepository {
     }
 
     pub fn list_default_tokens(&self) -> Vec<RegistryToken> {
-        TOKEN_REGISTRY_STORE.with_borrow(|store| {
-            store
-                .iter()
-                .filter(|(_, token)| token.is_default)
-                .map(|(_, token)| token)
-                .collect()
-        })
+        TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|(_, token)| token).collect())
     }
 
     pub fn update_token(
