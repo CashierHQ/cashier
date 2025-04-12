@@ -1,5 +1,6 @@
 // File: src/token_storage/src/repository/token.rs
 use super::{token_registry::TokenRegistryRepository, user_preference, USER_TOKEN_STORE};
+use crate::constant::default_tokens::get_default_tokens;
 use crate::types::{Candid, TokenDto, TokenId};
 
 pub struct TokenRepository {}
@@ -107,10 +108,12 @@ impl TokenRepository {
         let current_tokens = self.list_token_ids(user_id);
         if current_tokens.is_empty() {
             let registry = TokenRegistryRepository::new();
-            let default_tokens = registry.list_default_tokens();
 
-            for token in default_tokens {
-                let _ = self.add_token(user_id.clone(), token.id);
+            // Add only the first few tokens from the default list
+            let default_tokens_to_add = get_default_tokens();
+
+            for token in default_tokens_to_add {
+                let _ = self.add_token(user_id.clone(), token.id.clone());
             }
         }
     }
