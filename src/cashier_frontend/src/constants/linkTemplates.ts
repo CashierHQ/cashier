@@ -1,5 +1,6 @@
 import { TEMPLATE } from "@/types/template";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "./message";
+import { LINK_TYPE } from "@/services/types/enum";
 
 export const LINK_TEMPLATES: TEMPLATE[] = [
     {
@@ -8,6 +9,7 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         src: "/icpLogo.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
         title: "Tipping crypto",
+        linkType: LINK_TYPE.SEND_TIP,
     },
     {
         label: "Claim",
@@ -16,6 +18,7 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
         title: "Airdrop",
         isComingSoon: true,
+        linkType: LINK_TYPE.AIRDROP,
     },
     {
         label: "Claim",
@@ -24,5 +27,6 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
         title: "Token basket",
         isComingSoon: true,
+        linkType: LINK_TYPE.TOKEN_BASKET,
     },
 ];

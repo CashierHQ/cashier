@@ -16,11 +16,12 @@ import { useTranslation } from "react-i18next";
 import { AssetFormSkeleton } from "./asset-form-skeleton";
 import { SelectedAssetButtonInfo } from "./selected-asset-button-info";
 import { UsdSwitch } from "./usd-switch";
-import { TipLinkAssetFormSchema, useFormActions } from "./tip-link-asset-form.hooks";
+import { TipLinkAssetFormSchema } from "./tip-link-asset-form.hooks";
 import { useTipLinkAssetForm } from "./tip-link-asset-form.hooks";
 import { AmountActionButtons } from "./amount-action-buttons";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useTokens } from "@/hooks/useTokens";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 type TipLinkAssetFormProps = {
     onSubmit: SubmitHandler<TipLinkAssetFormSchema>;
     isButtonDisabled?: boolean;
@@ -35,46 +36,43 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
 
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [isUsd, setIsUsd] = useState<boolean>(false);
-    const [selectedTokenAddress, setSelectedTokenAddress] = useState<string | undefined>(
-        link?.asset_info[0]?.address,
-    );
 
     const { filteredTokenList, isLoading, getToken, isLoadingPrices, getTokenPrice } = useTokens();
 
-    // Get existing token from link state or maintain the selected one
-    const token = useMemo(() => {
-        console.log("useMemo ");
-        // First priority: currently selected token address (from state)
-        if (selectedTokenAddress) {
-            const currentToken = getToken(selectedTokenAddress);
-            if (currentToken) return currentToken;
-        }
-
-        // Second priority: link asset info
-        if (link?.asset_info[0]?.address) {
-            return getToken(link.asset_info[0].address);
-        }
-
-        // Last resort: first token in the list
-        return filteredTokenList && filteredTokenList.length > 0 ? filteredTokenList[0] : null;
-    }, [filteredTokenList]);
-
     const form = useTipLinkAssetForm(filteredTokenList ?? [], {
-        tokenAddress: token?.address,
+        tokenAddress: undefined,
         assetNumber: 0,
         usdNumber: null,
         amount: BigInt(0),
     });
 
-    const { setUsdAmount, setTokenAmount, setTokenAddress } = useFormActions(form, isUsd);
+    const [token, setToken] = useState<FungibleToken | undefined>(undefined);
 
-    // Update the selected token address when it changes in the form
     useEffect(() => {
-        const formTokenAddress = form.getValues("tokenAddress");
-        if (formTokenAddress && formTokenAddress !== selectedTokenAddress) {
-            setSelectedTokenAddress(formTokenAddress);
+        if (link?.asset_info[0]?.address) {
+            setToken(getToken(link.asset_info[0].address));
+        } else {
+            console.log("🚀 ~ useEffect ~ link:", link);
+            console.log("Updating with values: ", {
+                tokenAddress: filteredTokenList?.[0]?.address,
+                assetNumber: form.getValues("assetNumber"),
+                usdNumber: form.getValues("usdNumber"),
+                amount: form.getValues("amount"),
+            });
+            setToken(filteredTokenList?.[0]);
         }
-    }, [form, selectedTokenAddress]);
+    }, []);
+
+    useEffect(() => {
+        console.log("useEffect link: ", link);
+    }, [link]);
+    // Handle initial token selection and updates
+    useEffect(() => {
+        if (!token?.address) return;
+
+        form.setValue("tokenAddress", token.address);
+        console.log("Setting token address: ", token.address);
+    }, [token, form]);
 
     const tokenUsdPrice = getTokenPrice(token?.address || "");
     const canConvert = tokenUsdPrice !== undefined;
@@ -86,19 +84,12 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
         }
     }, [canConvert, isUsd]);
 
-    // Only set token address when token changes, don't touch the token amount
-    useEffect(() => {
-        if (token) {
-            setTokenAddress(token.address);
-        }
-    }, [token, setTokenAddress]);
-
     // Function to create preset buttons based on the current mode
     const getPresetButtons = () => {
         if (isUsd && canConvert) {
             return USD_AMOUNT_PRESETS.map((amount) => ({
                 content: `${amount} USD`,
-                action: () => setUsdAmount(amount),
+                action: () => form.setValue("usdNumber", amount),
             }));
         } else {
             return PERCENTAGE_AMOUNT_PRESETS.map((percentage) => {
@@ -111,9 +102,9 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                     content: `${percentage} %`,
                     action: () => {
                         if (availableAmount === undefined) {
-                            setTokenAmount(0);
+                            form.setValue("assetNumber", 0);
                         } else {
-                            setTokenAmount(availableAmount * factor);
+                            form.setValue("assetNumber", availableAmount * factor);
                         }
                     },
                 };
@@ -124,17 +115,18 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
     const handleAmountInputChange = (event: ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         if (isUsd) {
-            setUsdAmount(value);
+            form.setValue("usdNumber", parseFloat(value));
         } else {
-            setTokenAmount(value);
+            form.setValue("assetNumber", parseFloat(value));
         }
     };
 
     const handleSetTokenAddress = (address: string) => {
         // Only update if address is different to prevent unnecessary resets
         if (address !== form.getValues("tokenAddress")) {
-            setTokenAddress(address);
-            setSelectedTokenAddress(address);
+            console.log("Setting token address: ", address);
+            setToken(getToken(address));
+            form.setValue("tokenAddress", address);
         }
         setShowAssetDrawer(false);
     };

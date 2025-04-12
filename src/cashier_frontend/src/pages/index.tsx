@@ -22,10 +22,12 @@ import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
 import { Plus } from "lucide-react";
 import { useConnectToWallet } from "@/hooks/user-hook";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
+    const linkCreationFormStore = useLinkCreationFormStore();
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
     const {
@@ -51,23 +53,24 @@ export default function HomePage() {
     const { updateTokenInit } = useTokens();
 
     const handleCreateLink = async () => {
-        const linkList = linkData ? Object.values(linkData).flat() : [];
-        const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
-        if (newLink) {
-            navigate(`/edit/${newLink.id}`);
-        } else {
-            try {
-                setDisableCreateButton(true);
-                showToast(t("common.creating"), t("common.creatingLink"), "default");
-                const response = await new LinkService(identity).createLink({
-                    link_type: LINK_TYPE.SEND_TIP,
-                });
-                navigate(`/edit/${response}`);
-            } catch {
-                showToast(t("common.error"), t("common.commonErrorMessage"), "error");
-            } finally {
-                setDisableCreateButton(true);
-            }
+        try {
+            setDisableCreateButton(true);
+            showToast(t("common.creating"), t("common.creatingLink"), "default");
+            const linkId = await new LinkService(identity).createLink({
+                link_type: LINK_TYPE.SEND_TIP,
+            });
+            linkCreationFormStore.addUserInput({
+                linkId: linkId,
+                state: LINK_STATE.CHOOSE_TEMPLATE,
+                title: "",
+                linkType: LINK_TYPE.SEND_TIP,
+                assets: [],
+            });
+            navigate(`/edit/${linkId}`);
+        } catch {
+            showToast(t("common.error"), t("common.commonErrorMessage"), "error");
+        } finally {
+            setDisableCreateButton(false);
         }
     };
 
