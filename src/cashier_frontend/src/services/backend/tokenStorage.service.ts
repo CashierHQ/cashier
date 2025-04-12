@@ -41,7 +41,6 @@ class TokenStorageService {
      */
     async listTokens(): Promise<TokenDto[]> {
         const response = parseResultResponse(await this.actor.list_tokens());
-        console.log("listTokens response:", response);
         return response;
     }
 
