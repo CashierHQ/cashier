@@ -25,6 +25,7 @@ export function useTokens() {
 
     // Get Zustand store actions
     const {
+        rawTokenList,
         setRawTokenList,
         setFilters,
         setIsLoading,
@@ -91,7 +92,6 @@ export function useTokens() {
         applyFilters();
         await tokenMetadataQuery.refetch();
         await tokenBalancesQuery.refetch();
-        await tokenPricesQuery.refetch(); // Also refresh prices
     };
 
     const updateToken = async () => {
@@ -100,7 +100,6 @@ export function useTokens() {
         await userPreferencesQuery.refetch();
         applyFilters();
         await tokenBalancesQuery.refetch();
-        await tokenPricesQuery.refetch(); // Also refresh prices
     };
 
     // TODO: finish this
@@ -115,20 +114,16 @@ export function useTokens() {
 
     // Enrich tokens with balances, metadata, and prices
     useEffect(() => {
-        // Update loading states
-        setIsLoading(tokenListQuery.isLoading || userPreferencesQuery.isLoading);
-
-        setIsLoadingBalances(tokenBalancesQuery.isLoading || tokenBalancesQuery.isFetching);
-
-        setIsLoadingPrices(tokenPricesQuery.isLoading || tokenPricesQuery.isFetching);
-
         // Only process data when tokenList is available
         if (!tokenListQuery.data) return;
 
         // Get the raw token list
-        const rawTokens: FungibleToken[] = tokenListQuery.data.map((token: TokenModel) => {
-            return mapTokenModelToFungibleToken(token);
-        });
+        const rawTokens: FungibleToken[] =
+            rawTokenList.length > 0
+                ? rawTokenList
+                : tokenListQuery.data.map((token: TokenModel) => {
+                      return mapTokenModelToFungibleToken(token);
+                  });
 
         // Create an enriched token list by merging all data sources
         const enrichedTokens = rawTokens.map((token) => {
@@ -171,31 +166,34 @@ export function useTokens() {
                 }
             }
 
-            applyFilters();
+            console.log("enrichedToken", enrichedToken);
+
             return enrichedToken;
         });
 
         // Update the token store with enriched tokens
         setRawTokenList(enrichedTokens);
+        applyFilters();
 
         if (userPreferencesQuery.data) {
             setFilters(userPreferencesQuery.data);
         }
-    }, [
-        identity,
-        tokenListQuery.data,
-        tokenListQuery.isLoading,
-        userPreferencesQuery.isLoading,
-        userPreferencesQuery.data,
-        tokenBalancesQuery.data,
-        tokenBalancesQuery.isLoading,
-        tokenBalancesQuery.isFetching,
-        tokenMetadataQuery.data,
-        tokenMetadataQuery.isLoading,
-        tokenMetadataQuery.isFetching,
-        tokenPricesQuery.data,
-        tokenPricesQuery.isLoading,
-    ]);
+    }, [identity, tokenBalancesQuery.data, tokenMetadataQuery.data, tokenPricesQuery.data]);
+
+    // Separate useEffect for token list loading state
+    useEffect(() => {
+        setIsLoading(tokenListQuery.isLoading || userPreferencesQuery.isLoading);
+    }, [tokenListQuery.isLoading, userPreferencesQuery.isLoading]);
+
+    // Separate useEffect for token balances loading state
+    useEffect(() => {
+        setIsLoadingBalances(tokenBalancesQuery.isLoading || tokenBalancesQuery.isFetching);
+    }, [tokenBalancesQuery.isLoading, tokenBalancesQuery.isFetching]);
+
+    // Separate useEffect for token prices loading state
+    useEffect(() => {
+        setIsLoadingPrices(tokenPricesQuery.isLoading || tokenPricesQuery.isFetching);
+    }, [tokenPricesQuery.isLoading, tokenPricesQuery.isFetching]);
 
     // Update operation functions in Zustand
     useEffect(() => {
