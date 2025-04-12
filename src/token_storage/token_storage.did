@@ -5,19 +5,28 @@ type AddTokenInput = record {
 };
 type Chain = variant { IC };
 type RegisterTokenInput = record {
+  id : text;
   decimals : nat8;
   chain : text;
   name : text;
   ledger_id : opt principal;
-  is_default : opt bool;
   index_id : opt principal;
+  symbol : text;
+};
+type RegistryTokenDto = record {
+  id : text;
+  decimals : nat8;
+  chain : text;
+  name : text;
+  icrc_ledger_id : opt principal;
+  icrc_index_id : opt principal;
   symbol : text;
 };
 type RemoveTokenInput = record { token_id : text };
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : vec TokenDto; Err : text };
-type Result_2 = variant { Ok : TokenDto; Err : text };
-type Result_3 = variant { Ok : UserPreference; Err : text };
+type Result_2 = variant { Ok : UserPreference; Err : text };
+type Result_3 = variant { Ok : vec RegistryTokenDto; Err : text };
 type Result_4 = variant { Ok : text; Err : text };
 type TokenDto = record {
   id : text;
@@ -45,11 +54,10 @@ service : {
   add_token : (AddTokenInput) -> (Result);
   batch_toggle_token_visibility : (vec record { text; bool }) -> (Result);
   default_list_tokens : () -> (Result_1) query;
-  get_token : (text) -> (Result_2) query;
-  get_user_preference : () -> (Result_3) query;
+  get_user_preference : () -> (Result_2) query;
   initialize_registry : () -> (Result);
   initialize_user_tokens : () -> (Result);
-  list_registry_tokens : () -> (Result_1) query;
+  list_registry_tokens : () -> (Result_3) query;
   list_tokens : () -> (Result_1) query;
   query_user_token : (text) -> (Result_1);
   register_token : (RegisterTokenInput) -> (Result_4);

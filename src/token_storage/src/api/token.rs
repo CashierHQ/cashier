@@ -9,19 +9,19 @@ use crate::{
         user_preference::UserPreferenceRepository, user_token::TokenRepository,
     },
     types::{
-        AddTokenInput, Chain, RegisterTokenInput, RemoveTokenInput, TokenDto, TokenId,
-        UserFiltersInput, UserPreference,
+        AddTokenInput, Chain, RegisterTokenInput, RegistryToken, RegistryTokenDto,
+        RemoveTokenInput, TokenDto, TokenId, UserFiltersInput, UserPreference,
     },
 };
 
 #[query]
-pub fn list_registry_tokens() -> Result<Vec<TokenDto>, String> {
+pub fn list_registry_tokens() -> Result<Vec<RegistryTokenDto>, String> {
     let registry = TokenRegistryRepository::new();
     let tokens = registry.list_tokens();
 
     let result = tokens
         .into_iter()
-        .map(|token| TokenDto {
+        .map(|token| RegistryTokenDto {
             id: token.id,
             icrc_ledger_id: token.icrc_ledger_id,
             icrc_index_id: token.icrc_index_id,
@@ -29,8 +29,6 @@ pub fn list_registry_tokens() -> Result<Vec<TokenDto>, String> {
             name: token.name,
             decimals: token.decimals,
             chain: token.chain.to_str(),
-            enabled: token.is_default,
-            balance: None,
         })
         .collect();
 
@@ -96,15 +94,17 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
             decimals
         );
 
+        let chain = Chain::from_str(&input.chain)?;
+        let token_id = RegistryToken::generate_id(&chain, Some(&ledger_pid))?;
         registry
             .register_token(RegisterTokenInput {
+                id: token_id,
                 chain: input.chain,
                 ledger_id: Some(ledger_pid),
                 index_id: input.index_id,
                 symbol,
                 name,
                 decimals,
-                is_default: Some(false),
             })
             .map_err(|e| format!("Failed to register token: {}", e))?;
     }
@@ -362,28 +362,6 @@ pub fn initialize_user_tokens() -> Result<(), String> {
     user_preference.add(caller.to_text(), default_perference);
 
     Ok(())
-}
-
-// Helper to get a single token
-#[query]
-pub fn get_token(token_id: String) -> Result<TokenDto, String> {
-    let registry = TokenRegistryRepository::new();
-
-    if let Some(token) = registry.get_token(&token_id) {
-        Ok(TokenDto {
-            id: token.id,
-            icrc_ledger_id: token.icrc_ledger_id,
-            icrc_index_id: token.icrc_index_id,
-            symbol: token.symbol,
-            name: token.name,
-            decimals: token.decimals,
-            chain: token.chain.to_str(),
-            enabled: token.is_default,
-            balance: None,
-        })
-    } else {
-        Err(format!("Token with ID {} not found", token_id))
-    }
 }
 
 ic_cdk::export_candid!();
