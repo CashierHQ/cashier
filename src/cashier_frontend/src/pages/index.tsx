@@ -241,12 +241,16 @@ export default function HomePage() {
                                         </button>
                                     </div>
                                 )}
-                                <div className="flex h-full flex-col px-4 w-full">
+                                <div
+                                    className={`flex flex-col px-4 w-full ${
+                                        showGuide ? "h-[calc(100dvh-280px)]" : "h-full"
+                                    }`}
+                                >
                                     <h2 className="text-base font-semibold mt-7">
                                         Links created by me
                                     </h2>
                                     <div
-                                        className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-[85%]" : "h-full"}`}
+                                        className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-[85%]" : "h-[full]"}`}
                                     >
                                         {isLoading
                                             ? Array.from({ length: 5 }).map((_, index) => (
