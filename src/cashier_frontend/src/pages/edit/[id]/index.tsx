@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
 import { useNavigate, useParams } from "react-router-dom";
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -33,6 +34,8 @@ export default function LinkPage() {
     const { linkId } = useParams();
     const { toastData, showToast, hideToast } = useToast();
 
+    const linkCreationFormStore = useLinkCreationFormStore();
+
     const { link, setLink, action, setAction } = useLinkActionStore();
 
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
@@ -40,6 +43,10 @@ export default function LinkPage() {
         ACTION_TYPE.CREATE_LINK,
     );
     const { mutateAsync: updateLink } = useUpdateLinkSelfContained();
+
+    const currentLink = useMemo(() => {
+        return linkCreationFormStore.userInputs.find((input) => input.linkId === linkId);
+    }, [linkCreationFormStore.userInputs, linkId]);
 
     useEffect(() => {
         if (linkData) {
@@ -123,7 +130,7 @@ export default function LinkPage() {
             )}
         >
             <div className="w-11/12 h-full flex flex-col relative overflow-hidden">
-                <MultiStepForm initialStep={getInitialStep(linkData?.link?.state)}>
+                <MultiStepForm initialStep={getInitialStep(currentLink?.state)}>
                     <MultiStepForm.Header onClickBack={handleBackstep} />
 
                     <MultiStepForm.Items>

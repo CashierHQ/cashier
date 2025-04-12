@@ -22,7 +22,7 @@ import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
 import { Plus } from "lucide-react";
 import { useConnectToWallet } from "@/hooks/user-hook";
-import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { useLinkCreationFormStore, UserInputAsset } from "@/stores/linkCreationFormStore";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -86,6 +86,47 @@ export default function HomePage() {
             setShowGuide(true);
         }
     }, []);
+
+    useEffect(() => {
+        const draftLinkStates = [
+            LINK_STATE.ADD_ASSET,
+            LINK_STATE.CHOOSE_TEMPLATE,
+            LINK_STATE.CREATE_LINK,
+        ];
+        if (linkData) {
+            Object.entries(linkData).forEach(([date, links]) => {
+                links.forEach((link) => {
+                    if (draftLinkStates.includes(link.state as LINK_STATE)) {
+                        if (
+                            !linkCreationFormStore.userInputs.find(
+                                (storeLink) => storeLink.linkId === link.id,
+                            )
+                        ) {
+                            console.log("Link: ", link);
+
+                            // Convert BigInt values to strings before adding to store
+                            // Store kept crashing otherwise if using BigInt, maybe
+                            const processedAssets = link.asset_info
+                                ? link.asset_info.map((asset: any) => ({
+                                      ...asset,
+                                      amount: asset.amount,
+                                      totalClaim: asset.totalClaim,
+                                  }))
+                                : [];
+
+                            linkCreationFormStore.addUserInput({
+                                linkId: link.id,
+                                state: link.state as LINK_STATE,
+                                title: link.title,
+                                linkType: link.linkType as LINK_TYPE,
+                                assets: processedAssets,
+                            });
+                        }
+                    }
+                });
+            });
+        }
+    }, [linkData]);
 
     useEffect(() => {
         if (identity) {
@@ -217,13 +258,13 @@ export default function HomePage() {
         } else {
             return (
                 <div
-                    className={`w-screen flexs justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
+                    className={`w-screen flex justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
                 >
                     <SheetWrapper>
                         <div className="flex w-full flex-col h-full">
                             <Header />
                             <div
-                                className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
+                                className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 pt-9 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
                             >
                                 {showGuide && (
                                     <div className="mt-8 px-4">
@@ -246,11 +287,15 @@ export default function HomePage() {
                                         showGuide ? "h-[calc(100dvh-280px)]" : "h-full"
                                     }`}
                                 >
-                                    <h2 className="text-base font-semibold mt-7">
+                                    <h2
+                                        className={`text-base font-semibold ${
+                                            showGuide || !responsive.isSmallDevice ? "mt-7" : "mt-0"
+                                        }`}
+                                    >
                                         Links created by me
                                     </h2>
                                     <div
-                                        className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-[85%]" : "h-[full]"}`}
+                                        className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-full" : "h-full"}`}
                                     >
                                         {isLoading
                                             ? Array.from({ length: 5 }).map((_, index) => (
@@ -287,6 +332,7 @@ export default function HomePage() {
                             title={toastData?.title ?? ""}
                             description={toastData?.description ?? ""}
                             variant={toastData?.variant ?? "default"}
+                            duration={2000}
                         />
                     </SheetWrapper>
                 </div>

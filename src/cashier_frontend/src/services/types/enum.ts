@@ -65,7 +65,7 @@ export function getLinkLabel(state: LINK_STATE): string {
         case LINK_STATE.INACTIVE:
             return "Inactive";
         case LINK_STATE.INACTIVE_ENDED:
-            return "Inactive ended";
+            return "Inactive";
         default:
             return "Unknown state";
     }

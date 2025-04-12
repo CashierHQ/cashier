@@ -15,7 +15,7 @@ import {
 } from "@/components/link-template/link-template.hooks";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
-import { LINK_TYPE } from "@/services/types/enum";
+import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { useSetLinkTemplate } from "@/hooks/linkHooks";
 import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
@@ -29,6 +29,8 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
 import { Message } from "@/components/ui/message";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import useToast from "@/hooks/useToast";
+import TransactionToast from "@/components/transaction/transaction-toast";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     return linkType === LINK_TYPE.SEND_TIP;
 }
@@ -44,6 +46,8 @@ export default function LinkTemplate({
     const { nextStep } = useMultiStepFormContext();
     const linkCreationFormStore = useLinkCreationFormStore();
 
+    const { toastData, showToast, hideToast } = useToast();
+
     const responsive = useResponsive();
 
     const { link, setLink, updateLink } = useLinkActionStore();
@@ -53,22 +57,38 @@ export default function LinkTemplate({
     const carousel = useCarousel();
 
     const handleSubmit = async () => {
-        // setButtonDisabled(true);
-        // if (isLinkTypeSupported(data.linkType as LINK_TYPE)) {
-        //     const updatedLink = await setLinkTemplate({
-        //         link: link!,
-        //         patch: {
-        //             title: data.title,
-        //             description: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
-        //             linkType: data.linkType as LINK_TYPE,
-        //         },
-        //     });
-        //     setLink(updatedLink);
-        //     nextStep();
-        // } else {
-        //     onSelectUnsupportedLinkType();
-        // }
-        // setButtonDisabled(false);
+        const currentLink = linkCreationFormStore.userInputs.find(
+            (input) => input.linkId === link?.id,
+        );
+
+        if (!currentLink?.title) {
+            showToast("Error", "Please enter a title", "error");
+            return;
+        }
+
+        setButtonDisabled(true);
+        if (isLinkTypeSupported(currentLink?.linkType as LINK_TYPE)) {
+            const updatedLink = await setLinkTemplate({
+                link: link!,
+                patch: {
+                    title: currentLink?.title ?? "",
+                    description: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
+                    linkType: currentLink?.linkType as LINK_TYPE,
+                },
+            });
+            setLink(updatedLink);
+
+            linkCreationFormStore.updateUserInput(
+                linkCreationFormStore.userInputs.findIndex((input) => input.linkId === link?.id),
+                {
+                    state: LINK_STATE.ADD_ASSET,
+                },
+            );
+            nextStep();
+        } else {
+            onSelectUnsupportedLinkType();
+        }
+        setButtonDisabled(false);
     };
 
     useEffect(() => {
@@ -192,7 +212,7 @@ export default function LinkTemplate({
 
             <div className="w-full flex-shrink-0 mb-4 flex justify-center disabled:opacity-50 mt-auto">
                 <FixedBottomButton
-                    type="submit"
+                    onClick={handleSubmit}
                     variant="default"
                     size="lg"
                     className="w-[95%] max-w-[350px]"
@@ -201,6 +221,14 @@ export default function LinkTemplate({
                     {carousel.current === 0 ? t("continue") : "Coming Soon"}
                 </FixedBottomButton>
             </div>
+
+            <TransactionToast
+                open={toastData?.open ?? false}
+                onOpenChange={hideToast}
+                title={toastData?.title ?? ""}
+                description={toastData?.description ?? ""}
+                variant={toastData?.variant ?? "default"}
+            />
         </div>
     );
 }

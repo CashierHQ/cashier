@@ -2,14 +2,15 @@ import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
-interface UserInputAsset {
+export interface UserInputAsset {
     address: string;
     amount: bigint;
+    totalClaim: bigint;
     usdEquivalent: number;
     usdConversionRate: number;
 }
 
-interface UserInputItem {
+export interface UserInputItem {
     linkId: string;
     state: LINK_STATE;
     title: string;
@@ -26,45 +27,43 @@ interface LinkCreationFormState {
     clearStore: () => void;
 }
 
-export const useLinkCreationFormStore = create<LinkCreationFormState>()(
-    devtools((set) => ({
-        userInputs: [],
+export const useLinkCreationFormStore = create<LinkCreationFormState>()((set) => ({
+    userInputs: [],
 
-        addUserInput: (input) =>
-            set((state) => ({
-                userInputs: [
-                    ...state.userInputs,
-                    {
-                        linkId: input.linkId,
-                        state: input.state,
-                        title: input.title || "",
-                        linkType: input.linkType || "",
-                        assets: input.assets || [],
-                    },
-                ],
-            })),
+    addUserInput: (input) =>
+        set((state) => ({
+            userInputs: [
+                ...state.userInputs,
+                {
+                    linkId: input.linkId,
+                    state: input.state,
+                    title: input.title || "",
+                    linkType: input.linkType || "",
+                    assets: input.assets || [],
+                },
+            ],
+        })),
 
-        updateUserInput: (index, input) =>
-            set((state) => {
-                const newUserInput = [...state.userInputs];
-                if (index >= 0 && index < newUserInput.length) {
-                    newUserInput[index] = { ...newUserInput[index], ...input };
-                }
-                return { userInputs: newUserInput };
-            }),
+    updateUserInput: (index, input) =>
+        set((state) => {
+            const newUserInput = [...state.userInputs];
+            if (index >= 0 && index < newUserInput.length) {
+                newUserInput[index] = { ...newUserInput[index], ...input };
+            }
+            return { userInputs: newUserInput };
+        }),
 
-        removeUserInput: (index) =>
-            set((state) => {
-                const newUserInput = [...state.userInputs];
-                if (index >= 0 && index < newUserInput.length) {
-                    newUserInput.splice(index, 1);
-                }
-                return { userInputs: newUserInput };
-            }),
+    removeUserInput: (index) =>
+        set((state) => {
+            const newUserInput = [...state.userInputs];
+            if (index >= 0 && index < newUserInput.length) {
+                newUserInput.splice(index, 1);
+            }
+            return { userInputs: newUserInput };
+        }),
 
-        clearStore: () =>
-            set({
-                userInputs: [],
-            }),
-    })),
-);
+    clearStore: () =>
+        set({
+            userInputs: [],
+        }),
+}));

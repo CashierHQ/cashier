@@ -12,7 +12,7 @@ interface AmountActionButtons {
 
 export function AmountActionButtons({ data }: AmountActionButtons) {
     return (
-        <div className="flex justify-between mx-auto pt-1">
+        <div className="flex justify-between w-full mx-auto pt-1">
             {data.map(({ content, action }, index) => (
                 <Button
                     key={index}
