@@ -166,8 +166,6 @@ export function useTokens() {
                 }
             }
 
-            console.log("enrichedToken", enrichedToken);
-
             return enrichedToken;
         });
 
