@@ -1,18 +1,6 @@
 import { Input } from "@/components/ui/input";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
-import {
-    useBindFormAndCarousel,
-    useCarousel,
-    useLinkTemplateForm,
-} from "@/components/link-template/link-template.hooks";
+import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
@@ -21,13 +9,12 @@ import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useButtonState } from "@/hooks/useButtonState";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
-import { useMemo, useEffect } from "react";
+import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
-import { Message } from "@/components/ui/message";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "@/components/transaction/transaction-toast";
@@ -44,22 +31,20 @@ export default function LinkTemplate({
 }: LinkTemplateProps) {
     const { t } = useTranslation();
     const { nextStep } = useMultiStepFormContext();
-    const linkCreationFormStore = useLinkCreationFormStore();
+    const { updateUserInput, getUserInput, userInputs } = useLinkCreationFormStore();
 
     const { toastData, showToast, hideToast } = useToast();
 
     const responsive = useResponsive();
 
-    const { link, setLink, updateLink } = useLinkActionStore();
+    const { link, setLink } = useLinkActionStore();
     const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
     const { isButtonDisabled, setButtonDisabled } = useButtonState();
 
     const carousel = useCarousel();
 
     const handleSubmit = async () => {
-        const currentLink = linkCreationFormStore.userInputs.find(
-            (input) => input.linkId === link?.id,
-        );
+        const currentLink = link ? getUserInput(link.id) : undefined;
 
         if (!currentLink?.title) {
             showToast("Error", "Please enter a title", "error");
@@ -78,8 +63,8 @@ export default function LinkTemplate({
             });
             setLink(updatedLink);
 
-            linkCreationFormStore.updateUserInput(
-                linkCreationFormStore.userInputs.findIndex((input) => input.linkId === link?.id),
+            updateUserInput(
+                link!.id, // Ensure link.id is not undefined
                 {
                     state: LINK_STATE.ADD_ASSET,
                 },
@@ -94,13 +79,16 @@ export default function LinkTemplate({
     useEffect(() => {
         const selectedTemplate = LINK_TEMPLATES[carousel.current];
         console.log(selectedTemplate);
-        linkCreationFormStore.updateUserInput(
-            linkCreationFormStore.userInputs.findIndex((input) => input.linkId === link?.id),
-            {
+        if (link?.id) {
+            updateUserInput(link.id, {
                 linkType: selectedTemplate.linkType,
-            },
-        );
+            });
+        }
     }, [carousel.current]);
+
+    if (!link) {
+        return null;
+    }
 
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
@@ -110,20 +98,11 @@ export default function LinkTemplate({
                         <Label>{t("create.linkName")}</Label>
                     </div>
                     <Input
-                        value={
-                            linkCreationFormStore.userInputs.find(
-                                (input) => input.linkId === link?.id,
-                            )?.title
-                        }
+                        value={userInputs.get(link.id)?.title}
                         onChange={(e) => {
-                            linkCreationFormStore.updateUserInput(
-                                linkCreationFormStore.userInputs.findIndex(
-                                    (input) => input.linkId === link?.id,
-                                ),
-                                {
-                                    title: e.target.value,
-                                },
-                            );
+                            updateUserInput(link.id, {
+                                title: e.target.value,
+                            });
                         }}
                         className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                         placeholder={t("create.linkNamePlaceholder")}

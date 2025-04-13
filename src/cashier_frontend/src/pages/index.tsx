@@ -22,12 +22,12 @@ import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
 import { Plus } from "lucide-react";
 import { useConnectToWallet } from "@/hooks/user-hook";
-import { useLinkCreationFormStore, UserInputAsset } from "@/stores/linkCreationFormStore";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
-    const linkCreationFormStore = useLinkCreationFormStore();
+    const { userInputs, addUserInput } = useLinkCreationFormStore();
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
     const {
@@ -59,7 +59,7 @@ export default function HomePage() {
             const linkId = await new LinkService(identity).createLink({
                 link_type: LINK_TYPE.SEND_TIP,
             });
-            linkCreationFormStore.addUserInput({
+            addUserInput({
                 linkId: linkId,
                 state: LINK_STATE.CHOOSE_TEMPLATE,
                 title: "",
@@ -94,27 +94,25 @@ export default function HomePage() {
             LINK_STATE.CREATE_LINK,
         ];
         if (linkData) {
-            Object.entries(linkData).forEach(([date, links]) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            Object.entries(linkData).forEach(([_date, links]) => {
                 links.forEach((link) => {
                     if (draftLinkStates.includes(link.state as LINK_STATE)) {
-                        if (
-                            !linkCreationFormStore.userInputs.find(
-                                (storeLink) => storeLink.linkId === link.id,
-                            )
-                        ) {
+                        if (userInputs.has(link.id)) {
                             console.log("Link: ", link);
-
                             // Convert BigInt values to strings before adding to store
                             // Store kept crashing otherwise if using BigInt, maybe
                             const processedAssets = link.asset_info
-                                ? link.asset_info.map((asset: any) => ({
-                                      ...asset,
+                                ? link.asset_info.map((asset) => ({
+                                      address: asset.address,
                                       amount: asset.amount,
-                                      totalClaim: asset.totalClaim,
+                                      totalClaim: asset.totalClaim ?? asset.amount,
+                                      usdEquivalent: 0,
+                                      usdConversionRate: 0,
                                   }))
                                 : [];
 
-                            linkCreationFormStore.addUserInput({
+                            addUserInput({
                                 linkId: link.id,
                                 state: link.state as LINK_STATE,
                                 title: link.title,

@@ -1,13 +1,5 @@
 import { ChangeEvent, FC, useState, useEffect, useMemo } from "react";
 import { SubmitHandler } from "react-hook-form";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
 import { IconInput } from "@/components/icon-input";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import AssetButton from "@/components/asset-button";
@@ -20,7 +12,6 @@ import { TipLinkAssetFormSchema } from "./tip-link-asset-form.hooks";
 import { AmountActionButtons } from "./amount-action-buttons";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useTokens } from "@/hooks/useTokens";
-import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { Label } from "../ui/label";
 import { LINK_STATE } from "@/services/types/enum";
@@ -37,7 +28,7 @@ const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 75, 100];
 export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButtonDisabled }) => {
     const { t } = useTranslation();
     const { link } = useLinkActionStore();
-    const linkCreationFormStore = useLinkCreationFormStore();
+    const { getUserInput, updateUserInput } = useLinkCreationFormStore();
 
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [isUsd, setIsUsd] = useState<boolean>(false);
@@ -50,10 +41,8 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
     const { filteredTokenList, isLoading, getToken, isLoadingPrices, getTokenPrice } = useTokens();
 
     // Get current input from store
-    const currentInput = linkCreationFormStore.userInputs.find(
-        (input) => input.linkId === link?.id,
-    );
-    const currentAsset = currentInput?.assets[0];
+    const currentInput = link?.id ? getUserInput(link.id) : undefined;
+    const currentAsset = currentInput && currentInput.assets ? currentInput.assets[0] : undefined;
 
     // Get selected token from address
     const token = currentAsset?.address ? getToken(currentAsset.address) : undefined;
@@ -72,24 +61,21 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
         if (!link?.id || filteredTokenList?.length === 0) return;
 
         // Check if we already have an asset selected
-        if (currentInput?.assets[0]?.address) {
+        if (currentInput && currentInput.assets && currentInput?.assets[0]?.address) {
             // Do nothing, already initialized
         } else {
             // Initialize with the first token in the list
-            linkCreationFormStore.updateUserInput(
-                linkCreationFormStore.userInputs.findIndex((input) => input.linkId === link?.id),
-                {
-                    assets: [
-                        {
-                            address: filteredTokenList?.[0]?.address,
-                            amount: BigInt(0),
-                            totalClaim: BigInt(0),
-                            usdEquivalent: 0,
-                            usdConversionRate: filteredTokenList?.[0]?.usdConversionRate ?? 0,
-                        },
-                    ],
-                },
-            );
+            updateUserInput(link.id, {
+                assets: [
+                    {
+                        address: filteredTokenList?.[0]?.address,
+                        amount: BigInt(0),
+                        totalClaim: BigInt(0),
+                        usdEquivalent: 0,
+                        usdConversionRate: filteredTokenList?.[0]?.usdConversionRate ?? 0,
+                    },
+                ],
+            });
         }
     }, [link?.id, filteredTokenList]);
 
@@ -142,18 +128,16 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
 
     // Helper function to update asset amount in store
     const updateAssetAmount = (amount: bigint) => {
-        const inputIndex = linkCreationFormStore.userInputs.findIndex(
-            (input) => input.linkId === link?.id,
-        );
-        if (inputIndex >= 0) {
-            const updatedAssets = [...linkCreationFormStore.userInputs[inputIndex].assets];
-            if (updatedAssets.length > 0) {
-                updatedAssets[0] = {
-                    ...updatedAssets[0],
+        const currentInput = link?.id ? getUserInput(link.id) : undefined;
+        if (link && currentInput) {
+            const currentAssets = currentInput.assets || [];
+            if (currentAssets.length > 0) {
+                currentAssets[0] = {
+                    ...currentAssets[0],
                     amount,
                 };
-                linkCreationFormStore.updateUserInput(inputIndex, {
-                    assets: updatedAssets,
+                updateUserInput(link.id, {
+                    assets: currentAssets,
                 });
             }
         }
@@ -250,11 +234,9 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
 
     const handleSetTokenAddress = (address: string) => {
         const newToken = getToken(address);
-        const inputIndex = linkCreationFormStore.userInputs.findIndex(
-            (input) => input.linkId === link?.id,
-        );
+        const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
-        if (inputIndex >= 0 && newToken) {
+        if (currentInput && newToken && link) {
             // Get current value
             let newAmount = BigInt(0);
 
@@ -268,17 +250,17 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                 if (newTokenPrice) {
                     // Convert USD to new token amount using utility function
                     const newTokenAmount = convertFromUsd(usdAmount, newTokenPrice);
-                    const decimals = newToken.decimals || 8;
+                    const decimals = newToken.decimals;
                     newAmount = BigInt(Math.floor(newTokenAmount * 10 ** decimals));
                 }
             }
             // If we're in token mode or can't convert, keep the original amount
-            else if (currentAsset?.amount) {
-                newAmount = currentAsset.amount;
+            else if (currentInput.assets?.[0]?.amount) {
+                newAmount = currentInput.assets[0].amount;
             }
 
             // Update asset with new address and calculated amount
-            linkCreationFormStore.updateUserInput(inputIndex, {
+            updateUserInput(link.id, {
                 assets: [
                     {
                         address,
@@ -395,15 +377,10 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                         showToast("Error", "Insufficient balance", "error");
                                         return;
                                     }
-                                    if (currentAsset && currentAsset.amount > BigInt(0)) {
-                                        linkCreationFormStore.updateUserInput(
-                                            linkCreationFormStore.userInputs.findIndex(
-                                                (input) => input.linkId === link?.id,
-                                            ),
-                                            {
-                                                state: LINK_STATE.CREATE_LINK,
-                                            },
-                                        );
+                                    if (link && currentAsset && currentAsset.amount > BigInt(0)) {
+                                        updateUserInput(link.id, {
+                                            state: LINK_STATE.CREATE_LINK,
+                                        });
 
                                         onSubmit({
                                             tokenAddress: currentAsset.address,

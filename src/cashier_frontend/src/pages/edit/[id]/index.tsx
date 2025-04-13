@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,7 +7,13 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useUpdateLinkSelfContained } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { ACTION_STATE, ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
+import {
+    ACTION_STATE,
+    ACTION_TYPE,
+    LINK_STATE,
+    mapStringToLinkState,
+    mapStringToLinkType,
+} from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { Spinner } from "@/components/ui/spinner";
@@ -16,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
-import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -34,7 +40,7 @@ export default function LinkPage() {
     const { linkId } = useParams();
     const { toastData, showToast, hideToast } = useToast();
 
-    const linkCreationFormStore = useLinkCreationFormStore();
+    const { addUserInput } = useLinkCreationFormStore();
 
     const { link, setLink, action, setAction } = useLinkActionStore();
 
@@ -44,16 +50,29 @@ export default function LinkPage() {
     );
     const { mutateAsync: updateLink } = useUpdateLinkSelfContained();
 
-    const currentLink = useMemo(() => {
-        return linkCreationFormStore.userInputs.find((input) => input.linkId === linkId);
-    }, [linkCreationFormStore.userInputs, linkId]);
+    const currentLink = linkData?.link;
 
     useEffect(() => {
         if (linkData) {
             setLink(linkData.link);
             setAction(linkData.action);
-        }
 
+            const userInput: Partial<UserInputItem> = {
+                linkId: linkData.link.id,
+                state: mapStringToLinkState(linkData.link.state!),
+                title: linkData.link.title,
+                linkType: mapStringToLinkType(linkData.link.linkType),
+                assets: linkData.link.asset_info.map((asset) => ({
+                    address: asset.address,
+                    amount: asset.amount,
+                    totalClaim: asset.totalClaim ?? 0n,
+                    usdEquivalent: 0,
+                    usdConversionRate: 0,
+                })),
+            };
+
+            addUserInput(userInput);
+        }
         return () => {
             setLink(undefined);
             setAction(undefined);

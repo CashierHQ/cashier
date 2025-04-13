@@ -1,6 +1,5 @@
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
 
 export interface UserInputAsset {
     address: string;
@@ -19,51 +18,49 @@ export interface UserInputItem {
 }
 
 interface LinkCreationFormState {
-    userInputs: UserInputItem[];
+    userInputs: Map<string, Partial<UserInputItem>>;
 
-    addUserInput: (input: UserInputItem) => void;
-    updateUserInput: (index: number, input: Partial<UserInputItem>) => void;
-    removeUserInput: (index: number) => void;
+    getUserInput: (linkId: string) => Partial<UserInputItem> | undefined;
+
+    addUserInput: (input: Partial<UserInputItem>) => void;
+    updateUserInput: (linkId: string, input: Partial<UserInputItem>) => void;
+    removeUserInput: (linkId: string) => void;
     clearStore: () => void;
 }
 
-export const useLinkCreationFormStore = create<LinkCreationFormState>()((set) => ({
-    userInputs: [],
+export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, get) => ({
+    userInputs: new Map(),
 
     addUserInput: (input) =>
-        set((state) => ({
-            userInputs: [
-                ...state.userInputs,
-                {
-                    linkId: input.linkId,
-                    state: input.state,
-                    title: input.title || "",
-                    linkType: input.linkType || "",
-                    assets: input.assets || [],
-                },
-            ],
-        })),
-
-    updateUserInput: (index, input) =>
         set((state) => {
-            const newUserInput = [...state.userInputs];
-            if (index >= 0 && index < newUserInput.length) {
-                newUserInput[index] = { ...newUserInput[index], ...input };
-            }
-            return { userInputs: newUserInput };
+            const newUserInputs = new Map(state.userInputs);
+            newUserInputs.set(input.linkId, input);
+            return { userInputs: newUserInputs };
         }),
 
-    removeUserInput: (index) =>
+    updateUserInput: (linkId, input) =>
         set((state) => {
-            const newUserInput = [...state.userInputs];
-            if (index >= 0 && index < newUserInput.length) {
-                newUserInput.splice(index, 1);
+            const newUserInputs = new Map(state.userInputs);
+            if (newUserInputs.has(linkId)) {
+                const updatedInput = { ...newUserInputs.get(linkId), ...input };
+                newUserInputs.set(linkId, updatedInput);
+            } else {
+                newUserInputs.set(linkId, input);
             }
-            return { userInputs: newUserInput };
+            return { userInputs: newUserInputs };
+        }),
+
+    removeUserInput: (linkId) =>
+        set((state) => {
+            const newUserInputs = new Map(state.userInputs);
+            newUserInputs.delete(linkId);
+            return { userInputs: newUserInputs };
         }),
 
     clearStore: () =>
         set({
-            userInputs: [],
+            userInputs: new Map(),
         }),
+
+    getUserInput: (linkId) => get().userInputs.get(linkId),
 }));
