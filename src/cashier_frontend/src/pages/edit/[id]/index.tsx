@@ -71,7 +71,7 @@ export default function LinkPage() {
                 })),
             };
 
-            addUserInput(userInput);
+            addUserInput(linkData.link.id, userInput);
         }
         return () => {
             setLink(undefined);

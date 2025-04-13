@@ -59,7 +59,7 @@ export default function HomePage() {
             const linkId = await new LinkService(identity).createLink({
                 link_type: LINK_TYPE.SEND_TIP,
             });
-            addUserInput({
+            addUserInput(linkId, {
                 linkId: linkId,
                 state: LINK_STATE.CHOOSE_TEMPLATE,
                 title: "",
@@ -112,7 +112,7 @@ export default function HomePage() {
                                   }))
                                 : [];
 
-                            addUserInput({
+                            addUserInput(link.id, {
                                 linkId: link.id,
                                 state: link.state as LINK_STATE,
                                 title: link.title,

@@ -22,7 +22,7 @@ interface LinkCreationFormState {
 
     getUserInput: (linkId: string) => Partial<UserInputItem> | undefined;
 
-    addUserInput: (input: Partial<UserInputItem>) => void;
+    addUserInput: (linkId: string, input: Partial<UserInputItem>) => void;
     updateUserInput: (linkId: string, input: Partial<UserInputItem>) => void;
     removeUserInput: (linkId: string) => void;
     clearStore: () => void;
@@ -31,10 +31,10 @@ interface LinkCreationFormState {
 export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, get) => ({
     userInputs: new Map(),
 
-    addUserInput: (input) =>
+    addUserInput: (linkId, input) =>
         set((state) => {
             const newUserInputs = new Map(state.userInputs);
-            newUserInputs.set(input.linkId, input);
+            newUserInputs.set(linkId, input);
             return { userInputs: newUserInputs };
         }),
 

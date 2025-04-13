@@ -18,7 +18,7 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
         title: "Airdrop",
         isComingSoon: true,
-        linkType: LINK_TYPE.AIRDROP,
+        linkType: LINK_TYPE.SEND_AIRDROP,
     },
     {
         label: "Claim",
@@ -27,6 +27,6 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
         title: "Token basket",
         isComingSoon: true,
-        linkType: LINK_TYPE.TOKEN_BASKET,
+        linkType: LINK_TYPE.SEND_TOKEN_BASKET,
     },
 ];
