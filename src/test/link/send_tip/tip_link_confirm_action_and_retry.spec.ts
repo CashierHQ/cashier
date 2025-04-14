@@ -8,15 +8,15 @@ import {
     GetLinkOptions,
     Icrc112Request,
     idlFactory,
-} from "../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../declarations/cashier_backend/cashier_backend.did";
 
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
-import { parseResultResponse } from "../utils/parser";
-import { TokenHelper } from "../utils/token-helper";
+import { parseResultResponse } from "../../utils/parser";
+import { TokenHelper } from "../../utils/token-helper";
 
 import { Principal } from "@dfinity/principal";
-import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
+import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 

@@ -1,22 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     CreateLinkInput,
     UserDto,
-    IntentDto,
     ProcessActionInput,
     UpdateLinkInput,
     type _SERVICE,
-    GetLinkOptions,
     idlFactory,
-} from "../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../declarations/cashier_backend/cashier_backend.did";
 
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
-import { parseResultResponse } from "../utils/parser";
-import { TokenHelper } from "../utils/token-helper";
+import { parseResultResponse } from "../../utils/parser";
+import { TokenHelper } from "../../utils/token-helper";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Tip link timeout action", () => {
+describe("Tip Link validate user not have enough balance", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
@@ -24,9 +23,8 @@ describe("Tip link timeout action", () => {
     let user: UserDto;
 
     let linkId: string;
-    let createLinkActionId: string;
 
-    let airdropHelper: TokenHelper;
+    let token_helper: TokenHelper;
 
     const testPayload = {
         title: "tip 20 icp",
@@ -60,17 +58,18 @@ describe("Tip link timeout action", () => {
         actor.setIdentity(alice);
 
         // init seed for RNG
-        await pic.advanceTime(7 * 60 * 1000);
+        await pic.advanceTime(1 * 60 * 1000);
         await pic.tick(50);
 
         // create user snd airdrop
         const create_user_res = await actor.create_user();
         user = parseResultResponse(create_user_res);
+        console.log("user", user);
 
-        airdropHelper = new TokenHelper(pic);
-        await airdropHelper.setupCanister();
+        token_helper = new TokenHelper(pic);
+        await token_helper.setupCanister();
 
-        await airdropHelper.airdrop(BigInt(1_0000_0000_0000), alice.getPrincipal());
+        await token_helper.airdrop(BigInt(1_0000), alice.getPrincipal());
 
         await pic.advanceTime(5 * 60 * 1000);
         await pic.tick(50);
@@ -81,7 +80,7 @@ describe("Tip link timeout action", () => {
     });
 
     beforeEach(async () => {
-        await pic.advanceTime(6 * 60 * 1000);
+        await pic.advanceTime(1 * 60 * 1000);
         await pic.tick(50);
     });
 
@@ -161,7 +160,7 @@ describe("Tip link timeout action", () => {
         expect(linkUpdated.state).toEqual("Link_state_create_link");
     });
 
-    it("should create action CreateLink success", async () => {
+    it("should create action CreateLink Error", async () => {
         const input: ProcessActionInput = {
             link_id: linkId,
             action_id: "",
@@ -169,68 +168,8 @@ describe("Tip link timeout action", () => {
         };
 
         const createActionRes = await actor.process_action(input);
-        const link = await actor.get_link(linkId, []);
-        const linkRes = parseResultResponse(link);
-        const actionRes = parseResultResponse(createActionRes);
 
-        createLinkActionId = actionRes.id;
-
-        expect(actionRes.creator).toEqual(user.id);
-        expect(actionRes.intents).toHaveLength(2);
-        expect(linkRes.link.state).toEqual("Link_state_create_link");
-
-        // Check the state of all intents
-        actionRes.intents.forEach((intent: IntentDto) => {
-            expect(intent.state).toEqual("Intent_state_created");
-        });
-    });
-
-    it("should get action success", async () => {
-        const input: GetLinkOptions = {
-            action_type: "CreateLink",
-        };
-
-        const getActionRes = await actor.get_link(linkId, [input]);
-        const res = parseResultResponse(getActionRes);
-
-        expect(res.link.id).toEqual(linkId);
-        expect(res.action).toHaveLength(1);
-        expect(res.action[0]!.id).toEqual(createLinkActionId);
-    });
-
-    it("should confirm action success", async () => {
-        const input: ProcessActionInput = {
-            link_id: linkId,
-            action_id: createLinkActionId,
-            action_type: "CreateLink",
-        };
-
-        const confirmRes = await actor.process_action(input);
-        const actionDto = parseResultResponse(confirmRes);
-
-        expect(actionDto.id).toEqual(createLinkActionId);
-        expect(actionDto.state).toEqual("Action_state_processing");
-
-        actionDto.intents.forEach((intent: IntentDto) => {
-            expect(intent.state).toEqual("Intent_state_processing");
-        });
-    });
-
-    it("Should timeout", async () => {
-        const input: GetLinkOptions = {
-            action_type: "CreateLink",
-        };
-
-        const getActionRes = await actor.get_link(linkId, [input]);
-        const res = parseResultResponse(getActionRes);
-
-        expect(res.link.id).toEqual(linkId);
-        expect(res.action).toHaveLength(1);
-        expect(res.action[0]!.id).toEqual(createLinkActionId);
-        expect(res.action[0]!.state).toEqual("Action_state_fail");
-        res.action[0]!.intents.forEach((intent: IntentDto) => {
-            expect(intent.state).toEqual("Intent_state_fail");
-        });
+        expect(createActionRes).toHaveProperty("Err");
     });
 });
 //

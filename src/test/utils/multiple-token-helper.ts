@@ -15,20 +15,31 @@ import {
 import { Account, principalToAccountIdentifier } from "@dfinity/ledger-icp";
 import { IDL } from "@dfinity/candid";
 
-const LEDGER_ID = Principal.fromText("x5qut-viaaa-aaaar-qajda-cai");
-
-export class TokenHelper {
+export class MultipleTokenHelper {
     private pic: PocketIc;
     private deployer: Identity;
     private wasm_path: string;
-    private actor?: Actor<_SERVICE>;
+    private actors: Map<string, Actor<_SERVICE>>;
+    private canisterIds: Map<string, Principal>;
+    private identity?: Identity;
+
     constructor(pic: PocketIc) {
         this.pic = pic;
         this.deployer = createIdentity("tokenDeployer");
         this.wasm_path = resolve("artifacts", "token_canister.wasm.gz");
+        this.actors = new Map();
+        this.canisterIds = new Map();
     }
 
-    public setupCanister = async () => {
+    public getTokenCanisterIds = () => {
+        return this.canisterIds;
+    };
+
+    public getTokenCanisterIdsArray = () => {
+        return Array.from(this.canisterIds.values());
+    };
+
+    public setupCanister = async (tokenName: string) => {
         const init_args: InitArgs = {
             send_whitelist: [],
             token_symbol: [],
@@ -41,7 +52,7 @@ export class TokenHelper {
             icrc1_minting_account: [],
             archive_options: [],
             initial_values: [],
-            token_name: ["ICP"],
+            token_name: [tokenName],
             feature_flags: [],
         };
 
@@ -59,27 +70,26 @@ export class TokenHelper {
         const canister_id = await this.pic.createCanister({
             cycles: BigInt(1e13),
             sender: this.deployer.getPrincipal(),
-            // targetSubnetId: subnetId,
-            targetCanisterId: LEDGER_ID,
         });
 
         await this.pic.installCode({
             wasm: this.wasm_path,
             sender: this.deployer.getPrincipal(),
             canisterId: canister_id,
-            // targetSubnetId: subnetId,
             arg: encoded_arg,
         });
 
-        const actor = await this.pic.createActor<_SERVICE>(idlFactory, LEDGER_ID);
+        const actor = await this.pic.createActor<_SERVICE>(idlFactory, canister_id);
+        actor.setIdentity(this.deployer);
 
-        this.actor = actor;
-        this.actor.setIdentity(this.deployer);
+        this.actors.set(tokenName, actor);
+        this.canisterIds.set(tokenName, canister_id);
     };
 
-    public airdrop = async (amount: bigint, to: Principal) => {
-        if (!this.actor) {
-            throw new Error("Canister not setup");
+    public airdrop = async (tokenName: string, amount: bigint, to: Principal) => {
+        const actor = this.actors.get(tokenName);
+        if (!actor) {
+            throw new Error(`Canister for token ${tokenName} not setup`);
         }
 
         const transferArg: TransferArg = {
@@ -93,37 +103,43 @@ export class TokenHelper {
             created_at_time: [],
             amount: BigInt(amount),
         };
-        const result = await this.actor.icrc1_transfer(transferArg);
+        const result = await actor.icrc1_transfer(transferArg);
 
         return result;
     };
 
     public with_identity(identity: Identity) {
-        if (!this.actor) {
-            throw new Error("Canister not setup");
-        }
+        this.identity = identity;
 
-        this.actor.setIdentity(identity);
+        for (const actor of this.actors.values()) {
+            actor.setIdentity(this.identity);
+        }
     }
 
-    public async transfer(arg: TransferArg) {
-        if (!this.actor) {
-            throw new Error("Canister not setup");
+    public async transfer(tokenName: string, arg: TransferArg) {
+        const actor = this.actors.get(tokenName);
+        if (!actor) {
+            throw new Error(`Canister for token ${tokenName} not setup`);
         }
 
-        return await this.actor.icrc1_transfer(arg);
+        return await actor.icrc1_transfer(arg);
     }
 
-    public approve(arg: ApproveArgs) {
-        if (!this.actor) {
-            throw new Error("Canister not setup");
+    public approve(tokenName: string, arg: ApproveArgs) {
+        const actor = this.actors.get(tokenName);
+        if (!actor) {
+            throw new Error(`Canister for token ${tokenName} not setup`);
         }
 
-        return this.actor.icrc2_approve(arg);
+        return actor.icrc2_approve(arg);
     }
 
-    public async balanceOf(account: Account) {
-        const actor = this.pic.createActor<_SERVICE>(idlFactory, LEDGER_ID);
+    public async balanceOf(tokenName: string, account: Account) {
+        const actor = this.actors.get(tokenName);
+        if (!actor) {
+            throw new Error(`Canister for token ${tokenName} not setup`);
+        }
+
         return actor.icrc1_balance_of(account);
     }
 }

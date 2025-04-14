@@ -9,7 +9,10 @@ use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
 use crate::{
-    constant::{ICP_CANISTER_ID, INTENT_LABEL_WALLET_TO_LINK, INTENT_LABEL_WALLET_TO_TREASURY},
+    constant::{
+        ICP_CANISTER_ID, INTENT_LABEL_PAYMENT, INTENT_LABEL_WALLET_TO_LINK,
+        INTENT_LABEL_WALLET_TO_TREASURY,
+    },
     core::link::types::{LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto},
     domains::fee::Fee,
     info,
@@ -78,10 +81,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
     pub fn look_up_intent(
         &self,
-        link_type: &LinkType,
+        link: &Link,
         action_type: &ActionType,
-    ) -> Option<Vec<Intent>> {
+    ) -> Result<Option<Vec<Intent>>, CanisterError> {
         let mut intents: Vec<Intent> = vec![];
+        let link_type = link
+            .link_type
+            .ok_or_else(|| CanisterError::HandleLogicError("link type not found".to_string()))?;
+
         match (link_type, action_type) {
             (LinkType::SendTip, ActionType::CreateLink) => {
                 // create intent for transfer asset to link
@@ -95,7 +102,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_asset_intent.state = IntentState::Created;
                 transfer_asset_intent.created_at = ts;
                 transfer_asset_intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
-                // adding dependency
 
                 // create intent for transfer fee to treasury
                 //TODO: get the intent template from config then map the values
@@ -107,7 +113,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_fee_intent.state = IntentState::Created;
                 transfer_fee_intent.created_at = ts;
                 transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
-                // adding dependency
 
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
@@ -144,9 +149,140 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 intents.push(intent);
             }
-            _ => return None,
+            (LinkType::SendAirdrop, ActionType::CreateLink) => {
+                // create intent for transfer asset to link
+                let ts = self.ic_env.time();
+                //TODO: get the intent template from config then map the values
+                let mut transfer_asset_intent = Intent::default();
+                let transfer_data = IntentType::default_transfer();
+                transfer_asset_intent.r#type = transfer_data;
+                transfer_asset_intent.task = IntentTask::TransferWalletToLink;
+                transfer_asset_intent.id = Uuid::new_v4().to_string();
+                transfer_asset_intent.state = IntentState::Created;
+                transfer_asset_intent.created_at = ts;
+                transfer_asset_intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+                // adding dependency
+
+                // create intent for transfer fee to treasury
+                //TODO: get the intent template from config then map the values
+                let mut transfer_fee_intent = Intent::default();
+                let transfer_fee_data = IntentType::default_transfer_from();
+                transfer_fee_intent.r#type = transfer_fee_data;
+                transfer_fee_intent.task = IntentTask::TransferWalletToTreasury;
+                transfer_fee_intent.id = Uuid::new_v4().to_string();
+                transfer_fee_intent.state = IntentState::Created;
+                transfer_fee_intent.created_at = ts;
+                transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+                // adding dependency
+
+                intents.push(transfer_asset_intent);
+                intents.push(transfer_fee_intent);
+            }
+            (LinkType::SendAirdrop, ActionType::Claim) => {
+                // create intent for link asset to user wallet
+                let ts = self.ic_env.time();
+                //TODO: get the intent template from config then map the values
+                let mut intent = Intent::default();
+                let transfer_data = IntentType::default_transfer();
+                intent.r#type = transfer_data;
+                intent.task = IntentTask::TransferLinkToWallet;
+                intent.id = Uuid::new_v4().to_string();
+                intent.state = IntentState::Created;
+                intent.created_at = ts;
+                // same label with transfer asset to link
+                intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+
+                intents.push(intent);
+            }
+            (LinkType::SendTokenBasket, ActionType::CreateLink) => {
+                let asset_info = link.asset_info.clone().ok_or_else(|| {
+                    CanisterError::HandleLogicError("Asset info not found".to_string())
+                })?;
+                let ts = self.ic_env.time();
+
+                // create intents for each asset in asset_info
+                for asset in asset_info.iter() {
+                    // Create intent for transfer asset to link
+                    let mut transfer_asset_intent = Intent::default();
+                    let transfer_data = IntentType::default_transfer();
+                    transfer_asset_intent.r#type = transfer_data;
+                    transfer_asset_intent.task = IntentTask::TransferWalletToLink;
+                    transfer_asset_intent.id = Uuid::new_v4().to_string();
+                    transfer_asset_intent.state = IntentState::Created;
+                    transfer_asset_intent.created_at = ts;
+                    transfer_asset_intent.label = asset_info.label;
+                    // INTENT_LABEL_WALLET_TO_LINK.to_string() + "_" + &asset.address;
+
+                    intents.push(transfer_asset_intent);
+                }
+
+                // Create intent for transfer fee to treasury
+                let mut transfer_fee_intent = Intent::default();
+                let transfer_fee_data = IntentType::default_transfer_from();
+                transfer_fee_intent.r#type = transfer_fee_data;
+                transfer_fee_intent.task = IntentTask::TransferWalletToTreasury;
+                transfer_fee_intent.id = Uuid::new_v4().to_string();
+                transfer_fee_intent.state = IntentState::Created;
+                transfer_fee_intent.created_at = ts;
+                transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+
+                intents.push(transfer_fee_intent);
+            }
+            (LinkType::SendTokenBasket, ActionType::Claim) => {
+                let asset_info = link.asset_info.clone().ok_or_else(|| {
+                    CanisterError::HandleLogicError("Asset info not found".to_string())
+                })?;
+                let ts = self.ic_env.time();
+
+                // create intents for each asset in asset_info
+                for asset in asset_info.iter() {
+                    // Create intent for transfer asset to link
+                    let mut transfer_asset_intent = Intent::default();
+                    let transfer_data = IntentType::default_transfer();
+                    transfer_asset_intent.r#type = transfer_data;
+                    transfer_asset_intent.task = IntentTask::TransferLinkToWallet;
+                    transfer_asset_intent.id = Uuid::new_v4().to_string();
+                    transfer_asset_intent.state = IntentState::Created;
+                    transfer_asset_intent.created_at = ts;
+                    transfer_asset_intent.label =
+                        INTENT_LABEL_WALLET_TO_LINK.to_string() + "_" + &asset.address;
+
+                    intents.push(transfer_asset_intent);
+                }
+            }
+            (LinkType::ReceivePayment, ActionType::CreateLink) => {
+                let ts = self.ic_env.time();
+
+                // Create intent for transfer fee to treasury
+                let mut transfer_fee_intent = Intent::default();
+                let transfer_fee_data = IntentType::default_transfer_from();
+                transfer_fee_intent.r#type = transfer_fee_data;
+                transfer_fee_intent.task = IntentTask::TransferWalletToTreasury;
+                transfer_fee_intent.id = Uuid::new_v4().to_string();
+                transfer_fee_intent.state = IntentState::Created;
+                transfer_fee_intent.created_at = ts;
+                transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+
+                intents.push(transfer_fee_intent);
+            }
+            // ! should we rename to ActionType = Use
+            (LinkType::ReceivePayment, ActionType::Claim) => {
+                let ts = self.ic_env.time();
+                let mut intent = Intent::default();
+                let transfer_data = IntentType::default_transfer();
+                intent.r#type = transfer_data;
+                intent.task = IntentTask::TransferPayment;
+                intent.id = Uuid::new_v4().to_string();
+                intent.state = IntentState::Created;
+                intent.created_at = ts;
+                // same label with transfer asset to link
+                intent.label = INTENT_LABEL_PAYMENT.to_string();
+
+                intents.push(intent);
+            }
+            _ => return Ok(None),
         }
-        return Some(intents);
+        return Ok(Some(intents));
     }
 
     pub fn assemble_intents(
@@ -157,7 +293,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     ) -> Result<Vec<Intent>, CanisterError> {
         let link = self.get_link_by_id(link_id.to_string())?;
 
-        let temp_intents = self.look_up_intent(&link.link_type.unwrap(), action_type);
+        let temp_intents = self.look_up_intent(&link, action_type)?;
 
         if temp_intents.is_none() {
             return Err(CanisterError::HandleLogicError(
@@ -779,8 +915,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return Ok(withdraw_action);
     }
 
-    // return false if not whitelist properties changed
-    pub fn validate_props(
+    // this method checking non-whitelist props are changed or not
+    // if changed, return true
+    // if not changed, return false
+    pub fn is_props_changed(
         &self,
         whitelist_props: Vec<String>,
         params: &LinkDetailUpdateInput,
@@ -801,51 +939,156 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .filter(|prop| !whitelist_props.contains(prop))
             .collect::<Vec<_>>();
 
+        info!("[is_props_changed] check_props: {:#?}", check_props);
+
         for prop in check_props.iter() {
             match prop.as_str() {
                 "title" => {
-                    if params.title != link.title || params.title.is_some() {
-                        info!("[validate_props] title: {:#?}", params.title);
+                    info!("[is_props_changed] link title: {:#?}", link.title);
+                    info!("[is_props_changed] params title: {:#?}", params.title);
+
+                    if params.title.is_none() {
                         return false;
+                    }
+
+                    if params.title != link.title {
+                        info!("[is_props_changed] link title not match");
+                        return true;
                     }
                 }
                 "description" => {
-                    if params.description != link.description || params.description.is_some() {
-                        info!("[validate_props] title: {:#?}", params.title);
+                    info!(
+                        "[is_props_changed] link description: {:#?}",
+                        link.description
+                    );
+                    info!(
+                        "[is_props_changed] params description: {:#?}",
+                        params.description
+                    );
+
+                    if params.description.is_none() {
                         return false;
+                    }
+
+                    if params.description != link.description {
+                        info!("[is_props_changed] link description not match");
+                        return true;
                     }
                 }
                 "link_image_url" => {
-                    if params.link_image_url != link.get_metadata("link_image_url")
-                        || params.link_image_url.is_some()
-                    {
+                    info!(
+                        "[is_props_changed] link_image_url: {:#?}",
+                        link.get_metadata("link_image_url")
+                    );
+                    info!(
+                        "[is_props_changed] params link_image_url: {:#?}",
+                        params.link_image_url
+                    );
+
+                    if params.link_image_url.is_none() {
                         return false;
+                    }
+
+                    if params.link_image_url != link.get_metadata("link_image_url") {
+                        info!("[is_props_changed] link_image_url not match");
+                        return true;
                     }
                 }
                 "nft_image" => {
-                    if params.nft_image != link.get_metadata("nft_image")
-                        || params.nft_image.is_some()
-                    {
+                    info!(
+                        "[is_props_changed] nft_image: {:#?}",
+                        link.get_metadata("nft_image")
+                    );
+                    info!(
+                        "[is_props_changed] params nft_image: {:#?}",
+                        params.nft_image
+                    );
+
+                    if params.nft_image.is_none() {
                         return false;
+                    }
+
+                    if params.nft_image != link.get_metadata("nft_image") {
+                        info!("[is_props_changed] nft_image not match");
+                        return true;
                     }
                 }
                 "link_type" => {
+                    info!("[is_props_changed] link_type: {:#?}", link.link_type);
+                    info!(
+                        "[is_props_changed] params link_type: {:#?}",
+                        params.link_type
+                    );
                     let link_link_type_str = link.link_type.as_ref().map(|lt| lt.to_string());
-                    if params.link_type != link_link_type_str || params.link_type.is_some() {
+
+                    if params.link_type.is_none() {
                         return false;
+                    }
+                    if params.link_type != link_link_type_str {
+                        info!("[is_props_changed] link_type not match");
+                        return true;
                     }
                 }
                 "template" => {
+                    info!("[is_props_changed] link template: {:#?}", link.template);
+                    info!("[is_props_changed] params template: {:#?}", params.template);
                     let link_template_str = link.template.as_ref().map(|t| t.to_string());
-                    if params.template != link_template_str || params.template.is_some() {
+                    if params.template.is_none() {
                         return false;
+                    }
+                    if params.template != link_template_str {
+                        info!("[is_props_changed] link template not match");
+                        return true;
+                    }
+                }
+                "asset_info" => {
+                    info!("[is_props_changed] link asset_info: {:#?}", link.asset_info);
+                    info!(
+                        "[is_props_changed] params asset_info: {:#?}",
+                        params.asset_info
+                    );
+
+                    match (&link.asset_info, &params.asset_info) {
+                        (_, None) => {
+                            return false;
+                        }
+                        (Some(link_asset_info), Some(params_asset_info)) => {
+                            // Compare IDs in both lists
+                            let link_ids: Vec<_> =
+                                link_asset_info.iter().map(|asset| &asset.label).collect();
+                            let params_ids: Vec<_> =
+                                params_asset_info.iter().map(|asset| &asset.label).collect();
+
+                            // asset info changed
+                            if link_ids.len() != params_ids.len()
+                                || !link_ids.iter().all(|id| params_ids.contains(id))
+                            {
+                                info!("[is_props_changed] asset_info IDs do not match");
+                                return true;
+                            }
+
+                            // Compare updated data
+                            for param_asset in params_asset_info {
+                                if let Some(link_asset) = link_asset_info
+                                    .iter()
+                                    .find(|asset| asset.label == param_asset.label)
+                                {
+                                    if param_asset.is_changed(link_asset) {
+                                        return true;
+                                    }
+                                } else {
+                                    return true;
+                                }
+                            }
+                        }
+                        _ => {}
                     }
                 }
                 _ => {}
             }
         }
 
-        true
+        false
     }
 
     pub async fn handle_link_state_transition(
@@ -875,7 +1118,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         if link.state == LinkState::ChooseLinkType {
             let (template, link_type) = self.prefetch_template(&params)?;
 
-            if self.validate_props(
+            if self.is_props_changed(
                 vec![
                     "title".to_string(),
                     "template".to_string(),
@@ -911,7 +1154,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // prefetch 2 method
             let asset_info = self.prefetch_asset_info(&params, &link_state_goto)?;
 
-            if self.validate_props(vec!["asset_info".to_string()], &params, &link) {
+            if self.is_props_changed(vec!["asset_info".to_string()], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
                     "Link properties are not allowed to change".to_string(),
                 ));
@@ -949,7 +1192,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // prefetch 3 method
             let create_action = self.prefetch_create_action(&link)?;
 
-            if self.validate_props(vec![], &params, &link) {
+            if self.is_props_changed(vec![], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
                     "Link properties are not allowed to change".to_string(),
                 ));
@@ -985,7 +1228,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
         } else if link.state == LinkState::Active {
-            if self.validate_props(vec![], &params, &link) {
+            if self.is_props_changed(vec![], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
                     "Link properties are not allowed to change".to_string(),
                 ));
@@ -1005,7 +1248,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
         } else if link.state == LinkState::Inactive {
-            if self.validate_props(vec![], &params, &link) {
+            if self.is_props_changed(vec![], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
                     "Link properties are not allowed to change".to_string(),
                 ));

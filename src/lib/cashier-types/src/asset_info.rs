@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::Chain;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AssetInfo {
     pub address: String,
     pub chain: Chain,

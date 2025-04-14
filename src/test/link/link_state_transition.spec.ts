@@ -208,7 +208,7 @@ describe("Link state transition", () => {
             expect(createLinkRes).toHaveProperty("Ok");
         });
 
-        it("should transition fail if params is not valid", async () => {
+        it("should transition from choose tempalte to add asset fail if params is not valid", async () => {
             // adding description
             const linkInput: UpdateLinkInput = {
                 id: link2Id,
@@ -227,6 +227,8 @@ describe("Link state transition", () => {
             };
 
             const updateLinkRes = await actor.update_link(linkInput);
+
+            console.log("updateLinkRes", updateLinkRes);
 
             expect(updateLinkRes).toHaveProperty("Err");
         });
@@ -249,7 +251,7 @@ describe("Link state transition", () => {
                 ],
             };
             const linkInput2: UpdateLinkInput = {
-                id: linkId,
+                id: link2Id,
                 action: "Continue",
                 params: [
                     {

@@ -2,8 +2,8 @@
 import {
     // CreateLinkInput,
     type _SERVICE,
+    idlFactory,
 } from "../../declarations/cashier_backend/cashier_backend.did";
-import { idlFactory } from "../../declarations/cashier_backend/index";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../utils/parser";

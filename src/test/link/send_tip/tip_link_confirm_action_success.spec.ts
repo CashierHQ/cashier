@@ -2,20 +2,25 @@
 import {
     CreateLinkInput,
     UserDto,
+    IntentDto,
     ProcessActionInput,
     UpdateLinkInput,
     type _SERVICE,
+    GetLinkOptions,
+    Icrc112Request,
     idlFactory,
-} from "../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../declarations/cashier_backend/cashier_backend.did";
 
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
-import { parseResultResponse } from "../utils/parser";
-import { TokenHelper } from "../utils/token-helper";
+import { parseResultResponse } from "../../utils/parser";
+import { TokenHelper } from "../../utils/token-helper";
+import { Principal } from "@dfinity/principal";
+import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Tip Link validate user not have enough balance", () => {
+describe("Tip Link confirm action success", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
@@ -23,8 +28,13 @@ describe("Tip Link validate user not have enough balance", () => {
     let user: UserDto;
 
     let linkId: string;
+    let createLinkActionId: string;
 
     let token_helper: TokenHelper;
+
+    let icrc_112_requests: Icrc112Request[][] = [];
+
+    let canister_id: string = "";
 
     const testPayload = {
         title: "tip 20 icp",
@@ -53,6 +63,8 @@ describe("Tip Link validate user not have enough balance", () => {
             wasm: WASM_PATH,
         });
 
+        canister_id = fixture.canisterId.toString();
+
         actor = fixture.actor;
 
         actor.setIdentity(alice);
@@ -64,12 +76,11 @@ describe("Tip Link validate user not have enough balance", () => {
         // create user snd airdrop
         const create_user_res = await actor.create_user();
         user = parseResultResponse(create_user_res);
-        console.log("user", user);
 
         token_helper = new TokenHelper(pic);
         await token_helper.setupCanister();
 
-        await token_helper.airdrop(BigInt(1_0000), alice.getPrincipal());
+        await token_helper.airdrop(BigInt(1_0000_0000_0000), alice.getPrincipal());
 
         await pic.advanceTime(5 * 60 * 1000);
         await pic.tick(50);
@@ -160,7 +171,7 @@ describe("Tip Link validate user not have enough balance", () => {
         expect(linkUpdated.state).toEqual("Link_state_create_link");
     });
 
-    it("should create action CreateLink Error", async () => {
+    it("should create action CreateLink success", async () => {
         const input: ProcessActionInput = {
             link_id: linkId,
             action_id: "",
@@ -168,8 +179,102 @@ describe("Tip Link validate user not have enough balance", () => {
         };
 
         const createActionRes = await actor.process_action(input);
+        const link = await actor.get_link(linkId, []);
+        const linkRes = parseResultResponse(link);
+        const actionRes = parseResultResponse(createActionRes);
 
-        expect(createActionRes).toHaveProperty("Err");
+        createLinkActionId = actionRes.id;
+
+        expect(actionRes.creator).toEqual(user.id);
+        expect(actionRes.intents).toHaveLength(2);
+        expect(linkRes.link.state).toEqual("Link_state_create_link");
+
+        // Check the state of all intents
+        actionRes.intents.forEach((intent: IntentDto) => {
+            expect(intent.state).toEqual("Intent_state_created");
+        });
+    });
+
+    it("should get action success", async () => {
+        const input: GetLinkOptions = {
+            action_type: "CreateLink",
+        };
+
+        const getActionRes = await actor.get_link(linkId, [input]);
+        const res = parseResultResponse(getActionRes);
+
+        expect(res.link.id).toEqual(linkId);
+        expect(res.action).toHaveLength(1);
+        expect(res.action[0]!.id).toEqual(createLinkActionId);
+    });
+
+    it("should confirm action success", async () => {
+        const input: ProcessActionInput = {
+            link_id: linkId,
+            action_id: createLinkActionId,
+            action_type: "CreateLink",
+        };
+
+        const confirmRes = await actor.process_action(input);
+        const actionDto = parseResultResponse(confirmRes);
+
+        icrc_112_requests = actionDto.icrc_112_requests[0]!;
+
+        expect(actionDto.id).toEqual(createLinkActionId);
+        expect(actionDto.state).toEqual("Action_state_processing");
+
+        actionDto.intents.forEach((intent: IntentDto) => {
+            expect(intent.state).toEqual("Intent_state_processing");
+        });
+    });
+
+    // In product, after confirm, it should use icrc-112, but PicJs does not support http agent call yet
+    // This is is mimic the icrc-112 call not the actual call
+    it("should be success after executing the icrc-112 request", async () => {
+        const trigger_tx_method = flattenAndFindByMethod(icrc_112_requests, "trigger_transaction");
+
+        if (!trigger_tx_method) {
+            throw new Error("trigger_transaction method not found in icrc-112 requests");
+        }
+
+        const execute_helper = new Icrc112Executor(
+            icrc_112_requests,
+            token_helper,
+            alice,
+            linkId,
+            createLinkActionId,
+            Principal.fromText(canister_id),
+            actor,
+            trigger_tx_method.nonce[0]!,
+        );
+
+        await execute_helper.executeIcrc1Transfer();
+
+        await execute_helper.executeIcrc2Approve();
+
+        await actor.update_action({
+            action_id: createLinkActionId,
+            link_id: linkId,
+            external: true,
+        });
+
+        await execute_helper.triggerTransaction();
+
+        const input: GetLinkOptions = {
+            action_type: "CreateLink",
+        };
+
+        const getActionRes = await actor.get_link(linkId, [input]);
+        const res = parseResultResponse(getActionRes);
+
+        const actionDto = res.action[0]!;
+
+        expect(res.link.id).toEqual(linkId);
+        expect(actionDto.state).toEqual("Action_state_success");
+
+        actionDto.intents.forEach((intent: IntentDto) => {
+            expect(intent.state).toEqual("Intent_state_success");
+        });
     });
 });
 //

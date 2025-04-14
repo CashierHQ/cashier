@@ -25,4 +25,8 @@ pub fn get_tx_timeout_nano_seconds() -> u64 {
 }
 pub const INTENT_LABEL_WALLET_TO_LINK: &str = "1000";
 pub const INTENT_LABEL_WALLET_TO_TREASURY: &str = "1001";
+pub const INTENT_LABEL_PAYMENT: &str = "1002";
+
 pub const INTENT_LABEL_LINK_TO_WALLET: &str = "2001";
+
+pub const INTENT_LABEL_WALLET_TO_LINK_PAYMENT: &str = "1001";

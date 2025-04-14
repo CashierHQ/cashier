@@ -7,6 +7,7 @@ use crate::{
     core::link::types::{LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput},
     repositories::{
         action::ActionRepository, link::LinkRepository, link_action::LinkActionRepository,
+        user_wallet::UserWalletRepository,
     },
     services::{
         __tests__::tests::{generate_token_address, MockIcEnvironment},
@@ -22,6 +23,7 @@ fn create_mock_components() -> (
     LinkRepository,
     LinkActionRepository,
     ActionRepository,
+    UserWalletRepository,
     IcrcService,
 ) {
     let ic_env = MockIcEnvironment::faux();
@@ -29,12 +31,14 @@ fn create_mock_components() -> (
     let link_action_repository = LinkActionRepository::faux();
     let action_repository = ActionRepository::faux();
     let icrc_service = IcrcService::faux();
+    let user_wallet_repository = UserWalletRepository::faux();
 
     (
         ic_env,
         link_repository,
         link_action_repository,
         action_repository,
+        user_wallet_repository,
         icrc_service,
     )
 }
@@ -56,8 +60,14 @@ fn create_link_with_state(state: LinkState) -> Link {
 
 #[tokio::test]
 async fn test_handle_link_state_transition_choose_link_type_to_add_assets() {
-    let (ic_env, mut link_repository, link_action_repository, action_repository, icrc_service) =
-        create_mock_components();
+    let (
+        ic_env,
+        mut link_repository,
+        link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        icrc_service,
+    ) = create_mock_components();
 
     // Create link with ChooseLinkType state
     let link = create_link_with_state(LinkState::ChooseLinkType);
@@ -84,6 +94,7 @@ async fn test_handle_link_state_transition_choose_link_type_to_add_assets() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -99,8 +110,14 @@ async fn test_handle_link_state_transition_choose_link_type_to_add_assets() {
 
 #[tokio::test]
 async fn test_handle_link_state_transition_add_assets_to_create_link() {
-    let (ic_env, mut link_repository, mut link_action_repository, action_repository, icrc_service) =
-        create_mock_components();
+    let (
+        ic_env,
+        mut link_repository,
+        mut link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        icrc_service,
+    ) = create_mock_components();
 
     // Create link with AddAssets state
     let mut link = create_link_with_state(LinkState::AddAssets);
@@ -138,6 +155,7 @@ async fn test_handle_link_state_transition_add_assets_to_create_link() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -153,8 +171,14 @@ async fn test_handle_link_state_transition_add_assets_to_create_link() {
 
 #[tokio::test]
 async fn test_handle_link_state_transition_add_assets_to_choose_link_type() {
-    let (ic_env, mut link_repository, mut link_action_repository, action_repository, icrc_service) =
-        create_mock_components();
+    let (
+        ic_env,
+        mut link_repository,
+        mut link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        icrc_service,
+    ) = create_mock_components();
 
     // Create link with AddAssets state
     let link = create_link_with_state(LinkState::AddAssets);
@@ -174,6 +198,7 @@ async fn test_handle_link_state_transition_add_assets_to_choose_link_type() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -193,6 +218,7 @@ async fn test_handle_link_state_transition_create_link_to_active() {
         mut link_repository,
         mut link_action_repository,
         mut action_repository,
+        user_wallet_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -255,6 +281,7 @@ async fn test_handle_link_state_transition_create_link_to_active() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -269,8 +296,14 @@ async fn test_handle_link_state_transition_create_link_to_active() {
 
 #[tokio::test]
 async fn test_handle_link_state_transition_create_link_to_add_assets() {
-    let (ic_env, mut link_repository, mut link_action_repository, action_repository, icrc_service) =
-        create_mock_components();
+    let (
+        ic_env,
+        mut link_repository,
+        mut link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        icrc_service,
+    ) = create_mock_components();
 
     // Create link with CreateLink state
     let mut link = create_link_with_state(LinkState::CreateLink);
@@ -308,6 +341,7 @@ async fn test_handle_link_state_transition_create_link_to_add_assets() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -327,6 +361,7 @@ async fn test_handle_link_state_transition_active_to_inactive() {
         mut link_repository,
         link_action_repository,
         action_repository,
+        user_wallet_repository,
         mut icrc_service,
     ) = create_mock_components();
 
@@ -364,6 +399,7 @@ async fn test_handle_link_state_transition_active_to_inactive() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -383,6 +419,7 @@ async fn test_handle_link_state_transition_active_to_inactive_if_asset_balance_e
         mut link_repository,
         link_action_repository,
         action_repository,
+        user_wallet_repository,
         mut icrc_service,
     ) = create_mock_components();
 
@@ -420,6 +457,7 @@ async fn test_handle_link_state_transition_active_to_inactive_if_asset_balance_e
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -434,8 +472,14 @@ async fn test_handle_link_state_transition_active_to_inactive_if_asset_balance_e
 
 #[tokio::test]
 async fn test_handle_link_state_transition_invalid_state() {
-    let (ic_env, mut link_repository, link_action_repository, action_repository, icrc_service) =
-        create_mock_components();
+    let (
+        ic_env,
+        mut link_repository,
+        link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        icrc_service,
+    ) = create_mock_components();
 
     // Create link with InactiveEnded state
     let link = create_link_with_state(LinkState::InactiveEnded);
@@ -459,6 +503,7 @@ async fn test_handle_link_state_transition_invalid_state() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -477,8 +522,14 @@ async fn test_handle_link_state_transition_invalid_state() {
 
 #[tokio::test]
 async fn test_handle_link_state_transition_link_not_found() {
-    let (ic_env, mut link_repository, link_action_repository, action_repository, icrc_service) =
-        create_mock_components();
+    let (
+        ic_env,
+        mut link_repository,
+        link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        icrc_service,
+    ) = create_mock_components();
 
     let link_id = "non_existent_id".to_string();
 
@@ -502,6 +553,7 @@ async fn test_handle_link_state_transition_link_not_found() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -518,8 +570,14 @@ async fn test_handle_link_state_transition_link_not_found() {
 
 #[tokio::test]
 async fn test_handle_link_state_transition_invalid_action() {
-    let (ic_env, mut link_repository, link_action_repository, action_repository, icrc_service) =
-        create_mock_components();
+    let (
+        ic_env,
+        mut link_repository,
+        link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        icrc_service,
+    ) = create_mock_components();
 
     // Create link with ChooseLinkType state
     let link = create_link_with_state(LinkState::ChooseLinkType);
@@ -543,6 +601,7 @@ async fn test_handle_link_state_transition_invalid_action() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -564,6 +623,7 @@ async fn test_handle_link_state_back_transition_with_exist_create_action() {
         mut link_repository,
         mut link_action_repository,
         mut action_repository,
+        user_wallet_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -626,6 +686,7 @@ async fn test_handle_link_state_back_transition_with_exist_create_action() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -638,8 +699,14 @@ async fn test_handle_link_state_back_transition_with_exist_create_action() {
 
 #[tokio::test]
 async fn test_check_link_asset_left_with_balance() {
-    let (mut ic_env, link_repository, link_action_repository, action_repository, mut icrc_service) =
-        create_mock_components();
+    let (
+        mut ic_env,
+        link_repository,
+        link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        mut icrc_service,
+    ) = create_mock_components();
 
     // Create a link with asset info
     let mut link = create_link_with_state(LinkState::Active);
@@ -660,6 +727,7 @@ async fn test_check_link_asset_left_with_balance() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 
@@ -672,8 +740,14 @@ async fn test_check_link_asset_left_with_balance() {
 
 #[tokio::test]
 async fn test_check_link_asset_left_with_error() {
-    let (mut ic_env, link_repository, link_action_repository, action_repository, mut icrc_service) =
-        create_mock_components();
+    let (
+        mut ic_env,
+        link_repository,
+        link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        mut icrc_service,
+    ) = create_mock_components();
 
     // Create a link with asset info
     let mut link = create_link_with_state(LinkState::Active);
@@ -697,6 +771,7 @@ async fn test_check_link_asset_left_with_error() {
         link_action_repository,
         action_repository,
         icrc_service,
+        user_wallet_repository,
         ic_env,
     );
 

@@ -21,6 +21,9 @@ test:
 
 # have to run local-setup before running this, need create did file in .dfx
 g: 
+	make build-backend
+	make build-token-storage
+	make build-icp-ledger
 	@dfx generate cashier_backend
 	rm src/declarations/cashier_backend/cashier_backend.did
 	rm src/declarations/cashier_backend/index.d.ts
@@ -29,6 +32,10 @@ g:
 	rm src/declarations/token_storage/token_storage.did
 	rm src/declarations/token_storage/index.d.ts
 	rm src/declarations/token_storage/index.js
+	@dfx generate icp_ledger_canister
+	rm src/declarations/icp_ledger_canister/icp_ledger_canister.did
+	rm src/declarations/icp_ledger_canister/index.d.ts
+	rm src/declarations/icp_ledger_canister/index.js
 
 predeploy:
 	make build-backend

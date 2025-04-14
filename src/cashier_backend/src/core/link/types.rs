@@ -38,6 +38,15 @@ impl LinkDetailUpdateAssetInfoInput {
             claim_count: Some(0u64), // start with 0
         }
     }
+
+    pub fn is_changed(&self, asset_info: &AssetInfo) -> bool {
+        self.address == asset_info.address
+            && self.chain == asset_info.chain.to_string()
+            && self.total_amount == asset_info.total_amount
+            // TODO: amount_per_claim can be None based on link type
+            && self.amount_per_claim == asset_info.amount_per_claim.unwrap_or(0)
+            && self.label == asset_info.label
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
