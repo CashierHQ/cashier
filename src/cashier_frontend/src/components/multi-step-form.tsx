@@ -56,7 +56,7 @@ export function MultiStepFormHeader({
                         <div
                             key={index}
                             className={cn(
-                                "h-[4px] rounded-full mx-[2px] transition-all duration-300",
+                                "h-[6px] rounded-full mx-[2px] transition-all duration-300",
                                 {
                                     "bg-green": index <= context.step,
                                     "bg-lightgreen": index > context.step,
