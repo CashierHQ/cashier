@@ -287,11 +287,9 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                 <AssetFormSkeleton />
             ) : (
                 <>
-                    <div className="space-y-8 flex flex-col h-full">
-                        <div className="flex flex-col">
-                            <div className="flex justify-between items-center mb-2">
-                                <Label>{t("create.asset")}</Label>
-                            </div>
+                    <div className="flex flex-col h-full">
+                        <div className="input-label-field-container mt-4">
+                            <Label>{t("create.asset")}</Label>
                             <AssetButton
                                 handleClick={() => setShowAssetDrawer(true)}
                                 text="Choose Asset"
@@ -299,11 +297,9 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                             />
                         </div>
 
-                        <div className="flex flex-col">
+                        <div className="input-label-field-container mt-4">
                             <div className="flex justify-between items-center">
-                                <div className="flex gap-2 items-center justify-between mb-2">
-                                    <Label>{t("create.amount")}</Label>
-                                </div>
+                                <Label>{t("create.amount")}</Label>
                                 {token && (
                                     <UsdSwitch
                                         token={token}
@@ -325,14 +321,14 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                 value={displayValue}
                                 onChange={handleAmountInputChange}
                                 onBlur={handleInputBlur}
-                                className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
                             />
-                            {!isLoadingPrices && token && token.amount !== 0n && (
+                            {!isLoadingPrices && token && (
                                 <AmountActionButtons
                                     data={presetButtons.map((button) => ({
                                         content: button.content,
                                         action: () => handlePresetClick(button.action),
                                     }))}
+                                    isDisabled={token.amount == 0n}
                                 />
                             )}
                         </div>

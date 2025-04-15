@@ -186,17 +186,14 @@ export default function LinkTemplate({
                 </div>
             </div>
 
-            <div className="w-full flex-shrink-0 flex justify-center disabled:opacity-50 mt-auto">
-                <FixedBottomButton
-                    onClick={handleSubmit}
-                    variant="default"
-                    size="lg"
-                    className="w-[95%] max-w-[350px]"
-                    disabled={isButtonDisabled || carousel.current !== 0}
-                >
-                    {carousel.current === 0 ? t("continue") : "Coming Soon"}
-                </FixedBottomButton>
-            </div>
+            <FixedBottomButton
+                onClick={handleSubmit}
+                variant="default"
+                size="lg"
+                disabled={isButtonDisabled || carousel.current !== 0}
+            >
+                {carousel.current === 0 ? t("continue") : "Coming Soon"}
+            </FixedBottomButton>
 
             <TransactionToast
                 open={toastData?.open ?? false}

@@ -72,16 +72,7 @@ const IconInput = React.forwardRef<HTMLInputElement, IconInputProps>(
                             paddingLeft: icon ? "2.5rem" : "0.75rem",
                             paddingRight: rightIcon ? "3rem" : "0.75rem",
                         }}
-                        className={cn(
-                            "w-full rounded-lg",
-                            "bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-green focus:border-transparent",
-                            value && "ring-1 ring-green border-transparent",
-                            "autofill:bg-white autofill:!bg-white",
-                            "[&:-webkit-autofill]:bg-white [&:-webkit-autofill]:!bg-white",
-                            "[&:-webkit-autofill]:shadow-[0_0_0_30px_white_inset]",
-                            "[&:-webkit-autofill]:[text-fill-color:inherit]",
-                            className,
-                        )}
+                        className={cn(className)}
                         ref={ref}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => {

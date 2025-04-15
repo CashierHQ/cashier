@@ -100,8 +100,8 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             onClick={() => onToggle(!isUsd)}
             aria-label={isUsd ? "Switch to token amount" : "Switch to USD amount"}
         >
-            <span className="text-xs text-grey/60 leading-none">{valueToDisplay}</span>
-            <ArrowUpDown className="ml-1" size={16} />
+            <span className="text-xs text-primary leading-none">{valueToDisplay}</span>
+            <ArrowUpDown className="ml-1" size={16} strokeWidth={3} />
         </button>
     );
 };
