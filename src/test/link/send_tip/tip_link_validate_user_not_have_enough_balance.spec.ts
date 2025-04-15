@@ -12,6 +12,7 @@ import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
+import { toNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -137,9 +138,10 @@ describe("Tip Link validate user not have enough balance", () => {
                             {
                                 chain: assetInfoTest.chain,
                                 address: assetInfoTest.address,
-                                amount_per_claim: assetInfoTest.amount_per_claim,
+                                amount_per_claim: toNullable(assetInfoTest.amount_per_claim),
                                 total_amount: assetInfoTest.total_amount,
-                                label: "1000",
+                                label: "INTENT_LABEL_SEND_TIP_ASSET",
+                                payment_amount: [] as [],
                             },
                         ],
                     ],

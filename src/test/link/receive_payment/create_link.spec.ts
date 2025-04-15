@@ -16,7 +16,8 @@ import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
-import { fromNullable } from "@dfinity/utils";
+import { BACKEND_CANISTER_ID } from "../../constant";
+import { toNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -37,20 +38,20 @@ describe("Test create airdrop and claim", () => {
     let canister_id: string = "";
 
     const testPayload = {
-        title: "airdopr 10 icp for 10 user",
-        description: "tip 20 icp to the user",
+        title: "ReceivePayment",
+        description: "ReceivePayment",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "SendAirdrop",
+        link_type: "ReceivePayment",
     };
 
     const assetInfoTest = {
         chain: "IC",
         address: "x5qut-viaaa-aaaar-qajda-cai",
-        // 10 times claim
-        amount_per_claim: BigInt(1_0000_0000),
+        payment_amount: BigInt(1_0000_0000),
         // total 10
         total_amount: BigInt(10_0000_0000),
+        label: "RECEIVE_PAYMENT_ASSET",
     };
 
     beforeAll(async () => {
@@ -63,9 +64,12 @@ describe("Test create airdrop and claim", () => {
         const fixture = await pic.setupCanister<_SERVICE>({
             idlFactory,
             wasm: WASM_PATH,
+            targetCanisterId: Principal.fromText(BACKEND_CANISTER_ID),
         });
 
         canister_id = fixture.canisterId.toString();
+
+        console.log("canister_id", canister_id);
 
         actor = fixture.actor;
 
@@ -103,14 +107,17 @@ describe("Test create airdrop and claim", () => {
         beforeAll(async () => {
             actor.setIdentity(alice);
         });
-        it("should complete the entire process from link creation to executing icrc-112", async () => {
-            // Step 1: Create link
-            const createLinkInput: CreateLinkInput = { link_type: "SendTip" };
+
+        it("Should create link successfully", async () => {
+            const createLinkInput: CreateLinkInput = { link_type: "SendAirdrop" };
             const createLinkRes = await actor.create_link(createLinkInput);
             const createLinkParsed = parseResultResponse(createLinkRes);
             linkId = createLinkParsed;
 
-            // Step 2: Transition to add asset
+            expect(createLinkRes).toHaveProperty("Ok");
+        });
+
+        it("Should choose template successfully", async () => {
             const updateLinkInput1: UpdateLinkInput = {
                 id: linkId,
                 action: "Continue",
@@ -128,10 +135,12 @@ describe("Test create airdrop and claim", () => {
             };
             const updateLinkRes1 = await actor.update_link(updateLinkInput1);
             const linkUpdated1 = parseResultResponse(updateLinkRes1);
+
             expect(linkUpdated1.id).toEqual(linkId);
             expect(linkUpdated1.state).toEqual("Link_state_add_assets");
+        });
 
-            // Step 3: Transition to create link
+        it("Should add assets successfully", async () => {
             const updateLinkInput2: UpdateLinkInput = {
                 id: linkId,
                 action: "Continue",
@@ -143,9 +152,10 @@ describe("Test create airdrop and claim", () => {
                                 {
                                     chain: assetInfoTest.chain,
                                     address: assetInfoTest.address,
-                                    amount_per_claim: assetInfoTest.amount_per_claim,
+                                    amount_per_claim: toNullable(),
                                     total_amount: assetInfoTest.total_amount,
-                                    label: "1000",
+                                    label: assetInfoTest.label,
+                                    payment_amount: toNullable(assetInfoTest.payment_amount),
                                 },
                             ],
                         ],
@@ -159,10 +169,12 @@ describe("Test create airdrop and claim", () => {
             };
             const updateLinkRes2 = await actor.update_link(updateLinkInput2);
             const linkUpdated2 = parseResultResponse(updateLinkRes2);
+
             expect(linkUpdated2.id).toEqual(linkId);
             expect(linkUpdated2.state).toEqual("Link_state_create_link");
+        });
 
-            // Step 4: Create action
+        it("Should create action successfully", async () => {
             const processActionInput: ProcessActionInput = {
                 link_id: linkId,
                 action_id: "",
@@ -171,9 +183,11 @@ describe("Test create airdrop and claim", () => {
             const createActionRes = await actor.process_action(processActionInput);
             const actionRes = parseResultResponse(createActionRes);
             createLinkActionId = actionRes.id;
-            expect(actionRes.state).toEqual("Action_state_created");
 
-            // Step 5: Confirm action
+            expect(actionRes.state).toEqual("Action_state_created");
+        });
+
+        it("Should confirm action successfully", async () => {
             const confirmActionInput: ProcessActionInput = {
                 link_id: linkId,
                 action_id: createLinkActionId,
@@ -182,9 +196,11 @@ describe("Test create airdrop and claim", () => {
             const confirmRes = await actor.process_action(confirmActionInput);
             const confirmActionDto = parseResultResponse(confirmRes);
             icrc_112_requests = confirmActionDto.icrc_112_requests[0]!;
-            expect(confirmActionDto.state).toEqual("Action_state_processing");
 
-            // Step 6: Execute icrc-112 requests
+            expect(confirmActionDto.state).toEqual("Action_state_processing");
+        });
+
+        it("Should execute icrc-112 requests successfully", async () => {
             const triggerTxMethod = flattenAndFindByMethod(
                 icrc_112_requests,
                 "trigger_transaction",
@@ -210,21 +226,19 @@ describe("Test create airdrop and claim", () => {
                 external: true,
             });
             await executeHelper.triggerTransaction();
+        });
 
-            // Step 7: Verify final state
+        it("Should verify final state successfully", async () => {
             const getLinkOptions: GetLinkOptions = { action_type: "CreateLink" };
             const getActionRes = await actor.get_link(linkId, [getLinkOptions]);
             const finalRes = parseResultResponse(getActionRes);
             const finalActionDto = finalRes.action[0]!;
-
-            expect(createLinkRes).toHaveProperty("Ok");
 
             expect(finalActionDto.state).toEqual("Action_state_success");
             finalActionDto.intents.forEach((intent: IntentDto) => {
                 expect(intent.state).toEqual("Intent_state_success");
             });
 
-            // change link state to active
             const linkInput: UpdateLinkInput = {
                 id: linkId,
                 action: "Continue",
@@ -238,112 +252,6 @@ describe("Test create airdrop and claim", () => {
             expect(linkUpdated.asset_info).toHaveLength(1);
             expect(linkUpdated.state).toEqual("Link_state_active");
         });
-    });
-
-    describe("With Bob", () => {
-        let claimActionId: string;
-        beforeAll(async () => {
-            actor.setIdentity(bob);
-        });
-        it("Should return empty if there is no action yet", async () => {
-            const res = await actor.link_get_user_state({
-                link_id: linkId,
-                action_type: "Claim",
-                anonymous_wallet_address: [],
-            });
-
-            expect(res).toHaveProperty("Ok");
-            if ("Ok" in res) {
-                expect(res.Ok).toEqual([]);
-            } else {
-                // Optional: Better error message if test fails
-                throw new Error("Expected Ok in response");
-            }
-        });
-
-        it("Should call process_action success", async () => {
-            const res = await actor.process_action({
-                action_id: "",
-                link_id: linkId,
-                action_type: "Claim",
-            });
-
-            const parsedRes = parseResultResponse(res);
-            claimActionId = parsedRes.id;
-
-            expect(res).toHaveProperty("Ok");
-        });
-
-        it("Should return user state", async () => {
-            const res = await actor.link_get_user_state({
-                link_id: linkId,
-                action_type: "Claim",
-                anonymous_wallet_address: [],
-            });
-            const parsedRes = parseResultResponse(res);
-
-            expect(res).toHaveProperty("Ok");
-            if (parsedRes[0]) {
-                expect(parsedRes[0].link_user_state).toEqual("User_state_choose_wallet");
-                expect(parsedRes[0].action.state).toEqual("Action_state_created");
-                expect(parsedRes[0].action.type).toEqual("Claim");
-            } else {
-                throw new Error("Expected Ok in response");
-            }
-        });
-
-        it("Should change be success after call process_action", async () => {
-            const tokenHelper = new TokenHelper(pic);
-            const bobAccount = {
-                owner: bob.getPrincipal(),
-                subaccount: [] as any,
-            };
-            const balanceBefore = await tokenHelper.balanceOf(bobAccount);
-            console.log("claimActionId", claimActionId);
-            const res = await actor.process_action({
-                action_id: createLinkActionId,
-                link_id: linkId,
-                action_type: "Claim",
-            });
-            const parsedRes = parseResultResponse(res);
-            const balanceAfter = await tokenHelper.balanceOf(bobAccount);
-            const get_link_res = await actor.get_link(linkId, []);
-            const parsed_res = parseResultResponse(get_link_res);
-
-            expect(res).toHaveProperty("Ok");
-            expect(parsedRes.state).toEqual("Action_state_success");
-            expect(parsedRes.intents[0].state).toEqual("Intent_state_success");
-            expect(balanceBefore).toEqual(BigInt(0));
-            // minus fee
-            expect(balanceAfter).toEqual(assetInfoTest.total_amount - BigInt(10_000));
-            const asset_info = fromNullable(parsed_res.link.asset_info);
-            expect(asset_info).toHaveLength(1);
-            // Add a null check before accessing array element
-            if (asset_info && asset_info.length > 0) {
-                expect(asset_info[0].total_claim).toEqual([BigInt(1)]);
-            } else {
-                throw new Error("Expected asset_info to have length > 0");
-            }
-        });
-    });
-
-    it("Should update to complete claim", async () => {
-        const res = await actor.link_update_user_state({
-            link_id: linkId,
-            action_type: "Claim",
-            goto: "Continue",
-            anonymous_wallet_address: [],
-        });
-        const parsedRes = parseResultResponse(res);
-
-        expect(res).toHaveProperty("Ok");
-        if (parsedRes[0]) {
-            expect(parsedRes[0].link_user_state).toEqual("User_state_completed_link");
-            expect(parsedRes[0].action.state).toEqual("Action_state_success");
-            expect(parsedRes[0].action.type).toEqual("Claim");
-        } else {
-            throw new Error("Expected Ok in response");
-        }
     });
 });
 //

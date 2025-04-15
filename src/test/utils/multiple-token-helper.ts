@@ -31,12 +31,72 @@ export class MultipleTokenHelper {
         this.canisterIds = new Map();
     }
 
+    public getTokenCanisterId = (tokenName: string) => {
+        const canisterId = this.canisterIds.get(tokenName);
+        if (!canisterId) {
+            throw new Error(`Canister for token ${tokenName} not setup`);
+        }
+        return canisterId;
+    };
+
     public getTokenCanisterIds = () => {
         return this.canisterIds;
     };
 
     public getTokenCanisterIdsArray = () => {
         return Array.from(this.canisterIds.values());
+    };
+
+    public init = async () => {
+        const LEDGER_ID = Principal.fromText("x5qut-viaaa-aaaar-qajda-cai");
+
+        const init_args: InitArgs = {
+            send_whitelist: [],
+            token_symbol: [],
+            transfer_fee: [],
+            minting_account: principalToAccountIdentifier(this.deployer.getPrincipal()),
+            maximum_number_of_accounts: [],
+            accounts_overflow_trim_quantity: [],
+            transaction_window: [],
+            max_message_size_bytes: [],
+            icrc1_minting_account: [],
+            archive_options: [],
+            initial_values: [],
+            token_name: ["ICP"],
+            feature_flags: [],
+        };
+
+        const ledgerCanisterPayload: LedgerCanisterPayload = {
+            Init: init_args,
+        };
+
+        const encoded_arg = IDL.encode(
+            ledgerInit({
+                IDL,
+            }),
+            [ledgerCanisterPayload],
+        );
+
+        const canister_id = await this.pic.createCanister({
+            cycles: BigInt(1e13),
+            sender: this.deployer.getPrincipal(),
+            // targetSubnetId: subnetId,
+            targetCanisterId: LEDGER_ID,
+        });
+
+        await this.pic.installCode({
+            wasm: this.wasm_path,
+            sender: this.deployer.getPrincipal(),
+            canisterId: canister_id,
+            // targetSubnetId: subnetId,
+            arg: encoded_arg,
+        });
+
+        const actor = await this.pic.createActor<_SERVICE>(idlFactory, LEDGER_ID);
+        actor.setIdentity(this.deployer);
+
+        this.actors.set("feeICP", actor);
+        this.canisterIds.set("feeICP", canister_id);
     };
 
     public setupCanister = async (tokenName: string) => {
@@ -130,6 +190,8 @@ export class MultipleTokenHelper {
         if (!actor) {
             throw new Error(`Canister for token ${tokenName} not setup`);
         }
+
+        console.log("approve", arg);
 
         return actor.icrc2_approve(arg);
     }

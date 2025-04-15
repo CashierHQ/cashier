@@ -2,7 +2,6 @@
 
 import { _SERVICE, Icrc112Request } from "../../declarations/cashier_backend/cashier_backend.did";
 import { Actor } from "@hadronous/pic";
-import { TokenHelper } from "../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { linkIdToSubaccount } from "../utils";
 import { Account } from "@dfinity/ledger-icp";
@@ -20,7 +19,7 @@ export function flattenAndFindByMethod(
     return icrc_112_requests.flat().filter((request) => request.method === method)[0];
 }
 
-export class Icrc112Executor {
+export class Icrc112ExecutorV2 {
     private icrc_112_requests: Icrc112Request[][];
     private token_helper: MultipleTokenHelper;
     private identity: Identity;
@@ -50,17 +49,17 @@ export class Icrc112Executor {
         this.trigger_tx_id = trigger_tx_id;
     }
 
-    public async execute() {
+    public async execute(token_name: string, amount: bigint) {
         for (const row of this.icrc_112_requests) {
             for (const request of row) {
                 this.token_helper.with_identity(this.identity);
 
                 switch (request.method) {
                     case "icrc1_transfer":
-                        await this.executeIcrc1Transfer();
+                        await this.executeIcrc1Transfer(token_name, amount);
                         break;
                     case "icrc2_approve":
-                        await this.executeIcrc2Approve();
+                        await this.executeIcrc2Approve(token_name, amount);
                         break;
                     case "trigger_transaction":
                         await this.triggerTransaction();
@@ -72,7 +71,7 @@ export class Icrc112Executor {
         }
     }
 
-    public async executeIcrc1Transfer() {
+    public async executeIcrc1Transfer(token_name: string, amount: bigint) {
         const link_vault: Account = {
             owner: this.spender_pid,
             subaccount: [linkIdToSubaccount(this.link_id)],
@@ -84,19 +83,19 @@ export class Icrc112Executor {
             memo: [],
             from_subaccount: [],
             created_at_time: [],
-            amount: BigInt(10_0000_0000),
+            amount: amount,
         };
         this.token_helper.with_identity(this.identity);
-        await this.token_helper.transfer(transfer_arg);
+        await this.token_helper.transfer(token_name, transfer_arg);
     }
 
-    public async executeIcrc2Approve() {
+    public async executeIcrc2Approve(token_name: string, amount: bigint) {
         const approve_args: ApproveArgs = {
             fee: [],
             memo: [],
             from_subaccount: [],
             created_at_time: [],
-            amount: BigInt(520000),
+            amount: amount,
             expected_allowance: [],
             expires_at: [],
             spender: {
@@ -106,7 +105,9 @@ export class Icrc112Executor {
         };
 
         this.token_helper.with_identity(this.identity);
-        await this.token_helper.approve(approve_args);
+        const res = await this.token_helper.approve(token_name, approve_args);
+
+        console.log("approve result", res);
     }
 
     public async triggerTransaction() {

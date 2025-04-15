@@ -17,6 +17,7 @@ import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
+import { toNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -148,9 +149,10 @@ describe("Tip Link confirm action success", () => {
                             {
                                 chain: assetInfoTest.chain,
                                 address: assetInfoTest.address,
-                                amount_per_claim: assetInfoTest.amount_per_claim,
+                                amount_per_claim: toNullable(assetInfoTest.amount_per_claim),
                                 total_amount: assetInfoTest.total_amount,
-                                label: "1000",
+                                label: "INTENT_LABEL_SEND_TIP_ASSET",
+                                payment_amount: [] as [],
                             },
                         ],
                     ],

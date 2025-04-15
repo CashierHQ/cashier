@@ -16,12 +16,11 @@ import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
-import { fromNullable } from "@dfinity/utils";
-import { MultipleTokenHelper } from "../../utils/multiple-token-helper";
+import { fromNullable, toNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Test create token basket and claim", () => {
+describe("Send tip claim anonymous", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
@@ -31,28 +30,24 @@ describe("Test create token basket and claim", () => {
     let linkId: string;
     let createLinkActionId: string;
 
-    let multiple_token_helper: MultipleTokenHelper;
+    let token_helper: TokenHelper;
 
     let icrc_112_requests: Icrc112Request[][] = [];
 
     let canister_id: string = "";
 
     const testPayload = {
-        title: "airdopr 10 icp for 10 user",
+        title: "tip 20 icp",
         description: "tip 20 icp to the user",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "SendTokenBasket",
+        link_type: "SendTip",
     };
-
-    let tokenList: Principal[] = [];
 
     const assetInfoTest = {
         chain: "IC",
         address: "x5qut-viaaa-aaaar-qajda-cai",
-        // 10 times claim
-        amount_per_claim: BigInt(1_0000_0000),
-        // total 10
+        amount_per_claim: BigInt(10_0000_0000),
         total_amount: BigInt(10_0000_0000),
     };
 
@@ -84,28 +79,10 @@ describe("Test create token basket and claim", () => {
 
         // create user snd airdrop
 
-        multiple_token_helper = new MultipleTokenHelper(pic);
-        await multiple_token_helper.setupCanister("token1");
-        await multiple_token_helper.setupCanister("token2");
-        await multiple_token_helper.setupCanister("token3");
+        token_helper = new TokenHelper(pic);
+        await token_helper.setupCanister();
 
-        await multiple_token_helper.airdrop(
-            "token1",
-            BigInt(1_0000_0000_0000),
-            alice.getPrincipal(),
-        );
-        await multiple_token_helper.airdrop(
-            "token2",
-            BigInt(1_0000_0000_0000),
-            alice.getPrincipal(),
-        );
-        await multiple_token_helper.airdrop(
-            "token3",
-            BigInt(1_0000_0000_0000),
-            alice.getPrincipal(),
-        );
-
-        tokenList = multiple_token_helper.getTokenCanisterIdsArray();
+        await token_helper.airdrop(BigInt(1_0000_0000_0000), alice.getPrincipal());
 
         await pic.advanceTime(5 * 60 * 1000);
         await pic.tick(50);
@@ -153,38 +130,24 @@ describe("Test create token basket and claim", () => {
             expect(linkUpdated1.state).toEqual("Link_state_add_assets");
 
             // Step 3: Transition to create link
-            const asset = tokenList.map((tokenCanisterId, index) => {
-                let total_amount;
-                let amount_per_claim;
-
-                if (index === 0) {
-                    total_amount = BigInt(10_0000_0000);
-                    amount_per_claim = BigInt(10_0000_0000);
-                }
-                if (index === 1) {
-                    total_amount = BigInt(20_0000_0000);
-                    amount_per_claim = BigInt(20_0000_0000);
-                }
-                if (index === 2) {
-                    total_amount = BigInt(30_0000_0000);
-                    amount_per_claim = BigInt(30_0000_0000);
-                }
-
-                return {
-                    chain: "IC",
-                    address: tokenCanisterId.toString(),
-                    amount_per_claim: amount_per_claim,
-                    total_amount: total_amount,
-                    label: "1000",
-                };
-            });
             const updateLinkInput2: UpdateLinkInput = {
                 id: linkId,
                 action: "Continue",
                 params: [
                     {
                         title: [],
-                        asset_info: [asset],
+                        asset_info: [
+                            [
+                                {
+                                    chain: assetInfoTest.chain,
+                                    address: assetInfoTest.address,
+                                    amount_per_claim: toNullable(assetInfoTest.amount_per_claim),
+                                    total_amount: assetInfoTest.total_amount,
+                                    label: "INTENT_LABEL_SEND_TIP_ASSET",
+                                    payment_amount: [] as any,
+                                },
+                            ],
+                        ],
                         description: [],
                         template: [],
                         link_image_url: [],
@@ -230,7 +193,7 @@ describe("Test create token basket and claim", () => {
             }
             const executeHelper = new Icrc112Executor(
                 icrc_112_requests,
-                multiple_token_helper,
+                token_helper,
                 alice,
                 linkId,
                 createLinkActionId,
@@ -276,32 +239,37 @@ describe("Test create token basket and claim", () => {
         });
     });
 
-    describe("With Bob", () => {
+    describe("With anonymous", () => {
+        let anonymous_actor: Actor<_SERVICE>;
         let claimActionId: string;
         beforeAll(async () => {
-            actor.setIdentity(bob);
+            anonymous_actor = await pic.createActor<_SERVICE>(
+                idlFactory,
+                Principal.fromText(canister_id),
+            );
         });
+
         it("Should return empty if there is no action yet", async () => {
-            const res = await actor.link_get_user_state({
+            const res = await anonymous_actor.link_get_user_state({
                 link_id: linkId,
                 action_type: "Claim",
-                anonymous_wallet_address: [],
+                anonymous_wallet_address: [bob.getPrincipal().toText()],
             });
 
             expect(res).toHaveProperty("Ok");
             if ("Ok" in res) {
                 expect(res.Ok).toEqual([]);
             } else {
-                // Optional: Better error message if test fails
                 throw new Error("Expected Ok in response");
             }
         });
 
-        it("Should call process_action success", async () => {
-            const res = await actor.process_action({
+        it("Should call process_action_anonymous success", async () => {
+            const res = await anonymous_actor.process_action_anonymous({
                 action_id: "",
                 link_id: linkId,
                 action_type: "Claim",
+                wallet_address: bob.getPrincipal().toText(),
             });
 
             const parsedRes = parseResultResponse(res);
@@ -311,10 +279,10 @@ describe("Test create token basket and claim", () => {
         });
 
         it("Should return user state", async () => {
-            const res = await actor.link_get_user_state({
+            const res = await anonymous_actor.link_get_user_state({
                 link_id: linkId,
                 action_type: "Claim",
-                anonymous_wallet_address: [],
+                anonymous_wallet_address: [bob.getPrincipal().toText()],
             });
             const parsedRes = parseResultResponse(res);
 
@@ -328,18 +296,18 @@ describe("Test create token basket and claim", () => {
             }
         });
 
-        it("Should change be success after call process_action", async () => {
+        it("Should change be success after call process_action_anonymous", async () => {
             const tokenHelper = new TokenHelper(pic);
             const bobAccount = {
                 owner: bob.getPrincipal(),
                 subaccount: [] as any,
             };
             const balanceBefore = await tokenHelper.balanceOf(bobAccount);
-            console.log("claimActionId", claimActionId);
-            const res = await actor.process_action({
-                action_id: createLinkActionId,
+            const res = await anonymous_actor.process_action_anonymous({
+                action_id: claimActionId,
                 link_id: linkId,
                 action_type: "Claim",
+                wallet_address: bob.getPrincipal().toText(),
             });
             const parsedRes = parseResultResponse(res);
             const balanceAfter = await tokenHelper.balanceOf(bobAccount);
@@ -351,7 +319,7 @@ describe("Test create token basket and claim", () => {
             expect(parsedRes.intents[0].state).toEqual("Intent_state_success");
             expect(balanceBefore).toEqual(BigInt(0));
             // minus fee
-            expect(balanceAfter).toEqual(assetInfoTest.total_amount - BigInt(10_000));
+            expect(balanceAfter).toEqual(assetInfoTest.amount_per_claim - BigInt(10_000));
             const asset_info = fromNullable(parsed_res.link.asset_info);
             expect(asset_info).toHaveLength(1);
             // Add a null check before accessing array element
@@ -361,25 +329,25 @@ describe("Test create token basket and claim", () => {
                 throw new Error("Expected asset_info to have length > 0");
             }
         });
-    });
 
-    it("Should update to complete claim", async () => {
-        const res = await actor.link_update_user_state({
-            link_id: linkId,
-            action_type: "Claim",
-            goto: "Continue",
-            anonymous_wallet_address: [],
+        it("Should update to complete claim", async () => {
+            const res = await anonymous_actor.link_update_user_state({
+                link_id: linkId,
+                action_type: "Claim",
+                goto: "Continue",
+                anonymous_wallet_address: [bob.getPrincipal().toText()],
+            });
+            const parsedRes = parseResultResponse(res);
+
+            expect(res).toHaveProperty("Ok");
+            if (parsedRes[0]) {
+                expect(parsedRes[0].link_user_state).toEqual("User_state_completed_link");
+                expect(parsedRes[0].action.state).toEqual("Action_state_success");
+                expect(parsedRes[0].action.type).toEqual("Claim");
+            } else {
+                throw new Error("Expected Ok in response");
+            }
         });
-        const parsedRes = parseResultResponse(res);
-
-        expect(res).toHaveProperty("Ok");
-        if (parsedRes[0]) {
-            expect(parsedRes[0].link_user_state).toEqual("User_state_completed_link");
-            expect(parsedRes[0].action.state).toEqual("Action_state_success");
-            expect(parsedRes[0].action.type).toEqual("Claim");
-        } else {
-            throw new Error("Expected Ok in response");
-        }
     });
 });
 //

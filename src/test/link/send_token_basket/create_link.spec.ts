@@ -13,14 +13,15 @@ import {
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../../utils/parser";
-import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
-import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
+import { flattenAndFindByMethod } from "../../utils/icrc-112";
+import { MultipleTokenHelper } from "../../utils/multiple-token-helper";
+import { Icrc112ExecutorV2 } from "../../utils/icrc-112-v2";
 import { toNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
-describe("Tip Link claim create user", () => {
+describe("Test create token basket and claim", () => {
     let pic: PocketIc;
     let actor: Actor<_SERVICE>;
 
@@ -30,25 +31,18 @@ describe("Tip Link claim create user", () => {
     let linkId: string;
     let createLinkActionId: string;
 
-    let token_helper: TokenHelper;
+    let multiple_token_helper: MultipleTokenHelper;
 
     let icrc_112_requests: Icrc112Request[][] = [];
 
     let canister_id: string = "";
 
     const testPayload = {
-        title: "tip 20 icp",
+        title: "airdopr 10 icp for 10 user",
         description: "tip 20 icp to the user",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "SendTip",
-    };
-
-    const assetInfoTest = {
-        chain: "IC",
-        address: "x5qut-viaaa-aaaar-qajda-cai",
-        amount_per_claim: BigInt(10_0000_0000),
-        total_amount: BigInt(10_0000_0000),
+        link_type: "SendTokenBasket",
     };
 
     beforeAll(async () => {
@@ -79,10 +73,32 @@ describe("Tip Link claim create user", () => {
 
         // create user snd airdrop
 
-        token_helper = new TokenHelper(pic);
-        await token_helper.setupCanister();
+        multiple_token_helper = new MultipleTokenHelper(pic);
+        await multiple_token_helper.init();
+        await multiple_token_helper.setupCanister("token1");
+        await multiple_token_helper.setupCanister("token2");
+        await multiple_token_helper.setupCanister("token3");
 
-        await token_helper.airdrop(BigInt(1_0000_0000_0000), alice.getPrincipal());
+        await multiple_token_helper.airdrop(
+            "feeICP",
+            BigInt(1_0000_0000_0000),
+            alice.getPrincipal(),
+        );
+        await multiple_token_helper.airdrop(
+            "token1",
+            BigInt(1_0000_0000_0000),
+            alice.getPrincipal(),
+        );
+        await multiple_token_helper.airdrop(
+            "token2",
+            BigInt(1_0000_0000_0000),
+            alice.getPrincipal(),
+        );
+        await multiple_token_helper.airdrop(
+            "token3",
+            BigInt(1_0000_0000_0000),
+            alice.getPrincipal(),
+        );
 
         await pic.advanceTime(5 * 60 * 1000);
         await pic.tick(50);
@@ -101,13 +117,18 @@ describe("Tip Link claim create user", () => {
         beforeAll(async () => {
             actor.setIdentity(alice);
         });
-        it("should complete the entire process from link creation to executing icrc-112", async () => {
+
+        it("Should create link successfully", async () => {
             // Step 1: Create link
-            const createLinkInput: CreateLinkInput = { link_type: "SendTip" };
+            const createLinkInput: CreateLinkInput = { link_type: "SendTokenBasket" };
             const createLinkRes = await actor.create_link(createLinkInput);
             const createLinkParsed = parseResultResponse(createLinkRes);
             linkId = createLinkParsed;
 
+            expect(createLinkRes).toHaveProperty("Ok");
+        });
+
+        it("Should choose template successfully", async () => {
             // Step 2: Transition to add asset
             const updateLinkInput1: UpdateLinkInput = {
                 id: linkId,
@@ -126,28 +147,56 @@ describe("Tip Link claim create user", () => {
             };
             const updateLinkRes1 = await actor.update_link(updateLinkInput1);
             const linkUpdated1 = parseResultResponse(updateLinkRes1);
+
             expect(linkUpdated1.id).toEqual(linkId);
             expect(linkUpdated1.state).toEqual("Link_state_add_assets");
+        });
 
-            // Step 3: Transition to create link
+        it("Should add assets successfully", async () => {
+            // Step 3: Add assets
+            const assets = [
+                {
+                    chain: "IC",
+                    address: multiple_token_helper.getTokenCanisterId("token1").toString(),
+                    amount_per_claim: toNullable(BigInt(10_0000_0000)),
+                    total_amount: BigInt(10_0000_0000),
+                    label:
+                        "SEND_TOKEN_BASKET_ASSET" +
+                        "_" +
+                        multiple_token_helper.getTokenCanisterId("token1").toString(),
+                    payment_amount: [] as [],
+                },
+                {
+                    chain: "IC",
+                    address: multiple_token_helper.getTokenCanisterId("token2").toString(),
+                    amount_per_claim: toNullable(BigInt(20_0000_0000)),
+                    total_amount: BigInt(20_0000_0000),
+                    label:
+                        "SEND_TOKEN_BASKET_ASSET" +
+                        "_" +
+                        multiple_token_helper.getTokenCanisterId("token2").toString(),
+                    payment_amount: [] as [],
+                },
+                {
+                    chain: "IC",
+                    address: multiple_token_helper.getTokenCanisterId("token3").toString(),
+                    amount_per_claim: toNullable(BigInt(20_0000_0000)),
+                    total_amount: BigInt(30_0000_0000),
+                    label:
+                        "SEND_TOKEN_BASKET_ASSET" +
+                        "_" +
+                        multiple_token_helper.getTokenCanisterId("token3").toString(),
+                    payment_amount: [] as [],
+                },
+            ];
+
             const updateLinkInput2: UpdateLinkInput = {
                 id: linkId,
                 action: "Continue",
                 params: [
                     {
                         title: [],
-                        asset_info: [
-                            [
-                                {
-                                    chain: assetInfoTest.chain,
-                                    address: assetInfoTest.address,
-                                    amount_per_claim: toNullable(assetInfoTest.amount_per_claim),
-                                    total_amount: assetInfoTest.total_amount,
-                                    label: "INTENT_LABEL_SEND_TIP_ASSET",
-                                    payment_amount: [] as [],
-                                },
-                            ],
-                        ],
+                        asset_info: [assets],
                         description: [],
                         template: [],
                         link_image_url: [],
@@ -160,7 +209,9 @@ describe("Tip Link claim create user", () => {
             const linkUpdated2 = parseResultResponse(updateLinkRes2);
             expect(linkUpdated2.id).toEqual(linkId);
             expect(linkUpdated2.state).toEqual("Link_state_create_link");
+        });
 
+        it("Should create link successfully", async () => {
             // Step 4: Create action
             const processActionInput: ProcessActionInput = {
                 link_id: linkId,
@@ -170,8 +221,11 @@ describe("Tip Link claim create user", () => {
             const createActionRes = await actor.process_action(processActionInput);
             const actionRes = parseResultResponse(createActionRes);
             createLinkActionId = actionRes.id;
-            expect(actionRes.state).toEqual("Action_state_created");
 
+            expect(actionRes.state).toEqual("Action_state_created");
+        });
+
+        it("Should confirm action successfully", async () => {
             // Step 5: Confirm action
             const confirmActionInput: ProcessActionInput = {
                 link_id: linkId,
@@ -181,6 +235,7 @@ describe("Tip Link claim create user", () => {
             const confirmRes = await actor.process_action(confirmActionInput);
             const confirmActionDto = parseResultResponse(confirmRes);
             icrc_112_requests = confirmActionDto.icrc_112_requests[0]!;
+
             expect(confirmActionDto.state).toEqual("Action_state_processing");
 
             // Step 6: Execute icrc-112 requests
@@ -191,9 +246,9 @@ describe("Tip Link claim create user", () => {
             if (!triggerTxMethod) {
                 throw new Error("trigger_transaction method not found in icrc-112 requests");
             }
-            const executeHelper = new Icrc112Executor(
+            const executeHelper = new Icrc112ExecutorV2(
                 icrc_112_requests,
-                token_helper,
+                multiple_token_helper,
                 alice,
                 linkId,
                 createLinkActionId,
@@ -201,22 +256,24 @@ describe("Tip Link claim create user", () => {
                 actor,
                 triggerTxMethod.nonce[0]!,
             );
-            await executeHelper.executeIcrc1Transfer();
-            await executeHelper.executeIcrc2Approve();
+            await executeHelper.executeIcrc1Transfer("token1", 10_0000_0000n);
+            await executeHelper.executeIcrc1Transfer("token2", 20_0000_0000n);
+            await executeHelper.executeIcrc1Transfer("token3", 30_0000_0000n);
+            await executeHelper.executeIcrc2Approve("feeICP", 30_0000_0000n);
             await actor.update_action({
                 action_id: createLinkActionId,
                 link_id: linkId,
                 external: true,
             });
             await executeHelper.triggerTransaction();
+        });
 
+        it("Should be success after executing", async () => {
             // Step 7: Verify final state
             const getLinkOptions: GetLinkOptions = { action_type: "CreateLink" };
             const getActionRes = await actor.get_link(linkId, [getLinkOptions]);
             const finalRes = parseResultResponse(getActionRes);
             const finalActionDto = finalRes.action[0]!;
-
-            expect(createLinkRes).toHaveProperty("Ok");
 
             expect(finalActionDto.state).toEqual("Action_state_success");
             finalActionDto.intents.forEach((intent: IntentDto) => {
@@ -236,55 +293,6 @@ describe("Tip Link claim create user", () => {
             expect(linkUpdated.id).toEqual(linkId);
             expect(linkUpdated.asset_info).toHaveLength(1);
             expect(linkUpdated.state).toEqual("Link_state_active");
-        });
-    });
-
-    describe("With Bob", () => {
-        beforeAll(async () => {
-            actor.setIdentity(bob);
-        });
-        it("Should return empty if there is no action yet", async () => {
-            const res = await actor.link_get_user_state({
-                link_id: linkId,
-                action_type: "Claim",
-                anonymous_wallet_address: [],
-            });
-
-            expect(res).toHaveProperty("Ok");
-            if ("Ok" in res) {
-                expect(res.Ok).toEqual([]);
-            } else {
-                // Optional: Better error message if test fails
-                throw new Error("Expected Ok in response");
-            }
-        });
-
-        it("Should call process_action success", async () => {
-            const res = await actor.process_action({
-                action_id: createLinkActionId,
-                link_id: linkId,
-                action_type: "Claim",
-            });
-
-            expect(res).toHaveProperty("Ok");
-        });
-
-        it("Should return user state", async () => {
-            const res = await actor.link_get_user_state({
-                link_id: linkId,
-                action_type: "Claim",
-                anonymous_wallet_address: [],
-            });
-            const parsedRes = parseResultResponse(res);
-
-            expect(res).toHaveProperty("Ok");
-            if (parsedRes[0]) {
-                expect(parsedRes[0].link_user_state).toEqual("User_state_choose_wallet");
-                expect(parsedRes[0].action.state).toEqual("Action_state_created");
-                expect(parsedRes[0].action.type).toEqual("Claim");
-            } else {
-                fail(`Expected index 0 have record: ${JSON.stringify(res)}`);
-            }
         });
     });
 });

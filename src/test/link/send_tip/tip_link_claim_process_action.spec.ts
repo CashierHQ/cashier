@@ -16,7 +16,7 @@ import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
-import { fromNullable } from "@dfinity/utils";
+import { fromNullable, toNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -141,9 +141,10 @@ describe("Tip Link claim create user", () => {
                                 {
                                     chain: assetInfoTest.chain,
                                     address: assetInfoTest.address,
-                                    amount_per_claim: assetInfoTest.amount_per_claim,
+                                    amount_per_claim: toNullable(assetInfoTest.amount_per_claim),
                                     total_amount: assetInfoTest.total_amount,
-                                    label: "1000",
+                                    label: "INTENT_LABEL_SEND_TIP_ASSET",
+                                    payment_amount: [] as [],
                                 },
                             ],
                         ],
