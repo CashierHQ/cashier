@@ -13,6 +13,10 @@
     .scrollbar-hide::-webkit-scrollbar {
         display: none; /* Chrome, Safari and Opera */
     }
+
+    .input-field {
+        @apply border border-[#D0D5DD] rounded-[8px] py-[8px] px-[12px] placeholder:text-[#D9D9D9] font-normal text-[16px];
+    }
 }
 
 @layer base {

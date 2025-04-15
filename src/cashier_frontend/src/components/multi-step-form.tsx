@@ -37,7 +37,7 @@ export function MultiStepFormHeader({
         <div className="w-full flex-none">
             {showHeader && (
                 <div className="w-full flex items-center justify-center mb-3 relative">
-                    <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center transition-opacity duration-200">
+                    <h4 className="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200">
                         {context.stepName}
                     </h4>
                     <button
