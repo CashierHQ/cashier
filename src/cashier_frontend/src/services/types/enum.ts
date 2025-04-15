@@ -65,17 +65,63 @@ export function getLinkLabel(state: LINK_STATE): string {
         case LINK_STATE.INACTIVE:
             return "Inactive";
         case LINK_STATE.INACTIVE_ENDED:
-            return "Inactive ended";
+            return "Inactive";
         default:
             return "Unknown state";
     }
 }
 
+export function mapStringToLinkState(state: string): LINK_STATE {
+    switch (state) {
+        case "Link_state_choose_link_type":
+            return LINK_STATE.CHOOSE_TEMPLATE;
+        case "Link_state_add_assets":
+            return LINK_STATE.ADD_ASSET;
+        case "Link_state_create_link":
+            return LINK_STATE.CREATE_LINK;
+        case "Link_state_active":
+            return LINK_STATE.ACTIVE;
+        case "Link_state_inactive":
+            return LINK_STATE.INACTIVE;
+        case "Link_state_inactive_ended":
+            return LINK_STATE.INACTIVE_ENDED;
+        default:
+            throw new Error(`Unknown link state: ${state}`);
+    }
+}
+
 export enum LINK_TYPE {
-    NFT_CREATE_AND_AIRDROP = "NftCreateAndAirdrop",
     SEND_TIP = "SendTip",
-    AIRDROP = "Airdrop",
-    TOKEN_BASKET = "TokenBasket",
+    NFT_CREATE_AND_AIRDROP = "NftCreateAndAirdrop",
+    SEND_AIRDROP = "SendAirdrop",
+    SEND_TOKEN_BASKET = "SendTokenBasket",
+    RECEIVE_PAYMENT = "ReceivePayment",
+    RECEIVE_MULTI_PAYMENT = "ReceiveMultiPayment",
+    SWAP_SINGLE_ASSET = "SwapSingleAsset",
+    SWAP_MULTI_ASSET = "SwapMultiAsset",
+}
+
+export function mapStringToLinkType(type: string | undefined): LINK_TYPE | undefined {
+    switch (type) {
+        case "SendTip":
+            return LINK_TYPE.SEND_TIP;
+        case "NftCreateAndAirdrop":
+            return LINK_TYPE.NFT_CREATE_AND_AIRDROP;
+        case "SendAirdrop":
+            return LINK_TYPE.SEND_AIRDROP;
+        case "SendTokenBasket":
+            return LINK_TYPE.SEND_TOKEN_BASKET;
+        case "ReceivePayment":
+            return LINK_TYPE.RECEIVE_PAYMENT;
+        case "ReceiveMultiPayment":
+            return LINK_TYPE.RECEIVE_MULTI_PAYMENT;
+        case "SwapSingleAsset":
+            return LINK_TYPE.SWAP_SINGLE_ASSET;
+        case "SwapMultiAsset":
+            return LINK_TYPE.SWAP_MULTI_ASSET;
+        default:
+            return undefined; // Return undefined for unknown types
+    }
 }
 
 export enum CHAIN {

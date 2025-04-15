@@ -1,23 +1,36 @@
+import { FungibleToken } from "@/types/fungible-token.speculative";
 import { ArrowUpDown } from "lucide-react";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
+export type ConversionResult = {
+    tokenAmount: number;
+    usdAmount: number;
+    tokenFormatted: string;
+    usdFormatted: string;
+};
+
 type UsdSwitchProps = {
+    token: FungibleToken;
     amount?: number | null;
     symbol?: string;
-    amountUsd?: number | null;
     isUsd: boolean;
     canConvert?: boolean;
     onToggle: (isUsd: boolean) => void;
+    // Optional formatting settings
+    tokenDecimals?: number;
+    usdDecimals?: number;
 };
 
 export const UsdSwitch: FC<UsdSwitchProps> = ({
+    token,
     isUsd,
     onToggle,
     amount,
     symbol,
-    amountUsd,
     canConvert,
+    tokenDecimals = 8,
+    usdDecimals = 2,
 }) => {
     const { t } = useTranslation();
 
@@ -26,11 +39,50 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
         return value.toFixed(decimals);
     };
 
-    const getDisplayText = () => {
+    // Calculate both USD and token amounts from the current amount
+    const conversionResult = useMemo((): ConversionResult => {
+        const tokenToUsd = token.usdConversionRate;
+        const tokenAmount = amount || 0;
+
+        // Default values
+        const result = {
+            tokenAmount: 0,
+            usdAmount: 0,
+            tokenFormatted: "0",
+            usdFormatted: "0 USD",
+        };
+
+        if (!tokenAmount || !tokenToUsd) return result;
+
+        const usdAmount = tokenAmount * tokenToUsd;
+
+        return {
+            tokenAmount,
+            usdAmount,
+            tokenFormatted: formatAmount(tokenAmount, tokenDecimals),
+            usdFormatted: `${formatAmount(usdAmount, usdDecimals)} USD`,
+        };
+    }, [amount, token.usdConversionRate, tokenDecimals, usdDecimals]);
+
+    // Choose what to display based on isUsd
+    const valueToDisplay = useMemo(() => {
         if (isUsd) {
-            return `${formatAmount(amount ?? 0)} ${symbol}`;
+            return `${formatAmount(amount || 0)} ${symbol}`;
         }
-        return `${formatAmount(amountUsd ?? 0)} USD`;
+        return conversionResult.usdFormatted;
+    }, [isUsd, amount, symbol, conversionResult]);
+
+    // Provide a utility function to convert between USD and token amounts
+    const convertAmount = (value: number, toUsd: boolean): number => {
+        if (!token.usdConversionRate || value === 0) return 0;
+
+        if (toUsd) {
+            // Convert token to USD
+            return value * token.usdConversionRate;
+        } else {
+            // Convert USD to token
+            return value / token.usdConversionRate;
+        }
     };
 
     if (!canConvert) {
@@ -48,8 +100,19 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             onClick={() => onToggle(!isUsd)}
             aria-label={isUsd ? "Switch to token amount" : "Switch to USD amount"}
         >
-            <span className="text-xs text-grey/60 leading-none">{getDisplayText()}</span>
-            <ArrowUpDown className="ml-1" size={16} />
+            <span className="text-xs text-primary leading-none">{valueToDisplay}</span>
+            <ArrowUpDown className="ml-1" size={16} strokeWidth={3} />
         </button>
     );
+};
+
+// Utility functions that can be imported elsewhere
+export const convertToUsd = (tokenAmount: number, conversionRate?: number): number => {
+    if (!conversionRate || tokenAmount === 0) return 0;
+    return tokenAmount * conversionRate;
+};
+
+export const convertFromUsd = (usdAmount: number, conversionRate?: number): number => {
+    if (!conversionRate || usdAmount === 0) return 0;
+    return usdAmount / conversionRate;
 };

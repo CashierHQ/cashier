@@ -29,13 +29,15 @@ export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({ sele
 
     return (
         <div className="flex font-normal items-center">
-            <Avatar className="mr-3">
+            <Avatar className="mr-2">
                 <AvatarImage src={getTokenAvatar(selectedToken.address)} />
                 <AvatarFallback>{selectedToken.name}</AvatarFallback>
             </Avatar>
-            <div id="asset-info" className="text-md text-left">
-                <div>{selectedToken.name}</div>
-                {selectedToken.amount?.toString() && <div>{`Balance ${amount}`}</div>}
+            <div id="asset-info" className="text-left flex flex-col gap-1 leading-none">
+                <div className="text-[16px]">{selectedToken.name}</div>
+                {selectedToken.amount?.toString() && (
+                    <div className="text-[10px]">{`Balance ${amount} ${selectedToken.symbol}`}</div>
+                )}
             </div>
         </div>
     );
