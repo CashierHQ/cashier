@@ -98,10 +98,11 @@ type IntentDto = record {
 };
 type LinkDetailUpdateAssetInfoInput = record {
   total_amount : nat64;
+  payment_amount : opt nat64;
   chain : text;
   label : text;
   address : text;
-  amount_per_claim : nat64;
+  amount_per_claim : opt nat64;
 };
 type LinkDetailUpdateInput = record {
   title : opt text;

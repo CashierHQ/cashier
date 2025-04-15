@@ -10,12 +10,13 @@ use uuid::Uuid;
 
 use crate::{
     constant::{
-        ICP_CANISTER_ID, INTENT_LABEL_PAYMENT, INTENT_LABEL_WALLET_TO_LINK,
-        INTENT_LABEL_WALLET_TO_TREASURY,
+        ICP_CANISTER_ID, INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
+        INTENT_LABEL_SEND_AIRDROP_ASSET, INTENT_LABEL_SEND_TIP_ASSET,
+        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     },
     core::link::types::{LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto},
     domains::fee::Fee,
-    info,
+    error, info,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
         user_wallet::UserWalletRepository,
@@ -101,7 +102,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_asset_intent.id = Uuid::new_v4().to_string();
                 transfer_asset_intent.state = IntentState::Created;
                 transfer_asset_intent.created_at = ts;
-                transfer_asset_intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+                transfer_asset_intent.label = INTENT_LABEL_SEND_TIP_ASSET.to_string();
 
                 // create intent for transfer fee to treasury
                 //TODO: get the intent template from config then map the values
@@ -112,7 +113,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_fee_intent.id = Uuid::new_v4().to_string();
                 transfer_fee_intent.state = IntentState::Created;
                 transfer_fee_intent.created_at = ts;
-                transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+                transfer_fee_intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
 
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
@@ -129,7 +130,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 intent.state = IntentState::Created;
                 intent.created_at = ts;
                 // same label with transfer asset to link
-                intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+                intent.label = INTENT_LABEL_SEND_TIP_ASSET.to_string();
 
                 intents.push(intent);
             }
@@ -145,7 +146,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 intent.state = IntentState::Created;
                 intent.created_at = ts;
                 // same label with transfer asset to link
-                intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+                intent.label = INTENT_LABEL_SEND_TIP_ASSET.to_string();
 
                 intents.push(intent);
             }
@@ -160,7 +161,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_asset_intent.id = Uuid::new_v4().to_string();
                 transfer_asset_intent.state = IntentState::Created;
                 transfer_asset_intent.created_at = ts;
-                transfer_asset_intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+                transfer_asset_intent.label = INTENT_LABEL_SEND_AIRDROP_ASSET.to_string();
                 // adding dependency
 
                 // create intent for transfer fee to treasury
@@ -172,7 +173,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_fee_intent.id = Uuid::new_v4().to_string();
                 transfer_fee_intent.state = IntentState::Created;
                 transfer_fee_intent.created_at = ts;
-                transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+                transfer_fee_intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
                 // adding dependency
 
                 intents.push(transfer_asset_intent);
@@ -190,10 +191,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 intent.state = IntentState::Created;
                 intent.created_at = ts;
                 // same label with transfer asset to link
-                intent.label = INTENT_LABEL_WALLET_TO_LINK.to_string();
+                intent.label = INTENT_LABEL_SEND_AIRDROP_ASSET.to_string();
 
                 intents.push(intent);
             }
+
             (LinkType::SendTokenBasket, ActionType::CreateLink) => {
                 let asset_info = link.asset_info.clone().ok_or_else(|| {
                     CanisterError::HandleLogicError("Asset info not found".to_string())
@@ -201,7 +203,16 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 let ts = self.ic_env.time();
 
                 // create intents for each asset in asset_info
+
                 for asset in asset_info.iter() {
+                    if !asset
+                        .label
+                        .starts_with(INTENT_LABEL_SEND_TOKEN_BASKET_ASSET)
+                    {
+                        return Err(CanisterError::HandleLogicError(
+                            "Asset label not match".to_string(),
+                        ));
+                    }
                     // Create intent for transfer asset to link
                     let mut transfer_asset_intent = Intent::default();
                     let transfer_data = IntentType::default_transfer();
@@ -210,8 +221,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     transfer_asset_intent.id = Uuid::new_v4().to_string();
                     transfer_asset_intent.state = IntentState::Created;
                     transfer_asset_intent.created_at = ts;
-                    transfer_asset_intent.label = asset_info.label;
-                    // INTENT_LABEL_WALLET_TO_LINK.to_string() + "_" + &asset.address;
+                    // eg: SEND_TOKEN_BASKET_ASSET_xxx-xxx-xxx
+                    transfer_asset_intent.label =
+                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string() + "_" + &asset.address;
 
                     intents.push(transfer_asset_intent);
                 }
@@ -224,10 +236,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_fee_intent.id = Uuid::new_v4().to_string();
                 transfer_fee_intent.state = IntentState::Created;
                 transfer_fee_intent.created_at = ts;
-                transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+                transfer_fee_intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
 
                 intents.push(transfer_fee_intent);
             }
+
             (LinkType::SendTokenBasket, ActionType::Claim) => {
                 let asset_info = link.asset_info.clone().ok_or_else(|| {
                     CanisterError::HandleLogicError("Asset info not found".to_string())
@@ -245,7 +258,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     transfer_asset_intent.state = IntentState::Created;
                     transfer_asset_intent.created_at = ts;
                     transfer_asset_intent.label =
-                        INTENT_LABEL_WALLET_TO_LINK.to_string() + "_" + &asset.address;
+                        INTENT_LABEL_SEND_TIP_ASSET.to_string() + "_" + &asset.address;
 
                     intents.push(transfer_asset_intent);
                 }
@@ -261,7 +274,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_fee_intent.id = Uuid::new_v4().to_string();
                 transfer_fee_intent.state = IntentState::Created;
                 transfer_fee_intent.created_at = ts;
-                transfer_fee_intent.label = INTENT_LABEL_WALLET_TO_TREASURY.to_string();
+                transfer_fee_intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
 
                 intents.push(transfer_fee_intent);
             }
@@ -276,7 +289,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 intent.state = IntentState::Created;
                 intent.created_at = ts;
                 // same label with transfer asset to link
-                intent.label = INTENT_LABEL_PAYMENT.to_string();
+                intent.label = INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string();
 
                 intents.push(intent);
             }
@@ -309,6 +322,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 IntentTask::TransferWalletToLink => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
+                        error!("label {:#?}", intent.label);
                         CanisterError::HandleLogicError(
                             "[link_assemble_intents] task TransferWalletToLink Asset not found"
                                 .to_string(),
@@ -735,7 +749,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         // update tip link's total_claim
         if link.link_type == Some(LinkType::SendTip) && action.r#type == ActionType::Claim {
-            info!("[update_link_properties] updating total_claim for TipLink");
+            // Update asset info to track the claim
+            if let Some(mut asset_info) = updated_link.asset_info.clone() {
+                for asset in asset_info.iter_mut() {
+                    // Initialize claim_count to 1 or increment it if it already exists
+                    asset.claim_count = Some(asset.claim_count.unwrap_or(0) + 1);
+                }
+                updated_link.asset_info = Some(asset_info);
+            }
+        } else if link.link_type == Some(LinkType::SendAirdrop)
+            && action.r#type == ActionType::Claim
+        {
             // Update asset info to track the claim
             if let Some(mut asset_info) = updated_link.asset_info.clone() {
                 for asset in asset_info.iter_mut() {
@@ -783,6 +807,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
 
                 return false;
+            } else {
+                return false;
+            }
+        } else if link.link_type == Some(LinkType::ReceivePayment) {
+            info!("[link_type_add_asset_validate] link type: {:#?}", link);
+            // validate asset info
+            if asset_infos.len() == 1 && asset_infos[0].payment_amount.is_some() {
+                return true;
             } else {
                 return false;
             }

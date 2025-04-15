@@ -13,4 +13,7 @@ pub struct AssetInfo {
     // For tip, airdrop, token basket
     pub amount_per_claim: Option<u64>,
     pub claim_count: Option<u64>,
+
+    // For receive payment
+    pub payment_amount: Option<u64>,
 }

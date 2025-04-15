@@ -18,7 +18,8 @@ pub struct LinkDetailUpdateAssetInfoInput {
     pub address: String,
     pub chain: String,
     pub total_amount: u64,
-    pub amount_per_claim: u64,
+    pub amount_per_claim: Option<u64>,
+    pub payment_amount: Option<u64>,
     pub label: String,
 }
 
@@ -33,9 +34,10 @@ impl LinkDetailUpdateAssetInfoInput {
             address: self.address.clone(),
             chain,
             total_amount: self.total_amount,
-            amount_per_claim: Some(self.amount_per_claim),
             label: self.label.clone(),
             claim_count: Some(0u64), // start with 0
+            amount_per_claim: self.amount_per_claim,
+            payment_amount: self.payment_amount,
         }
     }
 
@@ -43,9 +45,31 @@ impl LinkDetailUpdateAssetInfoInput {
         self.address == asset_info.address
             && self.chain == asset_info.chain.to_string()
             && self.total_amount == asset_info.total_amount
-            // TODO: amount_per_claim can be None based on link type
-            && self.amount_per_claim == asset_info.amount_per_claim.unwrap_or(0)
+            && self.amount_per_claim == asset_info.amount_per_claim
+            && self.payment_amount == asset_info.payment_amount
             && self.label == asset_info.label
+    }
+
+    pub fn validate(&self) -> Result<(), String> {
+        if self.amount_per_claim.is_some() {
+            if self.total_amount < self.amount_per_claim.unwrap() {
+                return Err(
+                    "Total amount should be greater than or equal to amount per claim".to_string(),
+                );
+            }
+        } else if self.payment_amount.is_none() {
+            if self.total_amount != self.payment_amount.unwrap() {
+                return Err(
+                    "Either total_amount and amount_per_claim or payment_amount must be provided"
+                        .to_string(),
+                );
+            }
+        }
+
+        match Principal::from_text(self.address.as_str()) {
+            Ok(_) => Ok(()),
+            Err(_) => Err("Invalid address".to_string()),
+        }
     }
 }
 
@@ -152,10 +176,11 @@ impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
             address: input.address,
             chain,
             total_amount: input.total_amount,
-            amount_per_claim: Some(input.amount_per_claim),
+            amount_per_claim: input.amount_per_claim,
             label: input.label,
             // start with 0
             claim_count: Some(0u64),
+            payment_amount: input.payment_amount,
         }
     }
 }
@@ -211,21 +236,6 @@ impl From<cashier_types::Link> for LinkDto {
 
 // Implementations
 
-impl LinkDetailUpdateAssetInfoInput {
-    pub fn validate(&self) -> Result<(), String> {
-        if self.total_amount < self.amount_per_claim {
-            return Err("Total amount should be greater than amount per claim".to_string());
-        }
-
-        match Principal::from_text(self.address.as_str()) {
-            Ok(_) => {}
-            Err(_) => return Err("Invalid address".to_string()),
-        }
-
-        Ok(())
-    }
-}
-
 impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
     fn from(input: &LinkDetailUpdateAssetInfoInput) -> Self {
         let chain = input.chain.to_string();
@@ -234,7 +244,7 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
             address: input.address.clone(),
             chain,
             total_amount: input.total_amount,
-            amount_per_claim: Some(input.amount_per_claim),
+            amount_per_claim: input.amount_per_claim,
             total_claim: Some(0u64), // start with 0
         }
     }

@@ -135,9 +135,10 @@ async fn test_handle_link_state_transition_add_assets_to_create_link() {
     let asset_info = vec![LinkDetailUpdateAssetInfoInput {
         address: "aaaaa-aa".to_string(),
         chain: "IC".to_string(),
-        total_amount: 100,
-        amount_per_claim: 100, // Same as total for SendTip validation
+        total_amount: Some(100),
+        amount_per_claim: Some(100), // Same as total for SendTip validation
         label: "test_label".to_string(),
+        payment_amount: None,
     }];
 
     let params = Some(LinkDetailUpdateInput {
@@ -235,6 +236,7 @@ async fn test_handle_link_state_transition_create_link_to_active() {
         amount_per_claim: Some(100),
         label: "test_label".to_string(),
         claim_count: None,
+        payment_amount: None,
     }]);
 
     let link_id = link.id.clone();

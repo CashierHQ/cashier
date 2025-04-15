@@ -14,7 +14,7 @@ use super::{action::ActionService, adapter::IntentAdapterImpl, transaction::Tran
 use crate::{
     constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
     core::action::types::ActionDto,
-    info,
+    error, info,
     types::{
         error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
         transaction_manager::ActionData,
@@ -207,6 +207,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                             })?;
                     }
                     Err(e) => {
+                        error!(
+                            "[execute_canister_tx] Error executing tx: {}",
+                            e.to_string()
+                        );
                         self.update_tx_state(tx, &TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
@@ -316,6 +320,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     /// Core logic for transaction execution
     async fn execute_transaction(&self, transaction: &Transaction) -> Result<(), CanisterError> {
         let from_call_type = transaction.from_call_type.clone();
+
+        info!("[execute_transaction] transaction: {:#?}", transaction);
 
         match from_call_type {
             FromCallType::Canister => {
