@@ -1,5 +1,6 @@
 import { Children, ReactElement, ReactNode, useEffect } from "react";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
+import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     MultiStepFormContext,
@@ -36,15 +37,15 @@ export function MultiStepFormHeader({
     return (
         <div className="w-full flex-none">
             {showHeader && (
-                <div className="w-full flex items-center justify-center mb-3 relative">
-                    <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center transition-opacity duration-200">
+                <div className="w-full flex items-center justify-center mb-1.5 relative">
+                    <h4 className="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200">
                         {context.stepName}
                     </h4>
                     <button
-                        className="absolute left-1 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
+                        className="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
                         onClick={() => onClickBack(context)}
                     >
-                        <ChevronLeftIcon width={25} height={25} />
+                        <ChevronLeft width={25} height={25} strokeWidth={2} />
                     </button>
                 </div>
             )}
@@ -55,7 +56,7 @@ export function MultiStepFormHeader({
                         <div
                             key={index}
                             className={cn(
-                                "h-[4px] rounded-full mx-[2px] transition-all duration-300",
+                                "h-[6px] rounded-full mx-[2px] transition-all duration-300",
                                 {
                                     "bg-green": index <= context.step,
                                     "bg-lightgreen": index > context.step,

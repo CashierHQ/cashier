@@ -176,9 +176,9 @@ export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
     switch (linkType) {
         case LINK_TYPE.SEND_TIP:
             return `/tip-link-default.png`;
-        case LINK_TYPE.AIRDROP:
+        case LINK_TYPE.SEND_AIRDROP:
             return `/airdrop-default.png`;
-        case LINK_TYPE.TOKEN_BASKET:
+        case LINK_TYPE.SEND_TOKEN_BASKET:
             return `/token-basket-default.png`;
         default:
             return `/icpLogo.png`;

@@ -21,7 +21,7 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
     const [confirmText, setConfirmText] = useState("");
 
     const onClickConfirm = async () => {
-        if (confirmText !== "Delete") return;
+        if (confirmText !== "End link") return;
 
         try {
             onDelete();
@@ -60,10 +60,10 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                     </div>
 
                     <div className="flex flex-col items-start justify-start gap-1 mt-4">
-                        <p className="font-semibold text-sm">To confirm, please type "Delete"</p>
+                        <p className="font-semibold text-sm">To confirm, please type "End link"</p>
                         <Input
                             className="pl-3 placeholder:text-grey/75 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
-                            placeholder="Delete"
+                            placeholder="End link"
                             value={confirmText}
                             onChange={(e) => setConfirmText(e.target.value)}
                         />
@@ -83,7 +83,7 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                             size="default"
                             className="mt-4 mx-1 disabled:opacity-50"
                             onClick={onClickConfirm}
-                            disabled={confirmText !== "Delete"}
+                            disabled={confirmText !== "End link"}
                         >
                             End link
                         </Button>

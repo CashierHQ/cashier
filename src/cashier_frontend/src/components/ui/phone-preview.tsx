@@ -10,7 +10,7 @@ export default function PhonePreview({
     small?: boolean;
 }) {
     return (
-        <div className="flex flex-col items-center justify-center mb-6 mt-4">
+        <div className="flex flex-col items-center justify-center mb-0 mt-4">
             <div
                 className={`relative ${small ? "h-[250px] aspect-[9/16]" : "h-[320px] aspect-[9/16]"}`}
             >

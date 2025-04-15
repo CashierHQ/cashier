@@ -46,7 +46,7 @@ export function useCarousel() {
     };
 }
 
-const TEMPLATE_ORDER = [LINK_TYPE.SEND_TIP, LINK_TYPE.AIRDROP, LINK_TYPE.TOKEN_BASKET];
+const TEMPLATE_ORDER = [LINK_TYPE.SEND_TIP, LINK_TYPE.SEND_AIRDROP, LINK_TYPE.SEND_TOKEN_BASKET];
 
 export function useBindFormAndCarousel(
     form: UseFormReturn<LinkTemplateSchema>,

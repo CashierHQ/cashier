@@ -41,6 +41,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
             },
         ],
     };
+
     return updateLinkInput;
 };
 

@@ -7,7 +7,13 @@ import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
 import { useUpdateLinkSelfContained } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { ACTION_STATE, ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
+import {
+    ACTION_STATE,
+    ACTION_TYPE,
+    LINK_STATE,
+    mapStringToLinkState,
+    mapStringToLinkType,
+} from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { Spinner } from "@/components/ui/spinner";
@@ -16,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
+import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -33,6 +40,8 @@ export default function LinkPage() {
     const { linkId } = useParams();
     const { toastData, showToast, hideToast } = useToast();
 
+    const { addUserInput } = useLinkCreationFormStore();
+
     const { link, setLink, action, setAction } = useLinkActionStore();
 
     const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
@@ -41,12 +50,29 @@ export default function LinkPage() {
     );
     const { mutateAsync: updateLink } = useUpdateLinkSelfContained();
 
+    const currentLink = linkData?.link;
+
     useEffect(() => {
         if (linkData) {
             setLink(linkData.link);
             setAction(linkData.action);
-        }
 
+            const userInput: Partial<UserInputItem> = {
+                linkId: linkData.link.id,
+                state: mapStringToLinkState(linkData.link.state!),
+                title: linkData.link.title,
+                linkType: mapStringToLinkType(linkData.link.linkType),
+                assets: linkData.link.asset_info.map((asset) => ({
+                    address: asset.address,
+                    amount: asset.amount,
+                    totalClaim: asset.totalClaim ?? 0n,
+                    usdEquivalent: 0,
+                    usdConversionRate: 0,
+                })),
+            };
+
+            addUserInput(linkData.link.id, userInput);
+        }
         return () => {
             setLink(undefined);
             setAction(undefined);
@@ -118,12 +144,12 @@ export default function LinkPage() {
     return (
         <div
             className={cn(
-                "w-screen h-dvh  flex flex-col items-center py-3 overflow-hidden",
-                "md:h-[90%] md:w-[40%] md:max-w-[600px] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
+                "w-screen h-dvh flex flex-col items-center py-3 overflow-hidden",
+                "md:h-[90%] md:w-[40%] md:max-w-[600px] md:flex md:flex-col md:items-center md:py-5 mb-2 md:bg-[white] md:rounded-md md:drop-shadow-md",
             )}
         >
-            <div className="w-11/12 h-full flex flex-col relative overflow-hidden">
-                <MultiStepForm initialStep={getInitialStep(linkData?.link?.state)}>
+            <div className="w-11/12 h-full flex flex-col relative overflow-hidden md:overflow-y-auto">
+                <MultiStepForm initialStep={getInitialStep(currentLink?.state)}>
                     <MultiStepForm.Header onClickBack={handleBackstep} />
 
                     <MultiStepForm.Items>

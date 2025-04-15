@@ -22,10 +22,12 @@ import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
 import { Plus } from "lucide-react";
 import { useConnectToWallet } from "@/hooks/user-hook";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 
 export default function HomePage() {
     const { t } = useTranslation();
     const identity = useIdentity();
+    const { userInputs, addUserInput } = useLinkCreationFormStore();
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
     const {
@@ -51,23 +53,24 @@ export default function HomePage() {
     const { updateTokenInit } = useTokens();
 
     const handleCreateLink = async () => {
-        const linkList = linkData ? Object.values(linkData).flat() : [];
-        const newLink = linkList.find((link) => link.state === LINK_STATE.CHOOSE_TEMPLATE);
-        if (newLink) {
-            navigate(`/edit/${newLink.id}`);
-        } else {
-            try {
-                setDisableCreateButton(true);
-                showToast(t("common.creating"), t("common.creatingLink"), "default");
-                const response = await new LinkService(identity).createLink({
-                    link_type: LINK_TYPE.SEND_TIP,
-                });
-                navigate(`/edit/${response}`);
-            } catch {
-                showToast(t("common.error"), t("common.commonErrorMessage"), "error");
-            } finally {
-                setDisableCreateButton(true);
-            }
+        try {
+            setDisableCreateButton(true);
+            showToast(t("common.creating"), t("common.creatingLink"), "default");
+            const linkId = await new LinkService(identity).createLink({
+                link_type: LINK_TYPE.SEND_TIP,
+            });
+            addUserInput(linkId, {
+                linkId: linkId,
+                state: LINK_STATE.CHOOSE_TEMPLATE,
+                title: "",
+                linkType: LINK_TYPE.SEND_TIP,
+                assets: [],
+            });
+            navigate(`/edit/${linkId}`);
+        } catch {
+            showToast(t("common.error"), t("common.commonErrorMessage"), "error");
+        } finally {
+            setDisableCreateButton(false);
         }
     };
 
@@ -83,6 +86,45 @@ export default function HomePage() {
             setShowGuide(true);
         }
     }, []);
+
+    useEffect(() => {
+        const draftLinkStates = [
+            LINK_STATE.ADD_ASSET,
+            LINK_STATE.CHOOSE_TEMPLATE,
+            LINK_STATE.CREATE_LINK,
+        ];
+        if (linkData) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            Object.entries(linkData).forEach(([_date, links]) => {
+                links.forEach((link) => {
+                    if (draftLinkStates.includes(link.state as LINK_STATE)) {
+                        if (userInputs.has(link.id)) {
+                            console.log("Link: ", link);
+                            // Convert BigInt values to strings before adding to store
+                            // Store kept crashing otherwise if using BigInt, maybe
+                            const processedAssets = link.asset_info
+                                ? link.asset_info.map((asset) => ({
+                                      address: asset.address,
+                                      amount: asset.amount,
+                                      totalClaim: asset.totalClaim ?? asset.amount,
+                                      usdEquivalent: 0,
+                                      usdConversionRate: 0,
+                                  }))
+                                : [];
+
+                            addUserInput(link.id, {
+                                linkId: link.id,
+                                state: link.state as LINK_STATE,
+                                title: link.title,
+                                linkType: link.linkType as LINK_TYPE,
+                                assets: processedAssets,
+                            });
+                        }
+                    }
+                });
+            });
+        }
+    }, [linkData]);
 
     useEffect(() => {
         if (identity) {
@@ -214,13 +256,13 @@ export default function HomePage() {
         } else {
             return (
                 <div
-                    className={`w-screen flexs justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
+                    className={`w-screen flex justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
                 >
                     <SheetWrapper>
                         <div className="flex w-full flex-col h-full">
                             <Header />
                             <div
-                                className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
+                                className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 pt-9 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
                             >
                                 {showGuide && (
                                     <div className="mt-8 px-4">
@@ -238,12 +280,20 @@ export default function HomePage() {
                                         </button>
                                     </div>
                                 )}
-                                <div className="flex h-full flex-col px-4 w-full">
-                                    <h2 className="text-base font-semibold mt-7">
+                                <div
+                                    className={`flex flex-col px-4 w-full ${
+                                        showGuide ? "h-[calc(100dvh-280px)]" : "h-full"
+                                    }`}
+                                >
+                                    <h2
+                                        className={`text-base font-semibold ${
+                                            showGuide || !responsive.isSmallDevice ? "mt-7" : "mt-0"
+                                        }`}
+                                    >
                                         Links created by me
                                     </h2>
                                     <div
-                                        className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-[85%]" : "h-full"}`}
+                                        className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-full" : "h-full"}`}
                                     >
                                         {isLoading
                                             ? Array.from({ length: 5 }).map((_, index) => (
@@ -280,6 +330,7 @@ export default function HomePage() {
                             title={toastData?.title ?? ""}
                             description={toastData?.description ?? ""}
                             variant={toastData?.variant ?? "default"}
+                            duration={2000}
                         />
                     </SheetWrapper>
                 </div>
