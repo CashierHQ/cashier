@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { BackHeader } from "@/components/ui/back-header";
-import { Search } from "@/components/ui/search";
+import { Search as SearchIcon, RefreshCw } from "lucide-react";
 import { ManageTokensList } from "@/components/manage-tokens/token-list";
 import { ManageTokensMissingTokenMessage } from "@/components/manage-tokens/missing-token-message";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ import { useTokens } from "@/hooks/useTokens";
 import { Spinner } from "@/components/ui/spinner";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import debounce from "lodash/debounce";
+import { IconInput } from "@/components/icon-input";
 
 export default function ManageTokensPage() {
     const { t } = useTranslation();
@@ -23,6 +24,34 @@ export default function ManageTokensPage() {
 
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [filteredTokens, setFilteredTokens] = useState<FungibleToken[]>([]);
+
+    const [isExplorerLoading, setIsExplorerLoading] = useState<boolean>(false);
+
+    // Custom animation style
+    const halfSpinStyle = {
+        animation: "half-spin-pause 2.3s infinite",
+    };
+
+    // Define CSS keyframes animation style
+    const keyframesStyle = `
+        @keyframes half-spin-pause {
+            0% { transform: rotate(0deg); }
+            40% { transform: rotate(180deg); }
+            58% { transform: rotate(180deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+
+    // Add the keyframes to the document on component mount
+    useEffect(() => {
+        const styleElement = document.createElement("style");
+        styleElement.innerHTML = keyframesStyle;
+        document.head.appendChild(styleElement);
+
+        return () => {
+            document.head.removeChild(styleElement);
+        };
+    }, [keyframesStyle]);
 
     // Search function to filter tokens
     const searchTokens = useCallback((query: string, tokenList: FungibleToken[]) => {
@@ -45,13 +74,6 @@ export default function ManageTokensPage() {
         }, 300),
         [searchTokens],
     );
-
-    // Handle search input changes
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const query = e.target.value;
-        setSearchQuery(query);
-        debouncedSearch(query, tokens);
-    };
 
     // Clear search
     const handleClearSearch = () => {
@@ -81,24 +103,26 @@ export default function ManageTokensPage() {
             </BackHeader>
 
             <div className="mt-6 relative">
-                <div className="w-full relative">
-                    <input
-                        className="w-full py-3 px-10 border border-gray-200 rounded-md outline-none text-sm"
-                        placeholder={t("manage.search.placeholder")}
+                <div className="w-full flex gap-2">
+                    <IconInput
+                        isCurrencyInput={false}
                         value={searchQuery}
-                        onChange={handleSearchChange}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        icon={<SearchIcon color="#35A18A" />}
+                        placeholder="Search for a token"
+                        rightIcon={
+                            searchQuery && <button className="text-[#35A18A] text-sm">Clear</button>
+                        }
+                        onRightIconClick={handleClearSearch}
                     />
-                    <div className="absolute top-1/2 -translate-y-1/2 text-gray-400">
-                        <Search.Icon />
-                    </div>
-                    {searchQuery && (
-                        <button
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 text-sm"
-                            onClick={handleClearSearch}
-                        >
-                            {t("common.clear")}
-                        </button>
-                    )}
+                    <button
+                        onClick={() => {
+                            setIsExplorerLoading((oldValue) => !oldValue);
+                        }}
+                        className="light-borders w-12 flex items-center justify-center"
+                    >
+                        <RefreshCw color="#35A18A" style={isExplorerLoading ? halfSpinStyle : {}} />
+                    </button>
                 </div>
             </div>
 
