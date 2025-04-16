@@ -130,6 +130,7 @@ describe("Test create airdrop and claim", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [testPayload.link_type],
+                        link_use_action_max_count: [],
                     },
                 ],
             };
@@ -152,10 +153,8 @@ describe("Test create airdrop and claim", () => {
                                 {
                                     chain: assetInfoTest.chain,
                                     address: assetInfoTest.address,
-                                    amount_per_claim: toNullable(),
-                                    total_amount: assetInfoTest.total_amount,
                                     label: assetInfoTest.label,
-                                    payment_amount: toNullable(assetInfoTest.payment_amount),
+                                    amount_per_link_use_action: assetInfoTest.payment_amount,
                                 },
                             ],
                         ],
@@ -164,6 +163,7 @@ describe("Test create airdrop and claim", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [],
+                        link_use_action_max_count: toNullable(1n),
                     },
                 ],
             };

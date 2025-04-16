@@ -21,7 +21,7 @@ export default function LinkDetails() {
                 {
                     amount: data.amount,
                     address: data.tokenAddress,
-                    label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
+                    label: LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET,
                     chain: CHAIN.IC,
                     totalClaim: 0n,
                 },

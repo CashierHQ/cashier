@@ -12,7 +12,6 @@ import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
 import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
-import { toNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -113,6 +112,7 @@ describe("Tip Link validate user not have enough balance", () => {
                     link_image_url: [],
                     nft_image: [],
                     link_type: [testPayload.link_type],
+                    link_use_action_max_count: [],
                 },
             ],
         };
@@ -138,10 +138,8 @@ describe("Tip Link validate user not have enough balance", () => {
                             {
                                 chain: assetInfoTest.chain,
                                 address: assetInfoTest.address,
-                                amount_per_claim: toNullable(assetInfoTest.amount_per_claim),
-                                total_amount: assetInfoTest.total_amount,
-                                label: "INTENT_LABEL_SEND_TIP_ASSET",
-                                payment_amount: [] as [],
+                                label: "SEND_TIP_ASSET",
+                                amount_per_link_use_action: assetInfoTest.amount_per_claim,
                             },
                         ],
                     ],
@@ -150,6 +148,7 @@ describe("Tip Link validate user not have enough balance", () => {
                     link_image_url: [],
                     nft_image: [],
                     link_type: [],
+                    link_use_action_max_count: [1n],
                 },
             ],
         };

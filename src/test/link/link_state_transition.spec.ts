@@ -114,6 +114,7 @@ describe("Link state transition", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [testPayload.link_type],
+                        link_use_action_max_count: [],
                     },
                 ],
             };
@@ -139,9 +140,8 @@ describe("Link state transition", () => {
                                 {
                                     chain: assetInfoTest.chain,
                                     address: assetInfoTest.address,
-                                    amount_per_claim: assetInfoTest.amount_per_claim,
-                                    total_amount: assetInfoTest.total_amount,
-                                    label: "1000",
+                                    label: "SEND_TIP_ASSET",
+                                    amount_per_link_use_action: assetInfoTest.amount_per_claim,
                                 },
                             ],
                         ],
@@ -150,6 +150,7 @@ describe("Link state transition", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [],
+                        link_use_action_max_count: [1n],
                     },
                 ],
             };
@@ -222,6 +223,7 @@ describe("Link state transition", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [testPayload.link_type],
+                        link_use_action_max_count: [],
                     },
                 ],
             };
@@ -247,6 +249,7 @@ describe("Link state transition", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [testPayload.link_type],
+                        link_use_action_max_count: [],
                     },
                 ],
             };
@@ -261,9 +264,8 @@ describe("Link state transition", () => {
                                 {
                                     chain: assetInfoTest.chain,
                                     address: assetInfoTest.address,
-                                    amount_per_claim: assetInfoTest.amount_per_claim,
-                                    total_amount: assetInfoTest.total_amount,
-                                    label: "1000",
+                                    label: "SEND_TIP_ASSET",
+                                    amount_per_link_use_action: assetInfoTest.amount_per_claim,
                                 },
                             ],
                         ],
@@ -272,6 +274,7 @@ describe("Link state transition", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [],
+                        link_use_action_max_count: [1n],
                     },
                 ],
             };

@@ -17,7 +17,6 @@ import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod } from "../../utils/icrc-112";
 import { MultipleTokenHelper } from "../../utils/multiple-token-helper";
 import { Icrc112ExecutorV2 } from "../../utils/icrc-112-v2";
-import { toNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -142,6 +141,7 @@ describe("Test create token basket and claim", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [testPayload.link_type],
+                        link_use_action_max_count: [],
                     },
                 ],
             };
@@ -158,35 +158,32 @@ describe("Test create token basket and claim", () => {
                 {
                     chain: "IC",
                     address: multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    amount_per_claim: toNullable(BigInt(10_0000_0000)),
-                    total_amount: BigInt(10_0000_0000),
                     label:
                         "SEND_TOKEN_BASKET_ASSET" +
                         "_" +
                         multiple_token_helper.getTokenCanisterId("token1").toString(),
                     payment_amount: [] as [],
+                    amount_per_link_use_action: BigInt(10_0000_0000),
                 },
                 {
                     chain: "IC",
                     address: multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    amount_per_claim: toNullable(BigInt(20_0000_0000)),
-                    total_amount: BigInt(20_0000_0000),
                     label:
                         "SEND_TOKEN_BASKET_ASSET" +
                         "_" +
                         multiple_token_helper.getTokenCanisterId("token2").toString(),
                     payment_amount: [] as [],
+                    amount_per_link_use_action: BigInt(20_0000_0000),
                 },
                 {
                     chain: "IC",
                     address: multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    amount_per_claim: toNullable(BigInt(20_0000_0000)),
-                    total_amount: BigInt(30_0000_0000),
                     label:
                         "SEND_TOKEN_BASKET_ASSET" +
                         "_" +
                         multiple_token_helper.getTokenCanisterId("token3").toString(),
                     payment_amount: [] as [],
+                    amount_per_link_use_action: BigInt(30_0000_0000),
                 },
             ];
 
@@ -202,6 +199,7 @@ describe("Test create token basket and claim", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [],
+                        link_use_action_max_count: [1n],
                     },
                 ],
             };

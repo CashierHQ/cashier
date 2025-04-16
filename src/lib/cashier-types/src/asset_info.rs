@@ -6,14 +6,6 @@ use crate::common::Chain;
 pub struct AssetInfo {
     pub address: String,
     pub chain: Chain,
-    // how many asset we have in total
-    pub total_amount: u64,
     pub label: String,
-
-    // For tip, airdrop, token basket
-    pub amount_per_claim: Option<u64>,
-    pub claim_count: Option<u64>,
-
-    // For receive payment
-    pub payment_amount: Option<u64>,
+    pub amount_per_link_use_action: u64,
 }

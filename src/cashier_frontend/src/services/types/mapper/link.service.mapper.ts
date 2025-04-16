@@ -13,7 +13,7 @@ import {
     LinkModel,
 } from "../link.service.types";
 import { CHAIN, LINK_INTENT_LABEL, TEMPLATE } from "../enum";
-import { fromDefinedNullable, fromNullable } from "@dfinity/utils";
+import { fromDefinedNullable, fromNullable, toNullable } from "@dfinity/utils";
 import { mapActionModel } from "./action.service.mapper";
 
 const IS_USE_DEFAULT_LINK_TEMPLATE = true;
@@ -83,9 +83,10 @@ const mapAssetInfo = (assetInfo: AssetInfoModel): LinkDetailUpdateAssetInfoInput
         address: assetInfo.address,
         chain: CHAIN.IC,
         // for only tip link amount_per_claim = total_amount
-        amount_per_claim: assetInfo.amount,
+        amount_per_claim: toNullable(assetInfo.amount),
         total_amount: assetInfo.amount,
-        label: assetInfo.label ?? LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
+        label: assetInfo.label ?? LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET,
+        payment_amount: [],
     };
 };
 

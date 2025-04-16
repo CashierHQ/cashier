@@ -125,12 +125,22 @@ describe("Test create airdrop and claim", () => {
                 params: [
                     {
                         title: [testPayload.title],
-                        asset_info: [],
+                        asset_info: [
+                            [
+                                {
+                                    chain: assetInfoTest.chain,
+                                    address: assetInfoTest.address,
+                                    label: assetInfoTest.label,
+                                    amount_per_link_use_action: assetInfoTest.amount_per_claim,
+                                },
+                            ],
+                        ],
                         description: [],
                         template: [testPayload.template],
                         link_image_url: [],
                         nft_image: [],
                         link_type: [testPayload.link_type],
+                        link_use_action_max_count: toNullable(1n),
                     },
                 ],
             };
@@ -153,10 +163,8 @@ describe("Test create airdrop and claim", () => {
                                 {
                                     chain: assetInfoTest.chain,
                                     address: assetInfoTest.address,
-                                    amount_per_claim: toNullable(assetInfoTest.amount_per_claim),
-                                    total_amount: assetInfoTest.total_amount,
                                     label: assetInfoTest.label,
-                                    payment_amount: [] as any,
+                                    amount_per_link_use_action: assetInfoTest.amount_per_claim,
                                 },
                             ],
                         ],
@@ -165,6 +173,7 @@ describe("Test create airdrop and claim", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [],
+                        link_use_action_max_count: toNullable(10n),
                     },
                 ],
             };
@@ -331,12 +340,14 @@ describe("Test create airdrop and claim", () => {
             expect(parsedRes.intents[0].state).toEqual("Intent_state_success");
             expect(balanceBefore).toEqual(BigInt(0));
             // minus fee
-            expect(balanceAfter).toEqual(assetInfoTest.total_amount - BigInt(10_000));
+            expect(balanceAfter).toEqual(assetInfoTest.amount_per_claim - BigInt(10_000));
             const asset_info = fromNullable(parsed_res.link.asset_info);
             expect(asset_info).toHaveLength(1);
             // Add a null check before accessing array element
             if (asset_info && asset_info.length > 0) {
-                expect(asset_info[0].total_claim).toEqual([BigInt(1)]);
+                expect(asset_info[0].amount_per_link_use_action).toEqual(
+                    assetInfoTest.amount_per_claim,
+                );
             } else {
                 throw new Error("Expected asset_info to have length > 0");
             }
@@ -391,15 +402,12 @@ describe("Test create airdrop and claim", () => {
         console.log("balanceAfter", balanceAfter);
 
         // minus fee
-        expect(balanceAfter).toEqual(assetInfoTest.total_amount - BigInt(10_000));
+        expect(balanceAfter).toEqual(assetInfoTest.amount_per_claim - BigInt(10_000));
 
         const assetInfo = fromNullable(parsedRes.link.asset_info);
         expect(assetInfo).toHaveLength(1);
-        if (assetInfo && assetInfo.length > 0) {
-            expect(assetInfo[0].total_claim).toEqual([BigInt(6)]);
-        } else {
-            throw new Error("Expected asset_info to have length > 0");
-        }
+        expect(parsedRes.link.link_use_action_max_count).toEqual(10n);
+        expect(parsedRes.link.link_use_action_counter).toEqual(6n);
     });
 });
 //

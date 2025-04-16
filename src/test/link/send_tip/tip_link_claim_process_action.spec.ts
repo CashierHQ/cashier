@@ -16,7 +16,7 @@ import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
-import { fromNullable, toNullable } from "@dfinity/utils";
+import { fromNullable } from "@dfinity/utils";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -121,6 +121,7 @@ describe("Tip Link claim create user", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [testPayload.link_type],
+                        link_use_action_max_count: [],
                     },
                 ],
             };
@@ -141,10 +142,8 @@ describe("Tip Link claim create user", () => {
                                 {
                                     chain: assetInfoTest.chain,
                                     address: assetInfoTest.address,
-                                    amount_per_claim: toNullable(assetInfoTest.amount_per_claim),
-                                    total_amount: assetInfoTest.total_amount,
-                                    label: "INTENT_LABEL_SEND_TIP_ASSET",
-                                    payment_amount: [] as [],
+                                    label: "SEND_TIP_ASSET",
+                                    amount_per_link_use_action: assetInfoTest.amount_per_claim,
                                 },
                             ],
                         ],
@@ -153,6 +152,7 @@ describe("Tip Link claim create user", () => {
                         link_image_url: [],
                         nft_image: [],
                         link_type: [],
+                        link_use_action_max_count: [1n],
                     },
                 ],
             };
@@ -317,12 +317,7 @@ describe("Tip Link claim create user", () => {
             expect(balanceAfter).toEqual(assetInfoTest.amount_per_claim - BigInt(10_000));
             const asset_info = fromNullable(parsed_res.link.asset_info);
             expect(asset_info).toHaveLength(1);
-            // Add a null check before accessing array element
-            if (asset_info && asset_info.length > 0) {
-                expect(asset_info[0].total_claim).toEqual([BigInt(1)]);
-            } else {
-                throw new Error("Expected asset_info to have length > 0");
-            }
+            expect(parsed_res.link.link_use_action_counter).toEqual(1n);
         });
     });
 
