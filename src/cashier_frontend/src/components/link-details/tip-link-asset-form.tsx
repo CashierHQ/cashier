@@ -95,7 +95,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                 setDisplayValue(tokenAmount.toString());
             }
         } else {
-            setDisplayValue("");
+            setDisplayValue("0");
         }
     }, [tokenAmount, token, isUsd, tokenUsdPrice, inputTouched]);
 
@@ -256,7 +256,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
             }
             // If we're in token mode or can't convert, keep the original amount
             else if (currentInput.assets?.[0]?.amount) {
-                newAmount = currentInput.assets[0].amount;
+                newAmount = 0n;
             }
 
             // Update asset with new address and calculated amount
