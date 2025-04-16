@@ -194,17 +194,6 @@ export default function LinkPage() {
             )}
         >
             <div className="w-11/12 h-full flex flex-col relative overflow-hidden md:overflow-y-auto">
-                <p
-                    onClick={() => {
-                        console.log("🚀 ~ currentLink:", currentLink);
-                        console.log(
-                            "🚀 ~ from store: ",
-                            linkCreationFormStore.getUserInput(linkId!),
-                        );
-                    }}
-                >
-                    Log
-                </p>
                 <MultiStepForm initialStep={getInitialStep(currentLink?.state)}>
                     <MultiStepForm.Header
                         onClickBack={handleBackstep}

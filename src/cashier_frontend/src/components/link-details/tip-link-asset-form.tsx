@@ -12,11 +12,13 @@ import { TipLinkAssetFormSchema } from "./tip-link-asset-form.hooks";
 import { AmountActionButtons } from "./amount-action-buttons";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { useLinkCreationFormStore, UserInputAsset } from "@/stores/linkCreationFormStore";
 import { Label } from "../ui/label";
-import { LINK_STATE } from "@/services/types/enum";
+import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "../transaction/transaction-toast";
+import { X, Plus, Trash } from "lucide-react";
+
 type TipLinkAssetFormProps = {
     onSubmit: SubmitHandler<TipLinkAssetFormSchema>;
     isButtonDisabled?: boolean;
@@ -31,38 +33,35 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
     const { getUserInput, updateUserInput } = useLinkCreationFormStore();
 
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
-    const [isUsd, setIsUsd] = useState<boolean>(false);
+    const [editingAssetIndex, setEditingAssetIndex] = useState<number>(-1);
+    const [isUsdArray, setIsUsdArray] = useState<boolean[]>([false]);
     // Separate input value state - completely controlled by the user when editing
-    const [displayValue, setDisplayValue] = useState<string>("");
-    // Flag to track if input has been touched
-    const [inputTouched, setInputTouched] = useState<boolean>(false);
+    const [displayValues, setDisplayValues] = useState<string[]>([]);
+    // Flag to track if input has been touched for each asset
+    const [inputTouched, setInputTouched] = useState<boolean[]>([false]);
     const { showToast, toastData, hideToast } = useToast();
 
     const { filteredTokenList, isLoading, getToken, isLoadingPrices, getTokenPrice } = useTokens();
 
     // Get current input from store
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
-    const currentAsset = currentInput && currentInput.assets ? currentInput.assets[0] : undefined;
+    const currentAssets = currentInput && currentInput.assets ? currentInput.assets : [];
 
-    // Get selected token from address
-    const token = currentAsset?.address ? getToken(currentAsset.address) : undefined;
-    const tokenUsdPrice = token?.address ? getTokenPrice(token.address) : undefined;
-    const canConvert = tokenUsdPrice !== undefined;
-
-    // Calculate the actual token amount for display and conversion
-    const tokenAmount = useMemo(() => {
-        if (!currentAsset?.amount || !token) return 0;
-        const decimals = token.decimals || 8;
-        return Number(currentAsset.amount) / 10 ** decimals;
-    }, [currentAsset?.amount, token]);
+    // Check if we should show multiple assets interface
+    const isMultiAssetType = currentInput?.linkType === LINK_TYPE.SEND_TOKEN_BASKET;
 
     // Initialize with first token if no token is selected
     useEffect(() => {
         if (!link?.id || filteredTokenList?.length === 0) return;
         console.log("🚀 Link (tip-link-asset-form): ", link);
         // Check if we already have an asset selected
-        if (currentInput && currentInput.assets && currentInput?.assets[0]?.address) {
-            // Do nothing, already initialized
+        if (currentInput && currentInput.assets && currentInput?.assets.length > 0) {
+            // Initialize displayValues and isUsdArray with the correct length
+            if (displayValues.length !== currentAssets.length) {
+                setDisplayValues(new Array(currentAssets.length).fill("0"));
+                setIsUsdArray(new Array(currentAssets.length).fill(false));
+                setInputTouched(new Array(currentAssets.length).fill(false));
+            }
         } else {
             // Initialize with the first token in the list
             updateUserInput(link.id, {
@@ -76,77 +75,117 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                     },
                 ],
             });
+            setDisplayValues(["0"]);
+            setIsUsdArray([false]);
+            setInputTouched([false]);
         }
-    }, [link?.id, filteredTokenList]);
+    }, [link?.id, filteredTokenList, currentAssets.length]);
 
-    // Initialize display value when asset/token changes or when USD mode toggles
-    // But ONLY if the user hasn't touched the input
+    // Initialize display values for each asset when they change or USD mode toggles
     useEffect(() => {
-        // Skip updating if the user has touched the input
-        if (inputTouched) return;
+        currentAssets.forEach((asset, index) => {
+            // Skip updating if this input has been touched
+            if (inputTouched[index]) return;
 
-        if (tokenAmount > 0 && token) {
-            if (isUsd && tokenUsdPrice) {
-                // In USD mode, display the USD equivalent
-                const usdAmount = convertToUsd(tokenAmount, tokenUsdPrice);
-                setDisplayValue(usdAmount.toFixed(2));
+            const token = getToken(asset.address);
+            if (!token) return;
+
+            const decimals = token.decimals || 8;
+            const tokenAmount = Number(asset.amount) / 10 ** decimals;
+
+            if (tokenAmount > 0) {
+                const tokenUsdPrice = getTokenPrice(token.address);
+                if (isUsdArray[index] && tokenUsdPrice) {
+                    // In USD mode, display the USD equivalent
+                    const usdAmount = convertToUsd(tokenAmount, tokenUsdPrice);
+                    const newDisplayValues = [...displayValues];
+                    newDisplayValues[index] = usdAmount.toFixed(2);
+                    setDisplayValues(newDisplayValues);
+                } else {
+                    // In token mode, display the token amount
+                    const newDisplayValues = [...displayValues];
+                    newDisplayValues[index] = tokenAmount.toString();
+                    setDisplayValues(newDisplayValues);
+                }
             } else {
-                // In token mode, display the token amount
-                setDisplayValue(tokenAmount.toString());
+                const newDisplayValues = [...displayValues];
+                newDisplayValues[index] = "0";
+                setDisplayValues(newDisplayValues);
             }
-        } else {
-            setDisplayValue("0");
-        }
-    }, [tokenAmount, token, isUsd, tokenUsdPrice, inputTouched]);
+        });
+    }, [currentAssets, isUsdArray, getToken, getTokenPrice, inputTouched]);
 
-    // Automatically disable USD mode if there's no price for the current token
-    useEffect(() => {
-        if (isUsd && !canConvert) {
-            setIsUsd(false);
-        }
-    }, [canConvert, isUsd]);
+    // Helper function to update asset amount in store
+    const updateAssetAmount = (index: number, amount: bigint) => {
+        if (!link?.id) return;
 
-    // Handle USD toggle specifically
-    const handleUsdToggle = (newIsUsd: boolean) => {
+        const currentInput = getUserInput(link.id);
+        if (!currentInput) return;
+
+        const updatedAssets = [...(currentInput.assets || [])];
+        if (updatedAssets.length <= index) return;
+
+        updatedAssets[index] = {
+            ...updatedAssets[index],
+            amount,
+        };
+
+        updateUserInput(link.id, {
+            assets: updatedAssets,
+        });
+    };
+
+    // Handle USD toggle specifically for an asset
+    const handleUsdToggle = (index: number, newIsUsd: boolean) => {
+        const asset = currentAssets[index];
+        if (!asset) return;
+
+        const token = getToken(asset.address);
+        if (!token) return;
+
+        const tokenUsdPrice = getTokenPrice(token.address);
+        const canConvert = tokenUsdPrice !== undefined;
+
         if (canConvert) {
-            setIsUsd(newIsUsd);
-            // Always update display value on toggle
-            setInputTouched(false); // Reset touched state to allow update
+            const newIsUsdArray = [...isUsdArray];
+            newIsUsdArray[index] = newIsUsd;
+            setIsUsdArray(newIsUsdArray);
+
+            // Reset touched state for this input to allow update
+            const newInputTouched = [...inputTouched];
+            newInputTouched[index] = false;
+            setInputTouched(newInputTouched);
+
+            const decimals = token.decimals || 8;
+            const tokenAmount = Number(asset.amount) / 10 ** decimals;
 
             if (tokenAmount > 0 && tokenUsdPrice) {
+                const newDisplayValues = [...displayValues];
                 if (newIsUsd) {
                     // Switching to USD mode - show USD amount
                     const usdAmount = convertToUsd(tokenAmount, tokenUsdPrice);
-                    setDisplayValue(usdAmount.toFixed(2));
+                    newDisplayValues[index] = usdAmount.toFixed(2);
                 } else {
                     // Switching to token mode - show token amount
-                    setDisplayValue(tokenAmount.toString());
+                    newDisplayValues[index] = tokenAmount.toString();
                 }
+                setDisplayValues(newDisplayValues);
             }
         }
     };
 
-    // Helper function to update asset amount in store
-    const updateAssetAmount = (amount: bigint) => {
-        const currentInput = link?.id ? getUserInput(link.id) : undefined;
-        if (link && currentInput) {
-            const currentAssets = currentInput.assets || [];
-            if (currentAssets.length > 0) {
-                currentAssets[0] = {
-                    ...currentAssets[0],
-                    amount,
-                };
-                updateUserInput(link.id, {
-                    assets: currentAssets,
-                });
-            }
-        }
-    };
+    // Function to create preset buttons for a specific asset
+    const getPresetButtons = (index: number) => {
+        const asset = currentAssets[index];
+        if (!asset) return [];
 
-    // Function to create preset buttons based on the current mode
-    const presetButtons = useMemo(() => {
-        console.log("Calling get preset buttons");
-        if (isUsd && canConvert) {
+        const token = getToken(asset.address);
+        if (!token) return [];
+
+        const tokenUsdPrice = getTokenPrice(token.address);
+        const canConvert = tokenUsdPrice !== undefined;
+
+        if (isUsdArray[index] && canConvert) {
             return USD_AMOUNT_PRESETS.map((amount) => ({
                 content: `${amount} USD`,
                 action: () => {
@@ -154,9 +193,17 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                         const tokenAmount = convertFromUsd(amount, tokenUsdPrice);
                         const decimals = token.decimals || 8;
                         const valueBN = BigInt(Math.floor(tokenAmount * 10 ** decimals));
-                        updateAssetAmount(valueBN);
-                        // Update display directly to match the selected preset
-                        setDisplayValue(amount.toString());
+                        updateAssetAmount(index, valueBN);
+
+                        // Update display directly
+                        const newDisplayValues = [...displayValues];
+                        newDisplayValues[index] = amount.toString();
+                        setDisplayValues(newDisplayValues);
+
+                        // Reset touched state
+                        const newInputTouched = [...inputTouched];
+                        newInputTouched[index] = false;
+                        setInputTouched(newInputTouched);
                     }
                 },
             }));
@@ -174,164 +221,320 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                             const amount = availableAmount * factor;
                             const decimals = token.decimals || 8;
                             const valueBN = BigInt(Math.floor(amount * 10 ** decimals));
-                            updateAssetAmount(valueBN);
-                            // Update display directly to match the selected preset
-                            setDisplayValue(amount.toString());
+                            updateAssetAmount(index, valueBN);
+
+                            // Update display directly
+                            const newDisplayValues = [...displayValues];
+                            newDisplayValues[index] = amount.toString();
+                            setDisplayValues(newDisplayValues);
+
+                            // Reset touched state
+                            const newInputTouched = [...inputTouched];
+                            newInputTouched[index] = false;
+                            setInputTouched(newInputTouched);
                         }
                     },
                 };
             });
         }
-    }, [isUsd, canConvert, token, tokenUsdPrice, updateAssetAmount]);
+    };
 
     // Update the display value and the actual token amount on each keystroke
-    const handleAmountInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const handleAmountInputChange = (index: number, event: ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
-        setInputTouched(true);
-        setDisplayValue(value);
 
-        // Also update the actual token amount immediately
+        // Update display value
+        const newDisplayValues = [...displayValues];
+        newDisplayValues[index] = value;
+        setDisplayValues(newDisplayValues);
+
+        // Mark this input as touched
+        const newInputTouched = [...inputTouched];
+        newInputTouched[index] = true;
+        setInputTouched(newInputTouched);
+
+        // Update actual token amount
+        const asset = currentAssets[index];
+        if (!asset) return;
+
+        const token = getToken(asset.address);
         if (!token) return;
 
         if (value && !isNaN(parseFloat(value))) {
             const decimals = token.decimals || 8;
             try {
-                if (isUsd && tokenUsdPrice) {
+                if (isUsdArray[index]) {
                     // When in USD mode, convert USD amount to token amount
+                    const tokenUsdPrice = getTokenPrice(token.address);
+                    if (!tokenUsdPrice) return;
+
                     const usdAmount = parseFloat(value);
                     const tokenAmount = convertFromUsd(usdAmount, tokenUsdPrice);
                     const valueBN = BigInt(Math.floor(tokenAmount * 10 ** decimals));
-                    updateAssetAmount(valueBN);
+                    updateAssetAmount(index, valueBN);
                 } else {
                     // Regular token amount handling
                     const tokenAmount = parseFloat(value);
                     const valueBN = BigInt(Math.floor(tokenAmount * 10 ** decimals));
-                    updateAssetAmount(valueBN);
+                    updateAssetAmount(index, valueBN);
                 }
             } catch (e) {
                 // Handle potential BigInt conversion errors
                 console.error("Error converting to BigInt:", e);
-                updateAssetAmount(BigInt(0));
+                updateAssetAmount(index, BigInt(0));
             }
         } else {
-            updateAssetAmount(BigInt(0));
+            updateAssetAmount(index, BigInt(0));
         }
     };
 
-    // No need for separate blur handler since we update on change
-    const handleInputBlur = () => {
-        // Just reset the touched state
-        setTimeout(() => setInputTouched(false), 100);
-    };
-
-    // Apply the preset amount immediately and update display
-    const handlePresetClick = (action: () => void) => {
-        // Set inputTouched to false so the preset action updates are not interfered with
-        setInputTouched(false);
-        // Execute the preset action that updates the amount
-        action();
+    // Reset touched state on blur
+    const handleInputBlur = (index: number) => {
+        setTimeout(() => {
+            const newInputTouched = [...inputTouched];
+            newInputTouched[index] = false;
+            setInputTouched(newInputTouched);
+        }, 100);
     };
 
     const handleSetTokenAddress = (address: string) => {
+        if (editingAssetIndex < 0 || !link?.id) return;
+
         const newToken = getToken(address);
-        const currentInput = link?.id ? getUserInput(link.id) : undefined;
+        if (!newToken) return;
 
-        if (currentInput && newToken && link) {
-            // Get current value
-            let newAmount = BigInt(0);
+        const currentInput = getUserInput(link.id);
+        if (!currentInput) return;
 
-            // If we're in USD mode and have a valid displayValue, preserve the USD amount
-            if (isUsd && tokenUsdPrice && displayValue && !isNaN(parseFloat(displayValue))) {
-                const usdAmount = parseFloat(displayValue);
+        // Update asset with new token address
+        const updatedAssets = [...(currentInput.assets || [])];
 
-                // Get new token's price to convert USD to the proper token amount
-                const newTokenPrice = getTokenPrice(newToken.address);
-
-                if (newTokenPrice) {
-                    // Convert USD to new token amount using utility function
-                    const newTokenAmount = convertFromUsd(usdAmount, newTokenPrice);
-                    const decimals = newToken.decimals;
-                    newAmount = BigInt(Math.floor(newTokenAmount * 10 ** decimals));
-                }
+        // Calculate the new amount (either 0 or converted from USD if in USD mode)
+        let newAmount = BigInt(0);
+        if (isUsdArray[editingAssetIndex] && displayValues[editingAssetIndex]) {
+            const tokenUsdPrice = getTokenPrice(address);
+            if (tokenUsdPrice && !isNaN(parseFloat(displayValues[editingAssetIndex]))) {
+                const usdAmount = parseFloat(displayValues[editingAssetIndex]);
+                const tokenAmount = convertFromUsd(usdAmount, tokenUsdPrice);
+                const decimals = newToken.decimals || 8;
+                newAmount = BigInt(Math.floor(tokenAmount * 10 ** decimals));
             }
-            // If we're in token mode or can't convert, keep the original amount
-            else if (currentInput.assets?.[0]?.amount) {
-                newAmount = 0n;
-            }
+        }
 
-            // Update asset with new address and calculated amount
-            updateUserInput(link.id, {
-                assets: [
-                    {
-                        address,
-                        amount: newAmount,
-                        totalClaim: BigInt(0),
-                        usdEquivalent: 0,
-                        usdConversionRate: newToken?.usdConversionRate ?? 0,
-                    },
-                ],
+        // If we're editing an existing asset
+        if (updatedAssets.length > editingAssetIndex) {
+            updatedAssets[editingAssetIndex] = {
+                address,
+                amount: newAmount,
+                totalClaim: BigInt(0),
+                usdEquivalent: 0,
+                usdConversionRate: newToken?.usdConversionRate ?? 0,
+            };
+        } else {
+            // If we're adding a new asset (shouldn't happen here)
+            updatedAssets.push({
+                address,
+                amount: newAmount,
+                totalClaim: BigInt(0),
+                usdEquivalent: 0,
+                usdConversionRate: newToken?.usdConversionRate ?? 0,
             });
         }
 
+        updateUserInput(link.id, { assets: updatedAssets });
         setShowAssetDrawer(false);
-        setInputTouched(false); // Reset touched state when changing token
+
+        // Reset touched state for this input
+        const newInputTouched = [...inputTouched];
+        newInputTouched[editingAssetIndex] = false;
+        setInputTouched(newInputTouched);
+
+        // Reset display value if amount is 0
+        if (newAmount === BigInt(0)) {
+            const newDisplayValues = [...displayValues];
+            newDisplayValues[editingAssetIndex] = "0";
+            setDisplayValues(newDisplayValues);
+        }
     };
 
-    const getAmountInputCurrencySymbol = () => {
-        return isUsd ? "USD" : (token?.name ?? "");
+    const getAmountInputCurrencySymbol = (index: number) => {
+        if (isUsdArray[index]) return "USD";
+
+        const asset = currentAssets[index];
+        if (!asset) return "";
+
+        const token = getToken(asset.address);
+        return token?.name ?? "";
+    };
+
+    // Add a new asset to the list
+    const handleAddAnotherAsset = () => {
+        if (!link?.id || !filteredTokenList || filteredTokenList.length === 0) return;
+
+        const currentInput = getUserInput(link.id);
+        if (!currentInput) return;
+
+        const updatedAssets = [...(currentInput.assets || [])];
+
+        // Find a token that's not already selected
+        let nextTokenIndex = 0;
+        if (updatedAssets.length > 0) {
+            const usedAddresses = new Set(updatedAssets.map((asset) => asset.address));
+            nextTokenIndex = filteredTokenList.findIndex(
+                (token) => !usedAddresses.has(token.address),
+            );
+            if (nextTokenIndex === -1) nextTokenIndex = 0; // If all tokens are used, start from the beginning
+        }
+
+        const newAsset = {
+            address: filteredTokenList[nextTokenIndex]?.address,
+            amount: BigInt(0),
+            totalClaim: BigInt(0),
+            usdEquivalent: 0,
+            usdConversionRate: filteredTokenList[nextTokenIndex]?.usdConversionRate ?? 0,
+        };
+
+        updatedAssets.push(newAsset);
+        updateUserInput(link.id, { assets: updatedAssets });
+
+        // Update state arrays
+        setDisplayValues([...displayValues, "0"]);
+        setIsUsdArray([...isUsdArray, false]);
+        setInputTouched([...inputTouched, false]);
+    };
+
+    // Remove an asset from the list
+    const handleRemoveAsset = (indexToRemove: number) => {
+        if (!link?.id) return;
+
+        const currentInput = getUserInput(link.id);
+        if (!currentInput || !currentInput.assets || currentInput.assets.length <= 1) return;
+
+        const updatedAssets = currentInput.assets.filter((_, index) => index !== indexToRemove);
+        updateUserInput(link.id, { assets: updatedAssets });
+
+        // Update state arrays
+        setDisplayValues(displayValues.filter((_, index) => index !== indexToRemove));
+        setIsUsdArray(isUsdArray.filter((_, index) => index !== indexToRemove));
+        setInputTouched(inputTouched.filter((_, index) => index !== indexToRemove));
     };
 
     return (
-        <div className="w-full h-full flex flex-col flex-grow relative">
-            {isLoading || !currentAsset?.address ? (
+        <div className="w-full h-full flex flex-col">
+            {isLoading || currentAssets.length === 0 ? (
                 <AssetFormSkeleton />
             ) : (
                 <>
-                    <div className="flex flex-col h-full">
-                        <div className="input-label-field-container mt-4">
-                            <Label>{t("create.asset")}</Label>
-                            <AssetButton
-                                handleClick={() => setShowAssetDrawer(true)}
-                                text="Choose Asset"
-                                childrenNode={<SelectedAssetButtonInfo selectedToken={token} />}
-                            />
-                        </div>
+                    <div
+                        className="flex flex-col overflow-y-auto pb-20 md:pb-0 md:overflow-visible"
+                        style={{
+                            maxHeight: "calc(100vh - 120px)",
+                            WebkitOverflowScrolling: "touch",
+                        }}
+                    >
+                        {/* For each asset, create a complete section with asset selector and amount input */}
+                        {currentAssets.map((asset, index) => {
+                            const token = getToken(asset.address);
+                            const tokenUsdPrice = token?.address
+                                ? getTokenPrice(token.address)
+                                : undefined;
+                            const canConvert = tokenUsdPrice !== undefined;
 
-                        <div className="input-label-field-container mt-4">
-                            <div className="flex justify-between items-center">
-                                <Label>{t("create.amount")}</Label>
-                                {token && (
-                                    <UsdSwitch
-                                        token={token}
-                                        amount={tokenAmount}
-                                        symbol={token?.name ?? ""}
-                                        isUsd={isUsd}
-                                        onToggle={handleUsdToggle}
-                                        canConvert={canConvert}
-                                        tokenDecimals={8}
-                                        usdDecimals={2}
-                                    />
-                                )}
-                            </div>
-                            <IconInput
-                                type="number"
-                                step="any"
-                                isCurrencyInput={true}
-                                currencySymbol={getAmountInputCurrencySymbol()}
-                                value={displayValue}
-                                onChange={handleAmountInputChange}
-                                onBlur={handleInputBlur}
-                            />
-                            {!isLoadingPrices && token && (
-                                <AmountActionButtons
-                                    data={presetButtons.map((button) => ({
-                                        content: button.content,
-                                        action: () => handlePresetClick(button.action),
-                                    }))}
-                                    isDisabled={token.amount == 0n}
-                                />
-                            )}
-                        </div>
+                            return (
+                                <div
+                                    key={index}
+                                    className={`mb-6 ${currentAssets.length > 1 ? "border-b pb-4 last:border-b-0" : ""}`}
+                                >
+                                    {/* Asset header with optional remove button */}
+                                    <div className="flex justify-between items-center">
+                                        <Label>
+                                            {index === 0
+                                                ? t("create.asset")
+                                                : `${t("create.asset")} #${index + 1}`}
+                                        </Label>
+                                        {isMultiAssetType && currentAssets.length > 1 && (
+                                            <button
+                                                className="text-destructive hover:bg-destructive/10 rounded-full p-1"
+                                                onClick={() => handleRemoveAsset(index)}
+                                            >
+                                                <Trash size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Asset selector */}
+                                    <div className="mb-4">
+                                        <AssetButton
+                                            handleClick={() => {
+                                                setEditingAssetIndex(index);
+                                                setShowAssetDrawer(true);
+                                            }}
+                                            text="Choose Asset"
+                                            childrenNode={
+                                                <SelectedAssetButtonInfo selectedToken={token} />
+                                            }
+                                        />
+                                    </div>
+
+                                    {/* Amount input section */}
+                                    <div className="input-label-field-container">
+                                        <div className="flex justify-between items-center">
+                                            <Label>{t("create.amount")}</Label>
+                                            {token && (
+                                                <UsdSwitch
+                                                    token={token}
+                                                    amount={
+                                                        Number(asset.amount) /
+                                                        10 ** (token.decimals || 8)
+                                                    }
+                                                    symbol={token?.name ?? ""}
+                                                    isUsd={isUsdArray[index]}
+                                                    onToggle={(value) =>
+                                                        handleUsdToggle(index, value)
+                                                    }
+                                                    canConvert={canConvert}
+                                                    tokenDecimals={8}
+                                                    usdDecimals={2}
+                                                />
+                                            )}
+                                        </div>
+                                        <IconInput
+                                            type="number"
+                                            step="any"
+                                            isCurrencyInput={true}
+                                            currencySymbol={getAmountInputCurrencySymbol(index)}
+                                            value={displayValues[index] || ""}
+                                            onChange={(e) => handleAmountInputChange(index, e)}
+                                            onBlur={() => handleInputBlur(index)}
+                                        />
+                                        {!isLoadingPrices && token && (
+                                            <AmountActionButtons
+                                                data={getPresetButtons(index).map((button) => ({
+                                                    content: button.content,
+                                                    action: button.action,
+                                                }))}
+                                                isDisabled={token.amount === 0n}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {/* Add another asset button - only show for multi-asset types */}
+                        {isMultiAssetType && (
+                            <button
+                                className="light-borders flex items-center justify-center gap-2 flex-col py-8 mb-8"
+                                onClick={handleAddAnotherAsset}
+                            >
+                                <div className="bg-[#35A18B] rounded-full h-[44px] w-[44px] aspect-square flex items-center justify-center">
+                                    <Plus size={24} color={"white"} />
+                                </div>
+                                <span className="text-[#35A18B] text-[14px] font-medium">
+                                    {t("create.add_another_asset")}
+                                </span>
+                            </button>
+                        )}
 
                         <div className="flex-grow mt-auto flex items-end">
                             <FixedBottomButton
@@ -342,54 +545,77 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                 onClick={(e) => {
                                     e.preventDefault();
 
-                                    // Validate if needed
-                                    const asset = filteredTokenList?.find(
-                                        (asset) => asset.address === currentAsset?.address,
-                                    );
-
-                                    if (currentAsset && currentAsset.amount === BigInt(0)) {
-                                        showToast(
-                                            t("create.amount_error"),
-                                            t("create.amount_error_message"),
-                                            "error",
+                                    // Check if all assets have sufficient amounts
+                                    let hasError = false;
+                                    currentAssets.forEach((asset, index) => {
+                                        const token = filteredTokenList?.find(
+                                            (token) => token.address === asset.address,
                                         );
-                                    }
 
-                                    console.log("Asset amount:", Number(asset?.amount));
-                                    console.log(
-                                        "Current asset amount:",
-                                        Number(currentAsset.amount),
-                                    );
+                                        if (asset.amount === BigInt(0)) {
+                                            showToast(
+                                                t("create.amount_error"),
+                                                `Asset #${index + 1}: ${t("create.amount_error_message")}`,
+                                                "error",
+                                            );
+                                            hasError = true;
+                                        }
 
-                                    const hasEnoughBalance =
-                                        asset &&
-                                        asset.amount !== null &&
-                                        typeof asset.amount !== "undefined" &&
-                                        Number(currentAsset.amount) <= Number(asset.amount);
+                                        const hasEnoughBalance =
+                                            token &&
+                                            token.amount !== null &&
+                                            typeof token.amount !== "undefined" &&
+                                            Number(asset.amount) <= Number(token.amount);
 
-                                    console.log("Has enough balance:", hasEnoughBalance);
+                                        if (!hasEnoughBalance) {
+                                            showToast(
+                                                "Error",
+                                                `Asset #${index + 1}: Insufficient balance`,
+                                                "error",
+                                            );
+                                            hasError = true;
+                                        }
+                                    });
 
-                                    if (!hasEnoughBalance) {
-                                        showToast("Error", "Insufficient balance", "error");
-                                        return;
-                                    }
-                                    if (link && currentAsset && currentAsset.amount > BigInt(0)) {
+                                    if (hasError) return;
+
+                                    if (link && currentAssets.length > 0) {
                                         updateUserInput(link.id, {
                                             state: LINK_STATE.CREATE_LINK,
                                         });
 
-                                        onSubmit({
-                                            tokenAddress: currentAsset.address,
-                                            assetNumber: Number(displayValue),
-                                            usdNumber: isUsd ? Number(displayValue) : null,
-                                            amount: currentAsset.amount,
-                                        });
+                                        if (isMultiAssetType) {
+                                            // For multi-asset links, pass all assets to the onSubmit function
+                                            onSubmit({
+                                                tokenAddress: currentAssets[0].address, // Keep primary token for backward compatibility
+                                                assetNumber: parseFloat(displayValues[0] || "0"),
+                                                usdNumber: isUsdArray[0]
+                                                    ? parseFloat(displayValues[0] || "0")
+                                                    : null,
+                                                amount: currentAssets[0].amount,
+                                                // Add additional data for multi-asset processing
+                                                multiAssets: currentAssets.map((asset) => ({
+                                                    tokenAddress: asset.address,
+                                                    amount: asset.amount,
+                                                })),
+                                            });
+                                        } else {
+                                            // For single asset links, use the existing format
+                                            onSubmit({
+                                                tokenAddress: currentAssets[0].address,
+                                                assetNumber: parseFloat(displayValues[0] || "0"),
+                                                usdNumber: isUsdArray[0]
+                                                    ? parseFloat(displayValues[0] || "0")
+                                                    : null,
+                                                amount: currentAssets[0].amount,
+                                            });
+                                        }
                                     }
                                 }}
                                 disabled={
                                     isButtonDisabled ||
-                                    !currentAsset ||
-                                    currentAsset.amount <= BigInt(0)
+                                    !currentAssets.length ||
+                                    currentAssets.some((asset) => asset.amount <= BigInt(0))
                                 }
                             >
                                 {t("continue")}

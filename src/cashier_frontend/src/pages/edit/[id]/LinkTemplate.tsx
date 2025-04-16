@@ -19,7 +19,7 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "@/components/transaction/transaction-toast";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
-    return linkType === LINK_TYPE.SEND_TIP;
+    return linkType === LINK_TYPE.SEND_TIP || linkType === LINK_TYPE.SEND_TOKEN_BASKET;
 }
 
 export interface LinkTemplateProps {
@@ -75,6 +75,12 @@ export default function LinkTemplate({
         }
         setButtonDisabled(false);
     };
+
+    useEffect(() => {
+        carousel.setCurrent(
+            LINK_TEMPLATES.findIndex((template) => template.linkType === link?.linkType),
+        );
+    }, []);
 
     useEffect(() => {
         const selectedTemplate = LINK_TEMPLATES[carousel.current];
@@ -190,9 +196,9 @@ export default function LinkTemplate({
                 onClick={handleSubmit}
                 variant="default"
                 size="lg"
-                disabled={isButtonDisabled || carousel.current !== 0}
+                disabled={isButtonDisabled || LINK_TEMPLATES[carousel.current].isComingSoon}
             >
-                {carousel.current === 0 ? t("continue") : "Coming Soon"}
+                {LINK_TEMPLATES[carousel.current].isComingSoon ? "Coming Soon" : t("continue")}
             </FixedBottomButton>
 
             <TransactionToast

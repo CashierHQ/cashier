@@ -118,7 +118,7 @@ export function useSetTipLinkDetails() {
             const linkDto = await linkService.updateLink(
                 vars.link.id,
                 linkData,
-                vars.isContinue || true,
+                vars.isContinue === undefined ? true : vars.isContinue, // new, correct
             );
 
             return MapLinkToLinkDetailModel(linkDto);
