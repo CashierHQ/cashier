@@ -15,6 +15,26 @@ export default function LinkDetails() {
 
     const handleSubmitTipLinkDetails = async (data: TipLinkAssetFormSchema) => {
         setButtonDisabled(true);
+
+        // If we have multiple assets, use them
+        const assetPatches = data.multiAssets
+            ? data.multiAssets.map((asset) => ({
+                  amount: asset.amount,
+                  address: asset.tokenAddress,
+                  label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
+                  chain: CHAIN.IC,
+                  totalClaim: 0n,
+              }))
+            : [
+                  {
+                      amount: data.amount,
+                      address: data.tokenAddress,
+                      label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
+                      chain: CHAIN.IC,
+                      totalClaim: 0n,
+                  },
+              ];
+
         const updatedLink = await setTipLinkDetails({
             link: link!,
             patch: [
@@ -26,6 +46,7 @@ export default function LinkDetails() {
                     totalClaim: 0n,
                 },
             ],
+            patch: assetPatches,
         });
 
         setLink(updatedLink);
