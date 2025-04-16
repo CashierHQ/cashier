@@ -321,6 +321,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             match intent.task.clone() {
                 IntentTask::TransferWalletToLink => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
+                    info!("[link_assemble_intents] link: {:#?}", link);
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         error!("label {:#?}", intent.label);
                         CanisterError::HandleLogicError(
@@ -329,7 +330,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         )
                     })?;
 
-                    transfer_data.amount = asset_info.total_amount;
+                    transfer_data.amount =
+                        asset_info.amount_per_link_use_action * link.link_use_action_max_count;
                     transfer_data.asset = Asset {
                         address: asset_info.address.clone(),
                         chain: asset_info.chain.clone(),
@@ -401,7 +403,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         )
                     })?;
 
-                    transfer_data.amount = asset_info.total_amount;
+                    transfer_data.amount = asset_info.amount_per_link_use_action;
+
                     transfer_data.asset = Asset {
                         address: asset_info.address.clone(),
                         chain: asset_info.chain.clone(),
@@ -578,6 +581,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         return Ok(());
     }
 
+    // This method mostly use for "Send" link type
     pub async fn link_validate_balance_with_asset_info(
         &self,
         action_type: &ActionType,
@@ -591,6 +595,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         let link = self
             .get_link_by_id(link_id.to_string())
             .map_err(|e| CanisterError::NotFound(e.to_string()))?;
+
+        if link.link_type.unwrap() == LinkType::ReceivePayment {
+            return Ok(());
+        }
 
         let asset_info = link
             .asset_info
@@ -616,10 +624,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 .await
                 .map_err(|e| e)?;
 
-            if balance <= asset.total_amount {
+            let expected_amount = asset.amount_per_link_use_action * link.link_use_action_max_count;
+
+            if balance <= expected_amount {
                 return Err(CanisterError::ValidationErrors(format!(
                     "Insufficient balance for asset: {}, balance: {}, required: {} and fee try smaller amount",
-                    asset.address, balance, asset.total_amount
+                    asset.address, balance, expected_amount
                 )));
             }
         }
@@ -750,24 +760,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // update tip link's total_claim
         if link.link_type == Some(LinkType::SendTip) && action.r#type == ActionType::Claim {
             // Update asset info to track the claim
-            if let Some(mut asset_info) = updated_link.asset_info.clone() {
-                for asset in asset_info.iter_mut() {
-                    // Initialize claim_count to 1 or increment it if it already exists
-                    asset.claim_count = Some(asset.claim_count.unwrap_or(0) + 1);
-                }
-                updated_link.asset_info = Some(asset_info);
-            }
+            updated_link.link_use_action_counter += 1;
         } else if link.link_type == Some(LinkType::SendAirdrop)
             && action.r#type == ActionType::Claim
         {
-            // Update asset info to track the claim
-            if let Some(mut asset_info) = updated_link.asset_info.clone() {
-                for asset in asset_info.iter_mut() {
-                    // Initialize claim_count to 1 or increment it if it already exists
-                    asset.claim_count = Some(asset.claim_count.unwrap_or(0) + 1);
-                }
-                updated_link.asset_info = Some(asset_info);
-            }
+            updated_link.link_use_action_counter += 1;
         }
 
         // Save the updated link
@@ -777,43 +774,66 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok(true)
     }
 
-    pub fn link_type_add_asset_validate(&self, link: &Link, asset_infos: &Vec<AssetInfo>) -> bool {
+    // if the link and asset info meet the requirement return true
+    // else return false
+    pub fn link_type_add_asset_validate(
+        &self,
+        link: &Link,
+        asset_infos: &Vec<AssetInfo>,
+        link_use_action_max_count: &u64,
+    ) -> bool {
         if link.link_type == Some(LinkType::SendTip) {
+            // Send tip only use one time with one asset
+            // check amount_per_link_use_action for asset > 0
+            // check link_use_action_max_count == 1
             if asset_infos.len() == 1
-                && asset_infos[0].amount_per_claim.is_some()
-                && asset_infos[0].amount_per_claim.unwrap() == asset_infos[0].total_amount
+                && asset_infos[0].amount_per_link_use_action > 0
+                && *link_use_action_max_count == 1
             {
                 return true;
             } else {
                 return false;
             }
         } else if link.link_type == Some(LinkType::SendAirdrop) {
+            // Send airdrop use multiple time with one asset
+            // check amount_per_link_use_action for asset > 0
+            // check link_use_action_max_count >= 1
+            info!(
+                "[link_type_add_asset_validate] link_use_action_max_count: {:#?}",
+                link_use_action_max_count
+            );
+
             if asset_infos.len() == 1
-                && asset_infos[0].amount_per_claim.is_some()
-                && asset_infos[0].amount_per_claim.unwrap() <= asset_infos[0].total_amount
+                && asset_infos[0].amount_per_link_use_action > 0
+                && *link_use_action_max_count >= 1
             {
                 return true;
             } else {
                 return false;
             }
         } else if link.link_type == Some(LinkType::SendTokenBasket) {
+            // Send token basket use one time with multiple asset
+            // check amount_per_link_use_action for asset > 0
+            // check link_use_action_max_count == 1
             if asset_infos.len() >= 1 {
                 for asset in asset_infos.iter() {
-                    if asset.amount_per_claim.is_some()
-                        && asset.amount_per_claim.unwrap() == asset.total_amount
-                    {
-                        return true;
+                    if asset.amount_per_link_use_action == 0 && *link_use_action_max_count != 1 {
+                        return false;
                     }
                 }
 
-                return false;
+                return true;
             } else {
                 return false;
             }
         } else if link.link_type == Some(LinkType::ReceivePayment) {
-            info!("[link_type_add_asset_validate] link type: {:#?}", link);
-            // validate asset info
-            if asset_infos.len() == 1 && asset_infos[0].payment_amount.is_some() {
+            // Receive payment use one time with one asset
+            // check amount_per_link_use_action for asset > 0
+            // check link_use_action_max_count == 1
+            if asset_infos.len() == 1
+                && asset_infos[0].amount_per_link_use_action > 0
+                && *link_use_action_max_count == 1
+            {
                 return true;
             } else {
                 return false;
@@ -890,25 +910,27 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok((template, link_type))
     }
 
-    pub fn prefetch_asset_info(
+    pub fn prefetch_params_add_asset(
         &self,
         params: &LinkDetailUpdateInput,
-        goto: &LinkStateMachineGoto,
-    ) -> Result<Vec<AssetInfo>, CanisterError> {
-        // skip if goto is Back
-        if goto == &LinkStateMachineGoto::Back {
-            return Ok(vec![]);
-        }
+    ) -> Result<(u64, Vec<AssetInfo>), CanisterError> {
+        info!("[prefetch_params_add_asset] params: {:#?}", params);
+        let link_use_action_max_count = params.link_use_action_max_count.ok_or_else(|| {
+            CanisterError::ValidationErrors("Link use action max count is required".to_string())
+        })?;
 
         let asset_info_input = params
             .asset_info
             .clone()
             .ok_or_else(|| CanisterError::ValidationErrors("Asset info is required".to_string()))?;
 
-        Ok(asset_info_input
-            .iter()
-            .map(|asset| asset.to_model())
-            .collect())
+        Ok((
+            link_use_action_max_count,
+            asset_info_input
+                .iter()
+                .map(|asset| asset.to_model())
+                .collect(),
+        ))
     }
 
     pub fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
@@ -964,6 +986,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             "link_type".to_string(),
             "link_image_url".to_string(),
             "nft_image".to_string(),
+            "link_use_action_max_count".to_string(),
         ];
 
         let check_props = props_list
@@ -1073,6 +1096,25 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         return true;
                     }
                 }
+                "link_use_action_max_count" => {
+                    info!(
+                        "[is_props_changed] link link_use_action_max_count: {:#?}",
+                        link.link_use_action_max_count
+                    );
+                    info!(
+                        "[is_props_changed] params link_use_action_max_count: {:#?}",
+                        params.link_use_action_max_count
+                    );
+
+                    if params.link_use_action_max_count.is_none() {
+                        return false;
+                    }
+
+                    if params.link_use_action_max_count.unwrap() != link.link_use_action_max_count {
+                        info!("[is_props_changed] link_use_action_max_count not match");
+                        return true;
+                    }
+                }
                 "asset_info" => {
                     info!("[is_props_changed] link asset_info: {:#?}", link.asset_info);
                     info!(
@@ -1144,6 +1186,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             asset_info: None,
             template: None,
             link_type: None,
+            link_use_action_max_count: None,
         });
 
         // !Start of link state machine
@@ -1184,9 +1227,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
         } else if link.state == LinkState::AddAssets {
             // prefetch 2 method
-            let asset_info = self.prefetch_asset_info(&params, &link_state_goto)?;
+            let (link_use_action_max_count, asset_info) =
+                self.prefetch_params_add_asset(&params)?;
 
-            if self.is_props_changed(vec!["asset_info".to_string()], &params, &link) {
+            if self.is_props_changed(
+                vec![
+                    "link_use_action_max_count".to_string(),
+                    "asset_info".to_string(),
+                ],
+                &params,
+                &link,
+            ) {
                 return Err(CanisterError::ValidationErrors(
                     "Link properties are not allowed to change".to_string(),
                 ));
@@ -1200,19 +1251,25 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             info!("[handle_link_state_transition] params: {:#?}", params);
 
             if link_state_goto == LinkStateMachineGoto::Continue {
-                if !self.link_type_add_asset_validate(&link, &asset_info) {
+                if !self.link_type_add_asset_validate(
+                    &link,
+                    &asset_info,
+                    &link_use_action_max_count,
+                ) {
                     return Err(CanisterError::ValidationErrors(
                         "Link type add asset validate failed".to_string(),
                     ));
                 }
 
                 link.asset_info = Some(asset_info);
+                link.link_use_action_max_count = link_use_action_max_count;
                 link.state = LinkState::CreateLink;
                 self.link_repository.update(link.clone());
                 return Ok(link.clone());
             } else if link_state_goto == LinkStateMachineGoto::Back {
                 link.state = LinkState::ChooseLinkType;
                 link.asset_info = Some(asset_info);
+                link.link_use_action_max_count = link_use_action_max_count;
                 self.link_repository.update(link.clone());
                 return Ok(link.clone());
             } else {
@@ -1344,6 +1401,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             creator: user_id.clone(),
             create_at: ts,
             metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 0,
         };
         let new_user_link = UserLink {
             user_id: user_id.clone(),

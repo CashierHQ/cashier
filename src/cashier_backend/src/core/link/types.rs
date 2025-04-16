@@ -17,10 +17,8 @@ pub struct CreateLinkInput {
 pub struct LinkDetailUpdateAssetInfoInput {
     pub address: String,
     pub chain: String,
-    pub total_amount: u64,
-    pub amount_per_claim: Option<u64>,
-    pub payment_amount: Option<u64>,
     pub label: String,
+    pub amount_per_link_use_action: u64,
 }
 
 impl LinkDetailUpdateAssetInfoInput {
@@ -33,39 +31,19 @@ impl LinkDetailUpdateAssetInfoInput {
         AssetInfo {
             address: self.address.clone(),
             chain,
-            total_amount: self.total_amount,
             label: self.label.clone(),
-            claim_count: Some(0u64), // start with 0
-            amount_per_claim: self.amount_per_claim,
-            payment_amount: self.payment_amount,
+            amount_per_link_use_action: self.amount_per_link_use_action,
         }
     }
 
     pub fn is_changed(&self, asset_info: &AssetInfo) -> bool {
         self.address == asset_info.address
             && self.chain == asset_info.chain.to_string()
-            && self.total_amount == asset_info.total_amount
-            && self.amount_per_claim == asset_info.amount_per_claim
-            && self.payment_amount == asset_info.payment_amount
             && self.label == asset_info.label
+            && self.amount_per_link_use_action == asset_info.amount_per_link_use_action
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        if self.amount_per_claim.is_some() {
-            if self.total_amount < self.amount_per_claim.unwrap() {
-                return Err(
-                    "Total amount should be greater than or equal to amount per claim".to_string(),
-                );
-            }
-        } else if self.payment_amount.is_none() {
-            if self.total_amount != self.payment_amount.unwrap() {
-                return Err(
-                    "Either total_amount and amount_per_claim or payment_amount must be provided"
-                        .to_string(),
-                );
-            }
-        }
-
         match Principal::from_text(self.address.as_str()) {
             Ok(_) => Ok(()),
             Err(_) => Err("Invalid address".to_string()),
@@ -82,6 +60,7 @@ pub struct LinkDetailUpdateInput {
     pub asset_info: Option<Vec<LinkDetailUpdateAssetInfoInput>>,
     pub template: Option<String>,
     pub link_type: Option<String>,
+    pub link_use_action_max_count: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -125,15 +104,16 @@ pub struct LinkDto {
     pub creator: String,
     pub create_at: u64,
     pub metadata: Option<HashMap<String, String>>,
+    pub link_use_action_counter: u64,
+    pub link_use_action_max_count: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
 pub struct AssetInfoDto {
     pub address: String,
     pub chain: String,
-    pub total_amount: u64,
-    pub amount_per_claim: Option<u64>,
-    pub total_claim: Option<u64>,
+    pub label: String,
+    pub amount_per_link_use_action: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -175,12 +155,8 @@ impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
         cashier_types::AssetInfo {
             address: input.address,
             chain,
-            total_amount: input.total_amount,
-            amount_per_claim: input.amount_per_claim,
             label: input.label,
-            // start with 0
-            claim_count: Some(0u64),
-            payment_amount: input.payment_amount,
+            amount_per_link_use_action: input.amount_per_link_use_action,
         }
     }
 }
@@ -192,9 +168,8 @@ impl From<&cashier_types::AssetInfo> for AssetInfoDto {
         AssetInfoDto {
             address: input.address.clone(),
             chain,
-            total_amount: input.total_amount,
-            amount_per_claim: input.amount_per_claim,
-            total_claim: input.claim_count,
+            label: input.label.clone(),
+            amount_per_link_use_action: input.amount_per_link_use_action,
         }
     }
 }
@@ -230,6 +205,8 @@ impl From<cashier_types::Link> for LinkDto {
             creator: link.creator,
             create_at: link.create_at,
             metadata: link.metadata,
+            link_use_action_counter: link.link_use_action_counter,
+            link_use_action_max_count: link.link_use_action_max_count,
         }
     }
 }
@@ -243,9 +220,8 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
         AssetInfoDto {
             address: input.address.clone(),
             chain,
-            total_amount: input.total_amount,
-            amount_per_claim: input.amount_per_claim,
-            total_claim: Some(0u64), // start with 0
+            label: input.label.clone(),
+            amount_per_link_use_action: input.amount_per_link_use_action,
         }
     }
 }

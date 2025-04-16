@@ -8,11 +8,10 @@ type ActionDto = record {
 };
 type AssetDto = record { chain : text; address : text };
 type AssetInfoDto = record {
-  total_amount : nat64;
+  amount_per_link_use_action : nat64;
   chain : text;
+  label : text;
   address : text;
-  total_claim : opt nat64;
-  amount_per_claim : opt nat64;
 };
 type CanisterError = variant {
   InvalidDataError : text;
@@ -96,21 +95,14 @@ type IntentDto = record {
   state : text;
   transactions : vec TransactionDto;
 };
-type LinkDetailUpdateAssetInfoInput = record {
-  total_amount : nat64;
-  payment_amount : opt nat64;
-  chain : text;
-  label : text;
-  address : text;
-  amount_per_claim : opt nat64;
-};
 type LinkDetailUpdateInput = record {
   title : opt text;
-  asset_info : opt vec LinkDetailUpdateAssetInfoInput;
+  asset_info : opt vec AssetInfoDto;
   link_type : opt text;
   description : opt text;
   link_image_url : opt text;
   template : opt text;
+  link_use_action_max_count : opt nat64;
   nft_image : opt text;
 };
 type LinkDto = record {
@@ -124,6 +116,8 @@ type LinkDto = record {
   description : opt text;
   state : text;
   template : opt text;
+  link_use_action_max_count : nat64;
+  link_use_action_counter : nat64;
 };
 type LinkGetUserStateInput = record {
   link_id : text;
