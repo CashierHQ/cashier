@@ -1,15 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
 import { useNavigate, useParams } from "react-router-dom";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
-import { useUpdateLinkSelfContained } from "@/hooks/linkHooks";
+import { useSetTipLinkDetails, useUpdateLinkSelfContained } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import {
     ACTION_STATE,
     ACTION_TYPE,
+    CHAIN,
+    LINK_INTENT_LABEL,
     LINK_STATE,
     mapStringToLinkState,
     mapStringToLinkType,
@@ -23,6 +25,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
+import { AssetInfoModel, LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -40,6 +43,10 @@ export default function LinkPage() {
     const { linkId } = useParams();
     const { toastData, showToast, hideToast } = useToast();
 
+    const [backButtonDisabled, setBackButtonDisabled] = useState(false);
+
+    const linkCreationFormStore = useLinkCreationFormStore();
+
     const { addUserInput } = useLinkCreationFormStore();
 
     const { link, setLink, action, setAction } = useLinkActionStore();
@@ -49,11 +56,13 @@ export default function LinkPage() {
         ACTION_TYPE.CREATE_LINK,
     );
     const { mutateAsync: updateLink } = useUpdateLinkSelfContained();
+    const { mutateAsync: setTipLinkDetails } = useSetTipLinkDetails();
 
     const currentLink = linkData?.link;
 
     useEffect(() => {
         if (linkData) {
+            console.log("🚀 ~ linkData:", linkData);
             setLink(linkData.link);
             setAction(linkData.action);
 
@@ -80,17 +89,53 @@ export default function LinkPage() {
     }, [linkData]);
 
     const handleBackstep = async (context: MultiStepFormContext) => {
+        setBackButtonDisabled(true);
         if (context.step === 0 || action) {
             navigate("/");
         } else {
-            // Update the link state on the server with current values
-            await updateLink({
-                linkId: linkId!,
-                linkModel: link!,
-                isContinue: false,
-            });
+            try {
+                // Update the link state on the server with current values
+                const linkFromStore = linkCreationFormStore.getUserInput(linkId!);
+                if (!linkFromStore) return;
 
-            context.prevStep();
+                const linkModel: LinkDetailModel = {
+                    ...link!,
+                    asset_info: linkFromStore.assets as AssetInfoModel[],
+                    state: linkFromStore.state,
+                };
+
+                let updatedLink: LinkDetailModel | undefined = undefined;
+
+                if (
+                    context.step ===
+                    STEP_LINK_STATE_ORDER.findIndex((x) => x === LINK_STATE.ADD_ASSET)
+                ) {
+                    updatedLink = await setTipLinkDetails({
+                        link: {
+                            ...link!,
+                            state: LINK_STATE.ADD_ASSET,
+                        },
+                        patch: linkFromStore.assets as AssetInfoModel[],
+                        isContinue: false,
+                    });
+
+                    setLink(updatedLink);
+                } else {
+                    updatedLink = await updateLink({
+                        linkId: linkId!,
+                        linkModel: linkModel,
+                        isContinue: false,
+                    });
+                }
+
+                if (!updatedLink) return;
+                console.log("🚀 ~ handleBackstep ~ updatedLink:", updatedLink);
+                setLink(updatedLink);
+
+                context.prevStep();
+            } finally {
+                setBackButtonDisabled(false);
+            }
         }
     };
 
@@ -149,8 +194,22 @@ export default function LinkPage() {
             )}
         >
             <div className="w-11/12 h-full flex flex-col relative overflow-hidden md:overflow-y-auto">
+                <p
+                    onClick={() => {
+                        console.log("🚀 ~ currentLink:", currentLink);
+                        console.log(
+                            "🚀 ~ from store: ",
+                            linkCreationFormStore.getUserInput(linkId!),
+                        );
+                    }}
+                >
+                    Log
+                </p>
                 <MultiStepForm initialStep={getInitialStep(currentLink?.state)}>
-                    <MultiStepForm.Header onClickBack={handleBackstep} />
+                    <MultiStepForm.Header
+                        onClickBack={handleBackstep}
+                        backButtonDisabled={backButtonDisabled}
+                    />
 
                     <MultiStepForm.Items>
                         <MultiStepForm.Item name={t("create.chooseLinkType")}>

@@ -59,7 +59,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
     // Initialize with first token if no token is selected
     useEffect(() => {
         if (!link?.id || filteredTokenList?.length === 0) return;
-
+        console.log("🚀 Link (tip-link-asset-form): ", link);
         // Check if we already have an asset selected
         if (currentInput && currentInput.assets && currentInput?.assets[0]?.address) {
             // Do nothing, already initialized
