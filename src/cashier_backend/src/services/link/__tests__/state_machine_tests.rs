@@ -9,10 +9,7 @@ use crate::{
         action::ActionRepository, link::LinkRepository, link_action::LinkActionRepository,
         user_wallet::UserWalletRepository,
     },
-    services::{
-        __tests__::tests::{generate_token_address, MockIcEnvironment},
-        link::v2::LinkService,
-    },
+    services::{__tests__::tests::MockIcEnvironment, link::v2::LinkService},
     types::error::CanisterError,
     utils::icrc::IcrcService,
 };
@@ -132,7 +129,7 @@ async fn test_handle_link_state_transition_add_assets_to_create_link() {
     when!(link_action_repository.get_by_prefix).then_return(vec![]);
 
     // Setup asset info params
-    let asset_info = vec![LinkDetailUpdateAssetInfoInput {
+    let asset_info = vec![LinkDetailUpdateInput {
         address: "aaaaa-aa".to_string(),
         chain: "IC".to_string(),
         total_amount: Some(100),

@@ -1203,7 +1203,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 &link,
             ) {
                 return Err(CanisterError::ValidationErrors(
-                    "Link properties are not allowed to change".to_string(),
+                    "[ChooseLinkType] Link properties are not allowed to change".to_string(),
                 ));
             }
 
@@ -1239,7 +1239,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 &link,
             ) {
                 return Err(CanisterError::ValidationErrors(
-                    "Link properties are not allowed to change".to_string(),
+                    "[AddAssets] Link properties are not allowed to change".to_string(),
                 ));
             }
 
@@ -1283,7 +1283,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
             if self.is_props_changed(vec![], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
-                    "Link properties are not allowed to change".to_string(),
+                    "[CreateLink] Link properties are not allowed to change".to_string(),
                 ));
             }
 
@@ -1319,7 +1319,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         } else if link.state == LinkState::Active {
             if self.is_props_changed(vec![], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
-                    "Link properties are not allowed to change".to_string(),
+                    "[Active] Link properties are not allowed to change".to_string(),
                 ));
             }
 
@@ -1339,7 +1339,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         } else if link.state == LinkState::Inactive {
             if self.is_props_changed(vec![], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
-                    "Link properties are not allowed to change".to_string(),
+                    "[Inactive] Link properties are not allowed to change".to_string(),
                 ));
             }
 
