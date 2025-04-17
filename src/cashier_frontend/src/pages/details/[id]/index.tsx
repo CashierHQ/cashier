@@ -22,13 +22,12 @@ import { Label } from "@/components/ui/label";
 import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
-import { useCreateAction, useUpdateLink } from "@/hooks/linkHooks";
 import { getLinkAssetAmounts, getLinkIsClaimed } from "@/utils/helpers/link";
 import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
-import { useLinkActionStore } from "@/stores/linkActionStore";
+import { useLinkAction } from "@/hooks/linkActionHook";
 
 export default function DetailPage() {
     const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
@@ -39,16 +38,12 @@ export default function DetailPage() {
     const { renderSkeleton } = useSkeletonLoading();
     const responsive = useResponsive();
 
-    const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.WITHDRAW_LINK);
-
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
 
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
-    const { setLink, setAction } = useLinkActionStore();
-
-    const {} = useLinkActionStore();
+    const { setLink, setAction, createAction, callLinkStateMachine, isUpdating } = useLinkAction();
 
     // Add styles to document
     React.useEffect(() => {
@@ -111,8 +106,6 @@ export default function DetailPage() {
     const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
     const { t } = useTranslation();
 
-    const { mutateAsync: updateLink, isPending } = useUpdateLink();
-
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
@@ -152,9 +145,9 @@ export default function DetailPage() {
     const setInactiveLink = async () => {
         try {
             if (!linkData) throw new Error("Link data is not available");
-            const inactiveLink = await updateLink({
+            const inactiveLink = await callLinkStateMachine({
                 linkId: linkData.link.id,
-                linkModel: linkData.link,
+                linkModel: {},
                 isContinue: true,
             });
             console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
@@ -172,9 +165,9 @@ export default function DetailPage() {
     const setInactiveEndedLink = async () => {
         try {
             if (!linkData) throw new Error("Link data is not available");
-            const inactiveLink = await updateLink({
+            const inactiveLink = await callLinkStateMachine({
                 linkId: linkData.link.id,
-                linkModel: linkData.link,
+                linkModel: {},
                 isContinue: true,
             });
             console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
@@ -191,7 +184,7 @@ export default function DetailPage() {
 
     const handleWithdrawAssets = async () => {
         try {
-            const actionResult = await createAction({ linkId: linkData!.link.id });
+            const actionResult = await createAction(linkData!.link.id, ACTION_TYPE.WITHDRAW_LINK);
             console.log("🚀 ~ handleWithdrawAssets ~ actionResult:", actionResult);
             setLink(linkData?.link);
             setAction(actionResult);
@@ -296,7 +289,7 @@ export default function DetailPage() {
                                                 : "-"}
                                             /
                                             {TokenUtilService.getHumanReadableAmountFromMetadata(
-                                                linkData?.link?.asset_info[0].amount,
+                                                linkData?.link?.asset_info[0].amountPerClaim,
                                                 metadata,
                                             )}
                                         </p>
@@ -366,7 +359,7 @@ export default function DetailPage() {
                 onDelete={() => {
                     setInactiveLink();
                 }}
-                isEnding={isPending}
+                isEnding={isUpdating}
             />
 
             <ConfirmationDrawer

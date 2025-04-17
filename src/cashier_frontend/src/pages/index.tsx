@@ -10,13 +10,11 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { useUpdateLink } from "@/hooks/linkHooks";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
-import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
@@ -39,8 +37,6 @@ export default function HomePage() {
         enabled: !!identity,
         refetchOnWindowFocus: false,
     });
-    useUserAssets();
-    const { isPending } = useUpdateLink();
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -105,8 +101,7 @@ export default function HomePage() {
                             const processedAssets = link.asset_info
                                 ? link.asset_info.map((asset) => ({
                                       address: asset.address,
-                                      amount: asset.amount,
-                                      totalClaim: asset.totalClaim ?? asset.amount,
+                                      amount: asset.amountPerClaim,
                                       usdEquivalent: 0,
                                       usdConversionRate: 0,
                                   }))
@@ -134,12 +129,12 @@ export default function HomePage() {
     }, [identity]);
 
     useEffect(() => {
-        if (isLinksLoading || isPending) {
+        if (isLinksLoading) {
             setIsLoading(true);
         } else {
             setIsLoading(false);
         }
-    }, [isLinksLoading, isPending]);
+    }, [isLinksLoading]);
 
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {

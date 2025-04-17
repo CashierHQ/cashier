@@ -128,6 +128,24 @@ export enum CHAIN {
     IC = "IC",
 }
 
+export const mapStringToChain = (chain: string) => {
+    switch (chain) {
+        case CHAIN.IC:
+            return CHAIN.IC;
+        default:
+            throw new Error("Unknown chain");
+    }
+};
+
+export function mapStringToEnum<T extends object>(
+    enumObject: T,
+    value: string,
+): T[keyof T] | undefined {
+    return Object.values(enumObject).includes(value as T[keyof T])
+        ? (value as T[keyof T])
+        : undefined;
+}
+
 export enum TASK {
     TRANSFER_WALLET_TO_TREASURY = "transfer_wallet_to_treasury",
     TRANSFER_WALLET_TO_LINK = "transfer_wallet_to_link",
@@ -138,7 +156,6 @@ export enum ACTION_TYPE {
     CREATE_LINK = "CreateLink",
     WITHDRAW_LINK = "Withdraw",
     CLAIM_LINK = "Claim",
-    SEND_ASSET = "SendAsset",
 }
 
 export enum IC_TRANSACTION_PROTOCAL {
@@ -159,6 +176,44 @@ export enum LINK_INTENT_LABEL {
     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET = "SEND_TOKEN_BASKET_ASSET", //
     INTENT_LABEL_RECEIVE_PAYMENT_ASSET = "RECEIVE_PAYMENT_ASSET", // payment link
 }
+
+export const mapStringToLabel = (label: string) => {
+    console.log("🚀 ~ mapStringToLabel ~ label:", label);
+
+    // Special handling for token basket labels that start with SEND_TOKEN_BASKET_ASSET
+    if (label.startsWith(LINK_INTENT_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET)) {
+        return LINK_INTENT_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET;
+    }
+
+    switch (label) {
+        case LINK_INTENT_LABEL.INTENT_LABEL_LINK_CREATION_FEE:
+            return LINK_INTENT_LABEL.INTENT_LABEL_LINK_CREATION_FEE;
+        case LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET:
+            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
+        case LINK_INTENT_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET:
+            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
+        case LINK_INTENT_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET:
+            return LINK_INTENT_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
+        default:
+            return label;
+    }
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getAssetLabelForLinkType = (linkType: string, assetAddress?: string) => {
+    switch (linkType) {
+        case LINK_TYPE.SEND_TIP:
+            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
+        case LINK_TYPE.SEND_AIRDROP:
+            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET;
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return LINK_INTENT_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
+        default:
+            throw new Error("Unknown link type");
+    }
+};
 
 export enum LINK_USER_STATE {
     NO_STATE = "No_state",

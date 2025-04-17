@@ -1,6 +1,9 @@
+import { UpdateLinkParams2 } from "@/hooks/linkActionHook";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { create } from "zustand";
+import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { ACTION_TYPE } from "@/services/types/enum";
 
 // export interface ILinkModel<T extends LINK_TYPE> {
 //     id: string;
@@ -37,18 +40,41 @@ export interface LinkActionStoreData {
     action: ActionModel | undefined;
     anonymousWalletAddress: string | undefined;
 
+    isLoading: boolean;
+    isUpdating: boolean;
+    isProcessingAction: boolean;
+    setIsUpdating: (isUpdating: boolean) => void;
+    setIsProcessingAction: (isProcessing: boolean) => void;
+    setLoading: (isLoading: boolean) => void;
     setLink(data: LinkDetailModel | undefined): void;
-    updateLink(data: Partial<LinkDetailModel>): void;
-
     setAction(action: ActionModel | undefined): void;
+    updateLink(data: Partial<LinkDetailModel>): void;
     setAnonymousWalletAddress(walletAddress: string): void;
     clearStore(): void;
+    getLinkDetail: () => Promise<void>;
+
+    callLinkStateMachine(data: UpdateLinkParams2): Promise<LinkDto>;
+
+    createAction: (
+        linkId: string,
+        actionType: ACTION_TYPE,
+        actionId?: string,
+    ) => Promise<ActionModel | undefined>;
+
+    refetchLinkDetail: () => Promise<void>;
+    refetchAction: () => Promise<void>;
 }
 
 export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({
     link: undefined,
     action: undefined,
     anonymousWalletAddress: undefined,
+    isLoading: false,
+    isUpdating: false,
+    isProcessingAction: false,
+    setLoading: (isLoading) => set({ isLoading }),
+    setIsUpdating: (isUpdating) => set({ isUpdating }),
+    setIsProcessingAction: (isProcessing) => set({ isProcessingAction: isProcessing }),
 
     setLink: (data) => set({ link: data }),
     updateLink: (data) => {
@@ -60,4 +86,24 @@ export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({
     setAnonymousWalletAddress: (walletAddress) => set({ anonymousWalletAddress: walletAddress }),
     clearStore: () =>
         set({ link: undefined, action: undefined, anonymousWalletAddress: undefined }),
+
+    getLinkDetail: async () => {
+        throw new Error("Not implemented - will be set by useLinkAction hook");
+    },
+
+    callLinkStateMachine: async () => {
+        throw new Error("Not implemented - will be set by useLinkAction hook");
+    },
+
+    createAction: async () => {
+        throw new Error("Not implemented - will be set by useLinkAction hook");
+    },
+
+    refetchLinkDetail: async () => {
+        throw new Error("Not implemented - will be set by useLinkAction hook");
+    },
+
+    refetchAction: async () => {
+        throw new Error("Not implemented - will be set by useLinkAction hook");
+    },
 }));

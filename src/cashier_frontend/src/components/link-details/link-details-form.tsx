@@ -2,45 +2,50 @@ import { z } from "zod";
 import { LINK_INTENT_LABEL, CHAIN } from "@/services/types/enum";
 import { AssetSelectItem } from "../asset-select";
 
-// Core schema for data that needs to be stored/transmitted
-export const linkDetailsFormSchema = z.object({
+// Define a single asset schema
+export const assetSchema = z.object({
     tokenAddress: z.string().min(1, { message: "Asset is required" }),
     amount: z.bigint(),
-    label: z.nativeEnum(LINK_INTENT_LABEL).optional(),
+    label: z.union([z.nativeEnum(LINK_INTENT_LABEL), z.string()]).optional(),
     chain: z.nativeEnum(CHAIN).optional(),
 });
 
-// UI-specific interface for form display and interactions
+// Core schema for data that needs to be stored/transmitted
+export const linkDetailsFormSchema = z.object({
+    // We'll always use an array of assets, even for a single asset
+    assets: z.array(assetSchema).min(1, { message: "At least one asset is required" }),
+});
+
+// For backward compatibility with existing code
 export interface LinkDetailsFormUI {
-    assetNumber: number | null;
-    usdNumber: number | null;
+    // These fields will be deprecated in favor of assets array
+    tokenAddress?: string;
+    amount?: bigint;
+    label?: LINK_INTENT_LABEL | string;
+    chain?: CHAIN;
 }
 
+export type Asset = z.infer<typeof assetSchema>;
+export type LinkDetailsFormSchema = z.infer<typeof linkDetailsFormSchema>;
+
+/**
+ * Convert from assetNumber (number) to amount (bigint)
+ * This function should be used when converting user input to the actual amount
+ */
+export const assetNumberToAmount = (assetNumber: number | null, decimals: number = 8): bigint => {
+    if (assetNumber === null) return BigInt(0);
+    return BigInt(Math.round(assetNumber * Math.pow(10, decimals)));
+};
+
 // Validation function that can be used separately from the schema
-export const validateLinkDetails = (
-    values: z.infer<typeof linkDetailsFormSchema> & LinkDetailsFormUI,
-    assets: AssetSelectItem[],
-) => {
+export const validateAsset = (asset: Asset, availableAssets: AssetSelectItem[]) => {
     const errors: Record<string, string> = {};
 
-    if (values.assetNumber === null) {
-        errors.assetNumber = "Must input number";
-        errors.usdNumber = "Must input number";
-    }
+    const availableAsset = availableAssets.find((a) => a.address === asset.tokenAddress);
 
-    const asset = assets.find((asset) => asset.address === values.tokenAddress);
-
-    if (
-        !asset ||
-        values.assetNumber === null ||
-        asset.amount === undefined ||
-        values.assetNumber > asset.amount
-    ) {
-        errors.assetNumber = "Your balance is not enough";
-        errors.usdNumber = "Your balance is not enough";
+    if (!availableAsset || asset.amount === undefined) {
+        errors.amount = "Your balance is not enough";
     }
 
     return errors;
 };
-
-export type LinkDetailsFormSchema = z.infer<typeof linkDetailsFormSchema>;

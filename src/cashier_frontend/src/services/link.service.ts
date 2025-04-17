@@ -14,7 +14,6 @@ import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import {
-    LinkDetailModel,
     LinkGetUserStateInputModel,
     LinkModel,
     LinkUpdateUserStateInputModel,
@@ -29,6 +28,7 @@ import { ActionModel } from "./types/action.service.types";
 import { mapActionModel } from "./types/mapper/action.service.mapper";
 import { FeeModel } from "./types/intent.service.types";
 import { FEE_TYPE } from "./types/enum";
+import { UserInputItem } from "@/stores/linkCreationFormStore";
 
 interface ResponseLinksModel {
     data: LinkModel[];
@@ -77,7 +77,7 @@ class LinkService {
         });
     }
 
-    async getLinks() {
+    async getLinkList() {
         const response = parseResultResponse(
             await this.actor.get_links([
                 {
@@ -123,7 +123,7 @@ class LinkService {
         return parseResultResponse(await this.actor.create_link(input));
     }
 
-    async updateLink(linkId: string, data: LinkDetailModel, isContinue: boolean) {
+    async updateLink(linkId: string, data: Partial<UserInputItem>, isContinue: boolean) {
         console.log("🚀 ~ LinkService ~ updateLink ~ data:", data);
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
         const response = parseResultResponse(await this.actor.update_link(completeData));

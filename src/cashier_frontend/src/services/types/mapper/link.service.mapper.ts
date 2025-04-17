@@ -1,7 +1,6 @@
 import { convertNanoSecondsToDate } from "@/utils";
 import {
     GetLinkResp,
-    LinkDetailUpdateAssetInfoInput,
     LinkDto,
     LinkGetUserStateOutput,
     UpdateLinkInput,
@@ -12,16 +11,22 @@ import {
     LinkGetUserStateOutputModel,
     LinkModel,
 } from "../link.service.types";
-import { CHAIN, LINK_INTENT_LABEL, TEMPLATE } from "../enum";
+import {
+    LINK_STATE,
+    LINK_TYPE,
+    mapStringToChain,
+    mapStringToEnum,
+    mapStringToLabel,
+    TEMPLATE,
+} from "../enum";
 import { fromDefinedNullable, fromNullable, toNullable } from "@dfinity/utils";
 import { mapActionModel } from "./action.service.mapper";
-
-const IS_USE_DEFAULT_LINK_TEMPLATE = true;
+import { UserInputAsset, UserInputItem } from "@/stores/linkCreationFormStore";
 
 // Map front-end 'Link' model to back-end model
 export const MapLinkDetailModelToUpdateLinkInputModel = (
     linkId: string,
-    linkDetailModel: LinkDetailModel,
+    linkDetailModel: Partial<UserInputItem>,
     isContinue: boolean,
 ): UpdateLinkInput => {
     const updateLinkInput: UpdateLinkInput = {
@@ -29,15 +34,28 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
         action: isContinue ? "Continue" : "Back",
         params: [
             {
-                title: [linkDetailModel.title],
-                asset_info: linkDetailModel.asset_info
-                    ? [linkDetailModel.asset_info.map((asset) => mapAssetInfo(asset))]
-                    : [],
-                description: [linkDetailModel.description],
-                template: IS_USE_DEFAULT_LINK_TEMPLATE ? [TEMPLATE.CENTRAL] : [],
-                nft_image: [linkDetailModel.image],
+                title: toNullable(linkDetailModel.title),
+                asset_info: linkDetailModel.assets
+                    ? toNullable(
+                          linkDetailModel.assets.map((asset) => {
+                              return {
+                                  address: asset.address,
+                                  amount_per_link_use_action: asset.linkUseAmount,
+                                  chain: asset.chain,
+                                  label:
+                                      linkDetailModel.linkType === LINK_TYPE.SEND_TOKEN_BASKET
+                                          ? `${asset.label}_${asset.address}`
+                                          : asset.label,
+                              };
+                          }),
+                      )
+                    : toNullable(),
+                description: toNullable(linkDetailModel.description),
+                template: toNullable(TEMPLATE.CENTRAL),
+                nft_image: [],
                 link_image_url: [],
-                link_type: linkDetailModel.linkType ? [linkDetailModel.linkType] : [],
+                link_type: toNullable(linkDetailModel.linkType),
+                link_use_action_max_count: toNullable(linkDetailModel.maxActionNumber),
             },
         ],
     };
@@ -46,7 +64,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
 };
 
 export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
-    const result = {
+    const result: LinkDetailModel = {
         id: link.id,
         title: fromNullable(link.title) ?? "",
         description: fromNullable(link.description) ?? "",
@@ -58,13 +76,17 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
         create_at: link.create_at
             ? convertNanoSecondsToDate(link.create_at)
             : new Date("2000-10-01"),
-        asset_info: fromNullable(link.asset_info)
-            ? fromDefinedNullable(link.asset_info).map((asset) => ({
-                  address: asset?.address,
-                  amount: asset?.total_amount,
-                  totalClaim: fromNullable(asset?.total_claim),
-              }))
-            : [],
+        asset_info:
+            link.asset_info.length > 0
+                ? fromDefinedNullable(link.asset_info).map((asset) => ({
+                      address: asset.address,
+                      chain: mapStringToChain(asset.chain),
+                      amountPerClaim: asset.amount_per_link_use_action,
+                      label: mapStringToLabel(asset.label),
+                  }))
+                : [],
+        maxActionNumber: link.link_use_action_max_count,
+        useActionCounter: link.link_use_action_counter,
     };
     return result;
 };
@@ -78,18 +100,20 @@ export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkMode
     };
 };
 
-//TODO: May need to update in future, now received 'amount' as param, others are constants
-const mapAssetInfo = (assetInfo: AssetInfoModel): LinkDetailUpdateAssetInfoInput => {
-    return {
-        address: assetInfo.address,
-        chain: CHAIN.IC,
-        // for only tip link amount_per_claim = total_amount
-        amount_per_claim: toNullable(assetInfo.amount),
-        total_amount: assetInfo.amount,
-        label: assetInfo.label ?? LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET,
-        payment_amount: [],
-    };
-};
+// const mapAssetInfo = (assetInfo: AssetInfoModel): AssetInfoDto => {
+//     if (!assetInfo.label) {
+//         throw new Error("Asset address is undefined");
+//     }
+//     if (!assetInfo.chain) {
+//         throw new Error("Asset chain is undefined");
+//     }
+//     return {
+//         address: assetInfo.address,
+//         amount_per_link_use_action: assetInfo.amountPerClaim,
+//         chain: assetInfo.chain,
+//         label: assetInfo.label,
+//     };
+// };
 
 // Map back-end link user state to front-end model
 export const mapLinkUserStateModel = (
@@ -98,5 +122,61 @@ export const mapLinkUserStateModel = (
     return {
         action: model[0] ? mapActionModel(model[0]?.action) : undefined,
         link_user_state: model[0]?.link_user_state ?? undefined,
+    };
+};
+
+export const mapAssetInfoModelToUserInputAsset = (model: AssetInfoModel): UserInputAsset => {
+    if (!model.label) {
+        throw new Error("Asset label is undefined");
+    }
+    if (!model.chain) {
+        throw new Error("Asset chain is undefined");
+    }
+    return {
+        address: model.address,
+        linkUseAmount: model.amountPerClaim,
+        usdEquivalent: 0,
+        usdConversionRate: 0,
+        chain: model.chain,
+        label: model.label,
+    };
+};
+
+export const mapLinkDetailModelToUserInputItem = (model: LinkDetailModel): UserInputItem => {
+    if (!model.state) {
+        throw new Error("Link state is undefined");
+    }
+
+    if (!model.asset_info) {
+        throw new Error("Asset info is undefined");
+    }
+
+    if (!model.linkType) {
+        throw new Error("Link type is undefined");
+    }
+
+    const state = mapStringToEnum(LINK_STATE, model.state);
+    const linkType = mapStringToEnum(LINK_TYPE, model.linkType);
+    const assets = model.asset_info.map((asset) => {
+        return mapAssetInfoModelToUserInputAsset(asset);
+    });
+
+    if (!state) {
+        throw new Error("Link state is not valid");
+    }
+
+    if (!linkType) {
+        throw new Error("Link type is not valid");
+    }
+
+    return {
+        linkId: model.id,
+        state,
+        linkType,
+        title: model.title,
+        assets: assets,
+        description: model.description,
+        image: model.image,
+        maxActionNumber: model.maxActionNumber,
     };
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { FaChevronDown } from "react-icons/fa";
 import { ChevronDown } from "lucide-react";
 
 interface AssetButtonProps {

@@ -35,7 +35,7 @@ function App() {
             signers={signers}
             signerClientOptions={{
                 targets,
-                maxTimeToLive: 3_600_000_000_000n,
+                maxTimeToLive: 86_400_000_000_000n,
             }}
         >
             <QueryClientProvider client={queryClient}>

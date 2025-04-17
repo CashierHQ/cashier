@@ -23,9 +23,8 @@ export enum Chain {
 
 export type AssetInfoModel = {
     address: string;
-    amount: bigint;
-    totalClaim?: bigint;
-    label?: LINK_INTENT_LABEL;
+    amountPerClaim: bigint;
+    label?: LINK_INTENT_LABEL | string;
     chain?: CHAIN;
 };
 
@@ -40,6 +39,8 @@ export type LinkDetailModel = {
     creator?: string;
     create_at: Date;
     asset_info: AssetInfoModel[];
+    maxActionNumber: bigint;
+    useActionCounter: bigint;
 };
 
 export type LinkModel = {

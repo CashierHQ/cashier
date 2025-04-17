@@ -5,27 +5,22 @@ import { useNavigate, useParams } from "react-router-dom";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
-import { useSetTipLinkDetails, useUpdateLinkSelfContained } from "@/hooks/linkHooks";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import {
     ACTION_STATE,
     ACTION_TYPE,
-    CHAIN,
-    LINK_INTENT_LABEL,
     LINK_STATE,
     mapStringToLinkState,
     mapStringToLinkType,
 } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
-import { useLinkActionStore } from "@/stores/linkActionStore";
 import { Spinner } from "@/components/ui/spinner";
 import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
-import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
-import { AssetInfoModel, LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
+import { useLinkAction } from "@/hooks/linkActionHook";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -34,7 +29,13 @@ const STEP_LINK_STATE_ORDER = [
 ];
 
 function getInitialStep(state: string | undefined) {
-    return STEP_LINK_STATE_ORDER.findIndex((x) => x === state);
+    const res = STEP_LINK_STATE_ORDER.findIndex((x) => x === state);
+    return res;
+}
+
+export function stateToStepIndex(state: string | undefined) {
+    const res = STEP_LINK_STATE_ORDER.findIndex((x) => x === state);
+    return res;
 }
 
 export default function LinkPage() {
@@ -45,48 +46,34 @@ export default function LinkPage() {
 
     const [backButtonDisabled, setBackButtonDisabled] = useState(false);
 
-    const linkCreationFormStore = useLinkCreationFormStore();
-
-    const { addUserInput } = useLinkCreationFormStore();
-
-    const { link, setLink, action, setAction } = useLinkActionStore();
-
-    const { data: linkData, isFetching: isFetchingLinkData } = useLinkDataQuery(
+    const { addUserInput, getUserInput } = useLinkCreationFormStore();
+    const { link, action, callLinkStateMachine, isLoading } = useLinkAction(
         linkId,
         ACTION_TYPE.CREATE_LINK,
     );
-    const { mutateAsync: updateLink } = useUpdateLinkSelfContained();
-    const { mutateAsync: setTipLinkDetails } = useSetTipLinkDetails();
 
-    const currentLink = linkData?.link;
+    const currentLink = link;
 
     useEffect(() => {
-        if (linkData) {
-            console.log("🚀 ~ linkData:", linkData);
-            setLink(linkData.link);
-            setAction(linkData.action);
-
+        if (link) {
             const userInput: Partial<UserInputItem> = {
-                linkId: linkData.link.id,
-                state: mapStringToLinkState(linkData.link.state!),
-                title: linkData.link.title,
-                linkType: mapStringToLinkType(linkData.link.linkType),
-                assets: linkData.link.asset_info.map((asset) => ({
+                linkId: link.id,
+                state: mapStringToLinkState(link.state!),
+                title: link.title,
+                linkType: mapStringToLinkType(link.linkType),
+                assets: link.asset_info.map((asset) => ({
                     address: asset.address,
-                    amount: asset.amount,
-                    totalClaim: asset.totalClaim ?? 0n,
+                    linkUseAmount: asset.amountPerClaim,
                     usdEquivalent: 0,
                     usdConversionRate: 0,
+                    chain: asset.chain!,
+                    label: asset.label!,
                 })),
             };
 
-            addUserInput(linkData.link.id, userInput);
+            addUserInput(link.id, userInput);
         }
-        return () => {
-            setLink(undefined);
-            setAction(undefined);
-        };
-    }, [linkData]);
+    }, [link]);
 
     const handleBackstep = async (context: MultiStepFormContext) => {
         setBackButtonDisabled(true);
@@ -95,44 +82,35 @@ export default function LinkPage() {
         } else {
             try {
                 // Update the link state on the server with current values
-                const linkFromStore = linkCreationFormStore.getUserInput(linkId!);
-                if (!linkFromStore) return;
+                const input = getUserInput(linkId!);
+                console.log("🚀 ~ input:", input);
+                if (!input) throw new Error("Input not found");
 
-                const linkModel: LinkDetailModel = {
-                    ...link!,
-                    asset_info: linkFromStore.assets as AssetInfoModel[],
-                    state: linkFromStore.state,
-                };
+                if (!linkId) throw new Error("Link ID not found");
 
-                let updatedLink: LinkDetailModel | undefined = undefined;
+                if (!link || !link.state) throw new Error("Link not found");
 
-                if (
-                    context.step ===
-                    STEP_LINK_STATE_ORDER.findIndex((x) => x === LINK_STATE.ADD_ASSET)
-                ) {
-                    updatedLink = await setTipLinkDetails({
-                        link: {
-                            ...link!,
-                            state: LINK_STATE.ADD_ASSET,
-                        },
-                        patch: linkFromStore.assets as AssetInfoModel[],
-                        isContinue: false,
-                    });
+                const res = await callLinkStateMachine({
+                    linkId: linkId,
+                    linkModel: {
+                        ...input,
+                        // TODO: remove this, not using 1 as default
+                        maxActionNumber: BigInt(1),
+                    },
+                    isContinue: false,
+                });
 
-                    setLink(updatedLink);
-                } else {
-                    updatedLink = await updateLink({
-                        linkId: linkId!,
-                        linkModel: linkModel,
-                        isContinue: false,
-                    });
-                }
+                const currentState = res.state;
 
-                if (!updatedLink) return;
-                console.log("🚀 ~ handleBackstep ~ updatedLink:", updatedLink);
-                setLink(updatedLink);
-
-                context.prevStep();
+                const stepIndex = stateToStepIndex(currentState);
+                context.setStep(stepIndex);
+            } catch (e) {
+                console.error(e);
+                showToast(
+                    t("transaction.validation.action_failed"),
+                    t("transaction.validation.action_failed_message"),
+                    "error",
+                );
             } finally {
                 setBackButtonDisabled(false);
             }
@@ -178,7 +156,7 @@ export default function LinkPage() {
         }
     };
 
-    if (isFetchingLinkData) {
+    if (isLoading || !link) {
         return (
             <div className="w-screen h-screen flex items-center justify-center">
                 <Spinner />

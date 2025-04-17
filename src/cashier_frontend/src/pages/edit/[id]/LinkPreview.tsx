@@ -1,27 +1,24 @@
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
-import { LinkPreviewCashierFeeSection } from "@/components/link-preview/link-preview-cashier-fee-section";
-import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
-import { LINK_TYPE } from "@/services/types/enum";
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLinkActionStore } from "@/stores/linkActionStore";
-import { useCreateAction, useFeePreview, useSetLinkActive } from "@/hooks/linkHooks";
+import { useFeePreview } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useNavigate } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
-import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
-import { useTokenStore } from "@/stores/tokenStore";
 import { formatPrice } from "@/utils/helpers/currency";
 import { useFeeTotal } from "@/hooks/useFeeMetadata";
 import { NETWORK_FEE_DEFAULT_ADDRESS, NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
 import { convert } from "@/utils/helpers/convert";
+import { useLinkAction } from "@/hooks/linkActionHook";
+import { useTokens } from "@/hooks/useTokens";
+import { ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
     onCashierError?: (error: Error) => void;
@@ -37,23 +34,20 @@ export default function LinkPreview({
     const navigate = useNavigate();
     const responsive = useResponsive();
 
-    const { link, action, setAction, setLink } = useLinkActionStore();
+    const { link, action, setAction, refetchLinkDetail, callLinkStateMachine, createAction } =
+        useLinkAction();
     const linkCreationFormStore = useLinkCreationFormStore();
-    const tokenStore = useTokenStore();
+    const { getToken, getTokenPrice } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
-    const { mutateAsync: createAction } = useCreateAction();
-    const { mutateAsync: setLinkActive } = useSetLinkActive();
 
     const { data: feeData } = useFeePreview(link?.id);
 
     const currentLink = linkCreationFormStore.getUserInput(link?.id ?? "");
 
     const handleCreateAction = async () => {
-        const updatedAction = await createAction({
-            linkId: link!.id,
-        });
+        const updatedAction = await createAction(link!.id, ACTION_TYPE.CREATE_LINK);
         console.log("🚀 ~ handleCreateAction ~ updatedAction:", updatedAction);
         setAction(updatedAction);
     };
@@ -85,26 +79,17 @@ export default function LinkPreview({
         }
     };
 
-    const renderLinkCard = () => {
-        if (!link) return null;
-
-        const message =
-            link.linkType === LINK_TYPE.SEND_TIP
-                ? LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP
-                : link.description;
-        const src =
-            link.linkType === LINK_TYPE.SEND_TIP
-                ? getTokenImage(link?.asset_info?.[0].address ?? "")
-                : link.image;
-
-        return <PhonePreview src={src} title={link.title} message={message} />;
-    };
-
     const handleSetLinkToActive = async () => {
-        const activeLink = await setLinkActive({ link: link! });
-        setLink(activeLink);
+        const res = await callLinkStateMachine({
+            linkId: link!.id,
+            linkModel: {},
+            isContinue: true,
+        });
 
-        navigate(`/details/${link!.id}`);
+        if (res.state === LINK_STATE.ACTIVE) {
+            navigate(`/details/${link!.id}`);
+            refetchLinkDetail();
+        }
     };
 
     return (
@@ -132,11 +117,9 @@ export default function LinkPreview({
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center">
                                         <p className="text-[14px] font-normal">
-                                            {Number(asset.amount) /
-                                                10 **
-                                                    (tokenStore.getToken(asset.address)?.decimals ??
-                                                        8)}{" "}
-                                            {tokenStore.getToken(asset.address)?.symbol}
+                                            {Number(asset.linkUseAmount) /
+                                                10 ** (getToken(asset.address)?.decimals ?? 8)}{" "}
+                                            {getToken(asset.address)?.symbol}
                                         </p>
                                         <img
                                             src={getTokenImage(asset.address)}
@@ -148,8 +131,8 @@ export default function LinkPreview({
                                         ≈$
                                         {formatPrice(
                                             (
-                                                (Number(asset.amount) / 10 ** 8) *
-                                                (tokenStore.getTokenPrice(asset.address) || 0)
+                                                (Number(asset.linkUseAmount) / 10 ** 8) *
+                                                (getTokenPrice(asset.address) || 0)
                                             ).toString(),
                                         )}
                                         {/* {tokenStore.getTokenPrice(asset.address)} */}
@@ -183,8 +166,7 @@ export default function LinkPreview({
                                     (
                                         convert(
                                             useFeeTotal(feeData ?? []),
-                                            tokenStore.getTokenPrice(NETWORK_FEE_DEFAULT_ADDRESS) ||
-                                                0,
+                                            getTokenPrice(NETWORK_FEE_DEFAULT_ADDRESS) || 0,
                                         ) || 0
                                     ).toString(),
                                 )}
