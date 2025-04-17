@@ -20,7 +20,7 @@ export default function ManageTokensPage() {
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
 
-    const { rawTokenList: tokens, isLoading, isSyncPreferences } = useTokens();
+    const { rawTokenList: tokens, isLoading, isSyncPreferences, updateTokenExplorer } = useTokens();
 
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [filteredTokens, setFilteredTokens] = useState<FungibleToken[]>([]);
@@ -81,6 +81,17 @@ export default function ManageTokensPage() {
         setFilteredTokens(tokens);
     };
 
+    const handleUpdateExplorer = async () => {
+        setIsExplorerLoading(true);
+        try {
+            await updateTokenExplorer();
+        } catch (error) {
+            console.error("Error updating token explorer", error);
+        } finally {
+            setIsExplorerLoading(false);
+        }
+    };
+
     // Update filtered tokens when tokens list changes
     useEffect(() => {
         if (searchQuery) {
@@ -116,9 +127,7 @@ export default function ManageTokensPage() {
                         onRightIconClick={handleClearSearch}
                     />
                     <button
-                        onClick={() => {
-                            setIsExplorerLoading((oldValue) => !oldValue);
-                        }}
+                        onClick={handleUpdateExplorer}
                         className="light-borders w-12 flex items-center justify-center"
                     >
                         <RefreshCw color="#35A18A" style={isExplorerLoading ? halfSpinStyle : {}} />

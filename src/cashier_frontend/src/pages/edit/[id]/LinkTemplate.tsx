@@ -78,9 +78,9 @@ export default function LinkTemplate({
 
     useEffect(() => {
         carousel.setCurrent(
-            LINK_TEMPLATES.findIndex((template) => template.linkType === link?.linkType),
+            LINK_TEMPLATES.findIndex((template) => template.linkType === link?.linkType) || 0,
         );
-    }, []);
+    }, [link]);
 
     useEffect(() => {
         const selectedTemplate = LINK_TEMPLATES[carousel.current];
