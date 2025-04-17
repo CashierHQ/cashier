@@ -426,7 +426,7 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
             ) : (
                 <>
                     <div
-                        className="flex flex-col overflow-y-auto pb-20 md:pb-0 md:overflow-visible"
+                        className="flex flex-col overflow-y-auto pb-20 md:overflow-visible mt-2"
                         style={{
                             maxHeight: "calc(100vh - 120px)",
                             WebkitOverflowScrolling: "touch",
@@ -443,37 +443,41 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                             return (
                                 <div
                                     key={index}
-                                    className={`mb-6 ${currentAssets.length > 1 ? "border-b pb-4 last:border-b-0" : ""}`}
+                                    className={`mb-6 ${currentAssets.length > 1 ? "border-b border-grey/10 pb-8 last:border-b-0" : ""}`}
                                 >
-                                    {/* Asset header with optional remove button */}
-                                    <div className="flex justify-between items-center">
-                                        <Label>
-                                            {index === 0
-                                                ? t("create.asset")
-                                                : `${t("create.asset")} #${index + 1}`}
-                                        </Label>
-                                        {isMultiAssetType && currentAssets.length > 1 && (
-                                            <button
-                                                className="text-destructive hover:bg-destructive/10 rounded-full p-1"
-                                                onClick={() => handleRemoveAsset(index)}
-                                            >
-                                                <Trash size={16} />
-                                            </button>
-                                        )}
-                                    </div>
+                                    <div className="input-label-field-container">
+                                        {/* Asset header with optional remove button */}
+                                        <div className="flex justify-between items-center">
+                                            <Label>
+                                                {index === 0
+                                                    ? t("create.asset")
+                                                    : `${t("create.asset")}`}
+                                            </Label>
+                                            {isMultiAssetType && currentAssets.length > 1 && (
+                                                <button
+                                                    className="text-destructive hover:bg-destructive/10 rounded-full p-1"
+                                                    onClick={() => handleRemoveAsset(index)}
+                                                >
+                                                    <Trash size={19} />
+                                                </button>
+                                            )}
+                                        </div>
 
-                                    {/* Asset selector */}
-                                    <div className="mb-4">
-                                        <AssetButton
-                                            handleClick={() => {
-                                                setEditingAssetIndex(index);
-                                                setShowAssetDrawer(true);
-                                            }}
-                                            text="Choose Asset"
-                                            childrenNode={
-                                                <SelectedAssetButtonInfo selectedToken={token} />
-                                            }
-                                        />
+                                        {/* Asset selector */}
+                                        <div className="mb-4">
+                                            <AssetButton
+                                                handleClick={() => {
+                                                    setEditingAssetIndex(index);
+                                                    setShowAssetDrawer(true);
+                                                }}
+                                                text="Choose Asset"
+                                                childrenNode={
+                                                    <SelectedAssetButtonInfo
+                                                        selectedToken={token}
+                                                    />
+                                                }
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* Amount input section */}
@@ -541,12 +545,13 @@ export const TipLinkAssetForm: FC<TipLinkAssetFormProps> = ({ onSubmit, isButton
                                 type="submit"
                                 variant="default"
                                 size="lg"
-                                className="w-full"
+                                className="w-full fixed bottom-4 disabled:bg-disabledgreen"
                                 onClick={(e) => {
                                     e.preventDefault();
 
                                     // Check if all assets have sufficient amounts
                                     let hasError = false;
+                                    console.log("🚀 currentAssets: ", currentAssets);
                                     currentAssets.forEach((asset, index) => {
                                         const token = filteredTokenList?.find(
                                             (token) => token.address === asset.address,
