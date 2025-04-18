@@ -9,10 +9,11 @@ export default function LinkDetails() {
     // Determine if we need multi-asset mode based on link type
     const currentInput = link ? getUserInput(link.id) : undefined;
     const isMultiAsset = currentInput?.linkType === LINK_TYPE.SEND_TOKEN_BASKET;
+    const isAirdrop = currentInput?.linkType === LINK_TYPE.SEND_AIRDROP;
 
     return (
         <div className="w-full h-full flex flex-col">
-            <AddAssetForm isMultiAsset={isMultiAsset} />
+            <AddAssetForm isMultiAsset={isMultiAsset} isAirdrop={isAirdrop} />
         </div>
     );
 }

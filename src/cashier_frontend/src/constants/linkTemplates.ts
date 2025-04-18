@@ -17,7 +17,7 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         src: "/chatToken.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
         title: "Airdrop",
-        isComingSoon: true,
+        isComingSoon: false,
         linkType: LINK_TYPE.SEND_AIRDROP,
     },
     {

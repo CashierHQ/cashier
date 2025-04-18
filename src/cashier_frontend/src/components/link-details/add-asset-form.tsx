@@ -6,22 +6,31 @@ import { useTranslation } from "react-i18next";
 import { AssetFormSkeleton } from "./asset-form-skeleton";
 import { useAddAssetForm } from "./add-asset-hooks";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
+import {
+    useLinkCreationFormStore,
+    UserInputAsset,
+    UserInputItem,
+} from "@/stores/linkCreationFormStore";
 import { CHAIN, getAssetLabelForLinkType, LINK_INTENT_LABEL } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "../transaction/transaction-toast";
-import { Plus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { AssetFormInput } from "./asset-form-input";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useLinkAction } from "@/hooks/linkActionHook";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { formatPrice } from "@/utils/helpers/currency";
 
 type TipLinkAssetFormProps = {
     isMultiAsset: boolean;
+    isAirdrop: boolean;
 };
 
-export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset }) => {
+export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdrop }) => {
     const { t } = useTranslation();
     const { link, isUpdating, callLinkStateMachine } = useLinkAction();
     const { getUserInput, updateUserInput } = useLinkCreationFormStore();
@@ -193,17 +202,38 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset }) => {
         if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
 
         if (validateAssets(formAssets)) {
+            // Update the store with the current form values
+            const storeAssets = formAssets.map((asset) => {
+                const token = getToken(asset.tokenAddress);
+                const usdRate = getTokenPrice(asset.tokenAddress) || 0;
+                const tokenAmount = Number(asset.amount) / Math.pow(10, token?.decimals || 8);
+                const usdAmount = usdRate * tokenAmount;
+
+                if (isAirdrop) {
+                    return {
+                        address: asset.tokenAddress,
+                        // For airdrops, total amount is per-claim amount * maxActionNumber
+                        linkUseAmount: asset.amount * BigInt(maxActionNumber),
+                        amountPerClaim: asset.amount,
+                        usdEquivalent: usdAmount,
+                        usdConversionRate: usdRate,
+                        chain: asset.chain!,
+                        label: asset.label!,
+                    };
+                } else {
+                    return {
+                        address: asset.tokenAddress,
+                        linkUseAmount: asset.amount,
+                        usdEquivalent: usdAmount,
+                        usdConversionRate: usdRate,
+                        chain: asset.chain!,
+                        label: asset.label!,
+                    };
+                }
+            });
+
             updateUserInput(link.id, {
-                assets: formAssets.map((asset) => ({
-                    address: asset.tokenAddress,
-                    linkUseAmount: BigInt(asset.amount),
-                    usdEquivalent: 0,
-                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
-                    // validate in validateAssets
-                    chain: asset.chain!,
-                    // validate in validateAssets
-                    label: asset.label!,
-                })),
+                assets: storeAssets,
                 maxActionNumber: BigInt(maxActionNumber),
             });
 
@@ -275,9 +305,15 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset }) => {
                 label = LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET + "_" + firstAsset.address;
             }
 
+            // For airdrops, amountPerClaim should be used if available
+            const amount =
+                isAirdrop && firstAsset.amountPerClaim
+                    ? firstAsset.amountPerClaim
+                    : firstAsset.amountPerClaim || firstAsset.amountPerClaim;
+
             assetFields.append({
                 tokenAddress: firstAsset.address,
-                amount: firstAsset.amountPerClaim,
+                amount: amount,
                 label: label,
                 chain: firstAsset.chain,
             });
@@ -299,17 +335,23 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset }) => {
 
         setSelectedAssetAddresses([firstToken.address]);
 
+        // Create initial asset with proper typing that includes optional amountPerClaim
+        const initialAsset: UserInputAsset = {
+            address: firstToken.address,
+            linkUseAmount: BigInt(0),
+            usdEquivalent: 0,
+            usdConversionRate: getTokenPrice(firstToken.address) || 0,
+            chain: CHAIN.IC,
+            label,
+        };
+
+        // For airdrops, add the amountPerClaim field
+        if (isAirdrop) {
+            initialAsset.amountPerClaim = BigInt(0);
+        }
+
         updateUserInput(link.id, {
-            assets: [
-                {
-                    address: firstToken.address,
-                    linkUseAmount: BigInt(0),
-                    usdEquivalent: 0,
-                    usdConversionRate: getTokenPrice(firstToken.address) || 0,
-                    chain: CHAIN.IC,
-                    label,
-                },
-            ],
+            assets: [initialAsset],
         });
     }
 
@@ -322,19 +364,36 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset }) => {
         const tokenData = getToken(formAssets[0].tokenAddress);
         if (!tokenData) return;
 
-        const amouontNumber = Number(formAssets[0].amount) / Math.pow(10, tokenData.decimals || 8);
+        const amountNumber = Number(formAssets[0].amount) / Math.pow(10, tokenData.decimals || 8);
         const usdNumber = tokenData.usdConversionRate
-            ? tokenData.usdConversionRate * amouontNumber
+            ? tokenData.usdConversionRate * amountNumber
             : 0;
 
-        const storeAssets = formAssets.map((asset) => ({
-            address: asset.tokenAddress,
-            linkUseAmount: asset.amount,
-            usdEquivalent: usdNumber,
-            usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
-            chain: CHAIN.IC,
-            label: asset.label!,
-        }));
+        const storeAssets = formAssets.map((asset) => {
+            if (isAirdrop) {
+                // For airdrops, the amount per claim is what the user enters
+                // Total amount (linkUseAmount) is calculated as maxActionNumber * amountPerClaim
+                return {
+                    address: asset.tokenAddress,
+                    linkUseAmount: asset.amount * BigInt(maxActionNumber),
+                    amountPerClaim: asset.amount, // Store the per-claim amount separately
+                    usdEquivalent: usdNumber,
+                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
+                    chain: CHAIN.IC,
+                    label: asset.label!,
+                };
+            } else {
+                // For non-airdrops, behavior remains the same
+                return {
+                    address: asset.tokenAddress,
+                    linkUseAmount: asset.amount,
+                    usdEquivalent: usdNumber,
+                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
+                    chain: CHAIN.IC,
+                    label: asset.label!,
+                };
+            }
+        });
 
         updateUserInput(link.id, { assets: storeAssets });
     }
@@ -403,16 +462,28 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset }) => {
             }
 
             // Check balance
-            const hasEnoughBalance =
-                token &&
-                token.amount !== null &&
-                typeof token.amount !== "undefined" &&
-                Number(asset.amount) <= Number(token.amount);
+            if (token && token.amount !== null && typeof token.amount !== "undefined") {
+                let totalAmountNeeded: bigint;
 
-            if (!hasEnoughBalance) {
-                const availableAmount = token?.amount ? Number(token.amount) : 0;
-                const requestedAmount = Number(asset.amount);
-                const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${availableAmount}, Requested: ${requestedAmount}`;
+                if (isAirdrop) {
+                    // For airdrops: total amount = per-claim amount * maxActionNumber
+                    totalAmountNeeded = asset.amount * BigInt(maxActionNumber);
+                } else {
+                    // For regular links: just use the amount directly
+                    totalAmountNeeded = asset.amount;
+                }
+
+                const hasEnoughBalance = Number(totalAmountNeeded) <= Number(token.amount);
+
+                if (!hasEnoughBalance) {
+                    const availableAmount = token?.amount ? Number(token.amount) : 0;
+                    const requestedAmount = Number(totalAmountNeeded);
+                    const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${availableAmount}, Requested: ${requestedAmount}`;
+                    errorMessages.push(errorMsg);
+                    isValid = false;
+                }
+            } else {
+                const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Unable to verify balance.`;
                 errorMessages.push(errorMsg);
                 isValid = false;
             }
@@ -470,8 +541,64 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset }) => {
                         onAssetSelect={handleAssetSelect}
                         onRemoveAsset={handleRemoveAsset}
                         showRemoveButton={isMultiAsset && assetFields.fields.length > 1}
+                        isAirdrop={isAirdrop}
                     />
                 ))}
+
+                {/* Airdrop Fields */}
+                {isAirdrop && (
+                    <div className="flex gap-4 mt-2">
+                        <div className="input-label-field-container">
+                            <Label>Claims</Label>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setMaxUse(maxActionNumber - 1)}
+                                    className="bg-grey/10 rounded-full p-1"
+                                    disabled={maxActionNumber <= 1}
+                                >
+                                    <Minus size={16} className="text-grey" />
+                                </button>
+                                <Input
+                                    value={maxActionNumber}
+                                    onChange={(e) => setMaxUse(Number(e.target.value))}
+                                    className="max-w-20 h-11 text-center text-[16px] font-normal"
+                                    type="number"
+                                    min="1"
+                                />
+                                <button
+                                    onClick={() => setMaxUse(maxActionNumber + 1)}
+                                    className="bg-lightgreen rounded-full p-1"
+                                >
+                                    <Plus size={16} className="text-green" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="input-label-field-container flex-1">
+                            <Label>Total amount</Label>
+                            <div className="flex items-center gap-1 bg-lightgreen rounded-[8px] flex-1 px-4 justify-between">
+                                <p className="text-[16px] font-normal">
+                                    {formatPrice(
+                                        (() => {
+                                            const asset = getValues("assets")[0];
+                                            const token = getToken(asset?.tokenAddress || "");
+                                            if (!asset || !token) return "0";
+
+                                            // Calculate total from amount per claim * maxActionNumber
+                                            const amountPerClaim =
+                                                Number(asset.amount) /
+                                                Math.pow(10, token.decimals || 8);
+                                            return (amountPerClaim * maxActionNumber).toString();
+                                        })(),
+                                    )}
+                                </p>
+                                <p className="text-[16px] font-normal">
+                                    {getToken(getValues("assets")[0]?.tokenAddress || "")?.symbol}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Add Another Asset Button (for multi-asset mode) */}
                 {isMultiAsset && (

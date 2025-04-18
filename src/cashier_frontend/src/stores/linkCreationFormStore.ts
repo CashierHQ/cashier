@@ -9,6 +9,8 @@ export interface UserInputAsset {
     label: string;
     usdEquivalent?: number;
     usdConversionRate?: number;
+    // Amount per individual claim for airdrops
+    amountPerClaim?: bigint;
 }
 
 export interface UserInputItem {

@@ -23,6 +23,7 @@ type AssetFormInputProps = {
     onAssetSelect: (index: number) => void;
     onRemoveAsset: (index: number) => void;
     showRemoveButton: boolean;
+    isAirdrop?: boolean;
 };
 
 export const AssetFormInput: FC<AssetFormInputProps> = ({
@@ -31,6 +32,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     onAssetSelect,
     onRemoveAsset,
     showRemoveButton,
+    isAirdrop,
 }) => {
     // Add local state for isUsd with initial value from props or default to false
     const [localIsUsd, setLocalIsUsd] = useState<boolean>(false);
@@ -143,7 +145,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
             <div className="input-label-field-container">
                 {/* Asset header with optional remove button */}
                 <div className="flex justify-between items-center">
-                    <Label>{index === 0 ? t("create.asset") : `${t("create.asset")}`}</Label>
+                    <Label>{isAirdrop ? `Asset per claim` : `${t("create.asset")}`}</Label>
                     {showRemoveButton && (
                         <button
                             className="text-destructive hover:bg-destructive/10 rounded-full p-1"
@@ -167,7 +169,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
             {/* Amount input section */}
             <div className="input-label-field-container">
                 <div className="flex justify-between items-center">
-                    <Label>{t("create.amount")}</Label>
+                    <Label>{isAirdrop ? "Amount per claim" : t("create.amount")}</Label>
                     {token && (
                         <UsdSwitch
                             token={token}
