@@ -192,6 +192,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                     onChange={(e: ChangeEvent<HTMLInputElement>) => {
                         handleAmountChange(e.target.value);
                     }}
+                    placeholder={isAirdrop ? "Enter amount per claim" : "Enter amount"}
                 />
                 {errors.assets?.[index]?.amount && (
                     <div className="text-destructive text-sm mt-1">

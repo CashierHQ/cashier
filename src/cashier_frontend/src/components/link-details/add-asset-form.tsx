@@ -209,27 +209,16 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 const tokenAmount = Number(asset.amount) / Math.pow(10, token?.decimals || 8);
                 const usdAmount = usdRate * tokenAmount;
 
-                if (isAirdrop) {
-                    return {
-                        address: asset.tokenAddress,
-                        // For airdrops, total amount is per-claim amount * maxActionNumber
-                        linkUseAmount: asset.amount * BigInt(maxActionNumber),
-                        amountPerClaim: asset.amount,
-                        usdEquivalent: usdAmount,
-                        usdConversionRate: usdRate,
-                        chain: asset.chain!,
-                        label: asset.label!,
-                    };
-                } else {
-                    return {
-                        address: asset.tokenAddress,
-                        linkUseAmount: asset.amount,
-                        usdEquivalent: usdAmount,
-                        usdConversionRate: usdRate,
-                        chain: asset.chain!,
-                        label: asset.label!,
-                    };
-                }
+                return {
+                    address: asset.tokenAddress,
+                    // linkUseAmount is now just the per-claim amount (not multiplied)
+                    linkUseAmount: asset.amount,
+                    usdEquivalent: usdAmount,
+                    usdConversionRate: usdRate,
+                    chain: asset.chain!,
+                    label: asset.label!,
+                    maxActionNumber: BigInt(maxActionNumber),
+                };
             });
 
             updateUserInput(link.id, {
@@ -305,11 +294,8 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 label = LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET + "_" + firstAsset.address;
             }
 
-            // For airdrops, amountPerClaim should be used if available
-            const amount =
-                isAirdrop && firstAsset.amountPerClaim
-                    ? firstAsset.amountPerClaim
-                    : firstAsset.amountPerClaim || firstAsset.amountPerClaim;
+            // Use linkUseAmount directly for the form input (this is the per-claim amount)
+            const amount = firstAsset.amountPerClaim || firstAsset.amountPerClaim;
 
             assetFields.append({
                 tokenAddress: firstAsset.address,
@@ -335,20 +321,15 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
         setSelectedAssetAddresses([firstToken.address]);
 
-        // Create initial asset with proper typing that includes optional amountPerClaim
+        // Create initial asset with proper typing
         const initialAsset: UserInputAsset = {
             address: firstToken.address,
-            linkUseAmount: BigInt(0),
+            linkUseAmount: BigInt(0), // This is the per-claim amount
             usdEquivalent: 0,
             usdConversionRate: getTokenPrice(firstToken.address) || 0,
             chain: CHAIN.IC,
             label,
         };
-
-        // For airdrops, add the amountPerClaim field
-        if (isAirdrop) {
-            initialAsset.amountPerClaim = BigInt(0);
-        }
 
         updateUserInput(link.id, {
             assets: [initialAsset],
@@ -370,29 +351,16 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             : 0;
 
         const storeAssets = formAssets.map((asset) => {
-            if (isAirdrop) {
-                // For airdrops, the amount per claim is what the user enters
-                // Total amount (linkUseAmount) is calculated as maxActionNumber * amountPerClaim
-                return {
-                    address: asset.tokenAddress,
-                    linkUseAmount: asset.amount * BigInt(maxActionNumber),
-                    amountPerClaim: asset.amount, // Store the per-claim amount separately
-                    usdEquivalent: usdNumber,
-                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
-                    chain: CHAIN.IC,
-                    label: asset.label!,
-                };
-            } else {
-                // For non-airdrops, behavior remains the same
-                return {
-                    address: asset.tokenAddress,
-                    linkUseAmount: asset.amount,
-                    usdEquivalent: usdNumber,
-                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
-                    chain: CHAIN.IC,
-                    label: asset.label!,
-                };
-            }
+            // linkUseAmount is now just the amount per claim (not multiplied)
+            return {
+                address: asset.tokenAddress,
+                linkUseAmount: asset.amount, // Per claim amount
+                usdEquivalent: usdNumber,
+                usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
+                chain: CHAIN.IC,
+                label: asset.label!,
+                maxActionNumber: BigInt(maxActionNumber),
+            };
         });
 
         updateUserInput(link.id, { assets: storeAssets });
@@ -463,6 +431,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
             // Check balance
             if (token && token.amount !== null && typeof token.amount !== "undefined") {
+                // Calculate total amount needed: per-claim amount * maxActionNumber
                 let totalAmountNeeded: bigint;
 
                 if (isAirdrop) {
@@ -588,6 +557,8 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                                             const amountPerClaim =
                                                 Number(asset.amount) /
                                                 Math.pow(10, token.decimals || 8);
+
+                                            // Total amount = amount per claim * maxActionNumber
                                             return (amountPerClaim * maxActionNumber).toString();
                                         })(),
                                     )}

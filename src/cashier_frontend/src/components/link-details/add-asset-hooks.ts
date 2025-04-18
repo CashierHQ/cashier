@@ -135,6 +135,7 @@ export function useFormActions(
 
             // Update the amount (the source of truth)
             if (isValidValue) {
+                // This directly sets the amount per claim (linkUseAmount)
                 const amount = assetNumberToAmount(value, decimals);
                 form.setValue(`assets.${assetIndex}.amount`, amount, { shouldTouch: true });
             } else {
@@ -150,16 +151,15 @@ export function useFormActions(
             const isValidValue = !isNaN(value);
 
             // Update the USD number
-
             if (!tokenUsdPrice || !isValidValue) {
                 form.setValue(`assets.${assetIndex}.amount`, BigInt(0), { shouldTouch: true });
                 return;
             }
 
-            // Convert USD to token amount
+            // Convert USD to token amount (per claim)
             const tokenValue = value / tokenUsdPrice;
 
-            // Update the amount (source of truth)
+            // Update the amount (source of truth for per claim amount)
             const amount = assetNumberToAmount(tokenValue, decimals);
             form.setValue(`assets.${assetIndex}.amount`, amount, { shouldTouch: true });
         },

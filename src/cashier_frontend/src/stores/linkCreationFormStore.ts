@@ -3,14 +3,12 @@ import { create } from "zustand";
 
 export interface UserInputAsset {
     address: string;
-    // amount for one use action
+    // amount for one claim action (per-claim amount)
     linkUseAmount: bigint;
     chain: CHAIN;
     label: string;
     usdEquivalent?: number;
     usdConversionRate?: number;
-    // Amount per individual claim for airdrops
-    amountPerClaim?: bigint;
 }
 
 export interface UserInputItem {
