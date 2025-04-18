@@ -11,7 +11,12 @@ import {
     UserInputAsset,
     UserInputItem,
 } from "@/stores/linkCreationFormStore";
-import { CHAIN, getAssetLabelForLinkType, LINK_INTENT_LABEL } from "@/services/types/enum";
+import {
+    CHAIN,
+    getAssetLabelForLinkType,
+    LINK_INTENT_ASSET_LABEL,
+    LINK_TYPE,
+} from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "../transaction/transaction-toast";
 import { Plus, Minus } from "lucide-react";
@@ -22,7 +27,6 @@ import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { Button } from "../ui/button";
 import { formatPrice } from "@/utils/helpers/currency";
 
 type TipLinkAssetFormProps = {
@@ -48,8 +52,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
     // maxUse (default = 1)
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [maxActionNumber, setMaxUse] = useState<number>(1);
 
     // Get tokens data
@@ -70,11 +72,22 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             link.linkType
         ) {
             // Create default values with the first available token if no values exist
-            const label = getAssetLabelForLinkType(link.linkType);
+            console.log("link", link);
+            let label: string = getAssetLabelForLinkType(link.linkType);
+            const tokenAddress = allAvailableTokens[0].address;
+
+            if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
+                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${tokenAddress}`;
+            } else if (link?.linkType === LINK_TYPE.SEND_AIRDROP) {
+                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
+            } else if (link?.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET}`;
+            }
+
             return {
                 assets: [
                     {
-                        tokenAddress: allAvailableTokens[0].address,
+                        tokenAddress: tokenAddress,
                         amount: BigInt(0),
                         label: label,
                         chain: CHAIN.IC,
@@ -107,7 +120,42 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 maxActionNumber: BigInt(maxActionNumber),
             });
         }
-    }, [maxActionNumber, link?.id, updateUserInput]);
+    }, [maxActionNumber, link?.id]);
+
+    // Handle decreasing the maxActionNumber
+    const handleDecreaseMaxUse = () => {
+        if (maxActionNumber <= 1) return;
+        const newValue = maxActionNumber - 1;
+        setMaxUse(newValue);
+        if (link?.id) {
+            updateUserInput(link.id, {
+                maxActionNumber: BigInt(newValue),
+            });
+        }
+    };
+
+    // Handle increasing the maxActionNumber
+    const handleIncreaseMaxUse = () => {
+        const newValue = maxActionNumber + 1;
+        setMaxUse(newValue);
+        if (link?.id) {
+            updateUserInput(link.id, {
+                maxActionNumber: BigInt(newValue),
+            });
+        }
+    };
+
+    // Handle direct input change for maxActionNumber
+    const handleMaxUseInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = Number(e.target.value);
+        if (newValue < 1) return;
+        setMaxUse(newValue);
+        if (link?.id) {
+            updateUserInput(link.id, {
+                maxActionNumber: BigInt(newValue),
+            });
+        }
+    };
 
     // Update selected asset addresses when form values change
     useEffect(() => {
@@ -126,11 +174,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             initializeFirstAsset();
         }
     }, [allAvailableTokens, link]);
-
-    // Sync form data with store when assets change
-    useEffect(() => {
-        syncFormDataWithStore();
-    }, [watch("assets")]);
 
     useEffect(() => {
         console.log("errors ", errors);
@@ -185,7 +228,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             assetFields.append({
                 tokenAddress: nextToken.address,
                 amount: BigInt(0),
-                label: label as LINK_INTENT_LABEL,
+                label: label as LINK_INTENT_ASSET_LABEL,
                 chain: CHAIN.IC,
             });
 
@@ -204,20 +247,19 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         if (validateAssets(formAssets)) {
             // Update the store with the current form values
             const storeAssets = formAssets.map((asset) => {
-                const token = getToken(asset.tokenAddress);
-                const usdRate = getTokenPrice(asset.tokenAddress) || 0;
-                const tokenAmount = Number(asset.amount) / Math.pow(10, token?.decimals || 8);
-                const usdAmount = usdRate * tokenAmount;
+                let label = asset.label || "";
 
+                if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
+                    label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${asset.tokenAddress}`;
+                } else if (link?.linkType === LINK_TYPE.SEND_AIRDROP) {
+                    label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
+                }
                 return {
                     address: asset.tokenAddress,
                     // linkUseAmount is now just the per-claim amount (not multiplied)
                     linkUseAmount: asset.amount,
-                    usdEquivalent: usdAmount,
-                    usdConversionRate: usdRate,
                     chain: asset.chain!,
-                    label: asset.label!,
-                    maxActionNumber: BigInt(maxActionNumber),
+                    label: label,
                 };
             });
 
@@ -229,6 +271,8 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             const input = getUserInput(link.id);
 
             if (!input) throw new Error("Input not found");
+
+            console.log("Submitting form with input:", input);
 
             const previousState = link.state;
 
@@ -290,8 +334,9 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             const firstAsset = link.asset_info[0];
             let label: string = getAssetLabelForLinkType(link.linkType);
 
-            if (label == LINK_INTENT_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET) {
-                label = LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET + "_" + firstAsset.address;
+            if (label == LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET) {
+                label =
+                    LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET + "_" + firstAsset.address;
             }
 
             // Use linkUseAmount directly for the form input (this is the per-claim amount)
@@ -336,36 +381,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         });
     }
 
-    function syncFormDataWithStore() {
-        if (!link?.id) return;
-
-        const formAssets = getValues("assets");
-        if (!formAssets || formAssets.length === 0) return;
-
-        const tokenData = getToken(formAssets[0].tokenAddress);
-        if (!tokenData) return;
-
-        const amountNumber = Number(formAssets[0].amount) / Math.pow(10, tokenData.decimals || 8);
-        const usdNumber = tokenData.usdConversionRate
-            ? tokenData.usdConversionRate * amountNumber
-            : 0;
-
-        const storeAssets = formAssets.map((asset) => {
-            // linkUseAmount is now just the amount per claim (not multiplied)
-            return {
-                address: asset.tokenAddress,
-                linkUseAmount: asset.amount, // Per claim amount
-                usdEquivalent: usdNumber,
-                usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
-                chain: CHAIN.IC,
-                label: asset.label!,
-                maxActionNumber: BigInt(maxActionNumber),
-            };
-        });
-
-        updateUserInput(link.id, { assets: storeAssets });
-    }
-
     function getAvailableTokensForDrawer() {
         if (!allAvailableTokens) return [];
 
@@ -397,7 +412,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         assets: {
             tokenAddress: string;
             amount: bigint;
-            label?: string | LINK_INTENT_LABEL | undefined;
+            label?: string | LINK_INTENT_ASSET_LABEL | undefined;
             chain?: CHAIN | undefined;
         }[],
     ): boolean {
@@ -511,6 +526,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                         onRemoveAsset={handleRemoveAsset}
                         showRemoveButton={isMultiAsset && assetFields.fields.length > 1}
                         isAirdrop={isAirdrop}
+                        linkId={link?.id}
                     />
                 ))}
 
@@ -521,7 +537,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                             <Label>Claims</Label>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => setMaxUse(maxActionNumber - 1)}
+                                    onClick={handleDecreaseMaxUse}
                                     className="bg-grey/10 rounded-full p-1"
                                     disabled={maxActionNumber <= 1}
                                 >
@@ -529,13 +545,13 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                                 </button>
                                 <Input
                                     value={maxActionNumber}
-                                    onChange={(e) => setMaxUse(Number(e.target.value))}
+                                    onChange={handleMaxUseInputChange}
                                     className="max-w-20 h-11 text-center text-[16px] font-normal"
                                     type="number"
                                     min="1"
                                 />
                                 <button
-                                    onClick={() => setMaxUse(maxActionNumber + 1)}
+                                    onClick={handleIncreaseMaxUse}
                                     className="bg-lightgreen rounded-full p-1"
                                 >
                                     <Plus size={16} className="text-green" />

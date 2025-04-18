@@ -21,10 +21,10 @@ import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
 import { IoInformationCircle } from "react-icons/io5";
-import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { getTokenImage } from "@/utils";
 import LinkNotFound from "@/components/link-not-found";
+import { useLinkAction } from "@/hooks/linkActionHook";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -47,7 +47,7 @@ export default function ClaimPage() {
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
     const [assetNumber, setAssetNumber] = useState(0);
-    const { updateLink } = useLinkActionStore();
+    const { updateLink } = useLinkAction();
 
     // Fetch link data
     const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(
@@ -125,7 +125,7 @@ export default function ClaimPage() {
         if (!metadata) return;
         setAssetNumber(
             TokenUtilService.getHumanReadableAmountFromMetadata(
-                linkData?.link.asset_info?.[0].amount ?? BigInt(0),
+                linkData?.link.asset_info?.[0].amountPerClaim ?? BigInt(0),
                 metadata,
             ),
         );

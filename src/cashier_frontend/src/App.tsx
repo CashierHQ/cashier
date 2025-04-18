@@ -39,7 +39,7 @@ function App() {
             }}
         >
             <QueryClientProvider client={queryClient}>
-                <ReactQueryDevtools initialIsOpen={false} />
+                <ReactQueryDevtools initialIsOpen={true} />
                 <AppRouter />
                 <Toaster />
             </QueryClientProvider>

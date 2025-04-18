@@ -179,7 +179,7 @@ export default function LinkPage() {
                     />
 
                     <MultiStepForm.Items>
-                        <MultiStepForm.Item name={t("create.chooseLinkType")}>
+                        <MultiStepForm.Item name={t("create.linkName")}>
                             <LinkTemplate
                                 onSelectUnsupportedLinkType={showUnsupportedLinkTypeToast}
                             />

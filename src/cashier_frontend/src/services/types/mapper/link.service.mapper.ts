@@ -42,10 +42,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
                                   address: asset.address,
                                   amount_per_link_use_action: asset.linkUseAmount,
                                   chain: asset.chain,
-                                  label:
-                                      linkDetailModel.linkType === LINK_TYPE.SEND_TOKEN_BASKET
-                                          ? `${asset.label}_${asset.address}`
-                                          : asset.label,
+                                  label: asset.label,
                               };
                           }),
                       )

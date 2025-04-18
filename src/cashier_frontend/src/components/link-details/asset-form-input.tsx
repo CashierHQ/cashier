@@ -11,6 +11,9 @@ import { useTranslation } from "react-i18next";
 import { TipLinkAssetFormSchema, useFormActions } from "./add-asset-hooks";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
+import { useLinkAction } from "@/hooks/linkActionHook";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5, 10];
 const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 75, 100];
@@ -24,6 +27,7 @@ type AssetFormInputProps = {
     onRemoveAsset: (index: number) => void;
     showRemoveButton: boolean;
     isAirdrop?: boolean;
+    linkId?: string;
 };
 
 export const AssetFormInput: FC<AssetFormInputProps> = ({
@@ -33,6 +37,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     onRemoveAsset,
     showRemoveButton,
     isAirdrop,
+    linkId,
 }) => {
     // Add local state for isUsd with initial value from props or default to false
     const [localIsUsd, setLocalIsUsd] = useState<boolean>(false);
@@ -41,6 +46,8 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     const [localTokenAmount, setLocalTokenAmount] = useState<string>("0");
     const [localUsdAmount, setLocalUsdAmount] = useState<string>("0");
 
+    const { link } = useLinkAction();
+
     const { t } = useTranslation();
     const {
         getValues,
@@ -48,6 +55,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
         watch,
     } = form;
     const { getToken, getTokenPrice } = useTokens();
+    const { updateUserInput, getUserInput } = useLinkCreationFormStore();
 
     // Get current asset data
     const asset = getValues(`assets.${index}`);
@@ -58,6 +66,8 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
 
     // Watch for form amount changes to sync with local state
     const formAmount = watch(`assets.${index}.amount`);
+    const formTokenAddress = watch(`assets.${index}.tokenAddress`);
+    const formLabel = watch(`assets.${index}.label`);
 
     // Sync local state with form when form amount changes
     useEffect(() => {
@@ -72,14 +82,55 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
         }
     }, [formAmount, token, decimals, canConvert, tokenUsdPrice]);
 
+    // Sync with store when form values change
+    useEffect(() => {
+        if (linkId && token && formAmount !== undefined) {
+            syncToStore();
+        }
+    }, [formAmount, formTokenAddress, formLabel, linkId, token]);
+
     // Watch for token changes to reset amounts
-    const tokenAddress = watch(`assets.${index}.tokenAddress`);
     useEffect(() => {
         setLocalTokenAmount("0");
         setLocalUsdAmount("0");
-    }, [tokenAddress]);
+    }, [formTokenAddress]);
 
     const { setTokenAmount, setUsdAmount } = useFormActions(form, localIsUsd, index);
+
+    // Function to sync current asset to the store
+    const syncToStore = () => {
+        if (!linkId) return;
+
+        const currentInput = getUserInput(linkId);
+        if (!currentInput) return;
+
+        const formAssets = getValues("assets");
+        if (!formAssets || formAssets.length === 0) return;
+
+        // Map the current assets to the format expected by the store
+        const storeAssets = formAssets.map((asset) => {
+            // Ensure the label is always a string, never undefined
+            let label = asset.label || "";
+
+            if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET && token) {
+                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${asset.tokenAddress}`;
+            } else if (link?.linkType === LINK_TYPE.SEND_AIRDROP && token) {
+                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
+            }
+
+            return {
+                address: asset.tokenAddress,
+                linkUseAmount: asset.amount,
+                chain: CHAIN.IC,
+                label: label,
+            };
+        });
+
+        // Update the store with the latest values
+        updateUserInput(linkId, {
+            assets: storeAssets,
+        });
+    };
 
     // Handle amount changes
     const handleAmountChange = (value: string) => {
@@ -90,6 +141,8 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
             if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
                 const tokenValue = parseFloat(value) / tokenUsdPrice;
                 setLocalTokenAmount(tokenValue.toString());
+                setUsdAmount(value);
+            } else {
                 setUsdAmount(value);
             }
         } else {
@@ -125,9 +178,11 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                     const availableAmount = token?.amount
                         ? Number(token.amount) / 10 ** decimals
                         : 0;
-                    const amount = availableAmount * (percentage / 100);
-                    setLocalTokenAmount(amount.toString());
-                    setTokenAmount(amount);
+                    if (availableAmount > 0) {
+                        const amount = availableAmount * (percentage / 100);
+                        setLocalTokenAmount(amount.toFixed(decimals > 8 ? 8 : decimals));
+                        setTokenAmount(amount.toFixed(decimals > 8 ? 8 : decimals));
+                    }
                 },
             }));
         }

@@ -97,6 +97,7 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
                         if (metadata) {
                             metadataMap[token.address] = {
                                 fee: metadata.fee,
+                                logo: metadata.icon,
                             };
                         }
                         return { tokenId: token.address, metadata };

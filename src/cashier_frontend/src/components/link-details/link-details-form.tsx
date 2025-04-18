@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { LINK_INTENT_LABEL, CHAIN } from "@/services/types/enum";
+import { LINK_INTENT_ASSET_LABEL, CHAIN } from "@/services/types/enum";
 import { AssetSelectItem } from "../asset-select";
 
 // Define a single asset schema
 export const assetSchema = z.object({
     tokenAddress: z.string().min(1, { message: "Asset is required" }),
     amount: z.bigint(),
-    label: z.union([z.nativeEnum(LINK_INTENT_LABEL), z.string()]).optional(),
+    label: z.union([z.nativeEnum(LINK_INTENT_ASSET_LABEL), z.string()]).optional(),
     chain: z.nativeEnum(CHAIN).optional(),
 });
 
@@ -21,7 +21,7 @@ export interface LinkDetailsFormUI {
     // These fields will be deprecated in favor of assets array
     tokenAddress?: string;
     amount?: bigint;
-    label?: LINK_INTENT_LABEL | string;
+    label?: LINK_INTENT_ASSET_LABEL | string;
     chain?: CHAIN;
 }
 

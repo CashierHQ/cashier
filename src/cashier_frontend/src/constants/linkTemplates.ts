@@ -29,4 +29,13 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         isComingSoon: false,
         linkType: LINK_TYPE.SEND_TOKEN_BASKET,
     },
+    {
+        label: "Receive",
+        header: "Receive payment",
+        src: "/chatToken.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.RECEIVE_PAYMENT,
+        title: "Receive payment",
+        isComingSoon: false,
+        linkType: LINK_TYPE.RECEIVE_PAYMENT,
+    },
 ];

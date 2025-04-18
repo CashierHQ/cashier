@@ -101,6 +101,29 @@ export enum LINK_TYPE {
     SWAP_MULTI_ASSET = "SwapMultiAsset",
 }
 
+export function getLinkTypeString(type: string): string {
+    switch (type) {
+        case LINK_TYPE.SEND_TIP:
+            return "Send Tip";
+        case LINK_TYPE.NFT_CREATE_AND_AIRDROP:
+            return "NFT Create and Airdrop";
+        case LINK_TYPE.SEND_AIRDROP:
+            return "Send Airdrop";
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return "Send Token Basket";
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return "Receive Payment";
+        case LINK_TYPE.RECEIVE_MULTI_PAYMENT:
+            return "Receive Multi Payment";
+        case LINK_TYPE.SWAP_SINGLE_ASSET:
+            return "Swap Single Asset";
+        case LINK_TYPE.SWAP_MULTI_ASSET:
+            return "Swap Multi Asset";
+        default:
+            throw new Error(`Unknown link type: ${type}`);
+    }
+}
+
 export function mapStringToLinkType(type: string | undefined): LINK_TYPE | undefined {
     switch (type) {
         case "SendTip":
@@ -169,7 +192,7 @@ export enum WALLET {
     CANISTER = "Canister",
 }
 
-export enum LINK_INTENT_LABEL {
+export enum LINK_INTENT_ASSET_LABEL {
     INTENT_LABEL_LINK_CREATION_FEE = "LINK_CREATION_FEE", // fee transfer
     INTENT_LABEL_SEND_TIP_ASSET = "SEND_TIP_ASSET", // tip link
     INTENT_LABEL_SEND_AIRDROP_ASSET = "SEND_AIRDROP_ASSET", //
@@ -178,38 +201,31 @@ export enum LINK_INTENT_LABEL {
 }
 
 export const mapStringToLabel = (label: string) => {
-    console.log("🚀 ~ mapStringToLabel ~ label:", label);
-
-    // Special handling for token basket labels that start with SEND_TOKEN_BASKET_ASSET
-    if (label.startsWith(LINK_INTENT_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET)) {
-        return LINK_INTENT_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET;
-    }
-
     switch (label) {
-        case LINK_INTENT_LABEL.INTENT_LABEL_LINK_CREATION_FEE:
-            return LINK_INTENT_LABEL.INTENT_LABEL_LINK_CREATION_FEE;
-        case LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET:
-            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
-        case LINK_INTENT_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET:
-            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
-        case LINK_INTENT_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET:
-            return LINK_INTENT_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
+        case LINK_INTENT_ASSET_LABEL.INTENT_LABEL_LINK_CREATION_FEE:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_LINK_CREATION_FEE;
+        case LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
+        case LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
+        case LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
         default:
             return label;
     }
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getAssetLabelForLinkType = (linkType: string, assetAddress?: string) => {
+export const getAssetLabelForLinkType = (linkType: string) => {
     switch (linkType) {
         case LINK_TYPE.SEND_TIP:
-            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
         case LINK_TYPE.SEND_AIRDROP:
-            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
         case LINK_TYPE.SEND_TOKEN_BASKET:
-            return LINK_INTENT_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET;
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET;
         case LINK_TYPE.RECEIVE_PAYMENT:
-            return LINK_INTENT_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
         default:
             throw new Error("Unknown link type");
     }

@@ -60,6 +60,9 @@ export default function LinkTemplate({
                 showToast("Error", "Link not found", "error");
                 return;
             }
+
+            console.log("currentLink", currentLink);
+
             const stateMachineRes = await callLinkStateMachine({
                 linkId: currentLink.linkId,
                 linkModel: currentLink,

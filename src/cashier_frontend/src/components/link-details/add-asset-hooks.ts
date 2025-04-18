@@ -11,7 +11,7 @@ import {
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
 import { useTokenStore } from "@/stores/tokenStore";
-import { LINK_INTENT_LABEL, CHAIN } from "@/services/types/enum";
+import { LINK_INTENT_ASSET_LABEL, CHAIN } from "@/services/types/enum";
 
 // Combined type for the form that includes both core data and UI fields
 export type TipLinkAssetFormSchema = LinkDetailsFormSchema;
@@ -184,7 +184,7 @@ export function useFormActions(
             {
                 tokenAddress: "",
                 amount: BigInt(0),
-                label: LINK_INTENT_LABEL.INTENT_LABEL_SEND_TIP_ASSET,
+                label: LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET,
                 chain: CHAIN.IC,
             },
         ]);

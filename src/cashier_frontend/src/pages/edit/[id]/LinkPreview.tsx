@@ -11,14 +11,13 @@ import { useNavigate } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { formatPrice } from "@/utils/helpers/currency";
 import { useFeeTotal } from "@/hooks/useFeeMetadata";
 import { NETWORK_FEE_DEFAULT_ADDRESS, NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
 import { convert } from "@/utils/helpers/convert";
 import { useLinkAction } from "@/hooks/linkActionHook";
 import { useTokens } from "@/hooks/useTokens";
-import { ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
     onCashierError?: (error: Error) => void;
@@ -36,15 +35,12 @@ export default function LinkPreview({
 
     const { link, action, setAction, refetchLinkDetail, callLinkStateMachine, createAction } =
         useLinkAction();
-    const linkCreationFormStore = useLinkCreationFormStore();
     const { getToken, getTokenPrice } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
 
     const { data: feeData } = useFeePreview(link?.id);
-
-    const currentLink = linkCreationFormStore.getUserInput(link?.id ?? "");
 
     const handleCreateAction = async () => {
         const updatedAction = await createAction(link!.id, ACTION_TYPE.CREATE_LINK);
@@ -92,6 +88,16 @@ export default function LinkPreview({
         }
     };
 
+    if (!link || !link.linkType) {
+        return null;
+    }
+
+    const isSendLinkType = [
+        LINK_TYPE.SEND_AIRDROP.toString(),
+        LINK_TYPE.SEND_TIP.toString(),
+        LINK_TYPE.SEND_TOKEN_BASKET.toString(),
+    ].includes(link.linkType);
+
     return (
         <div
             className={`w-full flex flex-col h-full ${responsive.isSmallDevice ? "justify-between" : "gap-4"}`}
@@ -106,42 +112,48 @@ export default function LinkPreview({
                 </div>
             </div>
 
-            <div className="input-label-field-container mt-4">
-                <Label>Assets to transfer to link</Label>
-                <div className="light-borders px-4 py-3 flex flex-col gap-3">
-                    {currentLink &&
-                        currentLink.assets &&
-                        currentLink?.assets?.map((asset, index) => (
-                            <div key={index} className="flex justify-between items-start">
-                                <p className="text-[14px] font-normal">Token</p>
-                                <div className="flex flex-col items-end">
-                                    <div className="flex items-center">
-                                        <p className="text-[14px] font-normal">
-                                            {Number(asset.linkUseAmount) /
-                                                10 ** (getToken(asset.address)?.decimals ?? 8)}{" "}
-                                            {getToken(asset.address)?.symbol}
-                                        </p>
-                                        <img
-                                            src={getTokenImage(asset.address)}
-                                            alt={asset.address}
-                                            className="w-5 translate-x-1 rounded-full h-5"
-                                        />
+            {isSendLinkType && (
+                <div className="input-label-field-container mt-4">
+                    <Label>Assets to transfer to link</Label>
+                    <div className="light-borders px-4 py-3 flex flex-col gap-3">
+                        {link &&
+                            link.asset_info &&
+                            link?.asset_info?.map((asset, index) => {
+                                // Calculate token amount with proper decimals
+                                const tokenDecimals = getToken(asset.address)?.decimals ?? 8;
+                                const totalTokenAmount =
+                                    (Number(asset.amountPerClaim) * Number(link.maxActionNumber)) /
+                                    10 ** tokenDecimals;
+                                const tokenSymbol = getToken(asset.address)?.symbol;
+
+                                // Calculate approximate USD value
+                                const tokenPrice = getTokenPrice(asset.address) || 0;
+                                const approximateUsdValue = totalTokenAmount * tokenPrice;
+
+                                return (
+                                    <div key={index} className="flex justify-between items-start">
+                                        <p className="text-[14px] font-normal">Token</p>
+                                        <div className="flex flex-col items-end">
+                                            <div className="flex items-center">
+                                                <p className="text-[14px] font-normal">
+                                                    {totalTokenAmount} {tokenSymbol}
+                                                </p>
+                                                <img
+                                                    src={getTokenImage(asset.address)}
+                                                    alt={asset.address}
+                                                    className="w-5 translate-x-1 rounded-full h-5"
+                                                />
+                                            </div>
+                                            <p className="text-[11px] font-normal text-grey/60">
+                                                ≈${formatPrice(approximateUsdValue.toString())}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p className="text-[11px] font-normal text-grey/60">
-                                        ≈$
-                                        {formatPrice(
-                                            (
-                                                (Number(asset.linkUseAmount) / 10 ** 8) *
-                                                (getTokenPrice(asset.address) || 0)
-                                            ).toString(),
-                                        )}
-                                        {/* {tokenStore.getTokenPrice(asset.address)} */}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                                );
+                            })}
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="mt-4 input-label-field-container">
                 <Label>Cashier Fees</Label>
