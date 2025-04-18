@@ -293,5 +293,55 @@ describe("Test create token basket and claim", () => {
             expect(linkUpdated.state).toEqual("Link_state_active");
         });
     });
+
+    describe("With Bob", () => {
+        beforeAll(async () => {
+            actor.setIdentity(bob);
+        });
+
+        it("Should return empty if there is no action yet", async () => {
+            const res = await actor.link_get_user_state({
+                link_id: linkId,
+                action_type: "Claim",
+                anonymous_wallet_address: [],
+            });
+
+            expect(res).toHaveProperty("Ok");
+            if ("Ok" in res) {
+                expect(res.Ok).toEqual([]);
+            } else {
+                // Optional: Better error message if test fails
+                throw new Error("Expected Ok in response");
+            }
+        });
+
+        it("Should call process_action success", async () => {
+            const res = await actor.process_action({
+                action_id: createLinkActionId,
+                link_id: linkId,
+                action_type: "Claim",
+            });
+
+            expect(res).toHaveProperty("Ok");
+        });
+
+        it("Should return user state", async () => {
+            const res = await actor.link_get_user_state({
+                link_id: linkId,
+                action_type: "Claim",
+                anonymous_wallet_address: [],
+            });
+            const parsedRes = parseResultResponse(res);
+
+            expect(res).toHaveProperty("Ok");
+            if (parsedRes[0]) {
+                expect(parsedRes[0].link_user_state).toEqual("User_state_choose_wallet");
+                expect(parsedRes[0].action.state).toEqual("Action_state_created");
+                expect(parsedRes[0].action.type).toEqual("Claim");
+            } else {
+                fail(`Expected index 0 have record: ${JSON.stringify(res)}`);
+            }
+        });
+    });
 });
 //

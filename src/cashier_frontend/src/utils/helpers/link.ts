@@ -42,7 +42,7 @@ export const getLinkAssetAmounts = async (link: LinkDetailModel) => {
         );
         assetAmounts.push({
             address: asset.address,
-            totalAmount: asset.amountPerClaim * link.maxActionNumber,
+            totalAmount: asset.amountPerUse * link.maxActionNumber,
             pendingAmount: balance,
             claimsAmount: link.useActionCounter,
             assetClaimed: balance === 0n,

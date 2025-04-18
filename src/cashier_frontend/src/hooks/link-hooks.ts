@@ -36,7 +36,6 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
         queryFn: async () => {
             if (!identity || !linkId) throw new Error("Identity and linkId are required");
             const linkService = new LinkService(identity);
-            console.log("Fetching link details for ID:", linkId);
             return await linkService.getLink(linkId, actionType);
         },
         enabled: !!identity && !!linkId,

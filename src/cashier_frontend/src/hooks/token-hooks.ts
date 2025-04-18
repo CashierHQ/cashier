@@ -48,8 +48,6 @@ export function useTokenListQuery(identity: Identity | undefined) {
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
         queryFn: async () => {
-            if (!identity) throw new Error("Not authenticated");
-
             const tokenService = new TokenStorageService(identity);
             const tokens = await tokenService.listTokens();
 

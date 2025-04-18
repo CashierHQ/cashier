@@ -9,9 +9,6 @@ import { ACTION_STATE, ACTION_TYPE, LINK_STATE, LINK_USER_STATE } from "@/servic
 import useToast from "@/hooks/useToast";
 import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
-import useTokenMetadata from "@/hooks/tokenUtilsHooks";
-import { TokenUtilService } from "@/services/tokenUtils.service";
-import { useLinkDataQuery } from "@/hooks/useLinkDataQuery";
 import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
@@ -25,6 +22,7 @@ import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { getTokenImage } from "@/utils";
 import LinkNotFound from "@/components/link-not-found";
 import { useLinkAction } from "@/hooks/linkActionHook";
+import { useTokens } from "@/hooks/useTokens";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -46,14 +44,16 @@ export default function ClaimPage() {
     const identity = useIdentity();
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
-    const [assetNumber, setAssetNumber] = useState(0);
-    const { updateLink } = useLinkAction();
+
+    const { isLoading: isLoadingToken } = useTokens();
 
     // Fetch link data
-    const { data: linkData, isLoading: isLoadingLinkData } = useLinkDataQuery(
-        linkId,
-        ACTION_TYPE.CLAIM_LINK,
-    );
+    const {
+        link: linkData,
+        isLoading: isLoadingLinkData,
+        updateLink,
+        setLink,
+    } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
 
     // Fetch link user state when user is logged in and there's link data
     const { data: linkUserState, isLoading: isLoadingLinkUserState } = useLinkUserState(
@@ -70,8 +70,6 @@ export default function ClaimPage() {
     const form = useForm<z.infer<typeof ClaimSchema>>({
         resolver: zodResolver(ClaimSchema),
     });
-
-    const { metadata } = useTokenMetadata(linkData?.link.asset_info?.[0].address);
 
     const handleClaim = async () => {
         if (!identity && (!form.getValues("address") || form.getValues("address")?.length == 0)) {
@@ -117,32 +115,16 @@ export default function ClaimPage() {
             setEnableFetchLinkUserState(true);
         }
         if (linkData) {
-            updateLink(linkData.link);
+            setLink(linkData);
         }
-    }, [linkData, identity]);
-
-    useEffect(() => {
-        if (!metadata) return;
-        setAssetNumber(
-            TokenUtilService.getHumanReadableAmountFromMetadata(
-                linkData?.link.asset_info?.[0].amountPerClaim ?? BigInt(0),
-                metadata,
-            ),
-        );
-    }, [linkData, metadata]);
-
-    useEffect(() => {
         if (linkData && linkUserState?.link_user_state) {
             setShowDefaultPage(false);
         }
 
         console.log("🚀 ~ linkData:", linkData);
-    }, [linkData, linkUserState?.link_user_state]);
+    }, [linkData, identity]);
 
-    if (
-        linkData?.link.state === LINK_STATE.INACTIVE ||
-        linkData?.link.state === LINK_STATE.INACTIVE_ENDED
-    ) {
+    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
         return <LinkNotFound />;
     }
 
@@ -151,7 +133,7 @@ export default function ClaimPage() {
             <SheetWrapper>
                 <div className="w-11/12 items-center max-w-[400px] h-full flex flex-col flex-1">
                     <Header />
-                    {isLoadingLinkData || isLoadingLinkUserState ? (
+                    {isLoadingLinkData || isLoadingLinkUserState || isLoadingToken ? (
                         renderSkeleton()
                     ) : (
                         <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
@@ -174,10 +156,6 @@ export default function ClaimPage() {
                                         <MultiStepForm.Item name="Choose wallet">
                                             <ClaimFormPage
                                                 form={form}
-                                                claimLinkDetails={{
-                                                    title: metadata?.symbol ?? "",
-                                                    amount: assetNumber ?? 0,
-                                                }}
                                                 onSubmit={handleClaim}
                                                 linkData={linkData}
                                                 onActionResult={showActionResultToast}
@@ -190,10 +168,10 @@ export default function ClaimPage() {
                                             <LinkCardWithoutPhoneFrame
                                                 label="Claimed"
                                                 src={getTokenImage(
-                                                    linkData?.link.asset_info?.[0].address ?? "",
+                                                    linkData?.asset_info?.[0].address ?? "",
                                                 )}
-                                                message={linkData?.link.description ?? ""}
-                                                title={linkData?.link.title ?? ""}
+                                                message={linkData?.description ?? ""}
+                                                title={linkData?.title ?? ""}
                                                 disabled={true}
                                             />
                                         </MultiStepForm.Item>

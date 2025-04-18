@@ -101,9 +101,9 @@ export default function HomePage() {
                             const processedAssets = link.asset_info
                                 ? link.asset_info.map((asset) => ({
                                       address: asset.address,
-                                      amount: asset.amountPerClaim,
-                                      usdEquivalent: 0,
-                                      usdConversionRate: 0,
+                                      linkUseAmount: asset.amountPerUse,
+                                      chain: asset.chain!,
+                                      label: asset.label!,
                                   }))
                                 : [];
 

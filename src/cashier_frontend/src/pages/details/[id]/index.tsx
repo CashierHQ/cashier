@@ -258,49 +258,47 @@ export default function DetailPage() {
                                     <p className="font-medium text-sm">Chain</p>
                                     <p className="text-sm text-primary/80">ICP</p>
                                 </div>
-                                {/* <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
-                                    <p className="font-medium text-sm">Token</p>
-                                    <p className="text-sm text-primary/80">
-                                        {metadata?.name}
-                                    </p>
-                                </div> */}
                                 {assetAmounts.length > 0 &&
-                                    link.asset_info.map((asset, index) => {
+                                    link.asset_info.map((asset) => {
                                         const token = getToken(asset.address);
                                         if (!token) return null;
 
-                                        console.log("assetAmounts", assetAmounts);
+                                        const assetAmount = assetAmounts.find(
+                                            (amount) => amount.address === asset.address,
+                                        );
+
+                                        if (!assetAmount) return null;
+
                                         return (
-                                            <>
-                                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-2.5">
-                                                    <p className="font-medium text-sm">
-                                                        Asset left/added
+                                            <div
+                                                key={asset.address}
+                                                className="flex flex-row items-center justify-between border-lightgreen px-5 py-2.5"
+                                            >
+                                                <p className="font-medium text-sm">
+                                                    Asset left/added
+                                                </p>
+                                                <div className="flex items-center gap-1">
+                                                    <p className="text-sm text-primary/80">
+                                                        {assetAmount.totalAmount
+                                                            ? Number(assetAmount.totalAmount) /
+                                                              Math.pow(10, token.decimals)
+                                                            : "-"}
+                                                        /
+                                                        {asset.amountPerUse
+                                                            ? Number(asset.amountPerUse) /
+                                                              Math.pow(10, token.decimals)
+                                                            : "-"}
                                                     </p>
-                                                    <div className="flex items-center gap-1">
-                                                        <p className="text-sm text-primary/80">
-                                                            {assetAmounts[index].totalAmount
-                                                                ? Number(
-                                                                      assetAmounts[index]
-                                                                          .totalAmount,
-                                                                  ) / Math.pow(10, token.decimals)
-                                                                : "-"}
-                                                            /
-                                                            {asset.amountPerClaim
-                                                                ? Number(asset.amountPerClaim) /
-                                                                  Math.pow(10, token.decimals)
-                                                                : "-"}
-                                                        </p>
-                                                        <img
-                                                            src={token.logo}
-                                                            alt="token-icon"
-                                                            className="w-4 h-4"
-                                                        />
-                                                        <p className="text-sm text-primary/80">
-                                                            {token.symbol}
-                                                        </p>
-                                                    </div>
+                                                    <img
+                                                        src={token.logo}
+                                                        alt="token-icon"
+                                                        className="w-4 h-4"
+                                                    />
+                                                    <p className="text-sm text-primary/80">
+                                                        {token.symbol}
+                                                    </p>
                                                 </div>
-                                            </>
+                                            </div>
                                         );
                                     })}
                             </div>

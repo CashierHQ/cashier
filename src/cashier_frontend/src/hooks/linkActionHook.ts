@@ -78,6 +78,17 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     }, [linkDetailQuery.data]);
 
     useEffect(() => {
+        const refetchData = async () => {
+            await refetchLinkDetail();
+            await refetchAction();
+        };
+
+        if (linkId) {
+            refetchData();
+        }
+    }, [linkId]);
+
+    useEffect(() => {
         useLinkActionStore.setState({
             getLinkDetail: getLink,
             callLinkStateMachine,

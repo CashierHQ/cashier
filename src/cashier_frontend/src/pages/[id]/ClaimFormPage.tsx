@@ -1,6 +1,6 @@
-import ClaimPageForm, { ClaimLinkDetail } from "@/components/claim-page/claim-page-form";
+import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 import { FC, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from ".";
@@ -23,9 +23,8 @@ import { useTranslation } from "react-i18next";
 
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
-    claimLinkDetails: ClaimLinkDetail;
     onSubmit: () => void;
-    linkData?: LinkModel;
+    linkData?: LinkDetailModel;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
     onBack?: () => void;
@@ -33,7 +32,6 @@ type ClaimFormPageProps = {
 
 export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     form,
-    claimLinkDetails,
     linkData,
     onCashierError = () => {},
     onActionResult,
@@ -161,13 +159,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
             <div className="w-full h-full flex flex-grow flex-col">
                 <ClaimPageForm
                     form={form}
-                    formData={linkData?.link ?? ({} as LinkDetailModel)}
-                    claimLinkDetails={[
-                        {
-                            title: claimLinkDetails.title,
-                            amount: claimLinkDetails.amount,
-                        },
-                    ]}
+                    formData={linkData ?? ({} as LinkDetailModel)}
                     onSubmit={handleSubmit}
                     onBack={onBack}
                     isDisabled={isDisabledButton}

@@ -122,7 +122,7 @@ export default function LinkPreview({
                                 // Calculate token amount with proper decimals
                                 const tokenDecimals = getToken(asset.address)?.decimals ?? 8;
                                 const totalTokenAmount =
-                                    (Number(asset.amountPerClaim) * Number(link.maxActionNumber)) /
+                                    (Number(asset.amountPerUse) * Number(link.maxActionNumber)) /
                                     10 ** tokenDecimals;
                                 const tokenSymbol = getToken(asset.address)?.symbol;
 

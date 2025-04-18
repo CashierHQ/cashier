@@ -47,12 +47,10 @@ export default function LinkPage() {
     const [backButtonDisabled, setBackButtonDisabled] = useState(false);
 
     const { addUserInput, getUserInput } = useLinkCreationFormStore();
-    const { link, action, callLinkStateMachine, isLoading } = useLinkAction(
+    const { link, action, callLinkStateMachine, isLoading, refetchLinkDetail } = useLinkAction(
         linkId,
         ACTION_TYPE.CREATE_LINK,
     );
-
-    const currentLink = link;
 
     useEffect(() => {
         if (link) {
@@ -63,7 +61,7 @@ export default function LinkPage() {
                 linkType: mapStringToLinkType(link.linkType),
                 assets: link.asset_info.map((asset) => ({
                     address: asset.address,
-                    linkUseAmount: asset.amountPerClaim,
+                    linkUseAmount: asset.amountPerUse,
                     usdEquivalent: 0,
                     usdConversionRate: 0,
                     chain: asset.chain!,
@@ -74,6 +72,10 @@ export default function LinkPage() {
             addUserInput(link.id, userInput);
         }
     }, [link]);
+
+    useEffect(() => {
+        refetchLinkDetail();
+    }, []);
 
     const handleBackstep = async (context: MultiStepFormContext) => {
         setBackButtonDisabled(true);
@@ -156,7 +158,7 @@ export default function LinkPage() {
         }
     };
 
-    if (isLoading || !link) {
+    if (isLoading || !link || link.id !== linkId) {
         return (
             <div className="w-screen h-screen flex items-center justify-center">
                 <Spinner />
@@ -172,7 +174,7 @@ export default function LinkPage() {
             )}
         >
             <div className="w-11/12 h-full flex flex-col relative overflow-hidden md:overflow-y-auto">
-                <MultiStepForm initialStep={getInitialStep(currentLink?.state)}>
+                <MultiStepForm initialStep={getInitialStep(link.state)}>
                     <MultiStepForm.Header
                         onClickBack={handleBackstep}
                         backButtonDisabled={backButtonDisabled}

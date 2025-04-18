@@ -78,7 +78,7 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
                 ? fromDefinedNullable(link.asset_info).map((asset) => ({
                       address: asset.address,
                       chain: mapStringToChain(asset.chain),
-                      amountPerClaim: asset.amount_per_link_use_action,
+                      amountPerUse: asset.amount_per_link_use_action,
                       label: mapStringToLabel(asset.label),
                   }))
                 : [],
@@ -96,21 +96,6 @@ export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkMode
         link: MapLinkToLinkDetailModel(linkDto),
     };
 };
-
-// const mapAssetInfo = (assetInfo: AssetInfoModel): AssetInfoDto => {
-//     if (!assetInfo.label) {
-//         throw new Error("Asset address is undefined");
-//     }
-//     if (!assetInfo.chain) {
-//         throw new Error("Asset chain is undefined");
-//     }
-//     return {
-//         address: assetInfo.address,
-//         amount_per_link_use_action: assetInfo.amountPerClaim,
-//         chain: assetInfo.chain,
-//         label: assetInfo.label,
-//     };
-// };
 
 // Map back-end link user state to front-end model
 export const mapLinkUserStateModel = (
@@ -131,7 +116,7 @@ export const mapAssetInfoModelToUserInputAsset = (model: AssetInfoModel): UserIn
     }
     return {
         address: model.address,
-        linkUseAmount: model.amountPerClaim,
+        linkUseAmount: model.amountPerUse,
         usdEquivalent: 0,
         usdConversionRate: 0,
         chain: model.chain,

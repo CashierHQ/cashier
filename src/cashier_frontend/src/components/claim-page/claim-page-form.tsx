@@ -15,7 +15,6 @@ import WalletButton from "./connect-wallet-button";
 import { useAuth, useIdentity, useSigner } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import { FixedBottomButton } from "../fix-bottom-button";
-import { Spinner } from "../ui/spinner";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { Principal } from "@dfinity/principal";
@@ -23,16 +22,14 @@ import { FaCheck } from "react-icons/fa6";
 import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore, WALLET_OPTIONS } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
-
-export interface ClaimLinkDetail {
-    title: string;
-    amount: number;
-}
+import { useParams } from "react-router-dom";
+import { ACTION_TYPE } from "@/services/types/enum";
+import { useLinkAction } from "@/hooks/linkActionHook";
+import { useTokens } from "@/hooks/useTokens";
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData: LinkDetailModel;
-    claimLinkDetails: ClaimLinkDetail[];
     onSubmit: (address: string) => void;
     onBack?: () => void;
     isDisabled?: boolean;
@@ -43,7 +40,6 @@ interface ClaimPageFormProps {
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     onSubmit,
-    claimLinkDetails,
     onBack,
     isDisabled,
     setDisabled,
@@ -61,6 +57,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         initInternetIdentitySigner,
         initOtherWalletSigners,
     } = useSignerStore();
+    const { linkId } = useParams();
+
+    const { link } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
+    const { getToken } = useTokens();
 
     // Check if the address is valid
     const isAddressValid = () => {
@@ -193,23 +193,29 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
                         {t("claim.asset")}
                     </h2>
-                    <div id="asset-detail" className="flex justify-between ml-1">
-                        <div className="flex items-center">
-                            <div className="flex gap-x-5 items-center">
-                                <img
-                                    src="/icpLogo.png"
-                                    alt="link"
-                                    className="w-10 h-10 rounded-sm mr-3"
-                                />
+                    {link?.asset_info.map((asset, index) => {
+                        const token = getToken(asset.address);
+
+                        return (
+                            <div key={index} className="flex justify-between ml-1">
+                                <div className="flex items-center">
+                                    <div className="flex gap-x-5 items-center">
+                                        <img
+                                            src="/icpLogo.png"
+                                            alt="link"
+                                            className="w-10 h-10 rounded-sm mr-3"
+                                        />
+                                    </div>
+                                    <div className="mr-3">
+                                        {token ? token.symbol : asset.address}
+                                    </div>
+                                </div>
+                                <div className="text-green">
+                                    {Number(asset.amountPerUse) / 10 ** 8}
+                                </div>
                             </div>
-                            <div>{claimLinkDetails[0].title}</div>
-                        </div>
-                        {claimLinkDetails[0].amount ? (
-                            <div className="text-green">{claimLinkDetails[0].amount}</div>
-                        ) : (
-                            <Spinner width={22} />
-                        )}
-                    </div>
+                        );
+                    })}
                 </div>
 
                 <Form {...form}>

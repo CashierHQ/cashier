@@ -23,7 +23,7 @@ export enum Chain {
 
 export type AssetInfoModel = {
     address: string;
-    amountPerClaim: bigint;
+    amountPerUse: bigint;
     label?: LINK_INTENT_ASSET_LABEL | string;
     chain?: CHAIN;
 };

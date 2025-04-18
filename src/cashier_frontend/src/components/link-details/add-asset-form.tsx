@@ -299,7 +299,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     assets: link.asset_info.map((asset) => {
                         return {
                             tokenAddress: asset.address,
-                            amount: asset.amountPerClaim,
+                            amount: asset.amountPerUse,
                             label: asset.label,
                             chain: asset.chain,
                         };
@@ -340,7 +340,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             }
 
             // Use linkUseAmount directly for the form input (this is the per-claim amount)
-            const amount = firstAsset.amountPerClaim || firstAsset.amountPerClaim;
+            const amount = firstAsset.amountPerUse || firstAsset.amountPerUse;
 
             assetFields.append({
                 tokenAddress: firstAsset.address,
@@ -570,12 +570,12 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                                             if (!asset || !token) return "0";
 
                                             // Calculate total from amount per claim * maxActionNumber
-                                            const amountPerClaim =
+                                            const amountPerUse =
                                                 Number(asset.amount) /
                                                 Math.pow(10, token.decimals || 8);
 
                                             // Total amount = amount per claim * maxActionNumber
-                                            return (amountPerClaim * maxActionNumber).toString();
+                                            return (amountPerUse * maxActionNumber).toString();
                                         })(),
                                     )}
                                 </p>

@@ -258,7 +258,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     transfer_asset_intent.state = IntentState::Created;
                     transfer_asset_intent.created_at = ts;
                     transfer_asset_intent.label =
-                        INTENT_LABEL_SEND_TIP_ASSET.to_string() + "_" + &asset.address;
+                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string() + "_" + &asset.address;
 
                     intents.push(transfer_asset_intent);
                 }

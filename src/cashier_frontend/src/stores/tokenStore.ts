@@ -103,6 +103,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
 
     getTokenPrice: (tokenAddress) => {
         const { rawTokenList } = get();
+        console.log("🚀 ~ getTokenPrice ~ rawToken", rawTokenList);
         const token = rawTokenList.find((token) => token.address === tokenAddress);
         return token?.usdConversionRate;
     },
