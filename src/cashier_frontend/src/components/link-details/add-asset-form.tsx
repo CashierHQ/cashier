@@ -253,7 +253,10 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${asset.tokenAddress}`;
                 } else if (link?.linkType === LINK_TYPE.SEND_AIRDROP) {
                     label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
+                } else if (link?.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+                    label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET}`;
                 }
+
                 return {
                     address: asset.tokenAddress,
                     // linkUseAmount is now just the per-claim amount (not multiplied)

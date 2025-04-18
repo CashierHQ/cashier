@@ -4,7 +4,7 @@ import {
     type _SERVICE,
     idlFactory,
 } from "../../declarations/icp_ledger_canister/icp_ledger_canister.did";
-import { parse as uuidParse } from "uuid";
+import { linkIdToSubaccount } from ".";
 
 type Subaccount = Uint8Array;
 class LinkHelper {
@@ -15,8 +15,8 @@ class LinkHelper {
         this.pic = pic;
     }
 
-    async setupActor(canisterId: string) {
-        this.actor = await this.pic.createActor(idlFactory, Principal.fromText(canisterId));
+    setupActor(canisterId: string) {
+        this.actor = this.pic.createActor(idlFactory, Principal.fromText(canisterId));
     }
 
     async checkAccountBalanceWithSubAccount(backendCanisterId: string, linkId: string) {
@@ -34,11 +34,7 @@ class LinkHelper {
     }
 
     private toSubaccount(id: string): Subaccount {
-        const uuidBytes = uuidParse(id);
-        // DO NOT CHANGE THE ORDER OF THE BYTES
-        const subaccount = new Uint8Array(32);
-        subaccount.set(uuidBytes, 0);
-        return subaccount;
+        return linkIdToSubaccount(id);
     }
 }
 

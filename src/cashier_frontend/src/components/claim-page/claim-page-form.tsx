@@ -23,7 +23,7 @@ import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore, WALLET_OPTIONS } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
-import { ACTION_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/linkActionHook";
 import { useTokens } from "@/hooks/useTokens";
 
@@ -182,7 +182,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             <div className="w-full flex flex-col flex-grow relative">
                 <div className="w-full flex justify-center items-center mt-5 relative">
                     <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
-                        {t("claim.receive")}
+                        {link?.linkType != LINK_TYPE.RECEIVE_PAYMENT && t("claim.receive")}
+                        {link?.linkType == LINK_TYPE.RECEIVE_PAYMENT && t("claim.payment")}
                     </h4>
                     <div className="absolute left-[10px]" onClick={onBack}>
                         <IoIosArrowBack />

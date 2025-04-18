@@ -34,7 +34,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     return useQuery({
         queryKey: LINK_QUERY_KEYS.detail(linkId),
         queryFn: async () => {
-            if (!identity || !linkId) throw new Error("Identity and linkId are required");
+            if (!linkId) throw new Error("linkId are required");
             const linkService = new LinkService(identity);
             return await linkService.getLink(linkId, actionType);
         },

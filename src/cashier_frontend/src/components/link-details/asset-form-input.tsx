@@ -112,10 +112,12 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
             // Ensure the label is always a string, never undefined
             let label = asset.label || "";
 
-            if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET && token) {
+            if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
                 label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${asset.tokenAddress}`;
-            } else if (link?.linkType === LINK_TYPE.SEND_AIRDROP && token) {
+            } else if (link?.linkType === LINK_TYPE.SEND_AIRDROP) {
                 label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
+            } else if (link?.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET}`;
             }
 
             return {

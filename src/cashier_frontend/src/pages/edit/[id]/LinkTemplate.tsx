@@ -84,7 +84,6 @@ export default function LinkTemplate({
 
     useEffect(() => {
         const selectedTemplate = LINK_TEMPLATES[carousel.current];
-        console.log(selectedTemplate);
         if (link?.id) {
             updateUserInput(link.id, {
                 linkType: selectedTemplate.linkType,

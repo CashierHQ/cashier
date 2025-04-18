@@ -47,7 +47,7 @@ export default function LinkPage() {
     const [backButtonDisabled, setBackButtonDisabled] = useState(false);
 
     const { addUserInput, getUserInput } = useLinkCreationFormStore();
-    const { link, action, callLinkStateMachine, isLoading, refetchLinkDetail } = useLinkAction(
+    const { link, action, callLinkStateMachine, isLoading } = useLinkAction(
         linkId,
         ACTION_TYPE.CREATE_LINK,
     );
@@ -72,10 +72,6 @@ export default function LinkPage() {
             addUserInput(link.id, userInput);
         }
     }, [link]);
-
-    useEffect(() => {
-        refetchLinkDetail();
-    }, []);
 
     const handleBackstep = async (context: MultiStepFormContext) => {
         setBackButtonDisabled(true);

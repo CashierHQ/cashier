@@ -35,7 +35,8 @@
         "asset": "Asset",
         "addressPlaceholder": "Type in address",
         "receive_options": "Receive options",
-        "receive": "Receive"
+        "receive": "Receive",
+        "payment": "Payment"
     },
     "continue": "Continue",
     "submit": "Submit",

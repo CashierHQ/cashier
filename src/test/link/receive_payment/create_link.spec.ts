@@ -18,6 +18,7 @@ import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
 import { BACKEND_CANISTER_ID } from "../../constant";
 import { toNullable } from "@dfinity/utils";
+import LinkHelper from "../../utils/link-helper";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -50,7 +51,6 @@ describe("Test create airdrop and claim", () => {
         address: "x5qut-viaaa-aaaar-qajda-cai",
         payment_amount: BigInt(1_0000_0000),
         // total 10
-        total_amount: BigInt(10_0000_0000),
         label: "RECEIVE_PAYMENT_ASSET",
     };
 
@@ -89,6 +89,7 @@ describe("Test create airdrop and claim", () => {
         await token_helper.setupCanister();
 
         await token_helper.airdrop(BigInt(1_0000_0000_0000), alice.getPrincipal());
+        await token_helper.airdrop(BigInt(1_0000_0000_0000), bob.getPrincipal());
 
         await pic.advanceTime(5 * 60 * 1000);
         await pic.tick(50);
@@ -218,7 +219,6 @@ describe("Test create airdrop and claim", () => {
                 actor,
                 triggerTxMethod.nonce[0]!,
             );
-            await executeHelper.executeIcrc1Transfer();
             await executeHelper.executeIcrc2Approve();
             await actor.update_action({
                 action_id: createLinkActionId,
@@ -226,6 +226,16 @@ describe("Test create airdrop and claim", () => {
                 external: true,
             });
             await executeHelper.triggerTransaction();
+
+            const link_helper = new LinkHelper(pic);
+            link_helper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
+
+            const balanceOfLink = await link_helper.checkAccountBalanceWithSubAccount(
+                "x5qut-viaaa-aaaar-qajda-cai",
+                linkId,
+            );
+
+            expect(balanceOfLink).toEqual(BigInt(0));
         });
 
         it("Should verify final state successfully", async () => {
@@ -251,6 +261,135 @@ describe("Test create airdrop and claim", () => {
             expect(linkUpdated.id).toEqual(linkId);
             expect(linkUpdated.asset_info).toHaveLength(1);
             expect(linkUpdated.state).toEqual("Link_state_active");
+        });
+    });
+
+    describe("With Bob", () => {
+        let claimActionId: string;
+        beforeAll(async () => {
+            actor.setIdentity(bob);
+        });
+
+        it("Should return empty if there is no action yet", async () => {
+            const res = await actor.link_get_user_state({
+                link_id: linkId,
+                action_type: "Claim",
+                anonymous_wallet_address: [],
+            });
+
+            expect(res).toHaveProperty("Ok");
+            if ("Ok" in res) {
+                expect(res.Ok).toEqual([]);
+            } else {
+                // Optional: Better error message if test fails
+                throw new Error("Expected Ok in response");
+            }
+        });
+
+        it("Should call process_action success", async () => {
+            const res = await actor.process_action({
+                action_id: "",
+                link_id: linkId,
+                action_type: "Claim",
+            });
+
+            expect(res).toHaveProperty("Ok");
+
+            if ("Ok" in res) {
+                claimActionId = res.Ok.id;
+            }
+        });
+
+        it("Should return user state", async () => {
+            const res = await actor.link_get_user_state({
+                link_id: linkId,
+                action_type: "Claim",
+                anonymous_wallet_address: [],
+            });
+            const parsedRes = parseResultResponse(res);
+
+            expect(res).toHaveProperty("Ok");
+            if (parsedRes[0]) {
+                expect(parsedRes[0].link_user_state).toEqual("User_state_choose_wallet");
+                expect(parsedRes[0].action.state).toEqual("Action_state_created");
+                expect(parsedRes[0].action.type).toEqual("Claim");
+            } else {
+                fail(`Expected index 0 have record: ${JSON.stringify(res)}`);
+            }
+        });
+
+        it("should confirm action success", async () => {
+            const input: ProcessActionInput = {
+                link_id: linkId,
+                action_id: claimActionId,
+                action_type: "Claim",
+            };
+
+            const confirmRes = await actor.process_action(input);
+            const actionDto = parseResultResponse(confirmRes);
+
+            const requestToExecute = actionDto.icrc_112_requests[0]!;
+
+            expect(requestToExecute).toHaveLength(1);
+
+            expect(actionDto.id).toEqual(claimActionId);
+            expect(actionDto.state).toEqual("Action_state_processing");
+
+            actionDto.intents.forEach((intent: IntentDto) => {
+                expect(intent.state).toEqual("Intent_state_processing");
+            });
+        });
+
+        it("should be success after executing the icrc-112 request", async () => {
+            const trigger_tx_method = flattenAndFindByMethod(
+                icrc_112_requests,
+                "trigger_transaction",
+            );
+
+            if (!trigger_tx_method) {
+                throw new Error("trigger_transaction method not found in icrc-112 requests");
+            }
+
+            const execute_helper = new Icrc112Executor(
+                icrc_112_requests,
+                token_helper,
+                alice,
+                linkId,
+                createLinkActionId,
+                Principal.fromText(canister_id),
+                actor,
+                trigger_tx_method.nonce[0]!,
+            );
+
+            await execute_helper.executeIcrc1Transfer(BigInt(1_0000_0000));
+            await actor.update_action({
+                action_id: claimActionId,
+                link_id: linkId,
+                external: true,
+            });
+
+            const link_helper = new LinkHelper(pic);
+            link_helper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
+
+            const balanceOfLink = await link_helper.checkAccountBalanceWithSubAccount(
+                "jjio5-5aaaa-aaaam-adhaq-cai",
+                linkId,
+            );
+
+            const res = await actor.link_get_user_state({
+                link_id: linkId,
+                action_type: "Claim",
+                anonymous_wallet_address: [],
+            });
+            const parsedRes = parseResultResponse(res);
+
+            expect(balanceOfLink).toEqual(BigInt(1_0000_0000));
+            expect(parsedRes[0]?.action.state).toEqual("Action_state_success");
+            if (parsedRes[0]?.action.intents) {
+                for (const intent of parsedRes[0]?.action.intents) {
+                    expect(intent.state).toEqual("Intent_state_success");
+                }
+            }
         });
     });
 });

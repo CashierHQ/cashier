@@ -426,6 +426,41 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                     intent.r#type = IntentType::Transfer(transfer_data.clone());
                 }
+                IntentTask::TransferPayment => {
+                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
+                    let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
+                        error!("label {:#?}", intent.label);
+                        CanisterError::HandleLogicError(
+                            "[link_assemble_intents] task TransferWalletToLink Asset not found"
+                                .to_string(),
+                        )
+                    })?;
+
+                    transfer_data.amount =
+                        asset_info.amount_per_link_use_action * link.link_use_action_max_count;
+                    transfer_data.asset = Asset {
+                        address: asset_info.address.clone(),
+                        chain: asset_info.chain.clone(),
+                    };
+                    let from_account = Account {
+                        owner: user_wallet.clone(),
+                        subaccount: None,
+                    };
+                    transfer_data.from = Wallet {
+                        address: from_account.to_string(),
+                        chain: Chain::IC,
+                    };
+                    let to_account = Account {
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id.clone())),
+                    };
+                    transfer_data.to = Wallet {
+                        address: to_account.to_string(),
+                        chain: Chain::IC,
+                    };
+
+                    intent.r#type = IntentType::Transfer(transfer_data.clone());
+                }
                 _ => {
                     return Err(CanisterError::HandleLogicError(
                         "Not found intents config for {link_type}_{action_type}".to_string(),
@@ -510,28 +545,31 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
 
-                // validate link balance
-                let asset = link.asset_info.clone().ok_or_else(|| {
-                    CanisterError::HandleLogicError("Asset info not found".to_string())
-                })?;
-                let asset_address = asset[0].address.clone();
+                // TODO: handle this correctly not if to check link type
+                if link.link_type != Some(LinkType::ReceivePayment) {
+                    // validate link balance
+                    let asset = link.asset_info.clone().ok_or_else(|| {
+                        CanisterError::HandleLogicError("Asset info not found".to_string())
+                    })?;
+                    let asset_address = asset[0].address.clone();
 
-                let link_balance = self
-                    .icrc_service
-                    .balance_of(
-                        Principal::from_text(asset_address).unwrap(),
-                        Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id.clone())),
-                        },
-                    )
-                    .await
-                    .map_err(|e| e)?;
+                    let link_balance = self
+                        .icrc_service
+                        .balance_of(
+                            Principal::from_text(asset_address).unwrap(),
+                            Account {
+                                owner: self.ic_env.id(),
+                                subaccount: Some(to_subaccount(&link.id.clone())),
+                            },
+                        )
+                        .await
+                        .map_err(|e| e)?;
 
-                if link_balance <= 0 {
-                    return Err(CanisterError::ValidationErrors(
-                        "Not enough asset".to_string(),
-                    ));
+                    if link_balance <= 0 {
+                        return Err(CanisterError::ValidationErrors(
+                            "Not enough asset".to_string(),
+                        ));
+                    }
                 }
 
                 return Ok(());

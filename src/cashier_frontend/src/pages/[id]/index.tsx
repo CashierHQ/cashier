@@ -51,12 +51,12 @@ export default function ClaimPage() {
     const {
         link: linkData,
         isLoading: isLoadingLinkData,
-        updateLink,
         setLink,
+        getLinkDetail,
     } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
 
     // Fetch link user state when user is logged in and there's link data
-    const { data: linkUserState, isLoading: isLoadingLinkUserState } = useLinkUserState(
+    const { data: linkUserState } = useLinkUserState(
         {
             action_type: ACTION_TYPE.CLAIM_LINK,
             link_id: linkId ?? "",
@@ -124,6 +124,12 @@ export default function ClaimPage() {
         console.log("🚀 ~ linkData:", linkData);
     }, [linkData, identity]);
 
+    useEffect(() => {
+        if (linkId) {
+            getLinkDetail();
+        }
+    }, []);
+
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
         return <LinkNotFound />;
     }
@@ -133,7 +139,7 @@ export default function ClaimPage() {
             <SheetWrapper>
                 <div className="w-11/12 items-center max-w-[400px] h-full flex flex-col flex-1">
                     <Header />
-                    {isLoadingLinkData || isLoadingLinkUserState || isLoadingToken ? (
+                    {isLoadingLinkData || isLoadingToken ? (
                         renderSkeleton()
                     ) : (
                         <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">

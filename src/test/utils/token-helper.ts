@@ -22,10 +22,18 @@ export class TokenHelper {
     private deployer: Identity;
     private wasm_path: string;
     private actor?: Actor<_SERVICE>;
+    private canister_id?: string;
     constructor(pic: PocketIc) {
         this.pic = pic;
         this.deployer = createIdentity("tokenDeployer");
         this.wasm_path = resolve("artifacts", "token_canister.wasm.gz");
+    }
+
+    public getCanisterId() {
+        if (!this.canister_id) {
+            throw new Error("Canister not setup");
+        }
+        return this.canister_id;
     }
 
     public setupCanister = async () => {
@@ -62,6 +70,8 @@ export class TokenHelper {
             // targetSubnetId: subnetId,
             targetCanisterId: LEDGER_ID,
         });
+
+        this.canister_id = canister_id.toString();
 
         await this.pic.installCode({
             wasm: this.wasm_path,

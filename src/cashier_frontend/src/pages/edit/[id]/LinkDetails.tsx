@@ -13,7 +13,6 @@ export default function LinkDetails() {
 
     return (
         <div className="w-full h-full flex flex-col">
-            <p onClick={() => console.log(currentInput)}>Log</p>
             <AddAssetForm isMultiAsset={isMultiAsset} isAirdrop={isAirdrop} />
         </div>
     );
