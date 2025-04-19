@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { useLinkAction } from "@/hooks/linkActionHook";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 import { stateToStepIndex } from ".";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     const supportedLinkTypes = [

@@ -15,7 +15,7 @@ import { formatPrice } from "@/utils/helpers/currency";
 import { useFeeTotal } from "@/hooks/useFeeMetadata";
 import { NETWORK_FEE_DEFAULT_ADDRESS, NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
 import { convert } from "@/utils/helpers/convert";
-import { useLinkAction } from "@/hooks/linkActionHook";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { ACTION_TYPE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 export interface LinkPreviewProps {

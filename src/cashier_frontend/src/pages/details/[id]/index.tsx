@@ -23,7 +23,7 @@ import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
-import { useLinkAction } from "@/hooks/linkActionHook";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 
 export default function DetailPage() {
@@ -57,8 +57,6 @@ export default function DetailPage() {
         const styleTag = document.createElement("style");
         styleTag.innerHTML = customDriverStyles;
         document.head.appendChild(styleTag);
-
-        console.log("link data", link);
 
         return () => {
             document.head.removeChild(styleTag);

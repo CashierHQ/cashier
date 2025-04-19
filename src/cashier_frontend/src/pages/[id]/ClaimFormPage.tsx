@@ -16,10 +16,10 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
-import { useCreateAction, useCreateActionAnonymous } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useTranslation } from "react-i18next";
+import { useCreateAction, useCreateActionAnonymous } from "@/hooks/action-hooks";
 
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -44,8 +44,8 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const { nextStep } = useMultiStepFormContext();
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
-    const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.CLAIM_LINK);
-    const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous(ACTION_TYPE.CLAIM_LINK);
+    const { mutateAsync: createAction } = useCreateAction();
+    const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous();
     const { action, anonymousWalletAddress, setAction, setAnonymousWalletAddress } =
         useLinkActionStore();
     const [isDisabledButton, setIsDisabledButton] = useState(true);
@@ -69,6 +69,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
         const updatedAction = await createAction({
             linkId: linkId!,
+            actionType: ACTION_TYPE.CLAIM_LINK,
         });
         return updatedAction;
     };
@@ -77,6 +78,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         const linkUserAction = await createActionAnonymous({
             linkId: linkId!,
             walletAddress: walletAddress,
+            actionType: ACTION_TYPE.CLAIM_LINK,
         });
         return linkUserAction;
     };

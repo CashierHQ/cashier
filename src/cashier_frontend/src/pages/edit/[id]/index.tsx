@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
-import { useLinkAction } from "@/hooks/linkActionHook";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,

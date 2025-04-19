@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LinkService from "@/services/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { UpdateLinkParams2 } from "./linkActionHook";
+import { UpdateLinkParams2 } from "./link-action-hooks";
 
 // Centralized query keys for consistent caching
 export const LINK_QUERY_KEYS = {

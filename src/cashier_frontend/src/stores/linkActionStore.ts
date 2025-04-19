@@ -1,4 +1,4 @@
-import { UpdateLinkParams2 } from "@/hooks/linkActionHook";
+import { UpdateLinkParams2 } from "@/hooks/link-action-hooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { create } from "zustand";

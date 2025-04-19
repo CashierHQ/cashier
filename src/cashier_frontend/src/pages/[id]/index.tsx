@@ -21,7 +21,7 @@ import { IoInformationCircle } from "react-icons/io5";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { getTokenImage } from "@/utils";
 import LinkNotFound from "@/components/link-not-found";
-import { useLinkAction } from "@/hooks/linkActionHook";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 
 export const ClaimSchema = z.object({

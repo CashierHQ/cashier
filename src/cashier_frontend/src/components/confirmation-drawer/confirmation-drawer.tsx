@@ -12,17 +12,13 @@ import {
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
-import {
-    useIcrc112Execute,
-    useProcessAction,
-    useProcessActionAnonymous,
-    useUpdateAction,
-} from "@/hooks/linkHooks";
+import { useIcrc112Execute } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
-import { useLinkAction } from "@/hooks/linkActionHook";
+import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -48,9 +44,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const [isUsd, setIsUsd] = useState(false);
 
     const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous(
-        ACTION_TYPE.CLAIM_LINK,
-    );
+    const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous();
 
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
@@ -106,6 +100,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 linkId: link!.id,
                 actionId: action!.id,
                 walletAddress: anonymousWalletAddress ?? "",
+                actionType: ACTION_TYPE.CLAIM_LINK,
             });
             if (processActionResult) {
                 setAction(processActionResult);
