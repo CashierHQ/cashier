@@ -34,11 +34,7 @@ export const Asset: FC<AssetProps> = ({
     };
 
     const getSymbol = (title?: string) => {
-        if (title === "ICP") {
-            return "ICP";
-        } else if (title === "CUTE") {
-            return "tCHAT";
-        } else return title;
+        return title;
     };
 
     const renderAmount = () => {

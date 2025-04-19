@@ -1,44 +1,19 @@
-import { CHAIN, LINK_INTENT_LABEL } from "@/services/types/enum";
-//import { NftAssetForm } from "@/components/link-details/nft-asset-form";
-import { TipLinkAssetForm } from "@/components/link-details/tip-link-asset-form";
-import { TipLinkAssetFormSchema } from "@/components/link-details/tip-link-asset-form.hooks";
 import { useLinkActionStore } from "@/stores/linkActionStore";
-import { useSetTipLinkDetails } from "@/hooks/linkHooks";
-import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { useButtonState } from "@/hooks/useButtonState";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { LINK_TYPE } from "@/services/types/enum";
+import { AddAssetForm } from "@/components/link-details/add-asset-form";
 
 export default function LinkDetails() {
-    const { nextStep } = useMultiStepFormContext();
-    const { link, setLink } = useLinkActionStore();
-    const { mutateAsync: setTipLinkDetails } = useSetTipLinkDetails();
-    const { isButtonDisabled, setButtonDisabled } = useButtonState();
-
-    const handleSubmitTipLinkDetails = async (data: TipLinkAssetFormSchema) => {
-        setButtonDisabled(true);
-        const updatedLink = await setTipLinkDetails({
-            link: link!,
-            patch: [
-                {
-                    amount: data.amount,
-                    address: data.tokenAddress,
-                    label: LINK_INTENT_LABEL.INTENT_LABEL_WALLET_TO_LINK,
-                    chain: CHAIN.IC,
-                    totalClaim: 0n,
-                },
-            ],
-        });
-
-        setLink(updatedLink);
-        nextStep();
-        setButtonDisabled(false);
-    };
+    const { link } = useLinkActionStore();
+    const { getUserInput } = useLinkCreationFormStore();
+    // Determine if we need multi-asset mode based on link type
+    const currentInput = link ? getUserInput(link.id) : undefined;
+    const isMultiAsset = currentInput?.linkType === LINK_TYPE.SEND_TOKEN_BASKET;
+    const isAirdrop = currentInput?.linkType === LINK_TYPE.SEND_AIRDROP;
 
     return (
         <div className="w-full h-full flex flex-col">
-            <TipLinkAssetForm
-                onSubmit={handleSubmitTipLinkDetails}
-                isButtonDisabled={isButtonDisabled}
-            />
+            <AddAssetForm isMultiAsset={isMultiAsset} isAirdrop={isAirdrop} />
         </div>
     );
 }

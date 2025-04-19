@@ -3,7 +3,7 @@ use cashier_types::{
     LinkState, Transaction, TransactionState,
 };
 
-use crate::types::error::CanisterError;
+use crate::{error, types::error::CanisterError};
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -90,6 +90,8 @@ impl ActionDomainLogic {
             .iter()
             .any(|tx| tx.state == TransactionState::Fail)
         {
+            error!("tx fail : {:#?}", transactions);
+
             return IntentState::Fail;
         } else if transactions
             .iter()

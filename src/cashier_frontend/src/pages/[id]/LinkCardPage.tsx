@@ -1,10 +1,10 @@
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
-import { LinkModel } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 import { getTokenImage } from "@/utils";
 import { FC } from "react";
 
 type LinkCardPageProps = {
-    linkData?: LinkModel;
+    linkData?: LinkDetailModel;
     onClickClaim?: () => void;
 };
 
@@ -12,9 +12,9 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
     return (
         <LinkCardWithoutPhoneFrame
             label="Claim"
-            src={getTokenImage(linkData?.link.asset_info?.[0].address ?? "")}
-            message={linkData?.link.description ?? ""}
-            title={linkData?.link.title ?? ""}
+            src={getTokenImage(linkData?.asset_info?.[0].address ?? "")}
+            message={linkData?.description ?? ""}
+            title={linkData?.title ?? ""}
             onClaim={onClickClaim}
             disabled={linkData === undefined}
         />

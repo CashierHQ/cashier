@@ -146,6 +146,7 @@ export function useTokens() {
                 const metadata = metadataMap[token.address];
                 if (metadata?.fee !== undefined) {
                     enrichedToken.fee = metadata.fee;
+                    enrichedToken.logo = metadata.logo || enrichedToken.logo;
                 }
             }
 

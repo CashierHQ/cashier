@@ -12,17 +12,13 @@ import {
 } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
-import {
-    useIcrc112Execute,
-    useProcessAction,
-    useProcessActionAnonymous,
-    useUpdateAction,
-} from "@/hooks/linkHooks";
+import { useIcrc112Execute } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
-import { useLinkActionStore } from "@/stores/linkActionStore";
+import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -42,15 +38,13 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     onSuccessContinue = async () => {},
 }) => {
     const { t } = useTranslation();
-    const { link, action, anonymousWalletAddress, setAction } = useLinkActionStore();
+    const { link, action, anonymousWalletAddress, setAction } = useLinkAction();
     const identity = useIdentity();
 
     const [isUsd, setIsUsd] = useState(false);
 
     const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous(
-        ACTION_TYPE.CLAIM_LINK,
-    );
+    const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous();
 
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
@@ -68,15 +62,34 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             if (!link) throw new Error("Link is not defined");
             if (!action) throw new Error("Action is not defined");
             // Process action for logged in user to claim
+
             const processActionResult = await processAction({
                 linkId: link.id,
                 actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
                 actionId: action.id,
             });
-            console.log(
-                "🚀 ~ handleProcessClaimAction ~ processActionResult:",
-                processActionResult,
-            );
+
+            if (processActionResult.icrc112Requests) {
+                const response = await icrc112Execute({
+                    transactions: processActionResult.icrc112Requests,
+                });
+                console.log("🚀 ~ icrc112Execute ~ response:", response);
+                if (response) {
+                    const secondUpdatedAction = await updateAction({
+                        actionId: action!.id,
+                        linkId: link!.id,
+                        external: true,
+                    });
+
+                    console.log("🚀 ~ secondUpdatedAction:", secondUpdatedAction);
+
+                    if (secondUpdatedAction) {
+                        setAction(secondUpdatedAction);
+                        onActionResult(secondUpdatedAction);
+                    }
+                }
+            }
+
             if (processActionResult) {
                 setAction(processActionResult);
                 onActionResult(processActionResult);
@@ -87,11 +100,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 linkId: link!.id,
                 actionId: action!.id,
                 walletAddress: anonymousWalletAddress ?? "",
+                actionType: ACTION_TYPE.CLAIM_LINK,
             });
-            console.log(
-                "🚀 ~ handleProcessClaimAction ~ processActionResult:",
-                processActionResult,
-            );
             if (processActionResult) {
                 setAction(processActionResult);
                 onActionResult(processActionResult);
@@ -110,7 +120,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         setAction(firstUpdatedAction);
         if (firstUpdatedAction) {
             const response = await icrc112Execute({
-                transactions: firstUpdatedAction!.icrc112Requests,
+                transactions: firstUpdatedAction.icrc112Requests,
             });
             console.log("🚀 ~ icrc112Execute ~ response:", response);
             if (response) {
@@ -133,7 +143,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             if (action?.type === ACTION_TYPE.CLAIM_LINK) {
                 await handleProcessClaimAction();
             } else {
-                handleProcessCreateAction();
+                await handleProcessCreateAction();
             }
         } catch (error) {
             console.log("🚀 ~ startTransaction ~ error:", error);

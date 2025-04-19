@@ -1,6 +1,5 @@
 import CanisterUtilsService from "@/services/canisterUtils.service";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { Canister } from "@dfinity/utils";
 
 export const getLinkIsClaimed = async (link: LinkDetailModel) => {
     const canisterUtils = new CanisterUtilsService();
@@ -43,9 +42,9 @@ export const getLinkAssetAmounts = async (link: LinkDetailModel) => {
         );
         assetAmounts.push({
             address: asset.address,
-            totalAmount: asset.amount,
+            totalAmount: asset.amountPerUse * link.maxActionNumber,
             pendingAmount: balance,
-            claimsAmount: asset.totalClaim,
+            claimsAmount: link.useActionCounter,
             assetClaimed: balance === 0n,
         });
     }

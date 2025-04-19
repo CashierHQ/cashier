@@ -267,7 +267,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .get_action_of_link(&input.link_id, &input.action_type, &user_id);
 
         // if action is not found, create a new action
-        // only aloow == action type
+        // only allow == action type
         if action.is_none() {
             // validate create action
             self.link_service

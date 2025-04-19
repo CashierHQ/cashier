@@ -152,6 +152,9 @@ impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
             (IntentType::Transfer(transfer_intent), IntentTask::TransferLinkToWallet) => self
                 .assemble_icrc1_canister_transfer(transfer_intent)
                 .map_err(|e| e.to_string()),
+            (IntentType::Transfer(transfer_intent), IntentTask::TransferPayment) => self
+                .assemble_icrc1_canister_transfer(transfer_intent)
+                .map_err(|e| e.to_string()),
             _ => Err(format!(
                 "Invalid intent type and task combination: {:?}, {:?}",
                 intent.r#type, intent.task

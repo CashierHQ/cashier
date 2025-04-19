@@ -1,6 +1,6 @@
-import ClaimPageForm, { ClaimLinkDetail } from "@/components/claim-page/claim-page-form";
+import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 import { FC, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from ".";
@@ -16,16 +16,15 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
-import { useCreateAction, useCreateActionAnonymous } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useTranslation } from "react-i18next";
+import { useCreateAction, useCreateActionAnonymous } from "@/hooks/action-hooks";
 
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
-    claimLinkDetails: ClaimLinkDetail;
     onSubmit: () => void;
-    linkData?: LinkModel;
+    linkData?: LinkDetailModel;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
     onBack?: () => void;
@@ -33,7 +32,6 @@ type ClaimFormPageProps = {
 
 export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     form,
-    claimLinkDetails,
     linkData,
     onCashierError = () => {},
     onActionResult,
@@ -46,8 +44,8 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const { nextStep } = useMultiStepFormContext();
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
-    const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.CLAIM_LINK);
-    const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous(ACTION_TYPE.CLAIM_LINK);
+    const { mutateAsync: createAction } = useCreateAction();
+    const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous();
     const { action, anonymousWalletAddress, setAction, setAnonymousWalletAddress } =
         useLinkActionStore();
     const [isDisabledButton, setIsDisabledButton] = useState(true);
@@ -71,6 +69,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
         const updatedAction = await createAction({
             linkId: linkId!,
+            actionType: ACTION_TYPE.CLAIM_LINK,
         });
         return updatedAction;
     };
@@ -79,6 +78,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         const linkUserAction = await createActionAnonymous({
             linkId: linkId!,
             walletAddress: walletAddress,
+            actionType: ACTION_TYPE.CLAIM_LINK,
         });
         return linkUserAction;
     };
@@ -161,13 +161,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
             <div className="w-full h-full flex flex-grow flex-col">
                 <ClaimPageForm
                     form={form}
-                    formData={linkData?.link ?? ({} as LinkDetailModel)}
-                    claimLinkDetails={[
-                        {
-                            title: claimLinkDetails.title,
-                            amount: claimLinkDetails.amount,
-                        },
-                    ]}
+                    formData={linkData ?? ({} as LinkDetailModel)}
                     onSubmit={handleSubmit}
                     onBack={onBack}
                     isDisabled={isDisabledButton}

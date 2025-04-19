@@ -5,7 +5,10 @@ mod tests {
 
     use crate::{
         repositories::{
-            action::ActionRepository, link::LinkRepository, link_action::LinkActionRepository,
+            action::ActionRepository,
+            link::LinkRepository,
+            link_action::LinkActionRepository,
+            user_wallet::{self, UserWalletRepository},
         },
         services::{
             __tests__::tests::{generate_random_principal, generate_timestamp, MockIcEnvironment},
@@ -21,6 +24,7 @@ mod tests {
         let mut link_repository = LinkRepository::faux();
         let link_action_repository = LinkActionRepository::faux();
         let action_repository = ActionRepository::faux();
+        let user_wallet_repository = UserWalletRepository::faux();
         let icrc_service = IcrcService::faux();
 
         let link_id = Uuid::new_v4().to_string();
@@ -48,6 +52,7 @@ mod tests {
             link_action_repository,
             action_repository,
             icrc_service,
+            user_wallet_repository,
             ic_env,
         );
 
@@ -65,6 +70,7 @@ mod tests {
         let link_action_repository = LinkActionRepository::faux();
         let action_repository = ActionRepository::faux();
         let icrc_service = IcrcService::faux();
+        let user_wallet_repository = UserWalletRepository::faux();
         let caller = generate_random_principal();
 
         let link_id = Uuid::new_v4().to_string();
@@ -91,6 +97,7 @@ mod tests {
             link_action_repository,
             action_repository,
             icrc_service,
+            user_wallet_repository,
             ic_env,
         );
 

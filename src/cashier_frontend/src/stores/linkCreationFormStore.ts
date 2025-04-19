@@ -1,12 +1,14 @@
-import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { CHAIN, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { create } from "zustand";
 
 export interface UserInputAsset {
     address: string;
-    amount: bigint;
-    totalClaim: bigint;
-    usdEquivalent: number;
-    usdConversionRate: number;
+    // amount for one claim action (per-claim amount)
+    linkUseAmount: bigint;
+    chain: CHAIN;
+    label: string;
+    usdEquivalent?: number;
+    usdConversionRate?: number;
 }
 
 export interface UserInputItem {
@@ -15,6 +17,9 @@ export interface UserInputItem {
     title: string;
     linkType: LINK_TYPE;
     assets: UserInputAsset[];
+    description?: string;
+    image?: string;
+    maxActionNumber: bigint;
 }
 
 interface LinkCreationFormState {
@@ -62,5 +67,7 @@ export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, ge
             userInputs: new Map(),
         }),
 
-    getUserInput: (linkId) => get().userInputs.get(linkId),
+    getUserInput: (linkId) => {
+        return get().userInputs.get(linkId);
+    },
 }));

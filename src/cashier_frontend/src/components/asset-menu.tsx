@@ -40,9 +40,7 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
     };
 
     const getTokenName = (name: string) => {
-        if (name === "CUTE") {
-            return "tCHAT";
-        } else return name;
+        return name;
     };
 
     const amount = TokenUtilService.getHumanReadableAmountFromToken(asset.amount ?? 0n, asset);

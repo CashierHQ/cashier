@@ -15,6 +15,7 @@ export type TokenModel = {
 
 export interface TokenMetadata {
     fee?: bigint;
+    logo?: string;
 }
 
 export interface TokenBalance {
