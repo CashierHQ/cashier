@@ -17,10 +17,7 @@
         "defaultTemplate": "Default template",
         "asset": "Asset",
         "linkType": "Link type",
-        "preview": "Preview",
-        "add_another_asset": "Add another asset",
-        "amount_error": "Amount Error",
-        "amount_error_message": "Amount must be greater than 0"
+        "preview": "Preview"
     },
     "details": {
         "linkInfo": "Link info",

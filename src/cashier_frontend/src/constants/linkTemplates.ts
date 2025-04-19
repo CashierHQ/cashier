@@ -26,7 +26,7 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         src: "/tokenBasket.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
         title: "Token basket",
-        isComingSoon: false,
+        isComingSoon: true,
         linkType: LINK_TYPE.SEND_TOKEN_BASKET,
     },
 ];

@@ -104,22 +104,15 @@ export function useSetTipLinkDetails() {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async (vars: {
-            link: LinkDetailModel;
-            patch: AssetInfoModel[];
-            isContinue?: boolean;
-        }) => {
+        mutationFn: async (vars: { link: LinkDetailModel; patch: AssetInfoModel[] }) => {
             const linkService = new LinkService(identity);
 
             const linkData = {
                 ...vars.link,
                 asset_info: vars.patch,
+                state: State.PendingPreview,
             } as LinkDetailModel;
-            const linkDto = await linkService.updateLink(
-                vars.link.id,
-                linkData,
-                vars.isContinue === undefined ? true : vars.isContinue, // new, correct
-            );
+            const linkDto = await linkService.updateLink(vars.link.id, linkData, true);
 
             return MapLinkToLinkDetailModel(linkDto);
         },

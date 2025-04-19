@@ -61,7 +61,6 @@ module.exports = {
                     5: "hsl(var(--chart-5))",
                 },
                 green: "#36a18b",
-                disabledgreen: "#A0D0C5",
                 lightgreen: "#e8f2ee",
                 yellow: "#a17f37",
                 lightyellow: "#fffaf2",
