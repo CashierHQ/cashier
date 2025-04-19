@@ -17,6 +17,8 @@ pub struct Link {
     pub creator: String,
     pub create_at: u64,
     pub metadata: Option<HashMap<String, String>>,
+    pub link_use_action_counter: u64,
+    pub link_use_action_max_count: u64,
 }
 
 impl Link {

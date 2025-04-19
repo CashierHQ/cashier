@@ -18,11 +18,7 @@ export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading,
 
     /*TODO: Remove after mid milestone*/
     const getSymbol = (title?: string) => {
-        if (title === "ICP") {
-            return "ICP";
-        } else if (title === "CUTE") {
-            return "tCHAT";
-        } else return title;
+        return title;
     };
 
     const getPrefixAmount = () => {

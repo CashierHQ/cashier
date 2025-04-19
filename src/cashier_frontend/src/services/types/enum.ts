@@ -101,6 +101,29 @@ export enum LINK_TYPE {
     SWAP_MULTI_ASSET = "SwapMultiAsset",
 }
 
+export function getLinkTypeString(type: string): string {
+    switch (type) {
+        case LINK_TYPE.SEND_TIP:
+            return "Send Tip";
+        case LINK_TYPE.NFT_CREATE_AND_AIRDROP:
+            return "NFT Create and Airdrop";
+        case LINK_TYPE.SEND_AIRDROP:
+            return "Send Airdrop";
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return "Send Token Basket";
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return "Receive Payment";
+        case LINK_TYPE.RECEIVE_MULTI_PAYMENT:
+            return "Receive Multi Payment";
+        case LINK_TYPE.SWAP_SINGLE_ASSET:
+            return "Swap Single Asset";
+        case LINK_TYPE.SWAP_MULTI_ASSET:
+            return "Swap Multi Asset";
+        default:
+            throw new Error(`Unknown link type: ${type}`);
+    }
+}
+
 export function mapStringToLinkType(type: string | undefined): LINK_TYPE | undefined {
     switch (type) {
         case "SendTip":
@@ -128,6 +151,24 @@ export enum CHAIN {
     IC = "IC",
 }
 
+export const mapStringToChain = (chain: string) => {
+    switch (chain) {
+        case CHAIN.IC:
+            return CHAIN.IC;
+        default:
+            throw new Error("Unknown chain");
+    }
+};
+
+export function mapStringToEnum<T extends object>(
+    enumObject: T,
+    value: string,
+): T[keyof T] | undefined {
+    return Object.values(enumObject).includes(value as T[keyof T])
+        ? (value as T[keyof T])
+        : undefined;
+}
+
 export enum TASK {
     TRANSFER_WALLET_TO_TREASURY = "transfer_wallet_to_treasury",
     TRANSFER_WALLET_TO_LINK = "transfer_wallet_to_link",
@@ -138,7 +179,6 @@ export enum ACTION_TYPE {
     CREATE_LINK = "CreateLink",
     WITHDRAW_LINK = "Withdraw",
     CLAIM_LINK = "Claim",
-    SEND_ASSET = "SendAsset",
 }
 
 export enum IC_TRANSACTION_PROTOCAL {
@@ -152,11 +192,44 @@ export enum WALLET {
     CANISTER = "Canister",
 }
 
-export enum LINK_INTENT_LABEL {
-    INTENT_LABEL_WALLET_TO_LINK = "1000",
-    INTENT_LABEL_WALLET_TO_TREASURY = "1001",
-    INTENT_LABEL_LINK_TO_WALLET = "2001",
+export enum LINK_INTENT_ASSET_LABEL {
+    INTENT_LABEL_LINK_CREATION_FEE = "LINK_CREATION_FEE", // fee transfer
+    INTENT_LABEL_SEND_TIP_ASSET = "SEND_TIP_ASSET", // tip link
+    INTENT_LABEL_SEND_AIRDROP_ASSET = "SEND_AIRDROP_ASSET", //
+    INTENT_LABEL_SEND_TOKEN_BASKET_ASSET = "SEND_TOKEN_BASKET_ASSET", //
+    INTENT_LABEL_RECEIVE_PAYMENT_ASSET = "RECEIVE_PAYMENT_ASSET", // payment link
 }
+
+export const mapStringToLabel = (label: string) => {
+    switch (label) {
+        case LINK_INTENT_ASSET_LABEL.INTENT_LABEL_LINK_CREATION_FEE:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_LINK_CREATION_FEE;
+        case LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
+        case LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
+        case LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
+        default:
+            return label;
+    }
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getAssetLabelForLinkType = (linkType: string) => {
+    switch (linkType) {
+        case LINK_TYPE.SEND_TIP:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
+        case LINK_TYPE.SEND_AIRDROP:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET;
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
+        default:
+            throw new Error("Unknown link type");
+    }
+};
 
 export enum LINK_USER_STATE {
     NO_STATE = "No_state",

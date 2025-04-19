@@ -17,7 +17,7 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         src: "/chatToken.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
         title: "Airdrop",
-        isComingSoon: true,
+        isComingSoon: false,
         linkType: LINK_TYPE.SEND_AIRDROP,
     },
     {
@@ -26,7 +26,16 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
         src: "/tokenBasket.png",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
         title: "Token basket",
-        isComingSoon: true,
+        isComingSoon: false,
         linkType: LINK_TYPE.SEND_TOKEN_BASKET,
+    },
+    {
+        label: "Receive",
+        header: "Receive payment",
+        src: "/chatToken.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.RECEIVE_PAYMENT,
+        title: "Receive payment",
+        isComingSoon: false,
+        linkType: LINK_TYPE.RECEIVE_PAYMENT,
     },
 ];

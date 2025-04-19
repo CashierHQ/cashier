@@ -9,14 +9,14 @@ import {
     GetLinkOptions,
     Icrc112Request,
     idlFactory,
-} from "../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../declarations/cashier_backend/cashier_backend.did";
 
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
-import { parseResultResponse } from "../utils/parser";
-import { TokenHelper } from "../utils/token-helper";
+import { parseResultResponse } from "../../utils/parser";
+import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
-import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
+import { flattenAndFindByMethod, Icrc112Executor } from "../../utils/icrc-112";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -123,6 +123,7 @@ describe("Tip Link confirm action success", () => {
                     link_image_url: [],
                     nft_image: [],
                     link_type: [testPayload.link_type],
+                    link_use_action_max_count: [],
                 },
             ],
         };
@@ -148,9 +149,8 @@ describe("Tip Link confirm action success", () => {
                             {
                                 chain: assetInfoTest.chain,
                                 address: assetInfoTest.address,
-                                amount_per_claim: assetInfoTest.amount_per_claim,
-                                total_amount: assetInfoTest.total_amount,
-                                label: "1000",
+                                label: "SEND_TIP_ASSET",
+                                amount_per_link_use_action: assetInfoTest.amount_per_claim,
                             },
                         ],
                     ],
@@ -159,6 +159,7 @@ describe("Tip Link confirm action success", () => {
                     link_image_url: [],
                     nft_image: [],
                     link_type: [],
+                    link_use_action_max_count: [1n],
                 },
             ],
         };

@@ -71,7 +71,7 @@ export class Icrc112Executor {
         }
     }
 
-    public async executeIcrc1Transfer() {
+    public async executeIcrc1Transfer(amount: bigint = BigInt(10_0000_0000)) {
         const link_vault: Account = {
             owner: this.spender_pid,
             subaccount: [linkIdToSubaccount(this.link_id)],
@@ -83,7 +83,7 @@ export class Icrc112Executor {
             memo: [],
             from_subaccount: [],
             created_at_time: [],
-            amount: BigInt(10_0000_0000),
+            amount: amount,
         };
         this.token_helper.with_identity(this.identity);
         await this.token_helper.transfer(transfer_arg);

@@ -7,4 +7,5 @@ export const LINK_TEMPLATE_DESCRIPTION_MESSAGE = {
     TIP: "Congratulations, you received a tip!",
     AIRDROP: "Congratulations, you received an airdrop!",
     TOKEN_BASKET: "Congratulations, you received a token basket!",
+    RECEIVE_PAYMENT: "Pay me in crypto!",
 };

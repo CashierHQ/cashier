@@ -6,11 +6,10 @@ import {
 } from "@/services/types/link.service.types";
 import { Identity } from "@dfinity/agent";
 import { useIdentity } from "@nfid/identitykit/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function useUpdateLinkUserState() {
     const identity = useIdentity();
-    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: async (vars: { input: LinkUpdateUserStateInputModel }) => {

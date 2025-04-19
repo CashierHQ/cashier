@@ -23,6 +23,8 @@ pub fn get_tx_timeout_seconds() -> u64 {
 pub fn get_tx_timeout_nano_seconds() -> u64 {
     get_tx_timeout_seconds() * 1_000_000_000
 }
-pub const INTENT_LABEL_WALLET_TO_LINK: &str = "1000";
-pub const INTENT_LABEL_WALLET_TO_TREASURY: &str = "1001";
-pub const INTENT_LABEL_LINK_TO_WALLET: &str = "2001";
+pub const INTENT_LABEL_LINK_CREATION_FEE: &str = "LINK_CREATION_FEE"; // fee transfer
+pub const INTENT_LABEL_SEND_TIP_ASSET: &str = "SEND_TIP_ASSET"; // tip link
+pub const INTENT_LABEL_SEND_AIRDROP_ASSET: &str = "SEND_AIRDROP_ASSET"; //
+pub const INTENT_LABEL_SEND_TOKEN_BASKET_ASSET: &str = "SEND_TOKEN_BASKET_ASSET"; //
+pub const INTENT_LABEL_RECEIVE_PAYMENT_ASSET: &str = "RECEIVE_PAYMENT_ASSET"; // payment link

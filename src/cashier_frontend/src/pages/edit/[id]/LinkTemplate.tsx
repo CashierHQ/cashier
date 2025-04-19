@@ -1,13 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useCarousel } from "@/components/link-template/link-template.hooks";
-import { useLinkActionStore } from "@/stores/linkActionStore";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
-import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { useSetLinkTemplate } from "@/hooks/linkHooks";
-import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
+import { LINK_TYPE } from "@/services/types/enum";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { useButtonState } from "@/hooks/useButtonState";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -18,8 +14,17 @@ import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "@/components/transaction/transaction-toast";
+import { useLinkAction } from "@/hooks/link-action-hooks";
+import { stateToStepIndex } from ".";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
-    return linkType === LINK_TYPE.SEND_TIP;
+    const supportedLinkTypes = [
+        LINK_TYPE.SEND_TIP,
+        LINK_TYPE.SEND_TOKEN_BASKET,
+        LINK_TYPE.SEND_AIRDROP,
+        LINK_TYPE.RECEIVE_PAYMENT,
+    ];
+
+    return supportedLinkTypes.includes(linkType);
 }
 
 export interface LinkTemplateProps {
@@ -30,16 +35,15 @@ export default function LinkTemplate({
     onSelectUnsupportedLinkType = () => {},
 }: LinkTemplateProps) {
     const { t } = useTranslation();
-    const { nextStep } = useMultiStepFormContext();
+    const { setStep } = useMultiStepFormContext();
     const { updateUserInput, getUserInput, userInputs } = useLinkCreationFormStore();
 
     const { toastData, showToast, hideToast } = useToast();
 
     const responsive = useResponsive();
 
-    const { link, setLink } = useLinkActionStore();
-    const { mutateAsync: setLinkTemplate } = useSetLinkTemplate();
-    const { isButtonDisabled, setButtonDisabled } = useButtonState();
+    const { link, callLinkStateMachine, isUpdating } = useLinkAction();
+    const {} = useLinkAction();
 
     const carousel = useCarousel();
 
@@ -51,34 +55,35 @@ export default function LinkTemplate({
             return;
         }
 
-        setButtonDisabled(true);
         if (isLinkTypeSupported(currentLink?.linkType as LINK_TYPE)) {
-            const updatedLink = await setLinkTemplate({
-                link: link!,
-                patch: {
-                    title: currentLink?.title ?? "",
-                    description: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
-                    linkType: currentLink?.linkType as LINK_TYPE,
-                },
-            });
-            setLink(updatedLink);
+            if (!currentLink || !currentLink.linkId) {
+                showToast("Error", "Link not found", "error");
+                return;
+            }
 
-            updateUserInput(
-                link!.id, // Ensure link.id is not undefined
-                {
-                    state: LINK_STATE.ADD_ASSET,
-                },
-            );
-            nextStep();
+            console.log("currentLink", currentLink);
+
+            const stateMachineRes = await callLinkStateMachine({
+                linkId: currentLink.linkId,
+                linkModel: currentLink,
+                isContinue: true,
+            });
+
+            const stepIndex = stateToStepIndex(stateMachineRes.state);
+            setStep(stepIndex);
         } else {
             onSelectUnsupportedLinkType();
         }
-        setButtonDisabled(false);
     };
 
     useEffect(() => {
+        carousel.setCurrent(
+            LINK_TEMPLATES.findIndex((template) => template.linkType === link?.linkType) || 0,
+        );
+    }, [link]);
+
+    useEffect(() => {
         const selectedTemplate = LINK_TEMPLATES[carousel.current];
-        console.log(selectedTemplate);
         if (link?.id) {
             updateUserInput(link.id, {
                 linkType: selectedTemplate.linkType,
@@ -190,9 +195,10 @@ export default function LinkTemplate({
                 onClick={handleSubmit}
                 variant="default"
                 size="lg"
-                disabled={isButtonDisabled || carousel.current !== 0}
+                className="w-full fixed bottom-4 disabled:bg-disabledgreen"
+                disabled={isUpdating || LINK_TEMPLATES[carousel.current].isComingSoon}
             >
-                {carousel.current === 0 ? t("continue") : "Coming Soon"}
+                {LINK_TEMPLATES[carousel.current].isComingSoon ? "Coming Soon" : t("continue")}
             </FixedBottomButton>
 
             <TransactionToast

@@ -82,10 +82,7 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
         return Ok(vec![intent]);
     }
 
-    fn build_create_tip_link_intent(
-        &self,
-        input: ActionToIntentInput,
-    ) -> Result<Vec<Intent>, String> {
+    fn build_create_link_intent(&self, input: ActionToIntentInput) -> Result<Vec<Intent>, String> {
         let first_asset = input
             .link
             .asset_info
@@ -97,6 +94,9 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
             address: first_asset.address.clone(),
             chain: first_asset.chain.clone(),
         };
+
+        let total_amount =
+            first_asset.amount_per_link_use_action * input.link.link_use_action_max_count;
 
         let ts = self.ic_env.time();
 
@@ -129,7 +129,7 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
                 to: deposit_wallet,
                 asset,
                 // tip link full amount of the first asset
-                amount: first_asset.total_amount,
+                amount: total_amount,
             }),
             state: IntentState::Created,
             created_at: ts,
@@ -151,7 +151,7 @@ impl<E: IcEnvironment + Clone> ActionAdapter for IcActionAdapter<E> {
         ) {
             (LinkType::SendTip, ActionType::CreateLink) => {
                 let fee_intent = self.build_create_link_fee_intent()?;
-                let tip_intent = self.build_create_tip_link_intent(input)?;
+                let tip_intent = self.build_create_link_intent(input)?;
 
                 let result: Vec<_> = fee_intent
                     .into_iter()

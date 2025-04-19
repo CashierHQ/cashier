@@ -1,6 +1,5 @@
 import { Children, ReactElement, ReactNode, useEffect } from "react";
-import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     MultiStepFormContext,
@@ -25,12 +24,14 @@ interface MultiStepFormHeaderProps {
     onClickBack?: (context: MultiStepFormContext) => void;
     showIndicator?: boolean;
     showHeader?: boolean;
+    backButtonDisabled?: boolean;
 }
 
 export function MultiStepFormHeader({
     onClickBack = () => {},
     showIndicator = true,
     showHeader = true,
+    backButtonDisabled = false,
 }: MultiStepFormHeaderProps) {
     const context = useMultiStepFormContext();
 
@@ -44,8 +45,18 @@ export function MultiStepFormHeader({
                     <button
                         className="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
                         onClick={() => onClickBack(context)}
+                        disabled={backButtonDisabled}
                     >
-                        <ChevronLeft width={25} height={25} strokeWidth={2} />
+                        {backButtonDisabled ? (
+                            <LoaderCircle
+                                width={22}
+                                height={22}
+                                strokeWidth={2}
+                                className="animate-spin"
+                            />
+                        ) : (
+                            <ChevronLeft width={25} height={25} strokeWidth={2} />
+                        )}
                     </button>
                 </div>
             )}

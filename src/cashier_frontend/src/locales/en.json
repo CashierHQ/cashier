@@ -17,7 +17,10 @@
         "defaultTemplate": "Default template",
         "asset": "Asset",
         "linkType": "Link type",
-        "preview": "Preview"
+        "preview": "Preview",
+        "add_another_asset": "Add another asset",
+        "amount_error": "Amount Error",
+        "amount_error_message": "Amount must be greater than 0"
     },
     "details": {
         "linkInfo": "Link info",
@@ -32,7 +35,8 @@
         "asset": "Asset",
         "addressPlaceholder": "Type in address",
         "receive_options": "Receive options",
-        "receive": "Receive"
+        "receive": "Receive",
+        "payment": "Payment"
     },
     "continue": "Continue",
     "submit": "Submit",

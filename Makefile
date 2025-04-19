@@ -30,6 +30,7 @@ g:
 	rm src/declarations/token_storage/index.d.ts
 	rm src/declarations/token_storage/index.js
 
+
 predeploy:
 	make build-backend
 

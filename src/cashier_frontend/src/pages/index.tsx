@@ -10,13 +10,10 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
-import { useUpdateLink } from "@/hooks/linkHooks";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { TestForm } from "@/components/test-form/test-form";
 import useToast from "@/hooks/useToast";
-import { useUserAssets } from "@/components/link-details/tip-link-asset-form.hooks";
 import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useTokens } from "@/hooks/useTokens";
@@ -39,13 +36,10 @@ export default function HomePage() {
         enabled: !!identity,
         refetchOnWindowFocus: false,
     });
-    useUserAssets();
-    const { isPending } = useUpdateLink();
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [disableCreateButton, setDisableCreateButton] = useState(false);
-    const [openTestForm, setOpenTestForm] = useState(false);
     const { toastData, showToast, hideToast } = useToast();
     const navigate = useNavigate();
     const responsive = useResponsive();
@@ -105,10 +99,9 @@ export default function HomePage() {
                             const processedAssets = link.asset_info
                                 ? link.asset_info.map((asset) => ({
                                       address: asset.address,
-                                      amount: asset.amount,
-                                      totalClaim: asset.totalClaim ?? asset.amount,
-                                      usdEquivalent: 0,
-                                      usdConversionRate: 0,
+                                      linkUseAmount: asset.amountPerUse,
+                                      chain: asset.chain!,
+                                      label: asset.label!,
                                   }))
                                 : [];
 
@@ -134,12 +127,12 @@ export default function HomePage() {
     }, [identity]);
 
     useEffect(() => {
-        if (isLinksLoading || isPending) {
+        if (isLinksLoading) {
             setIsLoading(true);
         } else {
             setIsLoading(false);
         }
-    }, [isLinksLoading, isPending]);
+    }, [isLinksLoading]);
 
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {
@@ -251,90 +244,84 @@ export default function HomePage() {
             </div>
         );
     } else {
-        if (openTestForm) {
-            return <TestForm onCancel={() => setOpenTestForm(false)} />;
-        } else {
-            return (
-                <div
-                    className={`w-screen flex justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
-                >
-                    <SheetWrapper>
-                        <div className="flex w-full flex-col h-full">
-                            <Header />
+        return (
+            <div
+                className={`w-screen flex justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
+            >
+                <SheetWrapper>
+                    <div className="flex w-full flex-col h-full">
+                        <Header />
+                        <div
+                            className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 pt-9 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
+                        >
+                            {showGuide && (
+                                <div className="mt-8 px-4">
+                                    <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
+                                    <p className="text-sm text-gray-500 mt-3">
+                                        {t("home.guide.body")}
+                                    </p>
+                                    <button
+                                        className="text-green text-sm font-bold mt-3"
+                                        onClick={handleHideGuide}
+                                    >
+                                        {t("home.guide.confirm")}
+                                    </button>
+                                </div>
+                            )}
                             <div
-                                className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 pt-9 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
+                                className={`flex flex-col px-4 w-full ${
+                                    showGuide ? "h-[calc(100dvh-280px)]" : "h-full"
+                                }`}
                             >
-                                {showGuide && (
-                                    <div className="mt-8 px-4">
-                                        <h1 className="text-2xl font-bold">
-                                            {t("home.guide.header")}
-                                        </h1>
-                                        <p className="text-sm text-gray-500 mt-3">
-                                            {t("home.guide.body")}
-                                        </p>
-                                        <button
-                                            className="text-green text-sm font-bold mt-3"
-                                            onClick={handleHideGuide}
-                                        >
-                                            {t("home.guide.confirm")}
-                                        </button>
-                                    </div>
-                                )}
-                                <div
-                                    className={`flex flex-col px-4 w-full ${
-                                        showGuide ? "h-[calc(100dvh-280px)]" : "h-full"
+                                <h2
+                                    className={`text-base font-semibold ${
+                                        showGuide || !responsive.isSmallDevice ? "mt-7" : "mt-0"
                                     }`}
                                 >
-                                    <h2
-                                        className={`text-base font-semibold ${
-                                            showGuide || !responsive.isSmallDevice ? "mt-7" : "mt-0"
-                                        }`}
-                                    >
-                                        Links created by me
-                                    </h2>
-                                    <div
-                                        className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-full" : "h-full"}`}
-                                    >
-                                        {isLoading
-                                            ? Array.from({ length: 5 }).map((_, index) => (
-                                                  <div
-                                                      className="flex items-center space-x-4 my-3"
-                                                      key={index}
-                                                  >
-                                                      <Skeleton className="h-10 w-10 rounded-sm" />
-                                                      <div className="space-y-2">
-                                                          <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                                                          <Skeleton className="h-3 w-[200px]" />
-                                                      </div>
+                                    Links created by me
+                                </h2>
+                                <div
+                                    className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-full" : "h-full"}`}
+                                >
+                                    {isLoading
+                                        ? Array.from({ length: 5 }).map((_, index) => (
+                                              <div
+                                                  className="flex items-center space-x-4 my-3"
+                                                  key={index}
+                                              >
+                                                  <Skeleton className="h-10 w-10 rounded-sm" />
+                                                  <div className="space-y-2">
+                                                      <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                                                      <Skeleton className="h-3 w-[200px]" />
                                                   </div>
-                                              ))
-                                            : renderLinkList(linkData)}
-                                    </div>
+                                              </div>
+                                          ))
+                                        : renderLinkList(linkData)}
                                 </div>
                             </div>
                         </div>
-                        <button
-                            className={`fixed flex items-center justify-center bottom-[30px] right-[30px] text-[2rem] rounded-full w-[3rem] h-[3rem] border-2 border-white ${
-                                disableCreateButton
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-green hover:bg-green/90"
-                            } text-white`}
-                            onClick={handleCreateLink}
-                            disabled={disableCreateButton}
-                        >
-                            <Plus strokeWidth={3} />
-                        </button>
-                        <TransactionToast
-                            open={toastData?.open ?? false}
-                            onOpenChange={hideToast}
-                            title={toastData?.title ?? ""}
-                            description={toastData?.description ?? ""}
-                            variant={toastData?.variant ?? "default"}
-                            duration={2000}
-                        />
-                    </SheetWrapper>
-                </div>
-            );
-        }
+                    </div>
+                    <button
+                        className={`fixed flex items-center justify-center bottom-[30px] right-[30px] text-[2rem] rounded-full w-[3rem] h-[3rem] border-2 border-white ${
+                            disableCreateButton
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-green hover:bg-green/90"
+                        } text-white`}
+                        onClick={handleCreateLink}
+                        disabled={disableCreateButton}
+                    >
+                        <Plus strokeWidth={3} />
+                    </button>
+                    <TransactionToast
+                        open={toastData?.open ?? false}
+                        onOpenChange={hideToast}
+                        title={toastData?.title ?? ""}
+                        description={toastData?.description ?? ""}
+                        variant={toastData?.variant ?? "default"}
+                        duration={2000}
+                    />
+                </SheetWrapper>
+            </div>
+        );
     }
 }

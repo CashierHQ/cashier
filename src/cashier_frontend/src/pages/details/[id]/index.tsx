@@ -8,30 +8,25 @@ import useToast from "@/hooks/useToast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
-import LinkService from "@/services/link.service";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import QRCode from "react-qr-code";
-import { LinkModel } from "@/services/types/link.service.types";
-import useTokenMetadata from "@/hooks/tokenUtilsHooks";
-import { ACTION_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, getLinkTypeString } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
-import { TokenUtilService } from "@/services/tokenUtils.service";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { Label } from "@/components/ui/label";
 import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
-import { useCreateAction, useUpdateLink } from "@/hooks/linkHooks";
 import { getLinkAssetAmounts, getLinkIsClaimed } from "@/utils/helpers/link";
 import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
-import { useLinkActionStore } from "@/stores/linkActionStore";
+import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useTokens } from "@/hooks/useTokens";
 
 export default function DetailPage() {
-    const [linkData, setLinkData] = React.useState<LinkModel | undefined>();
     const { linkId } = useParams();
     const identity = useIdentity();
     const navigate = useNavigate();
@@ -39,18 +34,22 @@ export default function DetailPage() {
     const { renderSkeleton } = useSkeletonLoading();
     const responsive = useResponsive();
 
-    const { mutateAsync: createAction } = useCreateAction(ACTION_TYPE.WITHDRAW_LINK);
+    const {
+        link,
+        isLoading,
+        setAction,
+        createAction,
+        callLinkStateMachine,
+        isUpdating,
+        refetchLinkDetail,
+    } = useLinkAction(linkId, ACTION_TYPE.WITHDRAW_LINK);
 
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
 
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
-    const { setLink, setAction } = useLinkActionStore();
 
-    const {} = useLinkActionStore();
-
-    // Add styles to document
     React.useEffect(() => {
         const driver = initializeDriver();
         setDriverObj(driver);
@@ -58,8 +57,6 @@ export default function DetailPage() {
         const styleTag = document.createElement("style");
         styleTag.innerHTML = customDriverStyles;
         document.head.appendChild(styleTag);
-
-        console.log("linkData", linkData);
 
         return () => {
             document.head.removeChild(styleTag);
@@ -79,20 +76,24 @@ export default function DetailPage() {
 
     React.useEffect(() => {
         const fetchAssetAmounts = async () => {
-            if (linkData) {
-                const assetAmounts = await getLinkAssetAmounts(linkData.link);
+            if (link) {
+                const assetAmounts = await getLinkAssetAmounts(link);
                 setAssetAmounts(assetAmounts);
             }
         };
         const fetchLinkIsClaimed = async () => {
-            if (linkData) {
-                const linkIsClaimed = await getLinkIsClaimed(linkData.link);
+            if (link) {
+                const linkIsClaimed = await getLinkIsClaimed(link);
                 setLinkIsClaimed(linkIsClaimed);
             }
         };
         fetchAssetAmounts();
         fetchLinkIsClaimed();
-    }, [linkData]);
+    }, [link]);
+
+    React.useEffect(() => {
+        console.log("assetAmounts", assetAmounts);
+    }, [assetAmounts]);
 
     React.useEffect(() => {
         if (showOverlay && driverObj && document.getElementById("copy-link-button")) {
@@ -105,14 +106,10 @@ export default function DetailPage() {
                 },
             });
         }
-    }, [showOverlay, driverObj, linkData]);
+    }, [showOverlay, driverObj, link]);
 
-    //TODO: Update to apply asset_info as the list of assets
-    const { metadata } = useTokenMetadata(linkData?.link.asset_info[0].address);
     const { t } = useTranslation();
-
-    const { mutateAsync: updateLink, isPending } = useUpdateLink();
-
+    const { getToken } = useTokens();
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
@@ -129,40 +126,26 @@ export default function DetailPage() {
         if (!linkId) return;
         if (!identity) return;
 
-        // Check if this link has been viewed before
         const viewedLinks = JSON.parse(localStorage.getItem("viewedLinks") || "[]");
         const hasBeenViewed = viewedLinks.includes(linkId);
 
-        // Only show overlay for links that haven't been viewed before
         setShowOverlay(!hasBeenViewed);
 
-        // If this is a new link, add it to viewed links in localStorage
         if (!hasBeenViewed) {
             const updatedViewedLinks = [...viewedLinks, linkId];
             localStorage.setItem("viewedLinks", JSON.stringify(updatedViewedLinks));
         }
-
-        const fetchData = async () => {
-            const link = await new LinkService(identity).getLink(linkId, ACTION_TYPE.WITHDRAW_LINK);
-            setLinkData(link);
-        };
-        fetchData();
     }, [linkId, identity]);
 
     const setInactiveLink = async () => {
         try {
-            if (!linkData) throw new Error("Link data is not available");
-            const inactiveLink = await updateLink({
-                linkId: linkData.link.id,
-                linkModel: linkData.link,
+            if (!link) throw new Error("Link data is not available");
+            await callLinkStateMachine({
+                linkId: link.id,
+                linkModel: {},
                 isContinue: true,
             });
-            console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
-            const link = await new LinkService(identity).getLink(
-                linkData!.link.id,
-                ACTION_TYPE.WITHDRAW_LINK,
-            );
-            setLinkData(link);
+            await refetchLinkDetail();
             setShowEndLinkDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
@@ -171,18 +154,13 @@ export default function DetailPage() {
 
     const setInactiveEndedLink = async () => {
         try {
-            if (!linkData) throw new Error("Link data is not available");
-            const inactiveLink = await updateLink({
-                linkId: linkData.link.id,
-                linkModel: linkData.link,
+            if (!link) throw new Error("Link data is not available");
+            await callLinkStateMachine({
+                linkId: link.id,
+                linkModel: {},
                 isContinue: true,
             });
-            console.log("🚀 ~ setInactiveLink ~ inactiveLink:", inactiveLink);
-            const link = await new LinkService(identity).getLink(
-                linkData!.link.id,
-                ACTION_TYPE.WITHDRAW_LINK,
-            );
-            setLinkData(link);
+            await refetchLinkDetail();
             setShowConfirmationDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
@@ -191,9 +169,8 @@ export default function DetailPage() {
 
     const handleWithdrawAssets = async () => {
         try {
-            const actionResult = await createAction({ linkId: linkData!.link.id });
-            console.log("🚀 ~ handleWithdrawAssets ~ actionResult:", actionResult);
-            setLink(linkData?.link);
+            if (!link) throw new Error("Link data is not available");
+            const actionResult = await createAction(link.id, ACTION_TYPE.WITHDRAW_LINK);
             setAction(actionResult);
         } catch (error) {
             console.error("Error creating withdraw action:", error);
@@ -207,7 +184,6 @@ export default function DetailPage() {
 
     const handleActionResult = (actionResult: ActionModel) => {
         setAction(actionResult);
-        setLinkData(linkData);
     };
 
     return (
@@ -219,7 +195,7 @@ export default function DetailPage() {
         >
             <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
                 <div className="w-full flex flex-grow flex-col">
-                    {!linkData ? (
+                    {isLoading || !link ? (
                         renderSkeleton()
                     ) : (
                         <>
@@ -233,7 +209,7 @@ export default function DetailPage() {
                                     <ChevronLeftIcon width={26} height={26} />
                                 </div>
                                 <h4 className="scroll-m-20 text-xl font-semibold tracking-tight mx-auto flex-grow text-center">
-                                    {linkData?.link?.title}
+                                    {link?.title}
                                 </h4>
                             </div>
                             <div
@@ -242,7 +218,7 @@ export default function DetailPage() {
                                 <div
                                     className={`flex items-center justify-center ${responsive.isSmallDevice ? "" : "hidden"}`}
                                 >
-                                    <StateBadge state={linkData?.link?.state} />
+                                    <StateBadge state={link?.state} />
                                 </div>
                                 <div
                                     className={`flex items-center justify-center ${responsive.isSmallDevice ? " my-3" : "order-1"}`}
@@ -257,7 +233,7 @@ export default function DetailPage() {
                                     className={`${responsive.isSmallDevice ? "" : "order-2 flex flex-col items-start justify-between w-full"}`}
                                 >
                                     <div className={`${responsive.isSmallDevice ? "hidden" : ""}`}>
-                                        <StateBadge state={linkData?.link?.state} />
+                                        <StateBadge state={link?.state} />
                                     </div>
                                     <SocialButtons handleCopyLink={handleCopyLink} />
                                 </div>
@@ -272,47 +248,61 @@ export default function DetailPage() {
                             >
                                 <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
                                     <p className="font-medium text-sm">Link Type</p>
-                                    <p className="text-sm text-primary/80">Tip Link</p>
+                                    <p className="text-sm text-primary/80">
+                                        {getLinkTypeString(link.linkType!)}
+                                    </p>
                                 </div>
                                 <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
                                     <p className="font-medium text-sm">Chain</p>
                                     <p className="text-sm text-primary/80">ICP</p>
                                 </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
-                                    <p className="font-medium text-sm">Token</p>
-                                    <p className="text-sm text-primary/80">
-                                        {metadata?.name === "CUTE" ? "tCHAT" : metadata?.name}
-                                    </p>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-2.5">
-                                    <p className="font-medium text-sm">Asset left/added</p>
-                                    <div className="flex items-center gap-1">
-                                        <p className="text-sm text-primary/80">
-                                            {assetAmounts && assetAmounts.length
-                                                ? TokenUtilService.getHumanReadableAmountFromMetadata(
-                                                      assetAmounts[0].pendingAmount,
-                                                      metadata,
-                                                  )
-                                                : "-"}
-                                            /
-                                            {TokenUtilService.getHumanReadableAmountFromMetadata(
-                                                linkData?.link?.asset_info[0].amount,
-                                                metadata,
-                                            )}
-                                        </p>
-                                        {metadata && metadata.icon && (
-                                            <img
-                                                src={metadata?.icon}
-                                                alt="token-icon"
-                                                className="w-4 h-4"
-                                            />
-                                        )}
-                                    </div>
-                                </div>
+                                {assetAmounts.length > 0 &&
+                                    link.asset_info.map((asset) => {
+                                        const token = getToken(asset.address);
+                                        if (!token) return null;
+
+                                        const assetAmount = assetAmounts.find(
+                                            (amount) => amount.address === asset.address,
+                                        );
+
+                                        if (!assetAmount) return null;
+
+                                        return (
+                                            <div
+                                                key={asset.address}
+                                                className="flex flex-row items-center justify-between border-lightgreen px-5 py-2.5"
+                                            >
+                                                <p className="font-medium text-sm">
+                                                    Asset left/added
+                                                </p>
+                                                <div className="flex items-center gap-1">
+                                                    <p className="text-sm text-primary/80">
+                                                        {assetAmount.totalAmount
+                                                            ? Number(assetAmount.totalAmount) /
+                                                              Math.pow(10, token.decimals)
+                                                            : "-"}
+                                                        /
+                                                        {asset.amountPerUse
+                                                            ? Number(asset.amountPerUse) /
+                                                              Math.pow(10, token.decimals)
+                                                            : "-"}
+                                                    </p>
+                                                    <img
+                                                        src={token.logo}
+                                                        alt="token-icon"
+                                                        className="w-4 h-4"
+                                                    />
+                                                    <p className="text-sm text-primary/80">
+                                                        {token.symbol}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                             </div>
 
                             <div className="flex flex-col items-center gap-4 mt-auto">
-                                {linkData?.link?.state == LINK_STATE.ACTIVE && (
+                                {link?.state == LINK_STATE.ACTIVE && (
                                     <button
                                         onClick={() => {
                                             setShowEndLinkDrawer(true);
@@ -322,7 +312,7 @@ export default function DetailPage() {
                                         End Link
                                     </button>
                                 )}
-                                {linkData?.link?.state == LINK_STATE.ACTIVE && (
+                                {link?.state == LINK_STATE.ACTIVE && (
                                     <Button
                                         id="copy-link-button"
                                         onClick={handleCopyLink}
@@ -332,7 +322,7 @@ export default function DetailPage() {
                                         {t("details.copyLink")}
                                     </Button>
                                 )}{" "}
-                                {linkData?.link?.state == LINK_STATE.INACTIVE && (
+                                {link?.state == LINK_STATE.INACTIVE && (
                                     <Button
                                         id="copy-link-button"
                                         disabled={linkIsClaimed}
@@ -366,7 +356,7 @@ export default function DetailPage() {
                 onDelete={() => {
                     setInactiveLink();
                 }}
-                isEnding={isPending}
+                isEnding={isUpdating}
             />
 
             <ConfirmationDrawer
