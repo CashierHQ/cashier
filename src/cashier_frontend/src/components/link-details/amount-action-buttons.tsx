@@ -20,9 +20,7 @@ export function AmountActionButtons({ data, isDisabled }: AmountActionButtons) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={`!w-fit input-field shadow-xs !text-[10px] !text-primary ${
-                        isDisabled ? "!opacity-50" : ""
-                    }`}
+                    className="asset-amount-percentage-button"
                     onClick={action}
                     disabled={isDisabled}
                 >
