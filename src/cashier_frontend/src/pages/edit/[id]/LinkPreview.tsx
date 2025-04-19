@@ -16,12 +16,7 @@ import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
-import { useTokenStore } from "@/stores/tokenStore";
-import { formatPrice } from "@/utils/helpers/currency";
-import { useFeeTotal } from "@/hooks/useFeeMetadata";
-import { NETWORK_FEE_DEFAULT_ADDRESS, NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
-import { convert } from "@/utils/helpers/convert";
+
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
     onCashierError?: (error: Error) => void;
@@ -38,8 +33,7 @@ export default function LinkPreview({
     const responsive = useResponsive();
 
     const { link, action, setAction, setLink } = useLinkActionStore();
-    const linkCreationFormStore = useLinkCreationFormStore();
-    const tokenStore = useTokenStore();
+
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
@@ -47,8 +41,6 @@ export default function LinkPreview({
     const { mutateAsync: setLinkActive } = useSetLinkActive();
 
     const { data: feeData } = useFeePreview(link?.id);
-
-    const currentLink = linkCreationFormStore.getUserInput(link?.id ?? "");
 
     const handleCreateAction = async () => {
         const updatedAction = await createAction({
@@ -111,92 +103,17 @@ export default function LinkPreview({
         <div
             className={`w-full flex flex-col h-full ${responsive.isSmallDevice ? "justify-between" : "gap-4"}`}
         >
-            <div className="input-label-field-container">
-                <Label>Link info</Label>
-                <div className="flex justify-between items-center light-borders px-4 py-3">
-                    <p className="text-[14px] font-normal">Type</p>
-                    <p className="text-[14px] font-medium">
-                        {link?.linkType?.replace(/([A-Z])/g, " $1").trim()}
-                    </p>
+            <div className="flex flex-col">
+                <div className="flex justify-between items-center mb-2">
+                    <Label>{t("create.preview")}</Label>
                 </div>
+                {renderLinkCard()}
             </div>
 
-            <div className="input-label-field-container mt-4">
-                <Label>Assets to transfer to link</Label>
-                <div className="light-borders px-4 py-3 flex flex-col gap-3">
-                    {currentLink &&
-                        currentLink.assets &&
-                        currentLink?.assets?.map((asset, index) => (
-                            <div key={index} className="flex justify-between items-start">
-                                <p className="text-[14px] font-normal">Token</p>
-                                <div className="flex flex-col items-end">
-                                    <div className="flex items-center">
-                                        <p className="text-[14px] font-normal">
-                                            {Number(asset.amount) /
-                                                10 **
-                                                    (tokenStore.getToken(asset.address)?.decimals ??
-                                                        8)}{" "}
-                                            {tokenStore.getToken(asset.address)?.symbol}
-                                        </p>
-                                        <img
-                                            src={getTokenImage(asset.address)}
-                                            alt={asset.address}
-                                            className="w-5 translate-x-1 rounded-full h-5"
-                                        />
-                                    </div>
-                                    <p className="text-[11px] font-normal text-grey/60">
-                                        ≈$
-                                        {formatPrice(
-                                            (
-                                                (Number(asset.amount) / 10 ** 8) *
-                                                (tokenStore.getTokenPrice(asset.address) || 0)
-                                            ).toString(),
-                                        )}
-                                        {/* {tokenStore.getTokenPrice(asset.address)} */}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                </div>
-            </div>
-
-            <div className="mt-4 input-label-field-container">
-                <Label>Cashier Fees</Label>
-                <div className="bg-lightgreen rounded-[8px] px-4 py-3 flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                        <p className="text-[14px] font-normal">Link creation</p>
-                        <div className="flex flex-col items-end">
-                            <div className="flex items-center">
-                                <p className="text-[14px] font-normal">
-                                    {formatPrice((useFeeTotal(feeData ?? []) || 0).toString())}{" "}
-                                    {NETWORK_FEE_DEFAULT_SYMBOL}
-                                </p>
-                                <img
-                                    src={getTokenImage(NETWORK_FEE_DEFAULT_ADDRESS)}
-                                    alt={NETWORK_FEE_DEFAULT_SYMBOL}
-                                    className="w-5 translate-x-1 rounded-full h-5"
-                                />
-                            </div>
-                            <p className="text-[11px] font-normal text-grey/60">
-                                ≈$
-                                {formatPrice(
-                                    (
-                                        convert(
-                                            useFeeTotal(feeData ?? []),
-                                            tokenStore.getTokenPrice(NETWORK_FEE_DEFAULT_ADDRESS) ||
-                                                0,
-                                        ) || 0
-                                    ).toString(),
-                                )}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {/* <LinkPreviewCashierFeeSection
+            <LinkPreviewCashierFeeSection
                 intents={feeData ?? []}
                 onInfoClick={() => setShowInfo(true)}
-            /> */}
+            />
 
             <FixedBottomButton
                 type="submit"

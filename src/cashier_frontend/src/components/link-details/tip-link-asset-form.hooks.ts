@@ -12,17 +12,8 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
 import { useTokenStore } from "@/stores/tokenStore";
 
-// Interface for multi-asset support
-export interface MultiAsset {
-    tokenAddress: string;
-    amount: bigint;
-}
-
 // Combined type for the form that includes both core data and UI fields
-export type TipLinkAssetFormSchema = LinkDetailsFormSchema &
-    LinkDetailsFormUI & {
-        multiAssets?: MultiAsset[];
-    };
+export type TipLinkAssetFormSchema = LinkDetailsFormSchema & LinkDetailsFormUI;
 
 export function useTipLinkAssetForm(
     assets: FungibleToken[],
