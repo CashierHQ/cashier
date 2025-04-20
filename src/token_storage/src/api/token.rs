@@ -320,29 +320,6 @@ pub fn update_bulk_balances(token_balances: Vec<(String, u128)>) -> Result<(), S
     Ok(())
 }
 
-#[query]
-pub fn default_list_tokens() -> Result<Vec<TokenDto>, String> {
-    let registry = TokenRegistryRepository::new();
-    let tokens = registry.list_default_tokens();
-
-    let result = tokens
-        .into_iter()
-        .map(|token| TokenDto {
-            id: token.id,
-            icrc_ledger_id: token.icrc_ledger_id,
-            icrc_index_id: token.icrc_index_id,
-            symbol: token.symbol,
-            name: token.name,
-            decimals: token.decimals,
-            chain: token.chain.to_str(),
-            enabled: true,
-            balance: None,
-        })
-        .collect();
-
-    Ok(result)
-}
-
 // Init and first login helper
 #[update]
 pub fn initialize_user_tokens() -> Result<(), String> {

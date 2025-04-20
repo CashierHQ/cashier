@@ -1,7 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { NavigationMenu, NavigationMenuLink } from "@/components/ui/navigation-menu";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { FungibleToken } from "@/types/fungible-token.speculative";
@@ -30,15 +29,6 @@ interface AssetItemProps {
 }
 
 const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
-    //TODO: Remove after mid milestone
-    const getTokenAvatar = (tokenAddress: string) => {
-        if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
-            return `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`;
-        } else if (tokenAddress === "k64dn-7aaaa-aaaam-qcdaq-cai") {
-            return `${IC_EXPLORER_IMAGES_PATH}2ouva-viaaa-aaaaq-aaamq-cai`;
-        } else return `${IC_EXPLORER_IMAGES_PATH}${tokenAddress}`;
-    };
-
     const getTokenName = (name: string) => {
         return name;
     };
@@ -55,7 +45,7 @@ const ListItem: React.FC<AssetItemProps> = ({ asset, onSelected }) => {
                 >
                     <div className="flex items-center">
                         <Avatar className="mr-3">
-                            <AvatarImage src={getTokenAvatar(asset.address)} />
+                            <AvatarImage src={asset.logo} />
                             <AvatarFallback>{getTokenName(asset.name)}</AvatarFallback>
                         </Avatar>
                         <div id="asset-info" className="text-md text-left">

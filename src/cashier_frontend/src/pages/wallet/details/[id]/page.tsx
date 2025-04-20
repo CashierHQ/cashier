@@ -6,7 +6,6 @@ import { TokenDetailsHero } from "@/components/token-details/hero";
 import { TransactionHistory } from "@/components/token-details/transaction-history";
 import { MOCK_TX_DATA } from "@/constants/mock-data"; // Still using mock transaction data
 import { useTokens } from "@/hooks/useTokens";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 export default function TokenDetailsPage() {
     const navigate = useNavigate();
@@ -24,12 +23,6 @@ export default function TokenDetailsPage() {
 
         return filteredTokenList.find((token) => token.address === tokenId);
     }, [tokenId, filteredTokenList, isLoadingBalances]);
-
-    // Get token logo URL
-    const tokenLogo = useMemo(() => {
-        if (!tokenId) return undefined;
-        return `${IC_EXPLORER_IMAGES_PATH}${tokenId}`;
-    }, [tokenId]);
 
     // Show loading state while token data is being fetched
     if (isLoadingBalances) {
@@ -51,7 +44,7 @@ export default function TokenDetailsPage() {
                 {selectedToken && (
                     <AssetAvatar
                         className="w-10 h-10"
-                        src={tokenLogo || selectedToken.logo}
+                        src={selectedToken.logo}
                         symbol={selectedToken.symbol}
                     />
                 )}

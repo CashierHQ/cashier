@@ -1,7 +1,7 @@
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useFeePreview } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
@@ -17,11 +17,23 @@ import { NETWORK_FEE_DEFAULT_ADDRESS, NETWORK_FEE_DEFAULT_SYMBOL } from "@/const
 import { convert } from "@/utils/helpers/convert";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
-import { ACTION_TYPE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, CHAIN, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
+
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
+}
+
+// Define interface for asset info with logo
+interface EnhancedAsset {
+    address: string;
+    amountPerUse: string | number | bigint;
+    logo: string;
+    label?: string;
+    chain?: CHAIN; // Using the proper CHAIN enum type from imports
+    [key: string]: unknown; // For any additional properties that might exist
 }
 
 export default function LinkPreview({
@@ -39,6 +51,27 @@ export default function LinkPreview({
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
+    const { rawTokenList, getTokenMap } = useTokens();
+
+    // State for enhanced asset info with logos
+    const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
+
+    // Effect to map rawTokenList logos to asset_info
+    useEffect(() => {
+        const tokenMap = getTokenMap();
+        if (link?.asset_info && tokenMap) {
+            const enhanced = link.asset_info.map((asset) => {
+                console.log("asset_info", link?.asset_info);
+                const matchingToken = tokenMap[asset.address];
+                console.log("matchingToken", matchingToken);
+                return {
+                    ...asset,
+                    logo: matchingToken?.logo || getTokenImage(asset.address),
+                };
+            });
+            setEnhancedAssets(enhanced);
+        }
+    }, [link?.asset_info, rawTokenList]);
 
     const { data: feeData } = useFeePreview(link?.id);
 
@@ -116,41 +149,41 @@ export default function LinkPreview({
                 <div className="input-label-field-container mt-4">
                     <Label>Assets to transfer to link</Label>
                     <div className="light-borders px-4 py-3 flex flex-col gap-3">
-                        {link &&
-                            link.asset_info &&
-                            link?.asset_info?.map((asset, index) => {
-                                // Calculate token amount with proper decimals
-                                const tokenDecimals = getToken(asset.address)?.decimals ?? 8;
-                                const totalTokenAmount =
-                                    (Number(asset.amountPerUse) * Number(link.maxActionNumber)) /
-                                    10 ** tokenDecimals;
-                                const tokenSymbol = getToken(asset.address)?.symbol;
+                        {enhancedAssets.map((asset, index) => {
+                            // Calculate token amount with proper decimals
+                            const tokenDecimals = getToken(asset.address)?.decimals ?? 8;
+                            const totalTokenAmount =
+                                (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
+                                10 ** tokenDecimals;
+                            const tokenSymbol = getToken(asset.address)?.symbol;
 
-                                // Calculate approximate USD value
-                                const tokenPrice = getTokenPrice(asset.address) || 0;
-                                const approximateUsdValue = totalTokenAmount * tokenPrice;
+                            // Calculate approximate USD value
+                            const tokenPrice = getTokenPrice(asset.address) || 0;
+                            const approximateUsdValue = totalTokenAmount * tokenPrice;
 
-                                return (
-                                    <div key={index} className="flex justify-between items-start">
-                                        <p className="text-[14px] font-normal">Token</p>
-                                        <div className="flex flex-col items-end">
-                                            <div className="flex items-center">
-                                                <p className="text-[14px] font-normal">
-                                                    {totalTokenAmount} {tokenSymbol}
-                                                </p>
-                                                <img
-                                                    src={getTokenImage(asset.address)}
-                                                    alt={asset.address}
-                                                    className="w-5 translate-x-1 rounded-full h-5"
-                                                />
-                                            </div>
-                                            <p className="text-[11px] font-normal text-grey/60">
-                                                ≈${formatPrice(approximateUsdValue.toString())}
+                            return (
+                                <div key={index} className="flex justify-between items-start">
+                                    <p className="text-[14px] font-normal">Token</p>
+                                    <div className="flex flex-col items-end">
+                                        <div className="flex items-center gap-1">
+                                            <p className="text-[14px] font-normal">
+                                                {totalTokenAmount} {tokenSymbol}
                                             </p>
+                                            <Avatar className="w-5 h-5 rounded-full overflow-hidden">
+                                                <AvatarImage
+                                                    src={asset.logo}
+                                                    alt={tokenSymbol || asset.address}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </Avatar>
                                         </div>
+                                        <p className="text-[11px] font-normal text-grey/60">
+                                            ≈${formatPrice(approximateUsdValue.toString())}
+                                        </p>
                                     </div>
-                                );
-                            })}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -187,10 +220,6 @@ export default function LinkPreview({
                     </div>
                 </div>
             </div>
-            {/* <LinkPreviewCashierFeeSection
-                intents={feeData ?? []}
-                onInfoClick={() => setShowInfo(true)}
-            /> */}
 
             <FixedBottomButton
                 type="submit"
@@ -202,10 +231,6 @@ export default function LinkPreview({
             >
                 {isDisabled ? t("processing") : t("create.create")}
             </FixedBottomButton>
-
-            {/* <Button disabled={isDisabled} onClick={handleSubmit} className="my-3">
-                {isDisabled ? t("processing") : t("create.create")}
-            </Button> */}
 
             <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 

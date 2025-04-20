@@ -13,7 +13,10 @@ import {
     mapTokenDtoToTokenModel,
 } from "@/types/token-store.type";
 import TokenStorageService from "@/services/backend/tokenStorage.service";
-import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
+import {
+    AddTokenInput,
+    RegistryTokenDto,
+} from "../../../declarations/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import TokenCacheService from "@/services/backend/tokenCache.service";
@@ -49,12 +52,19 @@ export function useTokenListQuery(identity: Identity | undefined) {
         queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
         queryFn: async () => {
             const tokenService = new TokenStorageService(identity);
-            const tokens = await tokenService.listTokens();
+            let tokens: RegistryTokenDto[] = [];
+            if (!identity) {
+                tokens = await tokenService.listRegistryTokens();
+            } else {
+                tokens = await tokenService.listTokens();
+            }
+
+            console.log("identity", identity);
 
             // Initialize user tokens if none exist
-            if (tokens.length === 0) {
+            if (tokens.length === 0 && identity) {
                 await tokenService.initializeUserTokens();
-                return tokenService.listTokens();
+                return await tokenService.listTokens();
             }
 
             return tokens;
@@ -96,6 +106,7 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
                             metadataMap[token.address] = {
                                 fee: metadata.fee,
                                 logo: metadata.icon,
+                                decimals: metadata.decimals,
                             };
                         }
                         return { tokenId: token.address, metadata };
@@ -107,6 +118,8 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
 
                 await Promise.all(batchPromises);
             }
+
+            console.log("Fetched token metadata:", metadataMap);
 
             return metadataMap;
         },

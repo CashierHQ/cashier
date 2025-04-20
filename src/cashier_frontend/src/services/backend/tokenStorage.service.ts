@@ -29,14 +29,6 @@ class TokenStorageService {
     }
 
     /**
-     * Lists default tokens from the registry
-     */
-    async defaultListTokens(): Promise<TokenDto[]> {
-        const response = parseResultResponse(await this.actor.default_list_tokens());
-        return response;
-    }
-
-    /**
      * Lists user's tokens
      */
     async listTokens(): Promise<TokenDto[]> {

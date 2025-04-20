@@ -6,7 +6,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { FungibleToken } from "@/types/fungible-token.speculative";
@@ -38,10 +37,7 @@ export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
                     {selectedToken && (
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
-                                <AvatarImage
-                                    src={`${IC_EXPLORER_IMAGES_PATH}${selectedToken.address!.toLowerCase()}`}
-                                    alt={selectedToken.name}
-                                />
+                                <AvatarImage src={selectedToken.logo} alt={selectedToken.name} />
                                 <AvatarFallback>
                                     {selectedToken.name!.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
@@ -56,10 +52,7 @@ export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
                     <SelectItem key={token.id} value={token.id} className="">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
-                                <AvatarImage
-                                    src={`${IC_EXPLORER_IMAGES_PATH}${token.address.toLowerCase()}`}
-                                    alt={token.name}
-                                />
+                                <AvatarImage src={token.logo} alt={token.name} />
                                 <AvatarFallback>
                                     {token.name.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
