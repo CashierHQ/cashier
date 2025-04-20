@@ -29,7 +29,7 @@ interface TokenState {
     setFilteredTokens: (tokens: FungibleToken[]) => void;
     setFilters: (filters: TokenFilters) => void;
     setIsLoading: (isLoading: boolean) => void;
-    setIsLoadingBalances: (isLoading: boolean) => void;
+    setIsLoadingBalances: (isLoadingBalances: boolean) => void;
     setIsLoadingPrices: (isLoadingPrices: boolean) => void;
     setIsSyncPreferences: (isSyncPreferences: boolean) => void;
     setIsImporting: (isImporting: boolean) => void;
@@ -38,6 +38,9 @@ interface TokenState {
     // Getters
     getToken(tokenAddress: string): FungibleToken | undefined;
     getTokenPrice(tokenAddress: string): number | undefined;
+
+    // Create a map of tokens by address
+    getTokenMap(): Record<string, FungibleToken>;
 
     // Filter operations
     applyFilters: () => void;
@@ -105,6 +108,18 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         const { rawTokenList } = get();
         const token = rawTokenList.find((token) => token.address === tokenAddress);
         return token?.usdConversionRate;
+    },
+
+    // Create a map of tokens by address
+    getTokenMap: () => {
+        const { rawTokenList } = get();
+        return rawTokenList.reduce(
+            (map, token) => {
+                map[token.address] = token;
+                return map;
+            },
+            {} as Record<string, FungibleToken>,
+        );
     },
 
     // Filter operations

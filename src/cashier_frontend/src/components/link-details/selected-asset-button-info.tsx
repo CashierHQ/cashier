@@ -1,6 +1,5 @@
 import { FC } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 
@@ -13,15 +12,6 @@ export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({ sele
         return null;
     }
 
-    //TODO: Remove after mid milestone
-    const getTokenAvatar = (tokenAddress: string) => {
-        if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
-            return `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`;
-        } else if (tokenAddress === "k64dn-7aaaa-aaaam-qcdaq-cai") {
-            return `${IC_EXPLORER_IMAGES_PATH}2ouva-viaaa-aaaaq-aaamq-cai`;
-        } else return `${IC_EXPLORER_IMAGES_PATH}${tokenAddress}`;
-    };
-
     const amount = TokenUtilService.getHumanReadableAmountFromToken(
         selectedToken.amount ?? 0n,
         selectedToken,
@@ -30,7 +20,7 @@ export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({ sele
     return (
         <div className="flex font-normal items-center">
             <Avatar className="mr-2">
-                <AvatarImage src={getTokenAvatar(selectedToken.address)} />
+                <AvatarImage src={selectedToken.logo} />
                 <AvatarFallback>{selectedToken.name}</AvatarFallback>
             </Avatar>
             <div id="asset-info" className="text-left flex flex-col gap-1 leading-none">

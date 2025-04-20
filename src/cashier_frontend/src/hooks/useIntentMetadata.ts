@@ -1,6 +1,6 @@
 import { IntentModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
+
 import { TASK } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { useTokens } from "@/hooks/useTokens";
@@ -24,6 +24,8 @@ export const useIntentMetadata = (intent: IntentModel) => {
     // Get token data directly from useTokens
     const token = getToken(intent.asset.address);
 
+    const feeToken = getToken(intent.asset.address);
+
     const [assetAmount, setAssetAmount] = useState<number>();
     const [feeAmount, setFeeAmount] = useState<number>();
 
@@ -43,10 +45,10 @@ export const useIntentMetadata = (intent: IntentModel) => {
     return {
         assetAmount,
         assetSymbol: token?.symbol,
-        assetSrc: `${IC_EXPLORER_IMAGES_PATH}${intent.asset.address}`,
+        assetSrc: token?.logo,
         feeAmount,
         feeSymbol: token?.symbol,
-        feeIconSrc: `${IC_EXPLORER_IMAGES_PATH}${intent.asset.address}`,
+        feeIconSrc: feeToken?.logo,
         title: getIntentTitle(intent, t),
         isLoadingMetadata: !!token,
     };

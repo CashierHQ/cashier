@@ -8,7 +8,6 @@ import { Asset } from "@/components/ui/asset";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { useTokenStore } from "@/stores/tokenStore";
 import { convert } from "@/utils/helpers/convert";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
 interface TransactionItemProps {
     title: string;
@@ -22,23 +21,14 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
     const {
         assetAmount,
         assetSymbol,
-        assetSrc,
         feeAmount,
         feeSymbol,
         title: intentTitle,
+        assetSrc,
     } = useIntentMetadata(intent);
 
     const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
     const tokenUsdPrice = getTokenPrice(intent.asset.address);
-
-    //TODO: Remove after mid milestone
-    const getTokenAvatar = (tokenAddress: string) => {
-        if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
-            return `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`;
-        } else if (tokenAddress === "k64dn-7aaaa-aaaam-qcdaq-cai") {
-            return `${IC_EXPLORER_IMAGES_PATH}2ouva-viaaa-aaaaq-aaamq-cai`;
-        } else return assetSrc;
-    };
 
     return (
         <div className="flex items-center">
@@ -54,7 +44,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
                     isLoading={isLoading}
                     amount={assetAmount}
                     usdAmount={convert(assetAmount, tokenUsdPrice)}
-                    src={getTokenAvatar(intent.asset.address)}
+                    src={assetSrc}
                     symbol={assetSymbol}
                     isUsd={isUsd}
                 />

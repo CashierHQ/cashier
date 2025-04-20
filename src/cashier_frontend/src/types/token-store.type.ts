@@ -1,13 +1,14 @@
 import {
     Chain as BackendChain,
+    RegistryTokenDto,
     TokenDto,
     UserFiltersInput,
     UserPreference,
 } from "../../../declarations/token_storage/token_storage.did";
 import { TokenModel } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { toNullable } from "@dfinity/utils";
+import { IC_EXPLORER_IMAGES_PATH } from "@/const";
 
 export interface TokenFilters {
     hideZeroBalance: boolean;
@@ -82,8 +83,13 @@ export const mapStringToBackendChain = (chain: string): BackendChain => {
 };
 
 // Helper function to map UserToken to FungibleToken
-export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
+export const mapTokenDtoToTokenModel = (token: TokenDto | RegistryTokenDto): TokenModel => {
     const tokenId = token.icrc_ledger_id?.toString() || "";
+
+    let enable = false;
+    if ("enabled" in token) {
+        enable = token.enabled;
+    }
 
     return {
         id: token.id,
@@ -93,6 +99,6 @@ export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
         symbol: token.symbol?.toString() || "???",
         logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
         decimals: token.decimals || 8,
-        enabled: token.enabled || false,
+        enabled: enable,
     };
 };

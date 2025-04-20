@@ -52,10 +52,6 @@ impl TokenRegistryRepository {
         TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|(_, token)| token).collect())
     }
 
-    pub fn list_default_tokens(&self) -> Vec<RegistryToken> {
-        TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|(_, token)| token).collect())
-    }
-
     pub fn update_token(
         &self,
         token_id: &TokenId,
