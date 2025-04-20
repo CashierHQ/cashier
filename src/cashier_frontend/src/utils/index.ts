@@ -1,6 +1,6 @@
+import { IC_EXPLORER_IMAGES_PATH } from "@/const";
 import { MediaQuery } from "@/hooks/responsive-hook";
 import { UIResponsiveType } from "@/pages/edit/[id]/index_responsive";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
@@ -163,12 +163,6 @@ export const transformShortAddress = (address: string): string => {
 };
 
 export const getTokenImage = (tokenAddress: string) => {
-    if (tokenAddress === "x5qut-viaaa-aaaar-qajda-cai") {
-        return `${IC_EXPLORER_IMAGES_PATH}ryjl3-tyaaa-aaaaa-aaaba-cai`;
-    }
-    if (tokenAddress === "k64dn-7aaaa-aaaam-qcdaq-cai") {
-        return `${IC_EXPLORER_IMAGES_PATH}2ouva-viaaa-aaaaq-aaamq-cai`;
-    }
     return `${IC_EXPLORER_IMAGES_PATH}${tokenAddress}`;
 };
 

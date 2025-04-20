@@ -1,4 +1,4 @@
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
+import { IC_EXPLORER_IMAGES_PATH } from "@/const";
 import { Chain } from "@/services/types/link.service.types";
 
 const chainNameMap: { [key in Chain]: string } = {

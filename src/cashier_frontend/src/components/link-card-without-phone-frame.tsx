@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import { set } from "lodash";
+import { useState } from "react";
 
 export default function LinkCardWithoutPhoneFrame({
     src,
@@ -7,6 +9,7 @@ export default function LinkCardWithoutPhoneFrame({
     label,
     onClaim,
     disabled,
+    logoFallback,
 }: {
     src: string;
     header?: string;
@@ -15,14 +18,31 @@ export default function LinkCardWithoutPhoneFrame({
     label: string;
     onClaim?: () => void;
     disabled?: boolean;
+    logoFallback?: string;
 }) {
+    // Initial src with fallback
+    const [imgSrc, setImgSrc] = useState(src || "/defaultLinkImage.png");
+
+    // Handle image load error
+    const handleImageError = () => {
+        // If the current src is already the default, try another fallback
+        if (imgSrc === "/defaultLinkImage.png") {
+            setImgSrc("/token-basket-default.png");
+        } else if (logoFallback) {
+            setImgSrc(logoFallback);
+        } else {
+            setImgSrc("/defaultLinkImage.png");
+        }
+    };
+
     return (
         <div className="w-full flex flex-col items-center bg-lightgreen rounded-xl mt-5 py-5 px-8">
             <div className="w-full flex flex-col items-center bg-lightgreen rounded-xl mt-3 p-3">
                 <img
-                    src={src}
+                    src={imgSrc}
                     alt="Link template"
                     className="w-[200px] md:w-[60px] xl:w-[60px] 2xl:w-[100px]"
+                    onError={handleImageError}
                 />
                 <div className="mb-8 text-center">
                     <h3 className="text-lg font-semibold py-2">{title}</h3>

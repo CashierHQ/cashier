@@ -9,13 +9,16 @@ export type TokenModel = {
     enabled: boolean;
     name: string;
     symbol: string;
-    logo: string;
     decimals: number;
+    logo: string;
+    // only use for display, enrich from ledger metadata
+    logoFallback?: string;
 };
 
 export interface TokenMetadata {
     fee?: bigint;
     logo?: string;
+    decimals?: number;
 }
 
 export interface TokenBalance {

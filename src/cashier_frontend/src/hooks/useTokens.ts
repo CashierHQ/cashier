@@ -69,8 +69,6 @@ export function useTokens() {
         await toggleTokenVisibilityMutation.mutateAsync({ tokenId, hidden });
         await tokenListQuery.refetch();
         setIsSyncPreferences(false);
-        await userPreferencesQuery.refetch();
-        await tokenBalancesQuery.refetch();
     };
 
     // Update user filter preferences
@@ -90,8 +88,6 @@ export function useTokens() {
         await tokenListQuery.refetch();
         await userPreferencesQuery.refetch();
         applyFilters();
-        await tokenMetadataQuery.refetch();
-        await tokenBalancesQuery.refetch();
     };
 
     const updateToken = async () => {
@@ -146,7 +142,7 @@ export function useTokens() {
                 const metadata = metadataMap[token.address];
                 if (metadata?.fee !== undefined) {
                     enrichedToken.fee = metadata.fee;
-                    enrichedToken.logo = metadata.logo || enrichedToken.logo;
+                    enrichedToken.logoFallback = metadata.logo;
                 }
             }
 
@@ -206,7 +202,7 @@ export function useTokens() {
             updateTokenExplorer,
             updateTokenBalance,
         });
-    }, [identity]);
+    }, []);
 
     // Return the store with all data and operations
     return useTokenStore();

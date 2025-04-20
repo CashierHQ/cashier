@@ -27,11 +27,7 @@ export default function HomePage() {
     const { userInputs, addUserInput } = useLinkCreationFormStore();
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
-    const {
-        data: linkData,
-        isLoading: isLinksLoading,
-        refetch: refetchLinks,
-    } = useQuery({
+    const { data: linkData, isLoading: isLinksLoading } = useQuery({
         ...queryKeys.links.list(identity),
         enabled: !!identity,
         refetchOnWindowFocus: false,
@@ -121,7 +117,6 @@ export default function HomePage() {
 
     useEffect(() => {
         if (identity) {
-            refetchLinks();
             updateTokenInit();
         }
     }, [identity]);

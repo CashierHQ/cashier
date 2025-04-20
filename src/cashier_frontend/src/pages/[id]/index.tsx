@@ -45,7 +45,7 @@ export default function ClaimPage() {
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
 
-    const { isLoading: isLoadingToken } = useTokens();
+    const { isLoading: isLoadingToken, updateTokenInit } = useTokens();
 
     // Fetch link data
     const {
@@ -116,12 +116,11 @@ export default function ClaimPage() {
         }
         if (linkData) {
             setLink(linkData);
+            updateTokenInit();
         }
         if (linkData && linkUserState?.link_user_state) {
             setShowDefaultPage(false);
         }
-
-        console.log("🚀 ~ linkData:", linkData);
     }, [linkData, identity]);
 
     useEffect(() => {
@@ -139,7 +138,7 @@ export default function ClaimPage() {
             <SheetWrapper>
                 <div className="w-11/12 items-center max-w-[400px] h-full flex flex-col flex-1">
                     <Header />
-                    {isLoadingLinkData || isLoadingToken ? (
+                    {isLoadingLinkData ? (
                         renderSkeleton()
                     ) : (
                         <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">

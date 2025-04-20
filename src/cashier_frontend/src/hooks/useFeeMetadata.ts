@@ -1,6 +1,5 @@
 import { FeeModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
-import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 import { IntentHelperService } from "@/services/fee.service";
 import { useTokens } from "./useTokens";
 
@@ -9,6 +8,7 @@ export const useFeeMetadata = (feeModel: FeeModel) => {
 
     // Get token data directly from useTokens
     const token = getToken(feeModel.address);
+    const feeToken = getToken(feeModel.address);
 
     const [assetAmount, setAssetAmount] = useState<number>();
     const [feeAmount, setFeeAmount] = useState<number>();
@@ -28,10 +28,10 @@ export const useFeeMetadata = (feeModel: FeeModel) => {
     return {
         assetAmount,
         assetSymbol: token?.symbol,
-        assetSrc: `${IC_EXPLORER_IMAGES_PATH}${feeModel.address}`,
+        assetSrc: token?.logo,
         feeAmount,
         feeSymbol: token?.symbol,
-        feeIconSrc: `${IC_EXPLORER_IMAGES_PATH}${feeModel.address}`,
+        feeIconSrc: feeToken?.logo,
         isLoadingMetadata: isLoadingBalances || !token,
     };
 };

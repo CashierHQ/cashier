@@ -202,7 +202,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                 <div className="flex items-center">
                                     <div className="flex gap-x-5 items-center">
                                         <img
-                                            src="/icpLogo.png"
+                                            src={token?.logo}
                                             alt="link"
                                             className="w-10 h-10 rounded-sm mr-3"
                                         />
