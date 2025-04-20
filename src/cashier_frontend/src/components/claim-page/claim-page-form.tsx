@@ -196,6 +196,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     </h2>
                     {link?.asset_info.map((asset, index) => {
                         const token = getToken(asset.address);
+                        const tokenSymbol = token?.symbol || asset.address.substring(0, 3);
 
                         return (
                             <div key={index} className="flex justify-between ml-1">
@@ -203,8 +204,15 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                     <div className="flex gap-x-5 items-center">
                                         <img
                                             src={token?.logo}
-                                            alt="link"
+                                            alt={tokenSymbol}
                                             className="w-10 h-10 rounded-sm mr-3"
+                                            onError={(e) => {
+                                                // Set fallback image when the main image fails to load
+                                                e.currentTarget.onerror = null; // Prevent infinite loop
+                                                e.currentTarget.src = `./defaultLinkImage.png`;
+                                                // Alternatively, use a local asset:
+                                                // e.currentTarget.src = "/default-token-icon.png";
+                                            }}
                                         />
                                     </div>
                                     <div className="mr-3">
