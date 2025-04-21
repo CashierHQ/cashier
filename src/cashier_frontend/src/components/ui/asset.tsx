@@ -26,7 +26,7 @@ export const Asset: FC<AssetProps> = ({
 
     //TODO: Remove after mid milestone
     const getAvatarSrc = (title: string, src: string) => {
-        if (title === "ICP") {
+        if (symbol === "ICP") {
             return "/icpLogo.png";
         } else if (title === "BTC") {
             return "/chatTokenLogo.png";
