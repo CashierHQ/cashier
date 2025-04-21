@@ -197,12 +197,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                             onUsdClick={() => setIsUsd((old) => !old)}
                         />
 
-                        {cashierFeeIntents && cashierFeeIntents.length > 0 && (
-                            <ConfirmationPopupFeesSection
-                                intents={cashierFeeIntents}
-                                isUsd={isUsd}
-                            />
-                        )}
                         <ConfirmationPopupLegalSection />
                         <Button
                             className="my-3 mx-auto py-6 w-[95%]"

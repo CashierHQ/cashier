@@ -14,12 +14,11 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import useToast from "@/hooks/useToast";
-import Header from "@/components/header";
-import SheetWrapper from "@/components/sheet-wrapper";
-import { useTokens } from "@/hooks/useTokens";
 import { Plus } from "lucide-react";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { MainAppLayout } from "@/components/ui/main-app-layout";
+import { useTokens } from "@/hooks/useTokens";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -167,156 +166,134 @@ export default function HomePage() {
         }
     };
 
-    if (!walletUser) {
-        return (
-            <div className="w-screen flex justify-center py-5 h-full">
-                <div className="flex w-full flex-col items-center gap-4">
-                    <Header />
-                    <p className="text-yellow text-center text-sm font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow mt-4 mb-2">
-                        Cashier is still in development.
-                        {responsive.isSmallDevice ? <br /> : <span> </span>}
-                        Use with caution.
-                    </p>
+    const renderUnauthenticatedContent = () => (
+        <>
+            <p className="text-yellow text-center text-sm font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow mt-4 mb-2">
+                Cashier is still in development.
+                {responsive.isSmallDevice ? <br /> : <span> </span>}
+                Use with caution.
+            </p>
 
-                    <div
-                        className={`flex ${responsive.isSmallDevice ? "flex-col" : "flex-row gap-16 mt-[10vh]"}`}
-                    >
-                        <div
-                            className={`flex flex-col w-full justify-center gap-2 ${
-                                responsive.isSmallDevice
-                                    ? "items-center gap-2"
-                                    : "items-start gap-6 mt-4"
-                            }`}
-                        >
-                            <span
-                                className={`font-semibold ${responsive.isSmallDevice ? "text-center text-3xl" : "text-left text-6xl"}`}
-                            >
-                                Cashier Links - <br />
-                                fast, easy, and <span className="text-green">safe</span>{" "}
-                            </span>
-                            <span
-                                className={`text-gray-500 ${
-                                    responsive.isSmallDevice
-                                        ? "text-center text-sm"
-                                        : "text-left text-base"
-                                }`}
-                            >
-                                Start creating transaction links with Cashier:
-                                <br />
-                                create & airdrop NFTs, and more features coming!
-                            </span>
-                            {!responsive.isSmallDevice && (
-                                <Button
-                                    type="button"
-                                    onClick={() => {
-                                        connectToWallet();
-                                    }}
-                                    className="h-11 mt-8 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full"
-                                >
-                                    Get started
-                                </Button>
-                            )}
-                        </div>
-                        {/* TODO: Replace with actual component or better image, this looks blurry */}
-                        <img
-                            src="./landingPage.png"
-                            alt="Cashier illustration"
-                            className={`${responsive.isSmallDevice ? "w-[100%] mt-8" : "w-[50%]"}`}
-                        />
-                    </div>
-                </div>
-                {responsive.isSmallDevice && (
-                    <Button
-                        type="button"
-                        onClick={() => {
-                            connectToWallet();
-                        }}
-                        className="fixed h-11 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
-                    >
-                        Get started
-                    </Button>
-                )}
-            </div>
-        );
-    } else {
-        return (
             <div
-                className={`w-screen flex justify-center py-5 h-screen ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
+                className={`flex ${responsive.isSmallDevice ? "flex-col" : "flex-row gap-16 mt-[10vh]"}`}
             >
-                <SheetWrapper>
-                    <div className="flex w-full flex-col h-full">
-                        <Header />
-                        <div
-                            className={`flex h-full flex-col ${responsive.isSmallDevice ? "px-2 pt-9 h-full" : "max-h-[90%] w-[600px] p-2 items-center bg-[white] rounded-md drop-shadow-md mx-auto"}`}
-                        >
-                            {showGuide && (
-                                <div className="mt-8 px-4">
-                                    <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
-                                    <p className="text-sm text-gray-500 mt-3">
-                                        {t("home.guide.body")}
-                                    </p>
-                                    <button
-                                        className="text-green text-sm font-bold mt-3"
-                                        onClick={handleHideGuide}
-                                    >
-                                        {t("home.guide.confirm")}
-                                    </button>
-                                </div>
-                            )}
-                            <div
-                                className={`flex flex-col px-4 w-full ${
-                                    showGuide ? "h-[calc(100dvh-280px)]" : "h-full"
-                                }`}
-                            >
-                                <h2
-                                    className={`text-base font-semibold ${
-                                        showGuide || !responsive.isSmallDevice ? "mt-7" : "mt-0"
-                                    }`}
-                                >
-                                    Links created by me
-                                </h2>
-                                <div
-                                    className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-full" : "h-full"}`}
-                                >
-                                    {isLoading
-                                        ? Array.from({ length: 5 }).map((_, index) => (
-                                              <div
-                                                  className="flex items-center space-x-4 my-3"
-                                                  key={index}
-                                              >
-                                                  <Skeleton className="h-10 w-10 rounded-sm" />
-                                                  <div className="space-y-2">
-                                                      <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
-                                                      <Skeleton className="h-3 w-[200px]" />
-                                                  </div>
-                                              </div>
-                                          ))
-                                        : renderLinkList(linkData)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        className={`fixed flex items-center justify-center bottom-[30px] right-[30px] text-[2rem] rounded-full w-[3rem] h-[3rem] border-2 border-white ${
-                            disableCreateButton
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-green hover:bg-green/90"
-                        } text-white`}
-                        onClick={handleCreateLink}
-                        disabled={disableCreateButton}
+                <div
+                    className={`flex flex-col w-full justify-center gap-2 ${
+                        responsive.isSmallDevice ? "items-center gap-2" : "items-start gap-6 mt-4"
+                    }`}
+                >
+                    <span
+                        className={`font-semibold ${responsive.isSmallDevice ? "text-center text-3xl" : "text-left text-6xl"}`}
                     >
-                        <Plus strokeWidth={3} />
-                    </button>
-                    <TransactionToast
-                        open={toastData?.open ?? false}
-                        onOpenChange={hideToast}
-                        title={toastData?.title ?? ""}
-                        description={toastData?.description ?? ""}
-                        variant={toastData?.variant ?? "default"}
-                        duration={2000}
-                    />
-                </SheetWrapper>
+                        Cashier Links - <br />
+                        fast, easy, and <span className="text-green">safe</span>{" "}
+                    </span>
+                    <span
+                        className={`text-gray-500 ${
+                            responsive.isSmallDevice ? "text-center text-sm" : "text-left text-base"
+                        }`}
+                    >
+                        Start creating transaction links with Cashier:
+                        <br />
+                        create & airdrop NFTs, and more features coming!
+                    </span>
+                    {!responsive.isSmallDevice && (
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                connectToWallet();
+                            }}
+                            className="h-11 mt-8 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full"
+                        >
+                            Get started
+                        </Button>
+                    )}
+                </div>
+                {/* TODO: Replace with actual component or better image, this looks blurry */}
+                <img
+                    src="./landingPage.png"
+                    alt="Cashier illustration"
+                    className={`${responsive.isSmallDevice ? "w-[100%] mt-8" : "w-[50%]"}`}
+                />
             </div>
-        );
-    }
+            {responsive.isSmallDevice && (
+                <Button
+                    type="button"
+                    onClick={() => {
+                        connectToWallet();
+                    }}
+                    className="fixed h-11 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
+                >
+                    Get started
+                </Button>
+            )}
+        </>
+    );
+
+    const renderAuthenticatedContent = () => (
+        <>
+            {showGuide && (
+                <div className="mt-8 px-4">
+                    <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
+                    <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
+                    <button className="text-green text-sm font-bold mt-3" onClick={handleHideGuide}>
+                        {t("home.guide.confirm")}
+                    </button>
+                </div>
+            )}
+            <div
+                className={`flex flex-col px-4 w-full ${
+                    showGuide ? "h-[calc(100dvh-280px)]" : "h-full"
+                }`}
+            >
+                <h2
+                    className={`text-base font-semibold ${
+                        showGuide || !responsive.isSmallDevice ? "mt-7" : "mt-0"
+                    }`}
+                >
+                    Links created by me
+                </h2>
+                <div
+                    className={`flex flex-col overflow-y-hidden ${responsive.isSmallDevice ? "h-full" : "h-full"}`}
+                >
+                    {isLoading
+                        ? Array.from({ length: 5 }).map((_, index) => (
+                              <div className="flex items-center space-x-4 my-3" key={index}>
+                                  <Skeleton className="h-10 w-10 rounded-sm" />
+                                  <div className="space-y-2">
+                                      <Skeleton className="h-3 w-[75vw] max-w-[320px]" />
+                                      <Skeleton className="h-3 w-[200px]" />
+                                  </div>
+                              </div>
+                          ))
+                        : renderLinkList(linkData)}
+                </div>
+            </div>
+            <button
+                className={`fixed flex items-center justify-center bottom-[30px] right-[30px] text-[2rem] rounded-full w-[3rem] h-[3rem] border-2 border-white ${
+                    disableCreateButton
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-green hover:bg-green/90"
+                } text-white`}
+                onClick={handleCreateLink}
+                disabled={disableCreateButton}
+            >
+                <Plus strokeWidth={3} />
+            </button>
+            <TransactionToast
+                open={toastData?.open ?? false}
+                onOpenChange={hideToast}
+                title={toastData?.title ?? ""}
+                description={toastData?.description ?? ""}
+                variant={toastData?.variant ?? "default"}
+                duration={2000}
+            />
+        </>
+    );
+
+    return (
+        <MainAppLayout>
+            {!walletUser ? renderUnauthenticatedContent() : renderAuthenticatedContent()}
+        </MainAppLayout>
+    );
 }

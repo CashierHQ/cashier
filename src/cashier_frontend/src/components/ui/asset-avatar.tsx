@@ -10,7 +10,7 @@ type AssetAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
 export const AssetAvatar = React.forwardRef<React.ElementRef<typeof Avatar>, AssetAvatarProps>(
     ({ src, symbol, className, ...props }, ref) => {
         return (
-            <Avatar ref={ref} className={cn("w-8 h-8", className)} {...props}>
+            <Avatar ref={ref} className={cn("w-6 h-6", className)} {...props}>
                 <AvatarImage src={src} />
                 <AvatarFallback>{symbol}</AvatarFallback>
             </Avatar>

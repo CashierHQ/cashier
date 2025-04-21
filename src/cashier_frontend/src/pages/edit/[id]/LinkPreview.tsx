@@ -19,6 +19,7 @@ import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { ACTION_TYPE, CHAIN, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
+import { ICP_ADDRESS, ICP_LOGO } from "@/const";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -171,7 +172,11 @@ export default function LinkPreview({
                                             </p>
                                             <Avatar className="w-5 h-5 rounded-full overflow-hidden">
                                                 <AvatarImage
-                                                    src={asset.logo}
+                                                    src={
+                                                        asset.address === ICP_ADDRESS
+                                                            ? ICP_LOGO
+                                                            : asset.logo
+                                                    }
                                                     alt={tokenSymbol || asset.address}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -200,7 +205,8 @@ export default function LinkPreview({
                                     {NETWORK_FEE_DEFAULT_SYMBOL}
                                 </p>
                                 <img
-                                    src={getTokenImage(NETWORK_FEE_DEFAULT_ADDRESS)}
+                                    // src={getTokenImage(NETWORK_FEE_DEFAULT_ADDRESS)}
+                                    src={ICP_LOGO}
                                     alt={NETWORK_FEE_DEFAULT_SYMBOL}
                                     className="w-5 translate-x-1 rounded-full h-5"
                                 />
