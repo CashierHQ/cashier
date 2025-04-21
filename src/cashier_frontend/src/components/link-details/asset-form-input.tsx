@@ -89,6 +89,12 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
         }
     }, [formAmount, formTokenAddress, formLabel, linkId, token]);
 
+    useEffect(() => {
+        if (!canConvert) {
+            setLocalIsUsd(false);
+        }
+    }, [canConvert]);
+
     // Watch for token changes to reset amounts
     useEffect(() => {
         setLocalTokenAmount("0");
