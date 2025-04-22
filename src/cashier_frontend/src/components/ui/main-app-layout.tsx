@@ -39,7 +39,7 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
                 <div className="flex w-full flex-col h-full">
                     {!isHeaderHidden && <Header />}
                     <div
-                        className={`flex items-center justify-center h-full flex-col ${responsive.isSmallDevice ? "px-2 pt-4 h-full" : "max-h-[90%] w-[600px] px-4 items-center bg-[white] shadow-[#D6EDE433] shadow-sm rounded-[16px] mx-auto overflow-y-hidden pt-8 pb-4"}`}
+                        className={`flex items-center justify-center h-full flex-col ${responsive.isSmallDevice ? "px-4 pt-4 h-full" : "max-h-[90%] w-[600px] px-4 items-center bg-[white] shadow-[#D6EDE433] shadow-sm rounded-[16px] mx-auto overflow-y-hidden pt-8 pb-4"}`}
                     >
                         {children}
                     </div>
