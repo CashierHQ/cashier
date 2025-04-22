@@ -619,7 +619,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                         type="submit"
                         variant="default"
                         size="lg"
-                        className="w-full mt-2 bg-red-400 disabled:bg-disabledgreen"
+                        className="w-full mt-2 disabled:bg-disabledgreen"
                         onClick={handleSubmit}
                         disabled={
                             assetFields.fields.length === 0 ||
