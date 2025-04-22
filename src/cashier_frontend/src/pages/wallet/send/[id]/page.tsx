@@ -271,13 +271,7 @@ export default function SendTokenPage() {
     };
 
     return (
-        <div
-            className={`flex flex-col ${
-                responsive.isSmallDevice
-                    ? "px-2 h-full"
-                    : "max-w-[700px] mx-auto bg-white h-full p-4"
-            }`}
-        >
+        <div className="">
             <BackHeader onBack={handleGoBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader>
