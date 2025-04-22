@@ -28,6 +28,7 @@ import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { formatPrice } from "@/utils/helpers/currency";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 type TipLinkAssetFormProps = {
     isMultiAsset: boolean;
@@ -40,6 +41,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const { getUserInput, updateUserInput } = useLinkCreationFormStore();
     const { showToast, toastData, hideToast } = useToast();
     const { setStep } = useMultiStepFormContext();
+    const responsive = useResponsive();
 
     const { getToken } = useTokens();
 
@@ -510,109 +512,114 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
     return (
         <div className="w-full h-full flex flex-col">
-            <div
-                className="flex flex-col overflow-y-auto pb-20 md:overflow-visible mt-2"
-                style={{
-                    maxHeight: "calc(100vh - 120px)",
-                    WebkitOverflowScrolling: "touch",
-                }}
-            >
-                {/* Asset Form Fields */}
-                {assetFields.fields.map((field, index) => (
-                    <AssetFormInput
-                        key={field.id}
-                        fieldId={field.id}
-                        index={index}
-                        form={form}
-                        availableAssets={allAvailableTokens}
-                        onAssetSelect={handleAssetSelect}
-                        onRemoveAsset={handleRemoveAsset}
-                        showRemoveButton={isMultiAsset && assetFields.fields.length > 1}
-                        isAirdrop={isAirdrop}
-                        linkId={link?.id}
-                    />
-                ))}
+            <div className="flex flex-col flex-1">
+                <div
+                    className={`overflow-y-auto ${responsive.isSmallDevice ? "h-[calc(100dvh-150px)]" : "h-[calc(100vh-300px)]"}`}
+                    style={{
+                        WebkitOverflowScrolling: "touch",
+                        overscrollBehavior: "contain",
+                        paddingBottom: "16px",
+                    }}
+                >
+                    {assetFields.fields.map((field, index) => (
+                        <AssetFormInput
+                            key={field.id}
+                            fieldId={field.id}
+                            index={index}
+                            form={form}
+                            availableAssets={allAvailableTokens}
+                            onAssetSelect={handleAssetSelect}
+                            onRemoveAsset={handleRemoveAsset}
+                            showRemoveButton={isMultiAsset && assetFields.fields.length > 1}
+                            isAirdrop={isAirdrop}
+                            linkId={link?.id}
+                        />
+                    ))}
 
-                {/* Airdrop Fields */}
-                {isAirdrop && (
-                    <div className="flex gap-4 mt-2">
-                        <div className="input-label-field-container">
-                            <Label>Claims</Label>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={handleDecreaseMaxUse}
-                                    className="bg-grey/10 rounded-full p-1"
-                                    disabled={maxActionNumber <= 1}
-                                >
-                                    <Minus size={16} className="text-grey" />
-                                </button>
-                                <Input
-                                    value={maxActionNumber}
-                                    onChange={handleMaxUseInputChange}
-                                    className="max-w-20 h-11 text-center text-[16px] font-normal"
-                                    type="number"
-                                    min="1"
-                                />
-                                <button
-                                    onClick={handleIncreaseMaxUse}
-                                    className="bg-lightgreen rounded-full p-1"
-                                >
-                                    <Plus size={16} className="text-green" />
-                                </button>
+                    {/* Add Another Asset Button (for multi-asset mode) */}
+                    {isMultiAsset && (
+                        <button
+                            className="light-borders flex items-center justify-center gap-2 flex-col py-8 mb-4 w-full"
+                            onClick={handleAddAsset}
+                            disabled={selectedAssetAddresses.length >= allAvailableTokens.length}
+                        >
+                            <div className="bg-[#35A18B] rounded-full h-[44px] w-[44px] aspect-square flex items-center justify-center">
+                                <Plus size={24} color={"white"} />
+                            </div>
+                            <span className="text-[#35A18B] text-[14px] font-medium">
+                                {t("create.add_another_asset")}
+                            </span>
+                        </button>
+                    )}
+                </div>
+
+                <div className="mt-auto">
+                    {/* Airdrop Fields */}
+                    {isAirdrop && (
+                        <div className="flex gap-4 mt-2 mb-4">
+                            <div className="input-label-field-container">
+                                <Label>Claims</Label>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleDecreaseMaxUse}
+                                        className="bg-grey/10 rounded-full p-1"
+                                        disabled={maxActionNumber <= 1}
+                                    >
+                                        <Minus size={16} className="text-grey" />
+                                    </button>
+                                    <Input
+                                        value={maxActionNumber}
+                                        onChange={handleMaxUseInputChange}
+                                        className="max-w-20 h-11 text-center text-[16px] font-normal"
+                                        type="number"
+                                        min="1"
+                                    />
+                                    <button
+                                        onClick={handleIncreaseMaxUse}
+                                        className="bg-lightgreen rounded-full p-1"
+                                    >
+                                        <Plus size={16} className="text-green" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="input-label-field-container flex-1">
+                                <Label>Total amount</Label>
+                                <div className="flex items-center gap-1 bg-lightgreen rounded-[8px] flex-1 px-4 justify-between">
+                                    <p className="text-[16px] font-normal">
+                                        {formatPrice(
+                                            (() => {
+                                                const asset = getValues("assets")[0];
+                                                const token = getToken(asset?.tokenAddress || "");
+                                                if (!asset || !token) return "0";
+
+                                                // Calculate total from amount per claim * maxActionNumber
+                                                const amountPerUse =
+                                                    Number(asset.amount) /
+                                                    Math.pow(10, token.decimals || 8);
+
+                                                // Total amount = amount per claim * maxActionNumber
+                                                return (amountPerUse * maxActionNumber).toString();
+                                            })(),
+                                        )}
+                                    </p>
+                                    <p className="text-[16px] font-normal">
+                                        {
+                                            getToken(getValues("assets")[0]?.tokenAddress || "")
+                                                ?.symbol
+                                        }
+                                    </p>
+                                </div>
                             </div>
                         </div>
+                    )}
 
-                        <div className="input-label-field-container flex-1">
-                            <Label>Total amount</Label>
-                            <div className="flex items-center gap-1 bg-lightgreen rounded-[8px] flex-1 px-4 justify-between">
-                                <p className="text-[16px] font-normal">
-                                    {formatPrice(
-                                        (() => {
-                                            const asset = getValues("assets")[0];
-                                            const token = getToken(asset?.tokenAddress || "");
-                                            if (!asset || !token) return "0";
-
-                                            // Calculate total from amount per claim * maxActionNumber
-                                            const amountPerUse =
-                                                Number(asset.amount) /
-                                                Math.pow(10, token.decimals || 8);
-
-                                            // Total amount = amount per claim * maxActionNumber
-                                            return (amountPerUse * maxActionNumber).toString();
-                                        })(),
-                                    )}
-                                </p>
-                                <p className="text-[16px] font-normal">
-                                    {getToken(getValues("assets")[0]?.tokenAddress || "")?.symbol}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Add Another Asset Button (for multi-asset mode) */}
-                {isMultiAsset && (
-                    <button
-                        className="light-borders flex items-center justify-center gap-2 flex-col py-8 mb-8"
-                        onClick={handleAddAsset}
-                        disabled={selectedAssetAddresses.length >= allAvailableTokens.length}
-                    >
-                        <div className="bg-[#35A18B] rounded-full h-[44px] w-[44px] aspect-square flex items-center justify-center">
-                            <Plus size={24} color={"white"} />
-                        </div>
-                        <span className="text-[#35A18B] text-[14px] font-medium">
-                            {t("create.add_another_asset")}
-                        </span>
-                    </button>
-                )}
-
-                {/* Continue Button */}
-                <div className="flex-grow mt-auto flex items-end">
+                    {/* Continue Button */}
                     <FixedBottomButton
                         type="submit"
                         variant="default"
                         size="lg"
-                        className="w-full fixed bottom-4 disabled:bg-disabledgreen"
+                        className="w-full mt-2 disabled:bg-disabledgreen"
                         onClick={handleSubmit}
                         disabled={
                             assetFields.fields.length === 0 ||

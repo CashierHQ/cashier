@@ -130,9 +130,7 @@ export default function ReceiveTokenPage() {
     }, [selectedToken]);
 
     return (
-        <div
-            className={`flex flex-col ${responsive.isSmallDevice ? "px-2" : "max-w-[700px] mx-auto bg-white h-full p-4"}`}
-        >
+        <div>
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
             </BackHeader>

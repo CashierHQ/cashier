@@ -60,13 +60,11 @@ export default function WalletPage() {
     }
 
     return (
-        <div
-            className={`flex flex-col h-dvh ${!responsive.isSmallDevice && "max-w-[700px] mx-auto h-full px-4"}`}
-        >
+        <div className={`h-full`}>
             <div className="flex-none">
                 <WalletHero totalUsdEquivalent={totalUsdEquivalent} />
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden h-full">
                 <WalletTabs fungibleTokens={filteredTokens} />
             </div>
         </div>
