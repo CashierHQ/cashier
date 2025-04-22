@@ -513,9 +513,8 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     return (
         <div className="w-full h-full flex flex-col">
             <div className="flex flex-col flex-1">
-                {/* Asset Form Fields - Only this section should scroll */}
                 <div
-                    className={`overflow-y-auto ${responsive.isSmallDevice ? "h-[calc(100vh-150px)]" : "h-[calc(100vh-300px)]"}`}
+                    className={`overflow-y-auto ${responsive.isSmallDevice ? "h-[calc(100dvh-150px)]" : "h-[calc(100vh-300px)]"}`}
                     style={{
                         WebkitOverflowScrolling: "touch",
                         overscrollBehavior: "contain",
@@ -554,7 +553,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     )}
                 </div>
 
-                {/* Fixed elements that shouldn't scroll */}
                 <div className="mt-auto">
                     {/* Airdrop Fields */}
                     {isAirdrop && (
@@ -621,7 +619,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                         type="submit"
                         variant="default"
                         size="lg"
-                        className="w-full mt-2 disabled:bg-disabledgreen"
+                        className="w-full mt-2 bg-red-400 disabled:bg-disabledgreen"
                         onClick={handleSubmit}
                         disabled={
                             assetFields.fields.length === 0 ||
