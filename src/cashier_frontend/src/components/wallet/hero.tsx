@@ -34,7 +34,7 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
         <div className="flex flex-col items-center pb-5">
             <div className="relative w-full">
                 <div className="absolute left-0">
-                    <button onClick={() => navigate("/")}>
+                    <button onClick={() => navigate(-1)}>
                         <ChevronLeft size={24} />
                     </button>
                 </div>
