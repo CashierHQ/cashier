@@ -21,6 +21,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
 import { useLinkAction } from "@/hooks/link-action-hooks";
+import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
@@ -163,13 +164,8 @@ export default function LinkPage() {
     }
 
     return (
-        <div
-            className={cn(
-                "w-screen h-dvh flex flex-col items-center py-3 overflow-hidden",
-                "md:h-[90%] md:w-[40%] md:max-w-[600px] md:flex md:flex-col md:items-center md:py-5 mb-2 md:bg-[white] md:rounded-md md:drop-shadow-md",
-            )}
-        >
-            <div className="w-11/12 h-full flex flex-col relative overflow-hidden md:overflow-y-auto">
+        <MainAppLayout>
+            <div className="w-full h-full flex flex-col relative overflow-hidden">
                 <MultiStepForm initialStep={getInitialStep(link.state)}>
                     <MultiStepForm.Header
                         onClickBack={handleBackstep}
@@ -205,6 +201,6 @@ export default function LinkPage() {
                     variant={toastData?.variant ?? "default"}
                 />
             </div>
-        </div>
+        </MainAppLayout>
     );
 }

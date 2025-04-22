@@ -31,15 +31,13 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
     const navigateSendPage = () => navigate(`/wallet/send`);
 
     return (
-        <div className="flex flex-col items-center px-4 pt-6 pb-5">
+        <div className="flex flex-col items-center pb-5">
             <div className="relative w-full">
-                {!responsive.isSmallDevice && (
-                    <div className="absolute left-0">
-                        <button onClick={() => navigate("/")}>
-                            <ChevronLeft size={24} />
-                        </button>
-                    </div>
-                )}
+                <div className="absolute left-0">
+                    <button onClick={() => navigate(-1)}>
+                        <ChevronLeft size={24} />
+                    </button>
+                </div>
                 <h1 className="text-center text-[18px] font-regular leading-none">
                     {t("wallet.details.header")}
                 </h1>

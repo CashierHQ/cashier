@@ -41,7 +41,7 @@ export default function LinkCardWithoutPhoneFrame({
                 <img
                     src={imgSrc}
                     alt="Link template"
-                    className="w-[200px] md:w-[60px] xl:w-[60px] 2xl:w-[100px]"
+                    className="w-[200px]"
                     onError={handleImageError}
                 />
                 <div className="mb-8 text-center">

@@ -23,6 +23,7 @@ import { getTokenImage } from "@/utils";
 import LinkNotFound from "@/components/link-not-found";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
+import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -134,58 +135,52 @@ export default function ClaimPage() {
     }
 
     return (
-        <div className="w-screen min-h-screen md:min-h-screen flex flex-col items-center overflow-hidden py-5">
+        <MainAppLayout>
             <SheetWrapper>
-                <div className="w-11/12 items-center max-w-[400px] h-full flex flex-col flex-1">
-                    <Header />
-                    {isLoadingLinkData ? (
-                        renderSkeleton()
-                    ) : (
-                        <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
-                            {(!identity || !linkUserState?.link_user_state) &&
-                            linkData &&
-                            showDefaultPage ? (
-                                <LinkCardPage
-                                    linkData={linkData}
-                                    onClickClaim={() => setShowDefaultPage(false)}
-                                />
-                            ) : (
-                                <MultiStepForm
-                                    initialStep={getInitialStep(linkUserState?.link_user_state)}
-                                >
-                                    <MultiStepForm.Header
-                                        showIndicator={false}
-                                        showHeader={false}
-                                    />
-                                    <MultiStepForm.Items>
-                                        <MultiStepForm.Item name="Choose wallet">
-                                            <ClaimFormPage
-                                                form={form}
-                                                onSubmit={handleClaim}
-                                                linkData={linkData}
-                                                onActionResult={showActionResultToast}
-                                                onCashierError={showCashierErrorToast}
-                                                onBack={() => setShowDefaultPage(true)}
-                                            />
-                                        </MultiStepForm.Item>
+                {isLoadingLinkData ? (
+                    renderSkeleton()
+                ) : (
+                    <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
+                        {(!identity || !linkUserState?.link_user_state) &&
+                        linkData &&
+                        showDefaultPage ? (
+                            <LinkCardPage
+                                linkData={linkData}
+                                onClickClaim={() => setShowDefaultPage(false)}
+                            />
+                        ) : (
+                            <MultiStepForm
+                                initialStep={getInitialStep(linkUserState?.link_user_state)}
+                            >
+                                <MultiStepForm.Header showIndicator={false} showHeader={false} />
+                                <MultiStepForm.Items>
+                                    <MultiStepForm.Item name="Choose wallet">
+                                        <ClaimFormPage
+                                            form={form}
+                                            onSubmit={handleClaim}
+                                            linkData={linkData}
+                                            onActionResult={showActionResultToast}
+                                            onCashierError={showCashierErrorToast}
+                                            onBack={() => setShowDefaultPage(true)}
+                                        />
+                                    </MultiStepForm.Item>
 
-                                        <MultiStepForm.Item name="Complete">
-                                            <LinkCardWithoutPhoneFrame
-                                                label="Claimed"
-                                                src={getTokenImage(
-                                                    linkData?.asset_info?.[0].address ?? "",
-                                                )}
-                                                message={linkData?.description ?? ""}
-                                                title={linkData?.title ?? ""}
-                                                disabled={true}
-                                            />
-                                        </MultiStepForm.Item>
-                                    </MultiStepForm.Items>
-                                </MultiStepForm>
-                            )}
-                        </div>
-                    )}
-                </div>
+                                    <MultiStepForm.Item name="Complete">
+                                        <LinkCardWithoutPhoneFrame
+                                            label="Claimed"
+                                            src={getTokenImage(
+                                                linkData?.asset_info?.[0].address ?? "",
+                                            )}
+                                            message={linkData?.description ?? ""}
+                                            title={linkData?.title ?? ""}
+                                            disabled={true}
+                                        />
+                                    </MultiStepForm.Item>
+                                </MultiStepForm.Items>
+                            </MultiStepForm>
+                        )}
+                    </div>
+                )}
 
                 <TransactionToast
                     open={toastData?.open ?? false}
@@ -197,6 +192,6 @@ export default function ClaimPage() {
                     boldText={toastData?.boldText}
                 />
             </SheetWrapper>
-        </div>
+        </MainAppLayout>
     );
 }

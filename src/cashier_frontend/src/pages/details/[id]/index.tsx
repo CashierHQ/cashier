@@ -25,6 +25,7 @@ import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmatio
 import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
+import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -187,167 +188,158 @@ export default function DetailPage() {
     };
 
     return (
-        <div
-            className={cn(
-                "w-screen h-dvh max-h-dvh flex flex-col items-center py-3",
-                "md:h-[90%] md:w-[40%] md:flex md:flex-col md:items-center md:py-5 md:bg-[white] md:rounded-md md:drop-shadow-md",
-            )}
-        >
-            <div className="w-11/12 flex flex-col flex-grow sm:max-w-[400px] md:max-w-[100%]">
-                <div className="w-full flex flex-grow flex-col">
-                    {isLoading || !link ? (
-                        renderSkeleton()
-                    ) : (
-                        <>
-                            <div id="heading-section" className="flex mb-5 items-center">
-                                <div
-                                    className="absolute left-5 cursor-pointer"
-                                    onClick={() => {
-                                        navigate("/");
-                                    }}
-                                >
-                                    <ChevronLeftIcon width={26} height={26} />
-                                </div>
-                                <h4 className="scroll-m-20 text-xl font-semibold tracking-tight mx-auto flex-grow text-center">
-                                    {link?.title}
-                                </h4>
+        <MainAppLayout>
+            <div className="w-full flex flex-grow flex-col">
+                {isLoading || !link ? (
+                    renderSkeleton()
+                ) : (
+                    <>
+                        <div id="heading-section" className="flex mb-5 items-center relative">
+                            <div
+                                className="absolute left-0 cursor-pointer"
+                                onClick={() => {
+                                    navigate("/");
+                                }}
+                            >
+                                <ChevronLeftIcon width={26} height={26} />
+                            </div>
+                            <h4 className="scroll-m-20 text-xl font-semibold tracking-tight mx-auto flex-grow text-center">
+                                {link?.title}
+                            </h4>
+                        </div>
+                        <div
+                            className={`flex ${responsive.isSmallDevice ? "flex-col gap-2" : "flex-row justify-start items-between gap-8 mb-4"}`}
+                        >
+                            <div
+                                className={`flex items-center justify-center ${responsive.isSmallDevice ? "" : "hidden"}`}
+                            >
+                                <StateBadge state={link?.state} />
                             </div>
                             <div
-                                className={`flex ${responsive.isSmallDevice ? "flex-col gap-2" : "flex-row justify-start items-between gap-8 mb-4"}`}
+                                className={`flex items-center justify-center ${responsive.isSmallDevice ? " my-3" : "order-1"}`}
                             >
-                                <div
-                                    className={`flex items-center justify-center ${responsive.isSmallDevice ? "" : "hidden"}`}
-                                >
+                                <QRCode
+                                    size={responsive.isSmallDevice ? 100 : 130}
+                                    value={window.location.href.replace("details/", "")}
+                                />
+                            </div>
+
+                            <div
+                                className={`${responsive.isSmallDevice ? "" : "order-2 flex flex-col items-start justify-between w-full"}`}
+                            >
+                                <div className={`${responsive.isSmallDevice ? "hidden" : ""}`}>
                                     <StateBadge state={link?.state} />
                                 </div>
-                                <div
-                                    className={`flex items-center justify-center ${responsive.isSmallDevice ? " my-3" : "order-1"}`}
-                                >
-                                    <QRCode
-                                        size={responsive.isSmallDevice ? 100 : 130}
-                                        value={window.location.href.replace("details/", "")}
-                                    />
-                                </div>
-
-                                <div
-                                    className={`${responsive.isSmallDevice ? "" : "order-2 flex flex-col items-start justify-between w-full"}`}
-                                >
-                                    <div className={`${responsive.isSmallDevice ? "hidden" : ""}`}>
-                                        <StateBadge state={link?.state} />
-                                    </div>
-                                    <SocialButtons handleCopyLink={handleCopyLink} />
-                                </div>
+                                <SocialButtons handleCopyLink={handleCopyLink} />
                             </div>
+                        </div>
 
-                            <div className="flex gap-2 items-center mb-2">
-                                <Label>{t("details.linkInfo")}</Label>
+                        <div className="flex gap-2 items-center mb-2">
+                            <Label>{t("details.linkInfo")}</Label>
+                        </div>
+                        <div
+                            id="link-detail-section"
+                            className="flex flex-col border-[1px] rounded-xl border-lightgreen"
+                        >
+                            <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
+                                <p className="font-medium text-sm">Link Type</p>
+                                <p className="text-sm text-primary/80">
+                                    {getLinkTypeString(link.linkType!)}
+                                </p>
                             </div>
-                            <div
-                                id="link-detail-section"
-                                className="flex flex-col border-[1px] rounded-xl border-lightgreen"
-                            >
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
-                                    <p className="font-medium text-sm">Link Type</p>
-                                    <p className="text-sm text-primary/80">
-                                        {getLinkTypeString(link.linkType!)}
-                                    </p>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
-                                    <p className="font-medium text-sm">Chain</p>
-                                    <p className="text-sm text-primary/80">ICP</p>
-                                </div>
-                                {assetAmounts.length > 0 &&
-                                    link.asset_info.map((asset) => {
-                                        const token = getToken(asset.address);
-                                        if (!token) return null;
+                            <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
+                                <p className="font-medium text-sm">Chain</p>
+                                <p className="text-sm text-primary/80">ICP</p>
+                            </div>
+                            {assetAmounts.length > 0 &&
+                                link.asset_info.map((asset) => {
+                                    const token = getToken(asset.address);
+                                    if (!token) return null;
 
-                                        const assetAmount = assetAmounts.find(
-                                            (amount) => amount.address === asset.address,
-                                        );
+                                    const assetAmount = assetAmounts.find(
+                                        (amount) => amount.address === asset.address,
+                                    );
 
-                                        if (!assetAmount) return null;
+                                    if (!assetAmount) return null;
 
-                                        return (
-                                            <div
-                                                key={asset.address}
-                                                className="flex flex-row items-center justify-between border-lightgreen px-5 py-2.5"
-                                            >
-                                                <p className="font-medium text-sm">
-                                                    Asset left/added
+                                    return (
+                                        <div
+                                            key={asset.address}
+                                            className="flex flex-row items-center justify-between border-lightgreen px-5 py-2.5"
+                                        >
+                                            <p className="font-medium text-sm">Asset left/added</p>
+                                            <div className="flex items-center gap-1">
+                                                <p className="text-sm text-primary/80">
+                                                    {assetAmount.totalAmount
+                                                        ? Number(assetAmount.totalAmount) /
+                                                          Math.pow(10, token.decimals)
+                                                        : "-"}
+                                                    /
+                                                    {asset.amountPerUse
+                                                        ? Number(asset.amountPerUse) /
+                                                          Math.pow(10, token.decimals)
+                                                        : "-"}
                                                 </p>
-                                                <div className="flex items-center gap-1">
-                                                    <p className="text-sm text-primary/80">
-                                                        {assetAmount.totalAmount
-                                                            ? Number(assetAmount.totalAmount) /
-                                                              Math.pow(10, token.decimals)
-                                                            : "-"}
-                                                        /
-                                                        {asset.amountPerUse
-                                                            ? Number(asset.amountPerUse) /
-                                                              Math.pow(10, token.decimals)
-                                                            : "-"}
-                                                    </p>
-                                                    <img
-                                                        src={token.logo}
-                                                        alt="token-icon"
-                                                        className="w-4 h-4"
-                                                    />
-                                                    <p className="text-sm text-primary/80">
-                                                        {token.symbol}
-                                                    </p>
-                                                </div>
+                                                <img
+                                                    src={token.logo}
+                                                    alt="token-icon"
+                                                    className="w-4 h-4"
+                                                />
+                                                <p className="text-sm text-primary/80">
+                                                    {token.symbol}
+                                                </p>
                                             </div>
-                                        );
-                                    })}
-                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
 
-                            <div className="flex flex-col items-center gap-4 mt-auto">
-                                {link?.state == LINK_STATE.ACTIVE && (
-                                    <button
-                                        onClick={() => {
-                                            setShowEndLinkDrawer(true);
-                                        }}
-                                        className="text-[#D26060] text-[14px] font-semibold"
-                                    >
-                                        End Link
-                                    </button>
-                                )}
-                                {link?.state == LINK_STATE.ACTIVE && (
-                                    <Button
-                                        id="copy-link-button"
-                                        onClick={handleCopyLink}
-                                        size="lg"
-                                        className="w-full"
-                                    >
-                                        {t("details.copyLink")}
-                                    </Button>
-                                )}{" "}
-                                {link?.state == LINK_STATE.INACTIVE && (
-                                    <Button
-                                        id="copy-link-button"
-                                        disabled={linkIsClaimed}
-                                        onClick={() => {
-                                            handleWithdrawAssets();
-                                            setShowConfirmationDrawer(true);
-                                        }}
-                                        size="lg"
-                                        className="w-full disabled:bg-gray-300"
-                                    >
-                                        {t("details.withdrawAssets")}
-                                    </Button>
-                                )}
-                            </div>
+                        <div className="flex flex-col items-center gap-4 mt-auto">
+                            {link?.state == LINK_STATE.ACTIVE && (
+                                <button
+                                    onClick={() => {
+                                        setShowEndLinkDrawer(true);
+                                    }}
+                                    className="text-[#D26060] text-[14px] font-semibold"
+                                >
+                                    End Link
+                                </button>
+                            )}
+                            {link?.state == LINK_STATE.ACTIVE && (
+                                <Button
+                                    id="copy-link-button"
+                                    onClick={handleCopyLink}
+                                    size="lg"
+                                    className="w-full"
+                                >
+                                    {t("details.copyLink")}
+                                </Button>
+                            )}{" "}
+                            {link?.state == LINK_STATE.INACTIVE && (
+                                <Button
+                                    id="copy-link-button"
+                                    disabled={linkIsClaimed}
+                                    onClick={() => {
+                                        handleWithdrawAssets();
+                                        setShowConfirmationDrawer(true);
+                                    }}
+                                    size="lg"
+                                    className="w-full disabled:bg-gray-300"
+                                >
+                                    {t("details.withdrawAssets")}
+                                </Button>
+                            )}
+                        </div>
 
-                            <TransactionToast
-                                open={toastData?.open ?? false}
-                                onOpenChange={hideToast}
-                                title={toastData?.title ?? ""}
-                                description={toastData?.description ?? ""}
-                                variant={toastData?.variant ?? "default"}
-                            />
-                        </>
-                    )}
-                </div>
+                        <TransactionToast
+                            open={toastData?.open ?? false}
+                            onOpenChange={hideToast}
+                            title={toastData?.title ?? ""}
+                            description={toastData?.description ?? ""}
+                            variant={toastData?.variant ?? "default"}
+                        />
+                    </>
+                )}
             </div>
 
             <EndLinkDrawer
@@ -369,6 +361,6 @@ export default function DetailPage() {
                     setInactiveEndedLink();
                 }}
             />
-        </div>
+        </MainAppLayout>
     );
 }

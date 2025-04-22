@@ -131,7 +131,7 @@ export default function HomePage() {
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {
             return (
-                <div className="overflow-y-auto h-full scrollbar-hide">
+                <div className="overflow-y-auto h-full scrollbar-hide pb-20">
                     {Object.entries(links).map(([date, items]) => (
                         <div key={date} className="my-4">
                             <h3 className="text-lightblack font-normal mb-2">
@@ -233,11 +233,11 @@ export default function HomePage() {
     const renderAuthenticatedContent = () => (
         <>
             {showGuide && (
-                <div className="mt-8 px-4">
+                <div className="px-4 pb-4">
                     <h1 className="text-2xl font-bold">{t("home.guide.header")}</h1>
                     <p className="text-sm text-gray-500 mt-3">{t("home.guide.body")}</p>
                     <button className="text-green text-sm font-bold mt-3" onClick={handleHideGuide}>
-                        {t("home.guide.confirm")}
+                        {t("home.guide.confirm")}!
                     </button>
                 </div>
             )}
@@ -248,7 +248,7 @@ export default function HomePage() {
             >
                 <h2
                     className={`text-base font-semibold ${
-                        showGuide || !responsive.isSmallDevice ? "mt-7" : "mt-0"
+                        showGuide || !responsive.isSmallDevice ? "mt-0" : "mt-0"
                     }`}
                 >
                     Links created by me

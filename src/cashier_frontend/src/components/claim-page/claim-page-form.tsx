@@ -180,7 +180,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     return (
         <>
             <div className="w-full flex flex-col flex-grow relative">
-                <div className="w-full flex justify-center items-center mt-5 relative">
+                <div className="w-full flex justify-center items-center relative">
                     <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                         {link?.linkType != LINK_TYPE.RECEIVE_PAYMENT && t("claim.receive")}
                         {link?.linkType == LINK_TYPE.RECEIVE_PAYMENT && t("claim.payment")}
@@ -229,7 +229,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
                 <Form {...form}>
                     <form
-                        className="w-full flex flex-col gap-y-[10px] my-5 pb-[80px]"
+                        className="w-full flex flex-col gap-y-[10px] my-5 h-full"
                         onSubmit={(e) => {
                             e.preventDefault();
                             // Disable the button immediately on submission
@@ -392,7 +392,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             type="submit"
                             variant="default"
                             size="lg"
-                            className="absolute bottom-[0px] left-1/2 -translate-x-1/2"
+                            className="w-full mt-2 disabled:bg-disabledgreen"
                             disabled={isDisabled}
                         >
                             {buttonText ?? t("claim.claim")}

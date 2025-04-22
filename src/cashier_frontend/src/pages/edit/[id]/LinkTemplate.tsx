@@ -128,7 +128,7 @@ export default function LinkTemplate({
                         </button>
 
                         <div
-                            className="relative flex transition-transform duration-300 ease-in-out h-[20rem] md:h-[420px] pb-2"
+                            className="relative flex transition-transform duration-300 ease-in-out h-[20rem] md:h-[400px] pb-2"
                             style={{
                                 transform: `translateX(-${carousel.current * (100 / LINK_TEMPLATES.length)}%)`,
                                 width: `${LINK_TEMPLATES.length * 100}%`,
@@ -195,7 +195,7 @@ export default function LinkTemplate({
                 onClick={handleSubmit}
                 variant="default"
                 size="lg"
-                className="w-full fixed bottom-4 disabled:bg-disabledgreen"
+                className="w-full mt-auto disabled:bg-disabledgreen"
                 disabled={isUpdating || LINK_TEMPLATES[carousel.current].isComingSoon}
             >
                 {LINK_TEMPLATES[carousel.current].isComingSoon ? "Coming Soon" : t("continue")}
