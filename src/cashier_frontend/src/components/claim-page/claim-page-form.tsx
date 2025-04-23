@@ -301,7 +301,13 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             {identity ? (
                                 <WalletButton
                                     title={t("claim.addressPlaceholder")}
-                                    handleConnect={() => {}}
+                                    handleConnect={() => {
+                                        showDialog({
+                                            title: "Are you sure?",
+                                            description:
+                                                "You need to disconnect your current wallet to enter an address manually. Would you like to disconnect and continue?",
+                                        });
+                                    }}
                                     icon={<PiWallet color="green" className="mr-2 h-6 w-6" />}
                                 />
                             ) : (
@@ -348,7 +354,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                     className="py-5 h-14 text-md rounded-xl"
                                                     onFocusShowIcon={true}
                                                     onFocusText={true}
-                                                    disabled={!!identity}
+                                                    // disabled={!!identity}
                                                     {...field}
                                                     onChange={(e) => {
                                                         field.onChange(e);
@@ -415,6 +421,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     disconnect();
                     form.setValue("address", "");
                     form.clearErrors();
+                    setCurrentConnectOption(WALLET_OPTIONS.TYPING);
                     hideDialog();
                 }}
                 onOpenChange={hideDialog}
