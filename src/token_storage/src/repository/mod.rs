@@ -1,5 +1,6 @@
 pub mod balance_cache;
 pub mod token_registry;
+pub mod token_registry_metadata;
 pub mod user_preference;
 pub mod user_token;
 
@@ -7,9 +8,11 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
-use crate::types::{Candid, RegistryToken, TokenBalance, TokenId, UserPreference};
+use crate::types::{
+    Candid, RegistryToken, TokenBalance, TokenId, TokenRegistryMetadata, UserPreference,
+};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -18,6 +21,7 @@ const TOKEN_MEMORY_ID: MemoryId = MemoryId::new(1);
 const USER_PREFERENCE_MEMORY_ID: MemoryId = MemoryId::new(2);
 const TOKEN_REGISTRY_MEMORY_ID: MemoryId = MemoryId::new(3);
 const BALANCE_CACHE_MEMORY_ID: MemoryId = MemoryId::new(4);
+const TOKEN_REGISTRY_METADATA_ID: MemoryId = MemoryId::new(5);
 
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
@@ -48,6 +52,15 @@ thread_local! {
             )
         );
 
+       // Store registry metadata including version
+       pub static TOKEN_REGISTRY_METADATA_STORE: RefCell<StableCell<TokenRegistryMetadata, Memory>> =
+       RefCell::new(
+            StableCell::init(
+               MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_METADATA_ID)),
+               TokenRegistryMetadata::default()
+           ).expect("config cell initialization should succeed")
+       );
+
     // Balance cache for users
     pub static BALANCE_CACHE_STORE: RefCell<StableBTreeMap<String, Candid<HashMap<String, TokenBalance>>, Memory>> =
         RefCell::new(
@@ -75,5 +88,13 @@ pub fn load() {
     BALANCE_CACHE_STORE.with_borrow_mut(|store| {
         *store =
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(BALANCE_CACHE_MEMORY_ID)));
+    });
+
+    TOKEN_REGISTRY_METADATA_STORE.with_borrow_mut(|store| {
+        *store = StableCell::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_METADATA_ID)),
+            TokenRegistryMetadata::default(),
+        )
+        .expect("config cell initialization should succeed");
     });
 }

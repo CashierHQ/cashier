@@ -60,62 +60,45 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     };
 
     let registry = TokenRegistryRepository::new();
+    let repository = TokenRepository::new();
 
     if registry.get_token(&token_id).is_none() {
         let ledger_pid = input
             .ledger_id
             .ok_or("Ledger ID is required for IC chain")?;
-        let service = Service::new(ledger_pid);
 
-        let (symbol,) = service.icrc_1_symbol().await.map_err(|(code, msg)| {
-            format!(
-                "Failed to get token symbol from ledger: {:#?} , {:#?}",
-                code, msg
-            )
-        })?;
-        let (name,) = service.icrc_1_name().await.map_err(|(code, msg)| {
-            format!(
-                "Failed to get token name from ledger: {:#?} , {:#?}",
-                code, msg
-            )
-        })?;
-        let (decimals,) = service.icrc_1_decimals().await.map_err(|(code, msg)| {
-            format!(
-                "Failed to get token decimals from ledger: {:#?} , {:#?}",
-                code, msg
-            )
-        })?;
-
-        ic_cdk::println!(
-            "Registering token with ID: {}, symbol: {}, name: {}, decimals: {}",
-            token_id,
-            symbol,
-            name,
-            decimals
+        // Use metadata from input if provided, otherwise fetch from service
+        let (symbol, name, decimals) = (
+            input.symbol.unwrap(),
+            input.name.unwrap(),
+            input.decimals.unwrap(),
         );
 
         let chain = Chain::from_str(&input.chain)?;
         let token_id = RegistryToken::generate_id(&chain, Some(&ledger_pid))?;
         registry
             .register_token(RegisterTokenInput {
-                id: token_id,
+                id: token_id.clone(),
                 chain: input.chain,
                 ledger_id: Some(ledger_pid),
                 index_id: input.index_id,
                 symbol,
                 name,
                 decimals,
+                enabled_by_default: false,
             })
             .map_err(|e| format!("Failed to register token: {}", e))?;
-    }
 
-    let repository = TokenRepository::new();
-    ic_cdk::println!(
-        "Adding token with ID: {} to user: {}",
-        token_id,
-        caller.to_text()
-    );
-    repository.add_token(caller.to_text(), token_id)
+        let _ = repository.add_token(caller.to_text(), token_id)?;
+        let _ = repository.sync_registry_tokens(&caller.to_text())?;
+
+        Ok(())
+    } else {
+        return Err(format!(
+            "Token with ID {} already exists in registry",
+            token_id
+        ));
+    }
 }
 
 #[update]
@@ -337,6 +320,175 @@ pub fn initialize_user_tokens() -> Result<(), String> {
     // Add default tokens if user has no tokens yet
     token_repository.add_default_tokens(&caller.to_text());
     user_preference.add(caller.to_text(), default_perference);
+
+    Ok(())
+}
+
+/// Add multiple tokens in a single call for efficiency
+#[update]
+pub async fn add_tokens(input: Vec<AddTokenInput>) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    if input.is_empty() {
+        return Err("No tokens provided".to_string());
+    }
+
+    let start_ts = ic_cdk::api::time();
+
+    let registry = TokenRegistryRepository::new();
+    let repository = TokenRepository::new();
+    let mut token_ids_to_add = Vec::with_capacity(input.len());
+    let mut register_inputs = Vec::with_capacity(input.len());
+
+    // First pass: generate token IDs and prepare registration data
+    for token_input in input {
+        // Skip tokens without ledger ID
+        let Some(ledger_pid) = token_input.ledger_id.clone() else {
+            continue;
+        };
+
+        // Generate token ID more efficiently
+        let chain = match Chain::from_str(&token_input.chain) {
+            Ok(chain) => chain,
+            Err(e) => {
+                ic_cdk::println!("Invalid chain {}: {}", token_input.chain, e);
+                continue;
+            }
+        };
+
+        let token_id = match RegistryToken::generate_id(&chain, Some(&ledger_pid)) {
+            Ok(id) => id,
+            Err(e) => {
+                ic_cdk::println!("Failed to generate token ID: {}", e);
+                continue;
+            }
+        };
+
+        // Check if token already exists in registry - if so, just add it to user's list
+        if registry.get_token(&token_id).is_some() {
+            token_ids_to_add.push(token_id);
+            continue;
+        }
+
+        // For new tokens, we need metadata
+        let (symbol, name, decimals) = if token_input.symbol.is_some()
+            && token_input.name.is_some()
+            && token_input.decimals.is_some()
+        {
+            ic_cdk::println!(
+                "Using provided metadata for token {}: {:#?}",
+                token_id,
+                token_input
+            );
+            // Use provided metadata
+            (
+                token_input.symbol.unwrap(),
+                token_input.name.unwrap(),
+                token_input.decimals.unwrap(),
+            )
+        } else {
+            // Create a service for querying token metadata
+            let service = Service::new(ledger_pid.clone());
+
+            ic_cdk::println!(
+                "Fetching metadata for token {}: {:#?}",
+                token_id,
+                token_input
+            );
+
+            // Execute all metadata queries concurrently
+            let symbol_future = service.icrc_1_symbol();
+            let name_future = service.icrc_1_name();
+            let decimals_future = service.icrc_1_decimals();
+
+            // Await all futures at once to save time
+            let symbol_result = symbol_future.await;
+            let name_result = name_future.await;
+            let decimals_result = decimals_future.await;
+
+            // Check if any of the calls failed
+            if let Err((code, msg)) = &symbol_result {
+                ic_cdk::println!(
+                    "Failed to get symbol for token {}: {:#?}, {:#?}",
+                    ledger_pid,
+                    code,
+                    msg
+                );
+                continue;
+            }
+            if let Err((code, msg)) = &name_result {
+                ic_cdk::println!(
+                    "Failed to get name for token {}: {:#?}, {:#?}",
+                    ledger_pid,
+                    code,
+                    msg
+                );
+                continue;
+            }
+            if let Err((code, msg)) = &decimals_result {
+                ic_cdk::println!(
+                    "Failed to get decimals for token {}: {:#?}, {:#?}",
+                    ledger_pid,
+                    code,
+                    msg
+                );
+                continue;
+            }
+
+            // Extract values from results
+            let (symbol,) = symbol_result.unwrap();
+            let (name,) = name_result.unwrap();
+            let (decimals,) = decimals_result.unwrap();
+
+            (symbol, name, decimals)
+        };
+
+        // Create register token input and add to batch
+        register_inputs.push(RegisterTokenInput {
+            id: token_id.clone(),
+            chain: token_input.chain,
+            ledger_id: Some(ledger_pid),
+            index_id: token_input.index_id,
+            symbol,
+            name,
+            decimals,
+            enabled_by_default: false,
+        });
+
+        token_ids_to_add.push(token_id);
+    }
+
+    // Register new tokens in bulk if any
+    if !register_inputs.is_empty() {
+        match registry.add_bulk_tokens(register_inputs) {
+            Ok(_) => {}
+            Err(e) => {
+                ic_cdk::println!("Error registering tokens in bulk: {}", e);
+                return Err(format!("Error registering tokens: {}", e));
+            }
+        }
+    }
+
+    let end_1_ts = ic_cdk::api::time();
+
+    ic_cdk::println!(
+        "Token registration took {} nanosecond",
+        (end_1_ts - start_ts)
+    );
+
+    // Sync registry tokens once at the end
+    let _ = repository.sync_registry_tokens(&caller.to_text());
+
+    let end_2_ts = ic_cdk::api::time();
+
+    ic_cdk::println!(
+        "sync_registry_tokens took {} nanosecond",
+        (end_2_ts - end_1_ts)
+    );
 
     Ok(())
 }

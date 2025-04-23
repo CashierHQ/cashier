@@ -88,6 +88,7 @@ pub struct RegistryToken {
     pub name: String,
     pub decimals: u8,
     pub chain: Chain,
+    pub enabled_by_default: bool, // Whether this token is enabled by default for users
 }
 
 impl RegistryToken {
@@ -123,6 +124,7 @@ pub struct UserPreference {
     pub hide_unknown_token: bool,
     pub selected_chain: Vec<Chain>,
     pub hidden_tokens: Vec<TokenId>,
+    pub token_registry_version: u64, // Track which version of the registry the user has
 }
 
 impl Default for UserPreference {
@@ -132,6 +134,7 @@ impl Default for UserPreference {
             hide_unknown_token: false,
             selected_chain: vec![Chain::IC],
             hidden_tokens: vec![],
+            token_registry_version: 1,
         }
     }
 }
@@ -148,6 +151,9 @@ pub struct AddTokenInput {
     pub chain: String,
     pub ledger_id: Option<LedgerId>,
     pub index_id: Option<IndexId>,
+    pub name: Option<String>,
+    pub symbol: Option<String>,
+    pub decimals: Option<u8>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -164,6 +170,7 @@ pub struct RegisterTokenInput {
     pub symbol: String,
     pub name: String,
     pub decimals: u8,
+    pub enabled_by_default: bool,
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -204,4 +211,20 @@ impl TokenDto {
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct UpdateBulkBalancesInput {
     pub token_balances: Vec<(String, u128)>,
+}
+
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct TokenRegistryMetadata {
+    pub current_version: u64,
+    pub last_updated: u64, // Timestamp
+}
+
+impl Default for TokenRegistryMetadata {
+    fn default() -> Self {
+        Self {
+            current_version: 1,
+            last_updated: 0,
+        }
+    }
 }
