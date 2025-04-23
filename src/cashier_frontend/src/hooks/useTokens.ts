@@ -5,6 +5,7 @@ import { AddTokenInput } from "../../../declarations/token_storage/token_storage
 import { TokenFilters } from "@/types/token-store.type";
 import {
     useAddTokenMutation,
+    useAddTokensMutation,
     useToggleTokenVisibilityMutation,
     useTokenBalancesQuery,
     useTokenListQuery,
@@ -18,6 +19,10 @@ import {
     mapTokenModelToFungibleToken,
     TokenModel,
 } from "@/types/fungible-token.speculative";
+import {
+    ICExplorerService,
+    mapDataSourceTokenToAddTokenInput,
+} from "@/services/icExplorer.service";
 
 // Main hook that components should use
 export function useTokens() {
@@ -46,6 +51,7 @@ export function useTokens() {
 
     // Mutations
     const addTokenMutation = useAddTokenMutation(identity);
+    const addMultpleTokensMutation = useAddTokensMutation(identity);
     const toggleTokenVisibilityMutation = useToggleTokenVisibilityMutation(identity);
     const updateUserFiltersMutation = useUpdateUserFiltersMutation(identity);
 
@@ -87,20 +93,33 @@ export function useTokens() {
         console.log("Updating token init");
         await tokenListQuery.refetch();
         await userPreferencesQuery.refetch();
-        applyFilters();
     };
 
     const updateToken = async () => {
         console.log("call updateToken");
         await tokenListQuery.refetch();
         await userPreferencesQuery.refetch();
-        applyFilters();
         await tokenBalancesQuery.refetch();
     };
 
-    // TODO: finish this
     const updateTokenExplorer = async () => {
+        const explorerService = new ICExplorerService();
+        if (!identity) {
+            console.error("No identity found");
+            return;
+        }
+        const tokenList = await explorerService.getUserTokens(identity.getPrincipal().toText());
+
+        if (tokenList.length > 0) {
+            const tokensToAdd: AddTokenInput[] = tokenList.map((token) =>
+                mapDataSourceTokenToAddTokenInput(token),
+            );
+
+            await addMultpleTokensMutation.mutateAsync(tokensToAdd);
+        }
+
         await tokenListQuery.refetch();
+        await tokenBalancesQuery.refetch();
     };
 
     const updateTokenBalance = async () => {
@@ -113,13 +132,11 @@ export function useTokens() {
         // Only process data when tokenList is available
         if (!tokenListQuery.data) return;
 
-        // Get the raw token list
-        const rawTokens: FungibleToken[] =
-            rawTokenList.length > 0
-                ? rawTokenList
-                : tokenListQuery.data.map((token: TokenModel) => {
-                      return mapTokenModelToFungibleToken(token);
-                  });
+        // Always use the most recent token list data from the query
+        // This prevents conflicts when the rawTokenList might be outdated
+        const rawTokens: FungibleToken[] = tokenListQuery.data.map((token: TokenModel) => {
+            return mapTokenModelToFungibleToken(token);
+        });
 
         // Create an enriched token list by merging all data sources
         const enrichedTokens = rawTokens.map((token) => {
@@ -168,12 +185,17 @@ export function useTokens() {
 
         // Update the token store with enriched tokens
         setRawTokenList(enrichedTokens);
-        applyFilters();
 
         if (userPreferencesQuery.data) {
             setFilters(userPreferencesQuery.data);
         }
-    }, [identity, tokenBalancesQuery.data, tokenMetadataQuery.data, tokenPricesQuery.data]);
+    }, [
+        identity,
+        tokenListQuery.data,
+        tokenBalancesQuery.data,
+        tokenMetadataQuery.data,
+        tokenPricesQuery.data,
+    ]);
 
     // Separate useEffect for token list loading state
     useEffect(() => {

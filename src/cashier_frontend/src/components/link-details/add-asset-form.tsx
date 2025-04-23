@@ -57,11 +57,8 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const [maxActionNumber, setMaxUse] = useState<number>(1);
 
     // Get tokens data
-    const {
-        filteredTokenList: allAvailableTokens,
-        isLoading: isLoadingTokens,
-        getTokenPrice,
-    } = useTokens();
+    const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
+    const allAvailableTokens = getDisplayTokens();
 
     // Initialize form with existing or default values
     const initialValues = useMemo(() => {

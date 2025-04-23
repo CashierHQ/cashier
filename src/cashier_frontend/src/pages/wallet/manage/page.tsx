@@ -53,6 +53,10 @@ export default function ManageTokensPage() {
         };
     }, [keyframesStyle]);
 
+    useEffect(() => {
+        console.log("Tokens updated:", tokens);
+    }, [tokens]);
+
     // Search function to filter tokens
     const searchTokens = useCallback((query: string, tokenList: FungibleToken[]) => {
         if (!query.trim()) return tokenList;

@@ -10,7 +10,7 @@ interface TokenState {
     rawTokenList: FungibleToken[];
 
     // Filtered data
-    filteredTokenList: FungibleToken[];
+    userTokens: FungibleToken[];
 
     // Filter settings
     filters: TokenFilters;
@@ -38,12 +38,11 @@ interface TokenState {
     // Getters
     getToken(tokenAddress: string): FungibleToken | undefined;
     getTokenPrice(tokenAddress: string): number | undefined;
+    // Get the display token based on filters
+    getDisplayTokens(): FungibleToken[];
 
     // Create a map of tokens by address
-    getTokenMap(): Record<string, FungibleToken>;
-
-    // Filter operations
-    applyFilters: () => void;
+    createTokenMap(): Record<string, FungibleToken>;
 
     // Token operations
     searchTokens: (query: string) => FungibleToken[];
@@ -64,7 +63,7 @@ interface TokenState {
 export const useTokenStore = create<TokenState>((set, get) => ({
     // Initial state
     rawTokenList: [],
-    filteredTokenList: [],
+    userTokens: [],
     filters: {
         hideZeroBalance: false,
         hideUnknownToken: false,
@@ -82,14 +81,10 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     // Setters
     setRawTokenList: (tokens) => {
         set({ rawTokenList: tokens });
-        // Auto-apply filters when tokens change
-        get().applyFilters();
     },
-    setFilteredTokens: (filteredTokens) => set({ filteredTokenList: filteredTokens }),
+    setFilteredTokens: (filteredTokens) => set({ userTokens: filteredTokens }),
     setFilters: (filters) => {
         set({ filters });
-        // Auto-apply filters when filters change
-        get().applyFilters();
     },
     setIsLoading: (isLoading) => set({ isLoading }),
     setIsLoadingBalances: (isLoadingBalances) => set({ isLoadingBalances }),
@@ -111,7 +106,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     },
 
     // Create a map of tokens by address
-    getTokenMap: () => {
+    createTokenMap: () => {
         const { rawTokenList } = get();
         return rawTokenList.reduce(
             (map, token) => {
@@ -122,8 +117,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         );
     },
 
-    // Filter operations
-    applyFilters: () => {
+    getDisplayTokens: () => {
         const { rawTokenList: tokens, filters } = get();
 
         let filtered = tokens.slice();
@@ -178,7 +172,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
             return bBalance - aBalance;
         });
 
-        set({ filteredTokenList: filtered });
+        return filtered;
     },
 
     // Search operations - now operating on filteredTokens

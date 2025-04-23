@@ -16,10 +16,10 @@ interface SelectTokenProps {
 }
 
 export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
-    const { isLoading, filteredTokenList: filteredTokens } = useTokens();
+    const { isLoading, getDisplayTokens } = useTokens();
 
     const handleValueChange = (value: string) => {
-        const token = filteredTokens?.find((t) => t.id === value);
+        const token = getDisplayTokens()?.find((t) => t.id === value);
 
         if (token) {
             onSelect(token);
@@ -48,7 +48,7 @@ export const SelectToken = ({ onSelect, selectedToken }: SelectTokenProps) => {
                 </SelectValue>
             </SelectTrigger>
             <SelectContent>
-                {filteredTokens?.map((token) => (
+                {getDisplayTokens()?.map((token) => (
                     <SelectItem key={token.id} value={token.id} className="">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">

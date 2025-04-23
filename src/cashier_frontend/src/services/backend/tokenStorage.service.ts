@@ -59,6 +59,10 @@ class TokenStorageService {
         parseResultResponse(await this.actor.add_token(input));
     }
 
+    async addTokens(input: AddTokenInput[]): Promise<void> {
+        parseResultResponse(await this.actor.add_tokens(input));
+    }
+
     /**
      * Removes a token from the user's list
      */

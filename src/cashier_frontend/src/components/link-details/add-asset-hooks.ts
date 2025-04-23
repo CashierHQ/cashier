@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import {
     linkDetailsFormSchema,
     LinkDetailsFormSchema,
@@ -79,41 +79,6 @@ export function useAddAssetForm(
     }, [assets, getToken, form]);
 
     return form;
-}
-
-/**
- * Hook that provides token assets using the shared useTokens hook
- * @returns Token assets and loading states
- */
-export function useUserAssets() {
-    // Replace the custom queries with useTokens
-    const { filteredTokenList, isLoadingBalances, isLoading } = useTokens();
-
-    return {
-        assets: filteredTokenList,
-        isLoadingAssets: isLoading,
-        isLoadingBalance: isLoadingBalances,
-    };
-}
-
-export function useSelectedAsset(
-    availableAssets: FungibleToken[] | undefined,
-    form: UseFormReturn<TipLinkAssetFormSchema>,
-    assetIndex: number = 0,
-) {
-    const tokenAddress = form.watch(`assets.${assetIndex}.tokenAddress`);
-
-    useEffect(() => {
-        if (availableAssets && availableAssets.length > 0 && !tokenAddress) {
-            form.setValue(`assets.${assetIndex}.tokenAddress`, availableAssets[0].address);
-        }
-    }, [availableAssets, assetIndex, form, tokenAddress]);
-
-    const selectedAsset = useMemo(() => {
-        return availableAssets?.find((asset) => asset.address === tokenAddress);
-    }, [availableAssets, tokenAddress]);
-
-    return selectedAsset;
 }
 
 export function useFormActions(

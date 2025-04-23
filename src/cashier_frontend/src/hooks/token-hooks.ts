@@ -59,13 +59,13 @@ export function useTokenListQuery(identity: Identity | undefined) {
                 tokens = await tokenService.listTokens();
             }
 
-            console.log("identity", identity);
-
             // Initialize user tokens if none exist
             if (tokens.length === 0 && identity) {
                 await tokenService.initializeUserTokens();
                 return await tokenService.listTokens();
             }
+
+            console.log(`[${new Date().toISOString()}] Fetched tokens:`, tokens);
 
             return tokens;
         },
@@ -118,8 +118,6 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
 
                 await Promise.all(batchPromises);
             }
-
-            console.log("Fetched token metadata:", metadataMap);
 
             return metadataMap;
         },
@@ -201,6 +199,32 @@ export function useAddTokenMutation(identity: Identity | undefined) {
 
             const tokenService = new TokenStorageService(identity);
             await tokenService.addToken(input);
+            return true;
+        },
+        onSuccess: () => {
+            // Properly invalidate token queries
+            queryClient.invalidateQueries({
+                queryKey: TOKEN_QUERY_KEYS.all, // Invalidate all token-related queries
+            });
+
+            // Or more specifically:
+            queryClient.invalidateQueries({
+                queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
+            });
+        },
+    });
+}
+
+// add mutliple tokens mutation
+export function useAddTokensMutation(identity: Identity | undefined) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (input: AddTokenInput[]) => {
+            if (!identity) throw new Error("Not authenticated");
+
+            const tokenService = new TokenStorageService(identity);
+            await tokenService.addTokens(input);
             return true;
         },
         onSuccess: () => {

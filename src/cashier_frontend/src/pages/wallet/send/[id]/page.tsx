@@ -50,7 +50,8 @@ export default function SendTokenPage() {
     const [addressType, setAddressType] = useState<"principal" | "account">("principal");
 
     // Token data from global store
-    const { filteredTokenList } = useTokens();
+    const { getDisplayTokens } = useTokens();
+    const userTokens = getDisplayTokens();
 
     // Transaction state from store
     const { transactionStatus, setSendAssetInfo, setTransactionStatus, openConfirmation } =
@@ -64,17 +65,17 @@ export default function SendTokenPage() {
      */
     const selectedToken = useMemo(() => {
         // Skip if no token list available
-        if (!filteredTokenList?.length) {
+        if (!userTokens?.length) {
             return undefined;
         }
 
         // Find token by tokenId if provided
         if (tokenId) {
-            return filteredTokenList.find((token) => token.address === tokenId);
+            return userTokens.find((token) => token.address === tokenId);
         }
 
         return undefined;
-    }, [filteredTokenList, tokenId]);
+    }, [userTokens, tokenId]);
 
     /**
      * Calculate the maximum available amount considering network fees
@@ -100,7 +101,7 @@ export default function SendTokenPage() {
     }, [selectedToken]);
 
     // Init form with default values
-    const form = useWalletSendAssetForm(filteredTokenList, {
+    const form = useWalletSendAssetForm(userTokens, {
         address: selectedToken?.address ?? "",
         amount: BigInt(0),
         assetNumber: 0,
