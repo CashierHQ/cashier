@@ -26,6 +26,7 @@ import { useParams } from "react-router-dom";
 import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
+import { ClipboardIcon } from "lucide-react";
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -332,13 +333,17 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                                 className="mr-1 h-5 w-5"
                                                             />
                                                         ) : (
-                                                            <MdOutlineContentPaste
+                                                            <ClipboardIcon
                                                                 color="green"
                                                                 className="mr-2 h-5 w-5"
                                                             />
                                                         )
                                                     }
-                                                    onRightIconClick={() => handlePasteClick(field)}
+                                                    onRightIconClick={() => {
+                                                        field.value
+                                                            ? field.onChange("")
+                                                            : handlePasteClick(field);
+                                                    }}
                                                     placeholder={t("claim.addressPlaceholder")}
                                                     className="py-5 h-14 text-md rounded-xl"
                                                     onFocusShowIcon={true}
