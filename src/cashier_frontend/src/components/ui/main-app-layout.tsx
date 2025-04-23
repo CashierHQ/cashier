@@ -20,7 +20,7 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
         return hiddenPaths.some((path) => pathname.includes(path)) && !isLargeDevice;
     }, [pathname, responsive.isSmallDevice]);
 
-    if (!walletUser || pathname === "/") {
+    if (!walletUser && pathname === "/") {
         return (
             <div className="w-screen flex justify-center py-5 h-full">
                 <div className="flex w-full flex-col items-center gap-4">
