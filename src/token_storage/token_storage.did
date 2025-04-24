@@ -6,6 +6,10 @@ type AddTokenInput = record {
   index_id : opt principal;
   symbol : opt text;
 };
+type AddTokensInput = record {
+  tokens : vec AddTokenInput;
+  token_hold : vec text;
+};
 type Chain = variant { IC };
 type RegisterTokenInput = record {
   id : text;
@@ -57,7 +61,7 @@ type UserPreference = record {
 };
 service : {
   add_token : (AddTokenInput) -> (Result);
-  add_tokens : (vec AddTokenInput) -> (Result);
+  add_tokens : (AddTokensInput) -> (Result);
   batch_toggle_token_visibility : (vec record { text; bool }) -> (Result);
   get_user_preference : () -> (Result_1) query;
   initialize_registry : () -> (Result);

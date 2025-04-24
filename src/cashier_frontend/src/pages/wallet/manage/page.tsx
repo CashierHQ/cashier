@@ -20,12 +20,14 @@ export default function ManageTokensPage() {
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
 
-    const { rawTokenList: tokens, isLoading, isSyncPreferences, updateTokenExplorer } = useTokens();
+    const { rawTokenList, isLoading, updateTokenExplorer } = useTokens();
 
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [filteredTokens, setFilteredTokens] = useState<FungibleToken[]>([]);
-
     const [isExplorerLoading, setIsExplorerLoading] = useState<boolean>(false);
+
+    // Use either user tokens or raw tokens based on authentication status
+    const tokens = rawTokenList;
 
     // Custom animation style
     const halfSpinStyle = {
@@ -59,14 +61,13 @@ export default function ManageTokensPage() {
 
     // Search function to filter tokens
     const searchTokens = useCallback((query: string, tokenList: FungibleToken[]) => {
-        if (!query.trim()) return tokenList;
+        const lcQuery = query.toLowerCase().trim();
+        if (!lcQuery) return tokenList;
 
-        const lowercaseQuery = query.toLowerCase().trim();
         return tokenList.filter(
             (token) =>
-                token.name.toLowerCase().includes(lowercaseQuery) ||
-                token.symbol.toLowerCase().includes(lowercaseQuery) ||
-                token.address.toLowerCase().includes(lowercaseQuery),
+                token.name.toLowerCase().includes(lcQuery) ||
+                token.symbol.toLowerCase().includes(lcQuery),
         );
     }, []);
 
@@ -141,7 +142,7 @@ export default function ManageTokensPage() {
 
             <div className="flex flex-col py-6 relative">
                 {/* Loading Overlay for Sync Preferences */}
-                {isSyncPreferences && (
+                {isLoading && (
                     <div className="absolute inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center rounded-md">
                         <div className="flex flex-col items-center">
                             <Spinner width={40} height={40} />

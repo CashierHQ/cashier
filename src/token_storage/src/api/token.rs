@@ -9,7 +9,7 @@ use crate::{
         user_preference::UserPreferenceRepository, user_token::TokenRepository,
     },
     types::{
-        AddTokenInput, Chain, RegisterTokenInput, RegistryToken, RegistryTokenDto,
+        AddTokenInput, AddTokensInput, Chain, RegisterTokenInput, RegistryToken, RegistryTokenDto,
         RemoveTokenInput, TokenDto, TokenId, UserFiltersInput, UserPreference,
     },
 };
@@ -209,32 +209,26 @@ pub fn toggle_token_visibility(token_id: String, hidden: bool) -> Result<(), Str
     }
 
     let user_preference = UserPreferenceRepository::new();
-    let mut preferences = user_preference.get(&caller.to_text());
+    let repository = TokenRepository::new();
 
-    ic_cdk::println!(
-        "Toggling token visibility for user: {}, token_id: {}, hidden: {}",
-        caller.to_text(),
-        token_id,
-        hidden
-    );
+    let mut preferences = user_preference.get(&caller.to_text());
 
     if hidden {
         // Add token to hidden list if not already there (deduplicate)
         if !preferences.hidden_tokens.contains(&token_id) {
-            preferences.hidden_tokens.push(token_id);
+            preferences.hidden_tokens.push(token_id.clone());
         }
     } else {
         // Remove token from hidden list
-        preferences.hidden_tokens.retain(|id| id != &token_id);
+        preferences
+            .hidden_tokens
+            .retain(|id| id != &token_id.clone());
     }
 
-    ic_cdk::println!(
-        "Toggling token visibility for user: {}, preferences: {:#?}",
-        caller.to_text(),
-        preferences
-    );
-
     user_preference.update(caller.to_text(), preferences);
+
+    let _ = repository.add_token(caller.to_text(), token_id.clone());
+
     Ok(())
 }
 
@@ -263,6 +257,7 @@ pub fn batch_toggle_token_visibility(tokens: Vec<(String, bool)>) -> Result<(), 
     }
 
     user_preference.update(caller.to_text(), preferences);
+
     Ok(())
 }
 
@@ -326,26 +321,26 @@ pub fn initialize_user_tokens() -> Result<(), String> {
 
 /// Add multiple tokens in a single call for efficiency
 #[update]
-pub async fn add_tokens(input: Vec<AddTokenInput>) -> Result<(), String> {
+pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
         return Err("Not allowed for anonymous calls".to_string());
     }
 
-    if input.is_empty() {
+    if input.tokens.is_empty() && input.token_hold.is_empty() {
         return Err("No tokens provided".to_string());
     }
 
-    let start_ts = ic_cdk::api::time();
-
     let registry = TokenRegistryRepository::new();
     let repository = TokenRepository::new();
-    let mut token_ids_to_add = Vec::with_capacity(input.len());
-    let mut register_inputs = Vec::with_capacity(input.len());
+    let mut token_ids_to_add = Vec::new();
+    let mut register_inputs = Vec::new();
 
+    // Process tokens that need registry verification
     // First pass: generate token IDs and prepare registration data
-    for token_input in input {
+
+    for token_input in input.tokens {
         // Skip tokens without ledger ID
         let Some(ledger_pid) = token_input.ledger_id.clone() else {
             continue;
@@ -475,20 +470,24 @@ pub async fn add_tokens(input: Vec<AddTokenInput>) -> Result<(), String> {
 
     let end_1_ts = ic_cdk::api::time();
 
-    ic_cdk::println!(
-        "Token registration took {} nanosecond",
-        (end_1_ts - start_ts)
-    );
+    // // Add tokens to user's list
+    // if !token_ids_to_add.is_empty() {
+    //     for token_id in token_ids_to_add {
+    //         // Ignore errors to ensure all tokens are attempted
+    //         let _ = repository.add_token(caller.to_text(), token_id);
+    //     }
+    // }
 
     // Sync registry tokens once at the end
     let _ = repository.sync_registry_tokens(&caller.to_text());
 
     let end_2_ts = ic_cdk::api::time();
 
-    ic_cdk::println!(
-        "sync_registry_tokens took {} nanosecond",
-        (end_2_ts - end_1_ts)
-    );
+    // Process token_hold after syncing registry tokens
+    // These tokens are added directly to user's list without checking registry
+    for token_id in &input.token_hold {
+        let _ = repository.add_token(caller.to_text(), token_id.clone());
+    }
 
     Ok(())
 }

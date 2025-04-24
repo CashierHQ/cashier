@@ -69,6 +69,49 @@ export function mapDataSourceTokenToAddTokenInput(token: DataSourceToken): {
     };
 }
 
+/**
+ * Maps a TokenListItem to the target interface needed by the token storage
+ * @param token The source token data from icExplorer token list API
+ * @returns An object with the target structure for adding to token storage
+ */
+export function mapTokenListItemToAddTokenInput(token: TokenListItem): {
+    decimals: [] | [number];
+    chain: string;
+    name: [] | [string];
+    ledger_id: [] | [Principal];
+    index_id: [] | [Principal];
+    symbol: [] | [string];
+} {
+    return {
+        // Convert token0Decimal to optional array format
+        decimals: toNullable(token.tokenDecimal),
+
+        // Always set chain to 'IC' because we're using ICExplorer API
+        chain: "IC",
+
+        // Symbol is mapped as optional array
+        symbol: toNullable(token.symbol),
+
+        // Use token0Symbol for name as well since we don't have a separate name field
+        name: toNullable(token.symbol),
+
+        // Convert token0LedgerId to Principal if it's a valid string
+        ledger_id: token.ledgerId
+            ? (() => {
+                  try {
+                      return [Principal.fromText(token.ledgerId)];
+                  } catch (error) {
+                      console.error("Invalid ledger ID format:", error);
+                      return [];
+                  }
+              })()
+            : [],
+
+        // We don't have index_id in the source, so leave it empty
+        index_id: [],
+    };
+}
+
 export interface UserTokensListResponse {
     total: string;
     list: DataSourceToken[];
@@ -94,6 +137,42 @@ export interface GetUserTokensResponse {
     data: UserTokensListResponse;
 }
 
+export interface TokenListResponse {
+    statusCode: number;
+    data: {
+        total: string;
+        list: TokenListItem[];
+        pageNum: number;
+        pageSize: number;
+        size: number;
+        startRow: string;
+        endRow: string;
+        pages: number;
+        prePage: number;
+        nextPage: number;
+        isFirstPage: boolean;
+        isLastPage: boolean;
+        hasPreviousPage: boolean;
+        hasNextPage: boolean;
+        navigatePages: number;
+        navigateFirstPage: number;
+        navigateLastPage: number;
+    };
+}
+
+export interface TokenListItem {
+    ledgerId: string;
+    symbol: string;
+    totalSupply?: string;
+    owner?: string;
+    subaccount?: string;
+    accountId: string;
+    amount: string;
+    tokenDecimal: number;
+    snapshotTime: number;
+    valueUSD: string;
+}
+
 export class ICExplorerService {
     constructor() {}
 
@@ -105,6 +184,18 @@ export class ICExplorerService {
             size: 300,
             isDesc: true,
         });
+
+        return response.data.list;
+    }
+
+    async getListToken(): Promise<TokenListItem[]> {
+        const url = "token/list";
+        const response = await icExplorerAxiosClient.post(url, {
+            page: 1,
+            size: 300,
+        });
+
+        console.log("getListToken response", response.data.list);
 
         return response.data.list;
     }

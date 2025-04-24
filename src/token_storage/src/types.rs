@@ -157,6 +157,13 @@ pub struct AddTokenInput {
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
+pub struct AddTokensInput {
+    pub tokens: Vec<AddTokenInput>,
+    // sub set of tokens to be added, balance > 0
+    pub token_hold: Vec<String>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct RemoveTokenInput {
     pub token_id: String,
 }

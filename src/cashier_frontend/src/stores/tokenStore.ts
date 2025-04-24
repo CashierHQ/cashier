@@ -26,6 +26,7 @@ interface TokenState {
 
     // Setters
     setRawTokenList: (tokens: FungibleToken[]) => void;
+    setUserTokens: (tokens: FungibleToken[]) => void;
     setFilteredTokens: (tokens: FungibleToken[]) => void;
     setFilters: (filters: TokenFilters) => void;
     setIsLoading: (isLoading: boolean) => void;
@@ -82,6 +83,9 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     setRawTokenList: (tokens) => {
         set({ rawTokenList: tokens });
     },
+    setUserTokens: (tokens) => {
+        set({ userTokens: tokens });
+    },
     setFilteredTokens: (filteredTokens) => set({ userTokens: filteredTokens }),
     setFilters: (filters) => {
         set({ filters });
@@ -118,7 +122,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     },
 
     getDisplayTokens: () => {
-        const { rawTokenList: tokens, filters } = get();
+        const { userTokens: tokens, filters } = get();
 
         let filtered = tokens.slice();
 

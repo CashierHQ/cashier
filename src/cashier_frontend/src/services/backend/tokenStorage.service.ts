@@ -8,6 +8,7 @@ import {
     TokenDto,
     idlFactory,
     RegistryTokenDto,
+    AddTokensInput,
 } from "../../../../declarations/token_storage/token_storage.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
@@ -59,7 +60,7 @@ class TokenStorageService {
         parseResultResponse(await this.actor.add_token(input));
     }
 
-    async addTokens(input: AddTokenInput[]): Promise<void> {
+    async addTokens(input: AddTokensInput): Promise<void> {
         parseResultResponse(await this.actor.add_tokens(input));
     }
 
