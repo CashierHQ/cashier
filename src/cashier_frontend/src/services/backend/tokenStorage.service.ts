@@ -41,7 +41,7 @@ class TokenStorageService {
      * Lists all tokens in the registry
      */
     async listRegistryTokens(): Promise<RegistryTokenDto[]> {
-        const response = parseResultResponse(await this.actor.list_registry_tokens());
+        const response = parseResultResponse(await this.actor.list_registry_tokens([]));
         return response;
     }
 

@@ -44,6 +44,9 @@ export function ImportTokenReview({ token }: ImportTokenReviewProps) {
                 index_id: toNullable(
                     token.index_id ? Principal.fromText(token.index_id) : undefined,
                 ),
+                decimals: toNullable(token.decimals),
+                name: toNullable(token.name),
+                symbol: toNullable(token.symbol),
             };
 
             await addToken(addTokenInput);
