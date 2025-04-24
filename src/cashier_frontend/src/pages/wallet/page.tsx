@@ -26,8 +26,6 @@ export default function WalletPage() {
         return Number(total.toFixed(2));
     }, [filteredTokens]);
 
-    console.log("🚀 ~ WalletPage ~ filteredTokens:", filteredTokens);
-
     // Show loading skeleton when tokens are loading
     if (isLoading) {
         return (

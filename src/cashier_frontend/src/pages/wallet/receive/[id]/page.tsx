@@ -1,6 +1,5 @@
 import { IconInput } from "@/components/icon-input";
 import ConfirmDialog from "@/components/confirm-dialog";
-import { BackHeader } from "@/components/ui/back-header";
 import { SelectToken } from "@/components/receive/SelectToken";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { toast } from "@/hooks/use-toast";
@@ -61,7 +60,6 @@ function AccountIdContent({ accountId }: { accountId: string }) {
 export default function ReceiveTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId?: string }>();
     const { metadata } = useTokenMetadata(tokenId);
     const { user } = useAuth();
