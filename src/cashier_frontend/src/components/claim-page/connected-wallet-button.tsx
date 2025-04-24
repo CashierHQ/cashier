@@ -33,6 +33,7 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
                 // Prevent form submission
                 e.preventDefault();
                 e.stopPropagation();
+                console.log("Connected account:", connectedAccount);
                 handleConnect();
             }}
         >

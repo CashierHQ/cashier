@@ -3,7 +3,6 @@ import { IoIosArrowBack, IoMdClose } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
 import { PiWallet } from "react-icons/pi";
 import { HiOutlineWallet } from "react-icons/hi2";
-import { MdOutlineContentPaste } from "react-icons/md";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
@@ -111,7 +110,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             return;
         }
 
-        if (identity && walletOption !== currentConnectOption) {
+        if (identity) {
             showDialog({
                 title: "Are you sure?",
                 description:
@@ -128,6 +127,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                 connectToWallet("InternetIdentity");
             }
         } else if (walletOption === WALLET_OPTIONS.OTHER) {
+            initOtherWalletSigners();
+            if (!identity) {
+                connectToWallet();
+            }
+        } else if (walletOption === WALLET_OPTIONS.GOOGLE) {
             initOtherWalletSigners();
             if (!identity) {
                 connectToWallet("https://login.f0i.de/");
@@ -247,10 +251,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             {/* Google login */}
                             <WalletButton
                                 title="Google login"
-                                handleConnect={() => {}}
+                                handleConnect={() => {
+                                    handleConnectWallet(WALLET_OPTIONS.GOOGLE);
+                                }}
                                 image="/googleIcon.png"
-                                disabled={true}
-                                postfixText="Coming soon"
                             />
 
                             {/* Internet Identity */}
@@ -265,9 +269,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                             className="w-6 h-6 mr-2"
                                         />
                                     }
-                                    handleConnect={() =>
-                                        handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY)
-                                    }
+                                    handleConnect={() => {
+                                        handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY);
+                                    }}
                                 />
                             ) : (
                                 <WalletButton
@@ -346,6 +350,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                         )
                                                     }
                                                     onRightIconClick={() => {
+                                                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                                                         field.value
                                                             ? field.onChange("")
                                                             : handlePasteClick(field);
