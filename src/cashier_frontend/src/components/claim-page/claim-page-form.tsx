@@ -110,7 +110,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             return;
         }
 
-        if (identity && walletOption !== currentConnectOption) {
+        if (identity) {
             showDialog({
                 title: "Are you sure?",
                 description:
@@ -269,9 +269,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                             className="w-6 h-6 mr-2"
                                         />
                                     }
-                                    handleConnect={() =>
-                                        handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY)
-                                    }
+                                    handleConnect={() => {
+                                        handleConnectWallet(WALLET_OPTIONS.INTERNET_IDENTITY);
+                                    }}
                                 />
                             ) : (
                                 <WalletButton
@@ -350,6 +350,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                         )
                                                     }
                                                     onRightIconClick={() => {
+                                                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                                                         field.value
                                                             ? field.onChange("")
                                                             : handlePasteClick(field);
