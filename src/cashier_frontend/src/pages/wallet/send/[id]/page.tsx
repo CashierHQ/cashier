@@ -266,12 +266,12 @@ export default function SendTokenPage() {
     };
 
     return (
-        <div className="">
+        <div className="h-full">
             {/* <BackHeader onBack={handleGoBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
             </BackHeader> */}
 
-            <div id="content" className="my-5 h-full">
+            <div id="content" className="h-full">
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(handleSubmit)}
@@ -438,9 +438,9 @@ export default function SendTokenPage() {
                             variant="default"
                             size="lg"
                             disabled={isDisabled}
-                            className={`mx-auto ${responsive.isSmallDevice ? "mt-auto" : "mt-auto"}`}
+                            className={`mx-auto mt-auto`}
                         >
-                            {t("continue")}
+                            Send
                         </FixedBottomButton>
                     </form>
                 </Form>
