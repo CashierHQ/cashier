@@ -1,6 +1,7 @@
 // File: src/token_storage/src/api.rs
 use candid::Principal;
 use ic_cdk::{query, update};
+use std::{clone, collections::HashSet};
 
 use crate::{
     ext::icrc::Service,
@@ -334,8 +335,9 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
 
     let registry = TokenRegistryRepository::new();
     let repository = TokenRepository::new();
-    let mut token_ids_to_add = Vec::new();
     let mut register_inputs = Vec::new();
+    let token_hold_input_set: HashSet<_> = input.token_hold.clone().into_iter().collect();
+    let mut token_hold_ids_to_add = Vec::new();
 
     // Process tokens that need registry verification
     // First pass: generate token IDs and prepare registration data
@@ -363,22 +365,11 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
             }
         };
 
-        // Check if token already exists in registry - if so, just add it to user's list
-        if registry.get_token(&token_id).is_some() {
-            token_ids_to_add.push(token_id);
-            continue;
-        }
-
         // For new tokens, we need metadata
         let (symbol, name, decimals) = if token_input.symbol.is_some()
             && token_input.name.is_some()
             && token_input.decimals.is_some()
         {
-            ic_cdk::println!(
-                "Using provided metadata for token {}: {:#?}",
-                token_id,
-                token_input
-            );
             // Use provided metadata
             (
                 token_input.symbol.unwrap(),
@@ -388,12 +379,6 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
         } else {
             // Create a service for querying token metadata
             let service = Service::new(ledger_pid.clone());
-
-            ic_cdk::println!(
-                "Fetching metadata for token {}: {:#?}",
-                token_id,
-                token_input
-            );
 
             // Execute all metadata queries concurrently
             let symbol_future = service.icrc_1_symbol();
@@ -442,6 +427,10 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
             (symbol, name, decimals)
         };
 
+        if (token_hold_input_set.contains(&ledger_pid.clone().to_text())) {
+            token_hold_ids_to_add.push(token_id.clone());
+        }
+
         // Create register token input and add to batch
         register_inputs.push(RegisterTokenInput {
             id: token_id.clone(),
@@ -453,8 +442,6 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
             decimals,
             enabled_by_default: false,
         });
-
-        token_ids_to_add.push(token_id);
     }
 
     // Register new tokens in bulk if any
@@ -468,24 +455,13 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
         }
     }
 
-    let end_1_ts = ic_cdk::api::time();
-
-    // // Add tokens to user's list
-    // if !token_ids_to_add.is_empty() {
-    //     for token_id in token_ids_to_add {
-    //         // Ignore errors to ensure all tokens are attempted
-    //         let _ = repository.add_token(caller.to_text(), token_id);
-    //     }
-    // }
-
     // Sync registry tokens once at the end
     let _ = repository.sync_registry_tokens(&caller.to_text());
 
-    let end_2_ts = ic_cdk::api::time();
-
     // Process token_hold after syncing registry tokens
     // These tokens are added directly to user's list without checking registry
-    for token_id in &input.token_hold {
+    for token_id in &token_hold_ids_to_add {
+        ic_cdk::println!("Adding token {} to user {}", token_id, caller);
         let _ = repository.add_token(caller.to_text(), token_id.clone());
     }
 

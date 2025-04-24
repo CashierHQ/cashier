@@ -20,7 +20,11 @@ import {
     mapTokenModelToFungibleToken,
     TokenModel,
 } from "@/types/fungible-token.speculative";
-import { ICExplorerService, mapTokenListItemToAddTokenInput } from "@/services/icExplorer.service";
+import {
+    ICExplorerService,
+    mapTokenListItemToAddTokenInput,
+    TokenListItem,
+} from "@/services/icExplorer.service";
 
 // Main hook that components should use
 export function useTokens() {
@@ -100,6 +104,7 @@ export function useTokens() {
 
     const updateToken = async () => {
         console.log("call updateToken");
+        await tokenRawListQuery.refetch();
         if (identity) {
             await tokenUserListQuery.refetch();
             await userPreferencesQuery.refetch();
@@ -113,11 +118,41 @@ export function useTokens() {
             console.error("No identity found");
             return;
         }
+
+        // Get user tokens
         const tokenHold = await explorerService.getUserTokens(identity.getPrincipal().toText());
         const tokenHoldId = tokenHold.map((token) => token.ledgerId);
-        // this can be fail
-        // TODO: handle if this call is failed
-        const tokenList = await explorerService.getListToken();
+
+        // Add retry logic for getting token list
+        const MAX_RETRIES = 3;
+        const RETRY_DELAY = 1000; // 1 second delay between retries
+
+        // Implement retry function with exponential backoff
+        const getTokenListWithRetry = async (retries: number = 0): Promise<TokenListItem[]> => {
+            try {
+                const result = await explorerService.getListToken();
+                console.log(`Successfully retrieved token list with ${result.length} items`);
+                return result;
+            } catch (error) {
+                if (retries < MAX_RETRIES) {
+                    const delay = RETRY_DELAY * Math.pow(2, retries);
+                    console.log(`Attempt ${retries + 1} failed, retrying in ${delay}ms...`);
+
+                    // Wait for delay time
+                    await new Promise((resolve) => setTimeout(resolve, delay));
+
+                    // Retry with incremented counter
+                    return getTokenListWithRetry(retries + 1);
+                } else {
+                    console.error(`Failed to get token list after ${MAX_RETRIES} attempts:`, error);
+                    // Return empty array if all retries fail
+                    return [];
+                }
+            }
+        };
+
+        // Get token list with retry mechanism
+        const tokenList = await getTokenListWithRetry();
 
         if (tokenList.length > 0) {
             const tokensToAdd: AddTokenInput[] = tokenList.map((token) => {
@@ -131,7 +166,6 @@ export function useTokens() {
         }
 
         await tokenUserListQuery.refetch();
-        await tokenBalancesQuery.refetch();
     };
 
     const updateTokenBalance = async () => {
@@ -275,6 +309,21 @@ export function useTokens() {
         tokenPricesQuery.data,
         userPreferencesQuery.data,
     ]);
+
+    useEffect(() => {
+        const reloadIfChanged = async () => {
+            if (!identity) {
+                console.log("No identity found, skipping reload");
+                return;
+            }
+
+            await tokenBalancesQuery.refetch();
+            await tokenPricesQuery.refetch();
+            await userPreferencesQuery.refetch();
+        };
+
+        reloadIfChanged();
+    }, [tokenUserListQuery.data]);
 
     // Separate useEffect for loading states
     useEffect(() => {
