@@ -130,6 +130,11 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         } else if (walletOption === WALLET_OPTIONS.OTHER) {
             initOtherWalletSigners();
             if (!identity) {
+                connectToWallet();
+            }
+        } else if (walletOption === WALLET_OPTIONS.GOOGLE) {
+            initOtherWalletSigners();
+            if (!identity) {
                 connectToWallet("https://login.f0i.de/");
             }
         }
@@ -247,10 +252,10 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             {/* Google login */}
                             <WalletButton
                                 title="Google login"
-                                handleConnect={() => {}}
+                                handleConnect={() => {
+                                    handleConnectWallet(WALLET_OPTIONS.GOOGLE);
+                                }}
                                 image="/googleIcon.png"
-                                disabled={true}
-                                postfixText="Coming soon"
                             />
 
                             {/* Internet Identity */}
