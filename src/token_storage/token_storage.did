@@ -66,7 +66,7 @@ service : {
   get_user_preference : () -> (Result_1) query;
   initialize_registry : () -> (Result);
   initialize_user_tokens : () -> (Result);
-  list_registry_tokens : () -> (Result_2) query;
+  list_registry_tokens : (opt bool) -> (Result_2) query;
   list_tokens : () -> (Result_3) query;
   query_user_token : (text) -> (Result_3);
   register_token : (RegisterTokenInput) -> (Result_4);

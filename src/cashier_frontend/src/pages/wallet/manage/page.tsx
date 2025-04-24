@@ -4,13 +4,11 @@ import { Search as SearchIcon, RefreshCw } from "lucide-react";
 import { ManageTokensList } from "@/components/manage-tokens/token-list";
 import { ManageTokensMissingTokenMessage } from "@/components/manage-tokens/missing-token-message";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Link } from "@/components/ui/link";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { useTokens } from "@/hooks/useTokens";
 import { Spinner } from "@/components/ui/spinner";
-import { FungibleToken } from "@/types/fungible-token.speculative";
-import debounce from "lodash/debounce";
 import { IconInput } from "@/components/icon-input";
 
 export default function ManageTokensPage() {
@@ -20,10 +18,10 @@ export default function ManageTokensPage() {
     const navigate = useNavigate();
     const goBack = () => navigate("/wallet");
 
-    const { rawTokenList, isLoading, updateTokenExplorer } = useTokens();
+    const { rawTokenList, isLoading, updateTokenExplorer, isSyncPreferences, updateTokenBalance } =
+        useTokens();
 
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [filteredTokens, setFilteredTokens] = useState<FungibleToken[]>([]);
     const [isExplorerLoading, setIsExplorerLoading] = useState<boolean>(false);
 
     // For infinite scrolling
@@ -44,6 +42,18 @@ export default function ManageTokensPage() {
             return (a.enabled ?? true) ? -1 : 1;
         });
     }, [tokens]);
+
+    // Search function to filter tokens - moved inside useMemo
+    const filteredTokens = useMemo(() => {
+        const lcQuery = searchQuery.toLowerCase().trim();
+        if (!lcQuery) return sortedTokens;
+
+        return sortedTokens.filter(
+            (token) =>
+                token.name.toLowerCase().includes(lcQuery) ||
+                token.symbol.toLowerCase().includes(lcQuery),
+        );
+    }, [searchQuery, sortedTokens]);
 
     // Custom animation style
     const halfSpinStyle = {
@@ -81,10 +91,7 @@ export default function ManageTokensPage() {
                     setDisplayLimit((prev) => {
                         const newLimit = prev + 20; // Load 20 more items
                         // Don't exceed the total number of items
-                        return Math.min(
-                            newLimit,
-                            searchQuery ? filteredTokens.length : sortedTokens.length,
-                        );
+                        return Math.min(newLimit, filteredTokens.length);
                     });
                 }
             },
@@ -100,34 +107,11 @@ export default function ManageTokensPage() {
                 observer.unobserve(loaderRef.current);
             }
         };
-    }, [sortedTokens, filteredTokens, searchQuery]);
-
-    // Search function to filter tokens
-    const searchTokens = useCallback((query: string, tokenList: FungibleToken[]) => {
-        const lcQuery = query.toLowerCase().trim();
-        if (!lcQuery) return tokenList;
-
-        return tokenList.filter(
-            (token) =>
-                token.name.toLowerCase().includes(lcQuery) ||
-                token.symbol.toLowerCase().includes(lcQuery),
-        );
-    }, []);
-
-    // Add debouncing to search
-    const debouncedSearch = useCallback(
-        debounce((query: string, tokenList: FungibleToken[]) => {
-            const results = searchTokens(query, tokenList);
-            setFilteredTokens(results);
-            setDisplayLimit(30); // Reset display limit when search changes
-        }, 300),
-        [searchTokens],
-    );
+    }, [filteredTokens]);
 
     // Clear search
     const handleClearSearch = () => {
         setSearchQuery("");
-        setFilteredTokens(sortedTokens);
         setDisplayLimit(30); // Reset display limit when clearing search
     };
 
@@ -135,6 +119,7 @@ export default function ManageTokensPage() {
         setIsExplorerLoading(true);
         try {
             await updateTokenExplorer();
+            await updateTokenBalance();
         } catch (error) {
             console.error("Error updating token explorer", error);
         } finally {
@@ -142,22 +127,19 @@ export default function ManageTokensPage() {
         }
     };
 
-    // Update filtered tokens when tokens list changes
+    // Reset display limit when search query changes
     useEffect(() => {
-        if (searchQuery) {
-            debouncedSearch(searchQuery, sortedTokens);
-        } else {
-            setFilteredTokens(sortedTokens);
-        }
-    }, [sortedTokens, debouncedSearch, searchQuery]);
+        setDisplayLimit(30);
+    }, [searchQuery]);
 
-    // Get the tokens to display based on search query and display limit
-    const allTokens = searchQuery ? filteredTokens : sortedTokens;
-    const displayedTokens = allTokens.slice(0, displayLimit);
+    // Get the tokens to display based on display limit
+    const displayedTokens = useMemo(() => {
+        return filteredTokens.slice(0, displayLimit);
+    }, [filteredTokens, displayLimit]);
 
     const isNoTokens = tokens.length === 0;
     const noSearchResults = !isNoTokens && searchQuery && filteredTokens.length === 0;
-    const hasMoreTokens = displayLimit < allTokens.length;
+    const hasMoreTokens = displayLimit < filteredTokens.length;
 
     return (
         <div
@@ -193,7 +175,7 @@ export default function ManageTokensPage() {
                 {/* Container for scrollable content */}
                 <div className="overflow-y-auto h-full pb-4 flex-1">
                     {/* Loading Overlay for Sync Preferences */}
-                    {isLoading && (
+                    {isSyncPreferences && (
                         <div className="absolute inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center rounded-md">
                             <div className="flex flex-col items-center">
                                 <Spinner width={40} height={40} />

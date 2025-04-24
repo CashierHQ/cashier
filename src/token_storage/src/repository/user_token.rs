@@ -170,6 +170,12 @@ impl TokenRepository {
                 .filter(|token| token.enabled_by_default)
                 .collect();
 
+            ic_cdk::println!(
+                "Adding default tokens to user {}: {:?}",
+                user_id,
+                default_tokens
+            );
+
             // Add each default-enabled token to the user's list
             for token in default_tokens {
                 let _ = self.add_token(user_id.clone(), token.id.clone());

@@ -1,7 +1,7 @@
 // File: src/token_storage/src/api.rs
 use candid::Principal;
 use ic_cdk::{query, update};
-use std::{clone, collections::HashSet};
+use std::collections::HashSet;
 
 use crate::{
     ext::icrc::Service,
@@ -16,11 +16,23 @@ use crate::{
 };
 
 #[query]
-pub fn list_registry_tokens() -> Result<Vec<RegistryTokenDto>, String> {
+pub fn list_registry_tokens(only_enabled: Option<bool>) -> Result<Vec<RegistryTokenDto>, String> {
     let registry = TokenRegistryRepository::new();
     let tokens = registry.list_tokens();
 
-    let result = tokens
+    // Filter tokens if only_enabled parameter is provided
+    let filtered_tokens = if let Some(true) = only_enabled {
+        // Only include tokens with enabled_by_default = true
+        tokens
+            .into_iter()
+            .filter(|token| token.enabled_by_default)
+            .collect()
+    } else {
+        // Return all tokens if only_enabled is None or false
+        tokens
+    };
+
+    let result = filtered_tokens
         .into_iter()
         .map(|token| RegistryTokenDto {
             id: token.id,
@@ -335,13 +347,17 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
 
     let registry = TokenRegistryRepository::new();
     let repository = TokenRepository::new();
+    
+    // Get current user tokens to avoid adding duplicates
+    let current_user_tokens = repository.list_token_ids(&caller.to_text());
+    let current_user_tokens_set: HashSet<_> = current_user_tokens.iter().cloned().collect();
+    
     let mut register_inputs = Vec::new();
     let token_hold_input_set: HashSet<_> = input.token_hold.clone().into_iter().collect();
     let mut token_hold_ids_to_add = Vec::new();
 
     // Process tokens that need registry verification
     // First pass: generate token IDs and prepare registration data
-
     for token_input in input.tokens {
         // Skip tokens without ledger ID
         let Some(ledger_pid) = token_input.ledger_id.clone() else {
@@ -364,6 +380,12 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
                 continue;
             }
         };
+
+        // Skip if token is already in user's list
+        if current_user_tokens_set.contains(&token_id) {
+            ic_cdk::println!("Token {} already exists in user {}'s list, skipping", token_id, caller);
+            continue;
+        }
 
         // For new tokens, we need metadata
         let (symbol, name, decimals) = if token_input.symbol.is_some()
@@ -427,7 +449,7 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
             (symbol, name, decimals)
         };
 
-        if (token_hold_input_set.contains(&ledger_pid.clone().to_text())) {
+        if token_hold_input_set.contains(&ledger_pid.clone().to_text()) {
             token_hold_ids_to_add.push(token_id.clone());
         }
 
@@ -459,8 +481,14 @@ pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
     let _ = repository.sync_registry_tokens(&caller.to_text());
 
     // Process token_hold after syncing registry tokens
+    // Filter out tokens that are already in the user's list
+    let filtered_token_hold_ids: Vec<_> = token_hold_ids_to_add
+        .into_iter()
+        .filter(|token_id| !current_user_tokens_set.contains(token_id))
+        .collect();
+    
     // These tokens are added directly to user's list without checking registry
-    for token_id in &token_hold_ids_to_add {
+    for token_id in &filtered_token_hold_ids {
         ic_cdk::println!("Adding token {} to user {}", token_id, caller);
         let _ = repository.add_token(caller.to_text(), token_id.clone());
     }

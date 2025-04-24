@@ -310,21 +310,6 @@ export function useTokens() {
         userPreferencesQuery.data,
     ]);
 
-    useEffect(() => {
-        const reloadIfChanged = async () => {
-            if (!identity) {
-                console.log("No identity found, skipping reload");
-                return;
-            }
-
-            await tokenBalancesQuery.refetch();
-            await tokenPricesQuery.refetch();
-            await userPreferencesQuery.refetch();
-        };
-
-        reloadIfChanged();
-    }, [tokenUserListQuery.data]);
-
     // Separate useEffect for loading states
     useEffect(() => {
         setIsLoading(
