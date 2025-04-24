@@ -3,7 +3,6 @@ import { IoIosArrowBack, IoMdClose } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
 import { PiWallet } from "react-icons/pi";
 import { HiOutlineWallet } from "react-icons/hi2";
-import { MdOutlineContentPaste } from "react-icons/md";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
