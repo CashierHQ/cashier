@@ -273,9 +273,9 @@ export default function SendTokenPage() {
 
     return (
         <div className="">
-            <BackHeader onBack={handleGoBack}>
+            {/* <BackHeader onBack={handleGoBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
-            </BackHeader>
+            </BackHeader> */}
 
             <div id="content" className="my-5 h-full">
                 <Form {...form}>

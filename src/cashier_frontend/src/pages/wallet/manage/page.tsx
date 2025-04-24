@@ -241,7 +241,10 @@ export default function ManageTokensPage() {
                 </div>
 
                 <div className="flex justify-center gap-4 mt-4">
-                    <Link to="/wallet/import" className="text-green text-sm">
+                    <Link
+                        to="/wallet/import"
+                        className="mx-auto font-normal whitespace-nowrap py-2"
+                    >
                         + {t("manage.import")}
                     </Link>
                 </div>

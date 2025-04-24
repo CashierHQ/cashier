@@ -15,7 +15,7 @@
     }
 
     .light-borders {
-        @apply border border-[#D0D5DD]/65 rounded-[8px];
+        @apply border border-[#D0D5DD]/50 rounded-[8px];
     }
 
     .input-field {

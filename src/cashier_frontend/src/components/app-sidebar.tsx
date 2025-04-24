@@ -45,7 +45,7 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
     };
 
     return (
-        <SheetContent side="left" className="w-[100%] flex flex-col h-full">
+        <SheetContent side="right" className="w-[100%] flex flex-col h-full">
             <SheetHeader>
                 <SheetTitle>
                     <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
