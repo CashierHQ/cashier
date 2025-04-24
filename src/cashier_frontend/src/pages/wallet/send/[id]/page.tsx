@@ -7,7 +7,6 @@ import { Clipboard } from "lucide-react";
 import { SelectToken } from "@/components/receive/SelectToken";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
-import { BackHeader } from "@/components/ui/back-header";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import {
     Form,
@@ -163,11 +162,6 @@ export default function SendTokenPage() {
     useEffect(() => {
         form.clearErrors("assetNumber");
     }, [selectedToken, form]);
-
-    /**
-     * Handle navigation back to wallet
-     */
-    const handleGoBack = () => navigate("/wallet");
 
     /**
      * Handle token selection
