@@ -20,7 +20,6 @@ export function WalletTabs({ fungibleTokens }: WalletTabsProps) {
 
     const [tab, setTab] = useState<WalletTab>(WalletTab.Tokens);
 
-    //TODO: make an actual toast
     const [showToast, setShowToast] = useState<boolean>(false);
 
     function handleTabChange(newTab: string) {
