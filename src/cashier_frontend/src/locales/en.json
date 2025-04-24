@@ -167,7 +167,7 @@
             "noResults": "No results found",
             "missingToken": "Missing a token?"
         },
-        "import": "Import token",
+        "import": "Import manually",
         "missing": "Missing a token?"
     },
     "import": {

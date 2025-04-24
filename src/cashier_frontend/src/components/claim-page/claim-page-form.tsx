@@ -26,6 +26,7 @@ import { useParams } from "react-router-dom";
 import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
+import { ClipboardIcon } from "lucide-react";
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -179,7 +180,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     return (
         <>
-            <div className="w-full flex flex-col flex-grow relative">
+            <div className="w-full flex flex-col flex-grow  relative">
                 <div className="w-full flex justify-center items-center relative">
                     <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                         {link?.linkType != LINK_TYPE.RECEIVE_PAYMENT && t("claim.receive")}
@@ -229,7 +230,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
                 <Form {...form}>
                     <form
-                        className="w-full flex flex-col gap-y-[10px] my-5 h-full"
+                        className="w-full flex flex-col gap-y-[10px] mt-5 h-full"
                         onSubmit={(e) => {
                             e.preventDefault();
                             // Disable the button immediately on submission
@@ -300,7 +301,13 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             {identity ? (
                                 <WalletButton
                                     title={t("claim.addressPlaceholder")}
-                                    handleConnect={() => {}}
+                                    handleConnect={() => {
+                                        showDialog({
+                                            title: "Are you sure?",
+                                            description:
+                                                "You need to disconnect your current wallet to enter an address manually. Would you like to disconnect and continue?",
+                                        });
+                                    }}
                                     icon={<PiWallet color="green" className="mr-2 h-6 w-6" />}
                                 />
                             ) : (
@@ -332,18 +339,22 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                                 className="mr-1 h-5 w-5"
                                                             />
                                                         ) : (
-                                                            <MdOutlineContentPaste
+                                                            <ClipboardIcon
                                                                 color="green"
                                                                 className="mr-2 h-5 w-5"
                                                             />
                                                         )
                                                     }
-                                                    onRightIconClick={() => handlePasteClick(field)}
+                                                    onRightIconClick={() => {
+                                                        field.value
+                                                            ? field.onChange("")
+                                                            : handlePasteClick(field);
+                                                    }}
                                                     placeholder={t("claim.addressPlaceholder")}
                                                     className="py-5 h-14 text-md rounded-xl"
                                                     onFocusShowIcon={true}
                                                     onFocusText={true}
-                                                    disabled={!!identity}
+                                                    // disabled={!!identity}
                                                     {...field}
                                                     onChange={(e) => {
                                                         field.onChange(e);
@@ -392,7 +403,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                             type="submit"
                             variant="default"
                             size="lg"
-                            className="w-full mt-2 disabled:bg-disabledgreen"
+                            className="w-full mt-auto disabled:bg-disabledgreen"
                             disabled={isDisabled}
                         >
                             {buttonText ?? t("claim.claim")}
@@ -410,6 +421,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     disconnect();
                     form.setValue("address", "");
                     form.clearErrors();
+                    setCurrentConnectOption(WALLET_OPTIONS.TYPING);
                     hideDialog();
                 }}
                 onOpenChange={hideDialog}

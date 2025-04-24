@@ -131,9 +131,9 @@ export default function ReceiveTokenPage() {
 
     return (
         <div>
-            <BackHeader onBack={goBack}>
+            {/* <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
-            </BackHeader>
+            </BackHeader> */}
             <div id="content" className="mx-2">
                 <div className="mt-8">
                     <div id="warning-section" className="text-green flex place-items-start">
