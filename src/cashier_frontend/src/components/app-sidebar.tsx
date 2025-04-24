@@ -47,7 +47,7 @@ const AppSidebar: React.FC<AppSidebarProps> = (props: AppSidebarProps) => {
     return (
         <SheetContent side="right" className="w-[100%] flex flex-col h-full">
             <SheetHeader>
-                <SheetTitle>
+                <SheetTitle className="mb-2">
                     <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
                 </SheetTitle>
                 <NavigationMenu className="w-[100%] max-w-[100%] flex-col flex-grow">
