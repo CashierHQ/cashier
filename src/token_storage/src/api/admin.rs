@@ -78,7 +78,7 @@ pub fn initialize_registry() -> Result<(), String> {
     // }
 
     let registry = TokenRegistryRepository::new();
-
+    registry.delete_all()?;
     registry.add_bulk_tokens(get_default_tokens())?;
 
     Ok(())

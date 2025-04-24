@@ -16,7 +16,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AssetSelectItem } from "@/components/asset-select";
 import { Label } from "@/components/ui/label";
 import { Copy } from "lucide-react";
-import { useResponsive } from "@/hooks/responsive-hook";
 import { useTokens } from "@/hooks/useTokens";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
@@ -62,7 +61,6 @@ function AccountIdContent({ accountId }: { accountId: string }) {
 export default function ReceiveTokenPage() {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const responsive = useResponsive();
     const goBack = () => navigate("/wallet");
     const { tokenId } = useParams<{ tokenId?: string }>();
     const { metadata } = useTokenMetadata(tokenId);
@@ -73,7 +71,8 @@ export default function ReceiveTokenPage() {
         undefined,
     );
 
-    const { filteredTokenList: tokenList } = useTokens();
+    const { getDisplayTokens } = useTokens();
+    const tokenList = getDisplayTokens();
 
     const selectedToken = useMemo(() => {
         // If no token list, return undefined

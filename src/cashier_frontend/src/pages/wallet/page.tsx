@@ -9,10 +9,11 @@ export default function WalletPage() {
     const responsive = useResponsive();
 
     const {
-        filteredTokenList: filteredTokens,
         isLoading,
+        getDisplayTokens,
         // isLoadingBalances,
     } = useTokens();
+    const filteredTokens = getDisplayTokens();
 
     // Calculate the total USD equivalent from the tokens
     const totalUsdEquivalent = useMemo(() => {
@@ -24,6 +25,8 @@ export default function WalletPage() {
 
         return Number(total.toFixed(2));
     }, [filteredTokens]);
+
+    console.log("🚀 ~ WalletPage ~ filteredTokens:", filteredTokens);
 
     // Show loading skeleton when tokens are loading
     if (isLoading) {

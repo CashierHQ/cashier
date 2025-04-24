@@ -130,7 +130,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         } else if (walletOption === WALLET_OPTIONS.OTHER) {
             initOtherWalletSigners();
             if (!identity) {
-                connectToWallet();
+                connectToWallet("https://login.f0i.de/");
             }
         }
     };

@@ -52,14 +52,14 @@ export default function LinkPreview({
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
-    const { rawTokenList, getTokenMap } = useTokens();
+    const { rawTokenList, createTokenMap } = useTokens();
 
     // State for enhanced asset info with logos
     const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
 
     // Effect to map rawTokenList logos to asset_info
     useEffect(() => {
-        const tokenMap = getTokenMap();
+        const tokenMap = createTokenMap();
         if (link?.asset_info && tokenMap) {
             const enhanced = link.asset_info.map((asset) => {
                 console.log("asset_info", link?.asset_info);

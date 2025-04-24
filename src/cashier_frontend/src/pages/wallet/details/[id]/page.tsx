@@ -13,16 +13,17 @@ export default function TokenDetailsPage() {
     const { tokenId } = useParams<{ tokenId: string }>();
 
     // Use the useTokens hook to get consistent token data
-    const { filteredTokenList, isLoadingBalances } = useTokens();
+    const { isLoadingBalances, getDisplayTokens } = useTokens();
+    const userTokens = getDisplayTokens();
 
     // Find the selected token from the list
     const selectedToken = useMemo(() => {
-        if (!tokenId || isLoadingBalances || !filteredTokenList?.length) {
+        if (!tokenId || isLoadingBalances || !userTokens?.length) {
             return undefined;
         }
 
-        return filteredTokenList.find((token) => token.address === tokenId);
-    }, [tokenId, filteredTokenList, isLoadingBalances]);
+        return userTokens.find((token) => token.address === tokenId);
+    }, [tokenId, userTokens, isLoadingBalances]);
 
     // Show loading state while token data is being fetched
     if (isLoadingBalances) {

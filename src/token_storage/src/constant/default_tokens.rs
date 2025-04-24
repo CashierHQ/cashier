@@ -12,6 +12,7 @@ pub fn get_default_tokens() -> Vec<RegisterTokenInput> {
             symbol: "ICP".to_string(),
             name: "Internet Computer".to_string(),
             decimals: 8,
+            enabled_by_default: true,
         },
         RegisterTokenInput {
             id: "IC:mxzaz-hqaaa-aaaar-qaada-cai".to_string(),
@@ -21,6 +22,7 @@ pub fn get_default_tokens() -> Vec<RegisterTokenInput> {
             symbol: "ckBTC".to_string(),
             name: "Chain Key Bitcoin".to_string(),
             decimals: 8,
+            enabled_by_default: true,
         },
         RegisterTokenInput {
             id: "IC:ss2fx-dyaaa-aaaar-qacoq-cai".to_string(),
@@ -30,6 +32,7 @@ pub fn get_default_tokens() -> Vec<RegisterTokenInput> {
             symbol: "ckETH".to_string(),
             name: "Chain Key Ethereum".to_string(),
             decimals: 18,
+            enabled_by_default: true,
         },
         RegisterTokenInput {
             id: "IC:xevnm-gaaaa-aaaar-qafnq-cai".to_string(),
@@ -39,6 +42,7 @@ pub fn get_default_tokens() -> Vec<RegisterTokenInput> {
             symbol: "ckUSDC".to_string(),
             name: "Chain Key USD Coin".to_string(),
             decimals: 8,
+            enabled_by_default: true,
         },
         RegisterTokenInput {
             id: "x5qut-viaaa-aaaar-qajda-cai".to_string(),
@@ -48,6 +52,7 @@ pub fn get_default_tokens() -> Vec<RegisterTokenInput> {
             symbol: "tICP".to_string(),
             name: "Test Internet Computer".to_string(),
             decimals: 8,
+            enabled_by_default: true,
         },
     ]
 }
