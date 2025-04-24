@@ -124,7 +124,7 @@ export function useTokens() {
         const tokenHoldId = tokenHold.map((token) => token.ledgerId);
 
         // Add retry logic for getting token list
-        const MAX_RETRIES = 3;
+        const MAX_RETRIES = 10;
         const RETRY_DELAY = 1000; // 1 second delay between retries
 
         // Implement retry function with exponential backoff
