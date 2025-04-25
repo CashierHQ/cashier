@@ -55,13 +55,13 @@ const Header: React.FC<HeaderProps> = () => {
                     {!pathname.includes("/wallet") && (
                         <Button
                             variant="outline"
-                            className="ml-auto light-borders mr-3 flex items-center gap-2"
+                            className="ml-auto light-borders p-0 w-9 h-9 mr-3 gap-2"
                             onClick={() => navigate("/wallet")}
                         >
-                            <p className="text-primary/75 font-normal text-sm">
+                            {/* <p className="text-primary/75 font-normal text-sm">
                                 {user.principal.toText().slice(0, 9)}
-                            </p>
-                            <Wallet size={16} color={"green"} />
+                            </p> */}
+                            <Wallet size={16} color={"#35A18A"} />
                         </Button>
                     )}
 
@@ -70,20 +70,6 @@ const Header: React.FC<HeaderProps> = () => {
                             {responsive.customCompactHeaderTitle(pathname)}
                         </p>
                     )}
-
-                    {responsive.showCompactHeader(pathname) &&
-                        !responsive.customCompactHeaderTitle(pathname) && (
-                            <Button
-                                variant="outline"
-                                className="mx-auto light-borders flex items-center gap-2"
-                                onClick={() => {}}
-                            >
-                                <p className="text-primary/75 font-normal text-sm">
-                                    {user.principal.toText().slice(0, 9)}
-                                </p>
-                                <Wallet size={16} color={"green"} />
-                            </Button>
-                        )}
 
                     {responsive.showCompactHeader(pathname) ? (
                         <X size={24} onClick={() => navigate(-1)} />
