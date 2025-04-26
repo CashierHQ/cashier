@@ -8,9 +8,11 @@ export interface MediaQuery {
     isSmallDevice: boolean;
     showCompactHeader: (pathname: string) => boolean;
     customCompactHeaderTitle: (pathname: string) => string | null;
+    hideHeader: (pathname: string) => boolean;
 }
 
 export function useResponsive(): MediaQuery {
+    const hideHeaderPaths = ["/wallet/send", "/wallet/receive", "/wallet/manage", "/wallet/import"];
     const compactHeaderPaths = ["/wallet"];
 
     const isSmallDevice = useMediaQuery("only screen and (max-width : 768px)");
@@ -24,6 +26,10 @@ export function useResponsive(): MediaQuery {
     const showCompactHeader = useCallback(
         (pathname: string) => compactHeaderPaths.some((path) => pathname.startsWith(path)),
         [compactHeaderPaths],
+    );
+    const hideHeader = useCallback(
+        (pathname: string) => hideHeaderPaths.some((path) => pathname.startsWith(path)),
+        [hideHeaderPaths],
     );
     const customCompactHeaderTitle = useCallback((pathname: string) => {
         if (pathname.startsWith("/wallet/send")) {
@@ -42,5 +48,6 @@ export function useResponsive(): MediaQuery {
         isSmallDevice,
         showCompactHeader,
         customCompactHeaderTitle,
+        hideHeader,
     };
 }

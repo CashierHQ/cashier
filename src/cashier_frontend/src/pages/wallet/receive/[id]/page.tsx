@@ -16,6 +16,7 @@ import { AssetSelectItem } from "@/components/asset-select";
 import { Label } from "@/components/ui/label";
 import { Copy } from "lucide-react";
 import { useTokens } from "@/hooks/useTokens";
+import { BackHeader } from "@/components/ui/back-header";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
     const handleCopyAccountId = (e: React.SyntheticEvent) => {
@@ -97,6 +98,10 @@ export default function ReceiveTokenPage() {
         });
     };
 
+    function goBack() {
+        navigate(-1);
+    }
+
     const handleCopy = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
@@ -128,10 +133,10 @@ export default function ReceiveTokenPage() {
 
     return (
         <div>
-            {/* <BackHeader onBack={goBack}>
+            <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
-            </BackHeader> */}
-            <div id="content" className="mx-2">
+            </BackHeader>
+            <div id="content" className="mx-2 mt-8">
                 <div className="mt-8">
                     <div id="warning-section" className="text-green flex place-items-start">
                         <Info className="text-green mr-2" size={22} />

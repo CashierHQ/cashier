@@ -29,7 +29,12 @@ export default function ImportTokenPage() {
     const { updateToken } = useTokens();
 
     function goBack() {
-        navigate(-1);
+        if (tokenMetadata) {
+            setTokenMetadata(undefined);
+            setImportData(undefined);
+        } else {
+            navigate(-1);
+        }
     }
 
     const onSubmitImportToken = async (data: ImportTokenFormData) => {

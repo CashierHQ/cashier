@@ -19,7 +19,6 @@ import {
 import { SendAssetConfirmationDrawer } from "@/components/wallet/send/confirm-send-asset-drawer";
 
 // Hooks
-import { useResponsive } from "@/hooks/responsive-hook";
 import { useTokens } from "@/hooks/useTokens";
 import useToast from "@/hooks/useToast";
 import {
@@ -35,13 +34,13 @@ import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { CHAIN } from "@/services/types/enum";
 import { TransactionStatus } from "@/services/types/wallet.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
+import { BackHeader } from "@/components/ui/back-header";
 
 export default function SendTokenPage() {
     // Routing and locale
     const navigate = useNavigate();
     const { t } = useTranslation();
     const { tokenId } = useParams<{ tokenId?: string }>();
-    const responsive = useResponsive();
 
     // UI state
     const { toastData, showToast, hideToast } = useToast();
@@ -120,9 +119,11 @@ export default function SendTokenPage() {
     useEffect(() => {
         const amount = form.getValues("assetNumber");
         const walletAddress = form.getValues("walletAddress");
-        const hasAmountError = !!form.formState.errors.assetNumber;
+        const hasErrors = Object.keys(form.formState.errors).length > 0;
 
-        setIsDisabled(!walletAddress || hasAmountError || !amount || amount <= 0);
+        console.log("values ", amount, walletAddress, form.formState.errors);
+
+        setIsDisabled(!walletAddress || !amount || amount <= 0 || hasErrors);
     }, [form.watch("assetNumber"), form.watch("walletAddress"), form.formState.errors.assetNumber]);
 
     /**
@@ -265,13 +266,17 @@ export default function SendTokenPage() {
         form.setValue("walletAddress", "");
     };
 
-    return (
-        <div className="">
-            {/* <BackHeader onBack={handleGoBack}>
-                <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
-            </BackHeader> */}
+    function handleGoBack() {
+        navigate(-1);
+    }
 
-            <div id="content" className="my-5 h-full">
+    return (
+        <div className="w-full flex flex-col h-full">
+            <BackHeader onBack={handleGoBack}>
+                <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
+            </BackHeader>
+
+            <div id="content" className="h-full mt-8">
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(handleSubmit)}
@@ -438,9 +443,9 @@ export default function SendTokenPage() {
                             variant="default"
                             size="lg"
                             disabled={isDisabled}
-                            className={`mx-auto ${responsive.isSmallDevice ? "mt-auto" : "mt-auto"}`}
+                            className={`mx-auto mt-auto ${isDisabled ? "bg-disabledgreen" : ""}`}
                         >
-                            {t("continue")}
+                            {t("wallet.send.button")}
                         </FixedBottomButton>
                     </form>
                 </Form>

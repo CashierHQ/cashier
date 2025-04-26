@@ -20,6 +20,15 @@ const Header: React.FC<HeaderProps> = () => {
     const responsive = useResponsive();
     const { connectToWallet } = useConnectToWallet();
 
+    const handleNavigate = (path: string) => {
+        const backToHomePaths = ["/wallet"];
+        if (backToHomePaths.includes(path)) {
+            navigate("/");
+        } else {
+            navigate(-1);
+        }
+    };
+
     if (!user) {
         return (
             <div
@@ -40,14 +49,14 @@ const Header: React.FC<HeaderProps> = () => {
                 </LoginButton>
             </div>
         );
-    } else {
+    } else if (!responsive.hideHeader(pathname)) {
         return (
             <>
                 <div
                     className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4 pt-4" : "px-8 py-3 mb-4 bg-white"}`}
                 >
                     <img
-                        src={responsive.showCompactHeader(pathname) ? "./cLogo.svg" : "./logo.svg"}
+                        src="./logo.svg"
                         alt="Cashier logo"
                         className="max-w-[130px] cursor-pointer"
                         onClick={() => navigate("/")}
@@ -55,13 +64,13 @@ const Header: React.FC<HeaderProps> = () => {
                     {!pathname.includes("/wallet") && (
                         <Button
                             variant="outline"
-                            className="ml-auto light-borders mr-3 flex items-center gap-2"
+                            className="ml-auto light-borders p-0 w-9 h-9 mr-3 gap-2"
                             onClick={() => navigate("/wallet")}
                         >
-                            <p className="text-primary/75 font-normal text-sm">
+                            {/* <p className="text-primary/75 font-normal text-sm">
                                 {user.principal.toText().slice(0, 9)}
-                            </p>
-                            <Wallet size={16} color={"green"} />
+                            </p> */}
+                            <Wallet size={16} color={"#35A18A"} />
                         </Button>
                     )}
 
@@ -71,22 +80,8 @@ const Header: React.FC<HeaderProps> = () => {
                         </p>
                     )}
 
-                    {responsive.showCompactHeader(pathname) &&
-                        !responsive.customCompactHeaderTitle(pathname) && (
-                            <Button
-                                variant="outline"
-                                className="mx-auto light-borders flex items-center gap-2"
-                                onClick={() => {}}
-                            >
-                                <p className="text-primary/75 font-normal text-sm">
-                                    {user.principal.toText().slice(0, 9)}
-                                </p>
-                                <Wallet size={16} color={"green"} />
-                            </Button>
-                        )}
-
                     {responsive.showCompactHeader(pathname) ? (
-                        <X size={24} onClick={() => navigate(-1)} />
+                        <X size={24} onClick={() => handleNavigate(pathname)} />
                     ) : (
                         <SheetTrigger asChild>
                             <Button variant="outline" size="icon" className="light-borders">
