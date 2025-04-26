@@ -122,6 +122,7 @@
         ]
     },
     "wallet": {
+        "noToken": "You can add a token by clicking the + button above.",
         "details": {
             "header": "Wallet Balance",
             "send": "Send",
