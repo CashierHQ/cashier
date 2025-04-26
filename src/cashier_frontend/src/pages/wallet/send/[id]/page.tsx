@@ -35,6 +35,7 @@ import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { CHAIN } from "@/services/types/enum";
 import { TransactionStatus } from "@/services/types/wallet.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
+import { BackHeader } from "@/components/ui/back-header";
 
 export default function SendTokenPage() {
     // Routing and locale
@@ -265,13 +266,17 @@ export default function SendTokenPage() {
         form.setValue("walletAddress", "");
     };
 
+    function handleGoBack() {
+        navigate(-1);
+    }
+
     return (
         <div className="h-full">
-            {/* <BackHeader onBack={handleGoBack}>
+            <BackHeader onBack={handleGoBack}>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
-            </BackHeader> */}
+            </BackHeader>
 
-            <div id="content" className="h-full">
+            <div id="content" className="h-full mt-8">
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(handleSubmit)}

@@ -98,7 +98,8 @@
         "commonErrorMessage": "There was a error while creating the link. Please try again later.",
         "creating": "Creating",
         "creatingLink": "The link is being created. Please wait for seconds.",
-        "clear": "Clear"
+        "clear": "Clear",
+        "loading": "Loading"
     },
     "link": {
         "preview": {

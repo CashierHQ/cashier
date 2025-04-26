@@ -62,7 +62,7 @@ export default function WalletPage() {
 
     return (
         <div className={`h-full`}>
-            <div className="flex-none">
+            <div className="flex-none mt-4">
                 <WalletHero totalUsdEquivalent={totalUsdEquivalent} />
             </div>
             <div className="flex-1 overflow-hidden h-full">

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { BackHeader } from "@/components/ui/back-header";
-import { Search as SearchIcon, RefreshCw } from "lucide-react";
+import { Search as SearchIcon, RefreshCw, Plus } from "lucide-react";
 import { ManageTokensList } from "@/components/manage-tokens/token-list";
 import { ManageTokensMissingTokenMessage } from "@/components/manage-tokens/missing-token-message";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { useTokens } from "@/hooks/useTokens";
 import { Spinner } from "@/components/ui/spinner";
 import { IconInput } from "@/components/icon-input";
+import { Search } from "lucide-react";
 
 export default function ManageTokensPage() {
     const { t } = useTranslation();
@@ -143,14 +144,14 @@ export default function ManageTokensPage() {
 
     return (
         <div
-            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 py-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] p-4"}`}
+            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 pb-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] p-4"}`}
         >
             <BackHeader onBack={goBack}>
                 <h1 className="text-lg font-semibold">{t("manage.header")}</h1>
             </BackHeader>
 
             <div className="mt-6 relative">
-                <div className="w-full flex gap-2">
+                <div className="w-full flex gap-1.5">
                     <IconInput
                         isCurrencyInput={false}
                         value={searchQuery}
@@ -162,11 +163,21 @@ export default function ManageTokensPage() {
                         }
                         onRightIconClick={handleClearSearch}
                     />
+                    <Link
+                        to="/wallet/import"
+                        className="light-borders flex items-center justify-center w-[44px] min-w-[44px] max-w-[44px] h-[44px] flex-shrink-0"
+                    >
+                        <Plus size={22} color="#35A18A" />
+                    </Link>
                     <button
                         onClick={handleUpdateExplorer}
-                        className="light-borders w-12 flex items-center justify-center"
+                        className="light-borders flex items-center justify-center w-[44px] min-w-[44px] max-w-[44px] h-[44px] flex-shrink-0"
                     >
-                        <RefreshCw color="#35A18A" style={isExplorerLoading ? halfSpinStyle : {}} />
+                        <RefreshCw
+                            size={22}
+                            color="#35A18A"
+                            style={isExplorerLoading ? halfSpinStyle : {}}
+                        />
                     </button>
                 </div>
             </div>
@@ -187,41 +198,29 @@ export default function ManageTokensPage() {
                     )}
 
                     {isLoading ? (
-                        <div className="flex justify-center py-4">
+                        <div className="flex justify-center py-4 items-center">
                             <Spinner width={40} height={40} />
                             <span className="ml-2">{t("common.loading")}</span>
                         </div>
                     ) : isNoTokens ? (
                         <ManageTokensMissingTokenMessage />
                     ) : noSearchResults ? (
-                        <div className="flex flex-col items-center justify-center mt-8">
-                            <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-4">
-                                <svg
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
-                                        stroke="#9CA3AF"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                    <path
-                                        d="M21 21L16.65 16.65"
-                                        stroke="#9CA3AF"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
+                        <div className="flex flex-col items-center justify-center mt-16">
+                            <div className="w-12 h-12 rounded-xl bg-lightgreen flex items-center justify-center mb-4">
+                                <Search className="stroke-green" size={24} />
                             </div>
-                            <p className="text-gray-700 font-medium">
-                                {t("manage.search.missingToken", "Missing a token?")}
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                {t("manage.search.noResults")}
+                            </h3>
+                            <p className="text-sm text-gray-500 text-center max-w-[250px] mb-4">
+                                {t("manage.search.missingToken")}
                             </p>
+                            <Link
+                                to="/wallet/import"
+                                className="text-green hover:text-green/90 font-medium"
+                            >
+                                + {t("manage.import")}
+                            </Link>
                         </div>
                     ) : (
                         <>
@@ -238,15 +237,6 @@ export default function ManageTokensPage() {
                             )}
                         </>
                     )}
-                </div>
-
-                <div className="flex justify-center gap-4 mt-4">
-                    <Link
-                        to="/wallet/import"
-                        className="mx-auto font-normal whitespace-nowrap py-2"
-                    >
-                        + {t("manage.import")}
-                    </Link>
                 </div>
             </div>
         </div>

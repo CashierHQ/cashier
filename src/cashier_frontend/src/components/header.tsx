@@ -20,6 +20,15 @@ const Header: React.FC<HeaderProps> = () => {
     const responsive = useResponsive();
     const { connectToWallet } = useConnectToWallet();
 
+    const handleNavigate = (path: string) => {
+        const backToHomePaths = ["/wallet"];
+        if (backToHomePaths.includes(path)) {
+            navigate("/");
+        } else {
+            navigate(-1);
+        }
+    };
+
     if (!user) {
         return (
             <div
@@ -40,14 +49,14 @@ const Header: React.FC<HeaderProps> = () => {
                 </LoginButton>
             </div>
         );
-    } else {
+    } else if (!responsive.hideHeader(pathname)) {
         return (
             <>
                 <div
                     className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4 pt-4" : "px-8 py-3 mb-4 bg-white"}`}
                 >
                     <img
-                        src={responsive.showCompactHeader(pathname) ? "./cLogo.svg" : "./logo.svg"}
+                        src="./logo.svg"
                         alt="Cashier logo"
                         className="max-w-[130px] cursor-pointer"
                         onClick={() => navigate("/")}
@@ -72,7 +81,7 @@ const Header: React.FC<HeaderProps> = () => {
                     )}
 
                     {responsive.showCompactHeader(pathname) ? (
-                        <X size={24} onClick={() => navigate(-1)} />
+                        <X size={24} onClick={() => handleNavigate(pathname)} />
                     ) : (
                         <SheetTrigger asChild>
                             <Button variant="outline" size="icon" className="light-borders">
