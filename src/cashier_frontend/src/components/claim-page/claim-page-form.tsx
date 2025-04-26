@@ -184,7 +184,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
 
     return (
         <>
-            <div className="w-full flex flex-col flex-grow  relative">
+            <div className="w-full flex flex-col flex-grow relative">
                 <div className="w-full flex justify-center items-center relative">
                     <h4 className="scroll-m-20 text-xl font-semibold tracking-tight self-center">
                         {link?.linkType != LINK_TYPE.RECEIVE_PAYMENT && t("claim.receive")}

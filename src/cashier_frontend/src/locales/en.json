@@ -157,7 +157,8 @@
             "header": "Send",
             "sendToken": "Send token",
             "max": "Max",
-            "destinationAddress": "Destination address"
+            "destinationAddress": "Destination address",
+            "button": "Send"
         }
     },
     "manage": {

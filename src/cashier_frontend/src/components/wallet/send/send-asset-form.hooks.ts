@@ -1,7 +1,7 @@
 import { convertTokenAmountToNumber } from "@/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import * as z from "zod";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Principal } from "@dfinity/principal";
@@ -84,6 +84,7 @@ export function useWalletSendAssetForm(
     const form = useForm<WalletSendAssetFormSchema>({
         resolver: zodResolver(walletSendAssetFormSchema(assets)),
         defaultValues: defaultValues,
+        mode: "onChange", // Enable validation on change
     });
 
     const { getToken } = useTokens();
@@ -92,6 +93,22 @@ export function useWalletSendAssetForm(
     const token = getToken(tokenAddress);
 
     const assetNumber = form.watch("assetNumber");
+    const walletAddress = form.watch("walletAddress");
+
+    // Validate wallet address whenever it changes
+    useEffect(() => {
+        if (walletAddress) {
+            const validation = isValidWalletAddress(walletAddress);
+            if (!validation.valid) {
+                form.setError("walletAddress", {
+                    type: "manual",
+                    message: validation.message,
+                });
+            } else {
+                form.clearErrors("walletAddress");
+            }
+        }
+    }, [walletAddress, form]);
 
     useEffect(() => {
         if (assetNumber && token && token.decimals !== undefined) {
@@ -103,26 +120,6 @@ export function useWalletSendAssetForm(
     }, [assetNumber, token, form]);
 
     return form;
-}
-
-export function useSelectedWalletSendAsset(
-    assets: FungibleToken[] | undefined,
-    form: UseFormReturn<WalletSendAssetFormSchema>,
-) {
-    const tokenAddress = form.watch("address");
-    const defaultTokenAddress = form.formState.defaultValues?.address;
-
-    useEffect(() => {
-        if (assets && assets.length > 0) {
-            form.setValue("address", defaultTokenAddress || assets[0].address);
-        }
-    }, [assets]);
-
-    const selectedAsset = useMemo(() => {
-        return assets?.find((asset) => asset.address === tokenAddress);
-    }, [assets, tokenAddress]);
-
-    return selectedAsset;
 }
 
 export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAssetFormSchema>) {
