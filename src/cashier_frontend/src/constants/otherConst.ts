@@ -1,7 +1,5 @@
 import { SidebarMenuItem } from "@/components/app-sidebar";
-import { FaLink } from "react-icons/fa6";
 import { LuCompass } from "react-icons/lu";
-import { CiSettings } from "react-icons/ci";
 import { LuGanttChartSquare } from "react-icons/lu";
 import React from "react";
 import { CircleHelp, Link } from "lucide-react";

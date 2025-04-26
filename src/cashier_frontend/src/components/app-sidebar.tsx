@@ -1,7 +1,6 @@
 import { SheetHeader, SheetContent, SheetTitle, SheetFooter } from "./ui/sheet";
 import { cn } from "@/lib/utils";
 import { LuWallet2 } from "react-icons/lu";
-import { IoExitOutline } from "react-icons/io5";
 import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
 import { useAuth } from "@nfid/identitykit/react";
 import { transformShortAddress } from "@/utils";
@@ -10,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Copy } from "lucide-react";
 import { Separator } from "./ui/separator";
+import { MouseEventHandler } from "react";
 
 export interface SidebarMenuItem {
     title: string;
@@ -98,10 +98,11 @@ const AppSidebar: React.FC = () => {
 
 interface MenuItemProps {
     title: string;
-    onClick: (_: any | null) => void;
+    onClick: MouseEventHandler<HTMLButtonElement>;
     icon: React.ReactNode;
     className?: string;
     iconRight?: React.ReactNode;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onIconRightClick?: (_: any | null) => void;
     hoverDisabled?: boolean;
 }
