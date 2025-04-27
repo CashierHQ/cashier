@@ -49,7 +49,10 @@ const Header: React.FC<HeaderProps> = () => {
                 </LoginButton>
             </div>
         );
-    } else if (!responsive.hideHeader(pathname)) {
+    } else if (
+        !responsive.hideHeader(pathname) ||
+        (responsive.hideHeader(pathname) && !responsive.isSmallDevice)
+    ) {
         return (
             <>
                 <div
@@ -74,13 +77,9 @@ const Header: React.FC<HeaderProps> = () => {
                         </Button>
                     )}
 
-                    {responsive.customCompactHeaderTitle(pathname) && (
-                        <p className="text-lg font-semibold absolute left-1/2 -translate-x-1/2">
-                            {responsive.customCompactHeaderTitle(pathname)}
-                        </p>
-                    )}
-
-                    {responsive.showCompactHeader(pathname) ? (
+                    {responsive.hideHeader(pathname) && !responsive.isSmallDevice ? (
+                        <></> // Don't show X button on big device header when hideHeader is true
+                    ) : responsive.showCompactHeader(pathname) ? (
                         <X size={24} onClick={() => handleNavigate(pathname)} />
                     ) : (
                         <SheetTrigger asChild>
