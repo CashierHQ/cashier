@@ -32,7 +32,7 @@ const Header: React.FC<HeaderProps> = () => {
     if (!user) {
         return (
             <div
-                className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4" : "px-8"}`}
+                className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4 pt-4" : `px-8 py-3 mb-4 ${pathname === "/" ? "" : "bg-white"}`}`}
             >
                 <img
                     src={responsive.showCompactHeader(pathname) ? "./cLogo.svg" : "./logo.svg"}
