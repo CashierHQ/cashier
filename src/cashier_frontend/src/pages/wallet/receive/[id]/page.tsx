@@ -99,7 +99,7 @@ export default function ReceiveTokenPage() {
     };
 
     function goBack() {
-        navigate(-1);
+        navigate("/wallet");
     }
 
     const handleCopy = (e: React.SyntheticEvent) => {
