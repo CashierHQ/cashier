@@ -7,7 +7,6 @@ export interface MediaQuery {
     isExtraLargeDevice: boolean;
     isSmallDevice: boolean;
     showCompactHeader: (pathname: string) => boolean;
-    customCompactHeaderTitle: (pathname: string) => string | null;
     hideHeader: (pathname: string) => boolean;
 }
 
@@ -31,23 +30,12 @@ export function useResponsive(): MediaQuery {
         (pathname: string) => hideHeaderPaths.some((path) => pathname.startsWith(path)),
         [hideHeaderPaths],
     );
-    const customCompactHeaderTitle = useCallback((pathname: string) => {
-        if (pathname.startsWith("/wallet/send")) {
-            return "Send";
-        }
-        if (pathname.startsWith("/wallet/receive")) {
-            return "Receive";
-        }
-
-        return null;
-    }, []);
     return {
         isLargeDevice,
         isMediumDevice,
         isExtraLargeDevice,
         isSmallDevice,
         showCompactHeader,
-        customCompactHeaderTitle,
         hideHeader,
     };
 }

@@ -21,7 +21,12 @@ export function AmountActionButtons({ data, isDisabled }: AmountActionButtons) {
                     variant="outline"
                     size="sm"
                     className="asset-amount-percentage-button"
-                    onClick={action}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log("Button clicked");
+                        action();
+                    }}
                     disabled={isDisabled}
                 >
                     {content}

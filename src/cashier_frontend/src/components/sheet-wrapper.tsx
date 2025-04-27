@@ -1,5 +1,5 @@
-import React from "react";
-import { Sheet } from "@/components/ui/sheet";
+import React, { useState } from "react";
+import { Sheet, SheetClose } from "@/components/ui/sheet";
 import AppSidebar from "./app-sidebar";
 
 interface SheetWrapperProps {
@@ -7,10 +7,12 @@ interface SheetWrapperProps {
 }
 
 const SheetWrapper: React.FC<SheetWrapperProps> = ({ children }) => {
+    const [open, setOpen] = useState(false);
+
     return (
-        <Sheet>
+        <Sheet open={open} onOpenChange={setOpen}>
             {children}
-            <AppSidebar />
+            <AppSidebar onClose={() => setOpen(false)} />
         </Sheet>
     );
 };

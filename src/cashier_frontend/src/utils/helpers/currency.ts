@@ -1,3 +1,5 @@
+import React from "react";
+
 export function formatPrice(price: string) {
     "worklet";
     const numberPrice = parseFloat(price.replace(/,/g, ""));
@@ -22,9 +24,16 @@ export function formatPrice(price: string) {
         // Extract the significant digits (up to 3)
         const significantDigits = decimalPart.slice(nonZeroIndex, nonZeroIndex + 3);
 
-        // Return the formatted string
-        const formattedPrice = `<span>${wholePart}.0<sub>${zeroCount + 1}</sub>${significantDigits}</span>`;
-        return formattedPrice;
+        // Return a React element instead of an HTML string
+        return React.createElement(
+            React.Fragment,
+            null,
+            wholePart,
+            ".",
+            "0",
+            React.createElement("sub", null, zeroCount + 1),
+            significantDigits,
+        );
     } else {
         // Use decimal place formatting based on price range
         let decimalPlaces;
