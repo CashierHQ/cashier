@@ -69,6 +69,8 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     const formTokenAddress = watch(`assets.${index}.tokenAddress`);
     const formLabel = watch(`assets.${index}.label`);
 
+    console.log("token ", token);
+
     // Sync local state with form when form amount changes
     useEffect(() => {
         if (token && formAmount !== undefined) {
@@ -186,6 +188,9 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                     const availableAmount = token?.amount
                         ? Number(token.amount) / 10 ** decimals
                         : 0;
+
+                    console.log("availableAmount", availableAmount);
+
                     if (availableAmount > 0) {
                         const amount = availableAmount * (percentage / 100);
                         setLocalTokenAmount(amount.toFixed(decimals > 8 ? 8 : decimals));

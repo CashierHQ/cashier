@@ -99,8 +99,8 @@ export const useTokenStore = create<TokenState>((set, get) => ({
 
     // Getters
     getToken: (tokenAddress) => {
-        const { rawTokenList } = get();
-        return rawTokenList.find((token) => token.address === tokenAddress);
+        const { userTokens } = get();
+        return userTokens.find((token) => token.address === tokenAddress);
     },
 
     getTokenPrice: (tokenAddress) => {

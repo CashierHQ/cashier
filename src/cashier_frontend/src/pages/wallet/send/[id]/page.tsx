@@ -267,7 +267,7 @@ export default function SendTokenPage() {
     };
 
     function handleGoBack() {
-        navigate(-1);
+        navigate("/wallet");
     }
 
     return (

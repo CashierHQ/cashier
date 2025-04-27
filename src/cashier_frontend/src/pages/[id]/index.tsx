@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +41,8 @@ function getInitialStep(state: string | undefined) {
 export default function ClaimPage() {
     const [enableFetchLinkUserState, setEnableFetchLinkUserState] = useState(false);
     const { linkId } = useParams();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { renderSkeleton } = useSkeletonLoading();
     const identity = useIdentity();
     const { t } = useTranslation();
@@ -111,6 +113,11 @@ export default function ClaimPage() {
         }
     };
 
+    const handleClickClaim = () => {
+        setShowDefaultPage(false);
+        navigate(`/${linkId}?step=claim`);
+    };
+
     useEffect(() => {
         if (linkData && identity) {
             setEnableFetchLinkUserState(true);
@@ -122,7 +129,11 @@ export default function ClaimPage() {
         if (linkData && linkUserState?.link_user_state) {
             setShowDefaultPage(false);
         }
-    }, [linkData, identity]);
+        // Check if step=claim is in the URL
+        if (searchParams.get("step") === "claim") {
+            setShowDefaultPage(false);
+        }
+    }, [linkData, identity, searchParams]);
 
     useEffect(() => {
         if (linkId) {
@@ -144,10 +155,7 @@ export default function ClaimPage() {
                         {(!identity || !linkUserState?.link_user_state) &&
                         linkData &&
                         showDefaultPage ? (
-                            <LinkCardPage
-                                linkData={linkData}
-                                onClickClaim={() => setShowDefaultPage(false)}
-                            />
+                            <LinkCardPage linkData={linkData} onClickClaim={handleClickClaim} />
                         ) : (
                             <MultiStepForm
                                 initialStep={getInitialStep(linkUserState?.link_user_state)}
@@ -161,7 +169,10 @@ export default function ClaimPage() {
                                             linkData={linkData}
                                             onActionResult={showActionResultToast}
                                             onCashierError={showCashierErrorToast}
-                                            onBack={() => setShowDefaultPage(true)}
+                                            onBack={() => {
+                                                setShowDefaultPage(true);
+                                                navigate(`/${linkId}`);
+                                            }}
                                         />
                                     </MultiStepForm.Item>
 
