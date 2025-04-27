@@ -43,7 +43,6 @@ export default function LinkTemplate({
     const responsive = useResponsive();
 
     const { link, callLinkStateMachine, isUpdating } = useLinkAction();
-    const {} = useLinkAction();
 
     const carousel = useCarousel();
 
@@ -61,15 +60,15 @@ export default function LinkTemplate({
                 return;
             }
 
-            console.log("currentLink", currentLink);
-
             const stateMachineRes = await callLinkStateMachine({
                 linkId: currentLink.linkId,
                 linkModel: currentLink,
                 isContinue: true,
             });
 
-            const stepIndex = stateToStepIndex(stateMachineRes.state);
+            console.log("🚀 ~ stateMachineRes:", stateMachineRes);
+
+            const stepIndex = stateToStepIndex(stateMachineRes.link.state);
             setStep(stepIndex);
         } else {
             onSelectUnsupportedLinkType();

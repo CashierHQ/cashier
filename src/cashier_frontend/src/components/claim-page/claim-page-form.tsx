@@ -51,12 +51,8 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { open, options, hideDialog, showDialog } = useConfirmDialog();
     const signer = useSigner();
     const { connectToWallet } = useConnectToWallet();
-    const {
-        currentConnectOption,
-        setCurrentConnectOption,
-        initInternetIdentitySigner,
-        initOtherWalletSigners,
-    } = useSignerStore();
+    const { setCurrentConnectOption, initInternetIdentitySigner, initOtherWalletSigners } =
+        useSignerStore();
     const { linkId } = useParams();
 
     const { link } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);

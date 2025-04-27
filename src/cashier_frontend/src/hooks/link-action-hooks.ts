@@ -6,7 +6,7 @@ import { ACTION_TYPE } from "@/services/types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
 import { useCreateAction } from "./action-hooks";
 
-export interface UpdateLinkParams2 {
+export interface UpdateLinkParams {
     linkId: string;
     linkModel: Partial<UserInputItem>;
     isContinue: boolean;
@@ -24,7 +24,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         linkDetailQuery.refetch();
     };
 
-    const callLinkStateMachine = async (params: UpdateLinkParams2) => {
+    const callLinkStateMachine = async (params: UpdateLinkParams) => {
         const { linkId, linkModel, isContinue } = params;
         setIsUpdating(true);
         // this already invalidates the query no need to refetch
@@ -34,6 +34,8 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
                 linkModel,
                 isContinue,
             });
+
+            console.log("🚀 ~ callLinkStateMachine ~ res:", res);
 
             return res;
         } finally {

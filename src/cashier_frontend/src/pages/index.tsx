@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import LinkItem from "@/components/link-item";
 import { Skeleton } from "@/components/ui/skeleton";
-import LinkService from "@/services/link.service";
 import { Button } from "@/components/ui/button";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
@@ -19,6 +18,7 @@ import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useTokens } from "@/hooks/useTokens";
+import LinkService from "@/services/link/link.service";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -42,12 +42,18 @@ export default function HomePage() {
     const { updateTokenInit } = useTokens();
 
     const handleCreateLink = async () => {
+        if (!identity) {
+            showToast(t("common.error"), t("common.commonErrorMessage"), "error");
+            return;
+        }
         try {
             setDisableCreateButton(true);
-            showToast(t("common.creating"), t("common.creatingLink"), "default");
+            // showToast(t("common.creating"), t("common.creatingLink"), "default");
+
             const linkId = await new LinkService(identity).createLink({
                 link_type: LINK_TYPE.SEND_TIP,
             });
+
             addUserInput(linkId, {
                 linkId: linkId,
                 state: LINK_STATE.CHOOSE_TEMPLATE,

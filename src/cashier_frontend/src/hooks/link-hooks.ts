@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import LinkService from "@/services/link.service";
+import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { UpdateLinkParams2 } from "./link-action-hooks";
+import { UpdateLinkParams } from "./link-action-hooks";
 
 // Centralized query keys for consistent caching
 export const LINK_QUERY_KEYS = {
@@ -38,7 +38,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
             const linkService = new LinkService(identity);
             return await linkService.getLink(linkId, actionType);
         },
-        enabled: !!identity && !!linkId,
+        enabled: !!linkId,
         staleTime: staleTime, // Time in milliseconds data remains fresh
     });
 }
@@ -48,14 +48,14 @@ export function useUpdateLink() {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (data: UpdateLinkParams2) => {
+        mutationFn: (data: UpdateLinkParams) => {
             const linkService = new LinkService(identity);
             return linkService.updateLink(data.linkId, data.linkModel, data.isContinue);
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: LINK_QUERY_KEYS.list() });
             queryClient.invalidateQueries({
-                queryKey: LINK_QUERY_KEYS.detail(data.id),
+                queryKey: LINK_QUERY_KEYS.detail(data?.link?.id),
             });
         },
         onError: (err) => {

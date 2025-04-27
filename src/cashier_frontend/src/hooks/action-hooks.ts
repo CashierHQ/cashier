@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
-import LinkService, { UpdateActionInputModel } from "@/services/link.service";
+import LinkService, { UpdateActionInputModel } from "@/services/link/link.service";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { Principal } from "@dfinity/principal";
 

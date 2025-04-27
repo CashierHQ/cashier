@@ -286,7 +286,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 isContinue: true,
             });
 
-            const stepIndex = stateToStepIndex(stateMachineResponse.state);
+            const stepIndex = stateToStepIndex(stateMachineResponse.link.state);
 
             setStep(stepIndex);
         }

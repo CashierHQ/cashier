@@ -9,7 +9,7 @@ import {
     ProcessActionAnonymousInput,
     ProcessActionInput,
     UpdateActionInput,
-} from "../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../../declarations/cashier_backend/cashier_backend.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
@@ -17,17 +17,17 @@ import {
     LinkGetUserStateInputModel,
     LinkModel,
     LinkUpdateUserStateInputModel,
-} from "./types/link.service.types";
+} from "../types/link.service.types";
 import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
     MapLinkToLinkDetailModel,
     mapLinkUserStateModel,
-} from "./types/mapper/link.service.mapper";
-import { ActionModel } from "./types/action.service.types";
-import { mapActionModel } from "./types/mapper/action.service.mapper";
-import { FeeModel } from "./types/intent.service.types";
-import { FEE_TYPE } from "./types/enum";
+} from "../types/mapper/link.service.mapper";
+import { ActionModel } from "../types/action.service.types";
+import { mapActionModel } from "../types/mapper/action.service.mapper";
+import { FeeModel } from "../types/intent.service.types";
+import { FEE_TYPE } from "../types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
 
 interface ResponseLinksModel {
@@ -141,9 +141,7 @@ class LinkService {
             link_id: input.linkId,
             action_type: input.actionType,
         };
-        console.log("🚀 ~ LinkService ~ processAction ~ inputModel:", inputModel);
         const response = parseResultResponse(await this.actor.process_action(inputModel));
-        console.log("🚀 ~ LinkService ~ processAction ~ response:", response);
         const action = mapActionModel(response);
         return action;
     }

@@ -16,7 +16,6 @@ import {
 import useToast from "@/hooks/useToast";
 import { Spinner } from "@/components/ui/spinner";
 import { MultiStepFormContext } from "@/contexts/multistep-form-context";
-import { cn } from "@/lib/utils";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
@@ -26,7 +25,7 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
     LINK_STATE.ADD_ASSET,
-    LINK_STATE.CREATE_LINK,
+    LINK_STATE.PREVIEW,
 ];
 
 function getInitialStep(state: string | undefined) {
@@ -99,7 +98,7 @@ export default function LinkPage() {
                     isContinue: false,
                 });
 
-                const currentState = res.state;
+                const currentState = res.link.state;
 
                 const stepIndex = stateToStepIndex(currentState);
                 context.setStep(stepIndex);

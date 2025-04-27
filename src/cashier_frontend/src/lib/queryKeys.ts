@@ -1,4 +1,4 @@
-import LinkService from "@/services/link.service";
+import LinkService from "@/services/link/link.service";
 import { LinkGetUserStateInputModel } from "@/services/types/link.service.types";
 import { UsdConversionService } from "@/services/usdConversionService";
 import UserService from "@/services/user.service";
