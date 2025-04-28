@@ -116,11 +116,11 @@ class LinkLocalStorageService {
 
         const updatedLinkDto = mapLinkDetailModelToLinkDto(updatedlinkModelDetail);
 
-        console.log("🚀 ~  updatedLinkDto:", updatedLinkDto);
-
-        links[linkId] = updatedLinkDto;
-
-        console.log("🚀 ~  links[linkId]", links[linkId]);
+        links[linkId] = {
+            ...updatedLinkDto,
+            // always overwrite the id with prefix
+            id: linkId,
+        };
 
         this.saveLinks(links);
         return links[linkId];
