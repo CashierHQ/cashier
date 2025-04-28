@@ -59,8 +59,10 @@ export function getLinkLabel(state: LINK_STATE): string {
             return "Draft"; // User left on step 1
         case LINK_STATE.ADD_ASSET:
             return "Draft"; // User left on step 2
-        case LINK_STATE.CREATE_LINK:
+        case LINK_STATE.PREVIEW:
             return "Draft"; // User left on step 3
+        case LINK_STATE.CREATE_LINK:
+            return "Draft"; // not Show on UI but should be draft here
         case LINK_STATE.ACTIVE:
             return "Active";
         case LINK_STATE.INACTIVE:

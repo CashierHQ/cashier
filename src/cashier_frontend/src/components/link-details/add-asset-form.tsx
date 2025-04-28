@@ -508,8 +508,8 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     }
 
     return (
-        <div className="w-full h-full flex flex-col">
-            <div className="flex flex-col flex-1">
+        <div>
+            <div>
                 <div
                     className={`overflow-y-auto ${responsive.isSmallDevice ? "h-[calc(100dvh-150px)]" : "h-[calc(100vh-300px)]"}`}
                     style={{
@@ -550,7 +550,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     )}
                 </div>
 
-                <div className="mt-auto">
+                <div>
                     {/* Airdrop Fields */}
                     {isAirdrop && (
                         <div className="flex gap-4 mt-2 mb-4">
@@ -616,7 +616,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                         type="submit"
                         variant="default"
                         size="lg"
-                        className="w-full mt-2 disabled:bg-disabledgreen"
+                        className="w-full mt-auto disabled:bg-disabledgreen"
                         onClick={handleSubmit}
                         disabled={
                             assetFields.fields.length === 0 ||

@@ -21,7 +21,7 @@ import {
 import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
-    MapLinkToLinkDetailModel,
+    mapPartialDtoToLinkDetailModel,
     mapLinkUserStateModel,
 } from "../types/mapper/link.service.mapper";
 import { ActionModel } from "../types/action.service.types";
@@ -94,7 +94,7 @@ class LinkService {
         responseModel.data = response.data
             ? response.data.map((link: LinkDto) => {
                   return {
-                      link: MapLinkToLinkDetailModel(link),
+                      link: mapPartialDtoToLinkDetailModel(link),
                       action_create: undefined,
                   };
               })

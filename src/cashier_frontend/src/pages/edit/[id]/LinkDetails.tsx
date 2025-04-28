@@ -12,7 +12,7 @@ export default function LinkDetails() {
     const isAirdrop = currentInput?.linkType === LINK_TYPE.SEND_AIRDROP;
 
     return (
-        <div className="w-full h-full flex flex-col">
+        <div className="w-full h-full flex flex-col overflow-hidden">
             <AddAssetForm isMultiAsset={isMultiAsset} isAirdrop={isAirdrop} />
         </div>
     );

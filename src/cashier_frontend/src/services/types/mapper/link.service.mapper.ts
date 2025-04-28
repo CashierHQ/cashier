@@ -60,7 +60,7 @@ export const MapLinkDetailModelToUpdateLinkInputModel = (
     return updateLinkInput;
 };
 
-export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
+export const mapDtoToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
     const result: LinkDetailModel = {
         id: link.id,
         title: fromNullable(link.title) ?? "",
@@ -84,6 +84,36 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
                 : [],
         maxActionNumber: link.link_use_action_max_count,
         useActionCounter: link.link_use_action_counter,
+    };
+    return result;
+};
+
+export const mapPartialDtoToLinkDetailModel = (link: Partial<LinkDto>): LinkDetailModel => {
+    let asset_info: AssetInfoModel[] = [];
+    if (link.asset_info && link.asset_info.length > 0) {
+        asset_info = fromDefinedNullable(link.asset_info).map((asset) => ({
+            address: asset.address,
+            chain: mapStringToChain(asset.chain),
+            amountPerUse: asset.amount_per_link_use_action,
+            label: mapStringToLabel(asset.label),
+        }));
+    }
+
+    const result: LinkDetailModel = {
+        id: link.id ?? "",
+        title: fromNullable(link.title ?? []) ?? "",
+        description: fromNullable(link.description ?? []) ?? "",
+        image: "",
+        linkType: fromNullable(link.link_type ?? []),
+        state: link.state,
+        template: fromNullable(link.template ?? []),
+        creator: link.creator,
+        create_at: link.create_at
+            ? convertNanoSecondsToDate(link.create_at)
+            : new Date("2000-10-01"),
+        asset_info: asset_info,
+        maxActionNumber: link.link_use_action_max_count ?? BigInt(0),
+        useActionCounter: link.link_use_action_counter ?? BigInt(0),
     };
     return result;
 };
@@ -122,7 +152,7 @@ export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkMode
     const { link: linkDto, action: actionDto } = linkObj;
     return {
         action: actionDto?.length > 0 ? mapActionModel(actionDto[0]) : undefined,
-        link: MapLinkToLinkDetailModel(linkDto),
+        link: mapDtoToLinkDetailModel(linkDto),
     };
 };
 

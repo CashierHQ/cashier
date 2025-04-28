@@ -7,6 +7,8 @@ import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service";
 import { groupLinkListByDate } from "@/utils";
+import { LinkModel } from "@/services/types/link.service.types";
+import { mapPartialDtoToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
 
 // Centralized query keys for consistent caching
 export const LINK_QUERY_KEYS = {
@@ -23,18 +25,23 @@ export function useLinksListQuery() {
         queryKey: LINK_QUERY_KEYS.list(),
         queryFn: async () => {
             if (!identity) throw new Error("Identity is required");
-            const linkService = new LinkService(identity);
-            const linkLocalStorageService = new LinkLocalStorageService();
+            try {
+                const linkService = new LinkService(identity);
+                const linkLocalStorageService = new LinkLocalStorageService();
 
-            const res = await linkService.getLinkList();
-            const localRes = linkLocalStorageService.getLinkList();
+                const res = await linkService.getLinkList();
+                const localRes = linkLocalStorageService.getLinkList();
 
-            // aggregate the results from both services
-            const links = res.data.concat(localRes.data);
+                // aggregate the results from both services
+                const links = res.data.concat(localRes.data);
 
-            const result = groupLinkListByDate(links.map((linkModel) => linkModel.link));
+                const result = groupLinkListByDate(links.map((linkModel) => linkModel.link));
 
-            return result;
+                return result;
+            } catch (error) {
+                console.error("Error fetching link list", error);
+                throw error;
+            }
         },
         enabled: !!identity,
     });
@@ -49,8 +56,26 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
         queryKey: LINK_QUERY_KEYS.detail(linkId),
         queryFn: async () => {
             if (!linkId) throw new Error("linkId are required");
-            const linkService = new LinkService(identity);
-            return await linkService.getLink(linkId, actionType);
+
+            if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
+                const linkLocalStorageService = new LinkLocalStorageService();
+                const localLink = linkLocalStorageService.getLink(linkId);
+
+                const linkDetailModel = mapPartialDtoToLinkDetailModel(localLink);
+
+                const linkModel: LinkModel = {
+                    link: linkDetailModel,
+                };
+
+                if (localLink) {
+                    return Promise.resolve(linkModel);
+                } else {
+                    throw new Error("Link not found in local storage");
+                }
+            } else {
+                const linkService = new LinkService(identity);
+                return await linkService.getLink(linkId, actionType);
+            }
         },
         enabled: !!linkId,
         staleTime: staleTime, // Time in milliseconds data remains fresh

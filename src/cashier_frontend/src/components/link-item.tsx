@@ -1,59 +1,53 @@
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
-import { getLinkLabel, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { getLinkLabel, LINK_STATE, LINK_TYPE, mapStringToLinkState } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { getLinkDefaultAvatar } from "@/utils";
 
+const STATE_ORDER_ARRAY = [
+    LINK_STATE.ADD_ASSET,
+    LINK_STATE.CHOOSE_TEMPLATE,
+    LINK_STATE.PREVIEW,
+    LINK_STATE.CREATE_LINK,
+    LINK_STATE.ACTIVE,
+    LINK_STATE.INACTIVE,
+    LINK_STATE.INACTIVE_ENDED,
+];
+
 export function StateBadge({ state }: { state: string | undefined }) {
+    if (!state) return null;
     const baseLabelClass = "text-xs font-xs rounded-full px-2 py-1";
 
-    if (state === LINK_STATE.ADD_ASSET) {
+    const linkState = mapStringToLinkState(state);
+
+    // Get state index from order array
+    const stateIndex = state ? STATE_ORDER_ARRAY.indexOf(linkState) : -1;
+
+    // If state <= 3 return similar style as add asset (yellow background)
+    if (stateIndex >= 0 && stateIndex <= 3) {
         return (
             <div className={`${baseLabelClass} bg-lightyellow text-yellow`}>
-                {getLinkLabel(LINK_STATE.ADD_ASSET)}
+                {getLinkLabel(linkState)}
             </div>
         );
     }
 
-    if (state === LINK_STATE.CHOOSE_TEMPLATE) {
+    // Success state == 4 (ACTIVE)
+    if (stateIndex === 4) {
         return (
-            <div className={`${baseLabelClass} bg-lightyellow text-yellow`}>
-                {getLinkLabel(LINK_STATE.CHOOSE_TEMPLATE)}
-            </div>
+            <div className={`${baseLabelClass} bg-green text-white`}>{getLinkLabel(linkState)}</div>
         );
     }
 
-    if (state === LINK_STATE.ACTIVE) {
-        return (
-            <div className={`${baseLabelClass} bg-green text-white`}>
-                {getLinkLabel(LINK_STATE.ACTIVE)}
-            </div>
-        );
-    }
-
-    if (state === LINK_STATE.INACTIVE) {
+    // Inactive states > 4
+    if (stateIndex > 4) {
         return (
             <div className={`${baseLabelClass} bg-gray-200 text-gray-700`}>
-                {getLinkLabel(LINK_STATE.INACTIVE)}
+                {getLinkLabel(linkState)}
             </div>
         );
     }
 
-    if (state === LINK_STATE.INACTIVE_ENDED) {
-        return (
-            <div className={`${baseLabelClass} bg-gray-200 text-gray-700`}>
-                {getLinkLabel(LINK_STATE.INACTIVE_ENDED)}
-            </div>
-        );
-    }
-
-    if (state === LINK_STATE.CREATE_LINK) {
-        return (
-            <div className={`${baseLabelClass} text-yellow bg-lightyellow`}>
-                {getLinkLabel(LINK_STATE.CREATE_LINK)}
-            </div>
-        );
-    }
     return null;
 }
 

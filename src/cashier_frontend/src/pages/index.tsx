@@ -26,7 +26,7 @@ export default function HomePage() {
     const { userInputs, addUserInput } = useLinkCreationFormStore();
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
-    const { data: linkData, isLoading: isLinksLoading } = useLinksListQuery();
+    const { data: linkData, isLoading: isLinksLoading, refetch } = useLinksListQuery();
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -82,6 +82,12 @@ export default function HomePage() {
             setShowGuide(true);
         }
     }, []);
+
+    useEffect(() => {
+        if (identity) {
+            refetch();
+        }
+    }, [identity]);
 
     useEffect(() => {
         const draftLinkStates = [

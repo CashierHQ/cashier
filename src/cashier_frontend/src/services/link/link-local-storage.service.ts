@@ -6,7 +6,7 @@ import { LINK_STATE, LINK_TYPE } from "../types/enum";
 import { LinkDto } from "../../../../declarations/cashier_backend/cashier_backend.did";
 import {
     mapLinkDetailModelToLinkDto,
-    MapLinkToLinkDetailModel,
+    mapPartialDtoToLinkDetailModel,
     mapUserInputItemToLinkDetailModel,
 } from "../types/mapper/link.service.mapper";
 import { ResponseLinksModel } from "./link.service";
@@ -90,7 +90,7 @@ class LinkLocalStorageService {
 
         const linkModels = linkArray.map((link) => {
             return {
-                link: MapLinkToLinkDetailModel(link),
+                link: mapPartialDtoToLinkDetailModel(link),
             };
         });
 
