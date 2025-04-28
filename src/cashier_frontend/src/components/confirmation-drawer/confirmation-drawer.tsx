@@ -19,6 +19,7 @@ import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
+import { Check } from "lucide-react";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -171,14 +172,17 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         }
     };
 
+    const title =
+        action?.state === ACTION_STATE.SUCCESS
+            ? t("transaction.confirm_popup.link_creation_success_title")
+            : t("transaction.confirm_popup.title");
+
     return (
         <Drawer open={open}>
             <DrawerContent className="max-w-[400px] mx-auto p-3 rounded-t-[1.5rem]">
                 <DrawerHeader>
                     <DrawerTitle className="relative flex items-center justify-center">
-                        <div className="text-center text-xl">
-                            {t("transaction.confirm_popup.title")}
-                        </div>
+                        <div className="text-center text-xl">{title}</div>
 
                         <IoIosClose
                             onClick={onClose}
@@ -189,23 +193,42 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 </DrawerHeader>
 
                 {action ? (
-                    <>
-                        <ConfirmationPopupAssetsSection
-                            intents={primaryIntents}
-                            onInfoClick={onInfoClick}
-                            isUsd={isUsd}
-                            onUsdClick={() => setIsUsd((old) => !old)}
-                        />
+                    action.state === ACTION_STATE.SUCCESS ? (
+                        <div className="flex flex-col items-center justify-center">
+                            <div className="flex items-center justify-center bg-lightgreen rounded-full p-2 my-4">
+                                <Check color="#35A18A" size={42} />
+                            </div>
+                            <div className="text-center text-sm font-medium">
+                                {t("transaction.confirm_popup.link_creation_success_message")}
+                            </div>
 
-                        <ConfirmationPopupLegalSection />
-                        <Button
-                            className="my-3 mx-auto py-6 w-[95%]"
-                            disabled={isDisabled}
-                            onClick={onClickSubmit}
-                        >
-                            {buttonText}
-                        </Button>
-                    </>
+                            <Button
+                                className="mb-3 mt-8 mx-auto py-6 w-[95%]"
+                                disabled={isDisabled}
+                                onClick={onClickSubmit}
+                            >
+                                {buttonText}
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
+                            <ConfirmationPopupAssetsSection
+                                intents={primaryIntents}
+                                onInfoClick={onInfoClick}
+                                isUsd={isUsd}
+                                onUsdClick={() => setIsUsd((old) => !old)}
+                            />
+
+                            <ConfirmationPopupLegalSection />
+                            <Button
+                                className="my-3 mx-auto py-6 w-[95%]"
+                                disabled={isDisabled}
+                                onClick={onClickSubmit}
+                            >
+                                {buttonText}
+                            </Button>
+                        </>
+                    )
                 ) : (
                     <ConfirmationPopupSkeleton />
                 )}
