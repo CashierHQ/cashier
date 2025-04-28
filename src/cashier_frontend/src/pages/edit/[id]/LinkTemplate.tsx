@@ -60,16 +60,21 @@ export default function LinkTemplate({
                 return;
             }
 
-            const stateMachineRes = await callLinkStateMachine({
-                linkId: currentLink.linkId,
-                linkModel: currentLink,
-                isContinue: true,
-            });
+            try {
+                const stateMachineRes = await callLinkStateMachine({
+                    linkId: currentLink.linkId,
+                    linkModel: currentLink,
+                    isContinue: true,
+                });
 
-            console.log("🚀 ~ stateMachineRes:", stateMachineRes);
+                console.log("🚀 ~ stateMachineRes:", stateMachineRes);
 
-            const stepIndex = stateToStepIndex(stateMachineRes.link.state);
-            setStep(stepIndex);
+                const stepIndex = stateToStepIndex(stateMachineRes.state);
+                setStep(stepIndex);
+            } catch (error) {
+                console.error("Error calling state machine", error);
+                showToast("Error", "Failed to call state machine", "error");
+            }
         } else {
             onSelectUnsupportedLinkType();
         }

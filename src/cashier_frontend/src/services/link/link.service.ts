@@ -30,7 +30,7 @@ import { FeeModel } from "../types/intent.service.types";
 import { FEE_TYPE } from "../types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
 
-interface ResponseLinksModel {
+export interface ResponseLinksModel {
     data: LinkModel[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: any;
@@ -124,9 +124,9 @@ class LinkService {
     }
 
     async updateLink(linkId: string, data: Partial<UserInputItem>, isContinue: boolean) {
-        console.log("🚀 ~ LinkService ~ updateLink ~ data:", data);
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
         const response = parseResultResponse(await this.actor.update_link(completeData));
+
         return response;
     }
 

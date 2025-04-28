@@ -1281,13 +1281,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
 
-            info!("[handle_link_state_transition] link: {:#?}", link);
-            info!(
-                "[handle_link_state_transition] asset_info: {:#?}",
-                asset_info
-            );
-            info!("[handle_link_state_transition] params: {:#?}", params);
-
             if link_state_goto == LinkStateMachineGoto::Continue {
                 if !self.link_type_add_asset_validate(
                     &link,

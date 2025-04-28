@@ -1,8 +1,9 @@
 import { UpdateLinkParams } from "@/hooks/link-action-hooks";
 import { ActionModel } from "@/services/types/action.service.types";
-import { LinkDetailModel, LinkModel } from "@/services/types/link.service.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 import { create } from "zustand";
 import { ACTION_TYPE } from "@/services/types/enum";
+import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 // export interface ILinkModel<T extends LINK_TYPE> {
 //     id: string;
@@ -52,7 +53,7 @@ export interface LinkActionStoreData {
     clearStore(): void;
     getLinkDetail: () => Promise<void>;
 
-    callLinkStateMachine(data: UpdateLinkParams): Promise<LinkModel>;
+    callLinkStateMachine(data: UpdateLinkParams): Promise<LinkDto>;
 
     createAction: (
         linkId: string,

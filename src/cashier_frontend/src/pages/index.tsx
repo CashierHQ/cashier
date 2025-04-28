@@ -7,8 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { formatDateString } from "@/utils";
-import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "@/lib/queryKeys";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import TransactionToast from "@/components/transaction/transaction-toast";
@@ -19,6 +17,8 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useTokens } from "@/hooks/useTokens";
 import LinkService from "@/services/link/link.service";
+import LinkLocalStorageService from "@/services/link/link-local-storage.service";
+import { useLinksListQuery } from "@/hooks/link-hooks";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -26,11 +26,7 @@ export default function HomePage() {
     const { userInputs, addUserInput } = useLinkCreationFormStore();
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
-    const { data: linkData, isLoading: isLinksLoading } = useQuery({
-        ...queryKeys.links.list(identity),
-        enabled: !!identity,
-        refetchOnWindowFocus: false,
-    });
+    const { data: linkData, isLoading: isLinksLoading } = useLinksListQuery();
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -53,6 +49,11 @@ export default function HomePage() {
             const linkId = await new LinkService(identity).createLink({
                 link_type: LINK_TYPE.SEND_TIP,
             });
+
+            const creator = identity.getPrincipal().toString();
+
+            //! mirror create local storage
+            new LinkLocalStorageService().createLink(creator, linkId);
 
             addUserInput(linkId, {
                 linkId: linkId,

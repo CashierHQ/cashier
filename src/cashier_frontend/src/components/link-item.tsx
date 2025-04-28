@@ -1,4 +1,5 @@
 import { useResponsive } from "@/hooks/responsive-hook";
+import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { getLinkLabel, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { getLinkDefaultAvatar } from "@/utils";
@@ -58,6 +59,9 @@ export function StateBadge({ state }: { state: string | undefined }) {
 
 export default function LinkItem({ link }: { link: LinkDetailModel }) {
     const responsive = useResponsive();
+
+    const isLocalLink = link.id.startsWith(LOCAL_lINK_ID_PREFIX);
+
     return (
         <div
             className={`w-full flex justify-between items-center my-3 ${responsive.isSmallDevice ? "" : "p-2 hover:bg-gray-50 rounded-2xl"}`}
@@ -78,6 +82,7 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
             <div className="flex items-center justify-between grow ml-3">
                 <h3 className="font-base text-sm font-[500]">
                     {link.title.length > 0 ? link.title : "No title"}
+                    {isLocalLink && <span className="text-xs text-gray-500"> (Local Link)</span>}
                 </h3>
                 <StateBadge state={link.state} />
             </div>

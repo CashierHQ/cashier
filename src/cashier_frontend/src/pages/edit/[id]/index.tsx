@@ -25,7 +25,8 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 const STEP_LINK_STATE_ORDER = [
     LINK_STATE.CHOOSE_TEMPLATE,
     LINK_STATE.ADD_ASSET,
-    LINK_STATE.PREVIEW,
+    // TODO: change to PREVIEW
+    LINK_STATE.CREATE_LINK,
 ];
 
 function getInitialStep(state: string | undefined) {
@@ -98,7 +99,7 @@ export default function LinkPage() {
                     isContinue: false,
                 });
 
-                const currentState = res.link.state;
+                const currentState = res.state;
 
                 const stepIndex = stateToStepIndex(currentState);
                 context.setStep(stepIndex);

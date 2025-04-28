@@ -88,6 +88,35 @@ export const MapLinkToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
     return result;
 };
 
+export const mapLinkDetailModelToLinkDto = (model: LinkDetailModel): LinkDto => {
+    const linkDto: LinkDto = {
+        id: model.id,
+        state: model.state || "",
+        title: model.title ? toNullable(model.title) : [],
+        description: model.description ? toNullable(model.description) : [],
+        link_type: model.linkType ? toNullable(model.linkType) : [],
+        asset_info:
+            model.asset_info && model.asset_info.length > 0
+                ? toNullable(
+                      model.asset_info.map((asset) => ({
+                          address: asset.address,
+                          chain: asset.chain || "IC",
+                          label: asset.label || "",
+                          amount_per_link_use_action: asset.amountPerUse,
+                      })),
+                  )
+                : [],
+        template: model.template ? toNullable(model.template) : [],
+        creator: model.creator || "",
+        create_at: model.create_at ? BigInt(model.create_at.getTime() * 1_000_000) : BigInt(0), // Convert Date to nanoseconds
+        metadata: [],
+        link_use_action_counter: model.useActionCounter || BigInt(0),
+        link_use_action_max_count: model.maxActionNumber || BigInt(0),
+    };
+
+    return linkDto;
+};
+
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const MapLinkDetailModel = async (linkObj: GetLinkResp): Promise<LinkModel> => {
     const { link: linkDto, action: actionDto } = linkObj;
@@ -160,5 +189,34 @@ export const mapLinkDetailModelToUserInputItem = (model: LinkDetailModel): UserI
         description: model.description,
         image: model.image,
         maxActionNumber: model.maxActionNumber,
+    };
+};
+
+// Map from UserInputItem to LinkDetailModel
+export const mapUserInputItemToLinkDetailModel = (
+    model: Partial<UserInputItem>,
+): LinkDetailModel => {
+    const asset_info: AssetInfoModel[] =
+        model.assets?.map((asset) => {
+            return {
+                address: asset.address,
+                amountPerUse: asset.linkUseAmount,
+                label: asset.label,
+                chain: asset.chain,
+            };
+        }) || [];
+
+    return {
+        id: model.linkId || "",
+        title: model.title || "",
+        description: model.description || "",
+        image: model.image || "",
+        linkType: model.linkType || "",
+        state: model.state || "",
+        template: TEMPLATE.CENTRAL, // Default template
+        asset_info: asset_info,
+        maxActionNumber: model.maxActionNumber || BigInt(0),
+        useActionCounter: BigInt(0), // Default to 0 for new links
+        create_at: new Date(), // Default to current date for new links
     };
 };

@@ -29,6 +29,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         setIsUpdating(true);
         // this already invalidates the query no need to refetch
         try {
+            console.log("🚀 ~ callLinkStateMachine ~ linkModel:", linkModel);
             const res = await updateLinkMutation.mutateAsync({
                 linkId,
                 linkModel,

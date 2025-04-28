@@ -116,7 +116,7 @@ export default function LinkPreview({
             isContinue: true,
         });
 
-        if (res.link.state === LINK_STATE.ACTIVE) {
+        if (res.state === LINK_STATE.ACTIVE) {
             navigate(`/details/${link!.id}`);
             refetchLinkDetail();
         }
