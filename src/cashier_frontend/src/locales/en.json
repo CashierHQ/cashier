@@ -67,6 +67,8 @@
         },
         "confirm_popup": {
             "title": "Confirm transaction",
+            "link_creation_success_title": "Link created successfully",
+            "link_creation_success_message": "Congratulations! Your link has been created successfully.",
             "receive_label": "You receive",
             "cashier_link_label": "Cashier link",
             "send_label": "You send",
