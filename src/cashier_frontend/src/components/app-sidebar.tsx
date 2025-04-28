@@ -1,4 +1,4 @@
-import { SheetHeader, SheetContent, SheetTitle, SheetFooter } from "./ui/sheet";
+import { SheetHeader, SheetContent, SheetTitle, SheetFooter, Sheet, SheetClose } from "./ui/sheet";
 import { cn } from "@/lib/utils";
 import { LuWallet2 } from "react-icons/lu";
 import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
@@ -6,8 +6,8 @@ import { useAuth } from "@nfid/identitykit/react";
 import { transformShortAddress } from "@/utils";
 import copy from "copy-to-clipboard";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import { Copy } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Copy, X } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { MouseEventHandler } from "react";
 
@@ -17,11 +17,16 @@ export interface SidebarMenuItem {
     onClick: () => void;
 }
 
-const AppSidebar: React.FC = () => {
+interface AppSidebarProps {
+    onClose: () => void;
+}
+
+const AppSidebar: React.FC<AppSidebarProps> = ({ onClose }) => {
     const { user } = useAuth();
     const { disconnect } = useAuth();
     const { toast } = useToast();
     const navigate = useNavigate();
+    const { pathname, search } = useLocation();
 
     const handleCopy = (e: React.SyntheticEvent) => {
         try {
@@ -37,7 +42,13 @@ const AppSidebar: React.FC = () => {
 
     const handleDisConnect = () => {
         disconnect();
-        navigate("/");
+
+        // If the current page is not a claim page, navigate to the home page
+        // This prevents the user from being redirected to the home page when they click the disconnect button
+        // from within the sidebar
+        if (!search.includes("claim")) {
+            navigate("/");
+        }
     };
 
     return (
@@ -84,12 +95,14 @@ const AppSidebar: React.FC = () => {
                         hoverDisabled
                     />
 
-                    <button
-                        onClick={handleDisConnect}
-                        className="w-[95%] border border-[#D26060] mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] h-[44px] mt-4 hover:bg-[#D26060] hover:text-white transition-colors"
-                    >
-                        Disconnect
-                    </button>
+                    <SheetClose asChild>
+                        <button
+                            onClick={handleDisConnect}
+                            className="w-[95%] border border-[#D26060] mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] h-[44px] mt-4 hover:bg-[#D26060] hover:text-white transition-colors"
+                        >
+                            Disconnect
+                        </button>
+                    </SheetClose>
                 </div>
             </SheetFooter>
         </SheetContent>

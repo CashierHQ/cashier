@@ -34,10 +34,7 @@ export function useAddAssetForm(
         (assetIndex: number) => {
             const asset = form.getValues(`assets.${assetIndex}`);
             if (availableAssets.length > 0 && asset.amount !== undefined) {
-                console.log("Validating asset:", availableAssets);
                 const errors = validateAsset(asset, availableAssets);
-
-                console.log("Validation errors:", errors);
                 // Clear previous errors
                 form.clearErrors([
                     `assets.${assetIndex}.tokenAddress`,
@@ -64,7 +61,7 @@ export function useAddAssetForm(
         assets.forEach((_, index) => {
             validateSingleAsset(index);
         });
-    }, [assets, validateSingleAsset]);
+    }, [assets]);
 
     // Update amount when assetNumber changes using our utility functions
     useEffect(() => {

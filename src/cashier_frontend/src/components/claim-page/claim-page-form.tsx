@@ -26,6 +26,7 @@ import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { ClipboardIcon } from "lucide-react";
+import TokenItem from "./token-item";
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -56,7 +57,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { linkId } = useParams();
 
     const { link } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
-    const { getToken } = useTokens();
+    const { getToken, updateTokenInit } = useTokens();
 
     // Check if the address is valid
     const isAddressValid = () => {
@@ -70,6 +71,15 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             return false;
         }
     };
+
+    const getTokenData = (address: string) => {
+        const token = getToken(address);
+        return token;
+    };
+
+    useEffect(() => {
+        updateTokenInit();
+    }, []);
 
     useEffect(() => {
         console.log("signer", signer);
@@ -195,37 +205,9 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
                         {t("claim.asset")}
                     </h2>
-                    {link?.asset_info.map((asset, index) => {
-                        const token = getToken(asset.address);
-                        const tokenSymbol = token?.symbol || asset.address.substring(0, 3);
-
-                        return (
-                            <div key={index} className="flex justify-between ml-1">
-                                <div className="flex items-center">
-                                    <div className="flex gap-x-5 items-center">
-                                        <img
-                                            src={token?.logo}
-                                            alt={tokenSymbol}
-                                            className="w-10 h-10 rounded-sm mr-3"
-                                            onError={(e) => {
-                                                // Set fallback image when the main image fails to load
-                                                e.currentTarget.onerror = null; // Prevent infinite loop
-                                                e.currentTarget.src = `./defaultLinkImage.png`;
-                                                // Alternatively, use a local asset:
-                                                // e.currentTarget.src = "/default-token-icon.png";
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="mr-3">
-                                        {token ? token.symbol : asset.address}
-                                    </div>
-                                </div>
-                                <div className="text-green">
-                                    {Number(asset.amountPerUse) / 10 ** 8}
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {link?.asset_info.map((asset, index) => (
+                        <TokenItem key={index} asset={asset} />
+                    ))}
                 </div>
 
                 <Form {...form}>
@@ -352,7 +334,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                                                             : handlePasteClick(field);
                                                     }}
                                                     placeholder={t("claim.addressPlaceholder")}
-                                                    className="py-5 h-14 text-md rounded-xl"
+                                                    className="py-5 h-14 text-md rounded-xl placeholder:text-primary"
                                                     onFocusShowIcon={true}
                                                     onFocusText={true}
                                                     // disabled={!!identity}

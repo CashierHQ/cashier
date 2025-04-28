@@ -24,12 +24,7 @@ export function WalletToken({ token }: WalletTokenProps) {
 
                     {token.usdConversionRate ? (
                         <span className="flex flex-row items-center text-grey text-xs font-light leading-none">
-                            $
-                            <div
-                                dangerouslySetInnerHTML={{
-                                    __html: formatPrice(token.usdConversionRate.toString()),
-                                }}
-                            />
+                            ${formatPrice(token.usdConversionRate.toString())}
                         </span>
                     ) : (
                         <span className="text-grey text-xs font-light leading-none">-</span>
@@ -52,12 +47,7 @@ export function WalletToken({ token }: WalletTokenProps) {
 
                 {token.usdEquivalent ? (
                     <span className="flex flex-row items-center justify-end text-grey text-xs font-light leading-none">
-                        $
-                        <div
-                            dangerouslySetInnerHTML={{
-                                __html: formatPrice(token.usdEquivalent.toString()),
-                            }}
-                        />
+                        ${formatPrice(token.usdEquivalent.toString())}
                     </span>
                 ) : (
                     <span className="text-right text-grey text-xs font-light leading-none">-</span>
