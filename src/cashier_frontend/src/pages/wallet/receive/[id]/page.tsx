@@ -141,18 +141,6 @@ export default function ReceiveTokenPage() {
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
             </BackHeader>
             <div id="content" className="mx-2 mt-8">
-                <div className="mt-8">
-                    <div id="warning-section" className="text-green flex place-items-start">
-                        <Info className="text-green mr-2" size={22} />
-                        <div className="w-fit text-[14px]">
-                            {`Send ${currentSelectedToken?.name} to this wallet to begin using Cashier.`}{" "}
-                            {`Ensure that you are only sending assets that are `}
-                            <span className="font-bold">meant for this address</span>
-                            {t("wallet.receive.receiveWarning3")}
-                        </div>
-                    </div>
-                </div>
-
                 <div id="token-details" className="my-5">
                     <Label>{t("wallet.receive.receiveToken")}</Label>
                     <AssetButton
@@ -167,7 +155,7 @@ export default function ReceiveTokenPage() {
                 </div>
 
                 <div id="address-detail" className="my-3">
-                    <Label>Receive {currentSelectedToken?.name} adress</Label>
+                    <Label>Receive address</Label>
                     <IconInput
                         isCurrencyInput={false}
                         placeholder={t("claim.addressPlaceholder")}
