@@ -52,7 +52,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ onClose }) => {
     };
 
     return (
-        <SheetContent side="right" className="w-[100%] flex flex-col h-full">
+        <SheetContent side="right" className="w-[100%] p-4 flex flex-col h-full">
             <SheetHeader>
                 <SheetTitle className="mb-2">
                     <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
