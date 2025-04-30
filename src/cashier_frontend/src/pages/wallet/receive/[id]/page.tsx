@@ -1,7 +1,7 @@
 import { IconInput } from "@/components/icon-input";
 import ConfirmDialog from "@/components/confirm-dialog";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
-import { toast } from "@/hooks/use-toast";
+import useToast from "@/hooks/useToast";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { transformShortAddress } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
@@ -19,15 +19,16 @@ import AssetButton from "@/components/asset-button";
 import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
 import AssetDrawer from "@/components/asset-drawer";
 import { FungibleToken } from "@/types/fungible-token.speculative";
+import TransactionToast from "@/components/transaction/transaction-toast";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
+    const { showToast, hideToast } = useToast();
+
     const handleCopyAccountId = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
             copy(accountId ?? "");
-            toast({
-                description: "Copied",
-            });
+            showToast("Copied", "", "default");
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -67,6 +68,7 @@ export default function ReceiveTokenPage() {
     const { metadata } = useTokenMetadata(tokenId);
     const { user } = useAuth();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
+    const { toastData, showToast, hideToast } = useToast();
     const [accountId, setAccountId] = useState<string>("");
     const [currentSelectedToken, setCurrentSelectedToken] = useState<FungibleToken | undefined>(
         undefined,
@@ -110,9 +112,7 @@ export default function ReceiveTokenPage() {
         try {
             e.stopPropagation();
             copy(user?.principal.toString() ?? "");
-            toast({
-                description: "Copied",
-            });
+            showToast("Copied", "", "default");
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -199,6 +199,14 @@ export default function ReceiveTokenPage() {
                     assetList={tokenList || []}
                 />
             </div>
+            <TransactionToast
+                open={toastData?.open ?? false}
+                onOpenChange={hideToast}
+                title={toastData?.title ?? ""}
+                description={toastData?.description ?? ""}
+                variant={toastData?.variant ?? "default"}
+                duration={2000}
+            />
         </div>
     );
 }
