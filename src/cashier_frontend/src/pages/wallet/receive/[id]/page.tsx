@@ -1,6 +1,5 @@
 import { IconInput } from "@/components/icon-input";
 import ConfirmDialog from "@/components/confirm-dialog";
-import { SelectToken } from "@/components/receive/SelectToken";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { toast } from "@/hooks/use-toast";
 import { useConfirmDialog } from "@/hooks/useDialog";
@@ -12,11 +11,14 @@ import { Info } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { AssetSelectItem } from "@/components/asset-select";
 import { Label } from "@/components/ui/label";
 import { Copy } from "lucide-react";
 import { useTokens } from "@/hooks/useTokens";
 import { BackHeader } from "@/components/ui/back-header";
+import AssetButton from "@/components/asset-button";
+import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
+import AssetDrawer from "@/components/asset-drawer";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
     const handleCopyAccountId = (e: React.SyntheticEvent) => {
@@ -66,9 +68,10 @@ export default function ReceiveTokenPage() {
     const { user } = useAuth();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
     const [accountId, setAccountId] = useState<string>("");
-    const [currentSelectedToken, setCurrentSelectedToken] = useState<AssetSelectItem | undefined>(
+    const [currentSelectedToken, setCurrentSelectedToken] = useState<FungibleToken | undefined>(
         undefined,
     );
+    const [showAssetDrawer, setShowAssetDrawer] = useState(false);
 
     const { getDisplayTokens } = useTokens();
     const tokenList = getDisplayTokens();
@@ -82,13 +85,14 @@ export default function ReceiveTokenPage() {
             return tokenList.find((token) => token.address === tokenId);
         }
 
-        // If no tokenId provided, return undefined instead of defaulting to first token
-        return undefined;
+        // If no tokenId provided, default to ICP
+        return tokenList.find((token) => token.address === "ryjl3-tyaaa-aaaaa-aaaba-cai");
     }, [tokenList, tokenId, metadata]);
 
-    const handleTokenSelect = (token: AssetSelectItem) => {
+    const handleTokenSelect = (token: FungibleToken) => {
         setCurrentSelectedToken(token);
         navigate(`/wallet/receive/${token.address}`);
+        setShowAssetDrawer(false);
     };
 
     const handleShowAccountId = () => {
@@ -151,7 +155,15 @@ export default function ReceiveTokenPage() {
 
                 <div id="token-details" className="my-5">
                     <Label>{t("wallet.receive.receiveToken")}</Label>
-                    <SelectToken selectedToken={selectedToken} onSelect={handleTokenSelect} />
+                    <AssetButton
+                        handleClick={() => setShowAssetDrawer(true)}
+                        text="Select Token"
+                        childrenNode={
+                            selectedToken && (
+                                <SelectedAssetButtonInfo selectedToken={selectedToken} />
+                            )
+                        }
+                    />
                 </div>
 
                 <div id="address-detail" className="my-3">
@@ -183,6 +195,20 @@ export default function ReceiveTokenPage() {
                     open={open}
                     description={options.description}
                     onOpenChange={hideDialog}
+                />
+
+                {/* Asset Selection Drawer */}
+                <AssetDrawer
+                    title="Select Token"
+                    open={showAssetDrawer}
+                    handleClose={() => setShowAssetDrawer(false)}
+                    handleChange={(address) => {
+                        const token = tokenList?.find((t) => t.address === address);
+                        if (token) {
+                            handleTokenSelect(token);
+                        }
+                    }}
+                    assetList={tokenList || []}
                 />
             </div>
         </div>
