@@ -7,7 +7,7 @@ import { useFeePreview } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useResponsive } from "@/hooks/responsive-hook";
@@ -20,6 +20,9 @@ import { useTokens } from "@/hooks/useTokens";
 import { ACTION_TYPE, CHAIN, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
 import { ICP_ADDRESS, ICP_LOGO } from "@/const";
+import LinkLocalStorageService, {
+    LOCAL_lINK_ID_PREFIX,
+} from "@/services/link/link-local-storage.service";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -44,10 +47,22 @@ export default function LinkPreview({
 }: LinkPreviewProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const location = useLocation();
     const responsive = useResponsive();
+    const searchParams = new URLSearchParams(location.search);
+    const redirectParam = searchParams.get("redirect");
+    const oldIdParam = searchParams.get("oldId");
+    const shouldRedirect = redirectParam === "true";
 
-    const { link, action, setAction, refetchLinkDetail, callLinkStateMachine, createAction } =
-        useLinkAction();
+    const {
+        link,
+        setAction,
+        refetchLinkDetail,
+        callLinkStateMachine,
+        createAction,
+        createNewLink,
+        isLoading,
+    } = useLinkAction();
     const { getToken, getTokenPrice } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -62,9 +77,7 @@ export default function LinkPreview({
         const tokenMap = createTokenMap();
         if (link?.asset_info && tokenMap) {
             const enhanced = link.asset_info.map((asset) => {
-                console.log("asset_info", link?.asset_info);
                 const matchingToken = tokenMap[asset.address];
-                console.log("matchingToken", matchingToken);
                 return {
                     ...asset,
                     logo: matchingToken?.logo || getTokenImage(asset.address),
@@ -74,31 +87,61 @@ export default function LinkPreview({
         }
     }, [link?.asset_info, rawTokenList]);
 
+    // Effect to handle redirect and process action
+    useEffect(() => {
+        if (shouldRedirect && link && !link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
+            const handleRedirect = async () => {
+                try {
+                    setIsDisabled(true);
+                    await handleCreateAction();
+
+                    if (oldIdParam) {
+                        const localStorageService = new LinkLocalStorageService();
+                        localStorageService.deleteLink(oldIdParam);
+                    }
+
+                    setShowConfirmation(true);
+                } catch (error) {
+                    console.error("Error processing action", error);
+                    if (isCashierError(error)) {
+                        onCashierError(error);
+                    }
+                } finally {
+                    setIsDisabled(false);
+                }
+            };
+
+            handleRedirect();
+        }
+    }, [shouldRedirect, link]);
+
     const { data: feeData } = useFeePreview(link?.id);
 
     const handleCreateAction = async () => {
-        const updatedAction = await createAction(link!.id, ACTION_TYPE.CREATE_LINK);
-        console.log("🚀 ~ handleCreateAction ~ updatedAction:", updatedAction);
+        if (!link) {
+            throw new Error("Link is not defined");
+        }
+        const updatedAction = await createAction(link.id, ACTION_TYPE.CREATE_LINK);
         setAction(updatedAction);
     };
 
     const handleSubmit = async () => {
-        const validationResult = true;
-
         setIsDisabled(true);
 
         try {
-            if (validationResult) {
-                if (!action) {
-                    console.log("🚀 ~ handleSubmit ~ create action:", action);
-                    await handleCreateAction();
-                }
+            if (link && link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
+                // First create the link in the backend
+                const res = await createNewLink(link.id);
 
-                setShowConfirmation(true);
+                if (res) {
+                    navigate(`/edit/${res.id}?redirect=true&oldId=${res.oldId}`);
+                }
             } else {
-                onInvalidActon();
+                handleCreateAction();
+                setShowConfirmation(true);
             }
         } catch (error) {
+            console.error("Error creating link", error);
             if (isCashierError(error)) {
                 onCashierError(error);
             }
@@ -231,9 +274,9 @@ export default function LinkPreview({
                 type="submit"
                 variant="default"
                 size="lg"
-                className="mt-auto"
+                className="w-full mt-auto disabled:bg-disabledgreen"
                 onClick={handleSubmit}
-                disabled={isDisabled}
+                disabled={isDisabled || isLoading || shouldRedirect}
             >
                 {isDisabled ? t("processing") : t("create.create")}
             </FixedBottomButton>

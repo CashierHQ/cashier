@@ -42,6 +42,16 @@ type CanisterError = variant {
   };
 };
 type CreateLinkInput = record { link_type : text };
+type CreateLinkInputV2 = record {
+  title : text;
+  asset_info : vec LinkDetailUpdateAssetInfoInput;
+  link_type : text;
+  description : opt text;
+  link_image_url : opt text;
+  template : text;
+  link_use_action_max_count : nat64;
+  nft_image : opt text;
+};
 type GetLinkOptions = record { action_type : text };
 type GetLinkResp = record { action : opt ActionDto; link : LinkDto };
 type Icrc112Request = record {
@@ -94,6 +104,12 @@ type IntentDto = record {
   type_metadata : vec record { text; MetadataValue };
   state : text;
   transactions : vec TransactionDto;
+};
+type LinkDetailUpdateAssetInfoInput = record {
+  amount_per_link_use_action : nat64;
+  chain : text;
+  label : text;
+  address : text;
 };
 type LinkDetailUpdateInput = record {
   title : opt text;
@@ -212,6 +228,7 @@ type UpdateLinkInput = record {
 type UserDto = record { id : text; email : opt text; wallet : text };
 service : () -> {
   create_link : (CreateLinkInput) -> (Result);
+  create_link_v2 : (CreateLinkInputV2) -> (Result);
   create_user : () -> (Result_1);
   get_link : (text, opt GetLinkOptions) -> (Result_2) query;
   get_links : (opt PaginateInput) -> (Result_3) query;

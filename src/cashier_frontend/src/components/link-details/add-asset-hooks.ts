@@ -50,7 +50,7 @@ export function useAddAssetForm(
                 });
             }
         },
-        [availableAssets],
+        [availableAssets, form],
     );
 
     // Watch for changes in assets and validate them

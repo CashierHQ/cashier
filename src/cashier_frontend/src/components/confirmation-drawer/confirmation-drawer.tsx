@@ -4,12 +4,7 @@ import { useTranslation } from "react-i18next";
 import { IoIosClose } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-section";
-import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
-import {
-    useCashierFeeIntents,
-    useConfirmButtonState,
-    usePrimaryIntents,
-} from "./confirmation-drawer.hooks";
+import { useConfirmButtonState, usePrimaryIntents } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
 import { useIcrc112Execute } from "@/hooks/linkHooks";
@@ -51,7 +46,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
 
     const primaryIntents = usePrimaryIntents(action?.intents);
-    const cashierFeeIntents = useCashierFeeIntents(action?.intents);
 
     const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
         action?.state,
@@ -64,8 +58,14 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             if (!action) throw new Error("Action is not defined");
             // Process action for logged in user to claim
 
+            // currentLinkId can different from link.id
+            // in create link flow, the link id can be local_link which is not sync in backend
+            const linkId = link.id;
+
+            if (!linkId) throw new Error("Link ID is not defined");
+
             const processActionResult = await processAction({
-                linkId: link.id,
+                linkId: linkId,
                 actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
                 actionId: action.id,
             });
@@ -77,8 +77,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 console.log("🚀 ~ icrc112Execute ~ response:", response);
                 if (response) {
                     const secondUpdatedAction = await updateAction({
-                        actionId: action!.id,
-                        linkId: link!.id,
+                        actionId: action.id,
+                        linkId: linkId,
                         external: true,
                     });
 
@@ -221,7 +221,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
                             <ConfirmationPopupLegalSection />
                             <Button
-                                className="my-3 mx-auto py-6 w-[95%]"
+                                className="my-3 mx-auto py-6 w-[95%] disabled:bg-disabledgreen"
                                 disabled={isDisabled}
                                 onClick={onClickSubmit}
                             >

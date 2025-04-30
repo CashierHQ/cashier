@@ -2,6 +2,7 @@ import { convertTokenAmountToNumber, parseResultResponse } from "@/utils";
 import {
     _SERVICE,
     CreateLinkInput,
+    CreateLinkInputV2,
     idlFactory,
     LinkDto,
     LinkGetUserStateInput,
@@ -9,7 +10,7 @@ import {
     ProcessActionAnonymousInput,
     ProcessActionInput,
     UpdateActionInput,
-} from "../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../../declarations/cashier_backend/cashier_backend.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
@@ -17,20 +18,20 @@ import {
     LinkGetUserStateInputModel,
     LinkModel,
     LinkUpdateUserStateInputModel,
-} from "./types/link.service.types";
+} from "../types/link.service.types";
 import {
     MapLinkDetailModel,
     MapLinkDetailModelToUpdateLinkInputModel,
-    MapLinkToLinkDetailModel,
+    mapPartialDtoToLinkDetailModel,
     mapLinkUserStateModel,
-} from "./types/mapper/link.service.mapper";
-import { ActionModel } from "./types/action.service.types";
-import { mapActionModel } from "./types/mapper/action.service.mapper";
-import { FeeModel } from "./types/intent.service.types";
-import { FEE_TYPE } from "./types/enum";
+} from "../types/mapper/link.service.mapper";
+import { ActionModel } from "../types/action.service.types";
+import { mapActionModel } from "../types/mapper/action.service.mapper";
+import { FeeModel } from "../types/intent.service.types";
+import { FEE_TYPE } from "../types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
 
-interface ResponseLinksModel {
+export interface ResponseLinksModel {
     data: LinkModel[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: any;
@@ -94,7 +95,7 @@ class LinkService {
         responseModel.data = response.data
             ? response.data.map((link: LinkDto) => {
                   return {
-                      link: MapLinkToLinkDetailModel(link),
+                      link: mapPartialDtoToLinkDetailModel(link),
                       action_create: undefined,
                   };
               })
@@ -123,10 +124,14 @@ class LinkService {
         return parseResultResponse(await this.actor.create_link(input));
     }
 
+    async createLinkV2(input: CreateLinkInputV2) {
+        return parseResultResponse(await this.actor.create_link_v2(input));
+    }
+
     async updateLink(linkId: string, data: Partial<UserInputItem>, isContinue: boolean) {
-        console.log("🚀 ~ LinkService ~ updateLink ~ data:", data);
         const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
         const response = parseResultResponse(await this.actor.update_link(completeData));
+
         return response;
     }
 
@@ -141,9 +146,7 @@ class LinkService {
             link_id: input.linkId,
             action_type: input.actionType,
         };
-        console.log("🚀 ~ LinkService ~ processAction ~ inputModel:", inputModel);
         const response = parseResultResponse(await this.actor.process_action(inputModel));
-        console.log("🚀 ~ LinkService ~ processAction ~ response:", response);
         const action = mapActionModel(response);
         return action;
     }

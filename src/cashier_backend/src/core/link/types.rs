@@ -14,6 +14,18 @@ pub struct CreateLinkInput {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct CreateLinkInputV2 {
+    pub title: String,
+    pub link_use_action_max_count: u64,
+    pub asset_info: Vec<LinkDetailUpdateAssetInfoInput>,
+    pub template: String,
+    pub link_type: String,
+    pub nft_image: Option<String>,
+    pub link_image_url: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkDetailUpdateAssetInfoInput {
     pub address: String,
     pub chain: String,

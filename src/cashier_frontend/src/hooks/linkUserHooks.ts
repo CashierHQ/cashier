@@ -1,5 +1,5 @@
 import { queryKeys } from "@/lib/queryKeys";
-import LinkService from "@/services/link.service";
+import LinkService from "@/services/link/link.service";
 import {
     LinkUpdateUserStateInputModel,
     LinkGetUserStateInputModel,

@@ -31,6 +31,8 @@ mod tests {
             creator: creator.to_string(),
             create_at: 1000000,
             metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 0,
         }
     }
 

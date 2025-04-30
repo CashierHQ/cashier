@@ -1,4 +1,4 @@
-import LinkService from "@/services/link.service";
+import LinkService from "@/services/link/link.service";
 import { LinkGetUserStateInputModel } from "@/services/types/link.service.types";
 import { UsdConversionService } from "@/services/usdConversionService";
 import UserService from "@/services/user.service";
@@ -78,7 +78,7 @@ export const queryKeys = createQueryKeyStore({
             linkId: string | undefined,
             identity: Identity | PartialIdentity | undefined,
         ) => ({
-            queryKey: ["links", "feePreview", linkId, identity],
+            queryKey: ["links", "feePreview", linkId],
             queryFn: async () => {
                 if (!linkId || !identity) return [];
                 const linkService = new LinkService(identity);

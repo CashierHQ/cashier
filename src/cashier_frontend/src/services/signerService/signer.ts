@@ -82,8 +82,15 @@ export class Signer<T extends Transport = Transport> {
 
         // Establish a new transport channel
         const channel = this.#options.transport.establishChannel();
+
         // Indicate that transport channel is being established
-        this.#establishingChannel = channel.then(() => {}).catch(() => {});
+        this.#establishingChannel = channel
+            .then((c) => {
+                console.log("🚀 ~ Signer ~ openChannel ~ c:", c);
+            })
+            .catch((e) => {
+                console.error("🚀 ~ Signer ~ openChannel ~ e:", e);
+            });
         // Clear previous transport channel
         this.#channel = undefined;
         // Assign transport channel once established
@@ -116,6 +123,8 @@ export class Signer<T extends Transport = Transport> {
     async sendRequest<T extends JsonRequest, S extends JsonResponse>(request: T): Promise<S> {
         // Establish new or re-use existing transport channel
         const channel = await this.openChannel();
+
+        console.log("🚀 ~ Signer ~ sendRequest ~ channel:", channel);
 
         return new Promise<S>(async (resolve, reject) => {
             // Listen on transport channel for incoming response
