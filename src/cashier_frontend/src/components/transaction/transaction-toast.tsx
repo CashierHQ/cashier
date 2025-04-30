@@ -5,6 +5,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { IoIosClose } from "react-icons/io";
 import { IoIosCloseCircle } from "react-icons/io";
 import { FaCircleCheck } from "react-icons/fa6";
+import { X } from "lucide-react";
+import { FaInfoCircle } from "react-icons/fa";
 
 // Define custom variants
 const transactionToastVariants = cva(
@@ -13,6 +15,7 @@ const transactionToastVariants = cva(
         variants: {
             variant: {
                 default: "border-green-200 text-green-900",
+                success: "border-green-200 text-green-900",
                 error: "border-red-200 text-red-900",
             },
         },
@@ -81,6 +84,12 @@ const TransactionToast: FC<TransactionToastProps> = ({
         };
     }, [open, duration, onOpenChange]);
 
+    const descriptionStyles = {
+        default: "text-[14px] opacity-90 text-[#8D8D8D] font-normal",
+        success: "text-[14px] opacity-90 text-green font-normal",
+        error: "text-[14px] opacity-90 text-red font-normal",
+    };
+
     return (
         <ToastProvider>
             <Toast
@@ -91,67 +100,44 @@ const TransactionToast: FC<TransactionToastProps> = ({
             >
                 <div className="grid gap-1 w-full pointer-events-auto">
                     <div className="flex items-start">
-                        <div className="py-2">
+                        <div className="">
                             {icon ? (
                                 icon
                             ) : variant === "default" ? (
-                                <FaCircleCheck color="#36A18B" size={28} />
+                                <FaInfoCircle color="#36A18B" size={26} />
+                            ) : variant === "success" ? (
+                                <FaCircleCheck color="#36A18B" size={26} />
                             ) : (
-                                <IoIosCloseCircle color="red" size={28} />
+                                <IoIosCloseCircle color="red" size={26} />
                             )}
                         </div>
 
-                        <div className="ml-3 flex-1">
-                            {title.length > 0 ? (
-                                <>
+                        <div className="ml-3 flex-1 flex flex-col h-full justify-center">
+                            <div className="flex flex-col gap-0.5 justify-center items-start">
+                                {title && (
                                     <div className="flex items-center justify-between">
-                                        <div className="text-xl font-medium text-black">
+                                        <div className="text-[14px] font-semibold text-black">
                                             {title}
                                         </div>
-                                        <IoIosClose
-                                            onClick={() => onOpenChange(false)}
-                                            className="cursor-pointer"
-                                            size={38}
-                                            color="#98A2B3"
-                                        />
                                     </div>
-                                    <div
-                                        className={cn(
-                                            variant == "default"
-                                                ? "text-md opacity-90 text-green"
-                                                : "text-md opacity-90 text-red",
-                                            boldText ? "font-bold" : "",
-                                        )}
-                                    >
-                                        {description}
+                                )}
+                                {description && variant && (
+                                    <div className={cn(descriptionStyles[variant])}>
+                                        this is the description wooopw wopop {description}
                                     </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="flex items-center justify-between">
-                                        <div
-                                            className={cn(
-                                                variant == "default"
-                                                    ? "text-md opacity-90 text-green"
-                                                    : "text-md opacity-90 text-red",
-                                                boldText ? "font-bold" : "",
-                                            )}
-                                        >
-                                            {description}
-                                        </div>
-                                        <IoIosClose
-                                            onClick={() => onOpenChange(false)}
-                                            className="cursor-pointer ml-5"
-                                            size={48}
-                                            color="#98A2B3"
-                                        />
-                                    </div>
-                                </>
-                            )}
+                                )}
+                            </div>
                         </div>
+
+                        <X
+                            onClick={() => onOpenChange(false)}
+                            className="cursor-pointer ml-auto"
+                            size={20}
+                            color="#98A2B3"
+                        />
                     </div>
                     {/* Progress bar */}
-                    <div className="h-1 w-full bg-gray-200 mt-2 rounded-full overflow-hidden">
+                    {/* <div className="h-1 w-full bg-gray-200 mt-2 rounded-full overflow-hidden">
                         <div
                             className={cn(
                                 "h-full transition-all duration-100",
@@ -159,7 +145,7 @@ const TransactionToast: FC<TransactionToastProps> = ({
                             )}
                             style={{ width: `${progress}%` }}
                         />
-                    </div>
+                    </div> */}
                 </div>
             </Toast>
             <ToastViewport className="fixed bottom-20 sm:bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-full" />

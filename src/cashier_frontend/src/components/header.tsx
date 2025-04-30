@@ -80,7 +80,11 @@ const Header: React.FC<HeaderProps> = () => {
                     {responsive.hideHeader(pathname) && !responsive.isSmallDevice ? (
                         <></> // Don't show X button on big device header when hideHeader is true
                     ) : responsive.showCompactHeader(pathname) ? (
-                        <X size={24} onClick={() => handleNavigate(pathname)} />
+                        <X
+                            size={24}
+                            className="cursor-pointer"
+                            onClick={() => handleNavigate(pathname)}
+                        />
                     ) : (
                         <SheetTrigger asChild>
                             <Button variant="outline" size="icon" className="light-borders">
