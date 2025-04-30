@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Clipboard } from "lucide-react";
 
 // UI Components
-import { SelectToken } from "@/components/receive/SelectToken";
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
 import TransactionToast from "@/components/transaction/transaction-toast";
@@ -17,6 +16,9 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { SendAssetConfirmationDrawer } from "@/components/wallet/send/confirm-send-asset-drawer";
+import AssetDrawer from "@/components/asset-drawer";
+import AssetButton from "@/components/asset-button";
+import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
 
 // Hooks
 import { useTokens } from "@/hooks/useTokens";
@@ -35,8 +37,14 @@ import { CHAIN } from "@/services/types/enum";
 import { TransactionStatus } from "@/services/types/wallet.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { BackHeader } from "@/components/ui/back-header";
+import { TokenUtilService } from "@/services/tokenUtils.service";
 
 export default function SendTokenPage() {
+    const EXAMPLE_PRINCIPAL_ADDRESS =
+        "gaj2d-pzogj-lpg6c-aowj5-hb3t6-rgl3o-qo63w-2hogr-cjdmz-vobok-hqe";
+    const EXAMPLE_ACCOUNT_ADDRESS =
+        "cd619f6484bfdacea011dc4a53f098c2388cd15f940d19d569a0ecef7b857d86";
+
     // Routing and locale
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -46,6 +54,7 @@ export default function SendTokenPage() {
     const { toastData, showToast, hideToast } = useToast();
     const [isDisabled, setIsDisabled] = useState(true);
     const [addressType, setAddressType] = useState<"principal" | "account">("principal");
+    const [showAssetDrawer, setShowAssetDrawer] = useState(false);
 
     // Token data from global store
     const { getDisplayTokens } = useTokens();
@@ -72,8 +81,31 @@ export default function SendTokenPage() {
             return userTokens.find((token) => token.address === tokenId);
         }
 
-        return undefined;
+        // If no tokenId provided, default to ICP
+        return userTokens.find((token) => token.address === ICP_ADDRESS);
     }, [userTokens, tokenId]);
+
+    // Init form with default values
+    const form = useWalletSendAssetForm(userTokens, {
+        address: selectedToken?.address ?? "",
+        amount: BigInt(0),
+        assetNumber: 0,
+        walletAddress: "",
+    });
+
+    // Get form actions
+    const { setTokenAddress, setTokenAmount, setWalletAddress } =
+        useWalletSendAssetFormActions(form);
+
+    // Set default token in form if no token is selected
+    useEffect(() => {
+        if (!tokenId && selectedToken) {
+            setTokenAddress(selectedToken.address);
+        }
+    }, [tokenId, selectedToken, setTokenAddress]);
+
+    // Check if selected token is ICP
+    const isIcpToken = selectedToken?.address === ICP_ADDRESS;
 
     /**
      * Calculate the maximum available amount considering network fees
@@ -97,21 +129,6 @@ export default function SendTokenPage() {
 
         return tokenAmount;
     }, [selectedToken]);
-
-    // Init form with default values
-    const form = useWalletSendAssetForm(userTokens, {
-        address: selectedToken?.address ?? "",
-        amount: BigInt(0),
-        assetNumber: 0,
-        walletAddress: "",
-    });
-
-    // Get form actions
-    const { setTokenAddress, setTokenAmount, setWalletAddress } =
-        useWalletSendAssetFormActions(form);
-
-    // Check if selected token is ICP
-    const isIcpToken = selectedToken?.address === ICP_ADDRESS;
 
     /**
      * Update form validation status whenever relevant fields change
@@ -170,6 +187,7 @@ export default function SendTokenPage() {
     const handleTokenSelect = async (token: FungibleToken) => {
         navigate(`/wallet/send/${token.address}`);
         setTokenAddress(token.address);
+        setShowAssetDrawer(false);
     };
 
     /**
@@ -290,9 +308,16 @@ export default function SendTokenPage() {
                                 <FormItem>
                                     <FormLabel>{t("wallet.send.sendToken")}</FormLabel>
                                     <FormControl>
-                                        <SelectToken
-                                            selectedToken={selectedToken}
-                                            onSelect={handleTokenSelect}
+                                        <AssetButton
+                                            handleClick={() => setShowAssetDrawer(true)}
+                                            text="Select Token"
+                                            childrenNode={
+                                                selectedToken && (
+                                                    <SelectedAssetButtonInfo
+                                                        selectedToken={selectedToken}
+                                                    />
+                                                )
+                                            }
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -426,12 +451,21 @@ export default function SendTokenPage() {
                                         <FormMessage />
 
                                         {/* Address examples */}
-                                        <div className="text-xs text-gray-500">
+                                        <div className="text-xs text-gray-400 px-0.5 pt-1">
                                             {isIcpToken && addressType === "principal"
-                                                ? "Example: sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-..."
+                                                ? `Example: ${EXAMPLE_PRINCIPAL_ADDRESS.slice(
+                                                      0,
+                                                      12,
+                                                  )} . . . ${EXAMPLE_PRINCIPAL_ADDRESS.slice(-8)}`
                                                 : isIcpToken && addressType === "account"
-                                                  ? "Example: 6cff4a63eae8621c3dbc1040e6d25136e207b0b..."
-                                                  : "Example: 6cff4a63eae8621c3dbc1040e6d25136e207b0b..."}
+                                                  ? `Example: ${EXAMPLE_ACCOUNT_ADDRESS.slice(
+                                                        0,
+                                                        12,
+                                                    )} . . . ${EXAMPLE_ACCOUNT_ADDRESS.slice(-8)}`
+                                                  : `Example: ${EXAMPLE_ACCOUNT_ADDRESS.slice(
+                                                        0,
+                                                        12,
+                                                    )}...${EXAMPLE_ACCOUNT_ADDRESS.slice(-8)}`}
                                         </div>
                                     </FormItem>
                                 )}
@@ -462,6 +496,20 @@ export default function SendTokenPage() {
 
             {/* Confirmation drawer */}
             <SendAssetConfirmationDrawer />
+
+            {/* Asset Selection Drawer */}
+            <AssetDrawer
+                title="Select Token"
+                open={showAssetDrawer}
+                handleClose={() => setShowAssetDrawer(false)}
+                handleChange={(address) => {
+                    const token = userTokens?.find((t) => t.address === address);
+                    if (token) {
+                        handleTokenSelect(token);
+                    }
+                }}
+                assetList={userTokens || []}
+            />
         </div>
     );
 }
