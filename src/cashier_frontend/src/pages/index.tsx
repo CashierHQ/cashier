@@ -16,9 +16,9 @@ import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useTokens } from "@/hooks/useTokens";
-import LinkService from "@/services/link/link.service";
 import LinkLocalStorageService from "@/services/link/link-local-storage.service";
 import { useLinksListQuery } from "@/hooks/link-hooks";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -27,6 +27,7 @@ export default function HomePage() {
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
     const { data: linkData, isLoading: isLinksLoading, refetch } = useLinksListQuery();
+    const { link, action, setAction, setLink } = useLinkAction();
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +37,7 @@ export default function HomePage() {
     const responsive = useResponsive();
 
     const { updateTokenInit } = useTokens();
+    const { resetLinkAndAction } = useLinkAction();
 
     const handleCreateLink = async () => {
         if (!identity) {
@@ -44,16 +46,12 @@ export default function HomePage() {
         }
         try {
             setDisableCreateButton(true);
-            // showToast(t("common.creating"), t("common.creatingLink"), "default");
-
-            const linkId = await new LinkService(identity).createLink({
-                link_type: LINK_TYPE.SEND_TIP,
-            });
-
             const creator = identity.getPrincipal().toString();
 
+            console.log("create link with identity: ", creator);
+
             //! mirror create local storage
-            new LinkLocalStorageService().createLink(creator, linkId);
+            const linkId = new LinkLocalStorageService().createLink(creator);
 
             addUserInput(linkId, {
                 linkId: linkId,
@@ -62,6 +60,15 @@ export default function HomePage() {
                 linkType: LINK_TYPE.SEND_TIP,
                 assets: [],
             });
+
+            if (action) {
+                setAction(undefined);
+            }
+
+            if (link) {
+                setLink(undefined);
+            }
+
             navigate(`/edit/${linkId}`);
         } catch {
             showToast(t("common.error"), t("common.commonErrorMessage"), "error");
@@ -101,7 +108,6 @@ export default function HomePage() {
                 links.forEach((link) => {
                     if (draftLinkStates.includes(link.state as LINK_STATE)) {
                         if (userInputs.has(link.id)) {
-                            console.log("Link: ", link);
                             // Convert BigInt values to strings before adding to store
                             // Store kept crashing otherwise if using BigInt, maybe
                             const processedAssets = link.asset_info
@@ -161,6 +167,9 @@ export default function HomePage() {
                                                 : `/edit/${item.id}`
                                         }
                                         key={item.id}
+                                        onClick={() => {
+                                            resetLinkAndAction();
+                                        }}
                                     >
                                         <LinkItem key={item.id} link={item} />
                                     </Link>

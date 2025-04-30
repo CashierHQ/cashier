@@ -6,6 +6,8 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useState } from "react";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import useToast from "@/hooks/useToast";
+import TransactionToast from "@/components/transaction/transaction-toast";
 
 interface TokenDetailsHeroProps {
     token: FungibleToken;
@@ -14,6 +16,7 @@ interface TokenDetailsHeroProps {
 export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { toastData, showToast, hideToast } = useToast();
     const navigateReceivePage = () => navigate(`/wallet/receive/${token.address}`);
     const navigateSendPage = () => navigate(`/wallet/send/${token.address}`);
 
@@ -22,6 +25,7 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
     const copyAddress = () => {
         navigator.clipboard.writeText(token.address);
         setHasCopiedAddress(true);
+        showToast("Copied", "", "default");
     };
 
     const CopyIcon = hasCopiedAddress ? CopyCheck : Copy;
@@ -64,6 +68,14 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
                     <p className="text-sm text-grey">{token.address}</p>
                 </div>
             </div>
+            <TransactionToast
+                open={toastData?.open ?? false}
+                onOpenChange={hideToast}
+                title={toastData?.title ?? ""}
+                description={toastData?.description ?? ""}
+                variant={toastData?.variant ?? "default"}
+                duration={2000}
+            />
         </div>
     );
 }

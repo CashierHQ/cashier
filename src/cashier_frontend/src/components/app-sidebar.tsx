@@ -1,4 +1,4 @@
-import { SheetHeader, SheetContent, SheetTitle, SheetFooter, Sheet, SheetClose } from "./ui/sheet";
+import { SheetHeader, SheetContent, SheetTitle, SheetFooter, SheetClose } from "./ui/sheet";
 import { cn } from "@/lib/utils";
 import { LuWallet2 } from "react-icons/lu";
 import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
@@ -26,7 +26,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ onClose }) => {
     const { disconnect } = useAuth();
     const { toast } = useToast();
     const navigate = useNavigate();
-    const { pathname, search } = useLocation();
+    const { search } = useLocation();
 
     const handleCopy = (e: React.SyntheticEvent) => {
         try {
@@ -52,7 +52,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ onClose }) => {
     };
 
     return (
-        <SheetContent side="right" className="w-[100%] flex flex-col h-full">
+        <SheetContent side="right" className="w-[100%] p-4 flex flex-col h-full">
             <SheetHeader>
                 <SheetTitle className="mb-2">
                     <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
@@ -84,7 +84,6 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ onClose }) => {
 
                     <Separator className="mb-4 mt-2 max-w-[100%] mx-auto opacity-50" />
 
-                    <p className="text-[16px] text-[#36A18B] pl-3 font-medium">Connected wallet</p>
                     <ListItem
                         title={transformShortAddress(user?.principal?.toString() || "")}
                         onClick={() => {}}

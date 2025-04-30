@@ -2,6 +2,7 @@ import { convertTokenAmountToNumber, parseResultResponse } from "@/utils";
 import {
     _SERVICE,
     CreateLinkInput,
+    CreateLinkInputV2,
     idlFactory,
     LinkDto,
     LinkGetUserStateInput,
@@ -121,6 +122,10 @@ class LinkService {
 
     async createLink(input: CreateLinkInput) {
         return parseResultResponse(await this.actor.create_link(input));
+    }
+
+    async createLinkV2(input: CreateLinkInputV2) {
+        return parseResultResponse(await this.actor.create_link_v2(input));
     }
 
     async updateLink(linkId: string, data: Partial<UserInputItem>, isContinue: boolean) {

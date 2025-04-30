@@ -26,8 +26,8 @@ use crate::{
 };
 
 use super::types::{
-    CreateLinkInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
-    UpdateActionInput, UserStateMachineGoto,
+    CreateLinkInput, CreateLinkInputV2, LinkGetUserStateInput, LinkGetUserStateOutput,
+    LinkUpdateUserStateInput, UpdateActionInput, UserStateMachineGoto,
 };
 
 #[query(guard = "is_not_anonymous")]
@@ -46,6 +46,12 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
 async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.create_link(input)
+}
+
+#[update(guard = "is_not_anonymous")]
+async fn create_link_v2(input: CreateLinkInputV2) -> Result<String, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.create_link_v2(input).await
 }
 
 #[update(guard = "is_not_anonymous")]
@@ -219,6 +225,22 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let creator = self.ic_env.caller();
 
         match self.link_service.create_new(creator.to_text(), input) {
+            Ok(id) => Ok(id),
+            Err(e) => {
+                error!("Failed to create link: {}", e);
+                Err(CanisterError::HandleLogicError(e))
+            }
+        }
+    }
+
+    pub async fn create_link_v2(&self, input: CreateLinkInputV2) -> Result<String, CanisterError> {
+        let creator = self.ic_env.caller();
+
+        match self
+            .link_service
+            .create_new_v2(creator.to_text(), input)
+            .await
+        {
             Ok(id) => Ok(id),
             Err(e) => {
                 error!("Failed to create link: {}", e);

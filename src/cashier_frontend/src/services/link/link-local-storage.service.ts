@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { UserInputItem } from "@/stores/linkCreationFormStore";
-// import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import { LinkDetailModel } from "../types/link.service.types";
 import { LINK_STATE, LINK_TYPE } from "../types/enum";
 import { LinkDto } from "../../../../declarations/cashier_backend/cashier_backend.did";
@@ -39,15 +39,14 @@ class LinkLocalStorageService {
      * @param initialData Optional initial data for the link
      * @returns Generated local link id
      */
-    createLink(creator: string, linkId?: string): string {
+    createLink(creator: string): string {
         // Use UUIDv7 for better B-tree performance
-        // const linkId = lINK_ID_PREFIX + uuidv4();
+        const linkId = LOCAL_lINK_ID_PREFIX + uuidv4();
         // TODO: remove after get rid of backend for create link
-        const tempId = LOCAL_lINK_ID_PREFIX + linkId;
         const links = this.getLinks();
 
         const linkData: LinkDetailModel = {
-            id: tempId,
+            id: linkId,
             creator: creator,
             create_at: new Date(),
             state: LINK_STATE.CHOOSE_TEMPLATE,
@@ -62,10 +61,12 @@ class LinkLocalStorageService {
 
         const linkDto = mapLinkDetailModelToLinkDto(linkData);
 
-        links[tempId] = linkDto;
+        links[linkId] = linkDto;
         this.saveLinks(links);
 
-        return tempId;
+        console.log("Link created with ID:", linkId);
+
+        return linkId;
     }
 
     /**

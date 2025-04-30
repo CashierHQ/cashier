@@ -22,21 +22,21 @@ import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFo
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 
-const STEP_LINK_STATE_ORDER = [
-    LINK_STATE.CHOOSE_TEMPLATE,
-    LINK_STATE.ADD_ASSET,
-    // TODO: change to PREVIEW
-    LINK_STATE.CREATE_LINK,
-];
+export function stateToStepIndex(state: string | undefined): number {
+    console.log("🚀 ~ stateToStepIndex ~ state:", state);
+    if (state === LINK_STATE.CHOOSE_TEMPLATE) {
+        return 0;
+    }
 
-function getInitialStep(state: string | undefined) {
-    const res = STEP_LINK_STATE_ORDER.findIndex((x) => x === state);
-    return res;
-}
+    if (state === LINK_STATE.ADD_ASSET) {
+        return 1;
+    }
 
-export function stateToStepIndex(state: string | undefined) {
-    const res = STEP_LINK_STATE_ORDER.findIndex((x) => x === state);
-    return res;
+    if (state === LINK_STATE.PREVIEW || state === LINK_STATE.CREATE_LINK) {
+        return 2;
+    }
+
+    return -1;
 }
 
 export default function LinkPage() {
@@ -52,6 +52,8 @@ export default function LinkPage() {
         linkId,
         ACTION_TYPE.CREATE_LINK,
     );
+    const searchParams = new URLSearchParams(location.search);
+    const oldIdParam = searchParams.get("oldId");
 
     useEffect(() => {
         if (link) {
@@ -82,27 +84,33 @@ export default function LinkPage() {
             try {
                 // Update the link state on the server with current values
                 const input = getUserInput(linkId!);
-                console.log("🚀 ~ input:", input);
                 if (!input) throw new Error("Input not found");
 
                 if (!linkId) throw new Error("Link ID not found");
 
                 if (!link || !link.state) throw new Error("Link not found");
 
-                const res = await callLinkStateMachine({
-                    linkId: linkId,
-                    linkModel: {
-                        ...input,
-                        // TODO: remove this, not using 1 as default
-                        maxActionNumber: BigInt(1),
-                    },
-                    isContinue: false,
-                });
+                if (link.state === LINK_STATE.CREATE_LINK) {
+                    navigate("/");
+                } else {
+                    const res = await callLinkStateMachine({
+                        linkId: linkId,
+                        linkModel: {
+                            ...input,
+                            // TODO: remove this, not using 1 as default
+                            maxActionNumber: BigInt(1),
+                        },
+                        isContinue: false,
+                    });
 
-                const currentState = res.state;
+                    const currentState = res.state;
 
-                const stepIndex = stateToStepIndex(currentState);
-                context.setStep(stepIndex);
+                    const stepIndex = stateToStepIndex(currentState);
+                    if (stepIndex === undefined) {
+                        throw new Error("Step index not found");
+                    }
+                    context.setStep(stepIndex);
+                }
             } catch (e) {
                 console.error(e);
                 showToast(
@@ -155,51 +163,53 @@ export default function LinkPage() {
         }
     };
 
-    if (isLoading || !link || link.id !== linkId) {
-        return (
-            <div className="w-screen h-screen flex items-center justify-center">
-                <Spinner />
-            </div>
-        );
-    }
-
     return (
         <MainAppLayout>
             <div className="w-full h-full flex flex-col relative overflow-hidden">
-                <MultiStepForm initialStep={getInitialStep(link.state)}>
-                    <MultiStepForm.Header
-                        onClickBack={handleBackstep}
-                        backButtonDisabled={backButtonDisabled}
-                    />
+                {isLoading && (
+                    <div className="w-screen h-screen flex items-center justify-center">
+                        <Spinner />
+                    </div>
+                )}
 
-                    <MultiStepForm.Items>
-                        <MultiStepForm.Item name={t("create.linkName")}>
-                            <LinkTemplate
-                                onSelectUnsupportedLinkType={showUnsupportedLinkTypeToast}
+                {!isLoading && link && (
+                    <>
+                        <MultiStepForm initialStep={stateToStepIndex(link.state)}>
+                            <MultiStepForm.Header
+                                onClickBack={handleBackstep}
+                                backButtonDisabled={backButtonDisabled}
                             />
-                        </MultiStepForm.Item>
 
-                        <MultiStepForm.Item name={t("create.addAssets")}>
-                            <LinkDetails />
-                        </MultiStepForm.Item>
+                            <MultiStepForm.Items>
+                                <MultiStepForm.Item name={t("create.linkName")}>
+                                    <LinkTemplate
+                                        onSelectUnsupportedLinkType={showUnsupportedLinkTypeToast}
+                                    />
+                                </MultiStepForm.Item>
 
-                        <MultiStepForm.Item name={t("create.linkPreview")}>
-                            <LinkPreview
-                                onInvalidActon={showInvalidActionToast}
-                                onCashierError={showCashierErrorToast}
-                                onActionResult={showActionResultToast}
-                            />
-                        </MultiStepForm.Item>
-                    </MultiStepForm.Items>
-                </MultiStepForm>
+                                <MultiStepForm.Item name={t("create.addAssets")}>
+                                    <LinkDetails />
+                                </MultiStepForm.Item>
 
-                <TransactionToast
-                    open={toastData?.open ?? false}
-                    onOpenChange={hideToast}
-                    title={toastData?.title ?? ""}
-                    description={toastData?.description ?? ""}
-                    variant={toastData?.variant ?? "default"}
-                />
+                                <MultiStepForm.Item name={t("create.linkPreview")}>
+                                    <LinkPreview
+                                        onInvalidActon={showInvalidActionToast}
+                                        onCashierError={showCashierErrorToast}
+                                        onActionResult={showActionResultToast}
+                                    />
+                                </MultiStepForm.Item>
+                            </MultiStepForm.Items>
+                        </MultiStepForm>
+
+                        <TransactionToast
+                            open={toastData?.open ?? false}
+                            onOpenChange={hideToast}
+                            title={toastData?.title ?? ""}
+                            description={toastData?.description ?? ""}
+                            variant={toastData?.variant ?? "default"}
+                        />
+                    </>
+                )}
             </div>
         </MainAppLayout>
     );

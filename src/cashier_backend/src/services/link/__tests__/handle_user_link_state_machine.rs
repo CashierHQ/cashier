@@ -7,7 +7,7 @@ mod tests {
         core::link::types::UserStateMachineGoto,
         repositories::{
             action::ActionRepository, link::LinkRepository, link_action::LinkActionRepository,
-            user_wallet::UserWalletRepository,
+            user_link::UserLinkRepository, user_wallet::UserWalletRepository,
         },
         services::{__tests__::tests::MockIcEnvironment, link::v2::LinkService},
         types::error::CanisterError,
@@ -22,6 +22,7 @@ mod tests {
         let mut action_repository = ActionRepository::faux();
         let icrc_service = IcrcService::faux();
         let user_wallet_repository = UserWalletRepository::faux();
+        let user_link_repository = UserLinkRepository::faux();
 
         let link_id = Uuid::new_v4().to_string();
         let action_type = "Claim".to_string();
@@ -54,6 +55,7 @@ mod tests {
             action_repository,
             icrc_service,
             user_wallet_repository,
+            user_link_repository,
             ic_env,
         );
 
@@ -80,6 +82,7 @@ mod tests {
         let mut action_repository = ActionRepository::faux();
         let icrc_service = IcrcService::faux();
         let user_wallet_repository = UserWalletRepository::faux();
+        let user_link_repository = UserLinkRepository::faux();
 
         let link_id = Uuid::new_v4().to_string();
         let action_type = "Claim".to_string();
@@ -94,6 +97,7 @@ mod tests {
             action_repository,
             icrc_service,
             user_wallet_repository,
+            user_link_repository,
             ic_env,
         );
 
@@ -110,11 +114,12 @@ mod tests {
     #[test]
     fn should_return_error_if_invalid_state_transition() {
         let ic_env = MockIcEnvironment::faux();
-        let mut link_repository = LinkRepository::faux();
+        let link_repository = LinkRepository::faux();
         let mut link_action_repository = LinkActionRepository::faux();
-        let mut action_repository = ActionRepository::faux();
+        let action_repository = ActionRepository::faux();
         let icrc_service = IcrcService::faux();
         let user_wallet_repository = UserWalletRepository::faux();
+        let user_link_repository = UserLinkRepository::faux();
 
         let link_id = Uuid::new_v4().to_string();
         let action_type = "Claim".to_string();
@@ -137,6 +142,7 @@ mod tests {
             action_repository,
             icrc_service,
             user_wallet_repository,
+            user_link_repository,
             ic_env,
         );
 

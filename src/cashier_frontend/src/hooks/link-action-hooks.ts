@@ -1,10 +1,14 @@
 import { useLinkActionStore } from "@/stores/linkActionStore";
-import { useLinkDetailQuery, useUpdateLink } from "@/hooks/link-hooks";
+import {
+    useCreateNewLinkMutation,
+    useLinkDetailQuery,
+    useUpdateLinkMutation,
+} from "@/hooks/link-hooks";
 import { useEffect } from "react";
-import { identity } from "lodash";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { UserInputItem } from "@/stores/linkCreationFormStore";
+import { UserInputItem, useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useCreateAction } from "./action-hooks";
+import { mapUserInputItemToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -16,9 +20,13 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     const { setLink, setAction, setLoading, setIsUpdating, setIsProcessingAction } =
         useLinkActionStore();
 
+    const { getUserInput } = useLinkCreationFormStore();
+    const userInput = linkId ? getUserInput(linkId) : undefined;
+
     const linkDetailQuery = useLinkDetailQuery(linkId, actionType);
-    const updateLinkMutation = useUpdateLink();
+    const updateLinkMutation = useUpdateLinkMutation();
     const createActionMutation = useCreateAction();
+    const createNewLinkMutation = useCreateNewLinkMutation();
 
     const getLink = async () => {
         linkDetailQuery.refetch();
@@ -35,7 +43,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
                 linkModel,
                 isContinue,
             });
-
             console.log("🚀 ~ callLinkStateMachine ~ res:", res);
 
             return res;
@@ -60,6 +67,17 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         }
     };
 
+    const createNewLink = async (localLinkId: string) => {
+        try {
+            const res = await createNewLinkMutation.mutateAsync(localLinkId);
+
+            return res;
+        } catch (error) {
+            console.error("Error creating new link", error);
+            return undefined;
+        }
+    };
+
     const refetchLinkDetail = async () => {
         await linkDetailQuery.refetch();
     };
@@ -80,6 +98,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         }
     }, [linkDetailQuery.data]);
 
+    // Refetch when the effective ID changes (either linkId prop or currentLinkId in store)
     useEffect(() => {
         const refetchData = async () => {
             await refetchLinkDetail();
@@ -87,6 +106,10 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         };
 
         if (linkId) {
+            if (userInput) {
+                const linkModel = mapUserInputItemToLinkDetailModel(userInput);
+                setLink(linkModel);
+            }
             refetchData();
         }
     }, [linkId]);
@@ -98,8 +121,9 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
             refetchLinkDetail,
             refetchAction,
             createAction,
+            createNewLink,
         });
-    }, [identity]);
+    }, []);
 
     return useLinkActionStore();
 }
