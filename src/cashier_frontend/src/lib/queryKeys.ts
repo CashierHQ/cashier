@@ -78,7 +78,7 @@ export const queryKeys = createQueryKeyStore({
             linkId: string | undefined,
             identity: Identity | PartialIdentity | undefined,
         ) => ({
-            queryKey: ["links", "feePreview", linkId, identity],
+            queryKey: ["links", "feePreview", linkId],
             queryFn: async () => {
                 if (!linkId || !identity) return [];
                 const linkService = new LinkService(identity);

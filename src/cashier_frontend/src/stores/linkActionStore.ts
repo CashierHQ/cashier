@@ -48,12 +48,21 @@ export interface LinkActionStoreData {
     setLoading: (isLoading: boolean) => void;
     setLink(data: LinkDetailModel | undefined): void;
     setAction(action: ActionModel | undefined): void;
+    resetLinkAndAction(): void;
     updateLink(data: Partial<LinkDetailModel>): void;
     setAnonymousWalletAddress(walletAddress: string): void;
     clearStore(): void;
     getLinkDetail: () => Promise<void>;
 
     callLinkStateMachine(data: UpdateLinkParams): Promise<LinkDto>;
+
+    createNewLink: (localLinkId: string) => Promise<
+        | {
+              id: string;
+              oldId: string;
+          }
+        | undefined
+    >;
 
     createAction: (
         linkId: string,
@@ -69,6 +78,7 @@ export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({
     link: undefined,
     action: undefined,
     anonymousWalletAddress: undefined,
+    currentLinkId: undefined,
     isLoading: false,
     isUpdating: false,
     isProcessingAction: false,
@@ -77,6 +87,7 @@ export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({
     setIsProcessingAction: (isProcessing) => set({ isProcessingAction: isProcessing }),
 
     setLink: (data) => set({ link: data }),
+    resetLinkAndAction: () => set({ link: undefined, action: undefined }),
     updateLink: (data) => {
         const old = get().link;
         set({ link: { ...old!, ...data } });
@@ -92,6 +103,10 @@ export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({
     },
 
     callLinkStateMachine: async () => {
+        throw new Error("Not implemented - will be set by useLinkAction hook");
+    },
+
+    createNewLink: async () => {
         throw new Error("Not implemented - will be set by useLinkAction hook");
     },
 

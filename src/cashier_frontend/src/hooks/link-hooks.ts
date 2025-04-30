@@ -8,7 +8,10 @@ import LinkLocalStorageService, {
 } from "@/services/link/link-local-storage.service";
 import { groupLinkListByDate } from "@/utils";
 import { LinkModel } from "@/services/types/link.service.types";
-import { mapPartialDtoToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
+import {
+    mapParitalLinkDtoToCreateLinkInputV2,
+    mapPartialDtoToLinkDetailModel,
+} from "@/services/types/mapper/link.service.mapper";
 
 // Centralized query keys for consistent caching
 export const LINK_QUERY_KEYS = {
@@ -82,7 +85,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     });
 }
 
-export function useUpdateLink() {
+export function useUpdateLinkMutation() {
     const identity = useIdentity();
     const queryClient = useQueryClient();
 
@@ -132,6 +135,38 @@ export function useUpdateLink() {
             queryClient.invalidateQueries({
                 queryKey: LINK_QUERY_KEYS.detail(data?.id),
             });
+        },
+        onError: (err) => {
+            throw err;
+        },
+    });
+
+    return mutation;
+}
+
+// hook call backend create link
+export function useCreateNewLinkMutation() {
+    const identity = useIdentity();
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: async (localLinkId: string) => {
+            const linkService = new LinkService(identity);
+            const linkLocalStorageService = new LinkLocalStorageService();
+
+            const link = linkLocalStorageService.getLink(localLinkId);
+
+            const input = mapParitalLinkDtoToCreateLinkInputV2(link);
+
+            const backendLinkId = await linkService.createLinkV2(input);
+
+            return {
+                id: backendLinkId,
+                oldId: localLinkId,
+            };
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: LINK_QUERY_KEYS.list() });
         },
         onError: (err) => {
             throw err;

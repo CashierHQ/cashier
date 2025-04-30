@@ -1,5 +1,6 @@
 import { convertNanoSecondsToDate } from "@/utils";
 import {
+    CreateLinkInputV2,
     GetLinkResp,
     LinkDto,
     LinkGetUserStateOutput,
@@ -248,5 +249,50 @@ export const mapUserInputItemToLinkDetailModel = (
         maxActionNumber: model.maxActionNumber || BigInt(0),
         useActionCounter: BigInt(0), // Default to 0 for new links
         create_at: new Date(), // Default to current date for new links
+    };
+};
+
+export const mapLinkModelToCreateLinkInputV2 = (model: LinkDetailModel): CreateLinkInputV2 => {
+    // Map asset_info to LinkDetailUpdateAssetInfoInput format
+    const assetInfo = model.asset_info.map((asset) => ({
+        address: asset.address,
+        chain: asset.chain || "IC",
+        label: asset.label || "",
+        amount_per_link_use_action: asset.amountPerUse,
+    }));
+
+    return {
+        title: model.title,
+        asset_info: assetInfo,
+        link_type: model.linkType || "",
+        description: model.description ? [model.description] : [],
+        link_image_url: model.image ? [model.image] : [],
+        template: model.template || "Central",
+        link_use_action_max_count: model.maxActionNumber,
+        nft_image: [],
+    };
+};
+
+export const mapParitalLinkDtoToCreateLinkInputV2 = (dto: Partial<LinkDto>): CreateLinkInputV2 => {
+    // Map asset_info from LinkDto to LinkDetailUpdateAssetInfoInput array
+    const assetInfo =
+        dto.asset_info && dto.asset_info[0]
+            ? dto.asset_info[0].map((asset) => ({
+                  address: asset.address,
+                  chain: asset.chain,
+                  label: asset.label,
+                  amount_per_link_use_action: asset.amount_per_link_use_action,
+              }))
+            : [];
+
+    return {
+        title: dto.title ? (fromNullable(dto.title) ?? "") : "",
+        asset_info: assetInfo,
+        link_type: dto.link_type ? (fromNullable(dto.link_type) ?? "") : "",
+        description: dto.description ? [fromNullable(dto.description) ?? ""] : [],
+        link_image_url: [], // Not directly available in LinkDto
+        template: dto.template ? (fromNullable(dto.template) ?? "Central") : "Central",
+        link_use_action_max_count: dto.link_use_action_max_count ?? BigInt(0),
+        nft_image: [], // Not directly available in LinkDto
     };
 };
