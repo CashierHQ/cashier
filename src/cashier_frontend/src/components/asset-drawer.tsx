@@ -21,7 +21,7 @@ const AssetDrawer: React.FC<AssetDrawerProps> = ({
 }) => {
     return (
         <Drawer open={open} onClose={handleClose}>
-            <DrawerContent className="max-w-[400px] mx-auto p-3">
+            <DrawerContent className="max-w-[400px] max-h-full mx-auto p-3 flex flex-col">
                 <DrawerHeader>
                     <DrawerTitle className="flex justify-center">
                         <div className="text-center w-[100%]">{title}</div>
@@ -33,7 +33,9 @@ const AssetDrawer: React.FC<AssetDrawerProps> = ({
                     </DrawerTitle>
                 </DrawerHeader>
                 <div className="font-semibold mb-3">Your asset</div>
-                <Menu assetList={assetList} onSelect={handleChange} />
+                <div className="flex-1 overflow-y-auto">
+                    <Menu assetList={assetList} onSelect={handleChange} />
+                </div>
             </DrawerContent>
         </Drawer>
     );
