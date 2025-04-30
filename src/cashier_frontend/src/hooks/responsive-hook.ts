@@ -11,7 +11,13 @@ export interface MediaQuery {
 }
 
 export function useResponsive(): MediaQuery {
-    const hideHeaderPaths = ["/wallet/send", "/wallet/receive", "/wallet/manage", "/wallet/import"];
+    const hideHeaderPaths = [
+        "/wallet/send",
+        "/wallet/receive",
+        "/wallet/manage",
+        "/wallet/import",
+        "/wallet/details",
+    ];
     const compactHeaderPaths = ["/wallet"];
 
     const isSmallDevice = useMediaQuery("only screen and (max-width : 768px)");

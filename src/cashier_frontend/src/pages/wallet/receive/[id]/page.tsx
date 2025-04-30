@@ -1,8 +1,7 @@
 import { IconInput } from "@/components/icon-input";
 import ConfirmDialog from "@/components/confirm-dialog";
-import { SelectToken } from "@/components/receive/SelectToken";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
-import { toast } from "@/hooks/use-toast";
+import useToast from "@/hooks/useToast";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { transformShortAddress } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
@@ -12,20 +11,24 @@ import { Info } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { AssetSelectItem } from "@/components/asset-select";
 import { Label } from "@/components/ui/label";
 import { Copy } from "lucide-react";
 import { useTokens } from "@/hooks/useTokens";
 import { BackHeader } from "@/components/ui/back-header";
+import AssetButton from "@/components/asset-button";
+import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
+import AssetDrawer from "@/components/asset-drawer";
+import { FungibleToken } from "@/types/fungible-token.speculative";
+import TransactionToast from "@/components/transaction/transaction-toast";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
+    const { showToast, hideToast } = useToast();
+
     const handleCopyAccountId = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
             copy(accountId ?? "");
-            toast({
-                description: "Copied",
-            });
+            showToast("Copied", "", "default");
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -65,10 +68,12 @@ export default function ReceiveTokenPage() {
     const { metadata } = useTokenMetadata(tokenId);
     const { user } = useAuth();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
+    const { toastData, showToast, hideToast } = useToast();
     const [accountId, setAccountId] = useState<string>("");
-    const [currentSelectedToken, setCurrentSelectedToken] = useState<AssetSelectItem | undefined>(
+    const [currentSelectedToken, setCurrentSelectedToken] = useState<FungibleToken | undefined>(
         undefined,
     );
+    const [showAssetDrawer, setShowAssetDrawer] = useState(false);
 
     const { getDisplayTokens } = useTokens();
     const tokenList = getDisplayTokens();
@@ -82,13 +87,14 @@ export default function ReceiveTokenPage() {
             return tokenList.find((token) => token.address === tokenId);
         }
 
-        // If no tokenId provided, return undefined instead of defaulting to first token
-        return undefined;
+        // If no tokenId provided, default to ICP
+        return tokenList.find((token) => token.address === "ryjl3-tyaaa-aaaaa-aaaba-cai");
     }, [tokenList, tokenId, metadata]);
 
-    const handleTokenSelect = (token: AssetSelectItem) => {
+    const handleTokenSelect = (token: FungibleToken) => {
         setCurrentSelectedToken(token);
         navigate(`/wallet/receive/${token.address}`);
+        setShowAssetDrawer(false);
     };
 
     const handleShowAccountId = () => {
@@ -106,9 +112,7 @@ export default function ReceiveTokenPage() {
         try {
             e.stopPropagation();
             copy(user?.principal.toString() ?? "");
-            toast({
-                description: "Copied",
-            });
+            showToast("Copied", "", "default");
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -137,25 +141,21 @@ export default function ReceiveTokenPage() {
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
             </BackHeader>
             <div id="content" className="mx-2 mt-8">
-                <div className="mt-8">
-                    <div id="warning-section" className="text-green flex place-items-start">
-                        <Info className="text-green mr-2" size={22} />
-                        <div className="w-fit text-[14px]">
-                            {`Send ${currentSelectedToken?.name} to this wallet to begin using Cashier.`}{" "}
-                            {`Ensure that you are only sending assets that are `}
-                            <span className="font-bold">meant for this address</span>
-                            {t("wallet.receive.receiveWarning3")}
-                        </div>
-                    </div>
-                </div>
-
                 <div id="token-details" className="my-5">
                     <Label>{t("wallet.receive.receiveToken")}</Label>
-                    <SelectToken selectedToken={selectedToken} onSelect={handleTokenSelect} />
+                    <AssetButton
+                        handleClick={() => setShowAssetDrawer(true)}
+                        text="Select Token"
+                        childrenNode={
+                            selectedToken && (
+                                <SelectedAssetButtonInfo selectedToken={selectedToken} />
+                            )
+                        }
+                    />
                 </div>
 
                 <div id="address-detail" className="my-3">
-                    <Label>Receive {currentSelectedToken?.name} adress</Label>
+                    <Label>Receive address</Label>
                     <IconInput
                         isCurrencyInput={false}
                         placeholder={t("claim.addressPlaceholder")}
@@ -184,7 +184,29 @@ export default function ReceiveTokenPage() {
                     description={options.description}
                     onOpenChange={hideDialog}
                 />
+
+                {/* Asset Selection Drawer */}
+                <AssetDrawer
+                    title="Select Token"
+                    open={showAssetDrawer}
+                    handleClose={() => setShowAssetDrawer(false)}
+                    handleChange={(address) => {
+                        const token = tokenList?.find((t) => t.address === address);
+                        if (token) {
+                            handleTokenSelect(token);
+                        }
+                    }}
+                    assetList={tokenList || []}
+                />
             </div>
+            <TransactionToast
+                open={toastData?.open ?? false}
+                onOpenChange={hideToast}
+                title={toastData?.title ?? ""}
+                description={toastData?.description ?? ""}
+                variant={toastData?.variant ?? "default"}
+                duration={2000}
+            />
         </div>
     );
 }

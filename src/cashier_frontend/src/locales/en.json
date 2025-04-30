@@ -149,7 +149,7 @@
             "copy": "Copy",
             "copySuccess": "Address copied to clipboard",
             "copyError": "Failed to copy address",
-            "receiveToken": "Receive token",
+            "receiveToken": "Asset",
             "useAccountId": "Use Account ID instead",
             "receiveWarning1": "Send assets to this address to begin using Cashier.",
             "receiveWarning2": "Ensure that you are only sending assets that are ",
