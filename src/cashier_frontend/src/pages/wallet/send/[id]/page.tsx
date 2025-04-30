@@ -40,6 +40,11 @@ import { BackHeader } from "@/components/ui/back-header";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 
 export default function SendTokenPage() {
+    const EXAMPLE_PRINCIPAL_ADDRESS =
+        "gaj2d-pzogj-lpg6c-aowj5-hb3t6-rgl3o-qo63w-2hogr-cjdmz-vobok-hqe";
+    const EXAMPLE_ACCOUNT_ADDRESS =
+        "cd619f6484bfdacea011dc4a53f098c2388cd15f940d19d569a0ecef7b857d86";
+
     // Routing and locale
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -446,12 +451,21 @@ export default function SendTokenPage() {
                                         <FormMessage />
 
                                         {/* Address examples */}
-                                        <div className="text-xs text-gray-500">
+                                        <div className="text-xs text-gray-400 px-0.5 pt-1">
                                             {isIcpToken && addressType === "principal"
-                                                ? "Example: sahxn-t2vpk-p7m3p-hjg6j-juc2w-iyxh6-..."
+                                                ? `Example: ${EXAMPLE_PRINCIPAL_ADDRESS.slice(
+                                                      0,
+                                                      12,
+                                                  )} . . . ${EXAMPLE_PRINCIPAL_ADDRESS.slice(-8)}`
                                                 : isIcpToken && addressType === "account"
-                                                  ? "Example: 6cff4a63eae8621c3dbc1040e6d25136e207b0b..."
-                                                  : "Example: 6cff4a63eae8621c3dbc1040e6d25136e207b0b..."}
+                                                  ? `Example: ${EXAMPLE_ACCOUNT_ADDRESS.slice(
+                                                        0,
+                                                        12,
+                                                    )} . . . ${EXAMPLE_ACCOUNT_ADDRESS.slice(-8)}`
+                                                  : `Example: ${EXAMPLE_ACCOUNT_ADDRESS.slice(
+                                                        0,
+                                                        12,
+                                                    )}...${EXAMPLE_ACCOUNT_ADDRESS.slice(-8)}`}
                                         </div>
                                     </FormItem>
                                 )}

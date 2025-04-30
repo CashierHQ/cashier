@@ -18,7 +18,7 @@ export default function TokenDetailsPage() {
 
     // Find the selected token from the list
     const selectedToken = useMemo(() => {
-        if (!tokenId || isLoadingBalances || !userTokens?.length) {
+        if (!tokenId || !userTokens?.length) {
             return undefined;
         }
 
@@ -26,37 +26,44 @@ export default function TokenDetailsPage() {
     }, [tokenId, userTokens, isLoadingBalances]);
 
     // Show loading state while token data is being fetched
-    if (isLoadingBalances) {
+    if (isLoadingBalances && !selectedToken) {
         return (
-            <div className="h-full overflow-auto px-4 py-2">
+            <div className="h-full overflow-auto">
+                <p>selected token: {selectedToken}</p>
                 <BackHeader onBack={goBack}>
-                    <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
+                    <div className="h-8 w-full"></div>
                 </BackHeader>
-                <div className="mt-4 h-40 bg-gray-100 rounded-lg animate-pulse" />
-                <hr className="my-4" />
-                <div className="h-60 bg-gray-100 rounded-lg animate-pulse" />
+                <div className="flex flex-col px-2">
+                    <div className="flex items-center w-full justify-center h-fit">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
+                    </div>
+                    <div className="mt-4 h-40 bg-gray-100 rounded-lg animate-pulse" />
+                    <hr className="my-4" />
+                    <div className="h-60 bg-gray-100 rounded-lg animate-pulse" />
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="h-full overflow-auto px-4 py-2">
+        <div className="h-full overflow-hidden">
             <BackHeader onBack={goBack}>
-                {selectedToken && (
-                    <AssetAvatar
-                        className="w-10 h-10"
-                        src={selectedToken.logo}
-                        symbol={selectedToken.symbol}
-                    />
-                )}
+                <div className="h-8 w-full"></div>
             </BackHeader>
 
             {selectedToken ? (
-                <>
+                <div className="px-2">
+                    <div className="flex w-full justify-center h-fit items-center bg-transparent">
+                        <AssetAvatar
+                            className="w-12 h-12"
+                            src={selectedToken.logo}
+                            symbol={selectedToken.symbol}
+                        />
+                    </div>
                     <TokenDetailsHero token={selectedToken} />
                     <hr className="my-4" />
                     <TransactionHistory items={MOCK_TX_DATA} />
-                </>
+                </div>
             ) : (
                 <div className="flex flex-col items-center justify-center h-[50vh] text-center">
                     <h2 className="text-xl font-medium mb-2">Token Not Found</h2>
