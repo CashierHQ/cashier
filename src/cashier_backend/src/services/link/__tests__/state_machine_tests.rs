@@ -7,7 +7,7 @@ use crate::{
     core::link::types::{LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput},
     repositories::{
         action::ActionRepository, link::LinkRepository, link_action::LinkActionRepository,
-        user_wallet::UserWalletRepository,
+        user_link::UserLinkRepository, user_wallet::UserWalletRepository,
     },
     services::{__tests__::tests::MockIcEnvironment, link::v2::LinkService},
     types::error::CanisterError,
@@ -21,6 +21,7 @@ fn create_mock_components() -> (
     LinkActionRepository,
     ActionRepository,
     UserWalletRepository,
+    UserLinkRepository,
     IcrcService,
 ) {
     let ic_env = MockIcEnvironment::faux();
@@ -29,6 +30,7 @@ fn create_mock_components() -> (
     let action_repository = ActionRepository::faux();
     let icrc_service = IcrcService::faux();
     let user_wallet_repository = UserWalletRepository::faux();
+    let user_link_repository = UserLinkRepository::faux();
 
     (
         ic_env,
@@ -36,6 +38,7 @@ fn create_mock_components() -> (
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     )
 }
@@ -52,6 +55,8 @@ fn create_link_with_state(state: LinkState) -> Link {
         creator: "test_creator".to_string(),
         create_at: 0,
         metadata: None,
+        link_use_action_counter: 0,
+        link_use_action_max_count: 1,
     }
 }
 
@@ -63,6 +68,7 @@ async fn test_handle_link_state_transition_choose_link_type_to_add_assets() {
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -83,7 +89,8 @@ async fn test_handle_link_state_transition_choose_link_type_to_add_assets() {
         link_image_url: None,
         nft_image: None,
         asset_info: None,
-        link_type: None,
+        link_type: Some("SendTip".to_string()),
+        link_use_action_max_count: None,
     });
 
     let link_service = LinkService::new(
@@ -92,6 +99,7 @@ async fn test_handle_link_state_transition_choose_link_type_to_add_assets() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -106,13 +114,14 @@ async fn test_handle_link_state_transition_choose_link_type_to_add_assets() {
 }
 
 #[tokio::test]
-async fn test_handle_link_state_transition_add_assets_to_create_link() {
+async fn test_handle_link_state_transition_add_assets_to_preview() {
     let (
         ic_env,
         mut link_repository,
         mut link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -129,13 +138,11 @@ async fn test_handle_link_state_transition_add_assets_to_create_link() {
     when!(link_action_repository.get_by_prefix).then_return(vec![]);
 
     // Setup asset info params
-    let asset_info = vec![LinkDetailUpdateInput {
+    let asset_info = vec![LinkDetailUpdateAssetInfoInput {
         address: "aaaaa-aa".to_string(),
         chain: "IC".to_string(),
-        total_amount: Some(100),
-        amount_per_claim: Some(100), // Same as total for SendTip validation
         label: "test_label".to_string(),
-        payment_amount: None,
+        amount_per_link_use_action: 100,
     }];
 
     let params = Some(LinkDetailUpdateInput {
@@ -146,6 +153,7 @@ async fn test_handle_link_state_transition_add_assets_to_create_link() {
         nft_image: None,
         asset_info: Some(asset_info),
         link_type: None,
+        link_use_action_max_count: Some(1),
     });
 
     let link_service = LinkService::new(
@@ -154,6 +162,7 @@ async fn test_handle_link_state_transition_add_assets_to_create_link() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -163,7 +172,7 @@ async fn test_handle_link_state_transition_add_assets_to_create_link() {
 
     assert!(result.is_ok());
     let updated_link = result.unwrap();
-    assert_eq!(updated_link.state, LinkState::CreateLink);
+    assert_eq!(updated_link.state, LinkState::Preview);
     assert!(updated_link.asset_info.is_some());
 }
 
@@ -175,11 +184,13 @@ async fn test_handle_link_state_transition_add_assets_to_choose_link_type() {
         mut link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     ) = create_mock_components();
 
     // Create link with AddAssets state
     let link = create_link_with_state(LinkState::AddAssets);
+
     let link_id = link.id.clone();
 
     // Setup mock repository
@@ -189,7 +200,23 @@ async fn test_handle_link_state_transition_add_assets_to_choose_link_type() {
 
     when!(link_action_repository.get_by_prefix).then_return(vec![]);
 
-    let params = None;
+    let asset_info = vec![LinkDetailUpdateAssetInfoInput {
+        address: "aaaaa-aa".to_string(),
+        chain: "IC".to_string(),
+        label: "test_label".to_string(),
+        amount_per_link_use_action: 100,
+    }];
+
+    let params = Some(LinkDetailUpdateInput {
+        title: None,
+        template: None,
+        description: None,
+        link_image_url: None,
+        nft_image: None,
+        asset_info: Some(asset_info),
+        link_type: None,
+        link_use_action_max_count: Some(1),
+    });
 
     let link_service = LinkService::new(
         link_repository,
@@ -197,6 +224,7 @@ async fn test_handle_link_state_transition_add_assets_to_choose_link_type() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -210,6 +238,129 @@ async fn test_handle_link_state_transition_add_assets_to_choose_link_type() {
 }
 
 #[tokio::test]
+async fn test_handle_link_state_transition_preview_to_create_link() {
+    let (
+        ic_env,
+        mut link_repository,
+        link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        user_link_repository,
+        icrc_service,
+    ) = create_mock_components();
+
+    // Create link with CreateLink state
+    let mut link = create_link_with_state(LinkState::Preview);
+    link.title = Some("Test Link".to_string());
+    link.description = Some("Test Description".to_string());
+
+    // Add asset info
+    link.asset_info = Some(vec![cashier_types::AssetInfo {
+        address: "aaaaa-aa".to_string(),
+        chain: Chain::IC,
+        label: "test_label".to_string(),
+        amount_per_link_use_action: 100,
+    }]);
+
+    let link_id = link.id.clone();
+
+    // Setup mock repository
+    when!(link_repository.get).then_return(Some(link.clone()));
+
+    when!(link_repository.update).then_return(());
+
+    let params = Some(LinkDetailUpdateInput {
+        title: None,
+        template: None,
+        description: None,
+        link_image_url: None,
+        nft_image: None,
+        asset_info: None,
+        link_type: None,
+        link_use_action_max_count: None,
+    });
+
+    let link_service = LinkService::new(
+        link_repository,
+        link_action_repository,
+        action_repository,
+        icrc_service,
+        user_wallet_repository,
+        user_link_repository,
+        ic_env,
+    );
+
+    let result = link_service
+        .handle_link_state_transition(&link_id, "Continue".to_string(), params)
+        .await;
+
+    assert!(result.is_ok());
+    let updated_link = result.unwrap();
+    assert_eq!(updated_link.state, LinkState::CreateLink);
+}
+
+#[tokio::test]
+async fn test_handle_link_state_transition_preview_to_add_assets() {
+    let (
+        ic_env,
+        mut link_repository,
+        mut link_action_repository,
+        action_repository,
+        user_wallet_repository,
+        user_link_repository,
+        icrc_service,
+    ) = create_mock_components();
+
+    // Create link with CreateLink state
+    let mut link = create_link_with_state(LinkState::Preview);
+    link.title = Some("Test Link".to_string());
+    link.description = Some("Test Description".to_string());
+
+    // Add asset info
+    link.asset_info = Some(vec![cashier_types::AssetInfo {
+        address: "aaaaa-aa".to_string(),
+        chain: Chain::IC,
+        label: "test_label".to_string(),
+        amount_per_link_use_action: 100,
+    }]);
+
+    let link_id = link.id.clone();
+    when!(link_repository.get(link_id.clone())).then_return(Some(link.clone()));
+    when!(link_repository.update).then_return(());
+
+    when!(link_action_repository.get_by_prefix).then_return(vec![]);
+
+    let params = Some(LinkDetailUpdateInput {
+        title: None,
+        template: None,
+        description: None,
+        link_image_url: None,
+        nft_image: None,
+        asset_info: None,
+        link_type: None,
+        link_use_action_max_count: None,
+    });
+
+    let link_service = LinkService::new(
+        link_repository,
+        link_action_repository,
+        action_repository,
+        icrc_service,
+        user_wallet_repository,
+        user_link_repository,
+        ic_env,
+    );
+
+    let result = link_service
+        .handle_link_state_transition(&link_id, "Back".to_string(), params)
+        .await;
+
+    assert!(result.is_ok());
+    let updated_link = result.unwrap();
+    assert_eq!(updated_link.state, LinkState::AddAssets);
+}
+
+#[tokio::test]
 async fn test_handle_link_state_transition_create_link_to_active() {
     let (
         ic_env,
@@ -217,6 +368,7 @@ async fn test_handle_link_state_transition_create_link_to_active() {
         mut link_action_repository,
         mut action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -229,11 +381,8 @@ async fn test_handle_link_state_transition_create_link_to_active() {
     link.asset_info = Some(vec![cashier_types::AssetInfo {
         address: "aaaaa-aa".to_string(),
         chain: Chain::IC,
-        total_amount: 100,
-        amount_per_claim: Some(100),
         label: "test_label".to_string(),
-        claim_count: None,
-        payment_amount: None,
+        amount_per_link_use_action: 100,
     }]);
 
     let link_id = link.id.clone();
@@ -273,6 +422,7 @@ async fn test_handle_link_state_transition_create_link_to_active() {
         nft_image: None,
         asset_info: None,
         link_type: None,
+        link_use_action_max_count: None,
     });
 
     let link_service = LinkService::new(
@@ -281,6 +431,7 @@ async fn test_handle_link_state_transition_create_link_to_active() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -294,66 +445,6 @@ async fn test_handle_link_state_transition_create_link_to_active() {
 }
 
 #[tokio::test]
-async fn test_handle_link_state_transition_create_link_to_add_assets() {
-    let (
-        ic_env,
-        mut link_repository,
-        mut link_action_repository,
-        action_repository,
-        user_wallet_repository,
-        icrc_service,
-    ) = create_mock_components();
-
-    // Create link with CreateLink state
-    let mut link = create_link_with_state(LinkState::CreateLink);
-    link.title = Some("Test Link".to_string());
-    link.description = Some("Test Description".to_string());
-
-    // Add asset info
-    link.asset_info = Some(vec![cashier_types::AssetInfo {
-        address: "aaaaa-aa".to_string(),
-        chain: Chain::IC,
-        total_amount: 100,
-        amount_per_claim: Some(100),
-        label: "test_label".to_string(),
-        claim_count: None,
-    }]);
-
-    let link_id = link.id.clone();
-    when!(link_repository.get(link_id.clone())).then_return(Some(link.clone()));
-    when!(link_repository.update).then_return(());
-
-    when!(link_action_repository.get_by_prefix).then_return(vec![]);
-
-    let params = Some(LinkDetailUpdateInput {
-        title: None,
-        template: None,
-        description: None,
-        link_image_url: None,
-        nft_image: None,
-        asset_info: None,
-        link_type: None,
-    });
-
-    let link_service = LinkService::new(
-        link_repository,
-        link_action_repository,
-        action_repository,
-        icrc_service,
-        user_wallet_repository,
-        ic_env,
-    );
-
-    let result = link_service
-        .handle_link_state_transition(&link_id, "Back".to_string(), params)
-        .await;
-
-    assert!(result.is_ok());
-    let updated_link = result.unwrap();
-    assert_eq!(updated_link.state, LinkState::AddAssets);
-}
-
-#[tokio::test]
 async fn test_handle_link_state_transition_active_to_inactive() {
     let (
         mut ic_env,
@@ -361,6 +452,7 @@ async fn test_handle_link_state_transition_active_to_inactive() {
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         mut icrc_service,
     ) = create_mock_components();
 
@@ -371,10 +463,8 @@ async fn test_handle_link_state_transition_active_to_inactive() {
     link.asset_info = Some(vec![cashier_types::AssetInfo {
         address: "aaaaa-aa".to_string(),
         chain: Chain::IC,
-        total_amount: 100,
-        amount_per_claim: Some(100),
         label: "test_label".to_string(),
-        claim_count: None,
+        amount_per_link_use_action: 100,
     }]);
 
     // Setup mock repository
@@ -391,6 +481,7 @@ async fn test_handle_link_state_transition_active_to_inactive() {
         nft_image: None,
         asset_info: None,
         link_type: None,
+        link_use_action_max_count: None,
     });
 
     let link_service = LinkService::new(
@@ -399,6 +490,7 @@ async fn test_handle_link_state_transition_active_to_inactive() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -419,6 +511,7 @@ async fn test_handle_link_state_transition_active_to_inactive_if_asset_balance_e
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         mut icrc_service,
     ) = create_mock_components();
 
@@ -429,10 +522,8 @@ async fn test_handle_link_state_transition_active_to_inactive_if_asset_balance_e
     link.asset_info = Some(vec![cashier_types::AssetInfo {
         address: "aaaaa-aa".to_string(),
         chain: Chain::IC,
-        total_amount: 100,
-        amount_per_claim: Some(100),
         label: "test_label".to_string(),
-        claim_count: None,
+        amount_per_link_use_action: 100,
     }]);
 
     // Setup mock repository
@@ -449,6 +540,7 @@ async fn test_handle_link_state_transition_active_to_inactive_if_asset_balance_e
         nft_image: None,
         asset_info: None,
         link_type: None,
+        link_use_action_max_count: None,
     });
 
     let link_service = LinkService::new(
@@ -457,6 +549,7 @@ async fn test_handle_link_state_transition_active_to_inactive_if_asset_balance_e
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -477,6 +570,7 @@ async fn test_handle_link_state_transition_invalid_state() {
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -495,6 +589,7 @@ async fn test_handle_link_state_transition_invalid_state() {
         nft_image: None,
         asset_info: None,
         link_type: None,
+        link_use_action_max_count: None,
     });
 
     let link_service = LinkService::new(
@@ -503,6 +598,7 @@ async fn test_handle_link_state_transition_invalid_state() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -527,6 +623,7 @@ async fn test_handle_link_state_transition_link_not_found() {
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -545,6 +642,7 @@ async fn test_handle_link_state_transition_link_not_found() {
         nft_image: None,
         asset_info: None,
         link_type: None,
+        link_use_action_max_count: None,
     });
 
     let link_service = LinkService::new(
@@ -553,6 +651,7 @@ async fn test_handle_link_state_transition_link_not_found() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -575,6 +674,7 @@ async fn test_handle_link_state_transition_invalid_action() {
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -593,6 +693,7 @@ async fn test_handle_link_state_transition_invalid_action() {
         nft_image: None,
         asset_info: None,
         link_type: None,
+        link_use_action_max_count: None,
     });
 
     let link_service = LinkService::new(
@@ -601,6 +702,7 @@ async fn test_handle_link_state_transition_invalid_action() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -623,6 +725,7 @@ async fn test_handle_link_state_back_transition_with_exist_create_action() {
         mut link_action_repository,
         mut action_repository,
         user_wallet_repository,
+        user_link_repository,
         icrc_service,
     ) = create_mock_components();
 
@@ -635,10 +738,8 @@ async fn test_handle_link_state_back_transition_with_exist_create_action() {
     link.asset_info = Some(vec![cashier_types::AssetInfo {
         address: "aaaaa-aa".to_string(),
         chain: Chain::IC,
-        total_amount: 100,
-        amount_per_claim: Some(100),
+        amount_per_link_use_action: 100,
         label: "test_label".to_string(),
-        claim_count: None,
     }]);
 
     let link_id = link.id.clone();
@@ -678,6 +779,7 @@ async fn test_handle_link_state_back_transition_with_exist_create_action() {
         nft_image: None,
         asset_info: None,
         link_type: None,
+        link_use_action_max_count: None,
     });
 
     let link_service = LinkService::new(
@@ -686,6 +788,7 @@ async fn test_handle_link_state_back_transition_with_exist_create_action() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -704,6 +807,7 @@ async fn test_check_link_asset_left_with_balance() {
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         mut icrc_service,
     ) = create_mock_components();
 
@@ -712,10 +816,8 @@ async fn test_check_link_asset_left_with_balance() {
     link.asset_info = Some(vec![cashier_types::AssetInfo {
         address: "aaaaa-aa".to_string(),
         chain: Chain::IC,
-        total_amount: 100,
-        amount_per_claim: Some(100),
+        amount_per_link_use_action: 100,
         label: "test_label".to_string(),
-        claim_count: None,
     }]);
 
     // Mock the balance_of function to return a positive balance
@@ -727,6 +829,7 @@ async fn test_check_link_asset_left_with_balance() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 
@@ -745,6 +848,7 @@ async fn test_check_link_asset_left_with_error() {
         link_action_repository,
         action_repository,
         user_wallet_repository,
+        user_link_repository,
         mut icrc_service,
     ) = create_mock_components();
 
@@ -753,10 +857,8 @@ async fn test_check_link_asset_left_with_error() {
     link.asset_info = Some(vec![cashier_types::AssetInfo {
         address: "aaaaa-aa".to_string(),
         chain: Chain::IC,
-        total_amount: 100,
-        amount_per_claim: Some(100),
+        amount_per_link_use_action: 100,
         label: "test_label".to_string(),
-        claim_count: None,
     }]);
 
     // Mock the balance_of function to return an error
@@ -771,6 +873,7 @@ async fn test_check_link_asset_left_with_error() {
         action_repository,
         icrc_service,
         user_wallet_repository,
+        user_link_repository,
         ic_env,
     );
 

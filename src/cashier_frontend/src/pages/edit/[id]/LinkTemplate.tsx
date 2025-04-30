@@ -43,7 +43,6 @@ export default function LinkTemplate({
     const responsive = useResponsive();
 
     const { link, callLinkStateMachine, isUpdating } = useLinkAction();
-    const {} = useLinkAction();
 
     const carousel = useCarousel();
 
@@ -61,16 +60,21 @@ export default function LinkTemplate({
                 return;
             }
 
-            console.log("currentLink", currentLink);
+            try {
+                const stateMachineRes = await callLinkStateMachine({
+                    linkId: currentLink.linkId,
+                    linkModel: currentLink,
+                    isContinue: true,
+                });
 
-            const stateMachineRes = await callLinkStateMachine({
-                linkId: currentLink.linkId,
-                linkModel: currentLink,
-                isContinue: true,
-            });
+                console.log("🚀 ~ stateMachineRes:", stateMachineRes);
 
-            const stepIndex = stateToStepIndex(stateMachineRes.state);
-            setStep(stepIndex);
+                const stepIndex = stateToStepIndex(stateMachineRes.state);
+                setStep(stepIndex);
+            } catch (error) {
+                console.error("Error calling state machine", error);
+                showToast("Error", "Failed to call state machine", "error");
+            }
         } else {
             onSelectUnsupportedLinkType();
         }

@@ -4,7 +4,7 @@ import { useIdentity } from "@nfid/identitykit/react";
 import CallSignerService from "@/services/signerService/callSigner.service";
 import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
 import { SequenceRequest } from "@/services/signerService/icrc112.service";
-import LinkService from "@/services/link.service";
+import LinkService from "@/services/link/link.service";
 
 export function useIcrc112Execute() {
     const identity = useIdentity();
@@ -24,7 +24,12 @@ export function useIcrc112Execute() {
 
             const signerService = new CallSignerService(identity);
 
-            return await signerService.execute(transactions as unknown as SequenceRequest);
+            try {
+                return await signerService.execute(transactions as unknown as SequenceRequest);
+            } catch (error) {
+                console.error("Error executing ICRC112 transactions:", error);
+                throw error;
+            }
         },
     });
 

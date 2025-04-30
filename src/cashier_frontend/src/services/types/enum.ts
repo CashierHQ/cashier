@@ -8,6 +8,7 @@ export enum LINK_STATE {
     // allow edit
     CHOOSE_TEMPLATE = "Link_state_choose_link_type",
     ADD_ASSET = "Link_state_add_assets",
+    PREVIEW = "Link_state_preview",
     CREATE_LINK = "Link_state_create_link",
     // not allow edit
     ACTIVE = "Link_state_active",
@@ -58,8 +59,10 @@ export function getLinkLabel(state: LINK_STATE): string {
             return "Draft"; // User left on step 1
         case LINK_STATE.ADD_ASSET:
             return "Draft"; // User left on step 2
-        case LINK_STATE.CREATE_LINK:
+        case LINK_STATE.PREVIEW:
             return "Draft"; // User left on step 3
+        case LINK_STATE.CREATE_LINK:
+            return "Draft"; // not Show on UI but should be draft here
         case LINK_STATE.ACTIVE:
             return "Active";
         case LINK_STATE.INACTIVE:
@@ -77,6 +80,8 @@ export function mapStringToLinkState(state: string): LINK_STATE {
             return LINK_STATE.CHOOSE_TEMPLATE;
         case "Link_state_add_assets":
             return LINK_STATE.ADD_ASSET;
+        case "Link_state_preview":
+            return LINK_STATE.PREVIEW;
         case "Link_state_create_link":
             return LINK_STATE.CREATE_LINK;
         case "Link_state_active":

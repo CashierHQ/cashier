@@ -14,7 +14,9 @@ use crate::{
         INTENT_LABEL_SEND_AIRDROP_ASSET, INTENT_LABEL_SEND_TIP_ASSET,
         INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     },
-    core::link::types::{LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto},
+    core::link::types::{
+        CreateLinkInputV2, LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto,
+    },
     domains::fee::Fee,
     error, info,
     repositories::{
@@ -37,6 +39,7 @@ pub struct LinkService<E: IcEnvironment + Clone> {
     action_repository: ActionRepository,
     icrc_service: IcrcService,
     user_wallet_repository: UserWalletRepository,
+    user_link_repository: repositories::user_link::UserLinkRepository,
     ic_env: E,
 }
 
@@ -48,6 +51,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         action_repository: ActionRepository,
         icrc_service: IcrcService,
         user_wallet_repository: UserWalletRepository,
+        user_link_repository: repositories::user_link::UserLinkRepository,
         ic_env: E,
     ) -> Self {
         Self {
@@ -56,6 +60,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             action_repository,
             icrc_service,
             user_wallet_repository,
+            user_link_repository,
             ic_env,
         }
     }
@@ -67,6 +72,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             action_repository: ActionRepository::new(),
             icrc_service: IcrcService::new(),
             user_wallet_repository: UserWalletRepository::new(),
+            user_link_repository: repositories::user_link::UserLinkRepository::new(),
             ic_env: E::new(),
         }
     }
@@ -1228,6 +1234,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         });
 
         // !Start of link state machine
+        // CHOOSE LINK TYPE
         if link.state == LinkState::ChooseLinkType {
             let (template, link_type) = self.prefetch_template(&params)?;
 
@@ -1245,6 +1252,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
 
+            // ====== Continue Go to =====
             if link_state_goto == LinkStateMachineGoto::Continue {
                 link.title = params.title.clone();
                 link.template = Some(template);
@@ -1252,19 +1260,22 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 link.state = LinkState::AddAssets;
                 self.link_repository.update(link.clone());
                 return Ok(link.clone());
+
+            // ====== Back Go to =====
             } else if link_state_goto == LinkStateMachineGoto::Back {
                 link.title = params.title.clone();
                 link.template = Some(template);
                 link.link_type = Some(link_type);
                 self.link_repository.update(link.clone());
                 return Ok(link.clone());
-            } else {
+            }
+            // ====== invalid state =====
+            else {
                 return Err(CanisterError::ValidationErrors(
                     "State transition failed for ChooseLinkType".to_string(),
                 ));
             }
         } else if link.state == LinkState::AddAssets {
-            // prefetch 2 method
             let (link_use_action_max_count, asset_info) =
                 self.prefetch_params_add_asset(&params)?;
 
@@ -1281,13 +1292,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
 
-            info!("[handle_link_state_transition] link: {:#?}", link);
-            info!(
-                "[handle_link_state_transition] asset_info: {:#?}",
-                asset_info
-            );
-            info!("[handle_link_state_transition] params: {:#?}", params);
-
+            // ====== Continue Go to =====
             if link_state_goto == LinkStateMachineGoto::Continue {
                 if !self.link_type_add_asset_validate(
                     &link,
@@ -1301,30 +1306,53 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 link.asset_info = Some(asset_info);
                 link.link_use_action_max_count = link_use_action_max_count;
-                link.state = LinkState::CreateLink;
+                link.state = LinkState::Preview;
                 self.link_repository.update(link.clone());
                 return Ok(link.clone());
-            } else if link_state_goto == LinkStateMachineGoto::Back {
+            }
+            // ===== Back Go to =====
+            else if link_state_goto == LinkStateMachineGoto::Back {
                 link.state = LinkState::ChooseLinkType;
                 link.asset_info = Some(asset_info);
                 link.link_use_action_max_count = link_use_action_max_count;
                 self.link_repository.update(link.clone());
                 return Ok(link.clone());
-            } else {
+            }
+            // ===== invalid state =====
+            else {
                 return Err(CanisterError::ValidationErrors(
                     "State transition failed for AddAssets".to_string(),
                 ));
             }
-        } else if link.state == LinkState::CreateLink {
-            // prefetch 3 method
-            let create_action = self.prefetch_create_action(&link)?;
-
+        } else if link.state == LinkState::Preview {
             if self.is_props_changed(vec![], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
-                    "[CreateLink] Link properties are not allowed to change".to_string(),
+                    "[Preview] Link properties are not allowed to change".to_string(),
                 ));
             }
 
+            // ===== Continue Go to =====
+            if link_state_goto == LinkStateMachineGoto::Continue {
+                link.state = LinkState::CreateLink;
+                self.link_repository.update(link.clone());
+                return Ok(link.clone());
+            }
+            // ===== Back Go to =====
+            else if link_state_goto == LinkStateMachineGoto::Back {
+                link.state = LinkState::AddAssets;
+                self.link_repository.update(link.clone());
+                return Ok(link.clone());
+            }
+            // ===== invalid state =====
+            else {
+                return Err(CanisterError::ValidationErrors(
+                    "State transition failed for Preview".to_string(),
+                ));
+            }
+        } else if link.state == LinkState::CreateLink {
+            let create_action = self.prefetch_create_action(&link)?;
+
+            // ===== Continue Go to =====
             if link_state_goto == LinkStateMachineGoto::Continue {
                 if create_action.is_none() {
                     return Err(CanisterError::ValidationErrors(
@@ -1339,19 +1367,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         "Create action not success".to_string(),
                     ));
                 }
-            } else if link_state_goto == LinkStateMachineGoto::Back {
-                if create_action.is_none() {
-                    link.state = LinkState::AddAssets;
-                    self.link_repository.update(link.clone());
-                    return Ok(link.clone());
-                } else {
-                    return Err(CanisterError::ValidationErrors(
-                        "The create action is exist".to_string(),
-                    ));
-                }
-            } else {
+            }
+            // ===== invalid state =====
+            else {
                 return Err(CanisterError::ValidationErrors(
-                    "State transition failed for AddAssets".to_string(),
+                    "State transition failed for CreateLink".to_string(),
                 ));
             }
         } else if link.state == LinkState::Active {
@@ -1411,12 +1431,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     /// Create a new link
     pub fn create_new(
         &self,
-        creator: String,
+        caller: String,
         input: crate::core::link::types::CreateLinkInput,
     ) -> Result<String, String> {
         let user_wallet = self
             .user_wallet_repository
-            .get(&creator)
+            .get(&caller)
             .ok_or_else(|| "User not found".to_string())?;
 
         let user_id = user_wallet.user_id;
@@ -1447,11 +1467,147 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             link_id: link_id_str.clone(),
         };
 
-        let user_link_repository = repositories::user_link::UserLinkRepository::new();
-
         self.link_repository.create(new_link);
-        user_link_repository.create(new_user_link);
+        self.user_link_repository.create(new_user_link);
 
+        Ok(link_id_str)
+    }
+
+    pub async fn create_new_v2(
+        &self,
+        caller: String,
+        input: CreateLinkInputV2,
+    ) -> Result<String, String> {
+        let user_wallet = self
+            .user_wallet_repository
+            .get(&caller)
+            .ok_or_else(|| "User not found".to_string())?;
+
+        let user_id = user_wallet.user_id;
+
+        let ts = self.ic_env.time();
+        let id = Uuid::new_v4();
+        let link_id_str = id.to_string();
+
+        let link_type = LinkType::from_str(input.link_type.as_str())
+            .map_err(|_| "Invalid link type".to_string())?;
+
+        let new_link = Link {
+            id: link_id_str.clone(),
+            state: LinkState::ChooseLinkType,
+            title: None,
+            description: None,
+            link_type: Some(link_type),
+            asset_info: None,
+            template: Some(cashier_types::Template::Central),
+            creator: user_id.clone(),
+            create_at: ts,
+            metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 0,
+        };
+        let new_user_link = UserLink {
+            user_id: user_id.clone(),
+            link_id: link_id_str.clone(),
+        };
+
+        // Create the initial link and user_link records
+        self.link_repository.create(new_link);
+        self.user_link_repository.create(new_user_link.clone());
+
+        // First transition: ChooseLinkType -> AddAssets
+        // For this transition, we only need title, template, and link_type
+        let choose_link_type_params = LinkDetailUpdateInput {
+            title: Some(input.title.clone()),
+            template: Some(input.template.clone()),
+            link_type: Some(input.link_type.clone()),
+            description: None,
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            link_use_action_max_count: None,
+        };
+
+        let result = self
+            .handle_link_state_transition(
+                &link_id_str,
+                "Continue".to_string(),
+                Some(choose_link_type_params),
+            )
+            .await;
+
+        if result.is_err() {
+            // Clean up on failure
+            self.link_repository.delete(&link_id_str);
+            self.user_link_repository.delete(new_user_link);
+            return Err(format!(
+                "Failed to transition from ChooseLinkType to AddAssets: {}",
+                result.err().unwrap()
+            ));
+        }
+
+        // Second transition: AddAssets -> Preview
+        // For this transition, we only need asset_info and link_use_action_max_count
+        let add_assets_params = LinkDetailUpdateInput {
+            title: None,
+            template: None,
+            link_type: None,
+            description: input.description.clone(),
+            link_image_url: input.link_image_url.clone(),
+            nft_image: input.nft_image.clone(),
+            asset_info: Some(input.asset_info.clone()),
+            link_use_action_max_count: Some(input.link_use_action_max_count),
+        };
+
+        let result = self
+            .handle_link_state_transition(
+                &link_id_str,
+                "Continue".to_string(),
+                Some(add_assets_params),
+            )
+            .await;
+
+        if result.is_err() {
+            // Clean up on failure
+            self.link_repository.delete(&link_id_str);
+            self.user_link_repository.delete(new_user_link);
+            return Err(format!(
+                "Failed to transition from AddAssets to Preview: {}",
+                result.err().unwrap()
+            ));
+        }
+
+        // Second transition: Preview -> CreateLink
+        let add_assets_params = LinkDetailUpdateInput {
+            title: None,
+            template: None,
+            link_type: None,
+            description: None,
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            link_use_action_max_count: None,
+        };
+
+        let result = self
+            .handle_link_state_transition(
+                &link_id_str,
+                "Continue".to_string(),
+                Some(add_assets_params),
+            )
+            .await;
+
+        if result.is_err() {
+            // Clean up on failure
+            self.link_repository.delete(&link_id_str);
+            self.user_link_repository.delete(new_user_link);
+            return Err(format!(
+                "Failed to transition from Preview to CreateLink: {}",
+                result.err().unwrap()
+            ));
+        }
+
+        // Successfully reached CreateLink state
         Ok(link_id_str)
     }
 
@@ -1482,8 +1638,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         user_id: String,
         pagination: PaginateInput,
     ) -> Result<PaginateResult<Link>, String> {
-        let user_link_repository = repositories::user_link::UserLinkRepository::new();
-        let user_links = user_link_repository.get_links_by_user_id(user_id, pagination);
+        let user_links = self
+            .user_link_repository
+            .get_links_by_user_id(user_id, pagination);
 
         let link_ids = user_links
             .data

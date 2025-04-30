@@ -39,6 +39,14 @@ impl UserLinkRepository {
         USER_LINK_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
+    pub fn delete(&self, id: UserLink) {
+        let id = UserLinkKey {
+            user_id: id.user_id.clone(),
+            link_id: id.link_id.clone(),
+        };
+        USER_LINK_STORE.with_borrow_mut(|store| store.remove(&id.to_str()));
+    }
+
     pub fn get_links_by_user_id(
         &self,
         user_id: String,

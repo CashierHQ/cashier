@@ -85,9 +85,7 @@ pub mod tests {
         let asset_info = AssetInfo {
             address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
             chain: Chain::IC,
-            total_amount: 100,
-            amount_per_claim: Some(100),
-            claim_count: Some(0),
+            amount_per_link_use_action: 100,
             label: "dummy".to_string(),
         };
 
@@ -102,6 +100,8 @@ pub mod tests {
             creator: generate_random_principal().to_text(),
             create_at: generate_timestamp(),
             metadata: None,
+            link_use_action_counter: 1,
+            link_use_action_max_count: 1,
         }
     }
 

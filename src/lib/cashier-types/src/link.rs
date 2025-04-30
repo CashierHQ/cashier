@@ -99,6 +99,7 @@ impl FromStr for LinkType {
 pub enum LinkState {
     ChooseLinkType,
     AddAssets,
+    Preview,
     CreateLink,
     Active,
     Inactive,
@@ -110,6 +111,7 @@ impl LinkState {
         match self {
             LinkState::ChooseLinkType => "Link_state_choose_link_type",
             LinkState::AddAssets => "Link_state_add_assets",
+            LinkState::Preview => "Link_state_preview",
             LinkState::CreateLink => "Link_state_create_link",
             LinkState::Active => "Link_state_active",
             LinkState::Inactive => "Link_state_inactive",
@@ -129,6 +131,7 @@ impl FromStr for LinkState {
         match input {
             "Link_state_choose_link_type" => Ok(LinkState::ChooseLinkType),
             "Link_state_add_assets" => Ok(LinkState::AddAssets),
+            "Link_state_preview" => Ok(LinkState::Preview),
             "Link_state_create_link" => Ok(LinkState::CreateLink),
             "Link_state_active" => Ok(LinkState::Active),
             "Link_state_inactive" => Ok(LinkState::Inactive),

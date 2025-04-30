@@ -6,7 +6,7 @@ mod tests {
     use crate::{
         repositories::{
             action::ActionRepository, link::LinkRepository, link_action::LinkActionRepository,
-            user_wallet::UserWalletRepository,
+            user_link::UserLinkRepository, user_wallet::UserWalletRepository,
         },
         services::{
             __tests__::tests::{generate_random_principal, generate_timestamp, MockIcEnvironment},
@@ -24,6 +24,7 @@ mod tests {
         let action_repository = ActionRepository::faux();
         let user_wallet_repository = UserWalletRepository::faux();
         let icrc_service = IcrcService::faux();
+        let user_link_repository = UserLinkRepository::faux();
 
         let link_id = Uuid::new_v4().to_string();
         let user_id = Uuid::new_v4().to_string();
@@ -41,6 +42,8 @@ mod tests {
             template: Some(cashier_types::Template::Central),
             create_at: generate_timestamp(),
             metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 0,
         };
 
         let action = Action {
@@ -59,6 +62,7 @@ mod tests {
             action_repository,
             icrc_service,
             user_wallet_repository,
+            user_link_repository,
             ic_env,
         );
 
@@ -81,6 +85,7 @@ mod tests {
         let action_type = ActionType::CreateLink;
         let icrc_service = IcrcService::faux();
         let caller = generate_random_principal();
+        let user_link_repository = UserLinkRepository::faux();
 
         let link = Link {
             id: link_id.clone(),
@@ -93,6 +98,8 @@ mod tests {
             template: Some(cashier_types::Template::Central),
             create_at: generate_timestamp(),
             metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 0,
         };
 
         let action = Action {
@@ -110,6 +117,7 @@ mod tests {
             action_repository,
             icrc_service,
             user_wallet_repository,
+            user_link_repository,
             ic_env,
         );
 

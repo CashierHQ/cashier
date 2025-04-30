@@ -1,8 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import LinkService from "@/services/link.service";
+import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { UpdateLinkParams2 } from "./link-action-hooks";
+import { UpdateLinkParams } from "./link-action-hooks";
+import LinkLocalStorageService, {
+    LOCAL_lINK_ID_PREFIX,
+} from "@/services/link/link-local-storage.service";
+import { groupLinkListByDate } from "@/utils";
+import { LinkModel } from "@/services/types/link.service.types";
+import {
+    mapParitalLinkDtoToCreateLinkInputV2,
+    mapPartialDtoToLinkDetailModel,
+} from "@/services/types/mapper/link.service.mapper";
 
 // Centralized query keys for consistent caching
 export const LINK_QUERY_KEYS = {
@@ -19,8 +28,23 @@ export function useLinksListQuery() {
         queryKey: LINK_QUERY_KEYS.list(),
         queryFn: async () => {
             if (!identity) throw new Error("Identity is required");
-            const linkService = new LinkService(identity);
-            return await linkService.getLinkList();
+            try {
+                const linkService = new LinkService(identity);
+                const linkLocalStorageService = new LinkLocalStorageService();
+
+                const res = await linkService.getLinkList();
+                const localRes = linkLocalStorageService.getLinkList();
+
+                // aggregate the results from both services
+                const links = res.data.concat(localRes.data);
+
+                const result = groupLinkListByDate(links.map((linkModel) => linkModel.link));
+
+                return result;
+            } catch (error) {
+                console.error("Error fetching link list", error);
+                throw error;
+            }
         },
         enabled: !!identity,
     });
@@ -35,28 +59,114 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
         queryKey: LINK_QUERY_KEYS.detail(linkId),
         queryFn: async () => {
             if (!linkId) throw new Error("linkId are required");
-            const linkService = new LinkService(identity);
-            return await linkService.getLink(linkId, actionType);
+
+            if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
+                const linkLocalStorageService = new LinkLocalStorageService();
+                const localLink = linkLocalStorageService.getLink(linkId);
+
+                const linkDetailModel = mapPartialDtoToLinkDetailModel(localLink);
+
+                const linkModel: LinkModel = {
+                    link: linkDetailModel,
+                };
+
+                if (localLink) {
+                    return Promise.resolve(linkModel);
+                } else {
+                    throw new Error("Link not found in local storage");
+                }
+            } else {
+                const linkService = new LinkService(identity);
+                return await linkService.getLink(linkId, actionType);
+            }
         },
-        enabled: !!identity && !!linkId,
+        enabled: !!linkId,
         staleTime: staleTime, // Time in milliseconds data remains fresh
     });
 }
 
-export function useUpdateLink() {
+export function useUpdateLinkMutation() {
     const identity = useIdentity();
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (data: UpdateLinkParams2) => {
+        mutationFn: (data: UpdateLinkParams) => {
             const linkService = new LinkService(identity);
-            return linkService.updateLink(data.linkId, data.linkModel, data.isContinue);
+            const linkLocalStorageService = new LinkLocalStorageService();
+            const linkId = data.linkId;
+
+            if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
+                const localStorageLink = linkLocalStorageService.updateStateMachine(
+                    data.linkId,
+                    data.linkModel,
+                    data.isContinue,
+                );
+                return Promise.resolve(localStorageLink);
+            } else {
+                const localLinkId = LOCAL_lINK_ID_PREFIX + linkId;
+                const updated_link = linkService.updateLink(
+                    data.linkId,
+                    data.linkModel,
+                    data.isContinue,
+                );
+                try {
+                    const localStorage = linkLocalStorageService.updateStateMachine(
+                        localLinkId,
+                        data.linkModel,
+                        data.isContinue,
+                    );
+                    console.log("localStorage", localStorage);
+                } catch (error) {
+                    console.error(
+                        `
+                        ======= IGNORE THIS ERROR =======
+                        Error updating link in local storage
+                        ======= IGNORE THIS ERROR =======
+                        `,
+                        error,
+                    );
+                }
+
+                return updated_link;
+            }
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: LINK_QUERY_KEYS.list() });
             queryClient.invalidateQueries({
-                queryKey: LINK_QUERY_KEYS.detail(data.id),
+                queryKey: LINK_QUERY_KEYS.detail(data?.id),
             });
+        },
+        onError: (err) => {
+            throw err;
+        },
+    });
+
+    return mutation;
+}
+
+// hook call backend create link
+export function useCreateNewLinkMutation() {
+    const identity = useIdentity();
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: async (localLinkId: string) => {
+            const linkService = new LinkService(identity);
+            const linkLocalStorageService = new LinkLocalStorageService();
+
+            const link = linkLocalStorageService.getLink(localLinkId);
+
+            const input = mapParitalLinkDtoToCreateLinkInputV2(link);
+
+            const backendLinkId = await linkService.createLinkV2(input);
+
+            return {
+                id: backendLinkId,
+                oldId: localLinkId,
+            };
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: LINK_QUERY_KEYS.list() });
         },
         onError: (err) => {
             throw err;

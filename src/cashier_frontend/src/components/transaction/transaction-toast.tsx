@@ -2,7 +2,6 @@ import React, { FC, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Toast, ToastProvider, ToastViewport } from "@/components/ui/toast";
 import { cva, type VariantProps } from "class-variance-authority";
-import { IoIosClose } from "react-icons/io";
 import { IoIosCloseCircle } from "react-icons/io";
 import { FaCircleCheck } from "react-icons/fa6";
 import { X } from "lucide-react";
@@ -123,7 +122,7 @@ const TransactionToast: FC<TransactionToastProps> = ({
                                 )}
                                 {description && variant && (
                                     <div className={cn(descriptionStyles[variant])}>
-                                        this is the description wooopw wopop {description}
+                                        {description}
                                     </div>
                                 )}
                             </div>
