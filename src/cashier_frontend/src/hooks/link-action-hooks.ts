@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { UserInputItem, useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useCreateAction } from "./action-hooks";
-import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
+import { mapUserInputItemToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -106,6 +106,10 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         };
 
         if (linkId) {
+            if (userInput) {
+                const linkModel = mapUserInputItemToLinkDetailModel(userInput);
+                setLink(linkModel);
+            }
             refetchData();
         }
     }, [linkId]);
@@ -121,9 +125,5 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         });
     }, []);
 
-    return {
-        ...useLinkActionStore(),
-        userInput, // Include userInput in the returned values
-        isLocalDraft: linkId ? linkId.startsWith(LOCAL_lINK_ID_PREFIX) : false,
-    };
+    return useLinkActionStore();
 }

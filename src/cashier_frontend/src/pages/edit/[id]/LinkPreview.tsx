@@ -23,8 +23,6 @@ import { ICP_ADDRESS, ICP_LOGO } from "@/const";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service";
-import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
-import { use } from "i18next";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -70,7 +68,6 @@ export default function LinkPreview({
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
     const { rawTokenList, createTokenMap } = useTokens();
-    const { getUserInput } = useLinkCreationFormStore();
 
     // State for enhanced asset info with logos
     const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
@@ -131,8 +128,6 @@ export default function LinkPreview({
     const handleSubmit = async () => {
         setIsDisabled(true);
 
-        console.log("🚀 ~ handleSubmit ~ link:", link);
-
         try {
             if (link && link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
                 // First create the link in the backend
@@ -142,7 +137,8 @@ export default function LinkPreview({
                     navigate(`/edit/${res.id}?redirect=true&oldId=${res.oldId}`);
                 }
             } else {
-                onInvalidActon();
+                handleCreateAction();
+                setShowConfirmation(true);
             }
         } catch (error) {
             console.error("Error creating link", error);

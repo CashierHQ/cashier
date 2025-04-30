@@ -52,6 +52,8 @@ export default function LinkPage() {
         linkId,
         ACTION_TYPE.CREATE_LINK,
     );
+    const searchParams = new URLSearchParams(location.search);
+    const oldIdParam = searchParams.get("oldId");
 
     useEffect(() => {
         if (link) {

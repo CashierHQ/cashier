@@ -310,9 +310,7 @@ export class ICRC112Service {
 
     private async parallelExecuteIcrcRequests(
         requests: ParallelRequests,
-        linkTitle?: string,
     ): Promise<Array<Icrc112ResponseItem>> {
-        console.log("Processing requests with linkTitle:", linkTitle);
         const process_tasks: Promise<CallCanisterResponse>[] = [];
         const responses: Array<Icrc112ResponseItem> = [];
 
