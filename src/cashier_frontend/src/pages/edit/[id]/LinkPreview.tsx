@@ -114,7 +114,7 @@ export default function LinkPreview({
         }
     }, [link?.asset_info, rawTokenList]);
 
-    // Effect to handle redirect and process action
+    // Effect to handle redirect and call process action if redirect is true
     useEffect(() => {
         if (shouldRedirect && link && !link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
             const handleRedirect = async () => {
