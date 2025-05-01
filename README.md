@@ -1,3 +1,5 @@
+[![Staging Deploy Frontend](https://github.com/CashierHQ/cashier/actions/workflows/staging-deploy-frontend.yml/badge.svg?branch=staging)](https://github.com/CashierHQ/cashier/actions/workflows/staging-deploy-frontend.yml)
+
 # [Frontend document](./src/cashier_frontend/README.md)
 
 # Integration test
