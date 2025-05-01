@@ -190,16 +190,16 @@ type RejectionCode = variant {
   CanisterReject;
 };
 type Result = variant { Ok : text; Err : CanisterError };
-type Result_1 = variant { Ok : LinkDto; Err : CanisterError };
-type Result_2 = variant { Ok : UserDto; Err : text };
-type Result_3 = variant { Ok : GetLinkResp; Err : text };
-type Result_4 = variant { Ok : PaginateResult; Err : text };
-type Result_5 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
-type Result_6 = variant {
+type Result_1 = variant { Ok : UserDto; Err : text };
+type Result_2 = variant { Ok : GetLinkResp; Err : text };
+type Result_3 = variant { Ok : PaginateResult; Err : text };
+type Result_4 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
+type Result_5 = variant {
   Ok : opt LinkGetUserStateOutput;
   Err : CanisterError;
 };
-type Result_7 = variant { Ok : ActionDto; Err : CanisterError };
+type Result_6 = variant { Ok : ActionDto; Err : CanisterError };
+type Result_7 = variant { Ok : LinkDto; Err : CanisterError };
 type TransactionDto = record {
   id : text;
   protocol : text;
@@ -228,21 +228,21 @@ type UpdateLinkInput = record {
 type UserDto = record { id : text; email : opt text; wallet : text };
 service : () -> {
   create_link : (CreateLinkInput) -> (Result);
-  create_link_v2 : (CreateLinkInputV2) -> (Result_1);
-  create_user : () -> (Result_2);
-  get_link : (text, opt GetLinkOptions) -> (Result_3) query;
-  get_links : (opt PaginateInput) -> (Result_4) query;
-  get_user : () -> (Result_2) query;
+  create_link_v2 : (CreateLinkInputV2) -> (Result);
+  create_user : () -> (Result_1);
+  get_link : (text, opt GetLinkOptions) -> (Result_2) query;
+  get_links : (opt PaginateInput) -> (Result_3) query;
+  get_user : () -> (Result_1) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
   icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
-      Result_5,
+      Result_4,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
-  link_get_user_state : (LinkGetUserStateInput) -> (Result_6);
-  link_update_user_state : (LinkUpdateUserStateInput) -> (Result_6);
-  process_action : (ProcessActionInput) -> (Result_7);
-  process_action_anonymous : (ProcessActionAnonymousInput) -> (Result_7);
+  link_get_user_state : (LinkGetUserStateInput) -> (Result_5);
+  link_update_user_state : (LinkUpdateUserStateInput) -> (Result_5);
+  process_action : (ProcessActionInput) -> (Result_6);
+  process_action_anonymous : (ProcessActionAnonymousInput) -> (Result_6);
   trigger_transaction : (TriggerTransactionInput) -> (Result);
-  update_action : (UpdateActionInput) -> (Result_7);
-  update_link : (UpdateLinkInput) -> (Result_1);
+  update_action : (UpdateActionInput) -> (Result_6);
+  update_link : (UpdateLinkInput) -> (Result_7);
 }

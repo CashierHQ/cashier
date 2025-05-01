@@ -190,7 +190,7 @@ export default function LinkPage() {
     };
 
     // Determine if we should show content based on either having link data or user input data
-    const shouldShowContent = !isLoading || userInputData !== undefined;
+    const shouldShowContent = !isLoading || (isLoading && userInputData !== undefined);
 
     return (
         <MainAppLayout>

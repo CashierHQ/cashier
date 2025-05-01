@@ -170,10 +170,10 @@ export function useCreateNewLinkMutation() {
 
             const input = mapParitalLinkDtoToCreateLinkInputV2(link);
 
-            const backendLink = await linkService.createLinkV2(input);
+            const backendLinkId = await linkService.createLinkV2(input);
 
             return {
-                link: backendLink,
+                id: backendLinkId,
                 oldId: localLinkId,
             };
         },

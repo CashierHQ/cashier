@@ -57,6 +57,8 @@ export function useTokenRawListQuery() {
             const tokenService = new TokenStorageService();
             const tokens: RegistryTokenDto[] = await tokenService.listRegistryTokens();
 
+            console.log(`[${new Date().toISOString()}] Fetched raw tokens:`, tokens);
+
             return tokens;
         },
         select: (data) => {

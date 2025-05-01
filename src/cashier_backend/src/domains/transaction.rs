@@ -86,7 +86,7 @@ impl TransactionDomainLogic {
                     nonce: Some(tx.id.clone()),
                 }
             }
-            Protocol::IC(IcTransaction::Icrc2TransferFrom(_tx_transfer_from)) => {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(tx_transfer_from)) => {
                 let input = TriggerTransactionInput {
                     link_id: link_id.to_string(),
                     action_id: action_id.to_string(),
