@@ -30,7 +30,9 @@ export function useLinksListQuery() {
             if (!identity) throw new Error("Identity is required");
             try {
                 const linkService = new LinkService(identity);
-                const linkLocalStorageService = new LinkLocalStorageService();
+                const linkLocalStorageService = new LinkLocalStorageService(
+                    identity.getPrincipal().toString(),
+                );
 
                 const res = await linkService.getLinkList();
                 const localRes = linkLocalStorageService.getLinkList();
@@ -58,10 +60,13 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     return useQuery({
         queryKey: LINK_QUERY_KEYS.detail(linkId),
         queryFn: async () => {
+            if (!identity) throw new Error("Identity is required");
             if (!linkId) throw new Error("linkId are required");
 
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
-                const linkLocalStorageService = new LinkLocalStorageService();
+                const linkLocalStorageService = new LinkLocalStorageService(
+                    identity.getPrincipal().toString(),
+                );
                 const localLink = linkLocalStorageService.getLink(linkId);
 
                 const linkDetailModel = mapPartialDtoToLinkDetailModel(localLink);
@@ -91,8 +96,11 @@ export function useUpdateLinkMutation() {
 
     const mutation = useMutation({
         mutationFn: (data: UpdateLinkParams) => {
+            if (!identity) throw new Error("Identity is required");
             const linkService = new LinkService(identity);
-            const linkLocalStorageService = new LinkLocalStorageService();
+            const linkLocalStorageService = new LinkLocalStorageService(
+                identity.getPrincipal().toString(),
+            );
             const linkId = data.linkId;
 
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
@@ -151,8 +159,12 @@ export function useCreateNewLinkMutation() {
 
     const mutation = useMutation({
         mutationFn: async (localLinkId: string) => {
+            if (!identity) throw new Error("Identity is required");
+
             const linkService = new LinkService(identity);
-            const linkLocalStorageService = new LinkLocalStorageService();
+            const linkLocalStorageService = new LinkLocalStorageService(
+                identity.getPrincipal().toString(),
+            );
 
             const link = linkLocalStorageService.getLink(localLinkId);
 

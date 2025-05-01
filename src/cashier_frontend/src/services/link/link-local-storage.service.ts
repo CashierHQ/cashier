@@ -33,13 +33,17 @@ const reviver = (key: string, value: any) => {
 };
 
 class LinkLocalStorageService {
+    private userPid: string;
+    constructor(userPid: string) {
+        this.userPid = userPid;
+    }
     /**
      * Create a local storage link (before sending to backend)
      * @param creator The creator of the link
      * @param initialData Optional initial data for the link
      * @returns Generated local link id
      */
-    createLink(creator: string): string {
+    createLink(): string {
         // Use UUIDv7 for better B-tree performance
         const linkId = LOCAL_lINK_ID_PREFIX + uuidv4();
         // TODO: remove after get rid of backend for create link
@@ -47,7 +51,7 @@ class LinkLocalStorageService {
 
         const linkData: LinkDetailModel = {
             id: linkId,
-            creator: creator,
+            creator: this.userPid,
             create_at: new Date(),
             state: LINK_STATE.CHOOSE_TEMPLATE,
             title: "",
@@ -190,7 +194,8 @@ class LinkLocalStorageService {
      * @returns Object containing all links
      */
     private getLinks(): Record<string, LinkDto> {
-        const linksJson = localStorage.getItem(LINK_STORAGE_KEY);
+        const localStorageKey = LINK_STORAGE_KEY + "_" + this.userPid;
+        const linksJson = localStorage.getItem(localStorageKey);
         if (!linksJson) return {};
 
         try {
@@ -210,7 +215,8 @@ class LinkLocalStorageService {
         try {
             // Stringify with custom replacer to handle BigInt values
             const linksJson = JSON.stringify(links, replacer);
-            localStorage.setItem(LINK_STORAGE_KEY, linksJson);
+            const localStorageKey = LINK_STORAGE_KEY + "_" + this.userPid;
+            localStorage.setItem(localStorageKey, linksJson);
         } catch (error) {
             console.error("Error saving links to localStorage:", error);
         }
