@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
@@ -41,9 +41,14 @@ export function stateToStepIndex(state: string | undefined): number {
 
 export default function LinkPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { t } = useTranslation();
     const { linkId } = useParams();
     const { toastData, showToast, hideToast } = useToast();
+
+    // Parse URL search parameters to get oldId if present
+    const searchParams = new URLSearchParams(location.search);
+    const oldIdParam = searchParams.get("oldId");
 
     const [backButtonDisabled, setBackButtonDisabled] = useState(false);
 
@@ -52,8 +57,13 @@ export default function LinkPage() {
         linkId,
         ACTION_TYPE.CREATE_LINK,
     );
-    const searchParams = new URLSearchParams(location.search);
-    const oldIdParam = searchParams.get("oldId");
+
+    // Get user input data, prioritizing from the oldIdParam if present
+    const userInputData = oldIdParam
+        ? getUserInput(oldIdParam)
+        : linkId
+          ? getUserInput(linkId)
+          : undefined;
 
     useEffect(() => {
         if (link) {
@@ -163,18 +173,37 @@ export default function LinkPage() {
         }
     };
 
+    // Determine what step to show based on the best available data
+    const getInitialStep = () => {
+        // If we have link data, use its state
+        if (link?.state) {
+            return stateToStepIndex(link.state);
+        }
+
+        // If we have user input data (from oldId or current link), use its state
+        if (userInputData?.state) {
+            return stateToStepIndex(userInputData.state);
+        }
+
+        // Default to first step if we can't determine
+        return 0;
+    };
+
+    // Determine if we should show content based on either having link data or user input data
+    const shouldShowContent = !isLoading || (isLoading && userInputData !== undefined);
+
     return (
         <MainAppLayout>
             <div className="w-full h-full flex flex-col relative overflow-hidden">
-                {isLoading && (
+                {isLoading && !userInputData && (
                     <div className="w-screen h-screen flex items-center justify-center">
                         <Spinner />
                     </div>
                 )}
 
-                {!isLoading && link && (
+                {shouldShowContent && (
                     <>
-                        <MultiStepForm initialStep={stateToStepIndex(link.state)}>
+                        <MultiStepForm initialStep={getInitialStep()}>
                             <MultiStepForm.Header
                                 onClickBack={handleBackstep}
                                 backButtonDisabled={backButtonDisabled}

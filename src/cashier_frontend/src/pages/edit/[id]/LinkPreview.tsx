@@ -23,6 +23,7 @@ import { ICP_ADDRESS, ICP_LOGO } from "@/const";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -41,7 +42,7 @@ interface EnhancedAsset {
 }
 
 export default function LinkPreview({
-    onInvalidActon = () => {},
+    // onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
 }: LinkPreviewProps) {
@@ -68,6 +69,7 @@ export default function LinkPreview({
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
     const { rawTokenList, createTokenMap } = useTokens();
+    const { getUserInput } = useLinkCreationFormStore();
 
     // State for enhanced asset info with logos
     const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
@@ -75,6 +77,8 @@ export default function LinkPreview({
     // Effect to map rawTokenList logos to asset_info
     useEffect(() => {
         const tokenMap = createTokenMap();
+        const userInputData = oldIdParam ? getUserInput(oldIdParam) : undefined;
+
         if (link?.asset_info && tokenMap) {
             const enhanced = link.asset_info.map((asset) => {
                 const matchingToken = tokenMap[asset.address];
@@ -84,11 +88,24 @@ export default function LinkPreview({
                 };
             });
             setEnhancedAssets(enhanced);
+        } else if (userInputData && userInputData.assets && tokenMap) {
+            const enhanced = userInputData.assets.map((asset) => {
+                const matchingToken = tokenMap[asset.address];
+                return {
+                    address: asset.address,
+                    amountPerUse: asset.linkUseAmount,
+                    logo: matchingToken?.logo || getTokenImage(asset.address),
+                    label: asset.label,
+                    chain: asset.chain,
+                };
+            });
+            setEnhancedAssets(enhanced);
         }
     }, [link?.asset_info, rawTokenList]);
 
     // Effect to handle redirect and process action
     useEffect(() => {
+        console.log("🚀 ~ useEffect ~ shouldRedirect:", shouldRedirect);
         if (shouldRedirect && link && !link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
             const handleRedirect = async () => {
                 try {
