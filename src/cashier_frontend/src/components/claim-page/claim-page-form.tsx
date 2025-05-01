@@ -57,7 +57,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const { linkId } = useParams();
 
     const { link } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
-    const { getToken, updateTokenInit } = useTokens();
+    const { updateTokenInit } = useTokens();
 
     // Check if the address is valid
     const isAddressValid = () => {
@@ -70,11 +70,6 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         } catch {
             return false;
         }
-    };
-
-    const getTokenData = (address: string) => {
-        const token = getToken(address);
-        return token;
     };
 
     useEffect(() => {
