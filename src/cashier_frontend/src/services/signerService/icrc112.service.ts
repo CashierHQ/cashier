@@ -316,6 +316,7 @@ export class ICRC112Service {
 
         for (const request of requests) {
             console.log(`Processing request for method: ${request.method}`);
+            console.log("Request:", request);
             const task = this.callCanisterService.call({
                 canisterId: request.canisterId,
                 calledMethodName: request.method,
