@@ -25,7 +25,6 @@ import LinkLocalStorageService, {
 } from "@/services/link/link-local-storage.service";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
-import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -59,7 +58,6 @@ export default function LinkPreview({
 
     const {
         link,
-        action,
         setAction,
         refetchLinkDetail,
         callLinkStateMachine,
@@ -72,18 +70,11 @@ export default function LinkPreview({
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
     const { rawTokenList, createTokenMap } = useTokens();
-    const { getUserInput, addUserInput } = useLinkCreationFormStore();
+    const { getUserInput } = useLinkCreationFormStore();
     const identity = useIdentity();
 
     // State for enhanced asset info with logos
     const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
-
-    // Check if there's an existing action and show confirmation drawer
-    useEffect(() => {
-        if (action && action.type === ACTION_TYPE.CREATE_LINK) {
-            setShowConfirmation(true);
-        }
-    }, [action]);
 
     // Effect to map rawTokenList logos to asset_info
     useEffect(() => {
@@ -145,7 +136,6 @@ export default function LinkPreview({
     }, [shouldRedirect, link]);
 
     const { data: feeData } = useFeePreview(link?.id);
-    const feeTotal = useFeeTotal(feeData ?? []) || 0;
 
     const handleCreateAction = async () => {
         if (!link) {
@@ -163,15 +153,8 @@ export default function LinkPreview({
                 // First create the link in the backend
                 const res = await createNewLink(link.id);
 
-                if (!res) {
-                    throw new Error("Failed to create new link");
-                }
-
-                const input = mapLinkDtoToUserInputItem(res?.link);
-                addUserInput(res.link.id, input);
-
                 if (res) {
-                    navigate(`/edit/${res.link.id}?redirect=true&oldId=${res.oldId}`);
+                    navigate(`/edit/${res.id}?redirect=true&oldId=${res.oldId}`);
                 }
             } else {
                 handleCreateAction();
@@ -281,7 +264,8 @@ export default function LinkPreview({
                         <div className="flex flex-col items-end">
                             <div className="flex items-center">
                                 <p className="text-[14px] font-normal">
-                                    {formatPrice(feeTotal.toString())} {NETWORK_FEE_DEFAULT_SYMBOL}
+                                    {formatPrice((useFeeTotal(feeData ?? []) || 0).toString())}{" "}
+                                    {NETWORK_FEE_DEFAULT_SYMBOL}
                                 </p>
                                 <img
                                     // src={getTokenImage(NETWORK_FEE_DEFAULT_ADDRESS)}
@@ -295,7 +279,7 @@ export default function LinkPreview({
                                 {formatPrice(
                                     (
                                         convert(
-                                            feeTotal,
+                                            useFeeTotal(feeData ?? []),
                                             getTokenPrice(NETWORK_FEE_DEFAULT_ADDRESS) || 0,
                                         ) || 0
                                     ).toString(),

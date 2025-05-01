@@ -49,7 +49,7 @@ async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
 }
 
 #[update(guard = "is_not_anonymous")]
-async fn create_link_v2(input: CreateLinkInputV2) -> Result<LinkDto, CanisterError> {
+async fn create_link_v2(input: CreateLinkInputV2) -> Result<String, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.create_link_v2(input).await
 }
@@ -233,7 +233,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
     }
 
-    pub async fn create_link_v2(&self, input: CreateLinkInputV2) -> Result<LinkDto, CanisterError> {
+    pub async fn create_link_v2(&self, input: CreateLinkInputV2) -> Result<String, CanisterError> {
         let creator = self.ic_env.caller();
 
         match self
@@ -241,10 +241,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             .create_new_v2(creator.to_text(), input)
             .await
         {
-            Ok(link) => Ok(LinkDto::from(link)),
+            Ok(id) => Ok(id),
             Err(e) => {
                 error!("Failed to create link: {}", e);
-                Err(e)
+                Err(CanisterError::HandleLogicError(e))
             }
         }
     }
