@@ -24,6 +24,7 @@ import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { useIdentity } from "@nfid/identitykit/react";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -70,6 +71,7 @@ export default function LinkPreview({
     const [isDisabled, setIsDisabled] = useState(false);
     const { rawTokenList, createTokenMap } = useTokens();
     const { getUserInput } = useLinkCreationFormStore();
+    const identity = useIdentity();
 
     // State for enhanced asset info with logos
     const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
@@ -105,15 +107,16 @@ export default function LinkPreview({
 
     // Effect to handle redirect and process action
     useEffect(() => {
-        console.log("🚀 ~ useEffect ~ shouldRedirect:", shouldRedirect);
         if (shouldRedirect && link && !link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
             const handleRedirect = async () => {
                 try {
                     setIsDisabled(true);
                     await handleCreateAction();
 
-                    if (oldIdParam) {
-                        const localStorageService = new LinkLocalStorageService();
+                    if (oldIdParam && identity) {
+                        const localStorageService = new LinkLocalStorageService(
+                            identity.getPrincipal().toString(),
+                        );
                         localStorageService.deleteLink(oldIdParam);
                     }
 
