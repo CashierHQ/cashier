@@ -76,9 +76,7 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
             <div className="flex items-center justify-between grow ml-3">
                 <h3 className="font-base text-sm font-[500]">
                     {link.title.length > 0 ? link.title : "No title"}
-                    {isLocalLink && (
-                        <span className="text-xs text-gray-500"> (Local Link) {link.state}</span>
-                    )}
+                    {isLocalLink && <span className="text-xs text-gray-500"> (Local Link) </span>}
                 </h3>
                 <StateBadge state={link.state} />
             </div>

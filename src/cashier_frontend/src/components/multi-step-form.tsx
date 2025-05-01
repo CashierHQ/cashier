@@ -93,7 +93,6 @@ export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
     const stepComponent = stepsList[step];
 
     useEffect(() => {
-        console.log("stepComponent", step);
         setSteps(stepsList.length);
         setStepName(stepComponent.props.name);
     }, [step, children]);
