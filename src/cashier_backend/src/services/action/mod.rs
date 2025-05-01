@@ -178,20 +178,10 @@ where
         for intent in &mut intents {
             let txs = intent_txs.get(&intent.id).unwrap();
             let intent_state = self.domain_logic.calculate_intent_state(txs);
-            info!(
-                "[roll_up_state] intent: {:#?} {:?}",
-                intent.id, intent_state
-            );
-
             intent.state = intent_state;
         }
 
         action.state = self.domain_logic.calculate_action_state(&intents);
-        info!(
-            "[roll_up_state] action: {:#?} {:?}",
-            action.id, action.state
-        );
-
         self.intent_repository.batch_update(intents.clone());
         self.action_repository.update(action.clone());
 

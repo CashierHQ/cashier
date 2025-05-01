@@ -93,6 +93,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     useEffect(() => {
         if (linkDetailQuery.data) {
             const linkData = linkDetailQuery.data;
+            console.log("🚀 ~ useLinkAction ~ linkData:", linkData);
             setLink(linkData.link);
             setAction(linkData.action);
         }

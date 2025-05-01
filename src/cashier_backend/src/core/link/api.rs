@@ -11,7 +11,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error,
+    error, info,
     services::{
         self,
         action::ActionService,
@@ -429,6 +429,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // create real action
             let res = self.tx_manager_service.create_action(&temp_action)?;
 
+            info!(
+                "[process_action] user_id: {:?}, link_id: {:?}, action_id: {:?}",
+                user_id, input.link_id, res.id
+            );
+
             Ok(res)
         } else {
             // validate action
@@ -683,6 +688,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             .map_err(|e| {
                 CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
             })?;
+
+        info!("[update_action] update_action_res {:#?}", update_action_res);
 
         update_action_res
     }

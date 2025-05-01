@@ -77,6 +77,7 @@ export default function LinkPreview({
 
     // State for enhanced asset info with logos
     const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
+    const [redirectCounter, setRedirectCounter] = useState(0);
 
     // Check if there's an existing action and show confirmation drawer
     useEffect(() => {
@@ -117,7 +118,14 @@ export default function LinkPreview({
     // Effect to handle redirect and call process action if redirect is true
     useEffect(() => {
         if (shouldRedirect && link && !link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
+            setRedirectCounter((prev) => {
+                const newCount = prev + 1;
+                console.log(`Redirect effect called ${newCount} times`);
+                return newCount;
+            });
+
             const handleRedirect = async () => {
+                if (redirectCounter >= 1) return;
                 try {
                     setIsDisabled(true);
                     await handleCreateAction();
@@ -131,7 +139,6 @@ export default function LinkPreview({
 
                     setShowConfirmation(true);
                 } catch (error) {
-                    console.error("Error processing action", error);
                     if (isCashierError(error)) {
                         onCashierError(error);
                     }

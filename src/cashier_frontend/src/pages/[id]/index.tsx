@@ -7,7 +7,6 @@ import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-fram
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { ACTION_STATE, ACTION_TYPE, LINK_STATE, LINK_USER_STATE } from "@/services/types/enum";
 import useToast from "@/hooks/useToast";
-import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { useIdentity } from "@nfid/identitykit/react";

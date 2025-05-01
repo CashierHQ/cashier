@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use crate::{
     services::adapter::IntentAdapter, types::error::CanisterError, utils::runtime::IcEnvironment,
+    utils::helper::to_memo,
 };
 
 #[cfg_attr(test, faux::create)]
@@ -34,7 +35,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
             ts: Some(ts),
-            memo: None,
+            memo: Some(to_memo(&id.to_string())),
         };
 
         let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
@@ -58,6 +59,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
         transfer_intent: TransferFromData,
     ) -> Result<Vec<Transaction>, CanisterError> {
         let ts = self.ic_env.time();
+        let approve_id = Uuid::new_v4();
 
         let icrc2_approve = Icrc2Approve {
             from: transfer_intent.from.clone(),
@@ -68,7 +70,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
 
         let ic_approve_tx = IcTransaction::Icrc2Approve(icrc2_approve);
         let approve_tx: Transaction = Transaction {
-            id: Uuid::new_v4().to_string(),
+            id: approve_id.to_string(),
             created_at: ts,
             state: TransactionState::Created,
             dependency: None,
@@ -78,6 +80,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
             start_ts: None,
         };
 
+        let transfer_id = Uuid::new_v4();
         let icrc2_transfer_from = Icrc2TransferFrom {
             from: transfer_intent.from,
             to: transfer_intent.to,
@@ -85,11 +88,11 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
             ts: Some(ts),
-            memo: None,
+            memo: Some(to_memo(&transfer_id.to_string())),
         };
         let ic_transfer_from_tx = IcTransaction::Icrc2TransferFrom(icrc2_transfer_from);
         let transfer_from_tx = Transaction {
-            id: Uuid::new_v4().to_string(),
+            id: transfer_id.to_string(),
             created_at: ts,
             state: TransactionState::Created,
             dependency: Some(vec![approve_tx.id.clone()]),
@@ -106,6 +109,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
         &self,
         transfer_intent: TransferData,
     ) -> Result<Vec<Transaction>, CanisterError> {
+        let id: Uuid = Uuid::new_v4();
         let ts = self.ic_env.time();
 
         let icrc1_transfer = Icrc1Transfer {
@@ -114,17 +118,12 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
             ts: Some(ts),
-            memo: None,
+            memo: Some(to_memo(&id.to_string())),
         };
-
-        crate::info!(
-            "[assemble_icrc1_canister_transfer] icrc1_transfer: {:?}",
-            icrc1_transfer
-        );
 
         let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
         let transfer_from_tx = Transaction {
-            id: Uuid::new_v4().to_string(),
+            id: id.to_string(),
             created_at: ts,
             state: TransactionState::Created,
             dependency: None,
