@@ -58,7 +58,7 @@ export interface LinkActionStoreData {
 
     createNewLink: (localLinkId: string) => Promise<
         | {
-              id: string;
+              link: LinkDto;
               oldId: string;
           }
         | undefined
