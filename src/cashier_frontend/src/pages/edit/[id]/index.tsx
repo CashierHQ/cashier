@@ -23,7 +23,6 @@ import { useLinkAction } from "@/hooks/link-action-hooks";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 export function stateToStepIndex(state: string | undefined): number {
-    console.log("🚀 ~ stateToStepIndex ~ state:", state);
     if (state === LINK_STATE.CHOOSE_TEMPLATE) {
         return 0;
     }

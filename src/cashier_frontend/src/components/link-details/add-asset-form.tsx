@@ -167,6 +167,38 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         }
     }, [watch("assets"), getValues]);
 
+    // Use assetFields.fields.length as dependency instead of the entire assetFields object
+    // and add a check to prevent unnecessary updates
+    useEffect(() => {
+        if (link?.id) {
+            const input = getUserInput(link.id);
+            const formAssets = getValues("assets");
+
+            // Only update if we have both input and form assets
+            if (input && input.assets && formAssets && formAssets.length > 0) {
+                // Don't update if they match in length to avoid unnecessary rerenders
+                if (input.assets.length !== formAssets.length) {
+                    // Map the current form values to the store
+                    const storeAssets = formAssets.map((asset) => {
+                        // Create a properly formatted asset for the store
+                        return {
+                            address: asset.tokenAddress,
+                            linkUseAmount: asset.amount,
+                            chain: asset.chain || CHAIN.IC,
+                            label: asset.label || "",
+                            usdEquivalent: 0,
+                            usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
+                        };
+                    });
+
+                    updateUserInput(link.id, {
+                        assets: storeAssets,
+                    });
+                }
+            }
+        }
+    }, [assetFields.fields.length, link?.id]);
+
     // Initialize form with first asset if none exists
     useEffect(() => {
         if (allAvailableTokens?.length > 0 && link && assetFields.fields.length === 0) {
@@ -198,14 +230,9 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         setValue(`assets.${editingAssetIndex}.tokenAddress`, address);
         setValue(`assets.${editingAssetIndex}.amount`, BigInt(0));
 
-        const formValues = getValues("assets");
-
-        console.log("Form values:", formValues);
-
         const updatedAssets = [...selectedAssetAddresses];
         updatedAssets[editingAssetIndex] = address;
         setSelectedAssetAddresses(updatedAssets);
-
         setShowAssetDrawer(false);
     };
 
@@ -214,7 +241,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         setSelectedAssetAddresses((prev) =>
             prev.filter((address) => address !== removedAsset.tokenAddress),
         );
-
         assetFields.remove(index);
     };
 
@@ -222,7 +248,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         const nextToken = getNextAvailableToken();
         if (nextToken && link && link.linkType) {
             const label = getAssetLabelForLinkType(link?.linkType);
-            console.log("Adding asset:", label);
 
             assetFields.append({
                 tokenAddress: nextToken.address,
