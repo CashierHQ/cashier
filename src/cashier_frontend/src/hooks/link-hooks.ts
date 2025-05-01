@@ -60,10 +60,11 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     return useQuery({
         queryKey: LINK_QUERY_KEYS.detail(linkId),
         queryFn: async () => {
-            if (!identity) throw new Error("Identity is required");
             if (!linkId) throw new Error("linkId are required");
 
-            if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
+            console.log("🚀 ~ useLinkDetailQuery ~ linkId:", linkId);
+
+            if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
                 const linkLocalStorageService = new LinkLocalStorageService(
                     identity.getPrincipal().toString(),
                 );
@@ -82,7 +83,11 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
                 }
             } else {
                 const linkService = new LinkService(identity);
-                return await linkService.getLink(linkId, actionType);
+                const res = await linkService.getLink(linkId, actionType);
+
+                console.log("🚀 ~ useLinkDetailQuery ~ res:", res);
+
+                return res;
             }
         },
         enabled: !!linkId,
