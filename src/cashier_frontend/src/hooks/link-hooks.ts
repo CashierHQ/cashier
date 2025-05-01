@@ -62,8 +62,6 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
         queryFn: async () => {
             if (!linkId) throw new Error("linkId are required");
 
-            console.log("🚀 ~ useLinkDetailQuery ~ linkId:", linkId);
-
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
                 const linkLocalStorageService = new LinkLocalStorageService(
                     identity.getPrincipal().toString(),
@@ -81,6 +79,8 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
                 } else {
                     throw new Error("Link not found in local storage");
                 }
+
+                // this should support case identity is undefined = anonymous wallet
             } else {
                 const linkService = new LinkService(identity);
                 const res = await linkService.getLink(linkId, actionType);
