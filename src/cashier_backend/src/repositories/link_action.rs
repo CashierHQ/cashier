@@ -1,3 +1,5 @@
+use crate::info;
+
 use super::LINK_ACTION_STORE;
 use cashier_types::{keys::ActionTypeKey, LinkAction, LinkActionKey, LinkKey};
 
@@ -57,11 +59,15 @@ impl LinkActionRepository {
 
             let prefix = key.to_str().clone();
 
+            info!("get_by_prefix: prefix = {}", prefix);
+
             let link_actions: Vec<_> = store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
                 .map(|(_, value)| value.clone())
                 .collect();
+
+            info!("get_by_prefix: link_actions = {:?}", link_actions);
 
             link_actions
         })

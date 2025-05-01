@@ -327,7 +327,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             match intent.task.clone() {
                 IntentTask::TransferWalletToLink => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    info!("[link_assemble_intents] link: {:#?}", link);
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         error!("label {:#?}", intent.label);
                         CanisterError::HandleLogicError(
