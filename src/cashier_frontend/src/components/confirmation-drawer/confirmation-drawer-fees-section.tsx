@@ -7,6 +7,9 @@ import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
 import { useTokenStore } from "@/stores/tokenStore";
+import { Label } from "../ui/label";
+import { ICP_ADDRESS } from "@/const";
+import { getTokenImage } from "@/utils";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -36,16 +39,25 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
 
-    const tokenUsdPrice = getTokenPrice(intents[0]?.asset.address);
+    const tokenUsdPrice = getTokenPrice(ICP_ADDRESS);
 
     useEffect(() => {
         const initState = async () => {
-            const totalCashierFee = await IntentHelperService.calculateTotal(intents);
-            setTotalCashierFee(totalCashierFee);
+            console.log("Intents: ", intents);
+            //    const totalFees = intents.map((intent) => {
+            //     return IntentHelperService.gete
+            //    })
+            const totalFeesMapArray = await IntentHelperService.getNetworkFeeMap(intents);
+            console.log("Total fees mpa: ", totalFeesMapArray);
+            const totalFees = totalFeesMapArray.reduce((acc, curr) => {
+                return BigInt(acc) + BigInt(curr?.fee?.amount ?? 0n);
+            }, BigInt(0));
+            const totalFeesInUSD = convert(Number(totalFees) / 10 ** 8, tokenUsdPrice);
+            setTotalCashierFee(Number(totalFeesInUSD));
         };
 
         initState();
-    }, []);
+    }, [intents]);
 
     const calculateTotalCashierFee = () => {
         if (intents[0].task === TASK.TRANSFER_LINK_TO_WALLET && totalCashierFee && feeAmount) {
@@ -57,18 +69,28 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
-            <div className="flex flex-col gap-3 rounded-xl p-4 bg-lightgreen">
+            <div className="flex items-center w-full justify-between">
+                <h2 className="font-medium text-[14px] ml-2">Total fees</h2>
+            </div>
+            <div className="flex flex-col gap-3 light-borders-green px-4 py-3">
                 <div className="flex justify-between font-medium">
-                    <div>{t(getItemLabel(intents[0]))}</div>
+                    <img
+                        src={getTokenImage(ICP_ADDRESS)}
+                        alt="ICP"
+                        className="w-7 h-7 rounded-full"
+                    />
 
                     <div className="flex items-center">
                         {isLoading || !totalCashierFee ? (
                             <Spinner width={22} />
                         ) : (
                             <>
-                                {tokenUsdPrice !== undefined &&
+                                <p className="text-[14px] font-normal">
+                                    ${totalCashierFee.toFixed(4)}
+                                </p>
+                                {/* {tokenUsdPrice !== undefined &&
                                     `($${convert(calculateTotalCashierFee(), tokenUsdPrice)?.toFixed(3)}) ≈ `}
-                                {calculateTotalCashierFee()} {assetSymbol}
+                                {calculateTotalCashierFee()} {assetSymbol} */}
                             </>
                         )}
                     </div>

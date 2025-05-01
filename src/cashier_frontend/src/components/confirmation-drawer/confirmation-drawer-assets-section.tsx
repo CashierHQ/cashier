@@ -34,20 +34,11 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
 
     return (
         <section id="confirmation-popup-section-send" className="my-3">
-            <div className="flex justify-between">
-                <div className="flex items-center">
-                    <h2 className="font-medium ml-2">{t(getLabel(intents[0]))}</h2>
-
-                    <Info className="text-destructive ml-1.5" size={22} onClick={onInfoClick} />
-                </div>
-
-                <button className="flex text-destructive items-center" onClick={onUsdClick}>
-                    USD
-                    <ArrowUpDown className="ml-1" size={16} />
-                </button>
+            <div className="flex items-center w-full justify-between">
+                <h2 className="font-medium text-[14px] ml-2">{t(getLabel(intents[0]))}</h2>
             </div>
 
-            <ol className="flex flex-col gap-3 border-solid border-inherit border-[1px] rounded-xl mt-1 p-4 overflow-y-auto max-h-[200px]">
+            <ol className="flex flex-col gap-3 light-borders-green px-4 py-3 overflow-y-auto max-h-[200px]">
                 {intents.map((intent) => (
                     <li key={intent.id}>
                         <TransactionItem

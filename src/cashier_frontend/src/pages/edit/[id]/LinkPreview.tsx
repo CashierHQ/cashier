@@ -23,6 +23,8 @@ import { ICP_ADDRESS, ICP_LOGO } from "@/const";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service";
+import { Info } from "lucide-react";
+import { InformationOnAssetDrawer } from "@/components/information-on-asset-drawer/information-on-asset-drawer";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -65,6 +67,7 @@ export default function LinkPreview({
     } = useLinkAction();
     const { getToken, getTokenPrice } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
+    const [showAssetInfo, setShowAssetInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
     const { rawTokenList, createTokenMap } = useTokens();
@@ -179,20 +182,42 @@ export default function LinkPreview({
         <div
             className={`w-full flex flex-col h-full ${responsive.isSmallDevice ? "justify-between" : "gap-4"}`}
         >
-            <div className="input-label-field-container">
+            <div className="input-label-field-container mt-2">
                 <Label>Link info</Label>
-                <div className="flex justify-between items-center light-borders px-4 py-3">
-                    <p className="text-[14px] font-normal">Type</p>
-                    <p className="text-[14px] font-medium">
-                        {link?.linkType?.replace(/([A-Z])/g, " $1").trim()}
-                    </p>
+                <div className="flex flex-col gap-2 justify-between items-center light-borders-green px-4 py-3">
+                    <div className="flex items-center w-full justify-between">
+                        <p className="text-[14px] font-normal">Type</p>
+                        <p className="text-[14px] font-normal">
+                            {link?.linkType?.replace(/([A-Z])/g, " $1").trim()}
+                        </p>
+                    </div>
+                    <div className="flex items-center w-full justify-between">
+                        <p className="text-[14px] font-normal">Max use count</p>
+                        <p className="text-[14px] font-normal">
+                            {link.maxActionNumber ? link.maxActionNumber.toString() : "1"}
+                        </p>
+                    </div>
+                    <div className="flex items-center w-full justify-between">
+                        <p className="text-[14px] font-normal">Gate</p>
+                        <p className="text-[14px] font-normal">none</p>
+                    </div>
                 </div>
             </div>
 
             {isSendLinkType && (
                 <div className="input-label-field-container mt-4">
-                    <Label>Assets to transfer to link</Label>
-                    <div className="light-borders px-4 py-3 flex flex-col gap-3">
+                    <div className="flex items-center w-full justify-between">
+                        <Label>
+                            Asset{link.maxActionNumber > 1 ? "s" : ""} to transfer to link
+                        </Label>
+                        <button
+                            className="flex items-center gap-1"
+                            onClick={() => setShowAssetInfo(true)}
+                        >
+                            <Info size={18} color="#36A18B" />
+                        </button>
+                    </div>
+                    <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
                         {enhancedAssets.map((asset, index) => {
                             // Calculate token amount with proper decimals
                             const tokenDecimals = getToken(asset.address)?.decimals ?? 8;
@@ -206,27 +231,29 @@ export default function LinkPreview({
                             const approximateUsdValue = totalTokenAmount * tokenPrice;
 
                             return (
-                                <div key={index} className="flex justify-between items-start">
-                                    <p className="text-[14px] font-normal">Token</p>
+                                <div key={index} className="flex justify-between items-center">
+                                    <div className="flex items-center gap-1.5">
+                                        <Avatar className="w-5 h-5 rounded-full overflow-hidden">
+                                            <AvatarImage
+                                                src={
+                                                    asset.address === ICP_ADDRESS
+                                                        ? ICP_LOGO
+                                                        : asset.logo
+                                                }
+                                                alt={tokenSymbol || asset.address}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </Avatar>
+                                        <p className="text-[14px] font-normal">{tokenSymbol}</p>
+                                    </div>
                                     <div className="flex flex-col items-end">
                                         <div className="flex items-center gap-1">
                                             <p className="text-[14px] font-normal">
-                                                {totalTokenAmount} {tokenSymbol}
+                                                {totalTokenAmount}
                                             </p>
-                                            <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                                                <AvatarImage
-                                                    src={
-                                                        asset.address === ICP_ADDRESS
-                                                            ? ICP_LOGO
-                                                            : asset.logo
-                                                    }
-                                                    alt={tokenSymbol || asset.address}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </Avatar>
                                         </div>
-                                        <p className="text-[11px] font-normal text-grey/60">
-                                            ≈${formatPrice(approximateUsdValue.toString())}
+                                        <p className="text-[10px] font-normal text-grey/50">
+                                            ~${formatPrice(approximateUsdValue.toString())}
                                         </p>
                                     </div>
                                 </div>
@@ -236,26 +263,34 @@ export default function LinkPreview({
                 </div>
             )}
 
-            <div className="mt-4 input-label-field-container">
-                <Label>Cashier Fees</Label>
-                <div className="bg-lightgreen rounded-[8px] px-4 py-3 flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                        <p className="text-[14px] font-normal">Link creation</p>
+            <div className="input-label-field-container mt-4">
+                <div className="flex items-center w-full justify-between">
+                    <Label>Link creation fee</Label>
+                    <button className="flex items-center gap-1" onClick={() => setShowInfo(true)}>
+                        <Info size={18} color="#36A18B" />
+                    </button>
+                </div>
+                <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-1.5">
+                            <Avatar className="w-5 h-5 rounded-full overflow-hidden">
+                                <AvatarImage
+                                    src={ICP_LOGO}
+                                    alt={"ICP"}
+                                    className="w-full h-full object-cover"
+                                />
+                            </Avatar>
+                            <p className="text-[14px] font-normal">ICP</p>
+                        </div>
                         <div className="flex flex-col items-end">
-                            <div className="flex items-center">
+                            <div className="flex items-center gap-1">
                                 <p className="text-[14px] font-normal">
                                     {formatPrice((useFeeTotal(feeData ?? []) || 0).toString())}{" "}
                                     {NETWORK_FEE_DEFAULT_SYMBOL}
                                 </p>
-                                <img
-                                    // src={getTokenImage(NETWORK_FEE_DEFAULT_ADDRESS)}
-                                    src={ICP_LOGO}
-                                    alt={NETWORK_FEE_DEFAULT_SYMBOL}
-                                    className="w-5 translate-x-1 rounded-full h-5"
-                                />
                             </div>
-                            <p className="text-[11px] font-normal text-grey/60">
-                                ≈$
+                            <p className="text-[10px] font-normal text-grey/50">
+                                ~${" "}
                                 {formatPrice(
                                     (
                                         convert(
@@ -282,7 +317,10 @@ export default function LinkPreview({
             </FixedBottomButton>
 
             <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
-
+            <InformationOnAssetDrawer
+                open={showAssetInfo}
+                onClose={() => setShowAssetInfo(false)}
+            />
             <ConfirmationDrawer
                 open={showConfirmation && !showInfo}
                 onClose={() => setShowConfirmation(false)}

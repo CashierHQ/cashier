@@ -5,8 +5,8 @@ export const ConfirmationPopupLegalSection: FC = () => {
     const { t } = useTranslation();
 
     return (
-        <section id="confirmation-popup-section-legal-text" className="mb-3 ml-2 my-3">
-            <p className="text-sm">{t("transaction.confirm_popup.legal_text")}</p>
+        <section id="confirmation-popup-section-legal-text" className="mb-3 ml-2 mt-2">
+            <p className="text-[14px] font-normal">{t("transaction.confirm_popup.legal_text")}</p>
         </section>
     );
 };

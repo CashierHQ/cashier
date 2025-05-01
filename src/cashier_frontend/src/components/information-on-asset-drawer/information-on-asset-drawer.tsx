@@ -5,12 +5,12 @@ import { ChevronLeft, Link, Wifi } from "lucide-react";
 import { IoIosClose } from "react-icons/io";
 import { useTranslation } from "react-i18next";
 
-export type FeeInfoDrawerProps = {
+export type InformationOnAssetDrawerProps = {
     open?: boolean;
     onClose?: () => void;
 };
 
-export const FeeInfoDrawer: FC<FeeInfoDrawerProps> = ({ open, onClose }) => {
+export const InformationOnAssetDrawer: FC<InformationOnAssetDrawerProps> = ({ open, onClose }) => {
     const { t } = useTranslation();
 
     return (
@@ -19,7 +19,7 @@ export const FeeInfoDrawer: FC<FeeInfoDrawerProps> = ({ open, onClose }) => {
                 <DrawerHeader>
                     <DrawerTitle className="flex relative justify-center items-center">
                         <div className="text-center w-[100%] text-[18px] font-semibold">
-                            {t("feeInfo.title")}
+                            Info on asset transfer to link
                         </div>
                         <ChevronLeft
                             onClick={onClose}
@@ -31,25 +31,13 @@ export const FeeInfoDrawer: FC<FeeInfoDrawerProps> = ({ open, onClose }) => {
                 </DrawerHeader>
 
                 <div className="px-4 pb-4 mt-2">
-                    <h4 className="font-medium text-[14px] gap-1 items-center mt-5 flex flex-row">
-                        <Link size={18} className="text-green mr-1" to={""} />
-                        {t("feeInfo.cashierFeeHeader")}
-                    </h4>
-                    <p className="mt-0.5 text-[14px] font-normal">{t("feeInfo.cashierFeeText")}</p>
-
-                    <h4 className="font-medium text-[14px] gap-1 items-center mt-5 flex flex-row">
-                        <Wifi size={18} className="text-green mr-1" />
-                        {t("feeInfo.networkFeeHeader")}
-                    </h4>
-                    <div className="flex flex-col gap-2 mt-0.5 text-[14px] font-normal">
-                        {(
-                            t("feeInfo.networkFeeText", {
-                                returnObjects: true,
-                            }) as string[]
-                        ).map((paragraph, index) => (
-                            <p key={index}>{paragraph}</p>
-                        ))}
-                    </div>
+                    <p className="mt-0.5 text-[14px] font-normal">
+                        Cashier will hold the assets in a vault, until someone claims them from the
+                        link you share.
+                        <br />
+                        <br />
+                        You may end the link and withdraw the assets, if no-one claims the assets.
+                    </p>
                 </div>
 
                 <Button className="mt-6 py-5" onClick={onClose}>
