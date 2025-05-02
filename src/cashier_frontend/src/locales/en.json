@@ -32,7 +32,7 @@
         "claimToken": "Claim token",
         "amount": "Amount",
         "address": "Address",
-        "asset": "Asset",
+        "asset": "Receive asset",
         "addressPlaceholder": "Type in address",
         "receive_options": "Receive options",
         "receive": "Receive",

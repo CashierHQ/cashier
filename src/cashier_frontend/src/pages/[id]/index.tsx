@@ -128,10 +128,8 @@ export default function ClaimPage() {
         if (linkData && linkUserState?.link_user_state) {
             setShowDefaultPage(false);
         }
-        // Check if step=claim is in the URL
-        if (searchParams.get("step") === "claim") {
-            setShowDefaultPage(false);
-        }
+        // Handle step parameter
+        setShowDefaultPage(searchParams.get("step") !== "claim");
     }, [linkData, identity, searchParams]);
 
     useEffect(() => {

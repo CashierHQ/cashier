@@ -3,6 +3,16 @@ import { IntentModel } from "@/services/types/intent.service.types";
 import { TFunction } from "i18next";
 import { useEffect, useMemo, useState } from "react";
 
+/**
+ * Sorts an array of intent models, prioritizing wallet-to-link transfer intents.
+ *
+ * This function ensures that TRANSFER_WALLET_TO_LINK intents appear first in the sorted array,
+ * which is important for displaying transfer actions to users in the correct order.
+ * Other intent types maintain their original relative order.
+ *
+ * @param intents - Array of intent models to sort, or undefined
+ * @returns Sorted array of intent models with wallet-to-link transfers appearing first
+ */
 const sortIntents = (intents: IntentModel[] | undefined) => {
     return (intents ?? []).sort((a, b) => {
         if (a.task === TASK.TRANSFER_WALLET_TO_LINK && b.task !== TASK.TRANSFER_WALLET_TO_LINK) {
