@@ -2,17 +2,14 @@ import { FC } from "react";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { Status } from "@/components/ui/status";
 import { mapIntentsStateToStatus } from "@/utils/map/status.map";
-import { Fee } from "@/components/ui/fee";
 import { useTranslation } from "react-i18next";
-import { Asset } from "@/components/ui/asset";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { useTokenStore } from "@/stores/tokenStore";
 import { convert } from "@/utils/helpers/convert";
-import { useFeeTotal } from "@/hooks/useFeeMetadata";
 import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
 import { ICP_LOGO } from "@/const";
-import { NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
 import { formatPrice } from "@/utils/helpers/currency";
+import { AssetAvatar } from "../ui/asset-avatar";
 
 interface TransactionItemProps {
     title: string;
@@ -46,9 +43,9 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
             <div className="flex justify-between items-center w-full">
                 <div className="flex items-center gap-1.5">
                     <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                        <AvatarImage
+                        <AssetAvatar
                             src={assetSrc || ICP_LOGO}
-                            alt={assetSymbol}
+                            symbol={assetSymbol}
                             className="w-full h-full object-cover"
                         />
                     </Avatar>

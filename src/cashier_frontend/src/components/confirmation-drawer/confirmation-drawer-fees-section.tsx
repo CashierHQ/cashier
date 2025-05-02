@@ -1,45 +1,51 @@
 import { FC, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+// import { useTranslation } from "react-i18next";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { IntentHelperService } from "@/services/fee.service";
-import { convert } from "@/utils/helpers/convert";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
 import { useTokenStore } from "@/stores/tokenStore";
-import { Label } from "../ui/label";
 import { ICP_ADDRESS } from "@/const";
-import { getTokenImage } from "@/utils";
 import { ChevronRight } from "lucide-react";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { FeeBreakdownDrawer } from "./fee-breakdown-drawer";
+import { AssetAvatar } from "../ui/asset-avatar";
+import { Avatar } from "../ui/avatar";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
     isUsd?: boolean;
 };
 
-const getItemLabel = (intent: IntentModel) => {
-    switch (intent.task) {
-        case TASK.TRANSFER_LINK_TO_WALLET:
-            return "transaction.confirm_popup.total_assets_received_label";
-        case TASK.TRANSFER_WALLET_TO_LINK:
-        case TASK.TRANSFER_WALLET_TO_TREASURY:
-        default:
-            return "transaction.confirm_popup.total_cashier_fees_label";
-    }
+// Define a type for fee token info
+type FeeTokenInfo = {
+    address: string;
+    symbol: string;
+    logo?: string;
 };
+
+// const getItemLabel = (intent: IntentModel) => {
+//     switch (intent.task) {
+//         case TASK.TRANSFER_LINK_TO_WALLET:
+//             return "transaction.confirm_popup.total_assets_received_label";
+//         case TASK.TRANSFER_WALLET_TO_LINK:
+//         case TASK.TRANSFER_WALLET_TO_TREASURY:
+//         default:
+//             return "transaction.confirm_popup.total_cashier_fees_label";
+//     }
+// };
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
 }) => {
-    const { t } = useTranslation();
+    // const { t } = useTranslation();
     const { feeAmount } = useIntentMetadata(intents?.[0]);
 
-    const { assetSymbol } = useIntentMetadata(intents?.[0]);
     const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
     const isLoading = useTokenStore((state) => state.isLoading);
+    const getToken = useTokenStore((state) => state.getToken);
 
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
     const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
@@ -52,6 +58,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
             usdAmount: string;
         }>
     >([]);
+    const [usedTokens, setUsedTokens] = useState<FeeTokenInfo[]>([]);
 
     const tokenUsdPrice = getTokenPrice(ICP_ADDRESS);
 
@@ -73,12 +80,23 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 tokenAddress: string;
                 usdAmount: string;
             }> = [];
+            const tokensUsed: FeeTokenInfo[] = [];
 
             for (const transfer of totalFeesMapArray) {
                 if (transfer.fee?.amount) {
                     // Get token metadata to get the correct decimals
                     const metadata = await TokenUtilService.getTokenMetadata(transfer.fee.address);
                     if (metadata) {
+                        // Add token info to tracking array if not already present
+                        if (!tokensUsed.some((t) => t.address === transfer.fee!.address)) {
+                            const token = getToken(transfer.fee.address);
+                            tokensUsed.push({
+                                address: transfer.fee.address,
+                                symbol: metadata.symbol,
+                                logo: token?.logo,
+                            });
+                        }
+
                         // Convert using correct token decimals
                         const feeAmount = convertDecimalBigIntToNumber(
                             transfer.fee.amount,
@@ -120,6 +138,9 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 }
             }
 
+            // Keep track of used tokens for rendering icons
+            setUsedTokens(tokensUsed);
+
             // If we have no breakdown items but have intents, add a fallback
             if (breakdown.length === 0 && intents.length > 0) {
                 // Add a default fee since we know there should be fees
@@ -144,6 +165,18 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     });
 
                     totalFeesDisplay = defaultFeeAmount;
+
+                    // Add to used tokens if not already present
+                    if (!tokensUsed.some((t) => t.address === intent.asset.address)) {
+                        const token = getToken(intent.asset.address);
+                        setUsedTokens([
+                            {
+                                address: intent.asset.address,
+                                symbol: metadata.symbol,
+                                logo: token?.logo,
+                            },
+                        ]);
+                    }
                 }
             }
 
@@ -189,6 +222,55 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
         setIsBreakdownOpen(false);
     };
 
+    // Render stacked asset avatars for multiple tokens, or single avatar for one token
+    const renderFeeTokenAvatars = () => {
+        if (usedTokens.length === 0) {
+            // Fallback to ICP if no tokens found
+            const token = getToken(ICP_ADDRESS);
+            return (
+                <AssetAvatar
+                    symbol={token?.symbol || "ICP"}
+                    src={token?.logo}
+                    className="w-7 h-7 rounded-full"
+                />
+            );
+        } else if (usedTokens.length === 1) {
+            // Show single token avatar
+            const tokenInfo = usedTokens[0];
+            return (
+                <AssetAvatar
+                    symbol={tokenInfo.symbol || "ICP"}
+                    src={tokenInfo.logo}
+                    className="w-7 h-7 rounded-full"
+                />
+            );
+        } else {
+            // Calculate width based on number of tokens (each offset by 10px)
+            const width = Math.min(usedTokens.length, 3) * 10 + 15; // Base width + offset for each token
+
+            // Create staggered effect for multiple tokens
+            return (
+                <div className="relative" style={{ width: `${width}px`, height: "30px" }}>
+                    {usedTokens.slice(0, 3).map((tokenInfo, index) => {
+                        return (
+                            <Avatar
+                                key={tokenInfo.address}
+                                className="w-6 h-6 rounded-full border-2 border-white absolute"
+                                style={{ left: `${index * 10}px`, zIndex: 3 - index }}
+                            >
+                                <AssetAvatar
+                                    symbol={tokenInfo.symbol || "Token"}
+                                    src={tokenInfo.logo}
+                                    className="w-full h-full"
+                                />
+                            </Avatar>
+                        );
+                    })}
+                </div>
+            );
+        }
+    };
+
     return (
         <>
             <section id="confirmation-popup-section-total" className="mb-3">
@@ -196,12 +278,8 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     <h2 className="font-medium text-[14px] ml-2">Total fees</h2>
                 </div>
                 <div className="flex flex-col gap-3 light-borders-green px-4 py-4">
-                    <div className="flex justify-between font-medium">
-                        <img
-                            src={getTokenImage(ICP_ADDRESS)}
-                            alt="ICP"
-                            className="w-7 h-7 rounded-full"
-                        />
+                    <div className="flex justify-between font-medium items-center">
+                        {renderFeeTokenAvatars()}
 
                         <div className="flex items-center">
                             {isLoading || !totalCashierFee ? (

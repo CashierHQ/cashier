@@ -1,7 +1,6 @@
 import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
-import { IoIosClose } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-section";
 import { useConfirmButtonState, usePrimaryIntents } from "./confirmation-drawer.hooks";
@@ -211,24 +210,24 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 );
             } else {
                 return (
-                     <>
-                            <ConfirmationPopupAssetsSection
-                                intents={primaryIntents}
-                                onInfoClick={onInfoClick}
-                                isUsd={isUsd}
-                                onUsdClick={() => setIsUsd((old) => !old)}
-                            />
-                            <ConfirmationPopupFeesSection intents={primaryIntents} />
+                    <>
+                        <ConfirmationPopupAssetsSection
+                            intents={primaryIntents}
+                            onInfoClick={onInfoClick}
+                            isUsd={isUsd}
+                            onUsdClick={() => setIsUsd((old) => !old)}
+                        />
+                        <ConfirmationPopupFeesSection intents={primaryIntents} />
 
-                            <ConfirmationPopupLegalSection />
-                            <Button
-                                className="my-3 mx-auto py-6 w-[95%] disabled:bg-disabledgreen"
-                                disabled={isDisabled}
-                                onClick={onClickSubmit}
-                            >
-                                {buttonText}
-                            </Button>
-                        </>
+                        <ConfirmationPopupLegalSection />
+                        <Button
+                            className="my-3 mx-auto py-6 w-[95%] disabled:bg-disabledgreen"
+                            disabled={isDisabled}
+                            onClick={onClickSubmit}
+                        >
+                            {buttonText}
+                        </Button>
+                    </>
                 );
             }
         } else {

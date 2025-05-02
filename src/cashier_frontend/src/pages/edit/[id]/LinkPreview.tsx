@@ -28,6 +28,7 @@ import { InformationOnAssetDrawer } from "@/components/information-on-asset-draw
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
+import { AssetAvatar } from "@/components/ui/asset-avatar";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -69,12 +70,11 @@ export default function LinkPreview({
         createNewLink,
         isLoading,
     } = useLinkAction();
-    const { getToken, getTokenPrice } = useTokens();
+    const { getToken, getTokenPrice, rawTokenList, createTokenMap } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
     const [showAssetInfo, setShowAssetInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
-    const { rawTokenList, createTokenMap } = useTokens();
     const { getUserInput, addUserInput } = useLinkCreationFormStore();
     const identity = useIdentity();
 
@@ -278,13 +278,15 @@ export default function LinkPreview({
                                 <div key={index} className="flex justify-between items-center">
                                     <div className="flex items-center gap-1.5">
                                         <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                                            <AvatarImage
+                                            <AssetAvatar
                                                 src={
                                                     asset.address === ICP_ADDRESS
                                                         ? ICP_LOGO
                                                         : asset.logo
                                                 }
-                                                alt={tokenSymbol || asset.address}
+                                                symbol={
+                                                    getToken(asset.address)?.symbol || asset.address
+                                                }
                                                 className="w-full h-full object-cover"
                                             />
                                         </Avatar>

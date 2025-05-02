@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { IntentModel } from "@/services/types/intent.service.types";
 import { getTokenImage } from "@/utils";
 import { ICP_LOGO } from "@/const";
+import { AssetAvatar } from "../ui/asset-avatar";
 
 export type FeeBreakdownDrawerProps = {
     open?: boolean;
@@ -55,9 +55,9 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                                         <span className="text-[14px] font-normal">
                                             {fee.amount} {fee.tokenSymbol}
                                         </span>
-                                        <img
+                                        <AssetAvatar
                                             src={getTokenImage(fee.tokenAddress) || ICP_LOGO}
-                                            alt={fee.tokenSymbol}
+                                            symbol={fee.tokenSymbol}
                                             className="w-5 h-5 rounded-full"
                                         />
                                     </div>

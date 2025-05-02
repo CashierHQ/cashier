@@ -4,6 +4,10 @@ import { cn } from "@/lib/utils";
 
 type AssetAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
     src?: string | undefined;
+
+    /**
+     * Symbol text that is displayed as fallback when image source is not found or while loading
+     */
     symbol?: string | undefined;
 };
 
