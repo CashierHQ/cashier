@@ -69,8 +69,6 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     const formTokenAddress = watch(`assets.${index}.tokenAddress`);
     const formLabel = watch(`assets.${index}.label`);
 
-    console.log("token ", token);
-
     // Sync local state with form when form amount changes
     useEffect(() => {
         if (token && formAmount !== undefined) {

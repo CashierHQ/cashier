@@ -51,7 +51,7 @@ export default function HomePage() {
             console.log("create link with identity: ", creator);
 
             //! mirror create local storage
-            const linkId = new LinkLocalStorageService().createLink(creator);
+            const linkId = new LinkLocalStorageService(creator).createLink();
 
             addUserInput(linkId, {
                 linkId: linkId,

@@ -25,6 +25,9 @@ import LinkLocalStorageService, {
 } from "@/services/link/link-local-storage.service";
 import { Info } from "lucide-react";
 import { InformationOnAssetDrawer } from "@/components/information-on-asset-drawer/information-on-asset-drawer";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { useIdentity } from "@nfid/identitykit/react";
+import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -43,7 +46,7 @@ interface EnhancedAsset {
 }
 
 export default function LinkPreview({
-    onInvalidActon = () => {},
+    // onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
 }: LinkPreviewProps) {
@@ -58,6 +61,7 @@ export default function LinkPreview({
 
     const {
         link,
+        action,
         setAction,
         refetchLinkDetail,
         callLinkStateMachine,
@@ -71,13 +75,25 @@ export default function LinkPreview({
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
     const { rawTokenList, createTokenMap } = useTokens();
+    const { getUserInput, addUserInput } = useLinkCreationFormStore();
+    const identity = useIdentity();
 
     // State for enhanced asset info with logos
     const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
+    const [redirectCounter, setRedirectCounter] = useState(0);
+
+    // Check if there's an existing action and show confirmation drawer
+    useEffect(() => {
+        if (action && action.type === ACTION_TYPE.CREATE_LINK) {
+            setShowConfirmation(true);
+        }
+    }, [action]);
 
     // Effect to map rawTokenList logos to asset_info
     useEffect(() => {
         const tokenMap = createTokenMap();
+        const userInputData = oldIdParam ? getUserInput(oldIdParam) : undefined;
+
         if (link?.asset_info && tokenMap) {
             const enhanced = link.asset_info.map((asset) => {
                 const matchingToken = tokenMap[asset.address];
@@ -87,25 +103,45 @@ export default function LinkPreview({
                 };
             });
             setEnhancedAssets(enhanced);
+        } else if (userInputData && userInputData.assets && tokenMap) {
+            const enhanced = userInputData.assets.map((asset) => {
+                const matchingToken = tokenMap[asset.address];
+                return {
+                    address: asset.address,
+                    amountPerUse: asset.linkUseAmount,
+                    logo: matchingToken?.logo || getTokenImage(asset.address),
+                    label: asset.label,
+                    chain: asset.chain,
+                };
+            });
+            setEnhancedAssets(enhanced);
         }
     }, [link?.asset_info, rawTokenList]);
 
-    // Effect to handle redirect and process action
+    // Effect to handle redirect and call process action if redirect is true
     useEffect(() => {
         if (shouldRedirect && link && !link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
+            setRedirectCounter((prev) => {
+                const newCount = prev + 1;
+                console.log(`Redirect effect called ${newCount} times`);
+                return newCount;
+            });
+
             const handleRedirect = async () => {
+                if (redirectCounter >= 1) return;
                 try {
                     setIsDisabled(true);
                     await handleCreateAction();
 
-                    if (oldIdParam) {
-                        const localStorageService = new LinkLocalStorageService();
+                    if (oldIdParam && identity) {
+                        const localStorageService = new LinkLocalStorageService(
+                            identity.getPrincipal().toString(),
+                        );
                         localStorageService.deleteLink(oldIdParam);
                     }
 
                     setShowConfirmation(true);
                 } catch (error) {
-                    console.error("Error processing action", error);
                     if (isCashierError(error)) {
                         onCashierError(error);
                     }
@@ -119,6 +155,7 @@ export default function LinkPreview({
     }, [shouldRedirect, link]);
 
     const { data: feeData } = useFeePreview(link?.id);
+    const feeTotal = useFeeTotal(feeData ?? []) || 0;
 
     const handleCreateAction = async () => {
         if (!link) {
@@ -136,8 +173,15 @@ export default function LinkPreview({
                 // First create the link in the backend
                 const res = await createNewLink(link.id);
 
+                if (!res) {
+                    throw new Error("Failed to create new link");
+                }
+
+                const input = mapLinkDtoToUserInputItem(res?.link);
+                addUserInput(res.link.id, input);
+
                 if (res) {
-                    navigate(`/edit/${res.id}?redirect=true&oldId=${res.oldId}`);
+                    navigate(`/edit/${res.link.id}?redirect=true&oldId=${res.oldId}`);
                 }
             } else {
                 handleCreateAction();
@@ -285,8 +329,7 @@ export default function LinkPreview({
                         <div className="flex flex-col items-end">
                             <div className="flex items-center gap-1">
                                 <p className="text-[14px] font-normal">
-                                    {formatPrice((useFeeTotal(feeData ?? []) || 0).toString())}{" "}
-                                    {NETWORK_FEE_DEFAULT_SYMBOL}
+                                    {formatPrice(feeTotal.toString())} {NETWORK_FEE_DEFAULT_SYMBOL}
                                 </p>
                             </div>
                             <p className="text-[10px] font-normal text-grey/50">
@@ -294,7 +337,7 @@ export default function LinkPreview({
                                 {formatPrice(
                                     (
                                         convert(
-                                            useFeeTotal(feeData ?? []),
+                                            feeTotal,
                                             getTokenPrice(NETWORK_FEE_DEFAULT_ADDRESS) || 0,
                                         ) || 0
                                     ).toString(),

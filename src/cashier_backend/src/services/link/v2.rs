@@ -327,7 +327,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             match intent.task.clone() {
                 IntentTask::TransferWalletToLink => {
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    info!("[link_assemble_intents] link: {:#?}", link);
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         error!("label {:#?}", intent.label);
                         CanisterError::HandleLogicError(
@@ -1477,7 +1476,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         &self,
         caller: String,
         input: CreateLinkInputV2,
-    ) -> Result<String, String> {
+    ) -> Result<Link, CanisterError> {
         let user_wallet = self
             .user_wallet_repository
             .get(&caller)
@@ -1540,10 +1539,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
             self.user_link_repository.delete(new_user_link);
-            return Err(format!(
-                "Failed to transition from ChooseLinkType to AddAssets: {}",
+            return Err(CanisterError::HandleLogicError(format!(
+                "Create link failed: transition from ChooseLinkType to AddAssets{}",
                 result.err().unwrap()
-            ));
+            )));
         }
 
         // Second transition: AddAssets -> Preview
@@ -1571,10 +1570,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
             self.user_link_repository.delete(new_user_link);
-            return Err(format!(
-                "Failed to transition from AddAssets to Preview: {}",
+            return Err(CanisterError::HandleLogicError(format!(
+                "Create link failed: transition from AddAssets to Preview: {}",
                 result.err().unwrap()
-            ));
+            )));
         }
 
         // Second transition: Preview -> CreateLink
@@ -1601,14 +1600,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
             self.user_link_repository.delete(new_user_link);
-            return Err(format!(
-                "Failed to transition from Preview to CreateLink: {}",
+            return Err(CanisterError::HandleLogicError(format!(
+                "Create link failed: transition from Preview to CreateLink: {}",
                 result.err().unwrap()
-            ));
+            )));
         }
 
         // Successfully reached CreateLink state
-        Ok(link_id_str)
+        result
     }
 
     /// Get links by principal

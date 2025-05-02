@@ -75,7 +75,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 const response = await icrc112Execute({
                     transactions: processActionResult.icrc112Requests,
                 });
-                console.log("🚀 ~ icrc112Execute ~ response:", response);
                 if (response) {
                     const secondUpdatedAction = await updateAction({
                         actionId: action.id,
@@ -83,9 +82,11 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         external: true,
                     });
 
-                    console.log("🚀 ~ secondUpdatedAction:", secondUpdatedAction);
-
                     if (secondUpdatedAction) {
+                        console.log(
+                            "Setting action after updateAction in claim flow:",
+                            secondUpdatedAction,
+                        );
                         setAction(secondUpdatedAction);
                         onActionResult(secondUpdatedAction);
                     }
@@ -93,6 +94,10 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             }
 
             if (processActionResult) {
+                console.log(
+                    "Setting action after processAction in claim flow:",
+                    processActionResult,
+                );
                 setAction(processActionResult);
                 onActionResult(processActionResult);
             }
@@ -105,6 +110,10 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 actionType: ACTION_TYPE.CLAIM_LINK,
             });
             if (processActionResult) {
+                console.log(
+                    "Setting action after processActionAnonymous in claim flow:",
+                    processActionResult,
+                );
                 setAction(processActionResult);
                 onActionResult(processActionResult);
             }
@@ -124,11 +133,10 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             const response = await icrc112Execute({
                 transactions: firstUpdatedAction.icrc112Requests,
             });
-            console.log("🚀 ~ icrc112Execute ~ response:", response);
             if (response) {
                 const secondUpdatedAction = await updateAction({
-                    actionId: action!.id,
-                    linkId: link!.id,
+                    actionId: action.id,
+                    linkId: link.id,
                     external: true,
                 });
 
@@ -178,42 +186,32 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             ? t("transaction.confirm_popup.link_creation_success_title")
             : t("transaction.confirm_popup.title");
 
-    return (
-        <Drawer open={open}>
-            <DrawerContent className="max-w-[400px] mx-auto p-3 rounded-t-[1.5rem]">
-                <DrawerHeader>
-                    <DrawerTitle className="flex relative justify-center items-center">
-                        <div className="text-center w-[100%] text-[18px] font-semibold">
-                            {title}
-                        </div>
-                        <ChevronLeft
-                            onClick={onClose}
-                            strokeWidth={1.5}
-                            className="ml-auto cursor-pointer absolute left-0"
-                            size={28}
-                        />
-                    </DrawerTitle>
-                </DrawerHeader>
-                {action ? (
-                    action.state === ACTION_STATE.SUCCESS ? (
-                        <div className="flex flex-col items-center justify-center">
-                            <div className="flex items-center justify-center bg-lightgreen rounded-full p-2 my-4">
-                                <Check color="#35A18A" size={42} />
-                            </div>
-                            <div className="text-center text-sm font-medium">
-                                {t("transaction.confirm_popup.link_creation_success_message")}
-                            </div>
+    const getContent = (action: ActionModel | undefined) => {
+        console.log("🚀 ~ ConfirmationDrawer ~ action:", action);
 
-                            <Button
-                                className="mb-3 mt-8 mx-auto py-6 w-[95%]"
-                                disabled={isDisabled}
-                                onClick={onClickSubmit}
-                            >
-                                {buttonText}
-                            </Button>
+        if (action) {
+            if (action.state === ACTION_STATE.SUCCESS) {
+                return (
+                    <div className="flex flex-col items-center justify-center">
+                        <div className="flex items-center justify-center bg-lightgreen rounded-full p-2 my-4">
+                            <Check color="#35A18A" size={42} />
                         </div>
-                    ) : (
-                        <>
+                        <div className="text-center text-sm font-medium">
+                            {t("transaction.confirm_popup.link_creation_success_message")}
+                        </div>
+
+                        <Button
+                            className="mb-3 mt-8 mx-auto py-6 w-[95%]"
+                            disabled={isDisabled}
+                            onClick={onClickSubmit}
+                        >
+                            {buttonText}
+                        </Button>
+                    </div>
+                );
+            } else {
+                return (
+                     <>
                             <ConfirmationPopupAssetsSection
                                 intents={primaryIntents}
                                 onInfoClick={onInfoClick}
@@ -231,10 +229,34 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                                 {buttonText}
                             </Button>
                         </>
-                    )
-                ) : (
+                );
+            }
+        } else {
+            return (
+                <>
                     <ConfirmationPopupSkeleton />
-                )}
+                </>
+            );
+        }
+    };
+
+    return (
+        <Drawer open={open}>
+            <DrawerContent className="max-w-[400px] mx-auto p-3 rounded-t-[1.5rem]">
+                <DrawerHeader>
+                    <DrawerTitle className="flex relative justify-center items-center">
+                        <div className="text-center w-[100%] text-[18px] font-semibold">
+                            {title}
+                        </div>
+                        <ChevronLeft
+                            onClick={onClose}
+                            strokeWidth={1.5}
+                            className="ml-auto cursor-pointer absolute left-0"
+                            size={28}
+                        />
+                    </DrawerTitle>
+                </DrawerHeader>
+                {getContent(action)}
             </DrawerContent>
         </Drawer>
     );

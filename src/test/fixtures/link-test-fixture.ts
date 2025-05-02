@@ -64,11 +64,16 @@ export class LinkTestFixture {
             currentTime?: number;
             airdropAmount?: bigint;
             useMultipleTokens?: boolean;
+            advanceTimeAfterSetup?: number;
         } = {},
     ) {
         // Default time if not provided
         const currentTime = options.currentTime || new Date(1734434601000).getTime();
         const airdropAmount = options.airdropAmount || BigInt(1_0000_0000_0000);
+        const advanceTimeAfterSetup =
+            options.advanceTimeAfterSetup !== undefined
+                ? options.advanceTimeAfterSetup
+                : 5 * 60 * 1000; // Default 5 minutes
 
         // Create PocketIc instance
         this.pic = await PocketIc.create(process.env.PIC_URL);
@@ -130,7 +135,7 @@ export class LinkTestFixture {
         this.linkHelper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
 
         // Advance time to ensure we're ready for transactions
-        await this.pic.advanceTime(5 * 60 * 1000);
+        await this.pic.advanceTime(advanceTimeAfterSetup);
         await this.pic.tick(50);
 
         // Default back to Alice's identity
@@ -180,7 +185,7 @@ export class LinkTestFixture {
         const response = await this.actor.create_link_v2(input);
         const linkId = parseResultResponse(response);
 
-        return linkId;
+        return linkId.id;
     }
 
     async setupTemplate(linkId: string, config: LinkConfig): Promise<any> {
@@ -460,8 +465,17 @@ export class LinkTestFixture {
     ): Promise<string> {
         // Create link
         const linkId = await this.createLinkV2(linkType, config, assets, maxUseCount);
-
         return linkId;
+    }
+
+    async createActionForLink(
+        linkId: string,
+        actionType: string,
+    ): Promise<{ linkId: string; actionId: string }> {
+        // Create action
+        const actionId = await this.createAction(linkId, actionType);
+
+        return { linkId, actionId };
     }
 
     // Complete link creation flow in one function
