@@ -8,6 +8,7 @@ export interface MediaQuery {
     isSmallDevice: boolean;
     showCompactHeader: (pathname: string) => boolean;
     hideHeader: (pathname: string) => boolean;
+    showHeaderWithBackButtonAndWalletButton: (pathname: string, search?: string) => boolean;
 }
 
 export function useResponsive(): MediaQuery {
@@ -19,6 +20,8 @@ export function useResponsive(): MediaQuery {
         "/wallet/details",
     ];
     const compactHeaderPaths = ["/wallet"];
+
+    const headerWithBackButtonAndWalletButtonPaths = [/^\/[^/]+$/]; // Matches paths like "/uuid"
 
     const isSmallDevice = useMediaQuery("only screen and (max-width : 768px)");
     const isMediumDevice = useMediaQuery(
@@ -36,6 +39,18 @@ export function useResponsive(): MediaQuery {
         (pathname: string) => hideHeaderPaths.some((path) => pathname.startsWith(path)),
         [hideHeaderPaths],
     );
+    const showHeaderWithBackButtonAndWalletButton = useCallback(
+        (pathname: string, search?: string) => {
+            const matchesPath = headerWithBackButtonAndWalletButtonPaths.some((pattern) =>
+                pattern.test(pathname),
+            );
+            const matchesQuery = search
+                ? new URLSearchParams(search).get("step") === "claim"
+                : false;
+            return matchesPath && matchesQuery;
+        },
+        [headerWithBackButtonAndWalletButtonPaths],
+    );
     return {
         isLargeDevice,
         isMediumDevice,
@@ -43,5 +58,6 @@ export function useResponsive(): MediaQuery {
         isSmallDevice,
         showCompactHeader,
         hideHeader,
+        showHeaderWithBackButtonAndWalletButton,
     };
 }
