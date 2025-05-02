@@ -60,14 +60,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
         initState();
     }, [intents]);
 
-    const calculateTotalCashierFee = () => {
-        if (intents[0].task === TASK.TRANSFER_LINK_TO_WALLET && totalCashierFee && feeAmount) {
-            return totalCashierFee - feeAmount;
-        } else {
-            return totalCashierFee;
-        }
-    };
-
     return (
         <section id="confirmation-popup-section-total" className="mb-3">
             <div className="flex items-center w-full justify-between">
