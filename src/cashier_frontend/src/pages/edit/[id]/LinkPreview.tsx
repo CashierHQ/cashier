@@ -80,6 +80,10 @@ export default function LinkPreview({
 
     // State for enhanced asset info with logos
     const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
+
+    // flag to indicate if the action is in progress
+    const [createActionInProgress, setCreateActionInProgress] = useState(false);
+    // Debug state for countering redirects
     const [redirectCounter, setRedirectCounter] = useState(0);
 
     // Check if there's an existing action and show confirmation drawer
@@ -119,40 +123,67 @@ export default function LinkPreview({
     }, [link?.asset_info, rawTokenList]);
 
     // Effect to handle redirect and call process action if redirect is true
+    // IMPORTANT: This effect previously caused multiple calls to handleCreateAction, resulting in backend errors.
+    // Problems that were fixed:
+    // 1. Missing flag to prevent multiple simultaneous calls (createActionInProgress)
+    // 2. Effect would re-trigger whenever link or action updated, causing chain reactions
+    // 3. Effect didn't properly check if action already existed before creating a new one
+    // 4. Missing action dependency in dependency array
+    //
+    // Solution:
+    // - Added createActionInProgress flag to prevent duplicate calls
+    // - Added proper conditionals to skip when already in progress or when unnecessary
+    // - Only call handleCreateAction if no action exists
+    // - Fixed dependency array to include action
+    // - Added counter for debugging purposes
     useEffect(() => {
-        if (shouldRedirect && link && !link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
-            setRedirectCounter((prev) => {
-                const newCount = prev + 1;
-                console.log(`Redirect effect called ${newCount} times`);
-                return newCount;
-            });
-
-            const handleRedirect = async () => {
-                if (redirectCounter >= 1) return;
-                try {
-                    setIsDisabled(true);
-                    await handleCreateAction();
-
-                    if (oldIdParam && identity) {
-                        const localStorageService = new LinkLocalStorageService(
-                            identity.getPrincipal().toString(),
-                        );
-                        localStorageService.deleteLink(oldIdParam);
-                    }
-
-                    setShowConfirmation(true);
-                } catch (error) {
-                    if (isCashierError(error)) {
-                        onCashierError(error);
-                    }
-                } finally {
-                    setIsDisabled(false);
-                }
-            };
-
-            handleRedirect();
+        // Skip if already redirecting or if we don't have necessary data
+        if (
+            createActionInProgress ||
+            !link ||
+            !shouldRedirect ||
+            link.id.startsWith(LOCAL_lINK_ID_PREFIX)
+        ) {
+            return;
         }
-    }, [shouldRedirect, link]);
+
+        // Track the number of times this effect is triggered (for debugging)
+        setRedirectCounter((prev) => {
+            const newCount = prev + 1;
+            console.log(`Redirect effect called ${newCount} times`);
+            console.log("timestamp:", new Date().toISOString());
+            return newCount;
+        });
+
+        const handleRedirect = async () => {
+            try {
+                setIsDisabled(true);
+                setCreateActionInProgress(true); // Set flag to prevent multiple calls
+
+                // Only call handleCreateAction if there's no action yet
+                if (!action) {
+                    await handleCreateAction();
+                }
+
+                if (oldIdParam && identity) {
+                    const localStorageService = new LinkLocalStorageService(
+                        identity.getPrincipal().toString(),
+                    );
+                    localStorageService.deleteLink(oldIdParam);
+                }
+
+                setShowConfirmation(true);
+            } catch (error) {
+                if (isCashierError(error)) {
+                    onCashierError(error);
+                }
+            } finally {
+                setIsDisabled(false);
+            }
+        };
+
+        handleRedirect();
+    }, [shouldRedirect, link, action]); // Added action as dependency
 
     const { data: feeData } = useFeePreview(link?.id);
     const feeTotal = useFeeTotal(feeData ?? []) || 0;
@@ -184,7 +215,9 @@ export default function LinkPreview({
                     navigate(`/edit/${res.link.id}?redirect=true&oldId=${res.oldId}`);
                 }
             } else {
-                handleCreateAction();
+                if (!action) {
+                    handleCreateAction();
+                }
                 setShowConfirmation(true);
             }
         } catch (error) {
