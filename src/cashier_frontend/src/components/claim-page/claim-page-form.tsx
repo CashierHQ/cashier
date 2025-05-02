@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { IoIosArrowBack, IoMdClose } from "react-icons/io";
 import { IoWalletOutline } from "react-icons/io5";
 import { PiWallet } from "react-icons/pi";
 import { HiOutlineWallet } from "react-icons/hi2";
@@ -22,7 +21,7 @@ import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore, WALLET_OPTIONS } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
-import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { ClipboardIcon } from "lucide-react";

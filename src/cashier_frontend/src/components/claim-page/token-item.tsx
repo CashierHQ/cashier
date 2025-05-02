@@ -1,11 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { getTokenImage } from "@/utils";
-import { TokenUtilService } from "@/services/tokenUtils.service";
-import { TokenMetadata } from "@/types/fungible-token.speculative";
-import { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
-import { Loader2 } from "lucide-react";
 import { useTokenStore } from "@/stores/tokenStore";
+import { AssetAvatar } from "../ui/asset-avatar";
 interface TokenItemProps {
     asset: LinkDetailModel["asset_info"][0];
 }
@@ -18,14 +14,10 @@ const TokenItem: React.FC<TokenItemProps> = ({ asset }) => {
         <div className="flex justify-between ml-1">
             <div className="flex items-center">
                 <div className="flex gap-x-5 items-center">
-                    <img
+                    <AssetAvatar
                         src={token?.logo}
-                        alt={token?.symbol}
+                        symbol={token?.symbol}
                         className="w-10 h-10 rounded-sm mr-3"
-                        onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = `./defaultLinkImage.png`;
-                        }}
                     />
                 </div>
                 <div className="mr-3">{token?.symbol || asset.address}</div>

@@ -1,4 +1,3 @@
-import { ArrowUpDown, Info } from "lucide-react";
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { TransactionItem } from "@/components/transaction/transaction-item";
@@ -26,9 +25,7 @@ const getLabel = (intent: IntentModel) => {
 
 export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
     intents,
-    onInfoClick,
     isUsd,
-    onUsdClick,
 }) => {
     const { t } = useTranslation();
 
