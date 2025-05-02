@@ -1,7 +1,6 @@
 import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
-import { IoIosClose } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-section";
 import { useConfirmButtonState, usePrimaryIntents } from "./confirmation-drawer.hooks";
@@ -14,7 +13,8 @@ import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
-import { Check } from "lucide-react";
+import { Check, ChevronLeft } from "lucide-react";
+import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -217,6 +217,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                             isUsd={isUsd}
                             onUsdClick={() => setIsUsd((old) => !old)}
                         />
+                        <ConfirmationPopupFeesSection intents={primaryIntents} />
 
                         <ConfirmationPopupLegalSection />
                         <Button
@@ -242,13 +243,15 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         <Drawer open={open}>
             <DrawerContent className="max-w-[400px] mx-auto p-3 rounded-t-[1.5rem]">
                 <DrawerHeader>
-                    <DrawerTitle className="relative flex items-center justify-center">
-                        <div className="text-center text-xl">{title}</div>
-
-                        <IoIosClose
+                    <DrawerTitle className="flex relative justify-center items-center">
+                        <div className="text-center w-[100%] text-[18px] font-semibold">
+                            {title}
+                        </div>
+                        <ChevronLeft
                             onClick={onClose}
-                            className="absolute right-0 cursor-pointer"
-                            size={42}
+                            strokeWidth={1.5}
+                            className="ml-auto cursor-pointer absolute left-0"
+                            size={28}
                         />
                     </DrawerTitle>
                 </DrawerHeader>
