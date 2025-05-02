@@ -26,6 +26,7 @@ import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { ClipboardIcon } from "lucide-react";
 import TokenItem from "./token-item";
+import { IoMdClose } from "react-icons/io";
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
