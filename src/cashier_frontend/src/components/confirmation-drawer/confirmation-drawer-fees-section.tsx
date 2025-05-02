@@ -10,6 +10,7 @@ import { useTokenStore } from "@/stores/tokenStore";
 import { Label } from "../ui/label";
 import { ICP_ADDRESS } from "@/const";
 import { getTokenImage } from "@/utils";
+import { ChevronRight } from "lucide-react";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -84,14 +85,15 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                         {isLoading || !totalCashierFee ? (
                             <Spinner width={22} />
                         ) : (
-                            <>
+                            <button className="flex items-center">
                                 <p className="text-[14px] font-normal">
-                                    ${totalCashierFee.toFixed(4)}
+                                    ~${totalCashierFee.toFixed(4)}
                                 </p>
+                                <ChevronRight size={24} className="ml-1" />
                                 {/* {tokenUsdPrice !== undefined &&
                                     `($${convert(calculateTotalCashierFee(), tokenUsdPrice)?.toFixed(3)}) ≈ `}
                                 {calculateTotalCashierFee()} {assetSymbol} */}
-                            </>
+                            </button>
                         )}
                     </div>
                 </div>
