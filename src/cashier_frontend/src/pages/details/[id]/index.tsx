@@ -25,6 +25,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
+import { AssetAvatar } from "@/components/ui/asset-avatar";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -279,14 +280,14 @@ export default function DetailPage() {
                                                           Math.pow(10, token.decimals)
                                                         : "-"}
                                                 </p>
-                                                <img
-                                                    src={token.logo}
-                                                    alt="token-icon"
-                                                    className="w-4 h-4"
-                                                />
                                                 <p className="text-sm text-primary/80">
                                                     {token.symbol}
                                                 </p>
+                                                <AssetAvatar
+                                                    src={token.logo}
+                                                    symbol={token.symbol}
+                                                    className="w-4 h-4"
+                                                />
                                             </div>
                                         </div>
                                     );
