@@ -800,14 +800,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // Update link's properties here
         let mut updated_link = link.clone();
 
-        // update tip link's total_claim
-        if link.link_type == Some(LinkType::SendTip) && action.r#type == ActionType::Claim {
-            // Update asset info to track the claim
-            updated_link.link_use_action_counter += 1;
-        } else if link.link_type == Some(LinkType::SendAirdrop)
-            && action.r#type == ActionType::Claim
-        {
-            updated_link.link_use_action_counter += 1;
+        let list_send_link_type = [
+            LinkType::SendTip,
+            LinkType::SendAirdrop,
+            LinkType::SendTokenBasket,
+        ];
+
+        if list_send_link_type.contains(&link.link_type.unwrap()) {
+            if action.r#type == ActionType::Claim {
+                // Update asset info to track the claim
+                updated_link.link_use_action_counter += 1;
+            }
         }
 
         // Save the updated link
@@ -1297,6 +1300,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
             // ===== Continue Go to =====
             if link_state_goto == LinkStateMachineGoto::Continue {
+                info!(
+                    "[handle_link_state_transition] create action: {:#?}",
+                    create_action
+                );
                 if create_action.is_none() {
                     return Err(CanisterError::ValidationErrors(
                         "Create action not found".to_string(),

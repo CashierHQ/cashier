@@ -54,14 +54,14 @@ export class Icrc112Executor {
         this.trigger_tx_id = trigger_tx_id;
     }
 
-    public async execute() {
+    public async execute(amount: bigint = BigInt(10_0000_0000)) {
         for (const row of this.icrc_112_requests) {
             for (const request of row) {
                 this.token_helper.with_identity(this.identity);
 
                 switch (request.method) {
                     case "icrc1_transfer":
-                        await this.executeIcrc1Transfer();
+                        await this.executeIcrc1Transfer(amount);
                         break;
                     case "icrc2_approve":
                         await this.executeIcrc2Approve();

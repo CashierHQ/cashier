@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LinkTestFixture, LinkConfig, AssetInfo } from "../fixtures/link-test-fixture";
-import { IntentDto } from "../../declarations/cashier_backend/cashier_backend.did";
+import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
+import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 
-describe("Test create and claim token basket link", () => {
+describe("Test create and claim token airdrop link", () => {
     const fixture = new LinkTestFixture();
     let linkId: string;
     let claimActionId: string;
@@ -13,14 +13,20 @@ describe("Test create and claim token basket link", () => {
         description: "tip 20 icp to the user",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "SendTokenBasket",
-        link_use_action_max_count: BigInt(1),
+        link_type: "SendAirdrop",
+        link_use_action_max_count: BigInt(5),
+    };
+
+    const assetInfo: AssetInfo = {
+        chain: "IC",
+        address: "x5qut-viaaa-aaaar-qajda-cai",
+        label: "SEND_AIRDROP_ASSET",
+        amount_per_claim: BigInt(10_0000_0000),
     };
 
     beforeAll(async () => {
         await fixture.setup({
             airdropAmount: BigInt(1_0000_0000_0000),
-            useMultipleTokens: true,
         });
     });
 
@@ -29,56 +35,20 @@ describe("Test create and claim token basket link", () => {
     });
 
     describe("With Alice", () => {
-        let assets: AssetInfo[] = [];
-
-        beforeAll(async () => {
-            const multiple_token_helper = fixture.multiTokenHelper!;
-            assets = [
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    amount_per_claim: BigInt(10_0000_0000),
-                    amount_per_link_use_action: BigInt(10_0000_0000),
-                },
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    amount_per_claim: BigInt(20_0000_0000),
-                    amount_per_link_use_action: BigInt(20_0000_0000),
-                },
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    amount_per_claim: BigInt(30_0000_0000),
-                    amount_per_link_use_action: BigInt(30_0000_0000),
-                },
-            ];
-        });
-
         beforeEach(async () => {
             fixture.switchToUser("alice");
-            await fixture.advanceTime(1 * 60 * 1000); // 1 minute
         });
 
         it("should complete the full link creation process", async () => {
             // Create and set up the link using the fixture's helper method
             const result = await fixture.completeActiveLinkFlow(
-                "SendTokenBasket",
+                "SendAirdrop",
                 testConfig,
-                assets,
-                BigInt(1),
+                [assetInfo],
+                BigInt(5),
+                {
+                    icrc1TransferAmount: BigInt(50_0000_0000),
+                },
             );
 
             linkId = result.linkId;
@@ -100,7 +70,6 @@ describe("Test create and claim token basket link", () => {
     describe("With Bob", () => {
         beforeEach(async () => {
             fixture.switchToUser("bob");
-            await fixture.advanceTime(1 * 60 * 1000); // 1 minute
         });
 
         it("should retrieve empty user state initially", async () => {
@@ -120,12 +89,12 @@ describe("Test create and claim token basket link", () => {
 
         it("should process claim successfully", async () => {
             // Get initial balance
-            // const bobAccount = {
-            //     owner: fixture.identities.bob.getPrincipal(),
-            //     subaccount: [] as any,
-            // };
+            const bobAccount = {
+                owner: fixture.identities.bob.getPrincipal(),
+                subaccount: [] as any,
+            };
 
-            // const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
+            const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
 
             // Process claim action
             const result = await fixture.confirmAction(linkId, claimActionId, "Claim");
@@ -133,9 +102,9 @@ describe("Test create and claim token basket link", () => {
             expect(result.intents[0].state).toEqual("Intent_state_success");
 
             // Verify balance after claim
-            // const balanceAfter = await fixture.tokenHelper!.balanceOf(bobAccount);
-            // const balanceChanged = balanceAfter - balanceBefore;
-            // expect(balanceChanged).toEqual(assetInfo.amount_per_claim! - BigInt(10_000)); // Minus fee
+            const balanceAfter = await fixture.tokenHelper!.balanceOf(bobAccount);
+            const balanceChanged = balanceAfter - balanceBefore;
+            expect(balanceChanged).toEqual(assetInfo.amount_per_claim! - BigInt(10_000)); // Minus fee
 
             // Verify link state
             const linkState = await fixture.getLinkWithActions(linkId);
@@ -153,52 +122,18 @@ describe("Test create and claim token basket link", () => {
 
     describe("Anonymous User Flow", () => {
         let linkClaimAnymousId: string;
-        let assets: AssetInfo[] = [];
-
-        beforeAll(async () => {
-            const multiple_token_helper = fixture.multiTokenHelper!;
-            assets = [
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    amount_per_claim: BigInt(10_0000_0000),
-                    amount_per_link_use_action: BigInt(10_0000_0000),
-                },
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    amount_per_claim: BigInt(20_0000_0000),
-                    amount_per_link_use_action: BigInt(20_0000_0000),
-                },
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    amount_per_claim: BigInt(30_0000_0000),
-                    amount_per_link_use_action: BigInt(30_0000_0000),
-                },
-            ];
-        });
 
         beforeAll(async () => {
             fixture.switchToUser("alice");
 
             const result = await fixture.completeActiveLinkFlow(
-                "SendTokenBasket",
+                "SendAirdrop",
                 testConfig,
-                assets,
-                BigInt(1),
+                [assetInfo],
+                BigInt(5),
+                {
+                    icrc1TransferAmount: BigInt(50_0000_0000),
+                },
             );
 
             console.log("Link created for anonymous testing:", result);

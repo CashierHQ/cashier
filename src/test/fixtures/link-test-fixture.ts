@@ -343,6 +343,9 @@ export class LinkTestFixture {
         linkId: string,
         actionId: string,
         identity: Identity,
+        options?: {
+            icrc1TransferAmount?: bigint;
+        },
     ): Promise<void> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
@@ -377,7 +380,7 @@ export class LinkTestFixture {
             triggerTxMethod.nonce[0],
         );
 
-        await executor.executeIcrc1Transfer();
+        await executor.executeIcrc1Transfer(options?.icrc1TransferAmount);
         await executor.executeIcrc2Approve();
 
         await this.actor.update_action({
@@ -574,6 +577,10 @@ export class LinkTestFixture {
         config: LinkConfig,
         assets: AssetInfo[],
         maxUseCount?: bigint,
+        options?: {
+            // only use if maxUseCount > 1, to transfer more than default 10_0000_0000
+            icrc1TransferAmount?: bigint;
+        },
     ): Promise<{ linkId: string; actionId: string }> {
         // Create link
         const linkId = await this.createLinkV2(linkType, config, assets, maxUseCount);
@@ -593,7 +600,13 @@ export class LinkTestFixture {
             }
 
             if (this.tokenHelper) {
-                await this.executeIcrc112(requests, linkId, actionId, this.identities.alice);
+                await this.executeIcrc112(
+                    requests,
+                    linkId,
+                    actionId,
+                    this.identities.alice,
+                    options,
+                );
             }
 
             if (this.multiTokenHelper) {
