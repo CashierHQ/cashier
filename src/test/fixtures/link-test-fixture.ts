@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc, SubnetStateType } from "@hadronous/pic";
 import { Principal } from "@dfinity/principal";
 import {
     idlFactory,
@@ -11,14 +11,16 @@ import {
     GetLinkOptions,
     Icrc112Request,
     CreateLinkInputV2,
+    ActionDto,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 import { TokenHelper } from "../utils/token-helper";
 import { MultipleTokenHelper } from "../utils/multiple-token-helper";
-import { parseResultResponse } from "../utils/parser";
+import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
 import LinkHelper from "../utils/link-helper";
-import { toNullable } from "@dfinity/utils";
+import { fromNullable, toNullable } from "@dfinity/utils";
 import { Identity } from "@dfinity/agent";
+import { Icrc112ExecutorV2 } from "../utils/icrc-112-v2";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -76,7 +78,20 @@ export class LinkTestFixture {
                 : 5 * 60 * 1000; // Default 5 minutes
 
         // Create PocketIc instance
-        this.pic = await PocketIc.create(process.env.PIC_URL);
+        this.pic = await PocketIc.create(process.env.PIC_URL, {
+            application: [
+                {
+                    state: {
+                        type: SubnetStateType.New,
+                    },
+                },
+                {
+                    state: {
+                        type: SubnetStateType.New,
+                    },
+                },
+            ],
+        });
 
         // Set time and tick
         await this.pic.setTime(currentTime);
@@ -86,7 +101,15 @@ export class LinkTestFixture {
         const fixture = await this.pic.setupCanister<_SERVICE>({
             idlFactory,
             wasm: WASM_PATH,
+            targetCanisterId: Principal.fromText("jjio5-5aaaa-aaaam-adhaq-cai"),
+            // targetSubnetId: Principal.fromText("4ecnw-byqwz-dtgss-ua2mh-pfvs7-c3lct-gtf4e-hnu75-j7eek-iifqm-sqe"),
         });
+
+        const canisterSubnetId = await this.pic.getCanisterSubnetId(
+            Principal.fromText("jjio5-5aaaa-aaaam-adhaq-cai"),
+        );
+
+        console.log("subnets jjio5-5aaaa-aaaam-adhaq-cai", canisterSubnetId?.toText());
 
         this.canisterId = fixture.canisterId.toString();
         this.actor = fixture.actor;
@@ -121,6 +144,16 @@ export class LinkTestFixture {
                 airdropAmount,
                 this.identities.alice.getPrincipal(),
             );
+            await this.multiTokenHelper.airdrop(
+                "token2",
+                airdropAmount,
+                this.identities.alice.getPrincipal(),
+            );
+            await this.multiTokenHelper.airdrop(
+                "token3",
+                airdropAmount,
+                this.identities.alice.getPrincipal(),
+            );
         } else {
             this.tokenHelper = new TokenHelper(this.pic);
             await this.tokenHelper.setupCanister();
@@ -129,6 +162,12 @@ export class LinkTestFixture {
             // Also give tokens to Bob in some tests
             await this.tokenHelper.airdrop(airdropAmount, this.identities.bob.getPrincipal());
         }
+
+        const canisterSubnetId2 = await this.pic.getCanisterSubnetId(
+            Principal.fromText("x5qut-viaaa-aaaar-qajda-cai"),
+        );
+
+        console.log("subnets x5qut-viaaa-aaaar-qajda-cai", canisterSubnetId2?.toText());
 
         // Setup link helper
         this.linkHelper = new LinkHelper(this.pic);
@@ -276,7 +315,7 @@ export class LinkTestFixture {
         return result.id;
     }
 
-    async confirmAction(linkId: string, actionId: string, actionType: string): Promise<any> {
+    async confirmAction(linkId: string, actionId: string, actionType: string): Promise<ActionDto> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
@@ -348,6 +387,57 @@ export class LinkTestFixture {
         });
 
         await executor.triggerTransaction();
+    }
+
+    async executeIcrc112V2(
+        requests: Icrc112Request[][],
+        linkId: string,
+        actionId: string,
+        identity: Identity,
+    ) {
+        if (!this.actor) {
+            throw new Error("Actor is not initialized");
+        }
+
+        if (!this.pic) {
+            throw new Error("PocketIc is not initialized");
+        }
+
+        if (!this.canisterId) {
+            throw new Error("Canister ID is not initialized");
+        }
+
+        if (!this.multiTokenHelper) {
+            throw new Error("MultiToken helper is not initialized");
+        }
+
+        console.log("requests", safeParseJSON(requests as any));
+
+        const triggerTxMethod = flattenAndFindByMethod(requests, "trigger_transaction");
+        console.log("triggerTxMethod", triggerTxMethod);
+        if (!triggerTxMethod) {
+            throw new Error("trigger_transaction method not found in icrc-112 requests");
+        }
+        const executeHelper = new Icrc112ExecutorV2(
+            requests,
+            this.multiTokenHelper,
+            identity,
+            linkId,
+            actionId,
+            Principal.fromText(this.canisterId),
+            this.actor,
+            triggerTxMethod.nonce[0]!,
+        );
+        await executeHelper.executeIcrc1Transfer("token1", 10_0000_0000n);
+        await executeHelper.executeIcrc1Transfer("token2", 20_0000_0000n);
+        await executeHelper.executeIcrc1Transfer("token3", 30_0000_0000n);
+        await executeHelper.executeIcrc2Approve("feeICP", 30_0000_0000n);
+        await this.actor.update_action({
+            action_id: actionId,
+            link_id: linkId,
+            external: true,
+        });
+        await executeHelper.triggerTransaction();
     }
 
     async switchToUser(userKey?: "alice" | "bob"): Promise<void> {
@@ -496,12 +586,19 @@ export class LinkTestFixture {
 
         // Execute ICRC-112 requests
         if (confirmResult.icrc_112_requests && confirmResult.icrc_112_requests[0]) {
-            await this.executeIcrc112(
-                confirmResult.icrc_112_requests[0],
-                linkId,
-                actionId,
-                this.identities.alice,
-            );
+            const requests = fromNullable(confirmResult.icrc_112_requests);
+
+            if (!requests) {
+                throw new Error("No ICRC-112 requests found");
+            }
+
+            if (this.tokenHelper) {
+                await this.executeIcrc112(requests, linkId, actionId, this.identities.alice);
+            }
+
+            if (this.multiTokenHelper) {
+                await this.executeIcrc112V2(requests, linkId, actionId, this.identities.alice);
+            }
         }
 
         // Activate link

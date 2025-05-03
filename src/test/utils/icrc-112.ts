@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { _SERVICE, Icrc112Request } from "../../declarations/cashier_backend/cashier_backend.did";
 import { Actor } from "@hadronous/pic";
 import { TokenHelper } from "../utils/token-helper";
@@ -16,7 +14,14 @@ export function flattenAndFindByMethod(
     icrc_112_requests: Icrc112Request[][],
     method: string,
 ): Icrc112Request | undefined {
-    return icrc_112_requests.flat().filter((request) => request.method === method)[0];
+    for (const row of icrc_112_requests) {
+        for (const request of row) {
+            console.log("method", request.method);
+            if (request.method === method) {
+                return request;
+            }
+        }
+    }
 }
 
 export class Icrc112Executor {

@@ -12,13 +12,6 @@ import {
 import { Identity } from "@dfinity/agent";
 import { MultipleTokenHelper } from "./multiple-token-helper";
 
-export function flattenAndFindByMethod(
-    icrc_112_requests: Icrc112Request[][],
-    method: string,
-): Icrc112Request | undefined {
-    return icrc_112_requests.flat().filter((request) => request.method === method)[0];
-}
-
 export class Icrc112ExecutorV2 {
     private icrc_112_requests: Icrc112Request[][];
     private token_helper: MultipleTokenHelper;
