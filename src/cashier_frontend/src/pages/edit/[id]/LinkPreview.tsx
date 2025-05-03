@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { useFeePreview } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
-import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
@@ -75,7 +74,7 @@ export default function LinkPreview({
     const [showAssetInfo, setShowAssetInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isDisabled, setIsDisabled] = useState(false);
-    const { getUserInput, addUserInput } = useLinkCreationFormStore();
+    const { getUserInput, addUserInput, setButtonState } = useLinkCreationFormStore();
     const identity = useIdentity();
 
     // State for enhanced asset info with logos
@@ -92,6 +91,15 @@ export default function LinkPreview({
             setShowConfirmation(true);
         }
     }, [action]);
+
+    // Update the button state
+    useEffect(() => {
+        setButtonState({
+            label: isDisabled ? t("processing") : t("create.create"),
+            isDisabled: isDisabled || isLoading || shouldRedirect,
+            action: handleSubmit,
+        });
+    }, [isDisabled, isLoading, shouldRedirect]);
 
     // Effect to map rawTokenList logos to asset_info
     useEffect(() => {
@@ -197,6 +205,7 @@ export default function LinkPreview({
     };
 
     const handleSubmit = async () => {
+        console.log("handleSubmit");
         setIsDisabled(true);
 
         try {
@@ -342,7 +351,7 @@ export default function LinkPreview({
                 </div>
             )}
 
-            <div className="input-label-field-container mt-4">
+            <div className="input-label-field-container mt-4 mb-16">
                 <div className="flex items-center w-full justify-between">
                     <Label>Link creation fee</Label>
                     <button className="flex items-center gap-1" onClick={() => setShowInfo(true)}>
@@ -382,17 +391,6 @@ export default function LinkPreview({
                     </div>
                 </div>
             </div>
-
-            <FixedBottomButton
-                type="submit"
-                variant="default"
-                size="lg"
-                className="w-full mt-auto disabled:bg-disabledgreen"
-                onClick={handleSubmit}
-                disabled={isDisabled || isLoading || shouldRedirect}
-            >
-                {isDisabled ? t("processing") : t("create.create")}
-            </FixedBottomButton>
 
             <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
             <InformationOnAssetDrawer

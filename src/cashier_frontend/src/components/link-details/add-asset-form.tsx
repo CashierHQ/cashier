@@ -1,6 +1,5 @@
 import { FC, useState, useEffect, useMemo } from "react";
 import { useFieldArray } from "react-hook-form";
-import { FixedBottomButton } from "@/components/fix-bottom-button";
 import AssetDrawer from "@/components/asset-drawer";
 import { useTranslation } from "react-i18next";
 import { AssetFormSkeleton } from "./asset-form-skeleton";
@@ -38,7 +37,7 @@ type TipLinkAssetFormProps = {
 export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdrop }) => {
     const { t } = useTranslation();
     const { link, isUpdating, callLinkStateMachine } = useLinkAction();
-    const { getUserInput, updateUserInput } = useLinkCreationFormStore();
+    const { getUserInput, updateUserInput, setButtonState } = useLinkCreationFormStore();
     const { showToast, toastData, hideToast } = useToast();
     const { setStep } = useMultiStepFormContext();
     const responsive = useResponsive();
@@ -317,6 +316,29 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         }
     };
 
+    // Update button state whenever form validity changes
+    useEffect(() => {
+        const formAssets = getValues("assets");
+
+        const isFormValid =
+            formAssets &&
+            formAssets.length > 0 &&
+            !Object.keys(errors).length &&
+            !formAssets.some((asset) => !asset.amount || asset.amount <= BigInt(0));
+
+        setButtonState({
+            label: t("continue"),
+            isDisabled: !isFormValid || isUpdating,
+            action: handleSubmit,
+        });
+    }, [
+        errors,
+        isUpdating,
+        assetFields.fields.length, // Track array length changes
+        ...assetFields.fields.map((field, index) => watch(`assets.${index}.amount`)), // Track all amount changes
+        ...assetFields.fields.map((field, index) => watch(`assets.${index}.tokenAddress`)), // Track all tokenAddress changes
+    ]);
+
     // Helper functions
     function getInitialFormValues(input: Partial<UserInputItem> | undefined) {
         if (!input?.assets || input.assets.length === 0) {
@@ -536,7 +558,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         <div>
             <div>
                 <div
-                    className={`overflow-y-auto ${responsive.isSmallDevice ? "h-[calc(100dvh-150px)]" : "h-[calc(100vh-300px)]"}`}
+                    className={`overflow-y-auto ${responsive.isSmallDevice ? "h-[calc(100dvh-150px)]" : "h-[calc(100vh-250px)]"}`}
                     style={{
                         WebkitOverflowScrolling: "touch",
                         overscrollBehavior: "contain",
@@ -575,7 +597,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     )}
                 </div>
 
-                <div>
+                <div className="mb-16">
                     {/* Airdrop Fields */}
                     {isAirdrop && (
                         <div className="flex gap-4 mt-2 mb-4">
@@ -635,25 +657,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                             </div>
                         </div>
                     )}
-
-                    {/* Continue Button */}
-                    <FixedBottomButton
-                        type="submit"
-                        variant="default"
-                        size="lg"
-                        className="w-full mt-auto disabled:bg-disabledgreen"
-                        onClick={handleSubmit}
-                        disabled={
-                            assetFields.fields.length === 0 ||
-                            Object.keys(errors).length > 0 ||
-                            getValues("assets").some(
-                                (asset) => !asset.amount || asset.amount <= BigInt(0),
-                            ) ||
-                            isUpdating
-                        }
-                    >
-                        {t("continue")}
-                    </FixedBottomButton>
                 </div>
             </div>
 
