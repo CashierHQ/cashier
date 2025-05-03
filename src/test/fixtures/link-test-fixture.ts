@@ -12,6 +12,7 @@ import {
     Icrc112Request,
     CreateLinkInputV2,
     ActionDto,
+    GetLinkResp,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 import { TokenHelper } from "../utils/token-helper";
 import { MultipleTokenHelper } from "../utils/multiple-token-helper";
@@ -329,13 +330,29 @@ export class LinkTestFixture {
         return parseResultResponse(response);
     }
 
-    async getLinkWithActions(linkId: string, actionType?: string): Promise<any> {
+    async getLinkWithActions(linkId: string, actionType?: string): Promise<GetLinkResp> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
         const options: GetLinkOptions | null = actionType ? { action_type: actionType } : null;
         const response = await this.actor.get_link(linkId, toNullable(options));
         return parseResultResponse(response);
+    }
+
+    async checkLinkBalance(tokenId: string, linkId: string): Promise<bigint> {
+        if (!this.linkHelper || !this.canisterId) {
+            throw new Error("Link helper or canisterId is not initialized");
+        }
+
+        this.linkHelper.setupActor(tokenId);
+
+        // Use the linkHelper to check the balance of the link
+        const balance = await this.linkHelper.checkAccountBalanceWithSubAccount(
+            this.canisterId,
+            linkId,
+        );
+
+        return balance;
     }
 
     async executeIcrc112(

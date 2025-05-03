@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
 import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { fromNullable } from "@dfinity/utils";
 
 describe("Test create and claim tip link", () => {
     const fixture = new LinkTestFixture();
@@ -55,11 +56,14 @@ describe("Test create and claim tip link", () => {
             const linkState = await fixture.getLinkWithActions(linkId, "CreateLink");
             expect(linkState.link.state).toEqual("Link_state_active");
 
+            const linkBalance = await fixture.checkLinkBalance(assetInfo.address, linkId);
+            expect(linkBalance).toEqual(assetInfo.amount_per_claim!);
+
             // Verify action successful
-            const actions = linkState.action;
-            expect(actions).toHaveLength(1);
-            expect(actions[0].state).toEqual("Action_state_success");
-            actions[0].intents.forEach((intent: IntentDto) => {
+            const actions = fromNullable(linkState.action);
+            expect(actions).toBeDefined();
+            expect(actions!.state).toEqual("Action_state_success");
+            actions!.intents.forEach((intent: IntentDto) => {
                 expect(intent.state).toEqual("Intent_state_success");
             });
         });
