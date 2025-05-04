@@ -53,7 +53,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
     // maxUse (default = 1)
-    const [maxActionNumber, setMaxUse] = useState<number>(1);
+    const [maxActionNumber, setMaxUse] = useState<number>(0);
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -328,7 +328,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
         setButtonState({
             label: t("continue"),
-            isDisabled: !isFormValid || isUpdating,
+            isDisabled: !isFormValid || isUpdating || maxActionNumber <= 0,
             action: handleSubmit,
         });
     }, [
@@ -558,7 +558,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         <div>
             <div>
                 <div
-                    className={`overflow-y-auto ${responsive.isSmallDevice ? "h-[calc(100dvh-150px)]" : "h-[calc(100vh-250px)]"}`}
+                    className={`overflow-y-auto ${responsive.isSmallDevice ? "max-h-[calc(100dvh-150px)]" : "max-h-[calc(100vh-250px)]"}`}
                     style={{
                         WebkitOverflowScrolling: "touch",
                         overscrollBehavior: "contain",
@@ -614,7 +614,9 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                                     <Input
                                         value={maxActionNumber}
                                         onChange={handleMaxUseInputChange}
-                                        className="max-w-20 h-11 text-center text-[16px] font-normal"
+                                        className={`max-w-20 h-11 text-center text-[16px] font-normal ${
+                                            maxActionNumber <= 0 ? "text-grey/75" : ""
+                                        }`}
                                         type="number"
                                         min="1"
                                     />
