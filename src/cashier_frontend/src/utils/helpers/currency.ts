@@ -47,7 +47,7 @@ export function formatPrice(price: string) {
 
         // Use toLocaleString for regular formatting
         formattedPrice = numberPrice.toLocaleString("en-US", {
-            minimumFractionDigits: decimalPlaces,
+            minimumFractionDigits: 0,
             maximumFractionDigits: decimalPlaces,
         });
     }

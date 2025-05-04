@@ -13,7 +13,7 @@ import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
-import { Check, ChevronLeft } from "lucide-react";
+import { Check, ChevronLeft, X } from "lucide-react";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
 
 interface ConfirmationDrawerProps {
@@ -247,10 +247,10 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         <div className="text-center w-[100%] text-[18px] font-semibold">
                             {title}
                         </div>
-                        <ChevronLeft
+                        <X
                             onClick={onClose}
                             strokeWidth={1.5}
-                            className="ml-auto cursor-pointer absolute left-0"
+                            className="ml-auto cursor-pointer absolute right-0"
                             size={28}
                         />
                     </DrawerTitle>

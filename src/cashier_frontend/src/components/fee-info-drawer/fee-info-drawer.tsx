@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { ChevronLeft, Link, Wifi } from "lucide-react";
+import { ChevronLeft, Link, Wifi, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export type FeeInfoDrawerProps = {
@@ -20,10 +20,10 @@ export const FeeInfoDrawer: FC<FeeInfoDrawerProps> = ({ open, onClose }) => {
                         <div className="text-center w-[100%] text-[18px] font-semibold">
                             {t("feeInfo.title")}
                         </div>
-                        <ChevronLeft
+                        <X
                             onClick={onClose}
                             strokeWidth={1.5}
-                            className="ml-auto cursor-pointer absolute left-0"
+                            className="ml-auto cursor-pointer absolute right-0"
                             size={28}
                         />
                     </DrawerTitle>
