@@ -69,6 +69,7 @@ export class TokenHelper {
             sender: this.deployer.getPrincipal(),
             // targetSubnetId: subnetId,
             targetCanisterId: LEDGER_ID,
+            // targetSubnetId: Principal.fromText("pzp6e-ekpqk-3c5x7-2h6so-njoeq-mt45d-h3h6c-q3mxf-vpeq5-fk5o7-yae"),
         });
 
         this.canister_id = canister_id.toString();
