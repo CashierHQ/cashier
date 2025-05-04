@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { ChevronLeft, Link, Wifi } from "lucide-react";
+import { ChevronLeft, Link, Wifi, X } from "lucide-react";
 import { IoIosClose } from "react-icons/io";
 import { useTranslation } from "react-i18next";
 
@@ -21,10 +21,10 @@ export const InformationOnAssetDrawer: FC<InformationOnAssetDrawerProps> = ({ op
                         <div className="text-center w-[100%] text-[18px] font-semibold">
                             Info on asset transfer to link
                         </div>
-                        <ChevronLeft
+                        <X
                             onClick={onClose}
                             strokeWidth={1.5}
-                            className="ml-auto cursor-pointer absolute left-0"
+                            className="ml-auto cursor-pointer absolute right-0"
                             size={28}
                         />
                     </DrawerTitle>

@@ -4,7 +4,6 @@ import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
 import { LINK_TYPE } from "@/services/types/enum";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -36,7 +35,8 @@ export default function LinkTemplate({
 }: LinkTemplateProps) {
     const { t } = useTranslation();
     const { setStep } = useMultiStepFormContext();
-    const { updateUserInput, getUserInput, userInputs } = useLinkCreationFormStore();
+    const { updateUserInput, getUserInput, userInputs, setButtonState } =
+        useLinkCreationFormStore();
 
     const { toastData, showToast, hideToast } = useToast();
 
@@ -94,6 +94,19 @@ export default function LinkTemplate({
             });
         }
     }, [carousel.current]);
+
+    // Update button state
+    useEffect(() => {
+        const currentTemplate = LINK_TEMPLATES[carousel.current];
+        const title = userInputs.get(link?.id || "")?.title;
+        const isComingSoon = currentTemplate.isComingSoon;
+
+        setButtonState({
+            label: isComingSoon ? "Coming Soon" : t("continue"),
+            isDisabled: isUpdating || isComingSoon || !title || title.trim() === "",
+            action: handleSubmit,
+        });
+    }, [carousel.current, userInputs, isUpdating, link]);
 
     if (!link) {
         return null;
@@ -194,16 +207,6 @@ export default function LinkTemplate({
                     </div>
                 </div>
             </div>
-
-            <FixedBottomButton
-                onClick={handleSubmit}
-                variant="default"
-                size="lg"
-                className="w-full mt-auto disabled:bg-disabledgreen"
-                disabled={isUpdating || LINK_TEMPLATES[carousel.current].isComingSoon}
-            >
-                {LINK_TEMPLATES[carousel.current].isComingSoon ? "Coming Soon" : t("continue")}
-            </FixedBottomButton>
 
             <TransactionToast
                 open={toastData?.open ?? false}

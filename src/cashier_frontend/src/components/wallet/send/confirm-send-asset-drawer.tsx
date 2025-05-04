@@ -11,6 +11,7 @@ import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { TransactionStatus } from "@/services/types/wallet.types";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { useTokens } from "@/hooks/useTokens";
+import { X } from "lucide-react";
 
 export const SendAssetConfirmationDrawer: FC = () => {
     const { t } = useTranslation();
@@ -107,7 +108,7 @@ export const SendAssetConfirmationDrawer: FC = () => {
                             {t("transaction.confirm_popup.title")}
                         </div>
 
-                        <IoIosClose
+                        <X
                             onClick={closeConfirmation}
                             className="absolute right-0 cursor-pointer"
                             size={42}

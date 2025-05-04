@@ -51,7 +51,7 @@ export default function LinkPage() {
 
     const [backButtonDisabled, setBackButtonDisabled] = useState(false);
 
-    const { addUserInput, getUserInput } = useLinkCreationFormStore();
+    const { addUserInput, getUserInput, resetButtonState } = useLinkCreationFormStore();
     const { link, action, callLinkStateMachine, isLoading } = useLinkAction(
         linkId,
         ACTION_TYPE.CREATE_LINK,
@@ -65,6 +65,9 @@ export default function LinkPage() {
           : undefined;
 
     useEffect(() => {
+        // Reset button state when component mounts
+        resetButtonState();
+
         if (link) {
             const userInput: Partial<UserInputItem> = {
                 linkId: link.id,
@@ -227,6 +230,8 @@ export default function LinkPage() {
                                     />
                                 </MultiStepForm.Item>
                             </MultiStepForm.Items>
+
+                            <MultiStepForm.Footer />
                         </MultiStepForm>
 
                         <TransactionToast

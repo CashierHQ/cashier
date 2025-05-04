@@ -22,8 +22,15 @@ export interface UserInputItem {
     maxActionNumber: bigint;
 }
 
+export interface ButtonState {
+    label: string;
+    isDisabled: boolean;
+    action: (() => Promise<void>) | (() => void) | null;
+}
+
 interface LinkCreationFormState {
     userInputs: Map<string, Partial<UserInputItem>>;
+    buttonState: ButtonState;
 
     getUserInput: (linkId: string) => Partial<UserInputItem> | undefined;
 
@@ -31,10 +38,21 @@ interface LinkCreationFormState {
     updateUserInput: (linkId: string, input: Partial<UserInputItem>) => void;
     removeUserInput: (linkId: string) => void;
     clearStore: () => void;
+
+    // Button state methods
+    setButtonState: (buttonState: Partial<ButtonState>) => void;
+    resetButtonState: () => void;
 }
+
+const defaultButtonState: ButtonState = {
+    label: "Continue",
+    isDisabled: true,
+    action: null,
+};
 
 export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, get) => ({
     userInputs: new Map(),
+    buttonState: { ...defaultButtonState },
 
     addUserInput: (linkId, input) =>
         set((state) => {
@@ -65,9 +83,20 @@ export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, ge
     clearStore: () =>
         set({
             userInputs: new Map(),
+            buttonState: { ...defaultButtonState },
         }),
 
     getUserInput: (linkId) => {
         return get().userInputs.get(linkId);
     },
+
+    setButtonState: (buttonState) =>
+        set((state) => ({
+            buttonState: { ...state.buttonState, ...buttonState },
+        })),
+
+    resetButtonState: () =>
+        set({
+            buttonState: { ...defaultButtonState },
+        }),
 }));

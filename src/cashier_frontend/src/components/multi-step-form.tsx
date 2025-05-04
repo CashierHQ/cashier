@@ -6,6 +6,8 @@ import {
     MultiStepFormProvider,
     useMultiStepFormContext,
 } from "@/contexts/multistep-form-context";
+import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
+import { Button } from "./ui/button";
 
 interface MultiStepFormProps {
     initialStep: number;
@@ -121,6 +123,31 @@ export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
     );
 }
 
+interface MultiStepFormFooterProps {
+    showFixedButton?: boolean;
+}
+
+export function MultiStepFormFooter({ showFixedButton = true }: MultiStepFormFooterProps) {
+    const { buttonState } = useLinkCreationFormStore();
+
+    if (!showFixedButton) return null;
+
+    return (
+        <div className="flex-none w-full py-4 px-4 sticky bottom-0 left-0 right-0 z-10">
+            <Button
+                type="button"
+                variant="default"
+                size="lg"
+                className="w-full disabled:bg-disabledgreen"
+                onClick={buttonState.action || undefined}
+                disabled={buttonState.isDisabled}
+            >
+                {buttonState.label}
+            </Button>
+        </div>
+    );
+}
+
 interface MultiStepFormItemProps {
     name: string;
     children: ReactNode;
@@ -133,3 +160,4 @@ export function MultiStepFormItem({ children }: MultiStepFormItemProps) {
 MultiStepForm.Header = MultiStepFormHeader;
 MultiStepForm.Items = MultiStepFormItems;
 MultiStepForm.Item = MultiStepFormItem;
+MultiStepForm.Footer = MultiStepFormFooter;
