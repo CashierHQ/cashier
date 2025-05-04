@@ -104,6 +104,10 @@ describe("Test create and claim token airdrop link", () => {
 
             const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
 
+            // Check link balance before claim
+            const linkBalanceBefore = await fixture.checkLinkBalance(assetInfo.address, linkId);
+            expect(linkBalanceBefore).toEqual(assetInfo.amount_per_claim! * BigInt(5));
+
             // Process claim action
             const result = await fixture.confirmAction(linkId, claimActionId, "Claim");
             expect(result.state).toEqual("Action_state_success");
@@ -113,6 +117,10 @@ describe("Test create and claim token airdrop link", () => {
             const balanceAfter = await fixture.tokenHelper!.balanceOf(bobAccount);
             const balanceChanged = balanceAfter - balanceBefore;
             expect(balanceChanged).toEqual(assetInfo.amount_per_claim! - BigInt(10_000)); // Minus fee
+
+            // Check link balance after claim
+            const linkBalanceAfter = await fixture.checkLinkBalance(assetInfo.address, linkId);
+            expect(linkBalanceAfter).toEqual(assetInfo.amount_per_claim! * BigInt(4)); // Reduced by one claim
 
             // Verify link state
             const linkState = await fixture.getLinkWithActions(linkId);
@@ -148,11 +156,25 @@ describe("Test create and claim token airdrop link", () => {
 
             linkClaimAnymousId = result.linkId;
         });
+
         it("should allow anonymous user to claim", async () => {
             // Create a new link for anonymous testing
             fixture.switchToAnonymous();
 
             const walletAddress = fixture.identities.bob.getPrincipal().toText();
+
+            // Get initial balance for Bob's account
+            const bobAccount = {
+                owner: fixture.identities.bob.getPrincipal(),
+                subaccount: [] as any,
+            };
+            const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
+
+            // Check link balance before claim
+            const linkBalanceBefore = await fixture.checkLinkBalance(
+                assetInfo.address,
+                linkClaimAnymousId,
+            );
 
             // Process anonymous claim
             const claimResult = await fixture.processActionAnonymous(
@@ -174,6 +196,22 @@ describe("Test create and claim token airdrop link", () => {
             );
 
             expect(confirmResult.state).toEqual("Action_state_success");
+
+            // Verify balance after claim
+            const balanceAfter = await fixture.tokenHelper!.balanceOf(bobAccount);
+            const balanceChanged = balanceAfter - balanceBefore;
+            expect(balanceChanged).toEqual(assetInfo.amount_per_claim! - BigInt(10_000)); // Minus fee
+
+            // Check link balance after claim
+            const linkBalanceAfter = await fixture.checkLinkBalance(
+                assetInfo.address,
+                linkClaimAnymousId,
+            );
+            expect(linkBalanceAfter).toEqual(linkBalanceBefore - assetInfo.amount_per_claim!);
+
+            // Verify link state
+            const linkState = await fixture.getLinkWithActions(linkClaimAnymousId);
+            expect(linkState.link.link_use_action_counter).toEqual(1n);
 
             // Update user state to completed
             fixture.updateUserState(linkClaimAnymousId, "Claim", "Continue", walletAddress);

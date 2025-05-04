@@ -384,7 +384,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         );
 
         if action.is_none() {
-            // validate create action
             self.link_service
                 .link_validate_user_create_action(
                     &input.link_id,

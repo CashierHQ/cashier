@@ -29,45 +29,50 @@ describe("Test create and claim token basket link", () => {
         await fixture.tearDown();
     });
 
+    let assets: (AssetInfo & {
+        tokenIndex: string;
+    })[] = [];
+
+    beforeAll(async () => {
+        const multiple_token_helper = fixture.multiTokenHelper!;
+        assets = [
+            {
+                chain: "IC",
+                address: multiple_token_helper.getTokenCanisterId("token1").toString(),
+                label:
+                    "SEND_TOKEN_BASKET_ASSET" +
+                    "_" +
+                    multiple_token_helper.getTokenCanisterId("token1").toString(),
+                amount_per_claim: BigInt(10_0000_0000),
+                amount_per_link_use_action: BigInt(10_0000_0000),
+                tokenIndex: "token1",
+            },
+            {
+                chain: "IC",
+                address: multiple_token_helper.getTokenCanisterId("token2").toString(),
+                label:
+                    "SEND_TOKEN_BASKET_ASSET" +
+                    "_" +
+                    multiple_token_helper.getTokenCanisterId("token2").toString(),
+                amount_per_claim: BigInt(20_0000_0000),
+                amount_per_link_use_action: BigInt(20_0000_0000),
+                tokenIndex: "token2",
+            },
+            {
+                chain: "IC",
+                address: multiple_token_helper.getTokenCanisterId("token3").toString(),
+                label:
+                    "SEND_TOKEN_BASKET_ASSET" +
+                    "_" +
+                    multiple_token_helper.getTokenCanisterId("token3").toString(),
+                amount_per_claim: BigInt(30_0000_0000),
+                amount_per_link_use_action: BigInt(30_0000_0000),
+                tokenIndex: "token3",
+            },
+        ];
+    });
+
     describe("With Alice", () => {
-        let assets: AssetInfo[] = [];
-
-        beforeAll(async () => {
-            const multiple_token_helper = fixture.multiTokenHelper!;
-            assets = [
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    amount_per_claim: BigInt(10_0000_0000),
-                    amount_per_link_use_action: BigInt(10_0000_0000),
-                },
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    amount_per_claim: BigInt(20_0000_0000),
-                    amount_per_link_use_action: BigInt(20_0000_0000),
-                },
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    amount_per_claim: BigInt(30_0000_0000),
-                    amount_per_link_use_action: BigInt(30_0000_0000),
-                },
-            ];
-        });
-
         beforeEach(async () => {
             fixture.switchToUser("alice");
             await fixture.advanceTime(1 * 60 * 1000); // 1 minute
@@ -125,23 +130,40 @@ describe("Test create and claim token basket link", () => {
         });
 
         it("should process claim successfully", async () => {
-            // Get initial balance
-            // const bobAccount = {
-            //     owner: fixture.identities.bob.getPrincipal(),
-            //     subaccount: [] as any,
-            // };
+            // Get initial balance for each token
+            const bobAccount = {
+                owner: fixture.identities.bob.getPrincipal(),
+                subaccount: [] as any,
+            };
 
-            // const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
+            const balanceBeforeMap = new Map<string, bigint>();
+
+            // Store initial balances for all tokens in the basket
+            for (const asset of assets) {
+                const balanceBefore = await fixture.multiTokenHelper!.balanceOf(
+                    asset.tokenIndex,
+                    bobAccount,
+                );
+                balanceBeforeMap.set(asset.tokenIndex, balanceBefore);
+            }
 
             // Process claim action
             const result = await fixture.confirmAction(linkId, claimActionId, "Claim");
             expect(result.state).toEqual("Action_state_success");
             expect(result.intents[0].state).toEqual("Intent_state_success");
 
-            // Verify balance after claim
-            // const balanceAfter = await fixture.tokenHelper!.balanceOf(bobAccount);
-            // const balanceChanged = balanceAfter - balanceBefore;
-            // expect(balanceChanged).toEqual(assetInfo.amount_per_claim! - BigInt(10_000)); // Minus fee
+            // Verify balance after claim for each token
+            for (const asset of assets) {
+                const balanceBefore = balanceBeforeMap.get(asset.tokenIndex) || BigInt(0);
+                const balanceAfter = await fixture.multiTokenHelper!.balanceOf(
+                    asset.tokenIndex,
+                    bobAccount,
+                );
+                const balanceChanged = balanceAfter - balanceBefore;
+
+                // Each token should increase by amount_per_claim minus the fee
+                expect(balanceChanged).toEqual(asset.amount_per_claim! - BigInt(10_000)); // Minus fee
+            }
 
             // Verify link state
             const linkState = await fixture.getLinkWithActions(linkId);
@@ -159,43 +181,6 @@ describe("Test create and claim token basket link", () => {
 
     describe("Anonymous User Flow", () => {
         let linkClaimAnymousId: string;
-        let assets: AssetInfo[] = [];
-
-        beforeAll(async () => {
-            const multiple_token_helper = fixture.multiTokenHelper!;
-            assets = [
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token1").toString(),
-                    amount_per_claim: BigInt(10_0000_0000),
-                    amount_per_link_use_action: BigInt(10_0000_0000),
-                },
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token2").toString(),
-                    amount_per_claim: BigInt(20_0000_0000),
-                    amount_per_link_use_action: BigInt(20_0000_0000),
-                },
-                {
-                    chain: "IC",
-                    address: multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    label:
-                        "SEND_TOKEN_BASKET_ASSET" +
-                        "_" +
-                        multiple_token_helper.getTokenCanisterId("token3").toString(),
-                    amount_per_claim: BigInt(30_0000_0000),
-                    amount_per_link_use_action: BigInt(30_0000_0000),
-                },
-            ];
-        });
 
         beforeAll(async () => {
             fixture.switchToUser("alice");
@@ -211,11 +196,27 @@ describe("Test create and claim token basket link", () => {
 
             linkClaimAnymousId = result.linkId;
         });
+
         it("should allow anonymous user to claim", async () => {
             // Create a new link for anonymous testing
             fixture.switchToAnonymous();
 
             const walletAddress = fixture.identities.bob.getPrincipal().toText();
+
+            // Get Bob's initial balance for each token before anonymous claim
+            const bobAccount = {
+                owner: fixture.identities.bob.getPrincipal(),
+                subaccount: [] as any,
+            };
+
+            const balanceBeforeMap = new Map<string, bigint>();
+            for (const asset of assets) {
+                const balanceBefore = await fixture.multiTokenHelper!.balanceOf(
+                    asset.tokenIndex,
+                    bobAccount,
+                );
+                balanceBeforeMap.set(asset.tokenIndex, balanceBefore);
+            }
 
             // Process anonymous claim
             const claimResult = await fixture.processActionAnonymous(
@@ -237,6 +238,19 @@ describe("Test create and claim token basket link", () => {
             );
 
             expect(confirmResult.state).toEqual("Action_state_success");
+
+            // Verify balance changes for each token
+            for (const asset of assets) {
+                const balanceBefore = balanceBeforeMap.get(asset.tokenIndex) || BigInt(0);
+                const balanceAfter = await fixture.multiTokenHelper!.balanceOf(
+                    asset.tokenIndex,
+                    bobAccount,
+                );
+                const balanceChanged = balanceAfter - balanceBefore;
+
+                // Each token should increase by amount_per_claim minus the fee
+                expect(balanceChanged).toEqual(asset.amount_per_claim! - BigInt(10_000)); // Minus fee
+            }
 
             // Update user state to completed
             fixture.updateUserState(linkClaimAnymousId, "Claim", "Continue", walletAddress);
