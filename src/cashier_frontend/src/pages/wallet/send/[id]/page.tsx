@@ -477,7 +477,7 @@ export default function SendTokenPage() {
                             variant="default"
                             size="lg"
                             disabled={isDisabled}
-                            className={`mx-auto mt-auto ${isDisabled ? "bg-disabledgreen" : ""}`}
+                            className={`mx-auto mt-auto mb-2 ${isDisabled ? "bg-disabledgreen" : ""}`}
                         >
                             {t("wallet.send.button")}
                         </FixedBottomButton>

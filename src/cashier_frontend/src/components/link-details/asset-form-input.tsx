@@ -42,9 +42,9 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     // Add local state for isUsd with initial value from props or default to false
     const [localIsUsd, setLocalIsUsd] = useState<boolean>(false);
 
-    // Add local state for token amount and USD amount
-    const [localTokenAmount, setLocalTokenAmount] = useState<string>("0");
-    const [localUsdAmount, setLocalUsdAmount] = useState<string>("0");
+    // Add local state for token amount and USD amount with empty initial values
+    const [localTokenAmount, setLocalTokenAmount] = useState<string>("");
+    const [localUsdAmount, setLocalUsdAmount] = useState<string>("");
 
     const { link } = useLinkAction();
 
@@ -73,11 +73,15 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     useEffect(() => {
         if (token && formAmount !== undefined) {
             const tokenAmountNumber = Number(formAmount) / 10 ** decimals;
-            setLocalTokenAmount(tokenAmountNumber.toString());
 
-            if (canConvert && tokenUsdPrice) {
-                const usdValue = tokenAmountNumber * tokenUsdPrice;
-                setLocalUsdAmount(usdValue.toFixed(2));
+            // Only set non-zero values
+            if (tokenAmountNumber > 0) {
+                setLocalTokenAmount(tokenAmountNumber.toString());
+
+                if (canConvert && tokenUsdPrice) {
+                    const usdValue = tokenAmountNumber * tokenUsdPrice;
+                    setLocalUsdAmount(usdValue.toFixed(2));
+                }
             }
         }
     }, [formAmount, token, decimals, canConvert, tokenUsdPrice]);
@@ -97,8 +101,8 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
 
     // Watch for token changes to reset amounts
     useEffect(() => {
-        setLocalTokenAmount("0");
-        setLocalUsdAmount("0");
+        setLocalTokenAmount("");
+        setLocalUsdAmount("");
     }, [formTokenAddress]);
 
     const { setTokenAmount, setUsdAmount } = useFormActions(form, localIsUsd, index);
@@ -254,7 +258,15 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                     step="any"
                     isCurrencyInput={true}
                     currencySymbol={localIsUsd ? "USD" : token?.name || ""}
-                    value={localIsUsd ? localUsdAmount : localTokenAmount}
+                    value={
+                        localIsUsd
+                            ? localUsdAmount === "0"
+                                ? ""
+                                : localUsdAmount
+                            : localTokenAmount === "0"
+                              ? ""
+                              : localTokenAmount
+                    }
                     onChange={(e: ChangeEvent<HTMLInputElement>) => {
                         handleAmountChange(e.target.value);
                     }}
