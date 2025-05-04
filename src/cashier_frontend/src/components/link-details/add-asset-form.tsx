@@ -53,7 +53,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
     // maxUse (default = 1)
-    const [maxActionNumber, setMaxUse] = useState<number>(0);
+    const [maxActionNumber, setMaxUse] = useState<number>(isAirdrop ? 0 : 1);
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -115,7 +115,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     useEffect(() => {
         if (link?.id) {
             updateUserInput(link?.id, {
-                maxActionNumber: BigInt(maxActionNumber),
+                maxActionNumber: isAirdrop ? BigInt(maxActionNumber) : 1n,
             });
         }
     }, [maxActionNumber, link?.id]);

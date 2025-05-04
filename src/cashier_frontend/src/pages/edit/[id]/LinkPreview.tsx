@@ -278,7 +278,7 @@ export default function LinkPreview({
                         </p>
                     </div>
                     <div className="flex items-center w-full justify-between">
-                        <p className="text-[14px] font-normal">Max use count</p>
+                        <p className="text-[14px] font-normal">Max number of uses</p>
                         <p className="text-[14px] font-normal">
                             {link.maxActionNumber ? link.maxActionNumber.toString() : "1"}
                         </p>
