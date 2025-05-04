@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LinkTestFixture, LinkConfig, AssetInfo } from "../fixtures/link-test-fixture";
-import { IntentDto } from "../../declarations/cashier_backend/cashier_backend.did";
+import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
+import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { fromNullable } from "@dfinity/utils";
 
-describe("Test create and claim tip link", () => {
+describe("Test create and claim token airdrop link", () => {
     const fixture = new LinkTestFixture();
     let linkId: string;
     let claimActionId: string;
@@ -13,14 +14,14 @@ describe("Test create and claim tip link", () => {
         description: "tip 20 icp to the user",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "SendTip",
-        link_use_action_max_count: BigInt(1),
+        link_type: "SendAirdrop",
+        link_use_action_max_count: BigInt(5),
     };
 
     const assetInfo: AssetInfo = {
         chain: "IC",
         address: "x5qut-viaaa-aaaar-qajda-cai",
-        label: "SEND_TIP_ASSET",
+        label: "SEND_AIRDROP_ASSET",
         amount_per_claim: BigInt(10_0000_0000),
     };
 
@@ -37,16 +38,18 @@ describe("Test create and claim tip link", () => {
     describe("With Alice", () => {
         beforeEach(async () => {
             fixture.switchToUser("alice");
-            await fixture.advanceTime(1 * 60 * 1000); // 1 minute
         });
 
         it("should complete the full link creation process", async () => {
             // Create and set up the link using the fixture's helper method
             const result = await fixture.completeActiveLinkFlow(
-                "SendTip",
+                "SendAirdrop",
                 testConfig,
                 [assetInfo],
-                BigInt(1),
+                BigInt(5),
+                {
+                    icrc1TransferAmount: BigInt(50_0000_0000),
+                },
             );
 
             linkId = result.linkId;
@@ -54,12 +57,19 @@ describe("Test create and claim tip link", () => {
             // Verify link is active
             const linkState = await fixture.getLinkWithActions(linkId, "CreateLink");
             expect(linkState.link.state).toEqual("Link_state_active");
+            expect(linkState.link.link_use_action_counter).toEqual(0n);
+            expect(linkState.link.link_use_action_max_count).toEqual(BigInt(5));
+
+            const linkBalance = await fixture.checkLinkBalance(assetInfo.address, linkId);
+            expect(linkBalance).toEqual(
+                assetInfo.amount_per_claim! * linkState.link.link_use_action_max_count,
+            );
 
             // Verify action successful
-            const actions = linkState.action;
-            expect(actions).toHaveLength(1);
-            expect(actions[0].state).toEqual("Action_state_success");
-            actions[0].intents.forEach((intent: IntentDto) => {
+            const actions = fromNullable(linkState.action);
+            expect(actions).toBeDefined();
+            expect(actions!.state).toEqual("Action_state_success");
+            actions!.intents.forEach((intent: IntentDto) => {
                 expect(intent.state).toEqual("Intent_state_success");
             });
         });
@@ -68,7 +78,6 @@ describe("Test create and claim tip link", () => {
     describe("With Bob", () => {
         beforeEach(async () => {
             fixture.switchToUser("bob");
-            await fixture.advanceTime(1 * 60 * 1000); // 1 minute
         });
 
         it("should retrieve empty user state initially", async () => {
@@ -95,6 +104,10 @@ describe("Test create and claim tip link", () => {
 
             const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
 
+            // Check link balance before claim
+            const linkBalanceBefore = await fixture.checkLinkBalance(assetInfo.address, linkId);
+            expect(linkBalanceBefore).toEqual(assetInfo.amount_per_claim! * BigInt(5));
+
             // Process claim action
             const result = await fixture.confirmAction(linkId, claimActionId, "Claim");
             expect(result.state).toEqual("Action_state_success");
@@ -104,6 +117,10 @@ describe("Test create and claim tip link", () => {
             const balanceAfter = await fixture.tokenHelper!.balanceOf(bobAccount);
             const balanceChanged = balanceAfter - balanceBefore;
             expect(balanceChanged).toEqual(assetInfo.amount_per_claim! - BigInt(10_000)); // Minus fee
+
+            // Check link balance after claim
+            const linkBalanceAfter = await fixture.checkLinkBalance(assetInfo.address, linkId);
+            expect(linkBalanceAfter).toEqual(assetInfo.amount_per_claim! * BigInt(4)); // Reduced by one claim
 
             // Verify link state
             const linkState = await fixture.getLinkWithActions(linkId);
@@ -126,21 +143,38 @@ describe("Test create and claim tip link", () => {
             fixture.switchToUser("alice");
 
             const result = await fixture.completeActiveLinkFlow(
-                "SendTip",
+                "SendAirdrop",
                 testConfig,
                 [assetInfo],
-                BigInt(1),
+                BigInt(5),
+                {
+                    icrc1TransferAmount: BigInt(50_0000_0000),
+                },
             );
 
             console.log("Link created for anonymous testing:", result);
 
             linkClaimAnymousId = result.linkId;
         });
+
         it("should allow anonymous user to claim", async () => {
             // Create a new link for anonymous testing
             fixture.switchToAnonymous();
 
             const walletAddress = fixture.identities.bob.getPrincipal().toText();
+
+            // Get initial balance for Bob's account
+            const bobAccount = {
+                owner: fixture.identities.bob.getPrincipal(),
+                subaccount: [] as any,
+            };
+            const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
+
+            // Check link balance before claim
+            const linkBalanceBefore = await fixture.checkLinkBalance(
+                assetInfo.address,
+                linkClaimAnymousId,
+            );
 
             // Process anonymous claim
             const claimResult = await fixture.processActionAnonymous(
@@ -162,6 +196,22 @@ describe("Test create and claim tip link", () => {
             );
 
             expect(confirmResult.state).toEqual("Action_state_success");
+
+            // Verify balance after claim
+            const balanceAfter = await fixture.tokenHelper!.balanceOf(bobAccount);
+            const balanceChanged = balanceAfter - balanceBefore;
+            expect(balanceChanged).toEqual(assetInfo.amount_per_claim! - BigInt(10_000)); // Minus fee
+
+            // Check link balance after claim
+            const linkBalanceAfter = await fixture.checkLinkBalance(
+                assetInfo.address,
+                linkClaimAnymousId,
+            );
+            expect(linkBalanceAfter).toEqual(linkBalanceBefore - assetInfo.amount_per_claim!);
+
+            // Verify link state
+            const linkState = await fixture.getLinkWithActions(linkClaimAnymousId);
+            expect(linkState.link.link_use_action_counter).toEqual(1n);
 
             // Update user state to completed
             fixture.updateUserState(linkClaimAnymousId, "Claim", "Continue", walletAddress);

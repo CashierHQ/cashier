@@ -800,14 +800,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // Update link's properties here
         let mut updated_link = link.clone();
 
-        // update tip link's total_claim
-        if link.link_type == Some(LinkType::SendTip) && action.r#type == ActionType::Claim {
-            // Update asset info to track the claim
-            updated_link.link_use_action_counter += 1;
-        } else if link.link_type == Some(LinkType::SendAirdrop)
-            && action.r#type == ActionType::Claim
-        {
-            updated_link.link_use_action_counter += 1;
+        let list_send_link_type = [
+            LinkType::SendTip,
+            LinkType::SendAirdrop,
+            LinkType::SendTokenBasket,
+        ];
+
+        if list_send_link_type.contains(&link.link_type.unwrap()) {
+            if action.r#type == ActionType::Claim {
+                // Update asset info to track the claim
+                updated_link.link_use_action_counter += 1;
+            }
         }
 
         // Save the updated link
@@ -1037,124 +1040,69 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .filter(|prop| !whitelist_props.contains(prop))
             .collect::<Vec<_>>();
 
-        info!("[is_props_changed] check_props: {:#?}", check_props);
-
         for prop in check_props.iter() {
             match prop.as_str() {
                 "title" => {
-                    info!("[is_props_changed] link title: {:#?}", link.title);
-                    info!("[is_props_changed] params title: {:#?}", params.title);
-
                     if params.title.is_none() {
                         return false;
                     }
 
                     if params.title != link.title {
-                        info!("[is_props_changed] link title not match");
                         return true;
                     }
                 }
                 "description" => {
-                    info!(
-                        "[is_props_changed] link description: {:#?}",
-                        link.description
-                    );
-                    info!(
-                        "[is_props_changed] params description: {:#?}",
-                        params.description
-                    );
-
                     if params.description.is_none() {
                         return false;
                     }
 
                     if params.description != link.description {
-                        info!("[is_props_changed] link description not match");
                         return true;
                     }
                 }
                 "link_image_url" => {
-                    info!(
-                        "[is_props_changed] link_image_url: {:#?}",
-                        link.get_metadata("link_image_url")
-                    );
-                    info!(
-                        "[is_props_changed] params link_image_url: {:#?}",
-                        params.link_image_url
-                    );
-
                     if params.link_image_url.is_none() {
                         return false;
                     }
 
                     if params.link_image_url != link.get_metadata("link_image_url") {
-                        info!("[is_props_changed] link_image_url not match");
                         return true;
                     }
                 }
                 "nft_image" => {
-                    info!(
-                        "[is_props_changed] nft_image: {:#?}",
-                        link.get_metadata("nft_image")
-                    );
-                    info!(
-                        "[is_props_changed] params nft_image: {:#?}",
-                        params.nft_image
-                    );
-
                     if params.nft_image.is_none() {
                         return false;
                     }
 
                     if params.nft_image != link.get_metadata("nft_image") {
-                        info!("[is_props_changed] nft_image not match");
                         return true;
                     }
                 }
                 "link_type" => {
-                    info!("[is_props_changed] link_type: {:#?}", link.link_type);
-                    info!(
-                        "[is_props_changed] params link_type: {:#?}",
-                        params.link_type
-                    );
                     let link_link_type_str = link.link_type.as_ref().map(|lt| lt.to_string());
 
                     if params.link_type.is_none() {
                         return false;
                     }
                     if params.link_type != link_link_type_str {
-                        info!("[is_props_changed] link_type not match");
                         return true;
                     }
                 }
                 "template" => {
-                    info!("[is_props_changed] link template: {:#?}", link.template);
-                    info!("[is_props_changed] params template: {:#?}", params.template);
                     let link_template_str = link.template.as_ref().map(|t| t.to_string());
                     if params.template.is_none() {
                         return false;
                     }
                     if params.template != link_template_str {
-                        info!("[is_props_changed] link template not match");
                         return true;
                     }
                 }
                 "link_use_action_max_count" => {
-                    info!(
-                        "[is_props_changed] link link_use_action_max_count: {:#?}",
-                        link.link_use_action_max_count
-                    );
-                    info!(
-                        "[is_props_changed] params link_use_action_max_count: {:#?}",
-                        params.link_use_action_max_count
-                    );
-
                     if params.link_use_action_max_count.is_none() {
                         return false;
                     }
 
                     if params.link_use_action_max_count.unwrap() != link.link_use_action_max_count {
-                        info!("[is_props_changed] link_use_action_max_count not match");
                         return true;
                     }
                 }
@@ -1180,7 +1128,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                             if link_ids.len() != params_ids.len()
                                 || !link_ids.iter().all(|id| params_ids.contains(id))
                             {
-                                info!("[is_props_changed] asset_info IDs do not match");
                                 return true;
                             }
 
@@ -1353,6 +1300,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
             // ===== Continue Go to =====
             if link_state_goto == LinkStateMachineGoto::Continue {
+                info!(
+                    "[handle_link_state_transition] create action: {:#?}",
+                    create_action
+                );
                 if create_action.is_none() {
                     return Err(CanisterError::ValidationErrors(
                         "Create action not found".to_string(),

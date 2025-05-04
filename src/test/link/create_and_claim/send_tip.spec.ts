@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LinkTestFixture, LinkConfig, AssetInfo } from "../fixtures/link-test-fixture";
-import { IntentDto } from "../../declarations/cashier_backend/cashier_backend.did";
+import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
+import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { fromNullable } from "@dfinity/utils";
 
-describe("Test create and claim token basket link", () => {
+describe("Test create and claim tip link", () => {
     const fixture = new LinkTestFixture();
     let linkId: string;
     let claimActionId: string;
@@ -13,8 +14,8 @@ describe("Test create and claim token basket link", () => {
         description: "tip 20 icp to the user",
         template: "Central",
         link_image_url: "https://www.google.com",
-        link_type: "SendTokenBasket",
-        link_use_action_max_count: BigInt(3),
+        link_type: "SendTip",
+        link_use_action_max_count: BigInt(1),
     };
 
     const assetInfo: AssetInfo = {
@@ -55,11 +56,14 @@ describe("Test create and claim token basket link", () => {
             const linkState = await fixture.getLinkWithActions(linkId, "CreateLink");
             expect(linkState.link.state).toEqual("Link_state_active");
 
+            const linkBalance = await fixture.checkLinkBalance(assetInfo.address, linkId);
+            expect(linkBalance).toEqual(assetInfo.amount_per_claim!);
+
             // Verify action successful
-            const actions = linkState.action;
-            expect(actions).toHaveLength(1);
-            expect(actions[0].state).toEqual("Action_state_success");
-            actions[0].intents.forEach((intent: IntentDto) => {
+            const actions = fromNullable(linkState.action);
+            expect(actions).toBeDefined();
+            expect(actions!.state).toEqual("Action_state_success");
+            actions!.intents.forEach((intent: IntentDto) => {
                 expect(intent.state).toEqual("Intent_state_success");
             });
         });
