@@ -6,7 +6,8 @@ import { useAuth } from "@nfid/identitykit/react";
 import { transformShortAddress } from "@/utils";
 import copy from "copy-to-clipboard";
 import { useToast } from "@/hooks/use-toast";
-import { Copy } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Copy, X } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { MouseEventHandler } from "react";
 
@@ -17,13 +18,15 @@ export interface SidebarMenuItem {
 }
 
 interface AppSidebarProps {
-    onClose?: () => void;
+    onClose: () => void;
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = ({ onClose }) => {
     const { user } = useAuth();
     const { disconnect } = useAuth();
     const { toast } = useToast();
+    const navigate = useNavigate();
+    const { search } = useLocation();
 
     const handleCopy = (e: React.SyntheticEvent) => {
         try {
@@ -39,6 +42,13 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ onClose }) => {
 
     const handleDisConnect = () => {
         disconnect();
+
+        // If the current page is not a claim page, navigate to the home page
+        // This prevents the user from being redirected to the home page when they click the disconnect button
+        // from within the sidebar
+        if (!search.includes("claim")) {
+            navigate("/");
+        }
     };
 
     return (

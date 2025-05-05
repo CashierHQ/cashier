@@ -1,5 +1,5 @@
 import { useAuth } from "@nfid/identitykit/react";
-import React, { useState } from "react";
+import React from "react";
 import LoginButton from "./login-button";
 import { ChevronLeft, Wallet, X } from "lucide-react";
 import { Button } from "./ui/button";
@@ -8,10 +8,8 @@ import { RiMenu2Line } from "react-icons/ri";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { useConnectToWallet } from "@/hooks/user-hook";
+import { IoExit } from "react-icons/io5";
 import { useWalletContext } from "@/contexts/wallet-context";
-import WalletConnectDialog from "./wallet-connect-dialog";
-import { InternetIdentity } from "@nfid/identitykit";
-import { headerWalletOptions } from "@/constants/wallet-options";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface HeaderProps {}
@@ -23,7 +21,6 @@ const Header: React.FC<HeaderProps> = () => {
     const responsive = useResponsive();
     const { connectToWallet } = useConnectToWallet();
     const { openWallet } = useWalletContext();
-    const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
     const handleNavigate = (path: string) => {
         const backToHomePaths = ["/wallet"];
@@ -33,20 +30,6 @@ const Header: React.FC<HeaderProps> = () => {
             navigate(-1);
         }
     };
-
-    const handleWalletSelection = (walletId: string) => {
-        setIsWalletDialogOpen(false);
-
-        if (walletId === "InternetIdentity") {
-            connectToWallet(InternetIdentity.id);
-        }
-    };
-
-    // Use the centralized wallet options with onClick handlers
-    const walletDialogOptions = headerWalletOptions.map((option) => ({
-        ...option,
-        onClick: () => handleWalletSelection(option.id),
-    }));
 
     if (!user) {
         return (
@@ -65,19 +48,11 @@ const Header: React.FC<HeaderProps> = () => {
                 />
                 <LoginButton
                     onClick={() => {
-                        setIsWalletDialogOpen(true);
+                        connectToWallet();
                     }}
                 >
                     Login
                 </LoginButton>
-
-                <WalletConnectDialog
-                    open={isWalletDialogOpen}
-                    onOpenChange={setIsWalletDialogOpen}
-                    walletOptions={walletDialogOptions}
-                    title="Connect your wallet"
-                    viewAllLink={false}
-                />
             </div>
         );
     } else if (

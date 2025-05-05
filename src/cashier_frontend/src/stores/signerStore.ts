@@ -1,11 +1,12 @@
 import { create } from "zustand";
-import { IdentityKitSignerConfig } from "@nfid/identitykit";
-import {
-    WALLET_OPTIONS,
-    GoogleSigner,
-    defaultSigners,
-    allWalletSigners,
-} from "@/constants/wallet-options";
+import { IdentityKitSignerConfig, InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
+
+export enum WALLET_OPTIONS {
+    GOOGLE = "Google login",
+    INTERNET_IDENTITY = "Internet Identity",
+    OTHER = "Other wallets",
+    TYPING = "Typing",
+}
 
 interface SignerState {
     signers: IdentityKitSignerConfig[];
@@ -13,12 +14,16 @@ interface SignerState {
     setSigners: (signers: IdentityKitSignerConfig[]) => void;
     setCurrentConnectOption: (option: WALLET_OPTIONS) => void;
     reset: () => void;
+    initInternetIdentitySigner: () => void;
+    initOtherWalletSigners: () => void;
 }
 
-export { WALLET_OPTIONS, GoogleSigner }; // Re-export for backward compatibility
+const defaultSigners = [InternetIdentity];
+
+const otherSigners = [NFIDW, Stoic];
 
 export const useSignerStore = create<SignerState>((set) => ({
-    signers: allWalletSigners,
+    signers: defaultSigners,
     currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
     setSigners: (signers) => set({ signers }),
     setCurrentConnectOption: (option) => set({ currentConnectOption: option }),
@@ -26,5 +31,15 @@ export const useSignerStore = create<SignerState>((set) => ({
         set({
             signers: defaultSigners,
             currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
+        }),
+    initInternetIdentitySigner: () =>
+        set({
+            signers: defaultSigners,
+            currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
+        }),
+    initOtherWalletSigners: () =>
+        set({
+            signers: otherSigners,
+            currentConnectOption: WALLET_OPTIONS.OTHER,
         }),
 }));

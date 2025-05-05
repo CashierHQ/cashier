@@ -17,6 +17,17 @@ export function useUpdateLinkUserState() {
             const result = await linkService.updateLinkUserState(vars.input);
             return result;
         },
+        onSuccess: (data, variables) => {
+            // Invalidate the userState query key
+            // const { input } = variables;
+            // const userStateInput: LinkGetUserStateInputModel = {
+            //     link_id: input.link_id,
+            //     action_type: input.action_type,
+            //     anonymous_wallet_address: input.anonymous_wallet_address,
+            //     create_if_not_exist: input.,
+            // };
+            // queryClient.invalidateQueries({ queryKey: queryKeys.links.userState(userStateInput, identity).queryKey });
+        },
         onError: (e) => {
             console.error("Error updating link user state ", e.message);
         },
@@ -38,16 +49,6 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
         },
         enabled: isEnabled,
         refetchOnWindowFocus: false,
-        // Add stale time to prevent immediate refetches when identity changes
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        // Add retry options to manage refetches
-        retry: (failureCount, error) => {
-            if (error.toString().includes("Identity is required")) {
-                // Don't retry identity errors - wait for proper identity
-                return false;
-            }
-            return failureCount < 2;
-        },
     });
 }
 
