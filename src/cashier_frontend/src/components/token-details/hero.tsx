@@ -8,6 +8,7 @@ import { convertDecimalBigIntToNumber } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "@/components/transaction/transaction-toast";
+import { useWalletContext } from "@/contexts/wallet-context";
 
 interface TokenDetailsHeroProps {
     token: FungibleToken;
@@ -17,8 +18,26 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { toastData, showToast, hideToast } = useToast();
-    const navigateReceivePage = () => navigate(`/wallet/receive/${token.address}`);
-    const navigateSendPage = () => navigate(`/wallet/send/${token.address}`);
+    const { navigateToPanel } = useWalletContext();
+
+    // Check if we're in a panel context (using a heuristic)
+    const isInPanel = window.location.hash === "#/" || !window.location.hash.includes("/wallet/");
+
+    const handleNavigateReceive = () => {
+        if (isInPanel) {
+            navigateToPanel("receive", { tokenId: token.address });
+        } else {
+            navigate(`/wallet/receive/${token.address}`);
+        }
+    };
+
+    const handleNavigateSend = () => {
+        if (isInPanel) {
+            navigateToPanel("send", { tokenId: token.address });
+        } else {
+            navigate(`/wallet/send/${token.address}`);
+        }
+    };
 
     const [hasCopiedAddress, setHasCopiedAddress] = useState<boolean>(false);
 
@@ -39,7 +58,7 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
             <p className="text-xs text-grey font-semibold">${token.usdEquivalent}</p>
 
             <div className="mt-4">
-                <SendReceive onReceive={navigateReceivePage} onSend={navigateSendPage} />
+                <SendReceive onReceive={handleNavigateReceive} onSend={handleNavigateSend} />
             </div>
 
             <div className="mt-5 w-full">

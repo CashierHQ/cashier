@@ -1,17 +1,20 @@
-import { useNavigate, useParams } from "react-router-dom";
 import { useMemo } from "react";
 import { AssetAvatar } from "@/components/ui/asset-avatar";
-import { BackHeader } from "@/components/ui/back-header";
 import { TokenDetailsHero } from "@/components/token-details/hero";
 import { TransactionHistory } from "@/components/token-details/transaction-history";
 import { MOCK_TX_DATA } from "@/constants/mock-data"; // Still using mock transaction data
 import { useTokens } from "@/hooks/useTokens";
+import { useWalletContext } from "@/contexts/wallet-context";
+import { ChevronLeft } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
-export default function TokenDetailsPage() {
-    const navigate = useNavigate();
-    const goBack = () => navigate("/wallet");
-    const { tokenId } = useParams<{ tokenId: string }>();
+interface DetailsPanelProps {
+    tokenId?: string;
+    onBack: () => void;
+}
 
+const DetailsPanel: React.FC<DetailsPanelProps> = ({ tokenId, onBack }) => {
     // Use the useTokens hook to get consistent token data
     const { isLoadingBalances, getDisplayTokens } = useTokens();
     const userTokens = getDisplayTokens();
@@ -28,12 +31,14 @@ export default function TokenDetailsPage() {
     // Show loading state while token data is being fetched
     if (isLoadingBalances && !selectedToken) {
         return (
-            <div className="h-full overflow-auto">
-                <p>selected token: {selectedToken}</p>
-                <BackHeader onBack={goBack}>
+            <div className="w-full flex flex-col h-full">
+                <div className="flex items-center mb-4">
+                    <button onClick={onBack} className="mr-3">
+                        <ChevronLeft size={24} />
+                    </button>
                     <div className="h-8 w-full"></div>
-                </BackHeader>
-                <div className="flex flex-col px-2">
+                </div>
+                <div className="flex flex-col">
                     <div className="flex items-center w-full justify-center h-fit">
                         <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
                     </div>
@@ -46,13 +51,18 @@ export default function TokenDetailsPage() {
     }
 
     return (
-        <div className="h-full overflow-hidden">
-            <BackHeader onBack={goBack}>
-                <div className="h-8 w-full"></div>
-            </BackHeader>
+        <div className="w-full flex flex-col h-full">
+            <div className="relative flex justify-center items-center mb-4">
+                <button onClick={onBack} className="absolute left-0">
+                    <ChevronLeft size={24} />
+                </button>
+                <h1 className="text-lg font-semibold">
+                    {selectedToken?.symbol || "Token Details"}
+                </h1>
+            </div>
 
             {selectedToken ? (
-                <div className="px-2">
+                <div>
                     <div className="flex w-full justify-center h-fit items-center bg-transparent">
                         <AssetAvatar
                             className="w-12 h-12"
@@ -70,11 +80,13 @@ export default function TokenDetailsPage() {
                     <p className="text-gray-500 mb-6">
                         The token you're looking for could not be found.
                     </p>
-                    <button className="px-4 py-2 bg-primary text-white rounded-lg" onClick={goBack}>
+                    <Button variant="default" onClick={onBack}>
                         Return to Wallet
-                    </button>
+                    </Button>
                 </div>
             )}
         </div>
     );
-}
+};
+
+export default DetailsPanel;

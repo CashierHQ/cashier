@@ -5,6 +5,7 @@ import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ChevronLeft } from "lucide-react";
 import { useResponsive } from "@/hooks/responsive-hook";
+import { useWalletContext } from "@/contexts/wallet-context";
 
 interface WalletHeroProps {
     totalUsdEquivalent: number;
@@ -14,6 +15,7 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const responsive = useResponsive();
+    const { navigateToPanel } = useWalletContext();
 
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
     const [isVisible, setIsVisible] = useState(() => {
@@ -27,8 +29,8 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
 
     const usdEquivalentAmount = prettyNumber(totalUsdEquivalent);
 
-    const navigateReceivePage = () => navigate(`/wallet/receive`);
-    const navigateSendPage = () => navigate(`/wallet/send`);
+    const navigateReceivePage = () => navigateToPanel("receive");
+    const navigateSendPage = () => navigateToPanel("send");
 
     return (
         <div className="flex flex-col items-center pb-5">

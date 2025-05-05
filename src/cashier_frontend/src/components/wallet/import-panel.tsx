@@ -1,19 +1,19 @@
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import { BackHeader } from "@/components/ui/back-header";
 import { ImportTokenForm } from "@/components/import-token/form";
 import { ImportTokenFormData } from "@/hooks/import-token.hooks";
 import { ImportTokenReview } from "@/components/import-token/review";
-import { useNavigate } from "react-router-dom";
-import { useResponsive } from "@/hooks/responsive-hook";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { Spinner } from "@/components/ui/spinner";
 import { useTokens } from "@/hooks/useTokens";
+import { ChevronLeft } from "lucide-react";
 
-export default function ImportTokenPage() {
-    const navigate = useNavigate();
+interface ImportPanelProps {
+    onBack: () => void;
+}
+
+const ImportPanel: React.FC<ImportPanelProps> = ({ onBack }) => {
     const { t } = useTranslation();
-    const responsive = useResponsive();
     const [importData, setImportData] = useState<ImportTokenFormData>();
     const [tokenMetadata, setTokenMetadata] = useState<{
         name: string;
@@ -33,7 +33,7 @@ export default function ImportTokenPage() {
             setTokenMetadata(undefined);
             setImportData(undefined);
         } else {
-            navigate(-1);
+            onBack();
         }
     }
 
@@ -72,14 +72,15 @@ export default function ImportTokenPage() {
     };
 
     return (
-        <div
-            className={`flex flex-col relative ${responsive.isSmallDevice ? "px-2 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] h-full px-4"}`}
-        >
-            <BackHeader onBack={goBack}>
+        <div className="w-full flex flex-col h-full">
+            <div className="relative flex justify-center items-center mb-4">
+                <button onClick={goBack} className="absolute left-0">
+                    <ChevronLeft size={24} />
+                </button>
                 <h1 className="text-lg font-semibold">
-                    {t(importData ? "review.header" : "import.header")}
+                    {t(tokenMetadata ? "review.header" : "import.header")}
                 </h1>
-            </BackHeader>
+            </div>
 
             {importError && (
                 <div className="mt-4 p-3 bg-red-100 text-red-800 rounded-md">{importError}</div>
@@ -104,4 +105,6 @@ export default function ImportTokenPage() {
             </div>
         </div>
     );
-}
+};
+
+export default ImportPanel;
