@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -44,11 +44,10 @@ export default function ClaimPage() {
     const [searchParams] = useSearchParams();
     const { renderSkeleton } = useSkeletonLoading();
     const identity = useIdentity();
-    const prevIdentityRef = useRef(identity);
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
 
-    const { updateTokenInit } = useTokens();
+    const { isLoading: isLoadingToken, updateTokenInit } = useTokens();
 
     // Fetch link data
     const {
@@ -118,19 +117,8 @@ export default function ClaimPage() {
         navigate(`/${linkId}?step=claim`);
     };
 
-    // Handle identity changes to prevent unnecessary re-renders
     useEffect(() => {
-        if (identity !== prevIdentityRef.current) {
-            prevIdentityRef.current = identity;
-            if (linkData) {
-                // Reset state when identity changes but don't cause a page reload
-                setEnableFetchLinkUserState(true);
-            }
-        }
-    }, [identity, linkData]);
-
-    useEffect(() => {
-        if (linkData) {
+        if (linkData && identity) {
             setEnableFetchLinkUserState(true);
         }
         if (linkData) {
@@ -142,13 +130,13 @@ export default function ClaimPage() {
         }
         // Handle step parameter
         setShowDefaultPage(searchParams.get("step") !== "claim");
-    }, [linkData, searchParams, linkUserState]);
+    }, [linkData, identity, searchParams]);
 
     useEffect(() => {
-        if (linkId && !linkData) {
+        if (linkId) {
             getLinkDetail();
         }
-    }, [linkId, linkData]);
+    }, []);
 
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
         return <LinkNotFound />;

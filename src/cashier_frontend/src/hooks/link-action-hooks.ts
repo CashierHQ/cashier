@@ -29,8 +29,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     const createNewLinkMutation = useCreateNewLinkMutation();
 
     const getLink = async () => {
-        console.log("🚀 ~ getLink ~ linkId:", linkId);
-        console.log("current data in linkDetailQuery:", linkDetailQuery.data);
         linkDetailQuery.refetch();
     };
 
