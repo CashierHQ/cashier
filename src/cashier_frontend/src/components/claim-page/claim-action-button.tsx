@@ -10,7 +10,7 @@ interface ClaimActionButtonProps {
 }
 
 const ClaimActionButton: React.FC<ClaimActionButtonProps> = ({
-    isDisabled = true,
+    isDisabled,
     buttonText,
     onSubmit,
     setDisabled,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from "@/pages/[id]";
@@ -12,8 +12,8 @@ interface ClaimPageFormProps {
     formData: LinkDetailModel;
     onSubmit: (address: string) => void;
     onBack?: () => void;
-    isDisabled?: boolean;
-    setDisabled?: (disabled: boolean) => void;
+    isDisabled: boolean;
+    setDisabled: (disabled: boolean) => void;
     buttonText?: string;
 }
 
@@ -21,25 +21,19 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     form,
     formData,
     onSubmit,
-    isDisabled = true,
+    isDisabled,
     setDisabled,
     buttonText,
 }) => {
-    const [buttonDisabled, setButtonDisabled] = useState<boolean>(isDisabled);
-
-    // Function to manage disabled state for both components
-    const updateDisabledState = (disabled: boolean) => {
-        setButtonDisabled(disabled);
-        if (setDisabled) {
-            setDisabled(disabled);
-        }
-    };
-
     const handleSubmit = () => {
         // Disable the button immediately on submission
-        updateDisabledState(true);
+        setDisabled(true);
         onSubmit(form.getValues("address") ?? "");
     };
+
+    useEffect(() => {
+        console.log("useEffect buttonDisabled", isDisabled);
+    }, [isDisabled]);
 
     return (
         <div className="w-full flex flex-col flex-grow relative">
@@ -51,17 +45,13 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                         handleSubmit();
                     }}
                 >
-                    <ClaimFormOptions
-                        form={form}
-                        formData={formData}
-                        setDisabled={updateDisabledState}
-                    />
+                    <ClaimFormOptions form={form} formData={formData} setDisabled={setDisabled} />
 
                     <ClaimActionButton
-                        isDisabled={buttonDisabled}
+                        isDisabled={isDisabled}
                         buttonText={buttonText}
                         onSubmit={handleSubmit}
-                        setDisabled={updateDisabledState}
+                        setDisabled={setDisabled}
                     />
                 </form>
             </Form>

@@ -37,7 +37,7 @@ import {
 interface ClaimFormOptionsProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData?: LinkDetailModel;
-    setDisabled?: (disabled: boolean) => void;
+    setDisabled: (disabled: boolean) => void;
 }
 
 const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }) => {
@@ -58,6 +58,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
 
     const isAddressValid = () => {
         const address = form.getValues("address");
+
         if (!address) return false;
 
         try {
@@ -73,22 +74,19 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
     }, []);
 
     useEffect(() => {
-        if (setDisabled) {
-            const shouldEnable = !!identity || isAddressValid();
-            setDisabled(!shouldEnable);
+        // If user is authenticated, enable the form
+        if (identity) {
+            console.log("User is authenticated");
+            setDisabled(false);
+            return;
         }
-    }, [identity, setDisabled]);
 
-    useEffect(() => {
-        const subscription = form.watch(() => {
-            if (setDisabled) {
-                const shouldEnable = !!identity || isAddressValid();
-                setDisabled(!shouldEnable);
-            }
-        });
+        console.log("User is not authenticated");
 
-        return () => subscription.unsubscribe();
-    }, [form, setDisabled, identity]);
+        // Otherwise, check if the address is valid
+        const isValid = isAddressValid();
+        setDisabled(!isValid);
+    }, [identity]);
 
     const checkForExistingWallet = (): boolean => {
         const hasAddress = (form.getValues("address") ?? "").trim().length > 0;
@@ -144,23 +142,14 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
             if (addressValue) {
                 Principal.fromText(addressValue);
                 form.clearErrors("address");
-                if (setDisabled) {
-                    setDisabled(false);
-                }
             } else {
                 form.clearErrors("address");
-                if (setDisabled && !identity) {
-                    setDisabled(true);
-                }
             }
         } catch {
             form.setError("address", {
                 type: "manual",
                 message: "wallet-format-error",
             });
-            if (setDisabled && !identity) {
-                setDisabled(true);
-            }
         }
     };
 
