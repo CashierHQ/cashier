@@ -1,4 +1,3 @@
-import React from "react";
 import AppRouter from "./Router";
 import { IdentityKitProvider } from "@nfid/identitykit/react";
 import "@nfid/identitykit/react/styles.css";
@@ -8,8 +7,6 @@ import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { WalletProvider } from "./contexts/wallet-context";
 
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
@@ -38,9 +35,9 @@ function App() {
                 targets,
                 maxTimeToLive: 3_600_000_000_000n,
             }}
+            discoverExtensionSigners={false}
         >
             <QueryClientProvider client={queryClient}>
-                <ReactQueryDevtools initialIsOpen={true} />
                 <AppRouter />
                 <Toaster />
             </QueryClientProvider>
