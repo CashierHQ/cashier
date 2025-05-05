@@ -2,8 +2,11 @@ import { useAuth } from "@nfid/identitykit/react";
 import { useResponsive } from "@/hooks/responsive-hook";
 import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
+import WalletSheetWrapper from "@/components/wallet/wallet-sheet-wrapper";
 import { ReactNode, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useWalletContext } from "@/contexts/wallet-context";
+
 type MainAppLayoutProps = {
     children: ReactNode;
 };
@@ -12,6 +15,7 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
     const responsive = useResponsive();
     const { pathname } = useLocation();
     const { user: walletUser } = useAuth();
+    const { isWalletOpen, closeWallet } = useWalletContext();
 
     // Prevent body scrolling on iOS
     useEffect(() => {
@@ -50,20 +54,22 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
         <div
             className={`fixed inset-0 flex justify-center overflow-hidden ${responsive.isSmallDevice ? "" : "bg-lightgreen"}`}
         >
-            <SheetWrapper>
-                <div className="flex w-full flex-col h-full overflow-hidden">
-                    {!isHeaderHidden && <Header />}
-                    <div
-                        className={`flex items-center justify-center flex-col ${
-                            responsive.isSmallDevice
-                                ? "px-4 pt-4 h-full overflow-y-auto overscroll-none"
-                                : "h-[90%] w-[600px] px-4 items-center bg-[white] shadow-[#D6EDE433] shadow-sm rounded-[16px] mx-auto pt-8 pb-4 overflow-y-auto overscroll-none"
-                        }`}
-                    >
-                        {children}
+            <WalletSheetWrapper open={isWalletOpen} onOpenChange={closeWallet}>
+                <SheetWrapper>
+                    <div className="flex w-full flex-col h-full overflow-hidden">
+                        {!isHeaderHidden && <Header />}
+                        <div
+                            className={`flex items-center justify-center flex-col ${
+                                responsive.isSmallDevice
+                                    ? "px-4 pt-4 h-full overflow-y-auto overscroll-none"
+                                    : "h-[90%] w-[600px] px-4 items-center bg-[white] shadow-[#D6EDE433] shadow-sm rounded-[16px] mx-auto pt-8 pb-4 overflow-y-auto overscroll-none"
+                            }`}
+                        >
+                            {children}
+                        </div>
                     </div>
-                </div>
-            </SheetWrapper>
+                </SheetWrapper>
+            </WalletSheetWrapper>
         </div>
     );
 };

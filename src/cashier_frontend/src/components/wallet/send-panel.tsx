@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Clipboard } from "lucide-react";
+import { Clipboard, ChevronLeft } from "lucide-react";
 
 // UI Components
 import { FixedBottomButton } from "@/components/fix-bottom-button";
@@ -36,25 +35,28 @@ import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { CHAIN } from "@/services/types/enum";
 import { TransactionStatus } from "@/services/types/wallet.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { BackHeader } from "@/components/ui/back-header";
-import { TokenUtilService } from "@/services/tokenUtils.service";
+import { useWalletContext } from "@/contexts/wallet-context";
 
-export default function SendTokenPage() {
+interface SendPanelProps {
+    tokenId?: string;
+    onBack: () => void;
+}
+
+const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     const EXAMPLE_PRINCIPAL_ADDRESS =
         "gaj2d-pzogj-lpg6c-aowj5-hb3t6-rgl3o-qo63w-2hogr-cjdmz-vobok-hqe";
     const EXAMPLE_ACCOUNT_ADDRESS =
         "cd619f6484bfdacea011dc4a53f098c2388cd15f940d19d569a0ecef7b857d86";
 
-    // Routing and locale
-    const navigate = useNavigate();
+    // Locale
     const { t } = useTranslation();
-    const { tokenId } = useParams<{ tokenId?: string }>();
 
     // UI state
     const { toastData, showToast, hideToast } = useToast();
     const [isDisabled, setIsDisabled] = useState(true);
     const [addressType, setAddressType] = useState<"principal" | "account">("principal");
     const [showAssetDrawer, setShowAssetDrawer] = useState(false);
+    const { navigateToPanel } = useWalletContext();
 
     // Token data from global store
     const { getDisplayTokens } = useTokens();
@@ -68,7 +70,7 @@ export default function SendTokenPage() {
     const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
     /**
-     * Find the selected token from token list based on URL param
+     * Find the selected token from token list based on tokenId param
      */
     const selectedToken = useMemo(() => {
         // Skip if no token list available
@@ -138,8 +140,6 @@ export default function SendTokenPage() {
         const walletAddress = form.getValues("walletAddress");
         const hasErrors = Object.keys(form.formState.errors).length > 0;
 
-        console.log("values ", amount, walletAddress, form.formState.errors);
-
         setIsDisabled(!walletAddress || !amount || amount <= 0 || hasErrors);
     }, [form.watch("assetNumber"), form.watch("walletAddress"), form.formState.errors.assetNumber]);
 
@@ -185,7 +185,7 @@ export default function SendTokenPage() {
      * Handle token selection
      */
     const handleTokenSelect = async (token: FungibleToken) => {
-        navigate(`/wallet/send/${token.address}`);
+        navigateToPanel("send", { tokenId: token.address });
         setTokenAddress(token.address);
         setShowAssetDrawer(false);
     };
@@ -284,17 +284,16 @@ export default function SendTokenPage() {
         form.setValue("walletAddress", "");
     };
 
-    function handleGoBack() {
-        navigate("/wallet");
-    }
-
     return (
         <div className="w-full flex flex-col h-full">
-            <BackHeader onBack={handleGoBack}>
+            <div className="relative flex justify-center items-center mb-4">
+                <button onClick={onBack} className="absolute left-0">
+                    <ChevronLeft size={24} />
+                </button>
                 <h1 className="text-lg font-semibold">{t("wallet.send.header")}</h1>
-            </BackHeader>
+            </div>
 
-            <div id="content" className="h-full mt-8">
+            <div id="content" className="h-full">
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(handleSubmit)}
@@ -512,4 +511,6 @@ export default function SendTokenPage() {
             />
         </div>
     );
-}
+};
+
+export default SendPanel;

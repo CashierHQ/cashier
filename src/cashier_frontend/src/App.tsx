@@ -9,6 +9,7 @@ import { Toaster } from "./components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { WalletProvider } from "./contexts/wallet-context";
 
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 

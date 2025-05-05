@@ -9,6 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { IoExit } from "react-icons/io5";
+import { useWalletContext } from "@/contexts/wallet-context";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface HeaderProps {}
@@ -19,6 +20,7 @@ const Header: React.FC<HeaderProps> = () => {
     const location = useLocation();
     const responsive = useResponsive();
     const { connectToWallet } = useConnectToWallet();
+    const { openWallet } = useWalletContext();
 
     const handleNavigate = (path: string) => {
         const backToHomePaths = ["/wallet"];
@@ -84,11 +86,8 @@ const Header: React.FC<HeaderProps> = () => {
                         <Button
                             variant="outline"
                             className="ml-auto light-borders p-0 w-9 h-9 mr-3 gap-2"
-                            onClick={() => navigate("/wallet")}
+                            onClick={() => openWallet()}
                         >
-                            {/* <p className="text-primary/75 font-normal text-sm">
-                                {user.principal.toText().slice(0, 9)}
-                            </p> */}
                             <Wallet size={16} color={"#35A18A"} />
                         </Button>
                     )}

@@ -7,19 +7,18 @@ import { transformShortAddress } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { useAuth } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
-import { Info } from "lucide-react";
+import { Info, ChevronLeft } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Copy } from "lucide-react";
 import { useTokens } from "@/hooks/useTokens";
-import { BackHeader } from "@/components/ui/back-header";
 import AssetButton from "@/components/asset-button";
 import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
 import AssetDrawer from "@/components/asset-drawer";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import TransactionToast from "@/components/transaction/transaction-toast";
+import { useWalletContext } from "@/contexts/wallet-context";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
     const { showToast, hideToast } = useToast();
@@ -61,10 +60,13 @@ function AccountIdContent({ accountId }: { accountId: string }) {
     );
 }
 
-export default function ReceiveTokenPage() {
-    const navigate = useNavigate();
+interface ReceivePanelProps {
+    tokenId?: string;
+    onBack: () => void;
+}
+
+const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
     const { t } = useTranslation();
-    const { tokenId } = useParams<{ tokenId?: string }>();
     const { metadata } = useTokenMetadata(tokenId);
     const { user } = useAuth();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
@@ -74,6 +76,7 @@ export default function ReceiveTokenPage() {
         undefined,
     );
     const [showAssetDrawer, setShowAssetDrawer] = useState(false);
+    const { navigateToPanel } = useWalletContext();
 
     const { getDisplayTokens } = useTokens();
     const tokenList = getDisplayTokens();
@@ -93,7 +96,7 @@ export default function ReceiveTokenPage() {
 
     const handleTokenSelect = (token: FungibleToken) => {
         setCurrentSelectedToken(token);
-        navigate(`/wallet/receive/${token.address}`);
+        navigateToPanel("receive", { tokenId: token.address });
         setShowAssetDrawer(false);
     };
 
@@ -103,10 +106,6 @@ export default function ReceiveTokenPage() {
             description: <AccountIdContent accountId={accountId} />,
         });
     };
-
-    function goBack() {
-        navigate("/wallet");
-    }
 
     const handleCopy = (e: React.SyntheticEvent) => {
         try {
@@ -136,11 +135,15 @@ export default function ReceiveTokenPage() {
     }, [selectedToken]);
 
     return (
-        <div>
-            <BackHeader onBack={goBack}>
+        <div className="w-full flex flex-col h-full">
+            <div className="relative flex justify-center items-center mb-4">
+                <button onClick={onBack} className="absolute left-0">
+                    <ChevronLeft size={24} />
+                </button>
                 <h1 className="text-lg font-semibold">{t("wallet.receive.header")}</h1>
-            </BackHeader>
-            <div id="content" className="mx-2 mt-8">
+            </div>
+
+            <div id="content" className="h-full">
                 <div id="token-details" className="my-5">
                     <Label>{t("wallet.receive.receiveToken")}</Label>
                     <AssetButton
@@ -209,4 +212,6 @@ export default function ReceiveTokenPage() {
             />
         </div>
     );
-}
+};
+
+export default ReceivePanel;
