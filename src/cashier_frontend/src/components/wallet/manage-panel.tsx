@@ -1,23 +1,22 @@
-import { useNavigate } from "react-router-dom";
-import { BackHeader } from "@/components/ui/back-header";
-import { Search as SearchIcon, RefreshCw, Plus } from "lucide-react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { Search as SearchIcon, RefreshCw, Plus, ChevronLeft } from "lucide-react";
 import { ManageTokensList } from "@/components/manage-tokens/token-list";
 import { ManageTokensMissingTokenMessage } from "@/components/manage-tokens/missing-token-message";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState, useRef, useMemo } from "react";
 import { Link } from "@/components/ui/link";
-import { useResponsive } from "@/hooks/responsive-hook";
 import { useTokens } from "@/hooks/useTokens";
 import { Spinner } from "@/components/ui/spinner";
 import { IconInput } from "@/components/icon-input";
 import { Search } from "lucide-react";
+import { useWalletContext } from "@/contexts/wallet-context";
 
-export default function ManageTokensPage() {
+interface ManagePanelProps {
+    onBack: () => void;
+}
+
+const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
     const { t } = useTranslation();
-    const responsive = useResponsive();
-
-    const navigate = useNavigate();
-    const goBack = () => navigate("/wallet");
+    const { navigateToPanel } = useWalletContext();
 
     const { rawTokenList, isLoading, updateTokenExplorer, isSyncPreferences, updateTokenBalance } =
         useTokens();
@@ -142,13 +141,19 @@ export default function ManageTokensPage() {
     const noSearchResults = !isNoTokens && searchQuery && filteredTokens.length === 0;
     const hasMoreTokens = displayLimit < filteredTokens.length;
 
+    const handleImportToken = (e: React.MouseEvent) => {
+        e.preventDefault();
+        navigateToPanel("import");
+    };
+
     return (
-        <div
-            className={`flex flex-col ${responsive.isSmallDevice ? "px-2 pb-4 h-full" : "max-w-[700px] mx-auto bg-white max-h-[80%] p-4"}`}
-        >
-            <BackHeader onBack={goBack}>
+        <div className="w-full flex flex-col h-full">
+            <div className="relative flex justify-center items-center mb-4">
+                <button onClick={onBack} className="absolute left-0">
+                    <ChevronLeft size={24} />
+                </button>
                 <h1 className="text-lg font-semibold">{t("manage.header")}</h1>
-            </BackHeader>
+            </div>
 
             <div className="mt-6 relative">
                 <div className="w-full flex gap-1.5">
@@ -163,12 +168,12 @@ export default function ManageTokensPage() {
                         }
                         onRightIconClick={handleClearSearch}
                     />
-                    <Link
-                        to="/wallet/import"
+                    <button
+                        onClick={handleImportToken}
                         className="light-borders flex items-center justify-center w-[44px] min-w-[44px] max-w-[44px] h-[44px] flex-shrink-0"
                     >
                         <Plus size={22} color="#35A18A" />
-                    </Link>
+                    </button>
                     <button
                         onClick={handleUpdateExplorer}
                         className="light-borders flex items-center justify-center w-[44px] min-w-[44px] max-w-[44px] h-[44px] flex-shrink-0"
@@ -215,12 +220,12 @@ export default function ManageTokensPage() {
                             <p className="text-sm text-gray-500 text-center max-w-[250px] mb-4">
                                 {t("manage.search.missingToken")}
                             </p>
-                            <Link
-                                to="/wallet/import"
+                            <button
+                                onClick={handleImportToken}
                                 className="text-green hover:text-green/90 font-medium"
                             >
                                 + {t("manage.import")}
-                            </Link>
+                            </button>
                         </div>
                     ) : (
                         <>
@@ -241,4 +246,6 @@ export default function ManageTokensPage() {
             </div>
         </div>
     );
-}
+};
+
+export default ManagePanel;

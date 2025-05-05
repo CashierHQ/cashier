@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { formatPrice } from "@/utils/helpers/currency";
+import { useWalletContext } from "@/contexts/wallet-context";
 
 export interface WalletTokenProps {
     token: FungibleToken;
@@ -11,11 +12,25 @@ export interface WalletTokenProps {
 
 export function WalletToken({ token }: WalletTokenProps) {
     const navigate = useNavigate();
+    const { navigateToPanel } = useWalletContext();
 
-    const navigateToDetailsPage = () => navigate(`/wallet/details/${token.address}`);
+    // When clicking on a token, either navigate to details page or details panel
+    const handleTokenClick = () => {
+        // Check if we're in a panel context (using a heuristic)
+        const isInPanel =
+            window.location.hash === "#/" || !window.location.hash.includes("/wallet/");
+
+        if (isInPanel) {
+            // We're in a panel, show details in the panel
+            navigateToPanel("details", { tokenId: token.address });
+        } else {
+            // We're on a main wallet page, navigate to the full details page
+            navigate(`/wallet/details/${token.address}`);
+        }
+    };
 
     return (
-        <article className="flex justify-between" onClick={navigateToDetailsPage}>
+        <article className="flex justify-between" onClick={handleTokenClick}>
             <div className="flex flex-row items-center gap-2">
                 <AssetAvatar src={token.logo} symbol={token.chain} className="w-9 h-9" />
 

@@ -2,6 +2,7 @@ import { WalletToken } from "./token-card";
 import { Link } from "@/components/ui/link";
 import { useTranslation } from "react-i18next";
 import { FungibleToken } from "@/types/fungible-token.speculative";
+import { useWalletContext } from "@/contexts/wallet-context";
 
 interface WalletTokensTab {
     tokens: FungibleToken[];
@@ -9,6 +10,12 @@ interface WalletTokensTab {
 
 export function WalletTokensTab({ tokens }: WalletTokensTab) {
     const { t } = useTranslation();
+    const { navigateToPanel } = useWalletContext();
+
+    const handleManageClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        navigateToPanel("manage");
+    };
 
     return (
         <div className="relative h-full w-full">
@@ -17,12 +24,12 @@ export function WalletTokensTab({ tokens }: WalletTokensTab) {
                     {tokens.map((token) => (
                         <WalletToken key={token.id} token={token} />
                     ))}
-                    <Link
-                        to="/wallet/manage"
-                        className="mx-auto font-normal whitespace-nowrap py-2"
+                    <button
+                        onClick={handleManageClick}
+                        className="mx-auto font-normal whitespace-nowrap py-2 text-[#36A18B]"
                     >
                         + {t("wallet.tabs.tokens.manage")}
-                    </Link>
+                    </button>
                 </div>
             </div>
         </div>
