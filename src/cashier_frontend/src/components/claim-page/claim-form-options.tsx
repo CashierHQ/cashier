@@ -31,6 +31,7 @@ import {
     WALLET_OPTIONS,
     walletDialogConfigOptions,
     getWalletIcon,
+    GoogleSigner,
 } from "@/constants/wallet-options";
 
 interface ClaimFormOptionsProps {
@@ -122,7 +123,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                 break;
             case WALLET_OPTIONS.GOOGLE:
                 if (!identity) {
-                    connectToWallet("GoogleSigner");
+                    connectToWallet(GoogleSigner.id);
                 }
                 break;
         }
