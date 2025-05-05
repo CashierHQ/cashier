@@ -1,6 +1,5 @@
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogContent,
     AlertDialogDescription,
     AlertDialogFooter,
@@ -8,7 +7,6 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { FC } from "react";
-import { IoIosClose } from "react-icons/io";
 import { X } from "lucide-react";
 
 export interface ConfirmDialogProps {
