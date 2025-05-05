@@ -48,7 +48,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous();
     const { action, anonymousWalletAddress, setAction, setAnonymousWalletAddress } =
         useLinkActionStore();
-    const [isDisabledButton, setIsDisabledButton] = useState(true);
+    const [isDisabledButton, setIsDisabledButton] = useState(false);
     const [buttonText, setButtonText] = useState(t("claim.claim"));
 
     const updateLinkUserState = useUpdateLinkUserState();
