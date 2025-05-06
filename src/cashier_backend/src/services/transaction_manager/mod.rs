@@ -3,11 +3,11 @@ use std::{collections::HashMap, str::FromStr, time::Duration};
 use candid::Nat;
 use cashier_types::{
     Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
-    LinkAction, Protocol, Transaction, TransactionState,
+    IntentTask, LinkAction, Protocol, Transaction, TransactionState,
 };
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
-    icrc2::transfer_from::TransferFromArgs,
+    icrc2::{approve, transfer_from::TransferFromArgs},
 };
 
 use super::{action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService};
@@ -195,8 +195,14 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             let is_all_dependencies_success = self.is_all_depdendency_success(&tx, true)?;
 
             if is_all_dependencies_success {
+                let start = ic_cdk::api::time();
+
+                let action_belong = self.action_service.get_action_by_tx_id(tx.id.clone())?;
+                let (intent_belong, txs) =
+                    action_belong.get_intent_and_txs_by_its_tx_id(tx.id.clone())?;
+
                 // Execute the transaction
-                match self.execute_transaction(tx).await {
+                let res = match self.execute_transaction(tx).await {
                     Ok(_) => {
                         self.update_tx_state(tx, &TransactionState::Success)
                             .map_err(|e| {
@@ -205,6 +211,50 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                     e
                                 ))
                             })?;
+
+                        info!(
+                            "[execute_canister_tx] intent_belong: {:?}, task {:?}, state {:?}",
+                            intent_belong.id, intent_belong.task, intent_belong.state
+                        );
+
+                        if intent_belong.task == IntentTask::TransferWalletToTreasury {
+                            // Get mutable access to the transaction you need to update
+                            if txs.len() == 2 {
+                                // Clone the transaction first since we can't mutate it directly
+                                let mut approve_tx_clone = txs[0].clone();
+                                info!(
+                                    "[execute_canister_tx] approve tx: {:?}, type {:?}, state {:?}",
+                                    approve_tx_clone.id,
+                                    approve_tx_clone.get_tx_type(),
+                                    approve_tx_clone.state
+                                );
+                                self.update_tx_state(
+                                    &mut approve_tx_clone,
+                                    &TransactionState::Success,
+                                )
+                                .map_err(|e| {
+                                    CanisterError::HandleLogicError(format!(
+                                        "Error updating tx state: {}",
+                                        e
+                                    ))
+                                })?;
+
+                                self.update_tx_state(
+                                    &mut approve_tx_clone,
+                                    &TransactionState::Success,
+                                )
+                                .map_err(|e| {
+                                    CanisterError::HandleLogicError(format!(
+                                        "Error updating tx state: {}",
+                                        e
+                                    ))
+                                })?;
+                            } else {
+                                return Err(CanisterError::HandleLogicError(
+                                    "Invalid approve tx".to_string(),
+                                ));
+                            }
+                        }
                     }
                     Err(e) => {
                         error!(
@@ -223,7 +273,13 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                             e
                         )));
                     }
-                }
+                };
+                let end = ic_cdk::api::time();
+                let elapsed_time = end - start;
+                let elapsed_seconds = (elapsed_time as f64) / 1_000_000_000.0;
+                info!("[execute_canister_tx] in {:.3} seconds", elapsed_seconds);
+
+                res
             }
         } else {
             return Err(CanisterError::HandleLogicError(
@@ -320,8 +376,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     /// Core logic for transaction execution
     async fn execute_transaction(&self, transaction: &Transaction) -> Result<(), CanisterError> {
         let from_call_type = transaction.from_call_type.clone();
-
-        info!("[execute_transaction] transaction: {:#?}", transaction);
 
         match from_call_type {
             FromCallType::Canister => {
@@ -558,7 +612,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve_info)) => {
                 // THIS IS A HACK to check if the transfer from is success
                 // if the transfer from is success then the approve is success
-                // TODO: delete this when the fee change to icrc1
                 let txs_depended = txs
                     .iter()
                     .filter(|tx| {
@@ -686,6 +739,12 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // manually check the status of the tx of the action
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
+            info!(
+                "manual check tx: {:?}, type {:?}, state {:?}",
+                tx.id,
+                tx.get_tx_type(),
+                tx.state
+            );
             let new_state = self.manual_check_status(&tx, txs.clone()).await?;
             if tx.state == new_state.clone() {
                 continue;

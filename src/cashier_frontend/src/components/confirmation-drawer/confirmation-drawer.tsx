@@ -6,15 +6,15 @@ import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-sec
 import { useConfirmButtonState, usePrimaryIntents } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
-import { useIcrc112Execute } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
-import { Check, ChevronLeft, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
+import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -74,6 +74,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 const response = await icrc112Execute({
                     transactions: processActionResult.icrc112Requests,
                 });
+
+                const startTime = Date.now();
                 if (response) {
                     const secondUpdatedAction = await updateAction({
                         actionId: action.id,
@@ -90,6 +92,11 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         onActionResult(secondUpdatedAction);
                     }
                 }
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                const durationInSeconds = (duration / 1000).toFixed(2);
+
+                console.log("secondUpdatedAction", `${durationInSeconds}s`);
             }
 
             if (processActionResult) {
@@ -186,8 +193,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             : t("transaction.confirm_popup.title");
 
     const getContent = (action: ActionModel | undefined) => {
-        console.log("🚀 ~ ConfirmationDrawer ~ action:", action);
-
         if (action) {
             if (action.state === ACTION_STATE.SUCCESS) {
                 return (

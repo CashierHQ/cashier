@@ -514,8 +514,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // get link
         let link = self.get_link_by_id(link_id.to_string()).unwrap();
 
-        info!("link data: {:#?}", link);
-
         match action_type {
             ActionType::CreateLink => {
                 // validate user id == link creator
@@ -960,7 +958,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         &self,
         params: &LinkDetailUpdateInput,
     ) -> Result<(u64, Vec<AssetInfo>), CanisterError> {
-        info!("[prefetch_params_add_asset] params: {:#?}", params);
         let link_use_action_max_count = params.link_use_action_max_count.ok_or_else(|| {
             CanisterError::ValidationErrors("Link use action max count is required".to_string())
         })?;
