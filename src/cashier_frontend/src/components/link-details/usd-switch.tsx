@@ -50,7 +50,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             tokenAmount: 0,
             usdAmount: 0,
             tokenFormatted: "0",
-            usdFormatted: "0 USD",
+            usdFormatted: "$0",
         };
 
         if (!tokenAmount || !tokenToUsd) return result;
@@ -61,7 +61,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             tokenAmount,
             usdAmount,
             tokenFormatted: formatAmount(tokenAmount, tokenDecimals),
-            usdFormatted: `${formatPrice(usdAmount.toString())} USD`,
+            usdFormatted: `~$${formatPrice(usdAmount.toString())}`,
         };
     }, [amount, token.usdConversionRate, tokenDecimals, usdDecimals]);
 
@@ -70,7 +70,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
         if (isUsd) {
             return `${formatPrice(amount?.toString() || "0")} ${symbol}`;
         }
-        return conversionResult.usdFormatted;
+        return `${conversionResult.usdFormatted}`;
     }, [isUsd, amount, symbol, conversionResult]);
 
     // Provide a utility function to convert between USD and token amounts
@@ -88,7 +88,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
 
     if (!canConvert) {
         return (
-            <span className="text-xs text-grey/60 leading-none">
+            <span className="text-[10px] font-light text-grey/60">
                 {t("transaction.usd_conversion.no_price_available")}
             </span>
         );
@@ -101,8 +101,8 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             onClick={() => onToggle(!isUsd)}
             aria-label={isUsd ? "Switch to token amount" : "Switch to USD amount"}
         >
-            <span className="text-xs text-primary leading-none">{valueToDisplay}</span>
-            <ArrowUpDown className="ml-1" size={16} strokeWidth={3} />
+            <span className="text-[10px] font-light text-grey/60">{valueToDisplay}</span>
+            <ArrowUpDown className="ml-1" size={15} strokeWidth={2} />
         </button>
     );
 };

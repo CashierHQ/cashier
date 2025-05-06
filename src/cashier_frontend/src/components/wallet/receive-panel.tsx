@@ -151,9 +151,13 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
                         text="Select Token"
                         childrenNode={
                             selectedToken && (
-                                <SelectedAssetButtonInfo selectedToken={selectedToken} />
+                                <SelectedAssetButtonInfo
+                                    selectedToken={selectedToken}
+                                    showInput={false}
+                                />
                             )
                         }
+                        showInput={false}
                     />
                 </div>
 

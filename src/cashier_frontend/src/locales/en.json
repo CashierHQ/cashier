@@ -63,7 +63,7 @@
             "action_failed": "Creating link failed."
         },
         "usd_conversion": {
-            "no_price_available": "No price available"
+            "no_price_available": "Price unavailable"
         },
         "confirm_popup": {
             "title": "Confirm transaction",

@@ -317,6 +317,38 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                                                     />
                                                 )
                                             }
+                                            tokenValue={form.getValues("assetNumber")?.toString()}
+                                            onInputChange={(value) => setTokenAmount(value)}
+                                            isUsd={false}
+                                            token={selectedToken}
+                                            onToggleUsd={() => {}}
+                                            canConvert={false}
+                                            tokenDecimals={selectedToken?.decimals ?? 8}
+                                            showPresetButtons={true}
+                                            presetButtons={[
+                                                {
+                                                    content: "$1",
+                                                    action: () => {
+                                                        setTokenAmount("1");
+                                                    },
+                                                },
+                                                {
+                                                    content: "$5",
+                                                    action: () => {
+                                                        setTokenAmount("5");
+                                                    },
+                                                },
+                                                {
+                                                    content: "$10",
+                                                    action: () => {
+                                                        setTokenAmount("10");
+                                                    },
+                                                },
+                                            ]}
+                                            showMaxButton={true}
+                                            onMaxClick={() => {
+                                                setTokenAmount(maxAvailableAmount.toString());
+                                            }}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -327,63 +359,6 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                         <div className="mt-5 mb-6 h-px bg-gray-200 w-full max-w-[97%] mx-auto" />
 
                         <div className="flex flex-col w-full gap-5">
-                            {/* Amount Input */}
-                            <FormField
-                                control={form.control}
-                                name="assetNumber"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <div className="flex gap-2 items-center mb-2">
-                                            <FormLabel>{t("create.amount")}</FormLabel>
-                                            {selectedToken?.fee !== undefined && (
-                                                <div className="text-xs text-gray-500">
-                                                    (includes network fee)
-                                                </div>
-                                            )}
-                                        </div>
-                                        <FormControl>
-                                            <IconInput
-                                                type="number"
-                                                placeholder="Enter amount"
-                                                step="any"
-                                                isCurrencyInput={false}
-                                                rightIcon={
-                                                    <div className="font-semibold text-[#36A18B]">
-                                                        {t("wallet.send.max")}
-                                                    </div>
-                                                }
-                                                onRightIconClick={handleMaxAmount}
-                                                {...field}
-                                                value={form.getValues("assetNumber") ?? ""}
-                                                onChange={handleAmountInputChange}
-                                                className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
-                                                disabled={!selectedToken}
-                                            />
-                                        </FormControl>
-                                        <div className="flex justify-between items-center">
-                                            <div className="text-xs text-gray-500">
-                                                {selectedToken?.usdEquivalent
-                                                    ? `≈ $${(
-                                                          (parseFloat(
-                                                              form
-                                                                  .getValues("assetNumber")
-                                                                  ?.toString() || "0",
-                                                          ) || 0) *
-                                                          (selectedToken.usdConversionRate || 0)
-                                                      ).toFixed(2)}`
-                                                    : "≈ $0.00"}
-                                            </div>
-                                            {selectedToken?.amount !== undefined && (
-                                                <div className="text-xs text-gray-500">
-                                                    Available: {maxAvailableAmount}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <FormMessage className="text-[#36A18B]" />
-                                    </FormItem>
-                                )}
-                            />
-
                             {/* Wallet Address Input */}
                             <FormField
                                 control={form.control}
