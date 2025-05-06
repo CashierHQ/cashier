@@ -53,7 +53,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
     // maxUse (default = 1)
-    const [maxActionNumber, setMaxUse] = useState<number>(isAirdrop ? 0 : 1);
+    const [maxActionNumber, setMaxActionNumber] = useState<number>(isAirdrop ? 0 : 1);
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -113,6 +113,13 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     });
 
     useEffect(() => {
+        console.log("link", link);
+        if (link?.id && link?.maxActionNumber) {
+            setMaxActionNumber(Number(link.maxActionNumber));
+        }
+    }, [link]);
+
+    useEffect(() => {
         if (link?.id) {
             updateUserInput(link?.id, {
                 maxActionNumber: isAirdrop ? BigInt(maxActionNumber) : 1n,
@@ -124,7 +131,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const handleDecreaseMaxUse = () => {
         if (maxActionNumber <= 1) return;
         const newValue = maxActionNumber - 1;
-        setMaxUse(newValue);
+        setMaxActionNumber(newValue);
         if (link?.id) {
             updateUserInput(link.id, {
                 maxActionNumber: BigInt(newValue),
@@ -135,7 +142,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     // Handle increasing the maxActionNumber
     const handleIncreaseMaxUse = () => {
         const newValue = maxActionNumber + 1;
-        setMaxUse(newValue);
+        setMaxActionNumber(newValue);
         if (link?.id) {
             updateUserInput(link.id, {
                 maxActionNumber: BigInt(newValue),
@@ -147,7 +154,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const handleMaxUseInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = Number(e.target.value);
         if (newValue < 1) return;
-        setMaxUse(newValue);
+        setMaxActionNumber(newValue);
         if (link?.id) {
             updateUserInput(link.id, {
                 maxActionNumber: BigInt(newValue),
@@ -260,6 +267,10 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             showToast("Error", "No more tokens available to add", "error");
         }
     };
+
+    useEffect(() => {
+        console.log("max use", maxActionNumber);
+    }, [maxActionNumber]);
 
     const handleSubmit = async () => {
         if (!link?.id) throw new Error("Link ID not found");

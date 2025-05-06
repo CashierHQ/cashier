@@ -68,8 +68,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
             // Get the fee map for all intents
             const totalFeesMapArray = await IntentHelperService.getNetworkFeeMap(intents);
-            console.log("Total fees map: ", totalFeesMapArray);
-            console.log("Token USD price: ", tokenUsdPrice);
 
             // Calculate total fees in tokens with proper decimals
             let totalFeesDisplay = 0;
@@ -102,9 +100,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                             transfer.fee.amount,
                             metadata.decimals,
                         );
-                        console.log(
-                            `Fee for ${metadata.symbol}: ${feeAmount} (${transfer.fee.amount} / 10^${metadata.decimals})`,
-                        );
 
                         // Make sure feeAmount is a valid number
                         if (!isNaN(feeAmount) && feeAmount > 0) {
@@ -115,10 +110,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                             if (tokenUsdPrice && !isNaN(tokenUsdPrice) && tokenUsdPrice > 0) {
                                 feeUsdAmount = feeAmount * tokenUsdPrice;
                             }
-
-                            console.log(
-                                `USD Amount: ${feeUsdAmount} (${feeAmount} * ${tokenUsdPrice})`,
-                            );
 
                             // Use proper task-based label
                             const feeLabel =

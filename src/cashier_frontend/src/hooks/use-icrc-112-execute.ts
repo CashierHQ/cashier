@@ -23,13 +23,7 @@ export function useIcrc112Execute() {
             const signerService = new CallSignerService(identity);
 
             try {
-                const startTime = Date.now();
                 const res = await signerService.execute(transactions as unknown as SequenceRequest);
-
-                const endTime = Date.now();
-                const duration = endTime - startTime;
-                const durationInSeconds = (duration / 1000).toFixed(2);
-                console.log("🚀 [icrc-112]", `${durationInSeconds}s`);
                 return res;
             } catch (error) {
                 console.error("Error executing ICRC112 transactions:", error);
