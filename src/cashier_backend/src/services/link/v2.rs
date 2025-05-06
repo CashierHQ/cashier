@@ -201,6 +201,22 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 intents.push(intent);
             }
+            (LinkType::SendAirdrop, ActionType::Withdraw) => {
+                // create intent for link asset to user wallet
+                let ts = self.ic_env.time();
+                //TODO: get the intent template from config then map the values
+                let mut intent = Intent::default();
+                let transfer_data = IntentType::default_transfer();
+                intent.r#type = transfer_data;
+                intent.task = IntentTask::TransferLinkToWallet;
+                intent.id = Uuid::new_v4().to_string();
+                intent.state = IntentState::Created;
+                intent.created_at = ts;
+                // same label with transfer asset to link
+                intent.label = INTENT_LABEL_SEND_AIRDROP_ASSET.to_string();
+
+                intents.push(intent);
+            }
 
             (LinkType::SendTokenBasket, ActionType::CreateLink) => {
                 let asset_info = link.asset_info.clone().ok_or_else(|| {
@@ -269,6 +285,30 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     intents.push(transfer_asset_intent);
                 }
             }
+
+            (LinkType::SendTokenBasket, ActionType::Withdraw) => {
+                let asset_info = link.asset_info.clone().ok_or_else(|| {
+                    CanisterError::HandleLogicError("Asset info not found".to_string())
+                })?;
+                let ts = self.ic_env.time();
+
+                // create intents for each asset in asset_info
+                for asset in asset_info.iter() {
+                    // Create intent for transfer asset to link
+                    let mut transfer_asset_intent = Intent::default();
+                    let transfer_data = IntentType::default_transfer();
+                    transfer_asset_intent.r#type = transfer_data;
+                    transfer_asset_intent.task = IntentTask::TransferLinkToWallet;
+                    transfer_asset_intent.id = Uuid::new_v4().to_string();
+                    transfer_asset_intent.state = IntentState::Created;
+                    transfer_asset_intent.created_at = ts;
+                    transfer_asset_intent.label =
+                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string() + "_" + &asset.address;
+
+                    intents.push(transfer_asset_intent);
+                }
+            }
+
             (LinkType::ReceivePayment, ActionType::CreateLink) => {
                 let ts = self.ic_env.time();
 
@@ -299,6 +339,22 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 intents.push(intent);
             }
+
+            (LinkType::ReceivePayment, ActionType::Withdraw) => {
+                let ts = self.ic_env.time();
+                let mut intent = Intent::default();
+                let transfer_data = IntentType::default_transfer();
+                intent.r#type = transfer_data;
+                intent.task = IntentTask::TransferLinkToWallet;
+                intent.id = Uuid::new_v4().to_string();
+                intent.state = IntentState::Created;
+                intent.created_at = ts;
+                // same label with transfer asset to link
+                intent.label = INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string();
+
+                intents.push(intent);
+            }
+
             _ => return Ok(None),
         }
         return Ok(Some(intents));
@@ -513,8 +569,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     ) -> Result<(), CanisterError> {
         // get link
         let link = self.get_link_by_id(link_id.to_string()).unwrap();
-
-        info!("link data: {:#?}", link);
 
         match action_type {
             ActionType::CreateLink => {
@@ -960,7 +1014,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         &self,
         params: &LinkDetailUpdateInput,
     ) -> Result<(u64, Vec<AssetInfo>), CanisterError> {
-        info!("[prefetch_params_add_asset] params: {:#?}", params);
         let link_use_action_max_count = params.link_use_action_max_count.ok_or_else(|| {
             CanisterError::ValidationErrors("Link use action max count is required".to_string())
         })?;
@@ -1300,10 +1353,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
             // ===== Continue Go to =====
             if link_state_goto == LinkStateMachineGoto::Continue {
-                info!(
-                    "[handle_link_state_transition] create action: {:#?}",
-                    create_action
-                );
                 if create_action.is_none() {
                     return Err(CanisterError::ValidationErrors(
                         "Create action not found".to_string(),

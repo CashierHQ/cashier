@@ -124,8 +124,6 @@ export class Signer<T extends Transport = Transport> {
         // Establish new or re-use existing transport channel
         const channel = await this.openChannel();
 
-        console.log("🚀 ~ Signer ~ sendRequest ~ channel:", channel);
-
         return new Promise<S>(async (resolve, reject) => {
             // Listen on transport channel for incoming response
             const responseListener = channel.addEventListener("response", async (response) => {
