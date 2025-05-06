@@ -92,8 +92,17 @@ pub async fn link_update_user_state(
 
 #[update(guard = "is_not_anonymous")]
 pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
+    let start = ic_cdk::api::time();
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.update_action(input).await
+    let res = api.update_action(input).await;
+
+    let end = ic_cdk::api::time();
+
+    let elapsed = end - start;
+    let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
+    info!("[update_action] elapsed time: {} seconds", elapsed_seconds);
+
+    res
 }
 
 pub struct LinkApi<E: IcEnvironment + Clone> {
@@ -338,6 +347,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
             let action_id = action.unwrap().id.clone();
 
+            info!(
+                "[process_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
+                user_id, input.link_id, action_id
+            );
+
             // execute action
             let update_action_res = self
                 .tx_manager_service
@@ -362,6 +376,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         &self,
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
+        let start = ic_cdk::api::time();
         let caller = self.ic_env.caller();
 
         // get user_id and action_id
@@ -383,16 +398,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             &user_id.as_ref().unwrap(),
         );
 
-        if action.is_none() {
-            self.link_service
-                .link_validate_user_create_action(
-                    &input.link_id,
-                    &action_type,
-                    &user_id.as_ref().unwrap(),
-                    &caller,
-                )
-                .await?;
-
+        let res = if action.is_none() {
             //create temp action
             // fill in link_id info
             // fill in action_type info
@@ -435,15 +441,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
             Ok(res)
         } else {
-            // validate action
-            self.link_service
-                .link_validate_user_update_action(
-                    &action.as_ref().unwrap(),
-                    &user_id.unwrap(),
-                    &caller,
-                )
-                .await?;
-
             let action_id = action.unwrap().id.clone();
 
             // execute action
@@ -463,7 +460,14 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 })?;
 
             update_action_res
-        }
+        };
+
+        let end = ic_cdk::api::time();
+        let elapsed = end - start;
+        let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
+        info!("[process_action] elapsed time: {} seconds", elapsed_seconds);
+
+        res
     }
 
     pub fn link_get_user_state(
@@ -687,8 +691,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             .map_err(|e| {
                 CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
             })?;
-
-        info!("[update_action] update_action_res {:#?}", update_action_res);
 
         update_action_res
     }

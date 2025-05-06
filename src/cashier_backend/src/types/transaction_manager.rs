@@ -8,6 +8,28 @@ pub struct ActionData {
 }
 
 impl ActionData {
+    pub fn get_intent_and_txs_by_its_tx_id(
+        &self,
+        tx_id: String,
+    ) -> Result<(cashier_types::Intent, Vec<cashier_types::Transaction>), String> {
+        for (intent_id, txs) in &self.intent_txs {
+            for tx in txs {
+                if tx.id == tx_id {
+                    let intent = self
+                        .intents
+                        .iter()
+                        .find(|intent| intent.id == *intent_id)
+                        .ok_or_else(|| format!("Intent with id {} not found", intent_id))?;
+                    return Ok((intent.clone(), txs.clone()));
+                }
+            }
+        }
+
+        Err(format!(
+            "Transaction with id {} not found in intent_txs",
+            tx_id
+        ))
+    }
     pub fn get_tx(&self, tx_id: &str) -> Result<&cashier_types::Transaction, String> {
         for (_intent_id, txs) in &self.intent_txs {
             for tx in txs {
