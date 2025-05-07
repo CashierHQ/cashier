@@ -1,18 +1,17 @@
 import { FC, useEffect, useState } from "react";
-// import { useTranslation } from "react-i18next";
 import { IntentModel } from "@/services/types/intent.service.types";
-import { IntentHelperService } from "@/services/fee.service";
+import { FeeService, Transfer } from "@/services/fee.service";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
-import { TASK } from "@/services/types/enum";
+import { CHAIN, FEE_TYPE, TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
-import { useTokenStore } from "@/stores/tokenStore";
 import { ICP_ADDRESS } from "@/const";
 import { ChevronRight } from "lucide-react";
-import { TokenUtilService } from "@/services/tokenUtils.service";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { FeeBreakdownDrawer } from "./fee-breakdown-drawer";
 import { AssetAvatar } from "../ui/asset-avatar";
 import { Avatar } from "../ui/avatar";
+import { useTokens } from "@/hooks/useTokens";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -26,92 +25,130 @@ type FeeTokenInfo = {
     logo?: string;
 };
 
-// const getItemLabel = (intent: IntentModel) => {
-//     switch (intent.task) {
-//         case TASK.TRANSFER_LINK_TO_WALLET:
-//             return "transaction.confirm_popup.total_assets_received_label";
-//         case TASK.TRANSFER_WALLET_TO_LINK:
-//         case TASK.TRANSFER_WALLET_TO_TREASURY:
-//         default:
-//             return "transaction.confirm_popup.total_cashier_fees_label";
-//     }
-// };
+// Fee item type for breakdown display
+type FeeBreakdownItem = {
+    name: string;
+    amount: string;
+    tokenSymbol: string;
+    tokenAddress: string;
+    usdAmount: string;
+};
+
+// Track fees by token address
+interface TokenFeeMap {
+    [tokenAddress: string]: {
+        amount: number;
+        symbol: string;
+        decimals: number;
+        usdPrice?: number;
+    };
+}
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
 }) => {
-    // const { t } = useTranslation();
     const { feeAmount } = useIntentMetadata(intents?.[0]);
-
-    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
-    const isLoading = useTokenStore((state) => state.isLoading);
-    const getToken = useTokenStore((state) => state.getToken);
+    const { getTokenPrice, isLoading, getToken } = useTokens();
 
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
     const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
-    const [feesBreakdown, setFeesBreakdown] = useState<
-        Array<{
-            name: string;
-            amount: string;
-            tokenSymbol: string;
-            tokenAddress: string;
-            usdAmount: string;
-        }>
-    >([]);
+    const [feesBreakdown, setFeesBreakdown] = useState<FeeBreakdownItem[]>([]);
     const [usedTokens, setUsedTokens] = useState<FeeTokenInfo[]>([]);
-
-    const tokenUsdPrice = getTokenPrice(ICP_ADDRESS);
+    const { link } = useLinkAction();
 
     useEffect(() => {
         const initState = async () => {
             console.log("Intents: ", intents);
 
             // Get the fee map for all intents
-            const totalFeesMapArray = await IntentHelperService.getNetworkFeeMap(intents);
+            const totalFeesMapArray = [];
+            // intent is already sorted, the transfer fee create link is the first one
+            for (const intent of intents) {
+                const token = getToken(intent.asset.address);
+                const transfer: Transfer = {
+                    intent,
+                    fee: {
+                        chain: intent.asset.chain,
+                        type: "network_fee",
+                        address: intent.asset.address,
+                        amount: token?.fee || 0n,
+                    },
+                };
+                totalFeesMapArray.push(transfer);
+            }
 
-            // Calculate total fees in tokens with proper decimals
-            let totalFeesDisplay = 0;
-            const breakdown: Array<{
-                name: string;
-                amount: string;
-                tokenSymbol: string;
-                tokenAddress: string;
-                usdAmount: string;
-            }> = [];
-            const tokensUsed: FeeTokenInfo[] = [];
+            // Extract all unique token addresses from fees
+            const uniqueTokenAddresses = new Set<string>();
+            totalFeesMapArray.forEach((transfer) => {
+                if (transfer.fee?.address) {
+                    uniqueTokenAddresses.add(transfer.fee.address);
+                }
+            });
 
+            // If no fees found but we have intents, add the first intent's asset address
+            if (uniqueTokenAddresses.size === 0 && intents.length > 0) {
+                uniqueTokenAddresses.add(intents[0].asset.address);
+            }
+
+            // Get metadata for all unique tokens at once
+            const tokenInfoMap = new Map<string, FeeTokenInfo>();
+            const tokenAddressArray = Array.from(uniqueTokenAddresses);
+
+            for (const address of tokenAddressArray) {
+                const token = getToken(address);
+                if (token) {
+                    tokenInfoMap.set(address, {
+                        address,
+                        symbol: token.symbol,
+                        logo: token.logo,
+                    });
+                }
+            }
+
+            // Store the tokens for UI display
+            setUsedTokens(Array.from(tokenInfoMap.values()));
+
+            // Track fees by token
+            const feesByToken: TokenFeeMap = {};
+            const breakdown: FeeBreakdownItem[] = [];
+
+            // Process each transfer with its fee
             for (const transfer of totalFeesMapArray) {
-                if (transfer.fee?.amount) {
-                    // Get token metadata to get the correct decimals
-                    const metadata = await TokenUtilService.getTokenMetadata(transfer.fee.address);
-                    if (metadata) {
-                        // Add token info to tracking array if not already present
-                        if (!tokensUsed.some((t) => t.address === transfer.fee!.address)) {
-                            const token = getToken(transfer.fee.address);
-                            tokensUsed.push({
-                                address: transfer.fee.address,
-                                symbol: metadata.symbol,
-                                logo: token?.logo,
-                            });
-                        }
+                if (transfer.fee?.amount && transfer.fee?.address) {
+                    const tokenInfo = tokenInfoMap.get(transfer.fee.address);
 
-                        // Convert using correct token decimals
+                    if (tokenInfo) {
+                        const token = getToken(transfer.fee.address);
+                        const decimals = token?.decimals || 8;
+
+                        // Convert fee amount using correct decimals
                         const feeAmount = convertDecimalBigIntToNumber(
                             transfer.fee.amount,
-                            metadata.decimals,
+                            decimals,
                         );
 
                         // Make sure feeAmount is a valid number
                         if (!isNaN(feeAmount) && feeAmount > 0) {
-                            totalFeesDisplay += feeAmount;
+                            // Add to the token's fee record
+                            const tokenAddress = transfer.fee.address;
+                            if (!feesByToken[tokenAddress]) {
+                                feesByToken[tokenAddress] = {
+                                    amount: 0,
+                                    symbol: tokenInfo.symbol,
+                                    decimals: decimals,
+                                    usdPrice: getTokenPrice(tokenAddress),
+                                };
+                            }
+                            feesByToken[tokenAddress].amount += feeAmount;
 
-                            // Get a valid USD amount
+                            // Get USD value if available
                             let feeUsdAmount = 0;
+                            const tokenUsdPrice = getTokenPrice(transfer.fee.address);
                             if (tokenUsdPrice && !isNaN(tokenUsdPrice) && tokenUsdPrice > 0) {
                                 feeUsdAmount = feeAmount * tokenUsdPrice;
                             }
 
-                            // Use proper task-based label
+                            // Determine fee type label based on intent task
                             const feeLabel =
                                 transfer.intent.task === TASK.TRANSFER_WALLET_TO_TREASURY
                                     ? "Link creation fee"
@@ -120,29 +157,40 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                             breakdown.push({
                                 name: feeLabel,
                                 amount: feeAmount.toFixed(4),
-                                tokenSymbol: metadata.symbol,
+                                tokenSymbol: tokenInfo.symbol,
                                 tokenAddress: transfer.fee.address,
-                                usdAmount: `$${feeUsdAmount.toFixed(4)}`,
+                                usdAmount:
+                                    feeUsdAmount > 0 ? `$${feeUsdAmount.toFixed(4)}` : "$0.00",
                             });
                         }
                     }
                 }
             }
 
-            // Keep track of used tokens for rendering icons
-            setUsedTokens(tokensUsed);
-
             // If we have no breakdown items but have intents, add a fallback
             if (breakdown.length === 0 && intents.length > 0) {
-                // Add a default fee since we know there should be fees
                 const intent = intents[0];
-                const metadata = await TokenUtilService.getTokenMetadata(intent.asset.address);
+                const token = getToken(intent.asset.address);
 
-                if (metadata) {
+                console.log("intent: ", intent);
+
+                if (token && link?.linkType && intent.task === TASK.TRANSFER_WALLET_TO_TREASURY) {
                     // Use a default fee amount based on feeAmount from useIntentMetadata
+                    const feeService = new FeeService();
+                    feeService.getFee(CHAIN.IC, link.linkType, FEE_TYPE.LINK_CREATION);
                     const defaultFeeAmount = feeAmount || 0.01;
-                    let defaultUsdAmount = 0;
+                    const tokenAddress = intent.asset.address;
 
+                    // Create an entry in feesByToken
+                    feesByToken[tokenAddress] = {
+                        amount: defaultFeeAmount,
+                        symbol: token.symbol,
+                        decimals: token.decimals || 8,
+                        usdPrice: getTokenPrice(tokenAddress),
+                    };
+
+                    let defaultUsdAmount = 0;
+                    const tokenUsdPrice = getTokenPrice(tokenAddress);
                     if (tokenUsdPrice && !isNaN(tokenUsdPrice) && tokenUsdPrice > 0) {
                         defaultUsdAmount = defaultFeeAmount * tokenUsdPrice;
                     }
@@ -150,60 +198,39 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     breakdown.push({
                         name: "Link creation fee",
                         amount: defaultFeeAmount.toFixed(4),
-                        tokenSymbol: metadata.symbol,
-                        tokenAddress: intent.asset.address,
-                        usdAmount: `$${defaultUsdAmount.toFixed(4)}`,
+                        tokenSymbol: token.symbol,
+                        tokenAddress: tokenAddress,
+                        usdAmount:
+                            defaultUsdAmount > 0 ? `$${defaultUsdAmount.toFixed(4)}` : "$0.00",
                     });
-
-                    totalFeesDisplay = defaultFeeAmount;
-
-                    // Add to used tokens if not already present
-                    if (!tokensUsed.some((t) => t.address === intent.asset.address)) {
-                        const token = getToken(intent.asset.address);
-                        setUsedTokens([
-                            {
-                                address: intent.asset.address,
-                                symbol: metadata.symbol,
-                                logo: token?.logo,
-                            },
-                        ]);
-                    }
                 }
             }
 
             setFeesBreakdown(breakdown);
 
-            // If we calculated a valid fee but couldn't get it from the tokenUsdPrice conversion,
-            // use a default conversion rate to show something reasonable
-            if (totalFeesDisplay > 0) {
-                // Convert to USD
-                let totalFeesInUSD = 0;
-                if (tokenUsdPrice && !isNaN(tokenUsdPrice) && tokenUsdPrice > 0) {
-                    totalFeesInUSD = totalFeesDisplay * tokenUsdPrice;
-                } else {
-                    // Use a default conversion if tokenUsdPrice is not available
-                    totalFeesInUSD = totalFeesDisplay * 5; // Assuming a default conversion rate
-                }
+            // Calculate total fees in USD by converting each token's fee to USD
+            let totalUsdValue = 0;
 
-                setTotalCashierFee(totalFeesInUSD);
-            } else if (feeAmount) {
-                // Fallback to feeAmount if we have it
-                let fallbackUsdAmount = 0;
-                if (tokenUsdPrice && !isNaN(tokenUsdPrice) && tokenUsdPrice > 0) {
-                    fallbackUsdAmount = feeAmount * tokenUsdPrice;
-                } else {
-                    fallbackUsdAmount = feeAmount * 5; // Default conversion rate
-                }
+            console.log("Fees feesByToken: ", feesByToken);
 
-                setTotalCashierFee(fallbackUsdAmount);
-            } else {
-                // Set a minimum fee as a final fallback
-                setTotalCashierFee(0.05);
-            }
+            // Sum up USD values of all fees
+            Object.entries(feesByToken).forEach(([, tokenFee]) => {
+                if (tokenFee.usdPrice && !isNaN(tokenFee.usdPrice)) {
+                    console.log(
+                        `Token: ${tokenFee.symbol}, Amount: ${tokenFee.amount}, USD Price: ${tokenFee.usdPrice}`,
+                    );
+                    // We have a USD price for this token
+                    totalUsdValue += tokenFee.amount * tokenFee.usdPrice;
+                }
+            });
+
+            console.log("Total USD Value: ", totalUsdValue);
+
+            setTotalCashierFee(totalUsdValue);
         };
 
         initState();
-    }, [intents, tokenUsdPrice, feeAmount]);
+    }, [intents, feeAmount, getToken, getTokenPrice]);
 
     const handleOpenBreakdown = () => {
         setIsBreakdownOpen(true);
@@ -273,13 +300,17 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                         {renderFeeTokenAvatars()}
 
                         <div className="flex items-center">
-                            {isLoading || !totalCashierFee ? (
+                            {isLoading ? (
                                 <Spinner width={22} />
                             ) : (
                                 <button className="flex items-center" onClick={handleOpenBreakdown}>
-                                    <p className="text-[14px] font-normal">
-                                        ~${totalCashierFee.toFixed(4)}
-                                    </p>
+                                    {totalCashierFee === 0 || totalCashierFee === undefined ? (
+                                        <span className="text-[14px] font-normal"></span>
+                                    ) : (
+                                        <p className="text-[14px] font-normal">
+                                            ~${totalCashierFee.toFixed(4)}
+                                        </p>
+                                    )}
                                     <ChevronRight size={24} className="ml-1" />
                                 </button>
                             )}

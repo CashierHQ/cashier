@@ -1,10 +1,9 @@
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { ChevronLeft, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getTokenImage } from "@/utils";
-import { ICP_LOGO } from "@/const";
 import { AssetAvatar } from "../ui/asset-avatar";
 
 export type FeeBreakdownDrawerProps = {
@@ -56,7 +55,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                                             {fee.amount} {fee.tokenSymbol}
                                         </span>
                                         <AssetAvatar
-                                            src={getTokenImage(fee.tokenAddress) || ICP_LOGO}
+                                            src={getTokenImage(fee.tokenAddress)}
                                             symbol={fee.tokenSymbol}
                                             className="w-5 h-5 rounded-full"
                                         />
@@ -95,27 +94,10 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                     </div>
                     <div className="flex justify-end">
                         <p className="text-[10px] font-normal text-grey/50">
-                            ~${totalFees.toFixed(4)}{" "}
+                            {totalFees === 0 ? "-" : `~$${totalFees.toFixed(4)}`}
                         </p>
                     </div>
                 </div>
-
-                {/* <div className="mt-2 light-borders-green px-4 py-4 flex flex-col gap-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-[14px] font-normal">Total fees</span>
-
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                                <span className="text-[14px] font-normal">Multiple tokens</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <p className="text-[10px] font-normal text-grey/50">
-                            ~${totalFees.toFixed(4)}{" "}
-                        </p>
-                    </div>
-                </div> */}
 
                 <Button className="mt-6 py-5" onClick={onClose}>
                     Close

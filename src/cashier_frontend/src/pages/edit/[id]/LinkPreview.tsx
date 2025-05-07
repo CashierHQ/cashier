@@ -3,7 +3,6 @@ import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useFeePreview } from "@/hooks/linkHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -11,13 +10,10 @@ import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { formatPrice } from "@/utils/helpers/currency";
-import { useFeeTotal } from "@/hooks/useFeeMetadata";
-import { NETWORK_FEE_DEFAULT_ADDRESS, NETWORK_FEE_DEFAULT_SYMBOL } from "@/constants/defaultValues";
-import { convert } from "@/utils/helpers/convert";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { ACTION_TYPE, CHAIN, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
+import { Avatar } from "@radix-ui/react-avatar";
 import { ICP_ADDRESS, ICP_LOGO } from "@/const";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
@@ -28,6 +24,8 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatar } from "@/components/ui/asset-avatar";
+import { useFeeService } from "@/hooks/useFeeService";
+import { FEE_TYPE } from "@/services/types/fee.types";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -84,6 +82,8 @@ export default function LinkPreview({
     const [createActionInProgress, setCreateActionInProgress] = useState(false);
     // Debug state for countering redirects
     const [redirectCounter, setRedirectCounter] = useState(0);
+
+    const { getFee } = useFeeService();
 
     // Check if there's an existing action and show confirmation drawer
     useEffect(() => {
@@ -192,9 +192,6 @@ export default function LinkPreview({
 
         handleRedirect();
     }, [shouldRedirect, link, action]); // Added action as dependency
-
-    const { data: feeData } = useFeePreview(link?.id);
-    const feeTotal = useFeeTotal(feeData ?? []) || 0;
 
     const handleCreateAction = async () => {
         if (!link) {
@@ -359,36 +356,44 @@ export default function LinkPreview({
                     </button>
                 </div>
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-1.5">
-                            <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                                <AvatarImage
-                                    src={ICP_LOGO}
-                                    alt={"ICP"}
-                                    className="w-full h-full object-cover"
-                                />
-                            </Avatar>
-                            <p className="text-[14px] font-normal">ICP</p>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <div className="flex items-center gap-1">
-                                <p className="text-[14px] font-normal">
-                                    {formatPrice(feeTotal.toString())} {NETWORK_FEE_DEFAULT_SYMBOL}
-                                </p>
+                    {/* Use getFee instead of getAllFees to get fee information */}
+                    {(() => {
+                        const fee = getFee(CHAIN.IC, link.linkType as LINK_TYPE, FEE_TYPE.CREATION);
+                        if (!fee) return null;
+
+                        const tokenSymbol = getToken(fee.address)?.symbol || fee.symbol || "ICP";
+                        const tokenLogo =
+                            fee.address === ICP_ADDRESS ? ICP_LOGO : getTokenImage(fee.address);
+                        const tokenDecimals = fee.decimals || getToken(fee.address)?.decimals || 8;
+                        const displayAmount = Number(fee.amount) / 10 ** tokenDecimals;
+                        const tokenPrice = getTokenPrice(fee.address) || 0;
+                        const usdValue = displayAmount * tokenPrice;
+
+                        return (
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-1.5">
+                                    <Avatar className="w-5 h-5 rounded-full overflow-hidden">
+                                        <AssetAvatar
+                                            src={tokenLogo}
+                                            symbol={tokenSymbol}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </Avatar>
+                                    <p className="text-[14px] font-normal">{tokenSymbol}</p>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                    <div className="flex items-center gap-1">
+                                        <p className="text-[14px] font-normal">
+                                            {formatPrice(displayAmount.toString())} {tokenSymbol}
+                                        </p>
+                                    </div>
+                                    <p className="text-[10px] font-normal text-grey/50">
+                                        ~${formatPrice(usdValue.toString())}
+                                    </p>
+                                </div>
                             </div>
-                            <p className="text-[10px] font-normal text-grey/50">
-                                ~${" "}
-                                {formatPrice(
-                                    (
-                                        convert(
-                                            feeTotal,
-                                            getTokenPrice(NETWORK_FEE_DEFAULT_ADDRESS) || 0,
-                                        ) || 0
-                                    ).toString(),
-                                )}
-                            </p>
-                        </div>
-                    </div>
+                        );
+                    })()}
                 </div>
             </div>
 
