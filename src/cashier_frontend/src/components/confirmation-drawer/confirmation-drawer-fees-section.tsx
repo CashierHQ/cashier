@@ -87,8 +87,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 }
             }
 
-            console.log("totalFeesMapArray", totalFeesMapArray);
-
             // Extract all unique token addresses from fees
             // === for avatar
             const uniqueTokenAddresses = new Set<string>();
@@ -161,8 +159,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 breakdown.push(breakdownItem);
                 setFeesBreakdown(breakdown);
             }
-
-            console.log("Total USD Value: ", totalUsdValue);
 
             setTotalCashierFee(totalUsdValue);
         };
