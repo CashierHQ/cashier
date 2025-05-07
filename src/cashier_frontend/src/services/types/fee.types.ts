@@ -1,17 +1,4 @@
-import { CHAIN } from "./enum";
-
-// Link types from the application
-export enum LINK_TYPE {
-    SEND_TIP = "SendTip",
-    SEND_TOKEN_BASKET = "SendTokenBasket",
-    SEND_AIRDROP = "SendAirdrop",
-    RECEIVE_PAYMENT = "ReceivePayment",
-}
-
-// Different fee types that might exist in the application
-export enum FEE_TYPE {
-    CREATION = "creation",
-}
+import { CHAIN, FEE_TYPE, LINK_TYPE } from "./enum";
 
 // Asset information structure
 export interface AssetInfo {

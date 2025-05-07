@@ -2,7 +2,6 @@ import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { X } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { getTokenImage } from "@/utils";
 import { AssetAvatar } from "../ui/asset-avatar";
 
@@ -25,8 +24,6 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
     totalFees,
     feesBreakdown,
 }) => {
-    const { t } = useTranslation();
-
     return (
         <Drawer open={open}>
             <DrawerContent className="max-w-[400px] mx-auto p-3">

@@ -1,5 +1,5 @@
-import { FEE_TYPE, LINK_TYPE, AssetInfo, FeeConfig, FeeTable } from "@/services/types/fee.types";
-import { CHAIN } from "./types/enum";
+import { AssetInfo, FeeConfig, FeeTable } from "@/services/types/fee.types";
+import { CHAIN, FEE_TYPE, LINK_TYPE } from "./types/enum";
 
 // Default ICP token address
 export const ICP_TOKEN_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -36,11 +36,11 @@ export const initDefaultFeeTable = (): FeeTable => {
         LINK_TYPE.RECEIVE_PAYMENT,
     ].forEach((linkType) => {
         // Creation fee
-        const creationFeeKey = createFeeKey(CHAIN.IC, linkType, FEE_TYPE.CREATION);
+        const creationFeeKey = createFeeKey(CHAIN.IC, linkType, FEE_TYPE.LINK_CREATION);
         feeTable.set(creationFeeKey, {
             chain: CHAIN.IC,
             linkType,
-            feeType: FEE_TYPE.CREATION,
+            feeType: FEE_TYPE.LINK_CREATION,
             asset: createDefaultIcpAssetInfo(DEFAULT_CREATION_FEE),
         });
     });

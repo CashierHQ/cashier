@@ -12,7 +12,7 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { formatPrice } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
-import { ACTION_TYPE, CHAIN, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, CHAIN, FEE_TYPE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
 import { ICP_ADDRESS, ICP_LOGO } from "@/const";
 import LinkLocalStorageService, {
@@ -25,7 +25,6 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatar } from "@/components/ui/asset-avatar";
 import { useFeeService } from "@/hooks/useFeeService";
-import { FEE_TYPE } from "@/services/types/fee.types";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -358,7 +357,11 @@ export default function LinkPreview({
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
                     {/* Use getFee instead of getAllFees to get fee information */}
                     {(() => {
-                        const fee = getFee(CHAIN.IC, link.linkType as LINK_TYPE, FEE_TYPE.CREATION);
+                        const fee = getFee(
+                            CHAIN.IC,
+                            link.linkType as LINK_TYPE,
+                            FEE_TYPE.LINK_CREATION,
+                        );
                         if (!fee) return null;
 
                         const tokenSymbol = getToken(fee.address)?.symbol || fee.symbol || "ICP";

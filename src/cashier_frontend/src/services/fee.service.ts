@@ -2,8 +2,9 @@ import { FeeModel } from "@/services/types/intent.service.types";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { IntentModel } from "@/services/types/intent.service.types";
-import { AssetInfo as FeeAssetInfo, FEE_TYPE, FeeTable } from "@/services/types/fee.types";
+import { AssetInfo as FeeAssetInfo, FeeTable } from "@/services/types/fee.types";
 import { DEFAULT_FEE_TABLE, createFeeKey } from "./fee.constants";
+import { FEE_TYPE } from "./types/enum";
 
 export type Transfer = {
     intent: IntentModel;
@@ -95,6 +96,9 @@ export class FeeService {
     getFee(chain: string, linkType: string, feeType: string): FeeAssetInfo | null {
         const key = createFeeKey(chain, linkType, feeType);
         const feeConfig = this.feeTable.get(key);
+
+        console.log("key", key);
+        console.log("feeConfig", feeConfig);
 
         if (feeConfig) {
             return feeConfig.asset;
