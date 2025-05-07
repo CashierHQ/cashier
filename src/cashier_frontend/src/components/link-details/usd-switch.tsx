@@ -1,6 +1,6 @@
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { formatPrice } from "@/utils/helpers/currency";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Repeat2 } from "lucide-react";
 import { FC, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -102,7 +102,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             aria-label={isUsd ? "Switch to token amount" : "Switch to USD amount"}
         >
             <span className="text-[10px] font-light text-grey/60">{valueToDisplay}</span>
-            <ArrowUpDown className="ml-1" size={15} strokeWidth={2} />
+            <Repeat2 className="ml-1" size={15} strokeWidth={2} />
         </button>
     );
 };

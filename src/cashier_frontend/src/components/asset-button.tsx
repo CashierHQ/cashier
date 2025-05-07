@@ -4,6 +4,7 @@ import { UsdSwitch } from "./link-details/usd-switch";
 import { AmountActionButtons } from "./link-details/amount-action-buttons";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { convertDecimalBigIntToNumber } from "@/utils";
+import { formatPrice } from "@/utils/helpers/currency";
 
 interface AssetButtonProps {
     handleClick: () => void;
@@ -83,7 +84,12 @@ const AssetButton: React.FC<AssetButtonProps> = ({
                     <p className="text-[10px] font-light text-grey/60">
                         Balance{" "}
                         {token?.amount
-                            ? convertDecimalBigIntToNumber(token.amount, token.decimals)
+                            ? formatPrice(
+                                  convertDecimalBigIntToNumber(
+                                      token.amount,
+                                      token.decimals,
+                                  ).toString(),
+                              )
                             : 0}{" "}
                         {token?.symbol}
                     </p>
@@ -104,7 +110,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({
             )}
 
             {/* Preset Buttons */}
-            {showPresetButtons && presetButtons.length > 0 && (
+            {showPresetButtons && presetButtons.length > 0 && canConvert && (
                 <div className="mt-2">
                     <AmountActionButtons data={presetButtons} isDisabled={isDisabled} />
                 </div>
