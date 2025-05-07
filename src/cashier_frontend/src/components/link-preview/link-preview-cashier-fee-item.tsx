@@ -13,6 +13,10 @@ export const LinkPreviewCashierFeeItem: FC<LinkPreviewCashierFeeItemProps> = ({ 
     const { t } = useTranslation();
     const { isLoadingMetadata, assetAmount, assetSrc, assetSymbol } = useFeeMetadata(feeModel);
 
+    console.log("LinkPreviewCashierFeeItem", feeModel);
+    console.log("LinkPreviewCashierFeeItem", assetAmount);
+    console.log("LinkPreviewCashierFeeItem", isLoadingMetadata);
+
     return (
         <>
             {isLoadingMetadata ? (
