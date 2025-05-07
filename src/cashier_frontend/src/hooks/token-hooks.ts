@@ -86,17 +86,10 @@ export function useTokenListQuery(identity: Identity | undefined) {
                 tokens = await tokenService.listTokens();
             }
 
-            console.log(`[${new Date().toISOString()}] Fetched user tokens:`, tokens);
-
             // Initialize user tokens if none exist
             if (tokens.length === 0 && identity) {
                 await tokenService.initializeUserTokens();
                 const res = await tokenService.listTokens();
-                console.log(
-                    `[${new Date().toISOString()}] Fetched user tokens after initialization:`,
-                    res,
-                );
-
                 return res;
             }
 
