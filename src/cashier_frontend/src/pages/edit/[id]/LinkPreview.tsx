@@ -262,7 +262,7 @@ export default function LinkPreview({
 
     return (
         <div
-            className={`w-full flex flex-col h-full ${responsive.isSmallDevice ? "justify-between" : "gap-4"}`}
+            className={`w-full flex flex-col h-full ${responsive.isSmallDevice ? "justify-start" : "gap-4"}`}
         >
             <div className="input-label-field-container mt-2">
                 <Label>Link info</Label>
