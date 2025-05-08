@@ -100,7 +100,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             (LinkType::SendTip, ActionType::CreateLink) => {
                 // create intent for transfer asset to link
                 let ts = self.ic_env.time();
-                //TODO: get the intent template from config then map the values
                 let mut transfer_asset_intent = Intent::default();
                 let transfer_data = IntentType::default_transfer();
                 transfer_asset_intent.r#type = transfer_data;
@@ -111,7 +110,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 transfer_asset_intent.label = INTENT_LABEL_SEND_TIP_ASSET.to_string();
 
                 // create intent for transfer fee to treasury
-                //TODO: get the intent template from config then map the values
                 let mut transfer_fee_intent = Intent::default();
                 let transfer_fee_data = IntentType::default_transfer_from();
                 transfer_fee_intent.r#type = transfer_fee_data;
@@ -127,7 +125,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             (LinkType::SendTip, ActionType::Claim) => {
                 // create intent for link asset to user wallet
                 let ts = self.ic_env.time();
-                //TODO: get the intent template from config then map the values
                 let mut intent = Intent::default();
                 let transfer_data = IntentType::default_transfer();
                 intent.r#type = transfer_data;
@@ -143,7 +140,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             (LinkType::SendTip, ActionType::Withdraw) => {
                 // create intent for link asset to user wallet
                 let ts = self.ic_env.time();
-                //TODO: get the intent template from config then map the values
                 let mut intent = Intent::default();
                 let transfer_data = IntentType::default_transfer();
                 intent.r#type = transfer_data;
@@ -159,7 +155,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             (LinkType::SendAirdrop, ActionType::CreateLink) => {
                 // create intent for transfer asset to link
                 let ts = self.ic_env.time();
-                //TODO: get the intent template from config then map the values
                 let mut transfer_asset_intent = Intent::default();
                 let transfer_data = IntentType::default_transfer();
                 transfer_asset_intent.r#type = transfer_data;
@@ -171,7 +166,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 // adding dependency
 
                 // create intent for transfer fee to treasury
-                //TODO: get the intent template from config then map the values
                 let mut transfer_fee_intent = Intent::default();
                 let transfer_fee_data = IntentType::default_transfer_from();
                 transfer_fee_intent.r#type = transfer_fee_data;
@@ -188,7 +182,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             (LinkType::SendAirdrop, ActionType::Claim) => {
                 // create intent for link asset to user wallet
                 let ts = self.ic_env.time();
-                //TODO: get the intent template from config then map the values
                 let mut intent = Intent::default();
                 let transfer_data = IntentType::default_transfer();
                 intent.r#type = transfer_data;
@@ -204,7 +197,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             (LinkType::SendAirdrop, ActionType::Withdraw) => {
                 // create intent for link asset to user wallet
                 let ts = self.ic_env.time();
-                //TODO: get the intent template from config then map the values
                 let mut intent = Intent::default();
                 let transfer_data = IntentType::default_transfer();
                 intent.r#type = transfer_data;

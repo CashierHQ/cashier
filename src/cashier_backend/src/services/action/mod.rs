@@ -1,7 +1,6 @@
 use crate::repositories;
 use crate::{
     domains::action::ActionDomainLogic,
-    info,
     types::{error::CanisterError, transaction_manager::ActionData},
     utils::runtime::IcEnvironment,
 };

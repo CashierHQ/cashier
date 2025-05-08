@@ -7,7 +7,7 @@ use cashier_types::{
 };
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
-    icrc2::{approve, transfer_from::TransferFromArgs},
+    icrc2::transfer_from::TransferFromArgs,
 };
 
 use super::{action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService};
