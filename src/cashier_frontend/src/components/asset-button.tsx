@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 import { UsdSwitch } from "./link-details/usd-switch";
 import { AmountActionButtons } from "./link-details/amount-action-buttons";

@@ -14,7 +14,6 @@ import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { ACTION_TYPE, CHAIN, FEE_TYPE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
-import { ICP_ADDRESS, ICP_LOGO } from "@/const";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service";
@@ -23,7 +22,7 @@ import { InformationOnAssetDrawer } from "@/components/information-on-asset-draw
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
-import { AssetAvatar } from "@/components/ui/asset-avatar";
+import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useFeeService } from "@/hooks/useFeeService";
 
 export interface LinkPreviewProps {
@@ -302,11 +301,13 @@ export default function LinkPreview({
                     <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
                         {enhancedAssets.map((asset, index) => {
                             // Calculate token amount with proper decimals
-                            const tokenDecimals = getToken(asset.address)?.decimals ?? 8;
+                            const token = getToken(asset.address);
+
+                            const tokenDecimals = token?.decimals ?? 8;
                             const totalTokenAmount =
                                 (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
                                 10 ** tokenDecimals;
-                            const tokenSymbol = getToken(asset.address)?.symbol;
+                            const tokenSymbol = token?.symbol;
 
                             // Calculate approximate USD value
                             const tokenPrice = getTokenPrice(asset.address) || 0;
@@ -316,15 +317,8 @@ export default function LinkPreview({
                                 <div key={index} className="flex justify-between items-center">
                                     <div className="flex items-center gap-1.5">
                                         <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                                            <AssetAvatar
-                                                src={
-                                                    asset.address === ICP_ADDRESS
-                                                        ? ICP_LOGO
-                                                        : asset.logo
-                                                }
-                                                symbol={
-                                                    getToken(asset.address)?.symbol || asset.address
-                                                }
+                                            <AssetAvatarV2
+                                                token={token}
                                                 className="w-full h-full object-cover"
                                             />
                                         </Avatar>
@@ -364,10 +358,11 @@ export default function LinkPreview({
                         );
                         if (!fee) return null;
 
-                        const tokenSymbol = getToken(fee.address)?.symbol || fee.symbol || "ICP";
-                        const tokenLogo =
-                            fee.address === ICP_ADDRESS ? ICP_LOGO : getTokenImage(fee.address);
-                        const tokenDecimals = fee.decimals || getToken(fee.address)?.decimals || 8;
+                        const token = getToken(fee.address);
+
+                        const tokenSymbol = token?.symbol || fee.symbol || "ICP";
+
+                        const tokenDecimals = fee.decimals || token?.decimals || 8;
                         const displayAmount = Number(fee.amount) / 10 ** tokenDecimals;
                         const tokenPrice = getTokenPrice(fee.address) || 0;
                         const usdValue = displayAmount * tokenPrice;
@@ -376,9 +371,8 @@ export default function LinkPreview({
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-1.5">
                                     <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                                        <AssetAvatar
-                                            src={tokenLogo}
-                                            symbol={tokenSymbol}
+                                        <AssetAvatarV2
+                                            token={token!}
                                             className="w-full h-full object-cover"
                                         />
                                     </Avatar>

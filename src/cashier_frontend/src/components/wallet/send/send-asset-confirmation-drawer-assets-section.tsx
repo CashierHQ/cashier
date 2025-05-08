@@ -1,7 +1,8 @@
 import { FC } from "react";
-import { AssetAvatar } from "@/components/ui/asset-avatar";
+import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { transformShortAddress } from "@/utils";
 import { SendAssetInfo } from "@/services/types/wallet.types";
+import { useTokens } from "@/hooks/useTokens";
 
 type ConfirmationPopupAssetsSectionProps = {
     sendAssetInfo: SendAssetInfo;
@@ -13,6 +14,8 @@ type ConfirmationPopupAssetsSectionProps = {
 export const SendAssetConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
     sendAssetInfo,
 }) => {
+    const { getToken } = useTokens();
+    const token = getToken(sendAssetInfo.asset.address);
     return (
         <section id="confirmation-popup-section-send" className="my-3">
             <div className="flex flex-col gap-3 border-solid border-inherit border-[1px] rounded-xl mt-1 p-4 overflow-y-auto max-h-[200px]">
@@ -27,11 +30,7 @@ export const SendAssetConfirmationPopupAssetsSection: FC<ConfirmationPopupAssets
                     <span>Network</span>
                     <div className="flex items-center">
                         <span>{sendAssetInfo.asset.chain}</span>
-                        <AssetAvatar
-                            className="ml-1 w-5 h-5"
-                            src={"./icpLogo.png"}
-                            symbol={sendAssetInfo.asset.symbol}
-                        />
+                        <AssetAvatarV2 token={token} className="ml-1 w-5 h-5" />
                     </div>
                 </div>
 
@@ -42,11 +41,7 @@ export const SendAssetConfirmationPopupAssetsSection: FC<ConfirmationPopupAssets
                             {sendAssetInfo.feeAmount || "0.0001"}{" "}
                             {sendAssetInfo.feeSymbol || sendAssetInfo.asset.symbol}
                         </span>
-                        <AssetAvatar
-                            className="ml-1 w-5 h-5"
-                            src={"./icpLogo.png"}
-                            symbol={sendAssetInfo.asset.symbol}
-                        />
+                        <AssetAvatarV2 token={token} className="ml-1 w-5 h-5" />
                     </div>
                 </div>
             </div>

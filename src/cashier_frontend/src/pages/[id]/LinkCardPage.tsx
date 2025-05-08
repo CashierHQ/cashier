@@ -1,7 +1,6 @@
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import { useTokens } from "@/hooks/useTokens";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { getTokenImage } from "@/utils";
 import { FC } from "react";
 
 type LinkCardPageProps = {
@@ -15,7 +14,13 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
     // Get token data and image
     const tokenAddress = linkData?.asset_info?.[0]?.address;
     const token = tokenAddress ? getToken(tokenAddress) : undefined;
-    const tokenLogo = token?.logo || getTokenImage(tokenAddress ?? "");
+    // Use the token.logo as primary source and getTokenImage as an immediate fallback
+    const tokenLogo = token?.logo;
+    // Extract logoFallback from token or use a default fallback image
+    const logoFallback = token?.logoFallback || "/defaultLinkImage.png";
+
+    console.log("LinkCardPage tokenLogo: ", tokenLogo);
+    console.log("LinkCardPage logoFallback: ", logoFallback);
 
     return (
         <LinkCardWithoutPhoneFrame
@@ -25,7 +30,7 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
             title={linkData?.title ?? ""}
             onClaim={onClickClaim}
             disabled={linkData === undefined}
-            logoFallback={token?.logoFallback}
+            logoFallback={logoFallback}
         />
     );
 };

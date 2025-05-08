@@ -1,12 +1,10 @@
 import { useMemo } from "react";
-import { AssetAvatar } from "@/components/ui/asset-avatar";
+import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { TokenDetailsHero } from "@/components/token-details/hero";
 import { TransactionHistory } from "@/components/token-details/transaction-history";
 import { MOCK_TX_DATA } from "@/constants/mock-data"; // Still using mock transaction data
 import { useTokens } from "@/hooks/useTokens";
-import { useWalletContext } from "@/contexts/wallet-context";
 import { ChevronLeft } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 interface DetailsPanelProps {
@@ -64,11 +62,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ tokenId, onBack }) => {
             {selectedToken ? (
                 <div>
                     <div className="flex w-full justify-center h-fit items-center bg-transparent">
-                        <AssetAvatar
-                            className="w-12 h-12"
-                            src={selectedToken.logo}
-                            symbol={selectedToken.symbol}
-                        />
+                        <AssetAvatarV2 token={selectedToken} className="w-12 h-12" />
                     </div>
                     <TokenDetailsHero token={selectedToken} />
                     <hr className="my-4" />

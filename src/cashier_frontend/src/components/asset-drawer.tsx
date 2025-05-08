@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { AssetAvatar } from "./ui/asset-avatar";
+import { AssetAvatarV2 } from "./ui/asset-avatar";
 import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { formatPrice } from "@/utils/helpers/currency";
@@ -31,7 +31,7 @@ const SelectableToken: React.FC<{
             }}
         >
             <div className="flex flex-row items-center gap-2">
-                <AssetAvatar src={token.logo} symbol={token.chain} className="w-9 h-9" />
+                <AssetAvatarV2 token={token} className="w-9 h-9" />
 
                 <div className="flex flex-col gap-1.5">
                     <span className="leading-4">{token.symbol}</span>

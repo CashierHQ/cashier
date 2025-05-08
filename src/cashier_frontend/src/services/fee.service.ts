@@ -97,9 +97,6 @@ export class FeeService {
         const key = createFeeKey(chain, linkType, feeType);
         const feeConfig = this.feeTable.get(key);
 
-        console.log("key", key);
-        console.log("feeConfig", feeConfig);
-
         if (feeConfig) {
             return feeConfig.asset;
         }
