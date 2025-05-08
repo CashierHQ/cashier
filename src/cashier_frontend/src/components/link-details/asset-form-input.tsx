@@ -17,7 +17,6 @@ import { useLinkAction } from "@/hooks/link-action-hooks";
 import { convertDecimalBigIntToNumber, convertTokenAmountToNumber } from "@/utils";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
-const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 100];
 
 type AssetFormInputProps = {
     index: number;
@@ -174,38 +173,6 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
         }
     };
 
-    // Generate preset buttons for this asset
-    const getPresetButtons = () => {
-        if (!token) return [];
-
-        if (localIsUsd && canConvert) {
-            return USD_AMOUNT_PRESETS.map((amount) => ({
-                content: `${amount} USD`,
-                action: () => {
-                    setLocalUsdAmount(amount.toString());
-                    setUsdAmount(amount);
-                },
-            }));
-        } else {
-            return PERCENTAGE_AMOUNT_PRESETS.map((percentage) => ({
-                content: `${percentage} %`,
-                action: () => {
-                    const availableAmount = token?.amount
-                        ? Number(token.amount) / 10 ** decimals
-                        : 0;
-
-                    console.log("availableAmount", availableAmount);
-
-                    if (availableAmount > 0) {
-                        const amount = availableAmount * (percentage / 100);
-                        setLocalTokenAmount(amount.toFixed(decimals > 8 ? 8 : decimals));
-                        setTokenAmount(amount.toFixed(decimals > 8 ? 8 : decimals));
-                    }
-                },
-            }));
-        }
-    };
-
     // Handle toggling USD mode
     const handleToggleUsd = (value: boolean) => {
         setLocalIsUsd(value);
@@ -257,7 +224,22 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                         canConvert={canConvert}
                         tokenDecimals={decimals}
                         showPresetButtons={isAirdrop || isTip}
-                        presetButtons={getPresetButtons()}
+                        presetButtons={USD_AMOUNT_PRESETS.map((amount) => ({
+                            content: `${amount} USD`,
+                            action: () => {
+                                const value = amount.toString();
+                                setLocalUsdAmount(value);
+
+                                // Update token amount based on USD
+                                if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
+                                    const tokenValue = parseFloat(value) / tokenUsdPrice;
+                                    setLocalTokenAmount(tokenValue.toString());
+                                    setUsdAmount(value);
+                                } else {
+                                    setUsdAmount(value);
+                                }
+                            },
+                        }))}
                         showMaxButton={true}
                         onMaxClick={() => {
                             setLocalTokenAmount(
