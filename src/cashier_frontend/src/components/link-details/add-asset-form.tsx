@@ -670,6 +670,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 handleClose={() => setShowAssetDrawer(false)}
                 handleChange={handleSetTokenAddress}
                 assetList={availableTokensForDrawer}
+                showSearch
             />
 
             {/* Toast Messages */}

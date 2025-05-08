@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { IoIosClose } from "react-icons/io";
 import { FungibleToken } from "@/types/fungible-token.speculative";
@@ -6,13 +6,15 @@ import { AssetAvatar } from "./ui/asset-avatar";
 import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { formatPrice } from "@/utils/helpers/currency";
-
+import { IconInput } from "./icon-input";
+import { Search, X } from "lucide-react";
 interface AssetDrawerProps {
     open: boolean;
     title: string;
     assetList: FungibleToken[];
     handleClose: () => void;
     handleChange: (val: string) => void;
+    showSearch?: boolean;
 }
 
 // Custom token component for asset selection without navigation
@@ -76,24 +78,41 @@ const AssetDrawer: React.FC<AssetDrawerProps> = ({
     handleClose,
     handleChange,
     assetList,
+    showSearch = false,
 }) => {
+    const [search, setSearch] = useState("");
+
+    const filteredAssetList = assetList.filter((token) =>
+        token.symbol.toLowerCase().includes(search.toLowerCase()),
+    );
+
     return (
         <Drawer open={open} onClose={handleClose}>
-            <DrawerContent className="max-w-[400px] max-h-full mx-auto p-3 flex flex-col">
+            <DrawerContent className="max-w-[400px] max-h-full mx-auto py-3 px-4 flex flex-col">
                 <DrawerHeader>
-                    <DrawerTitle className="flex justify-center">
+                    <DrawerTitle className="flex justify-centerm items-center relative mb-2">
                         <div className="text-center w-[100%]">{title}</div>
-                        <IoIosClose
+                        <X
                             onClick={handleClose}
-                            className="ml-auto cursor-pointer"
-                            size={32}
+                            className="absolute right-0 cursor-pointer"
+                            size={28}
                         />
                     </DrawerTitle>
                 </DrawerHeader>
-                <div className="font-semibold">Your asset</div>
+                {showSearch && (
+                    <div className="mb-3">
+                        <IconInput
+                            icon={<Search size={20} color={"#35A18B"} />}
+                            placeholder="Search assets"
+                            isCurrencyInput={false}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                )}
+                <div className="font-semibold">Your assets</div>
                 <div className="flex-1 overflow-y-auto">
                     <div className="flex flex-col gap-4 py-4">
-                        {assetList.map((token) => (
+                        {filteredAssetList.map((token) => (
                             <SelectableToken key={token.id} token={token} onSelect={handleChange} />
                         ))}
                     </div>
