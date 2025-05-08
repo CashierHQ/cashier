@@ -22,7 +22,13 @@ export function useIcrc112Execute() {
 
             const signerService = new CallSignerService(identity);
 
-            return await signerService.execute(transactions as unknown as SequenceRequest);
+            try {
+                const res = await signerService.execute(transactions as unknown as SequenceRequest);
+                return res;
+            } catch (error) {
+                console.error("Error executing ICRC112 transactions:", error);
+                throw error;
+            }
         },
     });
 

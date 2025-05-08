@@ -2,6 +2,9 @@ import { FeeModel } from "@/services/types/intent.service.types";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { IntentModel } from "@/services/types/intent.service.types";
+import { AssetInfo as FeeAssetInfo, FeeTable } from "@/services/types/fee.types";
+import { DEFAULT_FEE_TABLE, createFeeKey } from "./fee.constants";
+import { FEE_TYPE } from "./types/enum";
 
 export type Transfer = {
     intent: IntentModel;
@@ -75,3 +78,71 @@ export abstract class IntentHelperService {
         return totalAssetsDisplayAmount;
     }
 }
+
+export class FeeService {
+    private feeTable: FeeTable;
+
+    /**
+     * Initialize the FeeService with the default fee table
+     * or a custom fee table if provided
+     */
+    constructor(customFeeTable?: FeeTable) {
+        this.feeTable = customFeeTable || DEFAULT_FEE_TABLE;
+    }
+
+    /**
+     * Get the fee for a specific chain, link type, and fee type
+     */
+    getFee(chain: string, linkType: string, feeType: string): FeeAssetInfo | null {
+        const key = createFeeKey(chain, linkType, feeType);
+        const feeConfig = this.feeTable.get(key);
+
+        console.log("key", key);
+        console.log("feeConfig", feeConfig);
+
+        if (feeConfig) {
+            return feeConfig.asset;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get all fees for a specific chain and link type
+     */
+    getAllFees(chain: string, linkType: string): FeeAssetInfo[] {
+        const fees: FeeAssetInfo[] = [];
+
+        Object.values(FEE_TYPE).forEach((feeType) => {
+            const fee = this.getFee(chain, linkType, feeType);
+            if (fee) {
+                fees.push(fee);
+            }
+        });
+
+        return fees;
+    }
+
+    /**
+     * Calculate the total fee in human-readable format for a specific chain and link type
+     */
+    async calculateTotalFee(chain: string, linkType: string): Promise<number> {
+        const fees = this.getAllFees(chain, linkType);
+        let totalFee = 0;
+
+        for (const fee of fees) {
+            const metadata = await TokenUtilService.getTokenMetadata(fee.address);
+            if (metadata) {
+                totalFee += convertDecimalBigIntToNumber(fee.amount, metadata.decimals);
+            } else if (fee.decimals !== undefined) {
+                // Use the fee's own decimals if available
+                totalFee += Number(fee.amount) / Math.pow(10, fee.decimals);
+            }
+        }
+
+        return totalFee;
+    }
+}
+
+// Export a singleton instance for easy use across the app
+export const feeService = new FeeService();

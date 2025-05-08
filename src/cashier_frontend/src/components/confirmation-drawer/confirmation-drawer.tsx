@@ -6,15 +6,15 @@ import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-sec
 import { useConfirmButtonState, usePrimaryIntents } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
-import { useIcrc112Execute } from "@/hooks/linkHooks";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
-import { Check, ChevronLeft, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
+import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 
 interface ConfirmationDrawerProps {
     open: boolean;
@@ -63,23 +63,47 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             const linkId = link.id;
 
             if (!linkId) throw new Error("Link ID is not defined");
+            const startTime = Date.now();
 
+            console.log("[handleProcessClaimAction] Starting processAction...");
+            const processActionStartTime = Date.now();
             const processActionResult = await processAction({
                 linkId: linkId,
                 actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
                 actionId: action.id,
             });
+            const processActionEndTime = Date.now();
+            const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
+            console.log(
+                `[handleProcessClaimAction] processAction completed in ${processActionDuration.toFixed(2)}s`,
+            );
 
             if (processActionResult.icrc112Requests) {
+                console.log("[handleProcessClaimAction] Starting icrc112Execute...");
+                const icrc112StartTime = Date.now();
                 const response = await icrc112Execute({
                     transactions: processActionResult.icrc112Requests,
                 });
+                const icrc112EndTime = Date.now();
+                const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
+                console.log(
+                    `[handleProcessClaimAction] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
+                );
+
                 if (response) {
+                    console.log("[handleProcessClaimAction] Starting updateAction...");
+                    const updateActionStartTime = Date.now();
                     const secondUpdatedAction = await updateAction({
                         actionId: action.id,
                         linkId: linkId,
                         external: true,
                     });
+                    const updateActionEndTime = Date.now();
+                    const updateActionDuration =
+                        (updateActionEndTime - updateActionStartTime) / 1000;
+                    console.log(
+                        `[handleProcessClaimAction] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
+                    );
 
                     if (secondUpdatedAction) {
                         console.log(
@@ -100,6 +124,15 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 setAction(processActionResult);
                 onActionResult(processActionResult);
             }
+
+            const endTime = Date.now();
+            const duration = endTime - startTime;
+            const durationInSeconds = (duration / 1000).toFixed(2);
+
+            console.log(
+                "[handleProcessClaimAction] Total claim process completed in",
+                `${durationInSeconds}s`,
+            );
         } else {
             //Process action for anonymous user to claim
             const processActionResult = await processActionAnonymous({
@@ -122,22 +155,48 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const handleProcessCreateAction = async () => {
         if (!link) throw new Error("Link is not defined");
         if (!action) throw new Error("Action is not defined");
+        const start = Date.now();
+
+        console.log("[handleProcessCreateAction] Starting processAction...");
+        const processActionStartTime = Date.now();
         const firstUpdatedAction = await processAction({
             linkId: link.id,
             actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
             actionId: action.id,
         });
+        const processActionEndTime = Date.now();
+        const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
+        console.log(
+            `[handleProcessCreateAction] processAction completed in ${processActionDuration.toFixed(2)}s`,
+        );
+
         setAction(firstUpdatedAction);
+
         if (firstUpdatedAction) {
+            console.log("[handleProcessCreateAction] Starting icrc112Execute...");
+            const icrc112StartTime = Date.now();
             const response = await icrc112Execute({
                 transactions: firstUpdatedAction.icrc112Requests,
             });
+            const icrc112EndTime = Date.now();
+            const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
+            console.log(
+                `[handleProcessCreateAction] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
+            );
+
             if (response) {
+                console.log("[handleProcessCreateAction] Starting updateAction...");
+                const updateActionStartTime = Date.now();
                 const secondUpdatedAction = await updateAction({
                     actionId: action.id,
                     linkId: link.id,
                     external: true,
                 });
+                const updateActionEndTime = Date.now();
+                const updateActionDuration = (updateActionEndTime - updateActionStartTime) / 1000;
+                console.log(
+                    `[handleProcessCreateAction] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
+                );
 
                 if (secondUpdatedAction) {
                     setAction(secondUpdatedAction);
@@ -145,6 +204,14 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 }
             }
         }
+
+        const end = Date.now();
+        const duration = end - start;
+        const durationInSeconds = (duration / 1000).toFixed(2);
+        console.log(
+            "[handleProcessCreateAction] Total create action process completed in",
+            `${durationInSeconds}s`,
+        );
     };
 
     const startTransaction = async () => {
@@ -186,8 +253,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             : t("transaction.confirm_popup.title");
 
     const getContent = (action: ActionModel | undefined) => {
-        console.log("🚀 ~ ConfirmationDrawer ~ action:", action);
-
         if (action) {
             if (action.state === ACTION_STATE.SUCCESS) {
                 return (
