@@ -245,18 +245,14 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 />
             );
         } else {
-            // Calculate width based on number of tokens (each offset by 10px)
-            const width = Math.min(usedTokens.length, 3) * 10 + 15; // Base width + offset for each token
-
             // Create staggered effect for multiple tokens
             return (
-                <div className="relative" style={{ width: `${width}px`, height: "30px" }}>
+                <div className="relative w-fit flex gap-0.5">
                     {usedTokens.slice(0, 3).map((tokenInfo, index) => {
                         return (
                             <Avatar
                                 key={tokenInfo.address}
-                                className="w-6 h-6 rounded-full border-2 border-white absolute"
-                                style={{ left: `${index * 10}px`, zIndex: 3 - index }}
+                                className="w-7 h-7 rounded-full border-2 border-white"
                             >
                                 <AssetAvatar
                                     symbol={tokenInfo.symbol || "Token"}
