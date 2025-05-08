@@ -37,6 +37,7 @@ import { TransactionStatus } from "@/services/types/wallet.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useWalletContext } from "@/contexts/wallet-context";
 
+const USD_AMOUNT_PRESETS = [1, 2, 5];
 interface SendPanelProps {
     tokenId?: string;
     onBack: () => void;
@@ -322,29 +323,23 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                                             isUsd={false}
                                             token={selectedToken}
                                             onToggleUsd={() => {}}
-                                            canConvert={false}
+                                            canConvert={selectedToken?.usdEquivalent ? true : false}
                                             tokenDecimals={selectedToken?.decimals ?? 8}
                                             showPresetButtons={true}
-                                            presetButtons={[
-                                                {
-                                                    content: "$1",
+                                            presetButtons={USD_AMOUNT_PRESETS.map(
+                                                (amount: number) => ({
+                                                    content: `${amount} USD`,
                                                     action: () => {
-                                                        setTokenAmount("1");
+                                                        const value = amount.toString();
+                                                        setTokenAmount(value);
+
+                                                        const tokenValue =
+                                                            parseFloat(value) /
+                                                            (selectedToken?.usdConversionRate ?? 1);
+                                                        setTokenAmount(tokenValue.toString());
                                                     },
-                                                },
-                                                {
-                                                    content: "$5",
-                                                    action: () => {
-                                                        setTokenAmount("5");
-                                                    },
-                                                },
-                                                {
-                                                    content: "$10",
-                                                    action: () => {
-                                                        setTokenAmount("10");
-                                                    },
-                                                },
-                                            ]}
+                                                }),
+                                            )}
                                             showMaxButton={true}
                                             onMaxClick={() => {
                                                 setTokenAmount(maxAvailableAmount.toString());
