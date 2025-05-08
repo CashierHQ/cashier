@@ -2,8 +2,8 @@ import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { X } from "lucide-react";
-import { getTokenImage } from "@/utils";
-import { AssetAvatar } from "../ui/asset-avatar";
+import { AssetAvatarV2 } from "../ui/asset-avatar";
+import { useTokens } from "@/hooks/useTokens";
 
 export type FeeBreakdownDrawerProps = {
     open?: boolean;
@@ -24,6 +24,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
     totalFees,
     feesBreakdown,
 }) => {
+    const { getToken } = useTokens();
     return (
         <Drawer open={open}>
             <DrawerContent className="max-w-[400px] mx-auto p-3">
@@ -42,30 +43,32 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                 </DrawerHeader>
 
                 <div className="mt-2 light-borders-green px-4 py-4 flex flex-col gap-4">
-                    {feesBreakdown.map((fee, index) => (
-                        <div key={index} className="">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[14px] font-normal">{fee.name}</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-[14px] font-normal">
-                                            {fee.amount} {fee.tokenSymbol}
-                                        </span>
-                                        <AssetAvatar
-                                            src={getTokenImage(fee.tokenAddress)}
-                                            symbol={fee.tokenSymbol}
-                                            className="w-5 h-5 rounded-full"
-                                        />
+                    {feesBreakdown.map((fee, index) => {
+                        const token = getToken(fee.tokenAddress);
+                        return (
+                            <div key={index} className="">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[14px] font-normal">{fee.name}</span>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[14px] font-normal">
+                                                {fee.amount} {fee.tokenSymbol}
+                                            </span>
+                                            <AssetAvatarV2
+                                                token={token}
+                                                className="w-5 h-5 rounded-full"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
+                                <div className="flex justify-end">
+                                    <p className="text-[10px] font-normal text-grey/50">
+                                        ~{fee.usdAmount}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex justify-end">
-                                <p className="text-[10px] font-normal text-grey/50">
-                                    ~{fee.usdAmount}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 <div className="mt-2 light-borders-green px-4 py-4 flex flex-col">

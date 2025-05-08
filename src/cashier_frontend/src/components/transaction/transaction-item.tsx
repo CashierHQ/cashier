@@ -4,12 +4,11 @@ import { Status } from "@/components/ui/status";
 import { mapIntentsStateToStatus } from "@/utils/map/status.map";
 import { useTranslation } from "react-i18next";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
-import { useTokenStore } from "@/stores/tokenStore";
 import { convert } from "@/utils/helpers/convert";
-import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
-import { ICP_LOGO } from "@/const";
+import { Avatar } from "@radix-ui/react-avatar";
 import { formatPrice } from "@/utils/helpers/currency";
-import { AssetAvatar } from "../ui/asset-avatar";
+import { AssetAvatarV2 } from "../ui/asset-avatar";
+import { useTokens } from "@/hooks/useTokens";
 
 interface TransactionItemProps {
     title: string;
@@ -20,16 +19,10 @@ interface TransactionItemProps {
 
 export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, isUsd }) => {
     const { t } = useTranslation();
-    const {
-        assetAmount,
-        assetSymbol,
-        feeAmount,
-        feeSymbol,
-        title: intentTitle,
-        assetSrc,
-    } = useIntentMetadata(intent);
+    const { assetAmount, assetSymbol, title: intentTitle, assetSrc } = useIntentMetadata(intent);
 
-    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
+    const { getToken, getTokenPrice } = useTokens();
+    const token = getToken(intent.asset.address);
     const tokenUsdPrice = getTokenPrice(intent.asset.address);
 
     return (
@@ -43,11 +36,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({ intent, isLoading, i
             <div className="flex justify-between items-center w-full">
                 <div className="flex items-center gap-1.5">
                     <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                        <AssetAvatar
-                            src={assetSrc || ICP_LOGO}
-                            symbol={assetSymbol}
-                            className="w-full h-full object-cover"
-                        />
+                        <AssetAvatarV2 token={token} className="w-full h-full object-cover" />
                     </Avatar>
                     <p className="text-[14px] font-normal flex items-center gap-2">
                         {assetSymbol}

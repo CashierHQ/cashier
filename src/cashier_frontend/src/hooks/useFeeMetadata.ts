@@ -26,6 +26,7 @@ export const useFeeMetadata = (feeModel: FeeModel) => {
     }, [token, feeModel.amount]);
 
     return {
+        token,
         assetAmount,
         assetSymbol: token?.symbol,
         assetSrc: token?.logo,

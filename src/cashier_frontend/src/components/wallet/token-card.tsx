@@ -1,5 +1,5 @@
 import { prettyNumber } from "@/utils/helpers/number/pretty";
-import { AssetAvatar } from "../ui/asset-avatar";
+import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useNavigate } from "react-router-dom";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { convertDecimalBigIntToNumber } from "@/utils";
@@ -32,7 +32,7 @@ export function WalletToken({ token }: WalletTokenProps) {
     return (
         <article className="flex justify-between" onClick={handleTokenClick}>
             <div className="flex flex-row items-center gap-2">
-                <AssetAvatar src={token.logo} symbol={token.chain} className="w-9 h-9" />
+                <AssetAvatarV2 token={token} className="w-9 h-9" />
 
                 <div className="flex flex-col gap-1.5">
                     <span className="leading-4">{token.symbol}</span>

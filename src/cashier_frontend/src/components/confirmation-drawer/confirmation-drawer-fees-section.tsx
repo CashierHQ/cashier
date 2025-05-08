@@ -7,7 +7,7 @@ import { Spinner } from "../ui/spinner";
 import { ICP_ADDRESS } from "@/const";
 import { ChevronRight } from "lucide-react";
 import { FeeBreakdownDrawer } from "./fee-breakdown-drawer";
-import { AssetAvatar } from "../ui/asset-avatar";
+import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "../ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/link-action-hooks";
@@ -179,20 +179,13 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
         if (usedTokens.length === 0) {
             // Fallback to ICP if no tokens found
             const token = getToken(ICP_ADDRESS);
-            return (
-                <AssetAvatar
-                    symbol={token?.symbol || "ICP"}
-                    src={token?.logo}
-                    className="w-7 h-7 rounded-full"
-                />
-            );
+            return <AssetAvatarV2 token={token} className="w-7 h-7 rounded-full" />;
         } else if (usedTokens.length === 1) {
             // Show single token avatar
             const tokenInfo = usedTokens[0];
             return (
-                <AssetAvatar
-                    symbol={tokenInfo.symbol || "ICP"}
-                    src={tokenInfo.logo}
+                <AssetAvatarV2
+                    token={getToken(tokenInfo.address)}
                     className="w-7 h-7 rounded-full"
                 />
             );
@@ -200,15 +193,14 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
             // Create staggered effect for multiple tokens
             return (
                 <div className="relative w-fit flex gap-0.5">
-                    {usedTokens.slice(0, 3).map((tokenInfo, index) => {
+                    {usedTokens.slice(0, 3).map((tokenInfo) => {
                         return (
                             <Avatar
                                 key={tokenInfo.address}
                                 className="w-7 h-7 rounded-full border-2 border-white"
                             >
-                                <AssetAvatar
-                                    symbol={tokenInfo.symbol || "Token"}
-                                    src={tokenInfo.logo}
+                                <AssetAvatarV2
+                                    token={getToken(tokenInfo.address)}
                                     className="w-full h-full"
                                 />
                             </Avatar>

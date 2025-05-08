@@ -1,41 +1,29 @@
 import { FC } from "react";
-import { AssetAvatar } from "@/components/ui/asset-avatar";
+import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { Spinner } from "@/components/ui/spinner";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 export type AssetProps = {
     title?: string | undefined;
     src?: string | undefined;
-    symbol?: string | undefined;
     amount?: number | undefined;
     usdAmount?: number | undefined;
 
     isLoading?: boolean;
     isUsd?: boolean;
+    token?: FungibleToken;
 };
 
 export const Asset: FC<AssetProps> = ({
     title,
     src,
-    symbol,
     amount,
     usdAmount,
     isLoading,
     isUsd,
+    token,
 }) => {
     const showUsd = isUsd && usdAmount !== undefined;
-
-    //TODO: Remove after mid milestone
-    const getAvatarSrc = (title: string, src: string) => {
-        if (symbol === "ICP") {
-            return "/icpLogo.png";
-        } else if (title === "BTC") {
-            return "/chatTokenLogo.png";
-        } else return src;
-    };
-
-    const getSymbol = (title?: string) => {
-        return title;
-    };
 
     const renderAmount = () => {
         if (isLoading) {
@@ -52,12 +40,8 @@ export const Asset: FC<AssetProps> = ({
                 )}
 
                 <span className="ml-1 font-light text-sm">{amount}</span>
-                <span className="ml-1 font-light text-sm">{getSymbol(symbol)}</span>
-                <AssetAvatar
-                    className="ml-1"
-                    src={getAvatarSrc(title ?? "", src ?? "")}
-                    symbol={symbol}
-                />
+                <span className="ml-1 font-light text-sm">{token?.symbol}</span>
+                <AssetAvatarV2 token={token} className="ml-1" />
             </div>
         );
     };
@@ -67,15 +51,6 @@ export const Asset: FC<AssetProps> = ({
             <h6 className="text-sm font-light">{title}</h6>
 
             {renderAmount()}
-            {/* {isLoading ? (
-                <Spinner width={22} />
-            ) : (
-                <div className="flex items-center">
-                    <span>{amount}</span>
-                    <span className="ml-1">{symbol}</span>
-                    <AssetAvatar className="ml-1" src={src} symbol={symbol} />
-                </div>
-            )} */}
         </div>
     );
 };

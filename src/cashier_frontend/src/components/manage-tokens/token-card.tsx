@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AssetAvatar } from "../ui/asset-avatar";
+import { AssetAvatar, AssetAvatarV2 } from "../ui/asset-avatar";
 import Switch from "../ui/switch";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { mapChainToLogo } from "@/utils/map/chain.map";
@@ -36,11 +36,7 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
         <article className="flex justify-between items-center">
             <div className="flex gap-1.5 items-center">
                 <div className="relative">
-                    <AssetAvatar
-                        src={token.logo}
-                        symbol={token.symbol}
-                        className="w-[30px] h-[30px]"
-                    />
+                    <AssetAvatarV2 token={token} className="w-[30px] h-[30px]" />
                     <AssetAvatar
                         src={mapChainToLogo(token.chain)}
                         symbol={token.chain}
