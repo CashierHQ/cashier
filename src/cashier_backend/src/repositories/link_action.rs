@@ -1,5 +1,3 @@
-use crate::info;
-
 use super::LINK_ACTION_STORE;
 use cashier_types::{keys::ActionTypeKey, LinkAction, LinkActionKey, LinkKey};
 
