@@ -478,6 +478,7 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                     }
                 }}
                 assetList={userTokens || []}
+                showSearch={true}
             />
         </div>
     );

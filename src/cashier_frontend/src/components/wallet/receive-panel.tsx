@@ -7,7 +7,7 @@ import { transformShortAddress } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { useAuth } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
-import { Info, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
@@ -204,6 +204,7 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
                         }
                     }}
                     assetList={tokenList || []}
+                    showSearch={true}
                 />
             </div>
             <TransactionToast
