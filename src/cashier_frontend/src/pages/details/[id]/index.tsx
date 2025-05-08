@@ -25,7 +25,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import { AssetAvatar } from "@/components/ui/asset-avatar";
+import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -283,11 +283,7 @@ export default function DetailPage() {
                                                 <p className="text-sm text-primary/80">
                                                     {token.symbol}
                                                 </p>
-                                                <AssetAvatar
-                                                    src={token.logo}
-                                                    symbol={token.symbol}
-                                                    className="w-4 h-4"
-                                                />
+                                                <AssetAvatarV2 token={token} className="w-4 h-4" />
                                             </div>
                                         </div>
                                     );

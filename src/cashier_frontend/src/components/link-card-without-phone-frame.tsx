@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function LinkCardWithoutPhoneFrame({
     src,
@@ -10,7 +10,7 @@ export default function LinkCardWithoutPhoneFrame({
     disabled,
     logoFallback,
 }: {
-    src: string;
+    src?: string;
     header?: string;
     title: string;
     message: string;
@@ -25,14 +25,21 @@ export default function LinkCardWithoutPhoneFrame({
     // Handle image load error
     const handleImageError = () => {
         // If the current src is already the default, try another fallback
+        if (logoFallback) {
+            setImgSrc(logoFallback);
+        }
         if (imgSrc === "/defaultLinkImage.png") {
             setImgSrc("/token-basket-default.png");
-        } else if (logoFallback) {
-            setImgSrc(logoFallback);
         } else {
             setImgSrc("/defaultLinkImage.png");
         }
     };
+
+    useEffect(() => {
+        if (logoFallback) {
+            setImgSrc(logoFallback);
+        }
+    }, [logoFallback]);
 
     return (
         <div className="w-full flex flex-col items-center bg-lightgreen rounded-xl mt-5 py-5 px-8">
