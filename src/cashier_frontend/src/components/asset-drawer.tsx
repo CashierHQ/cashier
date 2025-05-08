@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
-import { IoIosClose } from "react-icons/io";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatar } from "./ui/asset-avatar";
 import { prettyNumber } from "@/utils/helpers/number/pretty";
