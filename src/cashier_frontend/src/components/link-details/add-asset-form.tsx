@@ -573,7 +573,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     style={{
                         WebkitOverflowScrolling: "touch",
                         overscrollBehavior: "contain",
-                        paddingBottom: "16px",
+                        paddingBottom: `${isMultiAsset ? "16px" : "0px"}`,
                     }}
                 >
                     {assetFields.fields.map((field, index) => (
@@ -588,6 +588,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                             showRemoveButton={isMultiAsset && assetFields.fields.length > 1}
                             isAirdrop={isAirdrop}
                             linkId={link?.id}
+                            isTip={link?.linkType === LINK_TYPE.SEND_TIP}
                         />
                     ))}
 
@@ -608,19 +609,19 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     )}
                 </div>
 
-                <div className="mb-16">
+                <div>
                     {/* Airdrop Fields */}
                     {isAirdrop && (
-                        <div className="flex gap-4 mt-2 mb-4">
+                        <div className="flex gap-4 mb-4">
                             <div className="input-label-field-container">
                                 <Label>Claims</Label>
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={handleDecreaseMaxUse}
-                                        className="bg-grey/10 rounded-full p-1"
+                                        className="disabled:bg-grey/10 disabled:text-grey/75 bg-lightgreen text-green rounded-full p-1"
                                         disabled={maxActionNumber <= 1}
                                     >
-                                        <Minus size={16} className="text-grey" />
+                                        <Minus size={16} />
                                     </button>
                                     <Input
                                         value={maxActionNumber}
@@ -680,6 +681,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 handleClose={() => setShowAssetDrawer(false)}
                 handleChange={handleSetTokenAddress}
                 assetList={availableTokensForDrawer}
+                showSearch
             />
 
             {/* Toast Messages */}

@@ -1,16 +1,14 @@
-import { WalletHero } from "@/components/wallet/hero";
 import { WalletTabs } from "@/components/wallet/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTokens } from "@/hooks/useTokens";
 import { useMemo } from "react";
 import { SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { SendReceive } from "../ui/send-receive";
 import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useWalletContext, WalletPanelType } from "@/contexts/wallet-context";
+import { useWalletContext } from "@/contexts/wallet-context";
 import SendPanel from "./send-panel";
 import ReceivePanel from "./receive-panel";
 import DetailsPanel from "./details-panel";

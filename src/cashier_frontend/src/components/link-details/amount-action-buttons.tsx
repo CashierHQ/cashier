@@ -13,14 +13,14 @@ interface AmountActionButtons {
 
 export function AmountActionButtons({ data, isDisabled }: AmountActionButtons) {
     return (
-        <div className="flex justify-between w-full mx-auto">
+        <div className="flex justify-between w-full mx-auto gap-2">
             {data.map(({ content, action }, index) => (
                 <Button
                     key={index}
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="asset-amount-percentage-button"
+                    className={`asset-amount-percentage-button focus:border-green focus:bg-white`}
                     onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();

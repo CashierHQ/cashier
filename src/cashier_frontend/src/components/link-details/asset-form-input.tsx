@@ -14,9 +14,9 @@ import { useTokens } from "@/hooks/useTokens";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/link-action-hooks";
+import { convertDecimalBigIntToNumber, convertTokenAmountToNumber } from "@/utils";
 
-const USD_AMOUNT_PRESETS = [1, 2, 5, 10];
-const PERCENTAGE_AMOUNT_PRESETS = [25, 50, 75, 100];
+const USD_AMOUNT_PRESETS = [1, 2, 5];
 
 type AssetFormInputProps = {
     index: number;
@@ -28,6 +28,7 @@ type AssetFormInputProps = {
     showRemoveButton: boolean;
     isAirdrop?: boolean;
     linkId?: string;
+    isTip?: boolean;
 };
 
 export const AssetFormInput: FC<AssetFormInputProps> = ({
@@ -38,6 +39,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     showRemoveButton,
     isAirdrop,
     linkId,
+    isTip,
 }) => {
     // Add local state for isUsd with initial value from props or default to false
     const [localIsUsd, setLocalIsUsd] = useState<boolean>(false);
@@ -171,38 +173,6 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
         }
     };
 
-    // Generate preset buttons for this asset
-    const getPresetButtons = () => {
-        if (!token) return [];
-
-        if (localIsUsd && canConvert) {
-            return USD_AMOUNT_PRESETS.map((amount) => ({
-                content: `${amount} USD`,
-                action: () => {
-                    setLocalUsdAmount(amount.toString());
-                    setUsdAmount(amount);
-                },
-            }));
-        } else {
-            return PERCENTAGE_AMOUNT_PRESETS.map((percentage) => ({
-                content: `${percentage} %`,
-                action: () => {
-                    const availableAmount = token?.amount
-                        ? Number(token.amount) / 10 ** decimals
-                        : 0;
-
-                    console.log("availableAmount", availableAmount);
-
-                    if (availableAmount > 0) {
-                        const amount = availableAmount * (percentage / 100);
-                        setLocalTokenAmount(amount.toFixed(decimals > 8 ? 8 : decimals));
-                        setTokenAmount(amount.toFixed(decimals > 8 ? 8 : decimals));
-                    }
-                },
-            }));
-        }
-    };
-
     // Handle toggling USD mode
     const handleToggleUsd = (value: boolean) => {
         setLocalIsUsd(value);
@@ -210,34 +180,81 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
 
     return (
         <div
-            className={`mb-6 ${showRemoveButton ? "border-b border-grey/10 pb-8 last:border-b-0" : ""}`}
+            className={`mb-6 ${showRemoveButton ? "border-b border-grey/10 pb-6 last:border-b-0" : ""}`}
         >
             <div className="input-label-field-container">
                 {/* Asset header with optional remove button */}
-                <div className="flex justify-between items-center">
+                <div className="flex w-full items-center">
                     <Label>{isAirdrop ? `Asset per claim` : `${t("create.asset")}`}</Label>
                     {showRemoveButton && (
                         <button
                             className="text-destructive hover:bg-destructive/10 rounded-full p-1"
                             onClick={() => onRemoveAsset(index)}
                         >
-                            <Trash size={19} />
+                            <Trash className="ml-1" size={16} />
                         </button>
                     )}
+                    <button
+                        onClick={() =>
+                            setLocalTokenAmount(
+                                convertDecimalBigIntToNumber(
+                                    token?.amount || 0n,
+                                    token?.decimals || 8,
+                                ).toString(),
+                            )
+                        }
+                        className="ml-auto text-[#36A18B] text-[12px] font-medium"
+                    >
+                        Max
+                    </button>
                 </div>
 
                 {/* Asset selector */}
-                <div className="mb-4">
+                <div className="">
                     <AssetButton
                         handleClick={() => onAssetSelect(index)}
                         text="Choose Asset"
                         childrenNode={<SelectedAssetButtonInfo selectedToken={token} />}
+                        tokenValue={localTokenAmount}
+                        usdValue={localUsdAmount}
+                        onInputChange={(value) => handleAmountChange(value)}
+                        isUsd={localIsUsd}
+                        token={token}
+                        onToggleUsd={handleToggleUsd}
+                        canConvert={canConvert}
+                        tokenDecimals={decimals}
+                        showPresetButtons={isAirdrop || isTip}
+                        presetButtons={USD_AMOUNT_PRESETS.map((amount) => ({
+                            content: `${amount} USD`,
+                            action: () => {
+                                const value = amount.toString();
+                                setLocalUsdAmount(value);
+
+                                // Update token amount based on USD
+                                if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
+                                    const tokenValue = parseFloat(value) / tokenUsdPrice;
+                                    setLocalTokenAmount(tokenValue.toString());
+                                    setUsdAmount(value);
+                                } else {
+                                    setUsdAmount(value);
+                                }
+                            },
+                        }))}
+                        showMaxButton={true}
+                        onMaxClick={() => {
+                            setLocalTokenAmount(
+                                convertDecimalBigIntToNumber(
+                                    token?.amount || 0n,
+                                    token?.decimals || 8,
+                                ).toString(),
+                            );
+                        }}
                     />
                 </div>
             </div>
 
             {/* Amount input section */}
-            <div className="input-label-field-container">
+            {/* <div className="input-label-field-container">
                 <div className="flex justify-between items-center">
                     <Label>{isAirdrop ? "Amount per claim" : t("create.amount")}</Label>
                     {token && (
@@ -277,16 +294,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                         {errors.assets[index]?.amount?.message}
                     </div>
                 )}
-                {token && (
-                    <AmountActionButtons
-                        data={getPresetButtons().map((button) => ({
-                            content: button.content,
-                            action: button.action,
-                        }))}
-                        isDisabled={token.amount === 0n}
-                    />
-                )}
-            </div>
+            </div> */}
         </div>
     );
 };
