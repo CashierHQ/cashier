@@ -25,15 +25,6 @@ export const Asset: FC<AssetProps> = ({
 }) => {
     const showUsd = isUsd && usdAmount !== undefined;
 
-    //TODO: Remove after mid milestone
-    const getAvatarSrc = (title: string, src: string) => {
-        if (symbol === "ICP") {
-            return "/icpLogo.png";
-        } else if (title === "BTC") {
-            return "/chatTokenLogo.png";
-        } else return src;
-    };
-
     const renderAmount = () => {
         if (isLoading) {
             return <Spinner width={22} />;
