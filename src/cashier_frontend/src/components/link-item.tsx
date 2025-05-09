@@ -1,5 +1,4 @@
 import { useResponsive } from "@/hooks/responsive-hook";
-import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { getLinkLabel, LINK_STATE, LINK_TYPE, mapStringToLinkState } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { getLinkDefaultAvatar } from "@/utils";
@@ -51,10 +50,19 @@ export function StateBadge({ state }: { state: string | undefined }) {
     return null;
 }
 
+// Function to return formatted claim status text
+export function getClaimStatus(
+    useActionCounter: bigint | number,
+    maxActionNumber: bigint | number,
+): string {
+    const counter = Number(useActionCounter);
+    const maxActions = Number(maxActionNumber);
+
+    return `Claimed ${counter} / ${maxActions} times`;
+}
+
 export default function LinkItem({ link }: { link: LinkDetailModel }) {
     const responsive = useResponsive();
-
-    const isLocalLink = link.id.startsWith(LOCAL_lINK_ID_PREFIX);
 
     return (
         <div
@@ -81,9 +89,7 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
                         {link.title.length > 0 ? link.title : "No title"}
                     </h3>
                     <p className="text-[11px] text-grey/65 font-light">
-                        {Number(link.maxActionNumber) <= 1
-                            ? `Single use - ${Number(link.useActionCounter) === 0 ? "pending" : "claimed"}`
-                            : `Claimed ${Number(link.useActionCounter)} / ${Number(link.maxActionNumber)} times`}
+                        {getClaimStatus(link.useActionCounter, link.maxActionNumber)}
                     </p>
                 </div>
                 <StateBadge state={link.state} />
