@@ -17,7 +17,6 @@ import { Label } from "@/components/ui/label";
 import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
-import { getLinkAssetAmounts, getLinkIsClaimed } from "@/utils/helpers/link";
 import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
@@ -64,37 +63,16 @@ export default function DetailPage() {
         };
     }, []);
 
-    const [assetAmounts, setAssetAmounts] = React.useState<
-        {
-            address: string;
-            totalAmount: bigint;
-            pendingAmount: bigint;
-            claimsAmount: bigint | undefined;
-            assetClaimed: boolean;
-        }[]
-    >([]);
-    const [linkIsClaimed, setLinkIsClaimed] = React.useState<boolean>(false);
-
     React.useEffect(() => {
-        const fetchAssetAmounts = async () => {
-            if (link) {
-                const assetAmounts = await getLinkAssetAmounts(link);
-                setAssetAmounts(assetAmounts);
-            }
-        };
-        const fetchLinkIsClaimed = async () => {
-            if (link) {
-                const linkIsClaimed = await getLinkIsClaimed(link);
-                setLinkIsClaimed(linkIsClaimed);
-            }
-        };
-        fetchAssetAmounts();
-        fetchLinkIsClaimed();
+        console.log("link", link);
     }, [link]);
 
-    React.useEffect(() => {
-        console.log("assetAmounts", assetAmounts);
-    }, [assetAmounts]);
+    // Check if link has assets that can be withdrawn
+    const hasWithdrawableAssets = React.useMemo(() => {
+        if (!link) return false;
+        // If useActionCounter is less than maxActionNumber, there are still actions/assets available
+        return link.useActionCounter < link.maxActionNumber;
+    }, [link]);
 
     React.useEffect(() => {
         if (showOverlay && driverObj && document.getElementById("copy-link-button")) {
@@ -187,6 +165,17 @@ export default function DetailPage() {
         setAction(actionResult);
     };
 
+    // Calculate remaining actions and assets
+    const calculateRemainingInfo = (maxActions: bigint, usedActions: bigint) => {
+        if (maxActions <= BigInt(0)) return { remainingActions: BigInt(0), hasAssetsLeft: false };
+
+        const remaining = maxActions > usedActions ? maxActions - usedActions : BigInt(0);
+        return {
+            remainingActions: remaining,
+            hasAssetsLeft: remaining > BigInt(0),
+        };
+    };
+
     return (
         <MainAppLayout>
             <div className="w-full flex flex-grow flex-col">
@@ -251,16 +240,22 @@ export default function DetailPage() {
                                 <p className="font-medium text-sm">Chain</p>
                                 <p className="text-sm text-primary/80">ICP</p>
                             </div>
-                            {assetAmounts.length > 0 &&
+
+                            {link.asset_info.length > 0 &&
                                 link.asset_info.map((asset) => {
                                     const token = getToken(asset.address);
                                     if (!token) return null;
 
-                                    const assetAmount = assetAmounts.find(
-                                        (amount) => amount.address === asset.address,
+                                    const { remainingActions } = calculateRemainingInfo(
+                                        link.maxActionNumber,
+                                        link.useActionCounter,
                                     );
 
-                                    if (!assetAmount) return null;
+                                    // Calculate remaining asset amount using amountPerUse
+                                    const remainingAmount = remainingActions * asset.amountPerUse;
+
+                                    // Calculate total asset amount allocated to this link
+                                    const totalAmount = link.maxActionNumber * asset.amountPerUse;
 
                                     return (
                                         <div
@@ -270,15 +265,11 @@ export default function DetailPage() {
                                             <p className="font-medium text-sm">Asset left/added</p>
                                             <div className="flex items-center gap-1">
                                                 <p className="text-sm text-primary/80">
-                                                    {assetAmount.totalAmount
-                                                        ? Number(assetAmount.totalAmount) /
-                                                          Math.pow(10, token.decimals)
-                                                        : "-"}
+                                                    {Number(remainingAmount) /
+                                                        Math.pow(10, token.decimals)}
                                                     /
-                                                    {asset.amountPerUse
-                                                        ? Number(asset.amountPerUse) /
-                                                          Math.pow(10, token.decimals)
-                                                        : "-"}
+                                                    {Number(totalAmount) /
+                                                        Math.pow(10, token.decimals)}
                                                 </p>
                                                 <p className="text-sm text-primary/80">
                                                     {token.symbol}
@@ -314,7 +305,7 @@ export default function DetailPage() {
                             {link?.state == LINK_STATE.INACTIVE && (
                                 <Button
                                     id="copy-link-button"
-                                    disabled={linkIsClaimed}
+                                    disabled={!hasWithdrawableAssets}
                                     onClick={() => {
                                         handleWithdrawAssets();
                                         setShowConfirmationDrawer(true);
@@ -322,7 +313,9 @@ export default function DetailPage() {
                                     size="lg"
                                     className="w-full disabled:bg-gray-300"
                                 >
-                                    {t("details.withdrawAssets")}
+                                    {hasWithdrawableAssets
+                                        ? t("details.withdrawAssets")
+                                        : "No Assets To Withdraw"}
                                 </Button>
                             )}
                         </div>
