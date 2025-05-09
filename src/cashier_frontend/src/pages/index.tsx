@@ -153,7 +153,7 @@ export default function HomePage() {
                 <div className="overflow-y-auto h-full scrollbar-hide pb-20">
                     {Object.entries(links).map(([date, items]) => (
                         <div key={date} className="my-4">
-                            <h3 className="text-lightblack font-normal mb-2">
+                            <h3 className="text-lightblack/80 font-normal mb-2 text-[14px]">
                                 {formatDateString(date)}
                             </h3>
                             <ul>

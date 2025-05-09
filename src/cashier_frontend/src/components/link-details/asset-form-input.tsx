@@ -179,9 +179,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     };
 
     return (
-        <div
-            className={`mb-6 ${showRemoveButton ? "border-b border-grey/10 pb-6 last:border-b-0" : ""}`}
-        >
+        <div className={` ${showRemoveButton ? "" : ""}`}>
             <div className="input-label-field-container">
                 {/* Asset header with optional remove button */}
                 <div className="flex w-full items-center">

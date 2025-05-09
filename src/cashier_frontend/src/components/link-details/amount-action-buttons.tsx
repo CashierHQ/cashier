@@ -20,7 +20,7 @@ export function AmountActionButtons({ data, isDisabled }: AmountActionButtons) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={`asset-amount-percentage-button focus:border-green focus:bg-white`}
+                    className={`asset-amount-percentage-button focus:border-green focus:text-green focus:bg-white`}
                     onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
