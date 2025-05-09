@@ -30,6 +30,7 @@ export interface ButtonState {
 
 interface LinkCreationFormState {
     userInputs: Map<string, Partial<UserInputItem>>;
+    // continue button state
     buttonState: ButtonState;
 
     getUserInput: (linkId: string) => Partial<UserInputItem> | undefined;

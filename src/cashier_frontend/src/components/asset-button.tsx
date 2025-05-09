@@ -24,6 +24,7 @@ interface AssetButtonProps {
     showMaxButton?: boolean;
     onMaxClick?: () => void;
     showInput?: boolean;
+    isTip?: boolean;
 }
 
 const AssetButton: React.FC<AssetButtonProps> = ({
@@ -43,10 +44,13 @@ const AssetButton: React.FC<AssetButtonProps> = ({
     isDisabled = false,
     showMaxButton = false,
     onMaxClick,
+    isTip,
     showInput = true,
 }) => {
     // Determine which value to display based on isUsd flag
     const displayValue = isUsd ? usdValue : tokenValue;
+
+    console.log("is tip: ", isTip);
 
     return (
         <div className="flex flex-col w-full">
@@ -110,7 +114,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({
             )}
 
             {/* Preset Buttons */}
-            {showPresetButtons && presetButtons.length > 0 && canConvert && (
+            {showPresetButtons && presetButtons.length > 0 && canConvert && isTip && (
                 <div className="mt-8">
                     <AmountActionButtons data={presetButtons} isDisabled={isDisabled} />
                 </div>

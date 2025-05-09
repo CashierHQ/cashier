@@ -38,7 +38,8 @@ type TipLinkAssetFormProps = {
 export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdrop }) => {
     const { t } = useTranslation();
     const { link, isUpdating, callLinkStateMachine } = useLinkAction();
-    const { getUserInput, updateUserInput, setButtonState } = useLinkCreationFormStore();
+    const { userInputs, getUserInput, updateUserInput, setButtonState } =
+        useLinkCreationFormStore();
     const { showToast, toastData, hideToast } = useToast();
     const { setStep } = useMultiStepFormContext();
     const responsive = useResponsive();
@@ -53,12 +54,35 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     // Get current input and link type from store
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
-    // maxUse (default = 1)
-    const [maxActionNumber, setMaxActionNumber] = useState<number>(isAirdrop ? 0 : 1);
+    // maxUse - initialize based on link data if available, otherwise use defaults
+    const [maxActionNumber, setMaxActionNumber] = useState<number>(() => {
+        if (link?.maxActionNumber) {
+            return Number(link.maxActionNumber);
+        }
+        return isAirdrop ? 1 : 1;
+    });
+
+    useEffect(() => {
+        if (!link) return;
+
+        if (link.maxActionNumber > 0) {
+            setMaxActionNumber(Number(link.maxActionNumber));
+        }
+    }, [link]);
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
     const allAvailableTokens = getDisplayTokens();
+
+    useEffect(() => {
+        if (!link) {
+            return;
+        }
+        const currentInput = getUserInput(link?.id);
+        if (currentInput) {
+            console.log("currentInput", currentInput);
+        }
+    }, [userInputs]);
 
     // Initialize form with existing or default values
     const initialValues = useMemo(() => {
@@ -269,10 +293,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         }
     };
 
-    useEffect(() => {
-        console.log("max use", maxActionNumber);
-    }, [maxActionNumber]);
-
     const handleSubmit = async () => {
         if (!link?.id) throw new Error("Link ID not found");
 
@@ -338,12 +358,22 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             !Object.keys(errors).length &&
             !formAssets.some((asset) => !asset.amount || asset.amount <= BigInt(0));
 
+        console.log("isFormValid", isFormValid);
+        console.log("isUpdating", isUpdating);
+        console.log("maxActionNumber", maxActionNumber);
+
+        // button disbled when
+        // 1. validation fails
+        // 2. calling backend - isUpdating = true
+        // 3. maxActionNumber <= 0
+
         setButtonState({
             label: t("continue"),
             isDisabled: !isFormValid || isUpdating || maxActionNumber <= 0,
             action: handleSubmit,
         });
     }, [
+        userInputs,
         errors,
         isUpdating,
         assetFields.fields.length, // Track array length changes

@@ -247,6 +247,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                                 ).toString(),
                             );
                         }}
+                        isTip={isTip}
                     />
                 </div>
             </div>

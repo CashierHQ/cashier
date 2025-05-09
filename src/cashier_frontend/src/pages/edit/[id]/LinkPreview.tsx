@@ -92,12 +92,16 @@ export default function LinkPreview({
 
     // Update the button state
     useEffect(() => {
+        // button disabled if:
+        // 1. isDisabled is true
+        // 2. isLoading is true
+        // 3. showConfirmation is true
         setButtonState({
             label: isDisabled ? t("processing") : t("create.create"),
-            isDisabled: isDisabled || isLoading || shouldRedirect,
+            isDisabled: isDisabled || isLoading || showConfirmation,
             action: handleSubmit,
         });
-    }, [isDisabled, isLoading, shouldRedirect]);
+    }, [isDisabled, isLoading, shouldRedirect, showConfirmation]);
 
     // Effect to map rawTokenList logos to asset_info
     useEffect(() => {
@@ -401,7 +405,9 @@ export default function LinkPreview({
             />
             <ConfirmationDrawer
                 open={showConfirmation && !showInfo}
-                onClose={() => setShowConfirmation(false)}
+                onClose={() => {
+                    setShowConfirmation(false);
+                }}
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
                 onCashierError={onCashierError}
