@@ -111,7 +111,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({
 
             {/* Preset Buttons */}
             {showPresetButtons && presetButtons.length > 0 && canConvert && (
-                <div className="mt-2">
+                <div className="mt-8">
                     <AmountActionButtons data={presetButtons} isDisabled={isDisabled} />
                 </div>
             )}

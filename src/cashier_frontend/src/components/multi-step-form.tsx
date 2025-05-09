@@ -1,5 +1,5 @@
 import { Children, ReactElement, ReactNode, useEffect } from "react";
-import { ChevronLeft, LoaderCircle } from "lucide-react";
+import { ChevronLeft, LoaderCircle, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     MultiStepFormContext,
@@ -8,6 +8,10 @@ import {
 } from "@/contexts/multistep-form-context";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { Button } from "./ui/button";
+import { RiMenu2Line } from "react-icons/ri";
+import { SheetTrigger } from "./ui/sheet";
+import { useWalletContext } from "@/contexts/wallet-context";
+import { useResponsive } from "@/hooks/responsive-hook";
 
 interface MultiStepFormProps {
     initialStep: number;
@@ -36,11 +40,13 @@ export function MultiStepFormHeader({
     backButtonDisabled = false,
 }: MultiStepFormHeaderProps) {
     const context = useMultiStepFormContext();
+    const { openWallet } = useWalletContext();
+    const responsive = useResponsive();
 
     return (
         <div className="w-full flex-none">
             {showHeader && (
-                <div className="w-full flex items-center justify-center mb-1.5 relative">
+                <div className="w-full flex items-center justify-center mb-1.5 py-1 relative">
                     <h4 className="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200">
                         {context.stepName}
                     </h4>
@@ -60,6 +66,23 @@ export function MultiStepFormHeader({
                             <ChevronLeft width={25} height={25} strokeWidth={2} />
                         )}
                     </button>
+
+                    {responsive.isSmallDevice && (
+                        <div className="flex items-center gap-2 absolute right-0">
+                            <Button
+                                variant="outline"
+                                className="ml-auto light-borders p-0 w-9 h-9"
+                                onClick={() => openWallet()}
+                            >
+                                <Wallet size={16} color={"#35A18A"} />
+                            </Button>
+                            <SheetTrigger asChild>
+                                <Button variant="outline" size="icon" className="light-borders">
+                                    <RiMenu2Line />
+                                </Button>
+                            </SheetTrigger>
+                        </div>
+                    )}
                 </div>
             )}
 

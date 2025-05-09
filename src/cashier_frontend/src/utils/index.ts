@@ -169,12 +169,14 @@ export const getTokenImage = (tokenAddress: string) => {
 export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
     switch (linkType) {
         case LINK_TYPE.SEND_TIP:
-            return `/tip-link-default.png`;
+            return `/tip-link-default.svg`;
         case LINK_TYPE.SEND_AIRDROP:
-            return `/airdrop-default.png`;
+            return `/airdrop-default.svg`;
         case LINK_TYPE.SEND_TOKEN_BASKET:
-            return `/token-basket-default.png`;
+            return `/token-basket-default.svg`;
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return `/receive-payment-default.svg`;
         default:
-            return `/icpLogo.png`;
+            return `/smallLogo.svg`;
     }
 };

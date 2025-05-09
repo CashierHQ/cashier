@@ -27,7 +27,7 @@
     }
 
     .asset-amount-percentage-button {
-        @apply flex-1 shadow-none light-borders text-[12px] text-primary py-7 leading-none px-[12px] font-normal disabled:cursor-not-allowed disabled:opacity-50;
+        @apply flex-1 shadow-none light-borders text-[14px] text-primary leading-none px-[12px] font-normal h-[68px] disabled:cursor-not-allowed disabled:opacity-50;
     }
 
     .input-field-asset {

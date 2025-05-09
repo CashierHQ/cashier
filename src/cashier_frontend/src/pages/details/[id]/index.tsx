@@ -290,7 +290,7 @@ export default function DetailPage() {
                                 })}
                         </div>
 
-                        <div className="flex flex-col items-center gap-4 mt-auto">
+                        <div className="flex flex-col items-center gap-4 mb-2 mt-auto">
                             {link?.state == LINK_STATE.ACTIVE && (
                                 <button
                                     onClick={() => {

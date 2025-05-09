@@ -261,9 +261,9 @@ export default function LinkPreview({
 
     return (
         <div
-            className={`w-full flex flex-col h-full ${responsive.isSmallDevice ? "justify-start" : "gap-4"}`}
+            className={`w-full flex flex-col h-full mt-2 ${responsive.isSmallDevice ? "justify-start" : "gap-4"}`}
         >
-            <div className="input-label-field-container mt-2">
+            <div className="input-label-field-container">
                 <Label>Link info</Label>
                 <div className="flex flex-col gap-2 justify-between items-center light-borders-green px-4 py-3">
                     <div className="flex items-center w-full justify-between">
