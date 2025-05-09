@@ -113,9 +113,9 @@ export default function LinkTemplate({
     }
 
     return (
-        <div className="w-full h-full flex flex-col overflow-hidden">
+        <div className="w-full h-full flex flex-col overflow-hidden mt-2">
             <div className="flex-shrink-0">
-                <div className="input-label-field-container mt-2">
+                <div className="input-label-field-container">
                     <Label>{t("create.linkName")}</Label>
                     <Input
                         value={userInputs.get(link.id)?.title}

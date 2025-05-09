@@ -39,7 +39,7 @@ const MainWalletPanel: React.FC<{
     const usdEquivalentAmount = prettyNumber(totalUsdEquivalent);
 
     return (
-        <div className="flex-1 overflow-hidden h-full mt-4">
+        <div className="flex-1 overflow-hidden h-full">
             {/* Custom wallet hero for panel */}
             <div className="flex flex-col items-center pb-5">
                 <div className="relative flex items-center gap-2">
@@ -221,7 +221,7 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
         <SheetContent
             side="right"
             hideCloseButton={activePanel !== "wallet"}
-            className="w-[100%] p-4 flex flex-col h-full"
+            className="w-[100%] py-4 px-2 flex flex-col h-full"
         >
             {activePanel === "wallet" && (
                 <SheetHeader>

@@ -64,19 +64,28 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
                 {link.image ? (
                     <img src={link.image} alt="link" className="w-8 h-8 rounded-sm" />
                 ) : (
-                    <img
-                        src={getLinkDefaultAvatar(
-                            (link.linkType as LINK_TYPE) ?? LINK_TYPE.SEND_TIP,
-                        )}
-                        alt="link"
-                        className="w-8 h-8 rounded-sm"
-                    />
+                    <div className="flex items-center justify-center w-[32px] h-[32px] bg-[#E8F2EE] rounded-[6px]">
+                        <img
+                            src={getLinkDefaultAvatar(
+                                (link.linkType as LINK_TYPE) ?? LINK_TYPE.SEND_TIP,
+                            )}
+                            alt="link"
+                            className="w-18 h-18 rounded-sm"
+                        />
+                    </div>
                 )}
             </div>
             <div className="flex items-center justify-between grow ml-3">
-                <h3 className="font-base text-sm font-[500]">
-                    {link.title.length > 0 ? link.title : "No title"}
-                </h3>
+                <div className="flex flex-col items-start justify-center">
+                    <h3 className="text-[14px] font-medium">
+                        {link.title.length > 0 ? link.title : "No title"}
+                    </h3>
+                    <p className="text-[11px] text-grey/65 font-light">
+                        {Number(link.maxActionNumber) <= 1
+                            ? `Single use - ${Number(link.useActionCounter) === 0 ? "pending" : "claimed"}`
+                            : `Claimed ${Number(link.useActionCounter)} / ${Number(link.maxActionNumber)} times`}
+                    </p>
+                </div>
                 <StateBadge state={link.state} />
             </div>
         </div>

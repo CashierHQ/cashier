@@ -28,6 +28,7 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { formatPrice } from "@/utils/helpers/currency";
 import { useResponsive } from "@/hooks/responsive-hook";
+import { Separator } from "../ui/separator";
 
 type TipLinkAssetFormProps = {
     isMultiAsset: boolean;
@@ -577,19 +578,27 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     }}
                 >
                     {assetFields.fields.map((field, index) => (
-                        <AssetFormInput
+                        <div
                             key={field.id}
-                            fieldId={field.id}
-                            index={index}
-                            form={form}
-                            availableAssets={allAvailableTokens}
-                            onAssetSelect={handleAssetSelect}
-                            onRemoveAsset={handleRemoveAsset}
-                            showRemoveButton={isMultiAsset && assetFields.fields.length > 1}
-                            isAirdrop={isAirdrop}
-                            linkId={link?.id}
-                            isTip={link?.linkType === LINK_TYPE.SEND_TIP}
-                        />
+                            className={`${index !== assetFields.fields.length - 1 ? "" : "mb-10"}`}
+                        >
+                            <AssetFormInput
+                                key={field.id}
+                                fieldId={field.id}
+                                index={index}
+                                form={form}
+                                availableAssets={allAvailableTokens}
+                                onAssetSelect={handleAssetSelect}
+                                onRemoveAsset={handleRemoveAsset}
+                                showRemoveButton={isMultiAsset && assetFields.fields.length > 1}
+                                isAirdrop={isAirdrop}
+                                linkId={link?.id}
+                                isTip={link?.linkType === LINK_TYPE.SEND_TIP}
+                            />
+                            {index !== assetFields.fields.length - 1 && (
+                                <Separator className="my-6 max-w-[100%] mx-auto opacity-50" />
+                            )}
+                        </div>
                     ))}
 
                     {/* Add Another Asset Button (for multi-asset mode) */}
