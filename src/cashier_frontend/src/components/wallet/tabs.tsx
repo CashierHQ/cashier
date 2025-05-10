@@ -61,7 +61,7 @@ export function WalletTabs({ fungibleTokens }: WalletTabsProps) {
 
                     <div className="flex flex-col gap-1">
                         <p className="text-sm font-semibold">{t("wallet.banner.title")}</p>
-                        <p className="text-grey text-sm">{t("wallet.banner.text")}</p>
+                        <p className="text-grey-400 text-sm">{t("wallet.banner.text")}</p>
                     </div>
                 </div>
             )}

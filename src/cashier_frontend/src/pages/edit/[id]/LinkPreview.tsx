@@ -334,7 +334,7 @@ export default function LinkPreview({
                                                 {totalTokenAmount}
                                             </p>
                                         </div>
-                                        <p className="text-[10px] font-normal text-grey/50">
+                                        <p className="text-[10px] font-normal text-grey-400/50">
                                             ~${formatPrice(approximateUsdValue.toString())}
                                         </p>
                                     </div>
@@ -388,7 +388,7 @@ export default function LinkPreview({
                                             {formatPrice(displayAmount.toString())} {tokenSymbol}
                                         </p>
                                     </div>
-                                    <p className="text-[10px] font-normal text-grey/50">
+                                    <p className="text-[10px] font-normal text-grey-400/50">
                                         ~${formatPrice(usdValue.toString())}
                                     </p>
                                 </div>

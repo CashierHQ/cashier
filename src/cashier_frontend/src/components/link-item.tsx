@@ -88,7 +88,7 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
                     <h3 className="text-[14px] font-medium">
                         {link.title.length > 0 ? link.title : "No title"}
                     </h3>
-                    <p className="text-[11px] text-grey/65 font-light">
+                    <p className="text-[11px] text-grey-400 font-light">
                         {getClaimStatus(link.useActionCounter, link.maxActionNumber)}
                     </p>
                 </div>

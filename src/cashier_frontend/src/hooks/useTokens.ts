@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useTokenStore } from "@/stores/tokenStore";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
@@ -94,7 +94,6 @@ export function useTokens() {
     };
 
     const updateTokenInit = async () => {
-        console.log("Updating token init");
         await tokenRawListQuery.refetch();
         if (identity) {
             await tokenUserListQuery.refetch();
@@ -103,7 +102,6 @@ export function useTokens() {
     };
 
     const updateToken = async () => {
-        console.log("call updateToken");
         await tokenRawListQuery.refetch();
         if (identity) {
             await tokenUserListQuery.refetch();
@@ -173,6 +171,8 @@ export function useTokens() {
     };
 
     // Process raw tokens list (all tokens from registry) and merge with user token enabled status
+    const metadataQueryTriggeredRef = useRef(false);
+
     useEffect(() => {
         if (!tokenRawListQuery.data) return;
 
@@ -209,13 +209,14 @@ export function useTokens() {
             const enrichedToken = { ...token };
 
             // Enrich with metadata
-            if (tokenMetadataQuery.data) {
+            if (tokenMetadataQuery.data && !metadataQueryTriggeredRef.current) {
                 const metadataMap = tokenMetadataQuery.data;
                 const metadata = metadataMap[token.address];
                 if (metadata?.fee !== undefined) {
                     enrichedToken.fee = metadata.fee;
                     enrichedToken.logoFallback = metadata.logo;
                 }
+                metadataQueryTriggeredRef.current = true;
             }
 
             // Enrich with price data

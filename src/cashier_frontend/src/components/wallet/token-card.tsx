@@ -38,11 +38,11 @@ export function WalletToken({ token }: WalletTokenProps) {
                     <span className="leading-4">{token.symbol}</span>
 
                     {token.usdConversionRate ? (
-                        <span className="flex flex-row items-center text-grey text-xs font-light leading-none">
+                        <span className="flex flex-row items-center text-grey-400 text-xs font-light leading-none">
                             ${formatPrice(token.usdConversionRate.toString())}
                         </span>
                     ) : (
-                        <span className="text-grey text-xs font-light leading-none">-</span>
+                        <span className="text-grey-400 text-xs font-light leading-none">-</span>
                     )}
                 </div>
             </div>
@@ -61,11 +61,13 @@ export function WalletToken({ token }: WalletTokenProps) {
                 </span>
 
                 {token.usdEquivalent ? (
-                    <span className="flex flex-row items-center justify-end text-grey text-xs font-light leading-none">
+                    <span className="flex flex-row items-center justify-end text-grey-400 text-xs font-light leading-none">
                         ${formatPrice(token.usdEquivalent.toString())}
                     </span>
                 ) : (
-                    <span className="text-right text-grey text-xs font-light leading-none">-</span>
+                    <span className="text-right text-grey-400 text-xs font-light leading-none">
+                        -
+                    </span>
                 )}
             </div>
         </article>
