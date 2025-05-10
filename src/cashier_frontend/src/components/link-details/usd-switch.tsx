@@ -88,7 +88,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
 
     if (!canConvert) {
         return (
-            <span className="text-[10px] font-light text-grey/60">
+            <span className="text-[10px] font-light text-grey-400">
                 {t("transaction.usd_conversion.no_price_available")}
             </span>
         );
@@ -97,12 +97,12 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
     return (
         <button
             type="button"
-            className="flex items-center text-destructive"
+            className="flex items-center text-grey-400"
             onClick={() => onToggle(!isUsd)}
             aria-label={isUsd ? "Switch to token amount" : "Switch to USD amount"}
         >
-            <span className="text-[10px] font-light text-grey/60">{valueToDisplay}</span>
-            <Repeat2 className="ml-1" size={15} strokeWidth={2} />
+            <span className="text-[10px] font-light">{valueToDisplay}</span>
+            <Repeat2 className="ml-1 text-destructive" size={15} strokeWidth={2} />
         </button>
     );
 };
