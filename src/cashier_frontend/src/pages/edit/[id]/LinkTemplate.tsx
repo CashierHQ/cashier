@@ -137,11 +137,9 @@ export default function LinkTemplate({
                         placeholder={t("create.linkNamePlaceholder")}
                     />
                 </div>
-
-                <Separator className="my-4 max-w-[100%] mx-auto opacity-50" />
             </div>
 
-            <div className="input-label-field-container">
+            <div className="input-label-field-containe mt-4">
                 <Label>{t("create.linkType")}</Label>
                 <div className="flex flex-col items-center justify-center bg-lightgreen rounded-[16px] py-3 h-fit">
                     <div className="relative w-full overflow-hidden h-full">
