@@ -47,6 +47,8 @@ export default function LinkTemplate({
     const carousel = useCarousel();
 
     const handleSubmit = async () => {
+        const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
+
         const currentLink = link ? getUserInput(link.id) : undefined;
 
         if (!currentLink?.title) {
@@ -58,6 +60,14 @@ export default function LinkTemplate({
             if (!currentLink || !currentLink.linkId) {
                 showToast("Error", "Link not found", "error");
                 return;
+            }
+
+            if (
+                !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
+                currentLink.assets &&
+                currentLink.assets.length > 1
+            ) {
+                currentLink.assets = [currentLink.assets[0]];
             }
 
             try {
