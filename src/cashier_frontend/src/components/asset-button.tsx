@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { UsdSwitch } from "./link-details/usd-switch";
 import { AmountActionButtons } from "./link-details/amount-action-buttons";
@@ -50,6 +50,51 @@ const AssetButton: React.FC<AssetButtonProps> = ({
     // Determine which value to display based on isUsd flag
     const displayValue = isUsd ? usdValue : tokenValue;
 
+    // Local state for immediate UI feedback
+    const [localInputValue, setLocalInputValue] = useState<string>(displayValue || "");
+
+    // Update local state when props change
+    React.useEffect(() => {
+        setLocalInputValue(displayValue || "");
+    }, [displayValue]);
+
+    // Ref for debounce timer
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Validate and format input for crypto amounts
+    const handleInputChange = (value: string) => {
+        // Allow only digits and at most one decimal point
+        let sanitized = "";
+        let hasDecimal = false;
+
+        for (let i = 0; i < value.length; i++) {
+            const char = value[i];
+
+            // Allow digits
+            if (/[0-9]/.test(char)) {
+                sanitized += char;
+            }
+            // Allow only one decimal point
+            else if (char === "." && !hasDecimal) {
+                sanitized += char;
+                hasDecimal = true;
+            }
+        }
+
+        // Update local state immediately for UI feedback
+        setLocalInputValue(sanitized);
+
+        // Clear any existing timer
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        // Set a new timer to call onInputChange after 500ms
+        debounceTimerRef.current = setTimeout(() => {
+            onInputChange?.(sanitized);
+        }, 1000);
+    };
+
     console.log("is tip: ", isTip);
 
     return (
@@ -63,16 +108,24 @@ const AssetButton: React.FC<AssetButtonProps> = ({
                         </span>
                         <div className="flex w-fit items-center">
                             {showInput && (
-                                <input
-                                    value={displayValue === "0" ? "" : displayValue}
-                                    onChange={(e) => onInputChange?.(e.target.value)}
-                                    type="number"
-                                    step="any"
-                                    className="w-fit ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none"
-                                    placeholder="0"
-                                />
+                                <div className="relative flex items-center">
+                                    {isUsd && (
+                                        <span className="text-[14px] text-gray-400 mr-1">$</span>
+                                    )}
+                                    <input
+                                        value={localInputValue === "0" ? "" : localInputValue}
+                                        onChange={(e) => handleInputChange(e.target.value)}
+                                        type="text"
+                                        inputMode="decimal"
+                                        className="w-auto min-w-[30px] ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none"
+                                        placeholder="0"
+                                        style={{
+                                            width: `${Math.max((localInputValue || "").length * 9, 30)}px`,
+                                            maxWidth: "250px",
+                                        }}
+                                    />
+                                </div>
                             )}
-                            {isUsd && <span className="text-[12px] text-gray-400 ml-1">USD$</span>}
                         </div>
                     </span>
                 ) : (
