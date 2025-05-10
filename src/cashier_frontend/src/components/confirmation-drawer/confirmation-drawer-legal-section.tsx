@@ -6,7 +6,7 @@ export const ConfirmationPopupLegalSection: FC = () => {
 
     return (
         <section id="confirmation-popup-section-legal-text" className="mb-3 ml-2 mt-2">
-            <p className="text-[14px] font-normal">{t("transaction.confirm_popup.legal_text")}</p>
+            <p className="text-[14px] font-normal">{t("confirmation_drawer.legal_text")}</p>
         </section>
     );
 };

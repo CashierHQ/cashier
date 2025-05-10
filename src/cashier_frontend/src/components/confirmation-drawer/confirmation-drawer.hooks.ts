@@ -57,16 +57,16 @@ export const useConfirmButtonState = (
     const mapActionStateToButtonText = () => {
         switch (actionState) {
             case ACTION_STATE.CREATED:
-                return t("transaction.confirm_popup.confirm_button");
+                return t("confirmation_drawer.confirm_button");
             case ACTION_STATE.PROCESSING:
-                return t("transaction.confirm_popup.inprogress_button");
+                return t("confirmation_drawer.inprogress_button");
             case ACTION_STATE.FAIL:
                 console.log("Return failed");
                 return t("retry");
             case ACTION_STATE.SUCCESS:
                 return t("continue");
             default:
-                return defaultText ?? t("transaction.confirm_popup.confirm_button");
+                return defaultText ?? t("confirmation_drawer.confirm_button");
         }
     };
 

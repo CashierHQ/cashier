@@ -15,11 +15,11 @@ const getLabel = (intent: IntentModel) => {
     switch (intent.task) {
         case TASK.TRANSFER_WALLET_TO_LINK:
         case TASK.TRANSFER_WALLET_TO_TREASURY:
-            return "transaction.confirm_popup.send_label";
+            return "confirmation_drawer.send_label";
         case TASK.TRANSFER_LINK_TO_WALLET:
-            return "transaction.confirm_popup.receive_label";
+            return "confirmation_drawer.receive_label";
         default:
-            return "transaction.confirm_popup.send_label";
+            return "confirmation_drawer.send_label";
     }
 };
 
@@ -39,7 +39,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 {intents.map((intent) => (
                     <li key={intent.id}>
                         <TransactionItem
-                            title={t("transaction.confirm_popup.asset_label")}
+                            title={t("confirmation_drawer.asset_label")}
                             intent={intent}
                             isUsd={isUsd}
                         />

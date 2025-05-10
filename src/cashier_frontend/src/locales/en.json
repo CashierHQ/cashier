@@ -229,5 +229,31 @@
             "send": "Sent",
             "to": "To"
         }
+    },
+    "confirmation_drawer": {
+        "total_fees": "Total fees",
+        "title": "Confirm transaction",
+        "link_creation_success_title": "Confirm transaction",
+        "link_creation_success_message": "Congratulations! Your transaction was successful.",
+        "receive_label": "You receive",
+        "cashier_link_label": "Cashier link",
+        "send_label": "You send",
+        "asset_label": "Asset to add to link",
+        "asset_claim_label": "Asset",
+        "total_fee_label": "Total fees",
+        "confirm_button": "Confirm",
+        "inprogress_button": "Transaction in progress...",
+        "retry_button": "Retry",
+        "processing": "Processing...",
+        "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
+        "continue_button": "Continue",
+        "fee-breakdown": {
+            "title": "Total fees breakdown",
+            "close_button": "Close",
+            "link_creation_fee": "Link creation fee",
+            "network_fee": "Network Fee",
+            "total_fees": "Total fees",
+            "multiple_tokens": "Multiple tokens"
+        }
     }
 }
