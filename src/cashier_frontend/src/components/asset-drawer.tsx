@@ -110,7 +110,7 @@ const AssetDrawer: React.FC<AssetDrawerProps> = ({
                 )}
                 <div className="font-semibold">Your assets</div>
                 <div className="flex-1 overflow-y-auto">
-                    <div className="flex flex-col gap-4 py-4">
+                    <div className="flex flex-col gap-1 py-4">
                         {filteredAssetList.map((token) => (
                             <SelectableToken key={token.id} token={token} onSelect={handleChange} />
                         ))}
