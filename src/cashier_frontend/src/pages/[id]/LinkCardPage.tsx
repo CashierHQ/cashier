@@ -1,8 +1,8 @@
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
+import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { convertTokenAmountToNumber } from "@/utils";
 import { FC } from "react";
 
 type LinkCardPageProps = {
@@ -11,7 +11,7 @@ type LinkCardPageProps = {
 };
 
 export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) => {
-    const { getToken, rawTokenList } = useTokens();
+    const { getToken } = useTokens();
 
     // Get token data and image
     const tokenAddress = linkData?.asset_info?.[0]?.address;
@@ -31,9 +31,6 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
             case LINK_TYPE.SEND_TIP:
             case LINK_TYPE.SEND_AIRDROP:
             case LINK_TYPE.RECEIVE_PAYMENT:
-                const token = rawTokenList.find(
-                    (token) => token.address === linkData?.asset_info?.[0]?.address,
-                );
                 const amount =
                     Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
                 return `${amount} ${token?.symbol}`;
@@ -55,9 +52,6 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
             case LINK_TYPE.SEND_TOKEN_BASKET:
                 return "Congratulations, you received a token basket!";
             case LINK_TYPE.RECEIVE_PAYMENT:
-                const token = rawTokenList.find(
-                    (token) => token.address === linkData?.asset_info?.[0]?.address,
-                );
                 const amount =
                     Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
                 return `You have been requested to pay the amount of ${amount} ${token?.symbol}`;
@@ -71,10 +65,6 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
             case LINK_TYPE.SEND_TIP:
             case LINK_TYPE.SEND_AIRDROP:
             case LINK_TYPE.RECEIVE_PAYMENT:
-                const token = rawTokenList.find(
-                    (token) => token.address === linkData?.asset_info?.[0]?.address,
-                );
-                console.log("token logo: ", token?.logo);
                 return (
                     <img
                         src={token?.logo || logoFallback}
@@ -88,26 +78,13 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
                 );
             case LINK_TYPE.SEND_TOKEN_BASKET:
                 const tokens = linkData?.asset_info?.map((asset) => {
-                    const token = rawTokenList.find((token) => token.address === asset.address);
-                    return {
-                        symbol: token?.symbol,
-                        amount: asset.amountPerUse,
-                        logo: token?.logo,
-                        decimals: token?.decimals,
-                    };
+                    return getToken(asset.address)!;
                 });
                 return (
                     <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col justify-center gap-4">
-                        {tokens?.map((token) => (
-                            <div className="flex items-center">
-                                <img
-                                    src={token.logo}
-                                    alt={token.symbol}
-                                    className="w-8 h-8 rounded-sm"
-                                    onError={(e) => {
-                                        e.currentTarget.src = logoFallback;
-                                    }}
-                                />
+                        {tokens?.map((token, index) => (
+                            <div key={index} className="flex items-center">
+                                <AssetAvatarV2 token={token} className="w-8 h-8 rounded-sm" />
                                 <p className="text-[20px] font-light ml-2">
                                     {Number(token.amount) / 10 ** (token?.decimals ?? 0)}{" "}
                                     {token.symbol || "Token"}
@@ -124,9 +101,6 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
     const getHeaderTextForLink = () => {
         switch (linkData?.linkType) {
             case LINK_TYPE.SEND_AIRDROP:
-                const token = rawTokenList.find(
-                    (token) => token.address === linkData?.asset_info?.[0]?.address,
-                );
                 return `${linkData.useActionCounter}/${linkData.maxActionNumber} claimed`;
             default:
                 return "";
@@ -141,7 +115,6 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
             title={getTitleForLink()}
             onClaim={onClickClaim}
             disabled={linkData === undefined}
-            logoFallback={logoFallback}
             showHeader={linkData?.linkType === LINK_TYPE.SEND_AIRDROP}
             headerText={getHeaderTextForLink()}
         />

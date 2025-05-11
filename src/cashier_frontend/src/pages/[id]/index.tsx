@@ -188,9 +188,6 @@ export default function ClaimPage() {
                                     <MultiStepForm.Item name="Complete">
                                         <LinkCardWithoutPhoneFrame
                                             label="Claimed"
-                                            src={getTokenImage(
-                                                linkData?.asset_info?.[0].address ?? "",
-                                            )}
                                             message={linkData?.description ?? ""}
                                             title={linkData?.title ?? ""}
                                             disabled={true}

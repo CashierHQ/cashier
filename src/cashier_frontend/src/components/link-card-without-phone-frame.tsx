@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
 
 export default function LinkCardWithoutPhoneFrame({
     displayComponent,
@@ -8,7 +7,6 @@ export default function LinkCardWithoutPhoneFrame({
     label,
     onClaim,
     disabled,
-    logoFallback,
     showHeader = false,
     headerText = "",
 }: {
@@ -18,7 +16,6 @@ export default function LinkCardWithoutPhoneFrame({
     label: string;
     onClaim?: () => void;
     disabled?: boolean;
-    logoFallback?: string;
     showHeader?: boolean;
     headerText?: string;
 }) {
