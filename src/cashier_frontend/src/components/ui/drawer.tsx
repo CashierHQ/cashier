@@ -49,7 +49,7 @@ const DrawerContent = React.forwardRef<
             )}
             {...props}
         >
-            <DrawerHandle />
+            {/* <DrawerHandle /> */}
             {children}
         </VaulDrawer.Content>
     </DrawerPortal>
