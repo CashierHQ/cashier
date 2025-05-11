@@ -552,7 +552,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     // create link: only creator can create link
     // withdraw: only creator can withdraw
     // claim: any one can claim
-    pub async fn link_validate_user_create_action(
+    pub async fn link_validate_user_create_action_async(
         &self,
         link_id: &str,
         action_type: &ActionType,
@@ -579,7 +579,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             ActionType::Withdraw => {
                 // validate user id == link creator
                 if link.creator == user_id {
-                    //TODO : validate link's balance, link state
                     return Ok(());
                 } else {
                     return Err(CanisterError::ValidationErrors(
@@ -624,14 +623,16 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
 
                 return Ok(());
-            } // validate creator and balance
-              // _ => {
-              //     return Ok(());
-              // }
+            }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
+            }
         }
     }
 
-    pub async fn link_validate_user_update_action(
+    pub async fn link_validate_user_update_action_async(
         &self,
         action: &Action,
         user_id: &str,
@@ -658,7 +659,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
-            ActionType::Claim => {
+            ActionType::Claim | ActionType::Use => {
                 if action.creator != user_id {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -668,6 +669,108 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
 
         return Ok(());
+    }
+
+    // This method is a synchronous version that performs basic validation without async checks
+    pub fn link_validate_user_create_action(
+        &self,
+        link_id: &str,
+        action_type: &ActionType,
+        user_id: &str,
+    ) -> Result<(), CanisterError> {
+        // Get link
+        let link = self.get_link_by_id(link_id.to_string())?;
+
+        match action_type {
+            ActionType::CreateLink => {
+                // Validate user ID == link creator
+                if link.creator == user_id {
+                    // Basic validation passes, async balance validation would happen separately
+                    return Ok(());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the link".to_string(),
+                    ));
+                }
+            }
+            ActionType::Withdraw => {
+                // Validate user ID == link creator
+                if link.creator == user_id {
+                    // Synchronous validation passes
+                    return Ok(());
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the link".to_string(),
+                    ));
+                }
+            }
+            //TODO: replace claim as use
+            ActionType::Claim | ActionType::Use => {
+                // Validate link state
+                if link.state != LinkState::Active {
+                    return Err(CanisterError::ValidationErrors(
+                        "Link is not active".to_string(),
+                    ));
+                }
+
+                // For send-type links, check usage counter against max allowed
+                if let Some(link_type) = &link.link_type {
+                    if link.link_use_action_counter >= link.link_use_action_max_count {
+                        return Err(CanisterError::ValidationErrors(format!(
+                            "Link maximum usage count reached: {}",
+                            link.link_use_action_max_count
+                        )));
+                    }
+                }
+
+                // Synchronous validation passes
+                return Ok(());
+            }
+        }
+    }
+
+    // Helper method to validate action update permissions
+    pub fn link_validate_user_update_action(
+        &self,
+        action: &Action,
+        user_id: &str,
+    ) -> Result<(), CanisterError> {
+        //validate user_id
+        match action.r#type.clone() {
+            ActionType::CreateLink => {
+                let link = self.get_link_by_id(action.link_id.clone())?;
+                if !(action.creator == user_id && link.creator == user_id) {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+            }
+            ActionType::Withdraw => {
+                let link = self.get_link_by_id(action.link_id.clone())?;
+                if !(action.creator == user_id && link.creator == user_id) {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+            }
+
+            //TODO: replace claim as use
+            ActionType::Claim | ActionType::Use => {
+                if action.creator != user_id {
+                    return Err(CanisterError::ValidationErrors(
+                        "User is not the creator of the action".to_string(),
+                    ));
+                }
+
+                if action.state == ActionState::Success {
+                    return Err(CanisterError::ValidationErrors(
+                        "Action is already success".to_string(),
+                    ));
+                }
+            }
+        }
+
+        Ok(())
     }
 
     // This method mostly use for "Send" link type
@@ -855,6 +958,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         if list_send_link_type.contains(&link.link_type.unwrap()) {
             if action.r#type == ActionType::Claim {
                 // Update asset info to track the claim
+                if updated_link.link_use_action_counter + 1 > updated_link.link_use_action_max_count
+                {
+                    return Err(CanisterError::HandleLogicError(
+                        "Link use action counter exceeded max count".to_string(),
+                    ));
+                }
                 updated_link.link_use_action_counter += 1;
             }
         }
