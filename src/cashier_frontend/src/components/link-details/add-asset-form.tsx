@@ -177,12 +177,27 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
     // Handle direct input change for maxActionNumber
     const handleMaxUseInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = Number(e.target.value);
-        if (newValue < 1) return;
-        setMaxActionNumber(newValue);
+        // Allow empty input temporarily
+        if (e.target.value === "") {
+            // Just update component state but don't update store yet
+            setMaxActionNumber(0);
+            return;
+        }
+
+        // Remove leading zeros (except for lone zero)
+        const sanitizedValue = e.target.value.replace(/^0+(?=\d)/, "");
+
+        // Convert to number and ensure it's an integer for BigInt conversion
+        const parsedValue = Number(sanitizedValue);
+        const intValue = Math.floor(parsedValue); // Use floor to truncate decimal part
+
+        // Only update store if value is valid (≥ 1)
+        if (intValue < 1) return;
+
+        setMaxActionNumber(intValue);
         if (link?.id) {
             updateUserInput(link.id, {
-                maxActionNumber: BigInt(newValue),
+                maxActionNumber: BigInt(intValue),
             });
         }
     };
@@ -663,9 +678,9 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                                         <Minus size={16} />
                                     </button>
                                     <Input
-                                        value={maxActionNumber}
+                                        value={maxActionNumber === 0 ? "" : maxActionNumber}
                                         onChange={handleMaxUseInputChange}
-                                        className={`max-w-20 h-11 text-center text-[16px] font-normal ${
+                                        className={`max-w-20 h-11 text-center text-[16px] font-normal [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                                             maxActionNumber <= 0 ? "text-grey/75" : ""
                                         }`}
                                         type="number"

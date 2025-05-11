@@ -2,6 +2,7 @@ import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Check, X } from "lucide-react";
 import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-section";
 import { useConfirmButtonState, usePrimaryIntents } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
@@ -12,7 +13,6 @@ import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
-import { Check, X } from "lucide-react";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 
@@ -305,7 +305,14 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     };
 
     return (
-        <Drawer open={open}>
+        <Drawer
+            open={open}
+            onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    onClose();
+                }
+            }}
+        >
             <DrawerContent className="max-w-[400px] mx-auto p-3 rounded-t-[1.5rem]">
                 <DrawerHeader>
                     <DrawerTitle className="flex relative justify-center items-center">

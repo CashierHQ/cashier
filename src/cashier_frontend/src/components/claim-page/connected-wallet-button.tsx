@@ -19,9 +19,9 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
     return (
         <button
             className={cn(
-                "w-full h-14 px-3 py-5 space-y-2 my-3",
+                "w-full h-12 px-3",
                 "bg-background text-foreground",
-                "border border-input border-green",
+                "border border-input border-[#35A18B]",
                 "hover:bg-accent hover:text-accent-foreground",
                 "rounded-xl",
                 "text-md",
@@ -38,11 +38,15 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
             }}
         >
             <span className="flex items-center w-full">
-                {postfixIcon ? postfixIcon : <LuWallet2 className="mr-2" color="green" size={22} />}
+                {postfixIcon ? (
+                    postfixIcon
+                ) : (
+                    <LuWallet2 className="mr-2" color="#35A18B" size={22} />
+                )}
                 <span className="flex-grow text-left">
                     {transformShortAddress(connectedAccount || "")}
                 </span>{" "}
-                {postfixText && <span className="ml-auto text-green">{postfixText}</span>}
+                {postfixText && <span className="ml-auto text-[#35A18B]">{postfixText}</span>}
             </span>
         </button>
     );

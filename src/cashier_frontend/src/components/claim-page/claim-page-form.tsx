@@ -39,7 +39,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         <div className="w-full flex flex-col flex-grow relative">
             <Form {...form}>
                 <form
-                    className="w-full flex flex-col gap-y-[10px] mt-5 h-full"
+                    className="w-full flex flex-col gap-3 h-full"
                     onSubmit={(e) => {
                         e.preventDefault();
                         handleSubmit();

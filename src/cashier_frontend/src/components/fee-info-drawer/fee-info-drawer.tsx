@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { ChevronLeft, Link, Wifi, X } from "lucide-react";
+import { X, Link, Wifi } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export type FeeInfoDrawerProps = {
@@ -13,7 +13,14 @@ export const FeeInfoDrawer: FC<FeeInfoDrawerProps> = ({ open, onClose }) => {
     const { t } = useTranslation();
 
     return (
-        <Drawer open={open}>
+        <Drawer
+            open={open}
+            onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    onClose?.();
+                }
+            }}
+        >
             <DrawerContent className="max-w-[400px] mx-auto p-3">
                 <DrawerHeader>
                     <DrawerTitle className="flex relative justify-center items-center">
@@ -31,7 +38,7 @@ export const FeeInfoDrawer: FC<FeeInfoDrawerProps> = ({ open, onClose }) => {
 
                 <div className="px-4 pb-4 mt-2">
                     <h4 className="font-medium text-[14px] gap-1 items-center mt-5 flex flex-row">
-                        <Link size={18} className="text-green mr-1" to={""} />
+                        <Link size={18} className="text-green mr-1" />
                         {t("feeInfo.cashierFeeHeader")}
                     </h4>
                     <p className="mt-0.5 text-[14px] font-normal">{t("feeInfo.cashierFeeText")}</p>

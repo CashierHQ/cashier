@@ -47,6 +47,8 @@ export default function LinkTemplate({
     const carousel = useCarousel();
 
     const handleSubmit = async () => {
+        const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
+
         const currentLink = link ? getUserInput(link.id) : undefined;
 
         if (!currentLink?.title) {
@@ -58,6 +60,14 @@ export default function LinkTemplate({
             if (!currentLink || !currentLink.linkId) {
                 showToast("Error", "Link not found", "error");
                 return;
+            }
+
+            if (
+                !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
+                currentLink.assets &&
+                currentLink.assets.length > 1
+            ) {
+                currentLink.assets = [currentLink.assets[0]];
             }
 
             try {
@@ -127,11 +137,9 @@ export default function LinkTemplate({
                         placeholder={t("create.linkNamePlaceholder")}
                     />
                 </div>
-
-                <Separator className="my-4 max-w-[100%] mx-auto opacity-50" />
             </div>
 
-            <div className="input-label-field-container">
+            <div className="input-label-field-containe mt-4">
                 <Label>{t("create.linkType")}</Label>
                 <div className="flex flex-col items-center justify-center bg-lightgreen rounded-[16px] py-3 h-fit">
                     <div className="relative w-full overflow-hidden h-full">
