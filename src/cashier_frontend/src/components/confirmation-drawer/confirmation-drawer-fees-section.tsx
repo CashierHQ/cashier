@@ -149,7 +149,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 totalUsdValue += usdValue;
 
                 const breakdownItem: FeeBreakdownItem = {
-                    name: feeType === "transfer_fee" ? "Transfer Fee" : "Network Fee",
+                    name: feeType === "transfer_fee" ? "Link creation fee" : "Network fee",
                     amount: tokenAmount.toFixed(4),
                     tokenSymbol: token?.symbol || "Unknown",
                     tokenAddress: tokenAddress!,
