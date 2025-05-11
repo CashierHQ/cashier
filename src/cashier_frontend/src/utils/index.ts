@@ -159,7 +159,7 @@ export const convertDecimalBigIntToNumber = (amount: bigint, decimals: number): 
 };
 
 export const transformShortAddress = (address: string): string => {
-    return `${address.slice(0, 12)}...${address.slice(-8)}`;
+    return `${address.slice(0, 8)} ... ${address.slice(-8)}`;
 };
 
 export const getTokenImage = (tokenAddress: string) => {

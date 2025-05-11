@@ -33,6 +33,7 @@ import {
     getWalletIcon,
     GoogleSigner,
 } from "@/constants/wallet-options";
+import { LuWallet2 } from "react-icons/lu";
 
 interface ClaimFormOptionsProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -215,19 +216,15 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
 
     return (
         <>
-            <div id="asset-section" className="w-full my-5">
-                <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
-                    {t("claim.asset")}
-                </h2>
+            <div id="asset-section" className="">
+                <h2 className="text-[16px] font-medium mb-2">{t("claim.asset")}</h2>
                 {link?.asset_info.map((asset, index) => <TokenItem key={index} asset={asset} />)}
             </div>
 
-            <div className="w-full flex flex-col gap-y-[10px] mt-5">
-                <h2 className="text-md font-medium leading-6 text-gray-900 ml-2">
-                    {t("claim.receive_options")}
-                </h2>
+            <div className="mt-4">
+                <h2 className="text-[16px] font-medium mb-2">{t("claim.receive_options")}</h2>
 
-                <div className="px-1">
+                <div className="flex flex-col gap-2">
                     {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login")}
                     {renderWalletButton(WALLET_OPTIONS.INTERNET_IDENTITY, "Internet Identity")}
                     {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets")}
@@ -241,7 +238,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                                         "You need to disconnect your current wallet to enter an address manually. Would you like to disconnect and continue?",
                                 });
                             }}
-                            icon={<PiWallet color="green" className="mr-2 h-6 w-6" />}
+                            icon={<LuWallet2 color="#359F89" className="mr-2 h-6 w-6" />}
                         />
                     ) : (
                         <FormField
@@ -254,7 +251,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                                             isCurrencyInput={false}
                                             icon={
                                                 <IoWalletOutline
-                                                    color="green"
+                                                    color="#359F89"
                                                     className="mr-2 h-6 w-6"
                                                 />
                                             }
@@ -272,7 +269,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                                                     />
                                                 ) : (
                                                     <ClipboardIcon
-                                                        color="green"
+                                                        color="#359F89"
                                                         className="mr-2 h-5 w-5"
                                                     />
                                                 )
