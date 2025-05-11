@@ -11,6 +11,7 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "../ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useTranslation } from "react-i18next";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -36,6 +37,7 @@ type FeeBreakdownItem = {
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
 }) => {
+    const { t } = useTranslation();
     const { feeAmount } = useIntentMetadata(intents?.[0]);
     const { getTokenPrice, isLoading, getToken } = useTokens();
 
@@ -49,8 +51,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
     useEffect(() => {
         const initState = async () => {
-            console.log("Intents: ", intents);
-
             // Get the fee map for all intents
             const totalFeesMapArray = [];
             // intent is already sorted, the transfer fee create link is the first one
@@ -67,7 +67,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                             intent,
                             fee: {
                                 chain: intent.asset.chain,
-                                type: "transfer_fee",
+                                type: "link_creation_fee",
                                 address: intent.asset.address,
                                 amount: fee.amount,
                             },
@@ -149,7 +149,10 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 totalUsdValue += usdValue;
 
                 const breakdownItem: FeeBreakdownItem = {
-                    name: feeType === "transfer_fee" ? "Link creation fee" : "Network fee",
+                    name:
+                        feeType === "link_creation_fee"
+                            ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
+                            : t("confirmation_drawer.fee-breakdown.network_fee"),
                     amount: tokenAmount.toFixed(4),
                     tokenSymbol: token?.symbol || "Unknown",
                     tokenAddress: tokenAddress!,
@@ -215,7 +218,9 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
         <>
             <section id="confirmation-popup-section-total" className="mb-3">
                 <div className="flex items-center w-full justify-between">
-                    <h2 className="font-medium text-[14px] ml-2">Total fees</h2>
+                    <h2 className="font-medium text-[14px] ml-2">
+                        {t("confirmation_drawer.total_fees")}
+                    </h2>
                 </div>
                 <div className="flex flex-col gap-3 light-borders-green px-4 py-4">
                     <div className="flex justify-between font-medium items-center">

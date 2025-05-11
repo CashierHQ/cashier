@@ -229,7 +229,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 console.error(error);
             }
             setIsDisabled(false);
-            setButtonText(t("transaction.confirm_popup.confirm_button"));
+            setButtonText(t("confirmation_drawer.confirm_button"));
             throw error;
         }
     };
@@ -238,7 +238,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         const isTxSuccess = action?.state === ACTION_STATE.SUCCESS;
 
         setIsDisabled(true);
-        setButtonText(t("transaction.confirm_popup.processing"));
+        setButtonText(t("confirmation_drawer.processing"));
 
         if (isTxSuccess) {
             await onSuccessContinue();
@@ -249,8 +249,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
     const title =
         action?.state === ACTION_STATE.SUCCESS
-            ? t("transaction.confirm_popup.link_creation_success_title")
-            : t("transaction.confirm_popup.title");
+            ? t("confirmation_drawer.link_creation_success_title")
+            : t("confirmation_drawer.title");
 
     const getContent = (action: ActionModel | undefined) => {
         if (action) {
@@ -261,7 +261,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                             <Check color="#35A18A" size={42} />
                         </div>
                         <div className="text-center text-sm font-medium">
-                            {t("transaction.confirm_popup.link_creation_success_message")}
+                            {t("confirmation_drawer.link_creation_success_message")}
                         </div>
 
                         <Button

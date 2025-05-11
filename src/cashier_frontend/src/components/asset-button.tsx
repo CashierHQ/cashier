@@ -138,7 +138,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({
             {/* Balance and USD Switch */}
             {token && (
                 <div className="flex px-1 items-center justify-between mt-1.5">
-                    <p className="text-[10px] font-light text-grey/60">
+                    <p className="text-[10px] font-light text-grey-400/60">
                         Balance{" "}
                         {token?.amount
                             ? formatPrice(

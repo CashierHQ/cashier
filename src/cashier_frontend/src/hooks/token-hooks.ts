@@ -24,6 +24,7 @@ import TokenCacheService from "@/services/backend/tokenCache.service";
 
 // Centralized time constants (in milliseconds)
 const TIME_CONSTANTS = {
+    ONE_MINUTE: 60 * 1000,
     // Cache durations
     FIVE_MINUTES: 5 * 60 * 1000,
     THIRTY_MINUTES: 30 * 60 * 1000,
@@ -109,20 +110,17 @@ export function useTokenListQuery(identity: Identity | undefined) {
 }
 
 export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
-    const identity = useIdentity();
-
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.metadata(),
         queryFn: async () => {
-            if (!identity) throw new Error("Not authenticated");
-
             if (!tokens || tokens.length === 0) return {};
 
             // Create a map of token address to metadata
             const metadataMap: TokenMetadataMap = {};
 
             // Process tokens in batches to avoid overwhelming the network
-            const batchSize = 5;
+            const batchSize = 300;
+            const start = Date.now();
             for (let i = 0; i < tokens.length; i += batchSize) {
                 const batch = tokens.slice(i, i + batchSize);
                 const batchPromises = batch.map(async (token) => {
@@ -144,11 +142,18 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
 
                 await Promise.all(batchPromises);
             }
+            const end = Date.now();
+            const duration = end - start;
+            console.log(
+                `Fetched metadata for ${tokens.length} tokens in ${duration}ms`,
+                metadataMap,
+            );
+
+            console.log("Fetched token metadata:", metadataMap);
 
             return metadataMap;
         },
-        staleTime: TIME_CONSTANTS.THIRTY_MINUTES,
-        enabled: !!identity && !!tokens,
+        enabled: !!tokens,
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) =>
             Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
@@ -345,8 +350,8 @@ export function useTokenPricesQuery() {
                 throw error;
             }
         },
-        staleTime: TIME_CONSTANTS.FIVE_MINUTES,
-        refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
+        staleTime: TIME_CONSTANTS.ONE_MINUTE,
+        refetchInterval: TIME_CONSTANTS.ONE_MINUTE,
         retry: 10, // Retry failed requests up to 10 times
         retryDelay: (attemptIndex) =>
             Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
