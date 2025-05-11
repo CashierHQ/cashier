@@ -35,6 +35,14 @@ impl ActionDomainLogic {
                     ));
                 }
             }
+            ActionType::Use => {
+                // Validate transfer action
+                if link.state != LinkState::Active {
+                    return Err(CanisterError::ValidationErrors(
+                        "Link is not active".to_string(),
+                    ));
+                }
+            }
         }
 
         Ok(())

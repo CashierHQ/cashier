@@ -588,6 +588,91 @@ export class LinkTestFixture {
         return { linkId, actionId };
     }
 
+    // Method to setup a tip link and claim it once
+    // link only claim one
+    async setupPreconfiguredTipLinkWithClaim(
+        config?: LinkConfig,
+        assets?: AssetInfo[],
+        maxUseCount: bigint = BigInt(1),
+    ): Promise<{
+        linkId: string;
+        claimActionId: string;
+        balanceBefore: bigint;
+    }> {
+        // Use default config if not provided
+        const defaultConfig: LinkConfig = {
+            title: "tip 20 icp",
+            description: "tip 20 icp to the user",
+            template: "Central",
+            link_image_url: "https://www.google.com",
+            link_type: "SendTip",
+            link_use_action_max_count: BigInt(1),
+        };
+
+        const defaultAssetInfo: AssetInfo = {
+            chain: "IC",
+            address: "x5qut-viaaa-aaaar-qajda-cai",
+            label: "SEND_TIP_ASSET",
+            amount_per_claim: BigInt(10_0000_0000),
+        };
+
+        const linkConfig = config || defaultConfig;
+        const linkAssets = assets || [defaultAssetInfo];
+
+        // Switch to Alice to create the link
+        this.switchToUser("alice");
+        await this.advanceTime(1 * 60 * 1000);
+
+        // Create the link
+        const result = await this.completeActiveLinkFlow(
+            "SendTip",
+            linkConfig,
+            linkAssets,
+            maxUseCount,
+        );
+        const createdLinkId = result.linkId;
+
+        // Verify link is active
+        const linkState = await this.getLinkWithActions(createdLinkId, "CreateLink");
+        if (linkState.link.state !== "Link_state_active") {
+            throw new Error(`Link is not active. State: ${linkState.link.state}`);
+        }
+
+        // Switch to Bob to claim the link
+        this.switchToUser("bob");
+        await this.advanceTime(1 * 60 * 1000);
+
+        // Create claim action
+        const createdClaimActionId = await this.createAction(createdLinkId, "Claim");
+
+        // Process claim action
+        const bobAccount = {
+            owner: this.identities.bob.getPrincipal(),
+            subaccount: [] as any,
+        };
+
+        // Get initial balance
+        const balanceBefore = await this.tokenHelper!.balanceOf(bobAccount);
+
+        // Confirm the claim
+        const claimResult = await this.confirmAction(createdLinkId, createdClaimActionId, "Claim");
+        if (claimResult.state !== "Action_state_success") {
+            throw new Error(`Claim action failed. State: ${claimResult.state}`);
+        }
+
+        // Complete the claim process
+        await this.updateUserState(createdLinkId, "Claim", "Continue");
+
+        // back to Alice
+        this.switchToUser("alice");
+
+        return {
+            linkId: createdLinkId,
+            claimActionId: createdClaimActionId,
+            balanceBefore,
+        };
+    }
+
     // Complete link creation flow in one function
     async completeActiveLinkFlow(
         linkType: string,
@@ -604,6 +689,8 @@ export class LinkTestFixture {
 
         // Create action
         const actionId = await this.createAction(linkId, "CreateLink");
+
+        console.log("actionId", actionId);
 
         // Confirm action
         const confirmResult = await this.confirmAction(linkId, actionId, "CreateLink");

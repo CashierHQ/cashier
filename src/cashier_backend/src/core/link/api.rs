@@ -301,9 +301,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // only allow == action type
         if action.is_none() {
             // validate create action
-            self.link_service
-                .link_validate_user_create_action(&input.link_id, &action_type, &user_id, &caller)
-                .await?;
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
 
             //create temp action
             // fill in link_id info
@@ -342,8 +344,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         } else {
             // validate action
             self.link_service
-                .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id, &caller)
-                .await?;
+                .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id)?;
 
             let action_id = action.unwrap().id.clone();
 
@@ -379,7 +380,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let start = ic_cdk::api::time();
         let caller = self.ic_env.caller();
 
-        // get user_id and action_id
+        // input validate
         let user_id = self.user_service.get_user_id_by_wallet(&caller);
 
         let action_type = ActionType::from_str(&input.action_type)
@@ -398,7 +399,17 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             &user_id.as_ref().unwrap(),
         );
 
+        info!(
+            "[process_action 402] user_id: {:?}, link_id: {:?}, action_type: {:?}",
+            user_id, input.link_id, action_type
+        );
+
         let res = if action.is_none() {
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                user_id.as_ref().unwrap(),
+            )?;
             //create temp action
             // fill in link_id info
             // fill in action_type info
@@ -441,7 +452,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
             Ok(res)
         } else {
-            let action_id = action.unwrap().id.clone();
+            self.link_service.link_validate_user_update_action(
+                &action.clone().unwrap(),
+                user_id.as_ref().unwrap(),
+            )?;
+            let action_id = action.clone().unwrap().id.clone();
 
             // execute action
             let update_action_res = self
@@ -451,7 +466,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                     link_id: input.link_id.clone(),
                     execute_wallet_tx: false,
                 })
-                .await;
+                .await?;
 
             self.link_service
                 .update_link_properties(input.link_id.clone(), action_id.clone())
@@ -459,7 +474,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                     CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
                 })?;
 
-            update_action_res
+            Ok(update_action_res)
         };
 
         let end = ic_cdk::api::time();
