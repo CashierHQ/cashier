@@ -68,7 +68,7 @@ export function MultiStepFormHeader({
                     </button>
 
                     {responsive.isSmallDevice && (
-                        <div className="flex items-center gap-2 absolute right-0">
+                        <div className="flex items-center gap-3 absolute right-0">
                             <Button
                                 variant="outline"
                                 className="ml-auto light-borders p-0 w-9 h-9"

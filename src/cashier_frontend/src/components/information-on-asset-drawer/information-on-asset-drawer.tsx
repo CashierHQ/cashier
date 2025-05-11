@@ -14,7 +14,14 @@ export const InformationOnAssetDrawer: FC<InformationOnAssetDrawerProps> = ({ op
     const { t } = useTranslation();
 
     return (
-        <Drawer open={open}>
+        <Drawer
+            open={open}
+            onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    onClose?.();
+                }
+            }}
+        >
             <DrawerContent className="max-w-[400px] mx-auto p-3">
                 <DrawerHeader>
                     <DrawerTitle className="flex relative justify-center items-center">

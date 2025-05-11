@@ -26,7 +26,14 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
 }) => {
     const { getToken } = useTokens();
     return (
-        <Drawer open={open}>
+        <Drawer
+            open={open}
+            onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    onClose?.();
+                }
+            }}
+        >
             <DrawerContent className="max-w-[400px] mx-auto p-3">
                 <DrawerHeader>
                     <DrawerTitle className="flex relative justify-center items-center">

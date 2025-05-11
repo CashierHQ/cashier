@@ -27,8 +27,8 @@ const WalletButton: React.FC<WalletButtonProps> = ({
             type="button"
             className={cn(
                 className,
-                "w-full h-14 px-3 py-5 my-3",
-                "border border-input",
+                "w-full h-12 px-3",
+                "border border-grey/20",
                 "rounded-xl",
                 "text-md",
                 "ring-offset-background",
@@ -44,7 +44,7 @@ const WalletButton: React.FC<WalletButtonProps> = ({
                 {image ? (
                     <img src={image} alt={title} className="h-6 w-6 mr-2" />
                 ) : (
-                    icon || <LuWallet2 className="mr-2 h-6 w-6" color="green" />
+                    icon || <LuWallet2 className="mr-2 h-6 w-6" color="#359F89" />
                 )}
                 <span className="flex-grow text-left">{title}</span>
                 {postfixText && <span className="ml-auto">{postfixText}</span>}
