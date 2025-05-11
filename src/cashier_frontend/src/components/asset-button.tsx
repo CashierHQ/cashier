@@ -115,9 +115,9 @@ const AssetButton: React.FC<AssetButtonProps> = ({
                                     <input
                                         value={localInputValue === "0" ? "" : localInputValue}
                                         onChange={(e) => handleInputChange(e.target.value)}
-                                        type="text"
+                                        type="number"
                                         inputMode="decimal"
-                                        className="w-auto min-w-[30px] ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none"
+                                        className="w-auto min-w-[30px] ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         placeholder="0"
                                         style={{
                                             width: `${Math.max((localInputValue || "").length * 9, 30)}px`,
