@@ -17,6 +17,7 @@ interface TransactionItemProps {
     isLoading?: boolean;
     isUsd?: boolean;
     fees?: FeeModel[];
+    networkFee?: FeeModel;
 }
 
 export const TransactionItem: FC<TransactionItemProps> = ({
@@ -33,22 +34,23 @@ export const TransactionItem: FC<TransactionItemProps> = ({
     const token = getToken(intent.asset.address);
     const tokenUsdPrice = getTokenPrice(intent.asset.address);
 
-    // Calculate adjusted amount by subtracting fees
+    // Calculate adjusted amount by subtracting only the network fee
     useEffect(() => {
         if (assetAmount === undefined || !token) return;
 
-        let totalFeeAmount = 0;
+        // Find the network fee for this token
+        const networkFee = fees.find(
+            (fee) => fee.address === intent.asset.address && fee.type === "network_fee",
+        );
 
-        // Sum up all fees for this token
-        for (const fee of fees) {
-            if (fee.address === intent.asset.address && token.decimals !== undefined) {
-                totalFeeAmount += Number(fee.amount) / 10 ** token.decimals;
-            }
+        // Calculate adjusted amount by subtracting only the network fee
+        if (networkFee && token.decimals !== undefined) {
+            const networkFeeAmount = Number(networkFee.amount) / 10 ** token.decimals;
+            const newAdjustedAmount = Math.max(0, assetAmount - networkFeeAmount);
+            setAdjustedAmount(newAdjustedAmount);
+        } else {
+            setAdjustedAmount(assetAmount);
         }
-
-        // Subtract fees from asset amount
-        const newAdjustedAmount = Math.max(0, assetAmount - totalFeeAmount);
-        setAdjustedAmount(newAdjustedAmount);
     }, [assetAmount, fees, intent.asset.address, token]);
 
     return (

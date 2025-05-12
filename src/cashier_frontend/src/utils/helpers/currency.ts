@@ -6,7 +6,7 @@ export function formatPrice(price: string) {
     let formattedPrice: string;
 
     // Check if the price is a super small number (less than 0.0001)
-    if (parseFloat(price) < 0.00099) {
+    if (parseFloat(price) < 0.000099) {
         // Split the string into parts before and after the decimal point
         const [wholePart, decimalPart] = price.split(".");
 
