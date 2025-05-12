@@ -26,7 +26,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({
     fees = [],
 }) => {
     const { t } = useTranslation();
-    const { assetAmount, assetSymbol, title: intentTitle, assetSrc } = useIntentMetadata(intent);
+    const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
 
     const { getToken, getTokenPrice } = useTokens();
@@ -81,7 +81,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({
                     </div>
                     <p className="text-[10px] font-normal text-grey/50">
                         {tokenUsdPrice && tokenUsdPrice > 0
-                            ? `~${formatPrice((convert(adjustedAmount, tokenUsdPrice) || 0).toString())}`
+                            ? formatPrice((convert(adjustedAmount, tokenUsdPrice) || 0).toString())
                             : "No price available"}
                     </p>
                 </div>

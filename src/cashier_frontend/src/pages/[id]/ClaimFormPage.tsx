@@ -17,9 +17,9 @@ import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmatio
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import { ActionModel } from "@/services/types/action.service.types";
 import { isCashierError } from "@/services/errorProcess.service";
-import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useTranslation } from "react-i18next";
 import { useCreateAction, useCreateActionAnonymous } from "@/hooks/action-hooks";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -46,8 +46,10 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const [showInfo, setShowInfo] = useState(false);
     const { mutateAsync: createAction } = useCreateAction();
     const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous();
-    const { action, anonymousWalletAddress, setAction, setAnonymousWalletAddress } =
-        useLinkActionStore();
+    const { action, anonymousWalletAddress, setAction, setAnonymousWalletAddress } = useLinkAction(
+        linkId ?? "",
+        ACTION_TYPE.CLAIM_LINK,
+    );
     const [isDisabledButton, setIsDisabledButton] = useState(false);
     const [buttonText, setButtonText] = useState(t("claim.claim"));
 
