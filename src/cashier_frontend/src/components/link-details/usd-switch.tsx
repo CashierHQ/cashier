@@ -85,7 +85,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             <span className="flex items-center">
                 {!hasPrefix && <span>~$</span>}
                 {hasPrefix && typeof conversionResult.usdFormatted === "string"
-                    ? conversionResult.usdFormatted.replace("$", "~$")
+                    ? conversionResult.usdFormatted.replace(/\$/g, "~$")
                     : conversionResult.usdFormatted}
             </span>
         );
