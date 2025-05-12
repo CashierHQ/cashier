@@ -98,8 +98,6 @@ impl ActionDomainLogic {
             .iter()
             .any(|tx| tx.state == TransactionState::Fail)
         {
-            error!("tx fail : {:#?}", transactions);
-
             return IntentState::Fail;
         } else if transactions
             .iter()

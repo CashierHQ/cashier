@@ -5,7 +5,7 @@ use cashier_types::{Intent, Protocol};
 use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
 
-use crate::types::icrc_112_transaction::Icrc112Requests;
+use crate::types::{icrc_112_transaction::Icrc112Requests, transaction_manager::ActionData};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
@@ -162,12 +162,8 @@ impl ActionDto {
         }
     }
 
-    pub fn build(
-        action: cashier_types::Action,
-        intents: Vec<Intent>,
-        _intent_hashmap: HashMap<String, Vec<cashier_types::Transaction>>,
-        icrc_112_requests: Option<Icrc112Requests>,
-    ) -> Self {
+    pub fn build(action_data: &ActionData, icrc_112_requests: Option<Icrc112Requests>) -> Self {
+        let intents = action_data.clone().intents.clone();
         let intents_dto = intents
             .into_iter()
             .map(|intent| {
@@ -175,6 +171,8 @@ impl ActionDto {
                 IntentDto::from(intent)
             })
             .collect();
+
+        let action = action_data.action.clone();
 
         Self {
             id: action.id,
