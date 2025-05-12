@@ -103,10 +103,10 @@ const AssetButton: React.FC<AssetButtonProps> = ({
             <div className={cn("input-field-asset flex items-center")}>
                 {childrenNode ? (
                     <span className="flex items-center w-full">
-                        <span onClick={handleClick} className="flex-grow text-left">
+                        <span onClick={handleClick} className="text-left w-fit">
                             {childrenNode}
                         </span>
-                        <div className="flex w-fit items-center">
+                        <div className="flex w-fit items-center ml-auto">
                             {showInput && (
                                 <div className="relative flex items-center">
                                     {isUsd && (
