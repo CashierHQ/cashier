@@ -1,14 +1,14 @@
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { formatPrice } from "@/utils/helpers/currency";
 import { ArrowUpDown, Repeat2 } from "lucide-react";
-import { FC, useMemo } from "react";
+import { FC, useMemo, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 export type ConversionResult = {
     tokenAmount: number;
     usdAmount: number;
     tokenFormatted: string;
-    usdFormatted: string;
+    usdFormatted: string | ReactNode;
 };
 
 type UsdSwitchProps = {
@@ -61,7 +61,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             tokenAmount,
             usdAmount,
             tokenFormatted: formatAmount(tokenAmount, tokenDecimals),
-            usdFormatted: `~$${formatPrice(usdAmount.toString())}`,
+            usdFormatted: formatPrice(usdAmount.toString()),
         };
     }, [amount, token.usdConversionRate, tokenDecimals, usdDecimals]);
 
@@ -70,7 +70,25 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
         if (isUsd) {
             return `${formatPrice(amount?.toString() || "0")} ${symbol}`;
         }
-        return `${conversionResult.usdFormatted}`;
+
+        // Handle special case for zero to avoid double dollar signs
+        if (conversionResult.usdAmount === 0) {
+            return <span className="flex items-center">~$0</span>;
+        }
+
+        // Check if the formatted value already contains a dollar sign
+        const hasPrefix =
+            typeof conversionResult.usdFormatted === "string" &&
+            conversionResult.usdFormatted.includes("$");
+
+        return (
+            <span className="flex items-center">
+                {!hasPrefix && <span>~$</span>}
+                {hasPrefix && typeof conversionResult.usdFormatted === "string"
+                    ? conversionResult.usdFormatted.replace(/\$/g, "~$")
+                    : conversionResult.usdFormatted}
+            </span>
+        );
     }, [isUsd, amount, symbol, conversionResult]);
 
     // Provide a utility function to convert between USD and token amounts

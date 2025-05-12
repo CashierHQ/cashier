@@ -18,7 +18,7 @@ export const SelectedAssetButtonInfo: FC<SelectedAssetButtonInfoProps> = ({
     }
 
     return (
-        <div className="flex font-normal flex-grow items-center">
+        <div className="flex font-normal flex-grow items-center w-fit">
             <Avatar className="mr-2 w-6 h-6">
                 <AssetAvatarV2 token={selectedToken} />
             </Avatar>

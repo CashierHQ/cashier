@@ -78,14 +78,14 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
                 );
             case LINK_TYPE.SEND_TOKEN_BASKET:
                 const tokens = linkData?.asset_info?.map((asset) => {
-                    return getToken(asset.address)!;
+                    return { ...getToken(asset.address)!, amount: asset.amountPerUse };
                 });
                 return (
-                    <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col justify-center gap-4">
+                    <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col gap-4">
                         {tokens?.map((token, index) => (
                             <div key={index} className="flex items-center">
                                 <AssetAvatarV2 token={token} className="w-8 h-8 rounded-sm" />
-                                <p className="text-[20px] font-light ml-2">
+                                <p className="text-[18px] font-normal ml-2">
                                     {Number(token.amount) / 10 ** (token?.decimals ?? 0)}{" "}
                                     {token.symbol || "Token"}
                                 </p>

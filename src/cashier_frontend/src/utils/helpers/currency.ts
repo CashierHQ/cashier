@@ -38,11 +38,11 @@ export function formatPrice(price: string) {
         // Use decimal place formatting based on price range
         let decimalPlaces;
         if (numberPrice > 100) {
-            decimalPlaces = 2;
-        } else if (numberPrice > 10) {
             decimalPlaces = 3;
-        } else {
+        } else if (numberPrice > 10) {
             decimalPlaces = 4;
+        } else {
+            decimalPlaces = 5;
         }
 
         // Use toLocaleString for regular formatting
