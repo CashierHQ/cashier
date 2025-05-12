@@ -13,6 +13,7 @@ import {
     CreateLinkInputV2,
     ActionDto,
     GetLinkResp,
+    LinkGetUserStateOutput,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 import { TokenHelper } from "../utils/token-helper";
 import { MultipleTokenHelper } from "../utils/multiple-token-helper";
@@ -499,7 +500,7 @@ export class LinkTestFixture {
         linkId: string,
         actionType: string,
         anonymousWalletAddress?: string,
-    ): Promise<any> {
+    ): Promise<LinkGetUserStateOutput | undefined> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
@@ -509,7 +510,11 @@ export class LinkTestFixture {
             anonymous_wallet_address: anonymousWalletAddress ? [anonymousWalletAddress] : [],
         });
 
-        return parseResultResponse(response);
+        if (response === undefined) {
+            throw new Error("Response is undefined");
+        }
+
+        return fromNullable(parseResultResponse(response));
     }
 
     async updateUserState(

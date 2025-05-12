@@ -3,19 +3,19 @@ import React from "react";
 export function formatPrice(price: string) {
     "worklet";
     const numberPrice = parseFloat(price.replace(/,/g, ""));
-    let formattedPrice;
+    let formattedPrice: string;
 
     // Check if the price is a super small number (less than 0.0001)
-    if (parseFloat(price) < 0.00099) {
+    if (parseFloat(price) < 0.000099) {
         // Split the string into parts before and after the decimal point
         const [wholePart, decimalPart] = price.split(".");
 
         // Get the index of the first non-zero digit after the decimal point
         const nonZeroIndex = decimalPart ? decimalPart.search(/[1-9]/) : -1;
 
-        // If no non-zero digit is found, return the original price
+        // If no non-zero digit is found, return the original price as a React element
         if (nonZeroIndex === -1) {
-            return price;
+            return React.createElement(React.Fragment, null, price);
         }
 
         // Calculate the number of zeros to display as a subscript
@@ -24,7 +24,7 @@ export function formatPrice(price: string) {
         // Extract the significant digits (up to 3)
         const significantDigits = decimalPart.slice(nonZeroIndex, nonZeroIndex + 3);
 
-        // Return a React element instead of an HTML string
+        // Return a React element with tilde
         return React.createElement(
             React.Fragment,
             null,
@@ -50,7 +50,8 @@ export function formatPrice(price: string) {
             minimumFractionDigits: 0,
             maximumFractionDigits: decimalPlaces,
         });
-    }
 
-    return formattedPrice;
+        // Return formatted price as a React element with tilde
+        return React.createElement(React.Fragment, null, formattedPrice);
+    }
 }

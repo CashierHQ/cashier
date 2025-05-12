@@ -32,6 +32,7 @@ use crate::{
 };
 
 #[cfg_attr(test, faux::create)]
+#[derive(Clone)]
 pub struct LinkService<E: IcEnvironment + Clone> {
     // LinkService fields go here
     link_repository: repositories::link::LinkRepository,
@@ -828,8 +829,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         Ok(())
     }
-
-    pub fn validate_asset_left(&self, link_id: &str) -> () {}
 
     pub fn get_link_action_user(
         &self,

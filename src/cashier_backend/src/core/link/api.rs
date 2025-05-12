@@ -9,6 +9,7 @@ use crate::{
     core::{
         action::types::{ActionDto, ProcessActionAnonymousInput, ProcessActionInput},
         guard::is_not_anonymous,
+        link::callback,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
     error, info,
@@ -353,21 +354,18 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 user_id, input.link_id, action_id
             );
 
-            // execute action
+            // execute action with our standalone callback
             let update_action_res = self
                 .tx_manager_service
-                .update_action(UpdateActionArgs {
-                    action_id: action_id.clone(),
-                    link_id: input.link_id.clone(),
-                    execute_wallet_tx: false,
-                })
+                .update_action(
+                    UpdateActionArgs {
+                        action_id: action_id.clone(),
+                        link_id: input.link_id.clone(),
+                        execute_wallet_tx: false,
+                    },
+                    Some(callback::update_action_claim_callback),
+                )
                 .await;
-
-            self.link_service
-                .update_link_properties(input.link_id.clone(), action_id.clone())
-                .map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
-                })?;
 
             update_action_res
         }
@@ -461,18 +459,15 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // execute action
             let update_action_res = self
                 .tx_manager_service
-                .update_action(UpdateActionArgs {
-                    action_id: action_id.clone(),
-                    link_id: input.link_id.clone(),
-                    execute_wallet_tx: false,
-                })
+                .update_action(
+                    UpdateActionArgs {
+                        action_id: action_id.clone(),
+                        link_id: input.link_id.clone(),
+                        execute_wallet_tx: false,
+                    },
+                    Some(callback::update_action_claim_callback),
+                )
                 .await?;
-
-            self.link_service
-                .update_link_properties(input.link_id.clone(), action_id.clone())
-                .map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
-                })?;
 
             Ok(update_action_res)
         };
@@ -694,18 +689,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let update_action_res = self
             .tx_manager_service
-            .update_action(args)
+            .update_action::<fn(ActionState, ActionState, String, ActionType, String)>(args, None)
             .await
             .map_err(|e| {
                 CanisterError::HandleLogicError(format!("Failed to update action: {}", e))
             });
-
-        // update link prop
-        self.link_service
-            .update_link_properties(input.link_id.clone(), input.action_id.clone())
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!("Failed to update link: {}", e))
-            })?;
 
         update_action_res
     }
