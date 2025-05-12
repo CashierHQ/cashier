@@ -27,16 +27,8 @@ impl ActionDomainLogic {
                     ));
                 }
             }
-            ActionType::Claim => {
+            ActionType::Claim | ActionType::Use => {
                 // Anyone can claim, but only if link is active
-                if link.state != LinkState::Active {
-                    return Err(CanisterError::ValidationErrors(
-                        "Link is not active".to_string(),
-                    ));
-                }
-            }
-            ActionType::Use => {
-                // Validate transfer action
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
                         "Link is not active".to_string(),
