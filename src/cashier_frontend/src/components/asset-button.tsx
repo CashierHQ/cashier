@@ -63,7 +63,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({
 
     // Validate and format input for crypto amounts
     const handleInputChange = (value: string) => {
-        // Allow only digits and at most one decimal point
+        // Allow only digits and at most one decimal point (period or comma)
         let sanitized = "";
         let hasDecimal = false;
 
@@ -74,9 +74,9 @@ const AssetButton: React.FC<AssetButtonProps> = ({
             if (/[0-9]/.test(char)) {
                 sanitized += char;
             }
-            // Allow only one decimal point
-            else if (char === "." && !hasDecimal) {
-                sanitized += char;
+            // Allow only one decimal point (either . or ,)
+            else if ((char === "." || char === ",") && !hasDecimal) {
+                sanitized += "."; // Always store as period internally
                 hasDecimal = true;
             }
         }
@@ -93,6 +93,25 @@ const AssetButton: React.FC<AssetButtonProps> = ({
         debounceTimerRef.current = setTimeout(() => {
             onInputChange?.(sanitized);
         }, 1000);
+    };
+
+    // Format the display value to avoid scientific notation
+    const formatDisplayValue = (value: string): string => {
+        if (!value) return "";
+
+        // Parse the value as a number
+        const num = parseFloat(value);
+
+        // If it's a valid number but would display as scientific notation
+        if (!isNaN(num) && Math.abs(num) > 0 && Math.abs(num) < 0.0001) {
+            // Convert to decimal string without scientific notation
+            return num.toLocaleString("fullwide", {
+                useGrouping: false,
+                maximumFractionDigits: 20,
+            });
+        }
+
+        return value;
     };
 
     console.log("is tip: ", isTip);
@@ -113,14 +132,14 @@ const AssetButton: React.FC<AssetButtonProps> = ({
                                         <span className="text-[14px] text-gray-400 mr-1">$</span>
                                     )}
                                     <input
-                                        value={localInputValue === "0" ? "" : localInputValue}
+                                        value={formatDisplayValue(localInputValue)}
                                         onChange={(e) => handleInputChange(e.target.value)}
-                                        type="number"
+                                        type="text"
                                         inputMode="decimal"
                                         className="w-auto min-w-[30px] ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         placeholder="0"
                                         style={{
-                                            width: `${Math.max((localInputValue || "").length * 9, 30)}px`,
+                                            width: `${Math.max((formatDisplayValue(localInputValue) || "").length * 9, 30)}px`,
                                             maxWidth: "250px",
                                         }}
                                     />
