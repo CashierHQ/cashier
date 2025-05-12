@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const identity = useIdentity();
 
     const [isUsd, setIsUsd] = useState(false);
+    const [countdown, setCountdown] = useState(5);
 
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous();
@@ -51,6 +52,32 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
         action?.state,
         t,
     );
+
+    // Countdown effect for success state
+    useEffect(() => {
+        let timer: number;
+
+        if (open && action?.state === ACTION_STATE.SUCCESS && countdown > 0) {
+            timer = setTimeout(() => {
+                setCountdown((prevCount) => prevCount - 1);
+            }, 1000);
+        }
+
+        if (countdown === 0) {
+            onClickSubmit();
+        }
+
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
+    }, [countdown, action?.state, open]);
+
+    // Reset countdown when drawer opens
+    useEffect(() => {
+        if (open) {
+            setCountdown(5);
+        }
+    }, [open]);
 
     const handleProcessClaimAction = async () => {
         if (identity) {
@@ -269,7 +296,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                             disabled={isDisabled}
                             onClick={onClickSubmit}
                         >
-                            {buttonText}
+                            {`${buttonText} (${countdown}s)`}
                         </Button>
                     </div>
                 );

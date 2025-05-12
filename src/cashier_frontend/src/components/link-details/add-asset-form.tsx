@@ -711,7 +711,17 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                                                     Math.pow(10, token.decimals || 8);
 
                                                 // Total amount = amount per claim * maxActionNumber
-                                                return (amountPerUse * maxActionNumber).toString();
+                                                const totalAmount = amountPerUse * maxActionNumber;
+
+                                                // Format small numbers to avoid scientific notation
+                                                if (totalAmount > 0 && totalAmount < 0.0001) {
+                                                    return totalAmount.toLocaleString("fullwide", {
+                                                        useGrouping: false,
+                                                        maximumFractionDigits: 20,
+                                                    });
+                                                }
+
+                                                return totalAmount.toString();
                                             })(),
                                         )}
                                     </p>

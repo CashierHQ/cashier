@@ -1,8 +1,11 @@
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TransactionItem } from "@/components/transaction/transaction-item";
-import { IntentModel } from "@/services/types/intent.service.types";
-import { TASK } from "@/services/types/enum";
+import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
+import { TASK, FEE_TYPE } from "@/services/types/enum";
+import { feeService } from "@/services/fee.service";
+import { useTokens } from "@/hooks/useTokens";
+import { useLinkAction } from "@/hooks/link-action-hooks";
 
 type ConfirmationPopupAssetsSectionProps = {
     intents: IntentModel[];
@@ -28,6 +31,63 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
     isUsd,
 }) => {
     const { t } = useTranslation();
+    const { getToken } = useTokens();
+    const { link } = useLinkAction();
+    const [feesMap, setFeesMap] = useState<Map<string, FeeModel[]>>(new Map());
+
+    // Calculate fees for each intent and organize them by token address
+    useEffect(() => {
+        const calculateFees = async () => {
+            const newFeesMap = new Map<string, FeeModel[]>();
+
+            // Process each intent to get associated fees
+            for (const intent of intents) {
+                const tokenAddress = intent.asset.address;
+                const token = getToken(tokenAddress);
+
+                if (!token) continue;
+
+                // Get existing fees for this token or initialize empty array
+                const tokenFees = newFeesMap.get(tokenAddress) || [];
+
+                // Network fee for this token
+                if (token.fee) {
+                    tokenFees.push({
+                        chain: intent.asset.chain,
+                        type: "network_fee",
+                        address: tokenAddress,
+                        amount: token.fee,
+                    });
+                }
+
+                // Link creation fee if applicable
+                if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
+                    const linkCreationFee = feeService.getFee(
+                        intent.asset.chain,
+                        link.linkType!,
+                        FEE_TYPE.LINK_CREATION,
+                    );
+
+                    if (linkCreationFee) {
+                        tokenFees.push({
+                            chain: intent.asset.chain,
+                            type: "link_creation_fee",
+                            address: tokenAddress,
+                            amount: linkCreationFee.amount,
+                        });
+                    }
+                }
+
+                if (tokenFees.length > 0) {
+                    newFeesMap.set(tokenAddress, tokenFees);
+                }
+            }
+
+            setFeesMap(newFeesMap);
+        };
+
+        calculateFees();
+    }, [intents, getToken, link]);
 
     return (
         <section id="confirmation-popup-section-send" className="my-3">
@@ -42,6 +102,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                             title={t("confirmation_drawer.asset_label")}
                             intent={intent}
                             isUsd={isUsd}
+                            fees={feesMap.get(intent.asset.address) || []}
                         />
                     </li>
                 ))}
