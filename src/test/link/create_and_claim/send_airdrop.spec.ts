@@ -82,7 +82,7 @@ describe("Test create and claim token airdrop link", () => {
 
         it("should retrieve empty user state initially", async () => {
             const userState = await fixture.getUserState(linkId, "Claim");
-            expect(userState).toEqual([]);
+            expect(userState).toEqual(undefined);
         });
 
         it("should create claim action", async () => {
@@ -91,8 +91,11 @@ describe("Test create and claim token airdrop link", () => {
 
             // Verify user state after creating claim
             const userState = await fixture.getUserState(linkId, "Claim");
-            expect(userState[0].link_user_state).toEqual("User_state_choose_wallet");
-            expect(userState[0].action.state).toEqual("Action_state_created");
+            if (!userState) {
+                throw new Error("User state is undefined");
+            }
+            expect(userState.link_user_state).toEqual("User_state_choose_wallet");
+            expect(userState.action.state).toEqual("Action_state_created");
         });
 
         it("should process claim successfully", async () => {

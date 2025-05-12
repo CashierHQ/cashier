@@ -35,7 +35,7 @@ const TokenItem: React.FC<TokenItemProps> = ({ asset }) => {
                 </div>
                 <p className="text-[10px] font-normal text-grey-400/50">
                     {tokenPrice > 0
-                        ? `~${formatPrice(approximateUsdValue.toString())}`
+                        ? formatPrice(approximateUsdValue.toString())
                         : "No price available"}
                 </p>
             </div>

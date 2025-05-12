@@ -184,6 +184,7 @@ export enum ACTION_TYPE {
     CREATE_LINK = "CreateLink",
     WITHDRAW_LINK = "Withdraw",
     CLAIM_LINK = "Claim",
+    USE_LINK = "Use",
 }
 
 export enum IC_TRANSACTION_PROTOCAL {

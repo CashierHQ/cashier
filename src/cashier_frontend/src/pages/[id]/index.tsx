@@ -18,7 +18,6 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
 import { IoInformationCircle } from "react-icons/io5";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
-import { getTokenImage } from "@/utils";
 import LinkNotFound from "@/components/link-not-found";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
@@ -140,9 +139,16 @@ export default function ClaimPage() {
         if (linkData && linkUserState?.link_user_state) {
             setShowDefaultPage(false);
         }
-        // Handle step parameter
-        setShowDefaultPage(searchParams.get("step") !== "claim");
+        if (linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE) {
+            setShowDefaultPage(true);
+        } else {
+            setShowDefaultPage(searchParams.get("step") !== "claim");
+        }
     }, [linkData, searchParams, linkUserState]);
+
+    useEffect(() => {
+        console.log("linkUserState", linkUserState);
+    }, [linkUserState]);
 
     useEffect(() => {
         if (linkId && !linkData) {

@@ -2,8 +2,8 @@ use std::{collections::HashMap, str::FromStr, time::Duration};
 
 use candid::Nat;
 use cashier_types::{
-    Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
-    IntentTask, LinkAction, Protocol, Transaction, TransactionState,
+    ActionState, ActionType, Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve,
+    Icrc2TransferFrom, Intent, IntentTask, LinkAction, Protocol, Transaction, TransactionState,
 };
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
@@ -406,7 +406,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     }
 
     /// Process transaction execution
-    pub async fn execute_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
+    pub fn execute_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
         self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
             CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {}", e))
         })?;
@@ -728,11 +728,45 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         }
     }
 
-    pub async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
+    /// Updates an action with new state information and executes eligible transactions
+    ///
+    /// This method:
+    /// 1. Fetches the current action data by ID
+    /// 2. Manually checks and updates the status of all transactions in the action
+    /// 3. Identifies eligible transactions (those with all dependencies resolved)
+    /// 4. Creates ICRC-112 requests for wallet transactions if execute_wallet_tx is false
+    /// 5. Executes wallet transactions (setting them to 'processing' state)
+    /// 6. Executes canister transactions immediately
+    /// 7. Updates action state and executes the callback with state information
+    ///
+    /// The callback function is executed asynchronously after the action update is complete.
+    ///
+    /// # Arguments
+    /// * `args` - UpdateActionArgs containing action_id, link_id, and execute_wallet_tx flag
+    /// * `callback` - Function called with (before_state, after_state, link_id, action_type, action_id)
+    ///
+    /// # Returns
+    /// * `Result<ActionDto, CanisterError>` - The updated action data or an error
+    pub async fn update_action<F>(
+        &self,
+        args: UpdateActionArgs,
+        callback: Option<F>,
+    ) -> Result<ActionDto, CanisterError>
+    where
+        // args
+        // 1. update_action_before_update
+        // 2. update_action_after_update
+        // 3. link id
+        // 4. action type
+        // 5. action id
+        F: Fn(ActionState, ActionState, String, ActionType, String) + 'static + Send,
+    {
         let action_data = self
             .action_service
             .get_action_data(args.action_id.clone())
             .map_err(|e| CanisterError::NotFound(e))?;
+
+        let action_state_before_update = action_data.action.state.clone();
 
         let txs = utils::collections::flatten_hashmap_values(&action_data.intent_txs);
 
@@ -839,14 +873,14 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             // Wallet tx are executed by the client, when it receives the ICRC-112 request this method returns
             // and tx status is 'processing' until client updates tx manager with response of ICRC-112
             for mut tx in eligible_wallet_txs {
-                self.execute_tx(&mut tx).await.map_err(|e| {
+                self.execute_tx(&mut tx).map_err(|e| {
                     CanisterError::HandleLogicError(format!("Error executing tx: {}", e))
                 })?;
             }
 
             // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
             for mut tx in eligible_canister_txs {
-                self.execute_tx(&mut tx).await.map_err(|e| {
+                self.execute_tx(&mut tx).map_err(|e| {
                     CanisterError::HandleLogicError(format!("Error executing tx: {}", e))
                 })?;
 
@@ -860,12 +894,30 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .get_action_data(args.action_id.clone())
             .map_err(|e| CanisterError::InvalidDataError(format!("Error getting action: {}", e)))?;
 
-        Ok(ActionDto::build(
-            get_resp.action,
-            get_resp.intents,
-            get_resp.intent_txs,
-            request,
-        ))
+        let action_dto = ActionDto::build(&get_resp, request);
+
+        let callback_clone = callback;
+        if callback_clone.is_some() {
+            info!("spawning callback");
+            ic_cdk::spawn(async move {
+                let action_after = get_resp.action;
+                let action_state_after_update = action_after.state.clone();
+                let action_type = action_after.r#type.clone();
+                let action_id = action_after.id.clone();
+
+                let unwrap_callback = callback_clone.unwrap();
+
+                unwrap_callback(
+                    action_state_before_update,
+                    action_state_after_update,
+                    args.link_id.clone(),
+                    action_type,
+                    action_id,
+                );
+            });
+        }
+
+        Ok(action_dto)
     }
 
     pub fn update_tx_state(
