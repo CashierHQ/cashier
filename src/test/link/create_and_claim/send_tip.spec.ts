@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
-import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { ActionDto, IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
 
 describe("Test create and claim tip link", () => {
@@ -77,7 +77,7 @@ describe("Test create and claim tip link", () => {
 
         it("should retrieve empty user state initially", async () => {
             const userState = await fixture.getUserState(linkId, "Claim");
-            expect(userState).toEqual([]);
+            expect(userState).toEqual(undefined);
         });
 
         it("should create claim action", async () => {
@@ -86,8 +86,14 @@ describe("Test create and claim tip link", () => {
 
             // Verify user state after creating claim
             const userState = await fixture.getUserState(linkId, "Claim");
-            expect(userState[0].link_user_state).toEqual("User_state_choose_wallet");
-            expect(userState[0].action.state).toEqual("Action_state_created");
+            expect(userState).toBeTruthy();
+
+            if (!userState) {
+                throw new Error("User state is empty");
+            }
+
+            expect(userState.link_user_state).toEqual("User_state_choose_wallet");
+            expect(userState.action.state).toEqual("Action_state_created");
         });
 
         it("should process claim successfully", async () => {
@@ -99,8 +105,25 @@ describe("Test create and claim tip link", () => {
 
             const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
 
-            // Process claim action
-            const result = await fixture.confirmAction(linkId, claimActionId, "Claim");
+            const userState = await fixture.getUserState(linkId, "Claim");
+            console.log("User state before claim:", userState);
+            if (!userState) {
+                throw new Error("User state is empty");
+            }
+
+            expect(userState.link_user_state).toEqual("User_state_choose_wallet");
+            expect(userState.action.state).toEqual("Action_state_created");
+
+            let result: ActionDto | undefined;
+            try {
+                result = await fixture.confirmAction(linkId, claimActionId, "Claim");
+            } catch (e) {
+                console.error("Error during claim action:", e);
+            }
+            console.log("Claim result:", result);
+            if (!result) {
+                throw new Error("Claim result is empty");
+            }
             expect(result.state).toEqual("Action_state_success");
             expect(result.intents[0].state).toEqual("Intent_state_success");
 
