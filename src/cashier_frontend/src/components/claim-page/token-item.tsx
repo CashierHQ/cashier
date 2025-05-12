@@ -33,11 +33,11 @@ const TokenItem: React.FC<TokenItemProps> = ({ asset }) => {
                 <div className="flex items-center gap-1">
                     <p className="text-[14px] font-normal">{tokenAmount}</p>
                 </div>
-                {tokenPrice > 0 && (
-                    <p className="text-[10px] font-normal text-grey-400/50">
-                        ~${formatPrice(approximateUsdValue.toString())}
-                    </p>
-                )}
+                <p className="text-[10px] font-normal text-grey-400/50">
+                    {tokenPrice > 0
+                        ? `~${formatPrice(approximateUsdValue.toString())}`
+                        : "No price available"}
+                </p>
             </div>
         </div>
     );
