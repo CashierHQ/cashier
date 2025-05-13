@@ -2,7 +2,7 @@ import * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { ICP_TOKEN_ADDRESS } from "@/services/fee.constants";
+import { ICP_TOKEN_ADDRESS, TEST_ICP_TOKEN_ADDRESS } from "@/services/fee.constants";
 
 type AssetAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
     src?: string | undefined;
@@ -44,6 +44,15 @@ export const AssetAvatarV2 = React.forwardRef<React.ElementRef<typeof Avatar>, A
         }
 
         if (token.address === ICP_TOKEN_ADDRESS) {
+            return (
+                <Avatar ref={ref} className={cn("w-6 h-6", className)} {...props}>
+                    <AvatarImage src={icpToken} />
+                    <AvatarFallback>{token.logoFallback ?? token.symbol}</AvatarFallback>
+                </Avatar>
+            );
+        }
+
+        if (token.address === TEST_ICP_TOKEN_ADDRESS) {
             return (
                 <Avatar ref={ref} className={cn("w-6 h-6", className)} {...props}>
                     <AvatarImage src={icpToken} />
