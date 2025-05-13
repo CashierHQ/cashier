@@ -60,9 +60,13 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     return useQuery({
         queryKey: LINK_QUERY_KEYS.detail(linkId),
         queryFn: async () => {
+            console.log("[useLinkDetailQuery] linkId 1", linkId);
             if (!linkId) throw new Error("linkId are required");
 
+            console.log("[useLinkDetailQuery] linkId 2", linkId);
+
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
+                console.log("check point 1");
                 const linkLocalStorageService = new LinkLocalStorageService(
                     identity.getPrincipal().toString(),
                 );
@@ -82,11 +86,13 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
 
                 // this should support case identity is undefined = anonymous wallet
             } else {
+                console.log("check point 2");
+                console.log("[useLinkDetailQuery] identity", identity?.getPrincipal());
+                console.log("[useLinkDetailQuery] actionType", actionType);
+
                 const linkService = new LinkService(identity);
                 const res = await linkService.getLink(linkId, actionType);
-
-                console.log("🚀 ~ useLinkDetailQuery ~ res:", res);
-
+                console.log("[useLinkDetailQuery] link detail", res);
                 return res;
             }
         },

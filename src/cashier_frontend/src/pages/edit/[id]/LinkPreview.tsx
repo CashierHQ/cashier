@@ -1,4 +1,4 @@
-import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
+import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 
 import { useState, useEffect } from "react";
@@ -12,7 +12,14 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { formatPrice } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
-import { ACTION_TYPE, CHAIN, FEE_TYPE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import {
+    ACTION_TYPE,
+    CHAIN,
+    FEE_TYPE,
+    LINK_STATE,
+    LINK_TYPE,
+    ACTION_STATE,
+} from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
@@ -24,6 +31,8 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useFeeService } from "@/hooks/useFeeService";
+import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
+import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -81,7 +90,110 @@ export default function LinkPreview({
     // Debug state for countering redirects
     const [redirectCounter, setRedirectCounter] = useState(0);
 
+    // Button state for confirmation drawer
+    const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
+    const [confirmButtonText, setConfirmButtonText] = useState("");
+
+    // Update button text and disabled state based on action state
+    useEffect(() => {
+        if (!action) return;
+
+        const actionState = action.state;
+        if (actionState === ACTION_STATE.SUCCESS) {
+            setConfirmButtonText(t("continue"));
+            setConfirmButtonDisabled(false);
+        } else if (actionState === ACTION_STATE.PROCESSING) {
+            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
+            setConfirmButtonDisabled(true);
+        } else if (actionState === ACTION_STATE.FAIL) {
+            setConfirmButtonText(t("retry"));
+            setConfirmButtonDisabled(false);
+        } else {
+            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
+            setConfirmButtonDisabled(false);
+        }
+    }, [action, t]);
+
     const { getFee } = useFeeService();
+
+    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
+    const { mutateAsync: processAction } = useProcessAction();
+    const { mutateAsync: updateAction } = useUpdateAction();
+
+    // Handle process create action - this function is passed as startTransaction to ConfirmationDrawerV2
+    const handleStartTransaction = async () => {
+        try {
+            if (!link) throw new Error("Link is not defined");
+            if (!action) throw new Error("Action is not defined");
+
+            const start = Date.now();
+
+            console.log("[handleStartTransaction] Starting processAction...");
+            const processActionStartTime = Date.now();
+            const firstUpdatedAction = await processAction({
+                linkId: link.id,
+                actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
+                actionId: action.id,
+            });
+            const processActionEndTime = Date.now();
+            const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
+            console.log(
+                `[handleStartTransaction] processAction completed in ${processActionDuration.toFixed(2)}s`,
+            );
+
+            setAction(firstUpdatedAction);
+
+            if (firstUpdatedAction) {
+                console.log("[handleStartTransaction] Starting icrc112Execute...");
+                const icrc112StartTime = Date.now();
+                const response = await icrc112Execute({
+                    transactions: firstUpdatedAction.icrc112Requests,
+                });
+                const icrc112EndTime = Date.now();
+                const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
+                console.log(
+                    `[handleStartTransaction] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
+                );
+
+                if (response) {
+                    console.log("[handleStartTransaction] Starting updateAction...");
+                    const updateActionStartTime = Date.now();
+                    const secondUpdatedAction = await updateAction({
+                        actionId: action.id,
+                        linkId: link.id,
+                        external: true,
+                    });
+                    const updateActionEndTime = Date.now();
+                    const updateActionDuration =
+                        (updateActionEndTime - updateActionStartTime) / 1000;
+                    console.log(
+                        `[handleStartTransaction] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
+                    );
+
+                    if (secondUpdatedAction) {
+                        setAction(secondUpdatedAction);
+                        if (onActionResult) onActionResult(secondUpdatedAction);
+                    }
+                }
+            }
+
+            const end = Date.now();
+            const duration = end - start;
+            const durationInSeconds = (duration / 1000).toFixed(2);
+            console.log(
+                "[handleStartTransaction] Total create action process completed in",
+                `${durationInSeconds}s`,
+            );
+        } catch (error) {
+            console.error("Error in startTransaction:", error);
+            if (isCashierError(error)) {
+                onCashierError(error);
+            } else {
+                console.error(error);
+            }
+            throw error;
+        }
+    };
 
     // Check if there's an existing action and show confirmation drawer
     useEffect(() => {
@@ -203,6 +315,13 @@ export default function LinkPreview({
         setAction(updatedAction);
     };
 
+    /**
+     * Handles the submit action when user clicks the create/continue button.
+     * If the link has a local ID (starts with LOCAL_lINK_ID_PREFIX), it creates a new link in the backend,
+     * updates the local storage with the newly created link data, and redirects to the edit page with the new link ID.
+     * If the link already exists in the backend, it creates an action (if one doesn't exist) and shows the confirmation drawer.
+     * @returns {Promise<void>}
+     */
     const handleSubmit = async () => {
         console.log("handleSubmit");
         setIsDisabled(true);
@@ -403,15 +522,33 @@ export default function LinkPreview({
                 open={showAssetInfo}
                 onClose={() => setShowAssetInfo(false)}
             />
-            <ConfirmationDrawer
+            <ConfirmationDrawerV2
+                // The ActionModel to be displayed and processed
+                action={action}
+                // Controls whether the drawer is visible
                 open={showConfirmation && !showInfo}
+                // Called when the drawer is closed
                 onClose={() => {
                     setShowConfirmation(false);
                 }}
+                // Called when the info button is clicked, typically to show fee information
                 onInfoClick={() => setShowInfo(true)}
+                // Called after the action result is received, to update UI or state
                 onActionResult={onActionResult}
+                // Called when an error occurs during the transaction process
                 onCashierError={onCashierError}
+                // Called after successful transaction to continue the workflow
                 onSuccessContinue={handleSetLinkToActive}
+                // The main function that handles the transaction process
+                startTransaction={handleStartTransaction}
+                // Controls whether the action button is disabled
+                isButtonDisabled={confirmButtonDisabled}
+                // Function to update the button's disabled state
+                setButtonDisabled={setConfirmButtonDisabled}
+                // The text to display on the action button
+                buttonText={confirmButtonText}
+                // Function to update the action button's text
+                setButtonText={setConfirmButtonText}
             />
         </div>
     );

@@ -1,10 +1,10 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-section";
-import { useConfirmButtonState, usePrimaryIntents } from "./confirmation-drawer.hooks";
+import { useConfirmButtonState } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -23,6 +23,7 @@ interface ConfirmationDrawerProps {
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
     onSuccessContinue?: () => Promise<void>;
+    polling?: boolean;
 }
 
 export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
@@ -38,7 +39,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const identity = useIdentity();
 
     const [isUsd, setIsUsd] = useState(false);
-    const [countdown, setCountdown] = useState(5);
 
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous();
@@ -46,38 +46,33 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
 
-    const primaryIntents = usePrimaryIntents(action?.intents);
-
     const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
         action?.state,
         t,
     );
 
+    console.log("[ConfirmationDrawer] action ", action);
+
+    // Start polling for action status if polling is enabled
+    // useEffect(() => {
+    //     if (polling && action && action.state !== ACTION_STATE.SUCCESS) {
+    //         console.log("Starting polling for action status...");
+    //         const interval = setInterval(async () => {
+    //             await refetchAction();
+    //         }, 2000);
+
+    //         return () => clearInterval(interval);
+    //     }
+    // }, []);
+
     // Countdown effect for success state
-    useEffect(() => {
-        let timer: number;
-
-        if (open && action?.state === ACTION_STATE.SUCCESS && countdown > 0) {
-            timer = setTimeout(() => {
-                setCountdown((prevCount) => prevCount - 1);
-            }, 1000);
-        }
-
-        if (countdown === 0) {
-            onClickSubmit();
-        }
-
-        return () => {
-            if (timer) clearTimeout(timer);
-        };
-    }, [countdown, action?.state, open]);
 
     // Reset countdown when drawer opens
-    useEffect(() => {
-        if (open) {
-            setCountdown(5);
-        }
-    }, [open]);
+    // useEffect(() => {
+    //     if (open) {
+    //         setCountdown(5);
+    //     }
+    // }, [open]);
 
     const handleProcessClaimAction = async () => {
         if (identity) {
@@ -144,10 +139,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             }
 
             if (processActionResult) {
-                console.log(
-                    "Setting action after processAction in claim flow:",
-                    processActionResult,
-                );
                 setAction(processActionResult);
                 onActionResult(processActionResult);
             }
@@ -243,10 +234,13 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
     const startTransaction = async () => {
         try {
-            if (action?.type === ACTION_TYPE.CLAIM_LINK) {
-                await handleProcessClaimAction();
+            if (action?.state != ACTION_STATE.SUCCESS) {
+                if (action?.type === ACTION_TYPE.CLAIM_LINK) {
+                    await handleProcessClaimAction();
+                } else {
+                    await handleProcessCreateAction();
+                }
             } else {
-                await handleProcessCreateAction();
             }
         } catch (error) {
             console.log("🚀 ~ startTransaction ~ error:", error);
@@ -281,47 +275,47 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
 
     const getContent = (action: ActionModel | undefined) => {
         if (action) {
-            if (action.state === ACTION_STATE.SUCCESS) {
-                return (
-                    <div className="flex flex-col items-center justify-center">
-                        <div className="flex items-center justify-center bg-lightgreen rounded-full p-2 my-4">
-                            <Check color="#35A18A" size={42} />
-                        </div>
-                        <div className="text-center text-sm font-medium">
-                            {t("confirmation_drawer.link_creation_success_message")}
-                        </div>
+            // if (action.state === ACTION_STATE.SUCCESS) {
+            //     return (
+            //         <div className="flex flex-col items-center justify-center">
+            //             <div className="flex items-center justify-center bg-lightgreen rounded-full p-2 my-4">
+            //                 <Check color="#35A18A" size={42} />
+            //             </div>
+            //             <div className="text-center text-sm font-medium">
+            //                 {t("confirmation_drawer.link_creation_success_message")}
+            //             </div>
 
-                        <Button
-                            className="mb-3 mt-8 mx-auto py-6 w-[95%]"
-                            disabled={isDisabled}
-                            onClick={onClickSubmit}
-                        >
-                            {`${buttonText} (${countdown}s)`}
-                        </Button>
-                    </div>
-                );
-            } else {
-                return (
-                    <>
-                        <ConfirmationPopupAssetsSection
-                            intents={primaryIntents}
-                            onInfoClick={onInfoClick}
-                            isUsd={isUsd}
-                            onUsdClick={() => setIsUsd((old) => !old)}
-                        />
-                        <ConfirmationPopupFeesSection intents={primaryIntents} />
+            //             <Button
+            //                 className="mb-3 mt-8 mx-auto py-6 w-[95%]"
+            //                 disabled={isDisabled}
+            //                 onClick={onClickSubmit}
+            //             >
+            //                 {`${buttonText} (${countdown}s)`}
+            //             </Button>
+            //         </div>
+            //     );
+            // } else {
+            return (
+                <>
+                    <ConfirmationPopupAssetsSection
+                        intents={action.intents}
+                        onInfoClick={onInfoClick}
+                        isUsd={isUsd}
+                        onUsdClick={() => setIsUsd((old) => !old)}
+                    />
+                    <ConfirmationPopupFeesSection intents={action.intents} />
 
-                        <ConfirmationPopupLegalSection />
-                        <Button
-                            className="my-3 mx-auto py-6 w-[95%] disabled:bg-disabledgreen"
-                            disabled={isDisabled}
-                            onClick={onClickSubmit}
-                        >
-                            {buttonText}
-                        </Button>
-                    </>
-                );
-            }
+                    <ConfirmationPopupLegalSection />
+                    <Button
+                        className="my-3 mx-auto py-6 w-[95%] disabled:bg-disabledgreen"
+                        disabled={isDisabled}
+                        onClick={onClickSubmit}
+                    >
+                        {buttonText}
+                    </Button>
+                </>
+            );
+            // }
         } else {
             return (
                 <>

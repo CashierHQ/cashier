@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -12,11 +12,7 @@ import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { LinkCardPage } from "./LinkCardPage";
-import {
-    getMessageForLink,
-    getTitleForLink,
-    getDisplayComponentForLink,
-} from "./LinkCardPageUtils";
+
 import { ClaimFormPage } from "./ClaimFormPage";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -27,6 +23,11 @@ import LinkNotFound from "@/components/link-not-found";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
+import {
+    getDisplayComponentForLink,
+    getMessageForLink,
+    getTitleForLink,
+} from "@/components/page/linkCardPage";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -48,7 +49,6 @@ export default function ClaimPage() {
     const [searchParams] = useSearchParams();
     const { renderSkeleton } = useSkeletonLoading();
     const identity = useIdentity();
-    const prevIdentityRef = useRef(identity);
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
 
@@ -58,7 +58,6 @@ export default function ClaimPage() {
     const {
         link: linkData,
         isLoading: isLoadingLinkData,
-        setLink,
         getLinkDetail,
     } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
 
@@ -78,6 +77,36 @@ export default function ClaimPage() {
         resolver: zodResolver(ClaimSchema),
     });
 
+    // Fetch link data when linkId changes
+    useEffect(() => {
+        if (linkId && !linkData) {
+            getLinkDetail();
+        }
+    }, [linkId, linkData, getLinkDetail]);
+
+    // Enable linkUserState fetching when link data is available
+    useEffect(() => {
+        if (linkData) {
+            setEnableFetchLinkUserState(true);
+            updateTokenInit();
+        }
+    }, [linkData, updateTokenInit]);
+
+    // Update UI state based on linkUserState and URL params
+    useEffect(() => {
+        if (!linkData) return;
+
+        // If we have a linkUserState and it's COMPLETE, always show the default page
+        if (linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE) {
+            setShowDefaultPage(true);
+            return;
+        }
+
+        // If we have a step parameter in the URL, check if we should show claim form
+        const showClaimForm = searchParams.get("step") === "claim";
+        setShowDefaultPage(!showClaimForm);
+    }, [linkData, linkUserState, searchParams]);
+
     const handleClaim = async () => {
         if (!identity && (!form.getValues("address") || form.getValues("address")?.length == 0)) {
             showToast(
@@ -93,7 +122,6 @@ export default function ClaimPage() {
 
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
-
         showToast(t("transaction.create_intent.action_failed"), cahierError.message, "error");
     };
 
@@ -122,45 +150,6 @@ export default function ClaimPage() {
         navigate(`/${linkId}?step=claim`);
     };
 
-    // Handle identity changes to prevent unnecessary re-renders
-    useEffect(() => {
-        if (identity !== prevIdentityRef.current) {
-            prevIdentityRef.current = identity;
-            if (linkData) {
-                // Reset state when identity changes but don't cause a page reload
-                setEnableFetchLinkUserState(true);
-            }
-        }
-    }, [identity, linkData]);
-
-    useEffect(() => {
-        if (linkData) {
-            setEnableFetchLinkUserState(true);
-        }
-        if (linkData) {
-            setLink(linkData);
-            updateTokenInit();
-        }
-        if (linkData && linkUserState?.link_user_state) {
-            setShowDefaultPage(false);
-        }
-        if (linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE) {
-            setShowDefaultPage(true);
-        } else {
-            setShowDefaultPage(searchParams.get("step") !== "claim");
-        }
-    }, [linkData, searchParams, linkUserState]);
-
-    useEffect(() => {
-        console.log("linkUserState", linkUserState);
-    }, [linkUserState]);
-
-    useEffect(() => {
-        if (linkId && !linkData) {
-            getLinkDetail();
-        }
-    }, [linkId, linkData]);
-
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
         return <LinkNotFound />;
     }
@@ -168,7 +157,7 @@ export default function ClaimPage() {
     return (
         <MainAppLayout>
             <SheetWrapper>
-                {isLoadingLinkData ? (
+                {isLoadingLinkData && !linkData ? (
                     renderSkeleton()
                 ) : (
                     <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">

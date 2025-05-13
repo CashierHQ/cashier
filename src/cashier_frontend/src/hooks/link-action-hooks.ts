@@ -8,7 +8,16 @@ import { useEffect } from "react";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { UserInputItem, useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useCreateAction } from "./action-hooks";
-import { mapUserInputItemToLinkDetailModel } from "@/services/types/mapper/link.service.mapper";
+import {
+    mapUserInputItemToLinkDetailModel,
+    mapPartialDtoToLinkDetailModel,
+} from "@/services/types/mapper/link.service.mapper";
+import { useIdentity } from "@nfid/identitykit/react";
+import LinkLocalStorageService, {
+    LOCAL_lINK_ID_PREFIX,
+} from "@/services/link/link-local-storage.service";
+import { LinkModel } from "@/services/types/link.service.types";
+import LinkService from "@/services/link/link.service";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -17,7 +26,7 @@ export interface UpdateLinkParams {
 }
 
 export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
-    const { setLink, setAction, setLoading, setIsUpdating, setIsProcessingAction } =
+    const { setLink, setAction, setLoading, setIsUpdating, setIsProcessingAction, link, action } =
         useLinkActionStore();
 
     const { getUserInput } = useLinkCreationFormStore();
@@ -27,11 +36,10 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     const updateLinkMutation = useUpdateLinkMutation();
     const createActionMutation = useCreateAction();
     const createNewLinkMutation = useCreateNewLinkMutation();
+    const identity = useIdentity();
 
     const getLink = async () => {
-        console.log("🚀 ~ getLink ~ linkId:", linkId);
-        console.log("current data in linkDetailQuery:", linkDetailQuery.data);
-        linkDetailQuery.refetch();
+        await linkDetailQuery.refetch();
     };
 
     const callLinkStateMachine = async (params: UpdateLinkParams) => {
@@ -39,13 +47,11 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         setIsUpdating(true);
         // this already invalidates the query no need to refetch
         try {
-            console.log("🚀 ~ callLinkStateMachine ~ linkModel:", linkModel);
             const res = await updateLinkMutation.mutateAsync({
                 linkId,
                 linkModel,
                 isContinue,
             });
-            console.log("🚀 ~ callLinkStateMachine ~ res:", res);
 
             return res;
         } finally {
@@ -84,10 +90,58 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         await linkDetailQuery.refetch();
     };
 
-    const refetchAction = async () => {
-        await linkDetailQuery.refetch();
+    const refetchAction = async (linkId: string, actionType?: ACTION_TYPE) => {
+        console.log("refetchAction", linkId, actionType);
+
+        if (!linkId) {
+            console.warn("refetchAction called with undefined linkId");
+            return;
+        }
+
+        try {
+            // Clone the same logic from useLinkDetailQuery to ensure consistency
+            if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
+                console.log("[refetchAction] Using local storage for", linkId);
+                const linkLocalStorageService = new LinkLocalStorageService(
+                    identity.getPrincipal().toString(),
+                );
+                const localLink = linkLocalStorageService.getLink(linkId);
+
+                const linkDetailModel = mapPartialDtoToLinkDetailModel(localLink);
+
+                const linkModel: LinkModel = {
+                    link: linkDetailModel,
+                };
+
+                if (localLink) {
+                    // Set link from local storage (action might be undefined)
+                    setLink(linkModel.link);
+                    setAction(linkModel.action);
+                    console.log("[refetchAction] Updated state from local storage", linkModel);
+                } else {
+                    throw new Error("Link not found in local storage");
+                }
+            } else {
+                console.log("[refetchAction] Fetching from backend for", linkId);
+                console.log("[refetchAction] With identity", identity?.getPrincipal().toString());
+                console.log("[refetchAction] With actionType", actionType);
+
+                const linkService = new LinkService(identity);
+                const res = await linkService.getLink(linkId, actionType);
+
+                // Explicitly set both link and action state
+                if (res) {
+                    setLink(res.link);
+                    setAction(res.action);
+                    console.log("[refetchAction] Updated state from backend", res);
+                }
+            }
+        } catch (error) {
+            console.error("Error in refetchAction:", error);
+        }
     };
 
+    // Update state when query data changes
     useEffect(() => {
         setLoading(linkDetailQuery.isLoading);
     }, [linkDetailQuery.isLoading, linkDetailQuery.data]);
@@ -101,22 +155,41 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         }
     }, [linkDetailQuery.data]);
 
-    // Refetch when the effective ID changes (either linkId prop or currentLinkId in store)
+    // Update state when linkId changes
     useEffect(() => {
-        const refetchData = async () => {
-            await refetchLinkDetail();
-            await refetchAction();
-        };
-
         if (linkId) {
+            console.log("[useEffect] linkId changed:", linkId);
+
+            // First update with user input if available
             if (userInput) {
                 const linkModel = mapUserInputItemToLinkDetailModel(userInput);
                 setLink(linkModel);
             }
+
+            // Then refetch data
+            const refetchData = async () => {
+                await refetchLinkDetail();
+                await refetchAction(linkId, actionType);
+            };
+
             refetchData();
         }
     }, [linkId]);
 
+    // Update state when identity changes
+    useEffect(() => {
+        console.log("[useEffect] identity changed:", identity?.getPrincipal().toString());
+
+        const refetchData = async () => {
+            if (identity && linkId) {
+                await refetchAction(linkId, actionType);
+            }
+        };
+
+        refetchData();
+    }, [identity]);
+
+    // Update store with functions
     useEffect(() => {
         useLinkActionStore.setState({
             getLinkDetail: getLink,
@@ -126,7 +199,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
             createAction,
             createNewLink,
         });
-    }, []);
+    }, [linkId, link, action, identity, actionType]);
 
     return useLinkActionStore();
 }

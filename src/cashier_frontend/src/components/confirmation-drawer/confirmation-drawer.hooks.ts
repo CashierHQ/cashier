@@ -1,7 +1,7 @@
 import { ACTION_STATE, TASK } from "@/services/types/enum";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { TFunction } from "i18next";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Sorts an array of intent models, prioritizing wallet-to-link transfer intents.
@@ -26,25 +26,7 @@ const sortIntents = (intents: IntentModel[] | undefined) => {
 };
 
 export const usePrimaryIntents = (intents: IntentModel[] | undefined) => {
-    const primaryIntents = useMemo(() => {
-        return sortIntents(intents);
-    }, [intents]);
-
-    return primaryIntents;
-};
-
-export const useCashierFeeIntents = (intents: IntentModel[] | undefined) => {
-    const cashierFeeIntents = useMemo(() => {
-        return (
-            intents?.filter(
-                (intent) =>
-                    intent.task === TASK.TRANSFER_WALLET_TO_TREASURY ||
-                    intent.task === TASK.TRANSFER_LINK_TO_WALLET,
-            ) ?? []
-        );
-    }, [intents]);
-
-    return cashierFeeIntents;
+    return intents;
 };
 
 export const useConfirmButtonState = (

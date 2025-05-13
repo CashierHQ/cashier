@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Form } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from "@/pages/[id]";
@@ -30,10 +30,6 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
         setDisabled(true);
         onSubmit(form.getValues("address") ?? "");
     };
-
-    useEffect(() => {
-        console.log("useEffect buttonDisabled", isDisabled);
-    }, [isDisabled]);
 
     return (
         <div className="w-full flex flex-col flex-grow relative">
