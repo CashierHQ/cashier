@@ -144,7 +144,7 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
             </div>
 
             <div id="content" className="h-full">
-                <div id="token-details" className="my-5">
+                <div id="token-details" className="mb-5">
                     <Label>{t("wallet.receive.receiveToken")}</Label>
                     <AssetButton
                         handleClick={() => setShowAssetDrawer(true)}

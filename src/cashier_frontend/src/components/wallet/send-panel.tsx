@@ -351,9 +351,7 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                             )}
                         />
 
-                        <div className="mt-5 mb-6 h-px bg-gray-200 w-full max-w-[97%] mx-auto" />
-
-                        <div className="flex flex-col w-full gap-5">
+                        <div className="flex flex-col w-full gap-5 mt-5">
                             {/* Wallet Address Input */}
                             <FormField
                                 control={form.control}
