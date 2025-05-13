@@ -12,6 +12,11 @@ import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { LinkCardPage } from "./LinkCardPage";
+import {
+    getMessageForLink,
+    getTitleForLink,
+    getDisplayComponentForLink,
+} from "./LinkCardPageUtils";
 import { ClaimFormPage } from "./ClaimFormPage";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -47,7 +52,7 @@ export default function ClaimPage() {
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
 
-    const { updateTokenInit } = useTokens();
+    const { updateTokenInit, getToken } = useTokens();
 
     // Fetch link data
     const {
@@ -194,8 +199,12 @@ export default function ClaimPage() {
                                     <MultiStepForm.Item name="Complete">
                                         <LinkCardWithoutPhoneFrame
                                             label="Claimed"
-                                            message={linkData?.description ?? ""}
-                                            title={linkData?.title ?? ""}
+                                            message={getMessageForLink(linkData, getToken, true)}
+                                            title={getTitleForLink(linkData, getToken)}
+                                            displayComponent={getDisplayComponentForLink(
+                                                linkData,
+                                                getToken,
+                                            )}
                                             disabled={true}
                                         />
                                     </MultiStepForm.Item>
