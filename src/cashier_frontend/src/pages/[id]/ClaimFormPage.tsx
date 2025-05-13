@@ -10,7 +10,7 @@ import {
     useLinkUserState,
     useUpdateLinkUserState,
 } from "@/hooks/linkUserHooks";
-import { ACTION_STATE, ACTION_TYPE, INTENT_STATE, LINK_USER_STATE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
 import { useParams } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
@@ -91,21 +91,24 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         }
     }, [identity, linkId]);
 
+    console.log("ClaimFormPage - linkId", linkId);
+
     // Polling effect to update action state during processing
     useEffect(() => {
         let intervalId: number | null = null;
 
         if (isProcessing) {
-            intervalId = setInterval(() => {
-                // console.log("action", action);
-                // refetchAction();
-                const mockAction = action;
-                if (!mockAction) return;
-                mockAction.state = ACTION_STATE.PROCESSING;
-                mockAction.intents.forEach((intent) => {
-                    intent.state = INTENT_STATE.PROCESSING;
-                });
-                setAction(mockAction);
+            intervalId = setInterval(async () => {
+                console.log("link id", linkId);
+                console.log("action", action);
+                await refetchAction();
+                // const mockAction = action;
+                // if (!mockAction) return;
+                // mockAction.state = ACTION_STATE.PROCESSING;
+                // mockAction.intents.forEach((intent) => {
+                //     intent.state = INTENT_STATE.PROCESSING;
+                // });
+                // setAction(mockAction);
             }, 2000);
         }
 

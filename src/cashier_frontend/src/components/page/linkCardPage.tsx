@@ -1,9 +1,13 @@
-import { LINK_TYPE } from "@/services/types/enum";
-import { LinkDetailModel } from "@/services/types/link.service.types";
-import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { ReactNode } from "react";
+import { LinkDetailModel } from "../../services/types/link.service.types";
+import { LINK_TYPE } from "../../services/types/enum";
+import { FungibleToken } from "@/types/fungible-token.speculative";
+import { AssetAvatarV2 } from "../ui/asset-avatar";
 
-export const getTitleForLink = (linkData?: LinkDetailModel, getToken?: any) => {
+export const getTitleForLink = (
+    linkData?: LinkDetailModel,
+    getToken?: (tokenAddress: string) => FungibleToken | undefined,
+) => {
     if (!linkData || !getToken) return "";
 
     const tokenAddress = linkData?.asset_info?.[0]?.address;
@@ -27,7 +31,7 @@ export const getTitleForLink = (linkData?: LinkDetailModel, getToken?: any) => {
 
 export const getMessageForLink = (
     linkData?: LinkDetailModel,
-    getToken?: any,
+    getToken?: (tokenAddress: string) => FungibleToken | undefined,
     isClaimed?: boolean,
 ) => {
     if (!linkData) return "";
@@ -54,7 +58,7 @@ export const getMessageForLink = (
 
 export const getDisplayComponentForLink = (
     linkData?: LinkDetailModel,
-    getToken?: any,
+    getToken?: (tokenAddress: string) => FungibleToken | undefined,
 ): ReactNode => {
     if (!linkData || !getToken) return null;
 

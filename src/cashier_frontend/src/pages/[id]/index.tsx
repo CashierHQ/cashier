@@ -12,11 +12,7 @@ import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { LinkCardPage } from "./LinkCardPage";
-import {
-    getMessageForLink,
-    getTitleForLink,
-    getDisplayComponentForLink,
-} from "./LinkCardPageUtils";
+
 import { ClaimFormPage } from "./ClaimFormPage";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -27,6 +23,11 @@ import LinkNotFound from "@/components/link-not-found";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
+import {
+    getDisplayComponentForLink,
+    getMessageForLink,
+    getTitleForLink,
+} from "@/components/page/linkCardPage";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),

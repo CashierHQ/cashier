@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-section";
-import { useConfirmButtonState, usePrimaryIntents } from "./confirmation-drawer.hooks";
+import { useConfirmButtonState } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { ACTION_STATE, ACTION_TYPE } from "@/services/types/enum";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -46,12 +46,12 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
 
-    const primaryIntents = usePrimaryIntents(action?.intents);
-
     const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
         action?.state,
         t,
     );
+
+    console.log("[ConfirmationDrawer] action ", action);
 
     // Start polling for action status if polling is enabled
     // useEffect(() => {
@@ -298,12 +298,12 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             return (
                 <>
                     <ConfirmationPopupAssetsSection
-                        intents={primaryIntents}
+                        intents={action.intents}
                         onInfoClick={onInfoClick}
                         isUsd={isUsd}
                         onUsdClick={() => setIsUsd((old) => !old)}
                     />
-                    <ConfirmationPopupFeesSection intents={primaryIntents} />
+                    <ConfirmationPopupFeesSection intents={action.intents} />
 
                     <ConfirmationPopupLegalSection />
                     <Button
