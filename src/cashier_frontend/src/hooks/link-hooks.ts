@@ -85,8 +85,6 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
                 const linkService = new LinkService(identity);
                 const res = await linkService.getLink(linkId, actionType);
 
-                console.log("🚀 ~ useLinkDetailQuery ~ res:", res);
-
                 return res;
             }
         },

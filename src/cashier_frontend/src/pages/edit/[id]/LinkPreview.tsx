@@ -203,6 +203,13 @@ export default function LinkPreview({
         setAction(updatedAction);
     };
 
+    /**
+     * Handles the submit action when user clicks the create/continue button.
+     * If the link has a local ID (starts with LOCAL_lINK_ID_PREFIX), it creates a new link in the backend,
+     * updates the local storage with the newly created link data, and redirects to the edit page with the new link ID.
+     * If the link already exists in the backend, it creates an action (if one doesn't exist) and shows the confirmation drawer.
+     * @returns {Promise<void>}
+     */
     const handleSubmit = async () => {
         console.log("handleSubmit");
         setIsDisabled(true);

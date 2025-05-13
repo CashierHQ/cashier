@@ -16,15 +16,8 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
     // Get token data and image
     const tokenAddress = linkData?.asset_info?.[0]?.address;
     const token = tokenAddress ? getToken(tokenAddress) : undefined;
-    // Use the token.logo as primary source and getTokenImage as an immediate fallback
-    const tokenLogo = token?.logo;
     // Extract logoFallback from token or use a default fallback image
     const logoFallback = token?.logoFallback || "/defaultLinkImage.png";
-
-    console.log("LinkCardPage tokenLogo: ", tokenLogo);
-    console.log("LinkCardPage logoFallback: ", logoFallback);
-
-    console.log("LinkCardPage linkData: ", linkData);
 
     const getTitleForLink = () => {
         switch (linkData?.linkType) {

@@ -29,9 +29,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     const createNewLinkMutation = useCreateNewLinkMutation();
 
     const getLink = async () => {
-        console.log("🚀 ~ getLink ~ linkId:", linkId);
-        console.log("current data in linkDetailQuery:", linkDetailQuery.data);
-        linkDetailQuery.refetch();
+        await linkDetailQuery.refetch();
     };
 
     const callLinkStateMachine = async (params: UpdateLinkParams) => {
@@ -39,13 +37,11 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         setIsUpdating(true);
         // this already invalidates the query no need to refetch
         try {
-            console.log("🚀 ~ callLinkStateMachine ~ linkModel:", linkModel);
             const res = await updateLinkMutation.mutateAsync({
                 linkId,
                 linkModel,
                 isContinue,
             });
-            console.log("🚀 ~ callLinkStateMachine ~ res:", res);
 
             return res;
         } finally {
@@ -94,6 +90,8 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
 
     useEffect(() => {
         if (linkDetailQuery.data) {
+            console.log("[useEffect] linkId", linkId);
+            console.log("[useEffect] actionType", actionType);
             const linkData = linkDetailQuery.data;
             console.log("🚀 ~ useLinkAction ~ linkData:", linkData);
             setLink(linkData.link);
@@ -116,6 +114,10 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
             refetchData();
         }
     }, [linkId]);
+
+    useEffect(() => {
+        console.log("linkDetailQuery.data", linkDetailQuery.data);
+    }, [linkDetailQuery.data]);
 
     useEffect(() => {
         useLinkActionStore.setState({
