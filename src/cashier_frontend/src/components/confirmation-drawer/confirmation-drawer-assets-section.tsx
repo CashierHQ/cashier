@@ -26,6 +26,24 @@ const getLabel = (intent: IntentModel) => {
     }
 };
 
+// Sort intents by fee first, then by address
+const sortIntentsByAddress = (intents: IntentModel[]): IntentModel[] => {
+    return [...intents].sort((a, b) => {
+        // First prioritize fees (TRANSFER_WALLET_TO_TREASURY) to show at the top
+        const aIsFee = a.task === TASK.TRANSFER_WALLET_TO_TREASURY;
+        const bIsFee = b.task === TASK.TRANSFER_WALLET_TO_TREASURY;
+
+        if (aIsFee && !bIsFee) return 1; // Fee comes first (at the top)
+        if (!aIsFee && bIsFee) return -1; // Non-fee comes after
+
+        // If both are fees or both are not fees, then sort by address
+        if (a.asset.address < b.asset.address) return -1;
+        if (a.asset.address > b.asset.address) return 1;
+
+        return 0;
+    });
+};
+
 export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
     intents,
     isUsd,
@@ -34,9 +52,13 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
     const { getToken } = useTokens();
     const { link } = useLinkAction();
     const [feesMap, setFeesMap] = useState<Map<string, FeeModel[]>>(new Map());
+    const [sortedIntents, setSortedIntents] = useState<IntentModel[]>([]);
 
-    // Calculate fees for each intent and organize them by token address
+    // Sort intents and calculate fees
     useEffect(() => {
+        // Sort intents by address with fees last
+        setSortedIntents(sortIntentsByAddress(intents));
+
         const calculateFees = async () => {
             const newFeesMap = new Map<string, FeeModel[]>();
 
@@ -96,7 +118,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
             </div>
 
             <ol className="flex flex-col gap-3 light-borders-green px-4 py-3 overflow-y-auto max-h-[200px]">
-                {intents.map((intent) => (
+                {sortedIntents.map((intent) => (
                     <li key={intent.id}>
                         <TransactionItem
                             title={t("confirmation_drawer.asset_label")}

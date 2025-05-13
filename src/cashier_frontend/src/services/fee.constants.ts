@@ -2,7 +2,8 @@ import { AssetInfo, FeeConfig, FeeTable } from "@/services/types/fee.types";
 import { CHAIN, FEE_TYPE, LINK_TYPE } from "./types/enum";
 
 // Default ICP token address
-export const ICP_TOKEN_ADDRESS = "x5qut-viaaa-aaaar-qajda-cai";
+export const ICP_TOKEN_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+export const TEST_ICP_TOKEN_ADDRESS = "x5qut-viaaa-aaaar-qajda-cai";
 
 // Default fee amounts in smallest units (e8s for ICP)
 export const DEFAULT_NETWORK_FEE = BigInt(10000); // 0.0001 ICP
@@ -17,7 +18,7 @@ export const createFeeKey = (chain: string, linkType: string, feeType: string): 
 
 // Default ICP asset info for fees
 export const createDefaultIcpAssetInfo = (amount: bigint): AssetInfo => ({
-    address: ICP_TOKEN_ADDRESS,
+    address: TEST_ICP_TOKEN_ADDRESS,
     chain: CHAIN.IC,
     amount,
     symbol: "ICP",

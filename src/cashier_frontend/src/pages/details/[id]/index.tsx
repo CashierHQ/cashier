@@ -9,7 +9,7 @@ import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import QRCode from "react-qr-code";
-import { ACTION_TYPE, getLinkTypeString } from "@/services/types/enum";
+import { ACTION_TYPE, ACTION_STATE, getLinkTypeString } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
@@ -19,12 +19,14 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
 import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
-import { ConfirmationDrawer } from "@/components/confirmation-drawer/confirmation-drawer";
+import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
+import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
+import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -42,6 +44,7 @@ export default function DetailPage() {
         callLinkStateMachine,
         isUpdating,
         refetchLinkDetail,
+        action,
     } = useLinkAction(linkId, ACTION_TYPE.WITHDRAW_LINK);
 
     const [showOverlay, setShowOverlay] = React.useState(true);
@@ -49,6 +52,14 @@ export default function DetailPage() {
 
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
+
+    // Button state for confirmation drawer
+    const [confirmButtonDisabled, setConfirmButtonDisabled] = React.useState(false);
+    const [confirmButtonText, setConfirmButtonText] = React.useState("");
+
+    const { mutateAsync: processAction } = useProcessAction();
+    const { mutateAsync: updateAction } = useUpdateAction();
+    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
 
     React.useEffect(() => {
         const driver = initializeDriver();
@@ -89,6 +100,27 @@ export default function DetailPage() {
 
     const { t } = useTranslation();
     const { getToken } = useTokens();
+
+    // Update button text based on action state
+    React.useEffect(() => {
+        if (!action) return;
+
+        const actionState = action.state;
+        if (actionState === ACTION_STATE.SUCCESS) {
+            setConfirmButtonText(t("continue"));
+            setConfirmButtonDisabled(false);
+        } else if (actionState === ACTION_STATE.PROCESSING) {
+            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
+            setConfirmButtonDisabled(true);
+        } else if (actionState === ACTION_STATE.FAIL) {
+            setConfirmButtonText(t("retry"));
+            setConfirmButtonDisabled(false);
+        } else {
+            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
+            setConfirmButtonDisabled(false);
+        }
+    }, [action, t]);
+
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
@@ -154,6 +186,68 @@ export default function DetailPage() {
         } catch (error) {
             console.error("Error creating withdraw action:", error);
         }
+    };
+
+    const handleWithdrawProcess = async () => {
+        if (!link) throw new Error("Link is not defined");
+        if (!action) throw new Error("Action is not defined");
+        const start = Date.now();
+
+        console.log("[handleWithdrawProcess] Starting processAction...");
+        const processActionStartTime = Date.now();
+        const firstUpdatedAction = await processAction({
+            linkId: link.id,
+            actionType: ACTION_TYPE.WITHDRAW_LINK,
+            actionId: action.id,
+        });
+        const processActionEndTime = Date.now();
+        const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
+        console.log(
+            `[handleWithdrawProcess] processAction completed in ${processActionDuration.toFixed(2)}s`,
+        );
+
+        setAction(firstUpdatedAction);
+
+        if (firstUpdatedAction) {
+            console.log("[handleWithdrawProcess] Starting icrc112Execute...");
+            const icrc112StartTime = Date.now();
+            const response = await icrc112Execute({
+                transactions: firstUpdatedAction.icrc112Requests,
+            });
+            const icrc112EndTime = Date.now();
+            const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
+            console.log(
+                `[handleWithdrawProcess] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
+            );
+
+            if (response) {
+                console.log("[handleWithdrawProcess] Starting updateAction...");
+                const updateActionStartTime = Date.now();
+                const secondUpdatedAction = await updateAction({
+                    actionId: action.id,
+                    linkId: link.id,
+                    external: true,
+                });
+                const updateActionEndTime = Date.now();
+                const updateActionDuration = (updateActionEndTime - updateActionStartTime) / 1000;
+                console.log(
+                    `[handleWithdrawProcess] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
+                );
+
+                if (secondUpdatedAction) {
+                    setAction(secondUpdatedAction);
+                    handleActionResult(secondUpdatedAction);
+                }
+            }
+        }
+
+        const end = Date.now();
+        const duration = end - start;
+        const durationInSeconds = (duration / 1000).toFixed(2);
+        console.log(
+            "[handleWithdrawProcess] Total withdraw process completed in",
+            `${durationInSeconds}s`,
+        );
     };
 
     const handleCashierError = (error: Error) => {
@@ -340,15 +434,23 @@ export default function DetailPage() {
                 isEnding={isUpdating}
             />
 
-            <ConfirmationDrawer
+            <ConfirmationDrawerV2
                 open={showConfirmationDrawer}
+                action={action}
                 onClose={() => setShowConfirmationDrawer(false)}
                 onInfoClick={() => {}}
                 onActionResult={handleActionResult}
                 onCashierError={handleCashierError}
                 onSuccessContinue={async () => {
-                    setInactiveEndedLink();
+                    await setInactiveEndedLink();
                 }}
+                startTransaction={async () => {
+                    await handleWithdrawProcess();
+                }}
+                isButtonDisabled={confirmButtonDisabled}
+                setButtonDisabled={setConfirmButtonDisabled}
+                buttonText={confirmButtonText}
+                setButtonText={setConfirmButtonText}
             />
         </MainAppLayout>
     );

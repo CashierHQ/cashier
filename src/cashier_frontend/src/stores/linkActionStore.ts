@@ -71,7 +71,7 @@ export interface LinkActionStoreData {
     ) => Promise<ActionModel | undefined>;
 
     refetchLinkDetail: () => Promise<void>;
-    refetchAction: () => Promise<void>;
+    refetchAction: (linkId: string, actionType?: ACTION_TYPE) => Promise<void>;
 }
 
 export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({

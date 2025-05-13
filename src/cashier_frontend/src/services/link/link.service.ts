@@ -104,6 +104,8 @@ class LinkService {
     }
 
     async getLink(linkId: string, actionType?: string) {
+        console.log("🚀 ~ LinkService ~ getLink ~ linkId:", linkId);
+        console.log("🚀 ~ LinkService ~ getLink ~ actionType:", actionType);
         const response = parseResultResponse(
             await this.actor.get_link(
                 linkId,

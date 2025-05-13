@@ -1,7 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
-import { IoIosClose } from "react-icons/io";
 import { Button } from "@/components/ui/button";
 import { SendAssetConfirmationPopupAssetsSection } from "./send-asset-confirmation-drawer-assets-section";
 import { SendTransactionStatus } from "./send-transaction-status";
