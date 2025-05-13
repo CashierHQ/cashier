@@ -898,7 +898,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
         let callback_clone = callback;
         if callback_clone.is_some() {
-            info!("spawning callback");
             ic_cdk::spawn(async move {
                 let action_after = get_resp.action;
                 let action_state_after_update = action_after.state.clone();
