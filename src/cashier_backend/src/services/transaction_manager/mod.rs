@@ -879,11 +879,15 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             }
 
             // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
-            for mut tx in eligible_canister_txs {
-                self.execute_tx(&mut tx).map_err(|e| {
+            // First loop: update the transactions to processing state
+            for tx in eligible_canister_txs.iter_mut() {
+                self.execute_tx(tx).map_err(|e| {
                     CanisterError::HandleLogicError(format!("Error executing tx: {}", e))
                 })?;
+            }
 
+            // Second loop: execute the transactions
+            for mut tx in eligible_canister_txs {
                 // this method update the tx state to success or fail inside of it
                 self.execute_canister_tx(&mut tx).await?;
             }
