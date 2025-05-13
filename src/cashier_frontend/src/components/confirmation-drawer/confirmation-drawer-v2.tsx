@@ -4,61 +4,130 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { ConfirmationPopupAssetsSection } from "./confirmation-drawer-assets-section";
-import { useConfirmButtonState } from "./confirmation-drawer.hooks";
 import { ConfirmationPopupSkeleton } from "./confirmation-drawer-skeleton";
 import { ACTION_STATE } from "@/services/types/enum";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
-import { useLinkAction } from "@/hooks/link-action-hooks";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
 
+/**
+ * Props interface for the ConfirmationDrawerV2 component
+ */
 interface ConfirmationDrawerV2Props {
+    /** The action model containing all information about the current action */
+    action?: ActionModel;
+
+    /** Controls whether the drawer is visible */
     open: boolean;
+
+    /** Called when the drawer is closed */
     onClose?: () => void;
+
+    /** Called when the info button is clicked, typically to show fee information */
     onInfoClick?: () => void;
-    onCashierError?: (error: Error) => void;
+
+    /** Called after the action result is received, to update UI or state */
     onActionResult?: (action: ActionModel) => void;
+
+    /** Called when an error occurs during the transaction process */
+    onCashierError?: (error: Error) => void;
+
+    /** Called after a successful transaction to continue the workflow */
     onSuccessContinue?: () => Promise<void>;
+
+    /** The main function that handles the transaction process */
     startTransaction: () => Promise<void>;
+
+    /** Controls whether the action button is disabled */
+    isButtonDisabled?: boolean;
+
+    /** Function to update the button's disabled state */
+    setButtonDisabled?: (disabled: boolean) => void;
+
+    /** The text to display on the action button */
+    buttonText?: string;
+
+    /** Function to update the action button's text */
+    setButtonText?: (text: string) => void;
 }
 
+/**
+ * Enhanced confirmation drawer component for displaying action details and handling transactions
+ *
+ * This component is designed to be completely configurable via props, without relying on hooks
+ * for internal state. This makes it more flexible for use in different workflows.
+ */
 export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     open,
+    action,
     onClose = () => {},
     onInfoClick = () => {},
     onActionResult = () => {},
     onCashierError = () => {},
     onSuccessContinue = async () => {},
     startTransaction,
+    isButtonDisabled = false,
+    setButtonDisabled,
+    buttonText,
+    setButtonText,
 }) => {
     const { t } = useTranslation();
-    const { action } = useLinkAction();
-
+    /** Toggle state for showing USD values instead of token values */
     const [isUsd, setIsUsd] = useState(false);
 
-    const { isDisabled, setIsDisabled, buttonText, setButtonText } = useConfirmButtonState(
-        action?.state,
-        t,
-    );
+    /**
+     * Determine button text based on provided prop or action state
+     * Uses the action state as a fallback if no buttonText prop is provided
+     */
+    const displayButtonText =
+        buttonText ||
+        (action?.state === ACTION_STATE.SUCCESS
+            ? t("continue")
+            : action?.state === ACTION_STATE.PROCESSING
+              ? t("confirmation_drawer.inprogress_button")
+              : action?.state === ACTION_STATE.FAIL
+                ? t("retry")
+                : t("confirmation_drawer.confirm_button"));
 
+    /**
+     * Handles the submit button click
+     * Updates button state and calls appropriate handler based on action state
+     */
     const onClickSubmit = async () => {
+        // Determine if this is a successful transaction completion
         const isTxSuccess = action?.state === ACTION_STATE.SUCCESS;
 
-        setIsDisabled(true);
-        setButtonText(t("confirmation_drawer.processing"));
+        // Update button state
+        if (setButtonDisabled) {
+            setButtonDisabled(true);
+        }
 
+        if (setButtonText) {
+            setButtonText(t("confirmation_drawer.processing"));
+        }
+
+        // Call appropriate handler based on transaction state
         if (isTxSuccess) {
+            // For successful transactions, continue to next step
             await onSuccessContinue();
         } else {
+            // For new or failed transactions, start/retry the transaction
             await startTransaction();
         }
     };
 
+    /**
+     * Determine the appropriate title based on action state
+     */
     const title =
         action?.state === ACTION_STATE.SUCCESS
             ? t("confirmation_drawer.link_creation_success_title")
             : t("confirmation_drawer.title");
 
+    /**
+     * Renders the content of the drawer based on the current action state
+     * Shows skeleton loading state if no action is available
+     */
     const getContent = (action: ActionModel | undefined) => {
         if (action) {
             return (
@@ -74,10 +143,10 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                     <ConfirmationPopupLegalSection />
                     <Button
                         className="my-3 mx-auto py-6 w-[95%] disabled:bg-disabledgreen"
-                        disabled={isDisabled}
+                        disabled={isButtonDisabled}
                         onClick={onClickSubmit}
                     >
-                        {buttonText}
+                        {displayButtonText}
                     </Button>
                 </>
             );
@@ -113,6 +182,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                         />
                     </DrawerTitle>
                 </DrawerHeader>
+
                 {getContent(action)}
             </DrawerContent>
         </Drawer>

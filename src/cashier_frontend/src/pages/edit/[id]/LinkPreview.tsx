@@ -12,7 +12,14 @@ import { useResponsive } from "@/hooks/responsive-hook";
 import { formatPrice } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
-import { ACTION_TYPE, CHAIN, FEE_TYPE, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import {
+    ACTION_TYPE,
+    CHAIN,
+    FEE_TYPE,
+    LINK_STATE,
+    LINK_TYPE,
+    ACTION_STATE,
+} from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
@@ -82,6 +89,30 @@ export default function LinkPreview({
     const [createActionInProgress, setCreateActionInProgress] = useState(false);
     // Debug state for countering redirects
     const [redirectCounter, setRedirectCounter] = useState(0);
+
+    // Button state for confirmation drawer
+    const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
+    const [confirmButtonText, setConfirmButtonText] = useState("");
+
+    // Update button text and disabled state based on action state
+    useEffect(() => {
+        if (!action) return;
+
+        const actionState = action.state;
+        if (actionState === ACTION_STATE.SUCCESS) {
+            setConfirmButtonText(t("continue"));
+            setConfirmButtonDisabled(false);
+        } else if (actionState === ACTION_STATE.PROCESSING) {
+            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
+            setConfirmButtonDisabled(true);
+        } else if (actionState === ACTION_STATE.FAIL) {
+            setConfirmButtonText(t("retry"));
+            setConfirmButtonDisabled(false);
+        } else {
+            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
+            setConfirmButtonDisabled(false);
+        }
+    }, [action, t]);
 
     const { getFee } = useFeeService();
 
@@ -492,15 +523,32 @@ export default function LinkPreview({
                 onClose={() => setShowAssetInfo(false)}
             />
             <ConfirmationDrawerV2
+                // The ActionModel to be displayed and processed
+                action={action}
+                // Controls whether the drawer is visible
                 open={showConfirmation && !showInfo}
+                // Called when the drawer is closed
                 onClose={() => {
                     setShowConfirmation(false);
                 }}
+                // Called when the info button is clicked, typically to show fee information
                 onInfoClick={() => setShowInfo(true)}
+                // Called after the action result is received, to update UI or state
                 onActionResult={onActionResult}
+                // Called when an error occurs during the transaction process
                 onCashierError={onCashierError}
+                // Called after successful transaction to continue the workflow
                 onSuccessContinue={handleSetLinkToActive}
+                // The main function that handles the transaction process
                 startTransaction={handleStartTransaction}
+                // Controls whether the action button is disabled
+                isButtonDisabled={confirmButtonDisabled}
+                // Function to update the button's disabled state
+                setButtonDisabled={setConfirmButtonDisabled}
+                // The text to display on the action button
+                buttonText={confirmButtonText}
+                // Function to update the action button's text
+                setButtonText={setConfirmButtonText}
             />
         </div>
     );

@@ -10,7 +10,7 @@ import {
     useLinkUserState,
     useUpdateLinkUserState,
 } from "@/hooks/linkUserHooks";
-import { ACTION_TYPE, LINK_USER_STATE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_USER_STATE, ACTION_STATE } from "@/services/types/enum";
 import { useParams } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
@@ -57,6 +57,10 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const [buttonText, setButtonText] = useState(t("claim.claim"));
     const [isProcessing, setIsProcessing] = useState(false);
 
+    // Button state for confirmation drawer
+    const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
+    const [confirmButtonText, setConfirmButtonText] = useState("");
+
     // Hooks
     const { mutateAsync: createAction } = useCreateAction();
     const { mutateAsync: createActionAnonymous } = useCreateActionAnonymous();
@@ -66,49 +70,74 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
     const updateLinkUserState = useUpdateLinkUserState();
 
-    const {
-        link,
-        action,
-        anonymousWalletAddress,
-        setAction,
-        setAnonymousWalletAddress,
-        refetchAction,
-    } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
+    // Enable fetch when we have a link ID
+    const enableFetchLinkUserState = !!linkId && !!identity;
+
+    const { data: linkUserState, refetch: refetchLinkUserState } = useLinkUserState(
+        {
+            action_type: ACTION_TYPE.CLAIM_LINK,
+            link_id: linkId ?? "",
+            anonymous_wallet_address: "",
+        },
+        enableFetchLinkUserState,
+    );
+
+    const { link, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
+        linkId,
+        ACTION_TYPE.CLAIM_LINK,
+    );
+
+    // Update button text based on action state
+    useEffect(() => {
+        if (!linkUserState?.action) return;
+
+        const actionState = linkUserState.action.state;
+        if (actionState === ACTION_STATE.SUCCESS) {
+            setConfirmButtonText(t("continue"));
+            setConfirmButtonDisabled(false);
+        } else if (actionState === ACTION_STATE.PROCESSING) {
+            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
+            setConfirmButtonDisabled(true);
+        } else if (actionState === ACTION_STATE.FAIL) {
+            setConfirmButtonText(t("retry"));
+            setConfirmButtonDisabled(false);
+        } else {
+            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
+            setConfirmButtonDisabled(false);
+        }
+    }, [linkUserState, t]);
 
     // Show confirmation drawer when action is available
     useEffect(() => {
         console.log("[hook] Link:", link);
-        console.log("[hook] Action:", action);
-        if (action) {
+        console.log("[hook] Action:", linkUserState?.action);
+        if (linkUserState?.action) {
             setShowConfirmation(true);
         }
-    }, [action, link]);
+    }, [linkUserState?.action, link]);
 
     // Fetch action data when identity changes
     useEffect(() => {
         if (linkId && identity) {
-            refetchAction();
+            refetchLinkUserState().catch((error) => {
+                console.error("Error fetching action:", error);
+            });
         }
-    }, [identity, linkId]);
-
-    console.log("ClaimFormPage - linkId", linkId);
+    }, [identity, linkId, refetchLinkUserState]);
 
     // Polling effect to update action state during processing
     useEffect(() => {
         let intervalId: number | null = null;
 
+        console.log("isProcessing changed", isProcessing);
+
         if (isProcessing) {
             intervalId = setInterval(async () => {
                 console.log("link id", linkId);
-                console.log("action", action);
-                await refetchAction();
-                // const mockAction = action;
-                // if (!mockAction) return;
-                // mockAction.state = ACTION_STATE.PROCESSING;
-                // mockAction.intents.forEach((intent) => {
-                //     intent.state = INTENT_STATE.PROCESSING;
-                // });
-                // setAction(mockAction);
+                console.log("action", linkUserState?.action);
+                await refetchLinkUserState().catch((error) => {
+                    console.error("Error fetching action:", error);
+                });
             }, 2000);
         }
 
@@ -117,17 +146,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                 clearInterval(intervalId);
             }
         };
-    }, [isProcessing, refetchAction]);
-
-    // Fetch link user state when authenticated
-    const { data: linkUserState } = useLinkUserState(
-        {
-            action_type: ACTION_TYPE.CLAIM_LINK,
-            link_id: linkId ?? "",
-            anonymous_wallet_address: form.getValues("address") ?? "",
-        },
-        !!linkId && !!identity && !!form.getValues("address"),
-    );
+    }, [isProcessing, linkId, refetchLinkUserState]);
 
     /**
      * Creates an action for authenticated users
@@ -167,14 +186,14 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
             setIsDisabledButton(true);
             setButtonText(t("processing"));
 
-            if (action) {
+            if (linkUserState?.action) {
                 // Display the confirmation drawer if action exists
                 setShowConfirmation(true);
             } else if (identity) {
                 // Authenticated user flow
                 const action = await handleCreateActionForUser();
                 if (action) {
-                    setAction(action);
+                    await refetchLinkUserState();
                     setShowConfirmation(true);
                 }
             } else if (anonymousWalletAddress) {
@@ -190,18 +209,25 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
                 if (!anonymousLinkUserState.link_user_state) {
                     // Create new action if none exists
-                    const anonymousAction =
-                        await handleCreateActionAnonymous(anonymousWalletAddress);
-                    setAction(anonymousAction);
+                    await handleCreateActionAnonymous(anonymousWalletAddress);
                     setAnonymousWalletAddress(anonymousWalletAddress);
+                    // Refetch to get the action
+                    await fetchLinkUserState(
+                        {
+                            action_type: ACTION_TYPE.CLAIM_LINK,
+                            link_id: linkId ?? "",
+                            anonymous_wallet_address: anonymousWalletAddress,
+                        },
+                        identity,
+                    );
                     setShowConfirmation(true);
                 } else if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
                     // If claim is already complete, proceed to next step
                     nextStep();
                 } else {
                     // Show confirmation for existing action
-                    setAction(anonymousLinkUserState.action);
                     setAnonymousWalletAddress(anonymousWalletAddress);
+                    await refetchLinkUserState();
                     setShowConfirmation(true);
                 }
             } else {
@@ -223,7 +249,9 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
      */
     const handleProcessClaimAction = async () => {
         if (!link) throw new Error("Link is not defined");
-        if (!action) throw new Error("Action is not defined");
+        if (!linkUserState?.action) throw new Error("Action is not defined");
+
+        const action = linkUserState.action;
 
         try {
             setIsProcessing(true);
@@ -255,14 +283,14 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                         });
 
                         if (secondUpdatedAction) {
-                            setAction(secondUpdatedAction);
+                            await refetchLinkUserState();
                             if (onActionResult) onActionResult(secondUpdatedAction);
                         }
                     }
                 }
 
                 if (processActionResult) {
-                    setAction(processActionResult);
+                    await refetchLinkUserState();
                     if (onActionResult) onActionResult(processActionResult);
                 }
             } else {
@@ -275,7 +303,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                 });
 
                 if (processActionResult) {
-                    setAction(processActionResult);
+                    await refetchLinkUserState();
                     if (onActionResult) onActionResult(processActionResult);
                 }
             }
@@ -335,12 +363,17 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
             <ConfirmationDrawerV2
                 open={showConfirmation && !showInfo}
+                action={linkUserState?.action}
                 onClose={() => setShowConfirmation(false)}
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
                 onCashierError={onCashierError}
                 onSuccessContinue={handleUpdateLinkUserState}
                 startTransaction={startTransaction}
+                isButtonDisabled={confirmButtonDisabled}
+                setButtonDisabled={setConfirmButtonDisabled}
+                buttonText={confirmButtonText}
+                setButtonText={setConfirmButtonText}
             />
         </>
     );
