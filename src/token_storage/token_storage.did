@@ -1,0 +1,79 @@
+type AddTokenInput = record {
+  decimals : opt nat8;
+  chain : text;
+  name : opt text;
+  ledger_id : opt principal;
+  index_id : opt principal;
+  symbol : opt text;
+};
+type AddTokensInput = record {
+  tokens : vec AddTokenInput;
+  token_hold : vec text;
+};
+type Chain = variant { IC };
+type RegisterTokenInput = record {
+  id : text;
+  decimals : nat8;
+  chain : text;
+  name : text;
+  enabled_by_default : bool;
+  ledger_id : opt principal;
+  index_id : opt principal;
+  symbol : text;
+};
+type RegistryTokenDto = record {
+  id : text;
+  decimals : nat8;
+  chain : text;
+  name : text;
+  icrc_ledger_id : opt principal;
+  icrc_index_id : opt principal;
+  symbol : text;
+};
+type RemoveTokenInput = record { token_id : text };
+type Result = variant { Ok; Err : text };
+type Result_1 = variant { Ok : UserPreference; Err : text };
+type Result_2 = variant { Ok : vec RegistryTokenDto; Err : text };
+type Result_3 = variant { Ok : vec TokenDto; Err : text };
+type Result_4 = variant { Ok : text; Err : text };
+type TokenDto = record {
+  id : text;
+  decimals : nat8;
+  balance : opt nat;
+  chain : text;
+  name : text;
+  enabled : bool;
+  icrc_ledger_id : opt principal;
+  icrc_index_id : opt principal;
+  symbol : text;
+};
+type UserFiltersInput = record {
+  hide_zero_balance : opt bool;
+  selected_chain : opt vec text;
+  hide_unknown_token : opt bool;
+};
+type UserPreference = record {
+  token_registry_version : nat64;
+  hide_zero_balance : bool;
+  hidden_tokens : vec text;
+  selected_chain : vec Chain;
+  hide_unknown_token : bool;
+};
+service : {
+  add_token : (AddTokenInput) -> (Result);
+  add_tokens : (AddTokensInput) -> (Result);
+  batch_toggle_token_visibility : (vec record { text; bool }) -> (Result);
+  get_user_preference : () -> (Result_1) query;
+  initialize_registry : () -> (Result);
+  initialize_user_tokens : () -> (Result);
+  list_registry_tokens : (opt bool) -> (Result_2) query;
+  list_tokens : () -> (Result_3) query;
+  query_user_token : (text) -> (Result_3);
+  register_token : (RegisterTokenInput) -> (Result_4);
+  remove_token : (RemoveTokenInput) -> (Result);
+  reset_user_tokens : (text) -> (Result);
+  toggle_token_visibility : (text, bool) -> (Result);
+  update_bulk_balances : (vec record { text; nat }) -> (Result);
+  update_token_balance : (text, nat) -> (Result);
+  update_user_filters : (UserFiltersInput) -> (Result);
+}
