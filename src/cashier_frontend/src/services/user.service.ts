@@ -1,17 +1,16 @@
 import { parseResultResponse } from "@/utils";
-import { Actor, HttpAgent, Identity } from "@dfinity/agent";
+import { createActor } from "../../../declarations/cashier_backend";
+import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
-import { _SERVICE, idlFactory } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { BACKEND_CANISTER_ID } from "@/const";
+import { _SERVICE } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 class UserService {
     private actor: _SERVICE;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        const agent = HttpAgent.createSync({ identity, host: IC_HOST });
-        this.actor = Actor.createActor(idlFactory, {
-            agent,
-            canisterId: BACKEND_CANISTER_ID,
+        this.actor = createActor(BACKEND_CANISTER_ID, {
+            agent: HttpAgent.createSync({ identity, host: "https://icp0.io" }),
         });
     }
 

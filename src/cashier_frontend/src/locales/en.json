@@ -4,10 +4,8 @@
         "linkName": "Link name",
         "linkNamePlaceholder": "Enter link name",
         "linkTemplate": "Link template",
-        "chooseLinkType": "Choose link type",
         "linkDetails": "Link details",
-        "addAssets": "Add assets",
-        "linkPreview": "Create link",
+        "linkPreview": "Preview",
         "create": "Create",
         "photo": "Photo",
         "name": "Name",
@@ -15,36 +13,21 @@
         "chain": "Chain",
         "amount": "Amount",
         "defaultTemplate": "Default template",
-        "asset": "Asset",
-        "linkType": "Link type",
-        "preview": "Preview",
-        "add_another_asset": "Add another asset",
-        "amount_error": "Amount Error",
-        "amount_error_message": "Amount must be greater than 0"
-    },
-    "details": {
-        "linkInfo": "Link info",
-        "copyLink": "Copy link",
-        "withdrawAssets": "Withdraw assets"
+        "asset": "Asset"
     },
     "claim": {
         "claim": "Claim",
         "claimToken": "Claim token",
         "amount": "Amount",
         "address": "Address",
-        "asset": "Receive asset",
-        "addressPlaceholder": "Type in address",
-        "receive_options": "Receive options",
-        "receive": "Receive",
-        "payment": "Payment"
+        "asset": "Asset",
+        "addressPlaceholder": "ex. 0xecd93dyaf....asfewg934d",
+        "receive_options": "Receive options"
     },
     "continue": "Continue",
     "submit": "Submit",
     "cashier": "Cashier",
     "login": "Login",
-    "processing": "Processing...",
-    "retry": "Retry",
-    "optional": "Optional",
     "home": {
         "guide": {
             "header": "Cashier links",
@@ -59,201 +42,26 @@
             "action_failed": "The validation failed",
             "action_failed_message": "Your links is not valid. Please check again."
         },
-        "create_intent": {
-            "action_failed": "Creating link failed."
-        },
-        "usd_conversion": {
-            "no_price_available": "Price unavailable"
-        },
         "confirm_popup": {
             "title": "Confirm transaction",
-            "link_creation_success_title": "Confirm transaction",
-            "link_creation_success_message": "Congratulations! Your transaction was successful.",
-            "receive_label": "You receive",
-            "cashier_link_label": "Cashier link",
-            "send_label": "You send",
-            "asset_label": "Asset to add to link",
-            "asset_claim_label": "Asset",
+            "receive_label": "You will receive",
+            "send_label": "You will send",
             "cashier_fee_label": "Cashier fee",
             "network_fee_label": "Network fee",
-            "link_creation_fee_label": "Link creation fee",
             "total_fee_label": "Total fee",
-            "total_cashier_fees_label": "Total Cashier fees",
-            "total_assets_received_label": "Total assets received",
             "confirm_button": "Confirm",
             "inprogress_button": "Transaction in progress...",
             "retry_button": "Retry",
             "transaction_failed": "Transaction failed",
             "transaction_failed_message": "Retry failed transaction",
             "transaction_success": "Transaction success",
-            "transaction_success_message": "Continue to active link",
-            "processing": "Processing...",
-            "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
-            "info": {
-                "button_text": "Close",
-                "close": "Close"
-            }
+            "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service"
         }
     },
     "common": {
         "error": "Error",
         "commonErrorMessage": "There was a error while creating the link. Please try again later.",
         "creating": "Creating",
-        "creatingLink": "The link is being created. Please wait for seconds.",
-        "clear": "Clear",
-        "loading": "Loading"
-    },
-    "link": {
-        "preview": {
-            "fees": {
-                "label": "Cashier Fees",
-                "creationFee": "Link creation",
-                "totalFee": "Total Cashier fee"
-            }
-        }
-    },
-    "feeInfo": {
-        "title": "Info on fees",
-        "cashierFeeHeader": "Link creation fee",
-        "cashierFeeText": "Cashier charges a modest fee for creating links. The fees help us operate and improve Cashier.",
-        "networkFeeHeader": "Network fee",
-        "networkFeeText": [
-            "Network fees are charged by the blockchains, not by Cashier, as a payment to transfer assets on the blockchain. Cashier collects network fees to facilitate these transfer payments.",
-            "When an asset is sent to the link, network fee is charged. The amount may depends on the blockchain.",
-            "When an asset is received from the link, network fee is charged. Cashier preemptively collects these network fees from the link creator, so that the receiver does not have to pay a network fee to receive assets from the link."
-        ]
-    },
-    "wallet": {
-        "noToken": "You can add a token by clicking the + button above.",
-        "details": {
-            "header": "Wallet Balance",
-            "send": "Send",
-            "receive": "Receive"
-        },
-        "tabs": {
-            "tokens": {
-                "header": "Tokens",
-                "manage": "Manage tokens"
-            },
-            "nfts": {
-                "header": "NFTs"
-            }
-        },
-        "banner": {
-            "title": "NFT Coming soon!",
-            "text": "Included in Release 3"
-        },
-        "receive": {
-            "header": "Receive",
-            "address": "Address",
-            "copy": "Copy",
-            "copySuccess": "Address copied to clipboard",
-            "copyError": "Failed to copy address",
-            "receiveToken": "Asset",
-            "useAccountId": "Use Account ID instead",
-            "receiveWarning1": "Send assets to this address to begin using Cashier.",
-            "receiveWarning2": "Ensure that you are only sending assets that are ",
-            "boldReceiveWarning": "meant for this address,",
-            "receiveWarning3": " otherwise you may lose them forever."
-        },
-        "send": {
-            "header": "Send",
-            "sendToken": "Send token",
-            "max": "Max",
-            "destinationAddress": "Destination address",
-            "button": "Send"
-        }
-    },
-    "manage": {
-        "syncingPreferences": "Syncing preferences",
-        "header": "Manage tokens",
-        "search": {
-            "placeholder": "Search a token",
-            "noResults": "No results found",
-            "missingToken": "Missing a token?"
-        },
-        "import": "Import manually",
-        "missing": "Missing a token?"
-    },
-    "import": {
-        "header": "Import token",
-        "form": {
-            "message1": "Ledger and Index canister IDs are on the project's website.",
-            "message2": "The Index canister ID is optional, but without it, Cashier can't display transactions.",
-            "chain": {
-                "label": "Network",
-                "placeholder": "Select a network",
-                "error": {
-                    "required": "Network is required"
-                }
-            },
-            "ledgerCanisterId": {
-                "label": "Contract address",
-                "error": {
-                    "required": "Contract address is required",
-                    "format": "Invalid contract address"
-                }
-            },
-            "indexCanisterId": {
-                "label": "Index Canister ID",
-                "error": {
-                    "format": "Invalid Index Canister ID"
-                }
-            }
-        },
-        "loading": {
-            "fetchMetdata": "Fetching metadata"
-        }
-    },
-    "review": {
-        "header": "Review",
-        "token": "Token",
-        "import": "Import",
-        "message": "Make sure you trust the token you are adding. If the token you are adding is controlled by a malicious party, they could try and scam you e.g., by making you believe you received a significant amount of tokens in order to trick you into sending them tokens in return or perform other undesired actions. Learn more about scams and security risks e.g. here."
-    },
-    "history": {
-        "hero": {
-            "about": "About",
-            "tokenName": "Token Name",
-            "chain": "Network",
-            "contract": "Contract"
-        },
-        "list": {
-            "noData": "Transaction will appear here",
-            "cannotFind": "Cannot find?",
-            "checkExplorer": "Check explorer"
-        },
-        "item": {
-            "receive": "Received",
-            "from": "From",
-            "send": "Sent",
-            "to": "To"
-        }
-    },
-    "confirmation_drawer": {
-        "total_fees": "Total fees",
-        "title": "Confirm transaction",
-        "link_creation_success_title": "Confirm transaction",
-        "link_creation_success_message": "Congratulations! Your transaction was successful.",
-        "receive_label": "You receive",
-        "cashier_link_label": "Cashier link",
-        "send_label": "You send",
-        "asset_label": "Asset to add to link",
-        "asset_claim_label": "Asset",
-        "total_fee_label": "Total fees",
-        "confirm_button": "Confirm",
-        "inprogress_button": "Transaction in progress...",
-        "retry_button": "Retry",
-        "processing": "Processing...",
-        "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
-        "continue_button": "Continue",
-        "fee-breakdown": {
-            "title": "Total fees breakdown",
-            "close_button": "Close",
-            "link_creation_fee": "Link creation fee",
-            "network_fee": "Network Fee",
-            "total_fees": "Total fees",
-            "multiple_tokens": "Multiple tokens"
-        }
+        "creatingLink": "The link is being created. Please wait for seconds."
     }
 }

@@ -1,12 +1,11 @@
 {
     "cashier_backend": {
-        "staging": "jjio5-5aaaa-aaaam-adhaq-cai"
+        "ic": "jjio5-5aaaa-aaaam-adhaq-cai"
     },
     "cashier_frontend": {
-        "ic": "jg57n-xyaaa-aaaam-admqq-cai",
-        "staging": "iqwhg-ciaaa-aaaam-admvq-cai"
+        "ic": "jg57n-xyaaa-aaaam-admqq-cai"
     },
-    "token_storage": {
-        "staging": "o4l23-2iaaa-aaaam-aehga-cai"
+    "cashier_frontend_staging": {
+        "ic": "iqwhg-ciaaa-aaaam-admvq-cai"
     }
 }

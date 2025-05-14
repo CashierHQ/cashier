@@ -1,6 +1,4 @@
-import LinkService from "@/services/link/link.service";
-import { LinkGetUserStateInputModel } from "@/services/types/link.service.types";
-import { UsdConversionService } from "@/services/usdConversionService";
+import LinkService from "@/services/link.service";
 import UserService from "@/services/user.service";
 import { groupLinkListByDate } from "@/utils";
 import { Identity } from "@dfinity/agent";
@@ -46,59 +44,13 @@ export const queryKeys = createQueryKeyStore({
                 let groupedLinkList = null;
                 try {
                     const linkService = new LinkService(identity);
-                    const links = await linkService.getLinkList();
+                    const links = await linkService.getLinks();
                     groupedLinkList = groupLinkListByDate(links?.data.map((link) => link.link));
                 } catch (err) {
-                    console.log("🚀 ~ queryFn: ~ links list:", err);
+                    console.log("🚀 ~ queryFn: ~ err:", err);
                     throw err;
                 }
                 return groupedLinkList;
-            },
-        }),
-        detail: (
-            linkId: string | undefined,
-            identity: Identity | PartialIdentity | undefined,
-            actionType?: string,
-        ) => ({
-            queryKey: [QUERY_KEYS.LINKS, linkId],
-            queryFn: async () => {
-                if (!linkId) throw new Error("Link ID is required");
-                try {
-                    const linkService = identity ? new LinkService(identity) : new LinkService();
-                    const linkDetail = await linkService.getLink(linkId, actionType);
-                    return linkDetail;
-                } catch (error) {
-                    console.log("🚀 ~ queryFn: ~ error:", error);
-                    throw error;
-                }
-            },
-        }),
-
-        feePreview: (
-            linkId: string | undefined,
-            identity: Identity | PartialIdentity | undefined,
-        ) => ({
-            queryKey: ["links", "feePreview", linkId],
-            queryFn: async () => {
-                if (!linkId || !identity) return [];
-                const linkService = new LinkService(identity);
-                return linkService.getFeePreview(linkId);
-            },
-        }),
-        userState: (
-            input: LinkGetUserStateInputModel,
-            identity: Identity | PartialIdentity | undefined,
-        ) => ({
-            queryKey: [QUERY_KEYS.LINKS, input.link_id, input.action_type],
-            queryFn: async () => {
-                try {
-                    const linkService = new LinkService(identity);
-                    const userState = await linkService.getLinkUserState(input);
-                    return userState;
-                } catch (error) {
-                    console.log("🚀 ~ queryFn: ~ error:", error);
-                    throw error;
-                }
             },
         }),
     },
@@ -149,20 +101,6 @@ export const queryKeys = createQueryKeyStore({
                     localStorage.getItem(METADATA_LIST_KEY) || "[]",
                 );
                 return metadataList;
-            },
-        }),
-        conversionRates: (wallet: string | undefined, asset: string | undefined) => ({
-            queryKey: [QUERY_KEYS.TOKENS, "conversionRates", wallet, asset],
-            queryFn: async () => {
-                if (!wallet) throw new Error("Wallet address is required");
-                if (!asset) throw new Error("Token address is required");
-
-                const conversionRates = await UsdConversionService.getConversionRates(
-                    wallet,
-                    asset,
-                );
-
-                return conversionRates;
             },
         }),
     },

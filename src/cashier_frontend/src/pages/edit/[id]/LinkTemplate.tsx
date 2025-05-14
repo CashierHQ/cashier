@@ -1,228 +1,166 @@
 import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { string, z } from "zod";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
-import { useCarousel } from "@/components/link-template/link-template.hooks";
-import { LINK_TEMPLATES } from "@/constants/linkTemplates";
+import { ParitalFormProps } from "@/components/multi-step-form";
+import LinkCard from "@/components/link-card";
+import { LINK_TEMPLATE_DESCRIPTION_MESSAGE } from "@/constants/message";
+import { FixedBottomButton } from "@/components/fix-bottom-button";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    type CarouselApi,
+} from "@/components/ui/carousel";
+import React, { useEffect } from "react";
 import { LINK_TYPE } from "@/services/types/enum";
-import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import PhonePreview from "@/components/ui/phone-preview";
-import { useResponsive } from "@/hooks/responsive-hook";
-import { Label } from "@/components/ui/label";
-import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
-import useToast from "@/hooks/useToast";
-import TransactionToast from "@/components/transaction/transaction-toast";
-import { useLinkAction } from "@/hooks/link-action-hooks";
-import { stateToStepIndex } from ".";
-function isLinkTypeSupported(linkType: LINK_TYPE) {
-    const supportedLinkTypes = [
-        LINK_TYPE.SEND_TIP,
-        LINK_TYPE.SEND_TOKEN_BASKET,
-        LINK_TYPE.SEND_AIRDROP,
-        LINK_TYPE.RECEIVE_PAYMENT,
-    ];
 
-    return supportedLinkTypes.includes(linkType);
+export const linkTemplateSchema = z.object({
+    title: z.string().min(5),
+    linkType: z.string(),
+});
+
+type LinkTemplateInput = z.infer<typeof linkTemplateSchema>;
+const TEMPLATE_ORDER = [LINK_TYPE.TIP_LINK, LINK_TYPE.AIRDROP, LINK_TYPE.TOKEN_BASKET];
+
+interface TEMPLATE {
+    label: string;
+    header: string;
+    message: string;
+    title: string;
+    src: string;
 }
 
-export interface LinkTemplateProps {
-    onSelectUnsupportedLinkType?: () => void;
+interface TEMPLATE {
+    label: string;
+    header: string;
+    message: string;
+    title: string;
+    src: string;
 }
+
+const templates: TEMPLATE[] = [
+    {
+        label: "Claim",
+        header: "Tip",
+        src: "/icpLogo.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TIP,
+        title: "Tipping crypto",
+    },
+    {
+        label: "Claim",
+        header: "Airdrop (Coming soon)",
+        src: "/chatToken.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.AIRDROP,
+        title: "Airdrop",
+    },
+    {
+        label: "Claim",
+        header: "Token basket (Coming soon)",
+        src: "/tokenBasket.png",
+        message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.TOKEN_BASKET,
+        title: "Token basket",
+    },
+];
 
 export default function LinkTemplate({
-    onSelectUnsupportedLinkType = () => {},
-}: LinkTemplateProps) {
+    defaultValues = {},
+    handleSubmit,
+    handleChange,
+}: ParitalFormProps<LinkTemplateInput, Partial<LinkTemplateInput>>) {
     const { t } = useTranslation();
-    const { setStep } = useMultiStepFormContext();
-    const { updateUserInput, getUserInput, userInputs, setButtonState } =
-        useLinkCreationFormStore();
+    const [api, setApi] = React.useState<CarouselApi>();
+    const [current, setCurrent] = React.useState(0);
+    //const [count, setCount] = React.useState(0);
+    const form = useForm<z.infer<typeof linkTemplateSchema>>({
+        resolver: zodResolver(linkTemplateSchema),
+        defaultValues: {
+            title: "",
+            linkType: LINK_TYPE.NFT_CREATE_AND_AIRDROP,
+            ...defaultValues,
+        },
+    });
 
-    const { toastData, showToast, hideToast } = useToast();
-
-    const responsive = useResponsive();
-
-    const { link, callLinkStateMachine, isUpdating } = useLinkAction();
-
-    const carousel = useCarousel();
-
-    const handleSubmit = async () => {
-        const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
-
-        const currentLink = link ? getUserInput(link.id) : undefined;
-
-        if (!currentLink?.title) {
-            showToast("Error", "Please enter a title", "error");
+    useEffect(() => {
+        if (!api) {
             return;
         }
 
-        if (isLinkTypeSupported(currentLink?.linkType as LINK_TYPE)) {
-            if (!currentLink || !currentLink.linkId) {
-                showToast("Error", "Link not found", "error");
-                return;
-            }
+        //setCount(api.scrollSnapList().length);
+        setCurrent(api.selectedScrollSnap());
 
-            if (
-                !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
-                currentLink.assets &&
-                currentLink.assets.length > 1
-            ) {
-                currentLink.assets = [currentLink.assets[0]];
-            }
-
-            try {
-                const stateMachineRes = await callLinkStateMachine({
-                    linkId: currentLink.linkId,
-                    linkModel: currentLink,
-                    isContinue: true,
-                });
-
-                console.log("🚀 ~ stateMachineRes:", stateMachineRes);
-
-                const stepIndex = stateToStepIndex(stateMachineRes.state);
-                setStep(stepIndex);
-            } catch (error) {
-                console.error("Error calling state machine", error);
-                showToast("Error", "Failed to call state machine", "error");
-            }
-        } else {
-            onSelectUnsupportedLinkType();
-        }
-    };
-
-    useEffect(() => {
-        carousel.setCurrent(
-            LINK_TEMPLATES.findIndex((template) => template.linkType === link?.linkType) || 0,
-        );
-    }, [link]);
-
-    useEffect(() => {
-        const selectedTemplate = LINK_TEMPLATES[carousel.current];
-        if (link?.id) {
-            updateUserInput(link.id, {
-                linkType: selectedTemplate.linkType,
-            });
-        }
-    }, [carousel.current]);
-
-    // Update button state
-    useEffect(() => {
-        const currentTemplate = LINK_TEMPLATES[carousel.current];
-        const title = userInputs.get(link?.id || "")?.title;
-        const isComingSoon = currentTemplate.isComingSoon;
-
-        setButtonState({
-            label: isComingSoon ? "Coming Soon" : t("continue"),
-            isDisabled: isUpdating || isComingSoon || !title || title.trim() === "",
-            action: handleSubmit,
+        api.on("select", () => {
+            setCurrent(api.selectedScrollSnap());
         });
-    }, [carousel.current, userInputs, isUpdating, link]);
+    }, [api]);
 
-    if (!link) {
-        return null;
-    }
+    useEffect(() => {
+        handleChange({
+            linkType: TEMPLATE_ORDER[current],
+        });
+        form.setValue("linkType", TEMPLATE_ORDER[current]);
+    }, [current]);
 
     return (
-        <div className="w-full h-full flex flex-col overflow-hidden mt-2">
-            <div className="flex-shrink-0">
-                <div className="input-label-field-container">
-                    <Label>{t("create.linkName")}</Label>
-                    <Input
-                        value={userInputs.get(link.id)?.title}
-                        onChange={(e) => {
-                            updateUserInput(link.id, {
+        <div className="w-full flex flex-col">
+            <Form {...form}>
+                <form
+                    onSubmit={form.handleSubmit(handleSubmit)}
+                    onChange={(e: React.ChangeEvent<HTMLFormElement>) => {
+                        if (e.target.name == "title") {
+                            handleChange({
                                 title: e.target.value,
                             });
-                        }}
-                        placeholder={t("create.linkNamePlaceholder")}
-                    />
-                </div>
-            </div>
-
-            <div className="input-label-field-containe mt-4">
-                <Label>{t("create.linkType")}</Label>
-                <div className="flex flex-col items-center justify-center bg-lightgreen rounded-[16px] py-3 h-fit">
-                    <div className="relative w-full overflow-hidden h-full">
-                        <button
-                            type="button"
-                            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white w-10 h-10 rounded-full flex items-center justify-center shadow-sm disabled:opacity-50"
-                            onClick={() => carousel.setCurrent(Math.max(0, carousel.current - 1))}
-                            disabled={carousel.current === 0}
-                        >
-                            <ChevronLeft className="text-green" strokeWidth={1.7} />
-                        </button>
-
-                        <div
-                            className="relative flex transition-transform duration-300 ease-in-out h-[20rem] md:h-[400px] pb-2"
-                            style={{
-                                transform: `translateX(-${carousel.current * (100 / LINK_TEMPLATES.length)}%)`,
-                                width: `${LINK_TEMPLATES.length * 100}%`,
-                            }}
-                        >
-                            {LINK_TEMPLATES.map((template, index) => (
-                                <div
-                                    key={`custom-template-${index}`}
-                                    className="flex-shrink-0 flex flex-col justify-center items-center px-2 h-[100%]"
-                                    style={{ width: `${100 / LINK_TEMPLATES.length}%` }}
-                                >
-                                    <div className="flex flex-col items-center justify-center mb-2 gap-0">
-                                        <p className="text-[14px] font-medium uppercase">
-                                            {template.header}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                            {template.isComingSoon && " (Coming soon)"}
-                                        </p>
-                                    </div>
-                                    <div className="relative h-fit">
-                                        <PhonePreview
-                                            src={template.src}
-                                            title={template.title}
-                                            message={template.message}
-                                            small={responsive.isSmallDevice}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <button
-                            type="button"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white w-10 h-10 rounded-full flex items-center justify-center shadow-sm disabled:opacity-50"
-                            onClick={() =>
-                                carousel.setCurrent(
-                                    Math.min(LINK_TEMPLATES.length - 1, carousel.current + 1),
-                                )
-                            }
-                            disabled={carousel.current === LINK_TEMPLATES.length - 1}
-                        >
-                            <ChevronRight className="text-green" strokeWidth={1.7} />
-                        </button>
-
-                        <div className="flex gap-4 mt-0 items-center justify-center w-full">
-                            <div className="flex gap-4 bg-white/50 px-2 py-2 rounded-full">
-                                {LINK_TEMPLATES.map((_, index) => (
-                                    <button
-                                        key={`dot-${index}`}
-                                        type="button"
-                                        className={`w-2 h-2 rounded-full ${
-                                            index === carousel.current ? "bg-green" : "bg-white"
-                                        }`}
-                                        onClick={() => carousel.setCurrent(index)}
+                        }
+                    }}
+                >
+                    <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t("create.linkName")}</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        placeholder={t("create.linkNamePlaceholder")}
+                                        {...field}
                                     />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <div className="w-full h-[1px] bg-gray-200 my-3" />
+                    <div className="flex flex-col items-center bg-lightgreen rounded-md py-3 md:py-2 2xl:py-3 my-3 h-[52vh] xl:h-[50vh] 2xl:h-[60vh]">
+                        <Carousel className="items-center" setApi={setApi}>
+                            <CarouselContent>
+                                {templates.map((template, index) => (
+                                    <CarouselItem key={`template-${index}`}>
+                                        <LinkCard
+                                            label={template.label}
+                                            header={template.header}
+                                            src={template.src}
+                                            message={template.message}
+                                            title={template.title}
+                                        />
+                                    </CarouselItem>
                                 ))}
-                            </div>
-                        </div>
+                            </CarouselContent>
+                        </Carousel>
                     </div>
-                </div>
-            </div>
 
-            <TransactionToast
-                open={toastData?.open ?? false}
-                onOpenChange={hideToast}
-                title={toastData?.title ?? ""}
-                description={toastData?.description ?? ""}
-                variant={toastData?.variant ?? "default"}
-            />
+                    <FixedBottomButton type="submit">{t("continue")}</FixedBottomButton>
+                </form>
+            </Form>
         </div>
     );
 }

@@ -1,22 +1,14 @@
 import { fileURLToPath, URL } from "url";
 import react from "@vitejs/plugin-react";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import environment from "vite-plugin-environment";
 import dotenv from "dotenv";
 import tailwindcss from "tailwindcss";
-import path, { resolve } from "path";
+import path from "path";
 
-export default defineConfig(({ command, mode }) => {
-    // Determine which .env file to use based on mode
-    // Supports: .env.local, .env.staging, .env.production
-    const envFile = `.env.${mode}`;
-    const envPath = resolve(__dirname, envFile);
+dotenv.config({ path: "../../.env" });
 
-    // Load the environment variables from the determined .env file
-    dotenv.config({ path: envPath });
-
-    console.log(`Building for ${mode} environment using ${envFile}`);
-
+export default defineConfig((mode) => {
     return {
         build: {
             emptyOutDir: true,

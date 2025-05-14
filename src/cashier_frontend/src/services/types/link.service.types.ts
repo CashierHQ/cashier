@@ -1,7 +1,4 @@
 import { IntentCreateModel } from "./intent.service.types";
-import { ActionModel } from "./action.service.types";
-import { ACTION_TYPE, CHAIN, LINK_INTENT_ASSET_LABEL } from "./enum";
-import { LinkDto } from "../../../../declarations/cashier_backend/cashier_backend.did";
 
 export enum State {
     New = "New",
@@ -9,7 +6,6 @@ export enum State {
     Active = "Active",
     PendingPreview = "PendingPreview",
     PendingDetail = "PendingDetail",
-    InactiveEnded = "InactiveEnded",
 }
 
 export enum Template {
@@ -22,11 +18,34 @@ export enum Chain {
     IC = "IC",
 }
 
+export type ActionModel = {
+    arg: string;
+    method: string;
+    canister_id: string;
+    label: string;
+};
+
 export type AssetInfoModel = {
+    chain: string;
     address: string;
-    amountPerUse: bigint;
-    label?: LINK_INTENT_ASSET_LABEL | string;
-    chain?: CHAIN;
+    amount: bigint;
+};
+
+export type UpdateLinkInput = {
+    title: string;
+    //++ assetInfo
+    chain: Chain;
+    amount: number;
+    // -- assetInfo
+
+    //++ action
+    // -- action
+
+    description: string;
+    state: State;
+    template: Template;
+    image: string;
+    create_at: Date;
 };
 
 export type LinkDetailModel = {
@@ -39,14 +58,13 @@ export type LinkDetailModel = {
     template?: string;
     creator?: string;
     create_at: Date;
-    asset_info: AssetInfoModel[];
-    maxActionNumber: bigint;
-    useActionCounter: bigint;
+    amount: bigint;
+    amountNumber: number;
+    tokenAddress: string;
 };
 
 export type LinkModel = {
     link: LinkDetailModel;
-    action?: ActionModel;
     intent_create?: IntentCreateModel;
 };
 
@@ -55,22 +73,4 @@ export type TipLinkModel = {
     title: string;
     asset: string;
     amount: number;
-};
-
-export type LinkGetUserStateInputModel = {
-    link_id: string;
-    action_type: ACTION_TYPE;
-    anonymous_wallet_address?: string;
-};
-
-export type LinkUpdateUserStateInputModel = {
-    link_id: string;
-    action_type: ACTION_TYPE;
-    isContinue: boolean;
-    anonymous_wallet_address?: string;
-};
-
-export type LinkGetUserStateOutputModel = {
-    action: ActionModel | undefined;
-    link_user_state: string | undefined;
 };

@@ -1,69 +1,55 @@
-use cashier_types::{User, UserWallet};
 use uuid::Uuid;
 
 use crate::{
-    core::user::types::UserDto,
-    repositories::{self},
+    error,
+    repositories::{user_store, user_wallet_store},
+    types::user::User,
 };
 
-pub mod v2;
+use super::link::create_example_link::create_example_link;
 
-pub fn create_new() -> Result<UserDto, String> {
+pub fn create_new() -> Result<User, String> {
     if is_existed() {
         return Err("User already existed".to_string());
     }
 
+    let caller = ic_cdk::api::caller();
+
     let id = Uuid::new_v4();
     let id_str = id.to_string();
 
-    let user = User {
-        id: id_str.clone(),
-        email: None,
-    };
+    let user = User::new(id_str.clone(), None, caller.to_string());
 
-    let user_wallet = UserWallet {
-        user_id: id_str.clone(),
-    };
+    user_store::create(user.to_persistence());
+    user_wallet_store::create(caller.to_string(), id_str.clone());
 
-    let caller = ic_cdk::api::caller();
+    // ignore if failed
+    match create_example_link(id_str.clone()) {
+        Ok(_) => (),
+        Err(_) => {
+            error!("Failed to create example link");
+        }
+    }
 
-    let user_repository = repositories::user::UserRepository::new();
-    let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
-
-    user_repository.create(user.clone());
-    user_wallet_repository.create(caller.to_text(), user_wallet.clone());
-
-    Ok(UserDto {
-        id: id_str,
-        email: None,
-        wallet: caller.to_text(),
-    })
+    Ok(user)
 }
 
-pub fn get() -> Option<UserDto> {
-    let user_repository = repositories::user::UserRepository::new();
-    let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
+pub fn get() -> Option<User> {
     let caller = ic_cdk::api::caller();
-
-    let user_wallet = match user_wallet_repository.get(&caller.to_string()) {
+    let user_id = match user_wallet_store::get(&caller.to_string()) {
         Some(user_id) => user_id,
         None => return None,
     };
 
-    let user = user_repository.get(&user_wallet.user_id);
+    let user = user_store::get(user_id);
 
     match user {
-        Some(user) => Some(UserDto {
-            id: user.id,
-            email: user.email,
-            wallet: caller.to_text(),
-        }),
+        Some(user) => Some(User::from_persistence(user)),
         None => None,
     }
 }
 
 pub fn is_existed() -> bool {
     let caller = ic_cdk::api::caller();
-    let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
-    user_wallet_repository.get(&caller.to_string()).is_some()
+    user_wallet_store::get(&caller.to_string()).is_some()
 }

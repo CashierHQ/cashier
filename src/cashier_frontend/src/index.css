@@ -1,48 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer utilities {
-    .scrollbar-hide {
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
-    }
-
-    .scrollbar-hide::-webkit-scrollbar {
-        display: none; /* Chrome, Safari and Opera */
-    }
-
-    .light-borders {
-        @apply border border-[#D0D5DD]/50 rounded-[8px];
-    }
-
-    .light-borders-green {
-        @apply border border-[#E8F2EE] rounded-[8px];
-    }
-
-    .input-field {
-        @apply light-borders py-[8px] px-[12px] placeholder:text-[#D9D9D9] font-normal text-[16px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-green disabled:cursor-not-allowed disabled:opacity-50 w-full;
-    }
-
-    .asset-amount-percentage-button {
-        @apply flex-1 shadow-none light-borders text-[14px] text-primary leading-none px-[12px] font-normal h-[68px] disabled:cursor-not-allowed disabled:opacity-50;
-    }
-
-    .input-field-asset {
-        @apply border light-borders py-[8px] px-[12px] placeholder:text-[#D9D9D9] font-normal text-[16px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-green disabled:cursor-not-allowed disabled:opacity-50 w-full;
-    }
-
-    .input-label {
-        @apply text-[14px] font-medium;
-    }
-
-    .input-label-field-container {
-        @apply flex flex-col gap-1 px-[1px];
-    }
-}
-
 @layer base {
     :root {
         --background: 0 0% 100%;

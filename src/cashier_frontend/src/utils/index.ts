@@ -1,7 +1,5 @@
-import { IC_EXPLORER_IMAGES_PATH } from "@/const";
 import { MediaQuery } from "@/hooks/responsive-hook";
 import { UIResponsiveType } from "@/pages/edit/[id]/index_responsive";
-import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
 export const safeParseJSON = (arg: Record<string, unknown>): string => {
@@ -25,6 +23,7 @@ export type Response<T, E> =
       };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
+    console.log("response", response);
     if ("ok" in response) {
         return response.ok;
     } else if ("Ok" in response) {
@@ -133,7 +132,7 @@ export const formatDateString = (dateString: string): string => {
     }
 };
 
-export const getResponsiveClassname = (
+export const getReponsiveClassname = (
     responsive: MediaQuery,
     responsiveObject: UIResponsiveType | undefined,
 ): string | undefined => {
@@ -156,27 +155,4 @@ export const convertTokenAmountToNumber = (amount: number, decimals: number): nu
 };
 export const convertDecimalBigIntToNumber = (amount: bigint, decimals: number): number => {
     return Number(amount) / 10 ** decimals;
-};
-
-export const transformShortAddress = (address: string): string => {
-    return `${address.slice(0, 8)} ... ${address.slice(-8)}`;
-};
-
-export const getTokenImage = (tokenAddress: string) => {
-    return `${IC_EXPLORER_IMAGES_PATH}${tokenAddress}`;
-};
-
-export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
-    switch (linkType) {
-        case LINK_TYPE.SEND_TIP:
-            return `/tip-link-default.svg`;
-        case LINK_TYPE.SEND_AIRDROP:
-            return `/airdrop-default.svg`;
-        case LINK_TYPE.SEND_TOKEN_BASKET:
-            return `/token-basket-default.svg`;
-        case LINK_TYPE.RECEIVE_PAYMENT:
-            return `/receive-payment-default.svg`;
-        default:
-            return `/smallLogo.svg`;
-    }
 };
