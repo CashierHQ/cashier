@@ -40,7 +40,7 @@ const WalletButton: React.FC<WalletButtonProps> = ({
             )}
             disabled={disabled}
         >
-            <span className="flex items-center w-full">
+            <span className="flex items-center w-full text-[14px]">
                 {image ? (
                     <img src={image} alt={title} className="h-6 w-6 mr-2" />
                 ) : (
