@@ -46,7 +46,10 @@ export const TransactionItem: FC<TransactionItemProps> = ({
         // Calculate adjusted amount by subtracting only the network fee
         if (networkFee && token.decimals !== undefined) {
             const networkFeeAmount = Number(networkFee.amount) / 10 ** token.decimals;
-            const newAdjustedAmount = Math.max(0, assetAmount - networkFeeAmount);
+            console.log("networkFeeAmount: ", networkFeeAmount);
+            console.log("assetAmount: ", assetAmount);
+            const newAdjustedAmount = assetAmount - networkFeeAmount;
+            console.log("newAdjustedAmount: ", newAdjustedAmount);
             setAdjustedAmount(newAdjustedAmount);
         } else {
             setAdjustedAmount(assetAmount);
@@ -75,7 +78,12 @@ export const TransactionItem: FC<TransactionItemProps> = ({
                         </span>
                     </p>
                 </div>
-                <div className="flex flex-col items-end">
+                <div
+                    onClick={() => {
+                        console.log("adjusted amount: ", adjustedAmount);
+                    }}
+                    className="flex flex-col items-end"
+                >
                     <div className="flex items-center gap-1">
                         <p className="text-[14px] font-normal">
                             {formatPrice(adjustedAmount?.toString() || "0")}
