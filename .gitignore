@@ -27,7 +27,7 @@ dist/
 .env
 .env.local
 .env.staging
-.env.prod
+.env.production
 artifacts
 
 logs/*

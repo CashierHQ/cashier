@@ -1,4 +1,3 @@
-import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useNavigate } from "react-router-dom";
 import { FungibleToken } from "@/types/fungible-token.speculative";
@@ -53,8 +52,11 @@ export function WalletToken({ token }: WalletTokenProps) {
                         ? "-"
                         : `${
                               token.amount
-                                  ? prettyNumber(
-                                        convertDecimalBigIntToNumber(token.amount, token.decimals),
+                                  ? formatNumber(
+                                        convertDecimalBigIntToNumber(
+                                            token.amount,
+                                            token.decimals,
+                                        ).toString(),
                                     )
                                   : "0"
                           }`}
