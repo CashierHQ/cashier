@@ -5,30 +5,20 @@ import "./locales/config";
 import "./index.css";
 import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
-import { InternetIdentity } from "@nfid/identitykit";
-import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-const isMobile = () => {
-    if (
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    ) {
-        return true;
-    } else {
-        return false;
-    }
-};
+import { useSignerStore } from "./stores/signerStore";
 
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
 console.log("ENV", import.meta.env.VITE_IC_EXPLORER_BASE_URL);
+console.log(import.meta.env.MODE);
+console.log(import.meta.env.VITE_BACKEND_CANISTER_ID);
+console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
 
 function App() {
     const queryClient = new QueryClient();
-    useEffect(() => {
-        if (!isMobile()) {
-            // listSigners.push(Plug);
-        }
-    }, []);
+    const { signers } = useSignerStore();
+
     return (
         <IdentityKitProvider
             featuredSigner={false}
@@ -37,14 +27,15 @@ function App() {
             }}
             onConnectSuccess={() => {}}
             onDisconnect={() => {
-                console.log("Log out");
                 queryClient.clear();
             }}
             authType={IdentityKitAuthType.DELEGATION}
-            signers={isMobile() ? [InternetIdentity] : [InternetIdentity]}
+            signers={signers}
             signerClientOptions={{
                 targets,
+                maxTimeToLive: 3_600_000_000_000n,
             }}
+            discoverExtensionSigners={false}
         >
             <QueryClientProvider client={queryClient}>
                 <AppRouter />

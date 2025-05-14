@@ -1,3 +1,28 @@
+import { TASK, CHAIN, INTENT_STATE, INTENT_TYPE } from "./enum";
+
+export type AssetModel = {
+    address: string;
+    chain: string;
+};
+
+export type WalletModel = {
+    chain: string;
+    address: string;
+};
+
+export type IntentModel = {
+    id: string;
+    task: TASK;
+    chain: CHAIN;
+    state: INTENT_STATE;
+    type: INTENT_TYPE;
+    from: WalletModel;
+    to: WalletModel;
+    asset: AssetModel;
+    amount: bigint;
+    createdAt: Date;
+};
+
 export type TransactionModel = {
     id: string;
     arg: string;
@@ -12,7 +37,7 @@ export type IntentCreateModel = {
     link_id: string;
     creator_id: string;
     intent_type: string;
-    transactions?: TransactionModel[];
+    transactions?: TransactionModel[][];
 };
 
 export type FeeModel = {
@@ -20,18 +45,4 @@ export type FeeModel = {
     type: string;
     address: string;
     amount: bigint;
-};
-
-export type ReceiveModel = {
-    assetAddress: string[];
-    chain: string;
-    name: string;
-    type: string;
-    assetAmount: bigint[];
-};
-
-export type CreateIntentConsentModel = {
-    fee: FeeModel[];
-    send: FeeModel[];
-    receive: ReceiveModel[];
 };
