@@ -373,10 +373,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             !Object.keys(errors).length &&
             !formAssets.some((asset) => !asset.amount || asset.amount <= BigInt(0));
 
-        console.log("isFormValid", isFormValid);
-        console.log("isUpdating", isUpdating);
-        console.log("maxActionNumber", maxActionNumber);
-
         // button disbled when
         // 1. validation fails
         // 2. calling backend - isUpdating = true

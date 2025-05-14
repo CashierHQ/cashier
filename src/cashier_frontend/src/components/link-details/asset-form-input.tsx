@@ -1,11 +1,8 @@
-import { ChangeEvent, FC, useState, useEffect } from "react";
+import { FC, useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { IconInput } from "@/components/icon-input";
 import AssetButton from "@/components/asset-button";
 import { Label } from "../ui/label";
-import { UsdSwitch } from "./usd-switch";
 import { SelectedAssetButtonInfo } from "./selected-asset-button-info";
-import { AmountActionButtons } from "./amount-action-buttons";
 import { Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TipLinkAssetFormSchema, useFormActions } from "./add-asset-hooks";
@@ -14,7 +11,7 @@ import { useTokens } from "@/hooks/useTokens";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/link-action-hooks";
-import { convertDecimalBigIntToNumber, convertTokenAmountToNumber } from "@/utils";
+import { convertDecimalBigIntToNumber } from "@/utils";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 
