@@ -1,5 +1,3 @@
-import { Phone } from "./ui/phone-frame";
-
 export default function LinkCard({
     src,
     header,
@@ -17,7 +15,6 @@ export default function LinkCard({
 }) {
     /* TODO: Remove after we have all the flows for templates */
     const comingSoonLabel = header?.includes("(Coming soon)") ? "Coming soon" : "";
-
     const renderHeaderTitle = () => {
         if (comingSoonLabel.length > 0) {
             return (
@@ -27,34 +24,39 @@ export default function LinkCard({
                 </span>
             );
         } else {
-            return <h2>{header}</h2>;
+            return <span>{header}</span>;
         }
     };
 
     return (
-        <div className="flex flex-col items-center max-h-[60%]">
-            <div className="text-lg md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
+        <div className="flex flex-col items-center">
+            <div className="text-md md:text-md 2xl:text-lg font-medium mb-3 md:mb-1 2xl:mb-3">
                 {renderHeaderTitle()}
             </div>
-
-            <Phone.Frame className="max-h-[60%] max-w-[calc(45dvh*(9/16))] lg:max-w-[calc(35dvh*(9/16))]">
-                <Phone.Notch />
-
+            <div
+                id="phone-frame"
+                className="flex flex-col items-center bg-white rounded-[2rem] md:rounded-[1.5rem] 2xl:rounded-[2rem] border-black border-8 mt-3 md:mt-1 2xl:mt-3 px-3 pb-1 2xl:pb-5 h-[85vw] min-h-[15rem] md:h-[15rem] xl-[20vw] 2xl:h-[22rem] w-[50vw] md:w-[40%] 2xl:w-[50%]"
+            >
+                <div
+                    id="phone-notch-section"
+                    className="flex w-3/5 h-3 md:h-1 2xl:h-5 bg-black items-center border-black border-8 rounded-b-2xl md:rounded-b-xl 2xl:rounded-b-2xl"
+                ></div>
                 <div className="w-full flex justify-center items-center mt-3 md:mt-1 2xl:mt-3">
-                    <img src="./logo.svg" alt="Cashier logo" className="w-[80px] 2xl:w-[100px]" />
+                    <img src="./logo.svg" alt="Cashier logo" className="w-[60px] 2xl:w-[100px]" />
                 </div>
-
-                <div className="flex flex-col flex-grow items-center justify-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 w-full">
+                <div className="flex flex-col items-center bg-lightgreen rounded-md mt-3 md:mt-1 2xl:mt-3 p-3 max-h-[70%] w-[100%]">
                     <div className="overflow-hidden">
                         <img
                             src={src}
                             alt="Link template"
-                            className="w-[70px] md:w-[60px] xl:w-[60px] 2xl:w-[80px] object-fit"
+                            className="w-[200px] md:w-[60px] xl:w-[60px] 2xl:w-[80px]"
                         />
                     </div>
 
-                    <h3 className="font-semibold py-2 md:py-1 2xl:py-2 text-xs">{title}</h3>
-                    <h3 className="text-[0.5rem]">{message}</h3>
+                    <h3 className="font-semibold py-2 md:py-1 2xl:py-2 text-[0.5rem] md:text-[0.4rem] 2xl:text-[1rem]">
+                        {title}
+                    </h3>
+                    <h3 className="text-[0.4rem] md:text-[0.3rem] 2xl:text-[0.7rem]">{message}</h3>
                     <div
                         className="text-white bg-green rounded-full py-1 mt-3 text-[0.5rem] md:text-[0.5rem] 2xl:text-[1rem] w-[90%] text-center"
                         onClick={onClaim}
@@ -62,7 +64,7 @@ export default function LinkCard({
                         {label}
                     </div>
                 </div>
-            </Phone.Frame>
+            </div>
         </div>
     );
 }

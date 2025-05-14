@@ -1,72 +1,54 @@
 import * as React from "react";
-import { Drawer as VaulDrawer } from "vaul";
+import { Drawer as DrawerPrimitive } from "vaul";
+
 import { cn } from "@/lib/utils";
 
 const Drawer = ({
-    closeThreshold = 0.5,
-    snapPoints = [1],
-    snapToSequentialPoint = false,
+    shouldScaleBackground = true,
     ...props
-}: React.ComponentProps<typeof VaulDrawer.Root>) => (
-    <VaulDrawer.Root
-        closeThreshold={closeThreshold}
-        snapPoints={snapPoints}
-        snapToSequentialPoint={snapToSequentialPoint}
-        {...props}
-    />
+}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
+    <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
 );
 Drawer.displayName = "Drawer";
 
-const DrawerTrigger = VaulDrawer.Trigger;
+const DrawerTrigger = DrawerPrimitive.Trigger;
 
-const DrawerPortal = VaulDrawer.Portal;
+const DrawerPortal = DrawerPrimitive.Portal;
 
-const DrawerClose = VaulDrawer.Close;
+const DrawerClose = DrawerPrimitive.Close;
 
 const DrawerOverlay = React.forwardRef<
-    React.ElementRef<typeof VaulDrawer.Overlay>,
-    React.ComponentPropsWithoutRef<typeof VaulDrawer.Overlay>
+    React.ElementRef<typeof DrawerPrimitive.Overlay>,
+    React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-    <VaulDrawer.Overlay
+    <DrawerPrimitive.Overlay
         ref={ref}
         className={cn("fixed inset-0 z-50 bg-black/80", className)}
         {...props}
     />
 ));
-DrawerOverlay.displayName = VaulDrawer.Overlay.displayName;
+DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
 const DrawerContent = React.forwardRef<
-    React.ElementRef<typeof VaulDrawer.Content>,
-    React.ComponentPropsWithoutRef<typeof VaulDrawer.Content>
+    React.ElementRef<typeof DrawerPrimitive.Content>,
+    React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
     <DrawerPortal>
         <DrawerOverlay />
-        <VaulDrawer.Content
+        <DrawerPrimitive.Content
             ref={ref}
             className={cn(
-                "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[24px] border bg-background",
+                "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
                 className,
             )}
             {...props}
         >
-            {/* <DrawerHandle /> */}
+            <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
             {children}
-        </VaulDrawer.Content>
+        </DrawerPrimitive.Content>
     </DrawerPortal>
 ));
 DrawerContent.displayName = "DrawerContent";
-
-const DrawerHandle = React.forwardRef<
-    React.ElementRef<typeof VaulDrawer.Handle>,
-    React.ComponentPropsWithoutRef<typeof VaulDrawer.Handle>
->(({ className, ...props }, ref) => (
-    <VaulDrawer.Handle
-        ref={ref}
-        className={cn("mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted", className)}
-        {...props}
-    />
-));
-DrawerHandle.displayName = "DrawerHandle";
 
 const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
     <div className={cn("grid gap-1.5 p-4 text-center sm:text-left", className)} {...props} />
@@ -79,28 +61,28 @@ const DrawerFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 DrawerFooter.displayName = "DrawerFooter";
 
 const DrawerTitle = React.forwardRef<
-    React.ElementRef<typeof VaulDrawer.Title>,
-    React.ComponentPropsWithoutRef<typeof VaulDrawer.Title>
+    React.ElementRef<typeof DrawerPrimitive.Title>,
+    React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
 >(({ className, ...props }, ref) => (
-    <VaulDrawer.Title
+    <DrawerPrimitive.Title
         ref={ref}
         className={cn("text-lg font-semibold leading-none tracking-tight", className)}
         {...props}
     />
 ));
-DrawerTitle.displayName = VaulDrawer.Title.displayName;
+DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
 
 const DrawerDescription = React.forwardRef<
-    React.ElementRef<typeof VaulDrawer.Description>,
-    React.ComponentPropsWithoutRef<typeof VaulDrawer.Description>
+    React.ElementRef<typeof DrawerPrimitive.Description>,
+    React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
 >(({ className, ...props }, ref) => (
-    <VaulDrawer.Description
+    <DrawerPrimitive.Description
         ref={ref}
         className={cn("text-sm text-muted-foreground", className)}
         {...props}
     />
 ));
-DrawerDescription.displayName = VaulDrawer.Description.displayName;
+DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
 export {
     Drawer,
@@ -113,5 +95,4 @@ export {
     DrawerFooter,
     DrawerTitle,
     DrawerDescription,
-    DrawerHandle,
 };

@@ -8,9 +8,14 @@ import {
     SelectItem,
 } from "@/components/ui/select";
 import { FormControl } from "./ui/form";
-import { FungibleToken } from "@/types/fungible-token.speculative";
+import { IC_EXPLORER_IMAGES_PATH } from "@/services/icExplorer.service";
 
-export type AssetSelectItem = Pick<FungibleToken, "id" | "name" | "address" | "amount" | "logo">;
+export interface AssetSelectItem {
+    name: string;
+    amount: number;
+    tokenAddress: string;
+}
+
 export default function AssetSelect({
     assetList,
     defaultValue,
@@ -31,11 +36,11 @@ export default function AssetSelect({
                         <SelectGroup>
                             <SelectLabel>Choose assets</SelectLabel>
                             {assetList?.map((asset) => (
-                                <SelectItem key={asset.name} value={asset.address}>
+                                <SelectItem key={asset.name} value={asset.tokenAddress}>
                                     <div className="flex">
                                         <img
                                             id="asset-logo"
-                                            src={asset.logo}
+                                            src={`${IC_EXPLORER_IMAGES_PATH}${asset.tokenAddress}`}
                                             width={40}
                                             className="mr-5"
                                         />

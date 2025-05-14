@@ -28,6 +28,3 @@ dist/
 .env.local
 .env.staging
 .env.prod
-artifacts
-
-logs/*

@@ -1,65 +1,94 @@
 // Import generated types for your canister
 import {
-    // CreateLinkInput,
+    CreateLinkInput,
     type _SERVICE,
-    idlFactory,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { getRandomIdentity } from "../utils/wallet";
 import { parseResultResponse } from "../utils/parser";
+import { initLocalAgent } from "../utils/agent";
+import { ActorSubclass } from "@dfinity/agent";
 
-export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
+// Define the path to your canister's WASM file
+export const WASM_PATH = resolve(
+    "target",
+    "wasm32-unknown-unknown",
+    "release",
+    "cashier_backend.wasm",
+);
 
+// The `describe` function is used to group tests together
+// and is completely optional.
 describe("User", () => {
-    let pic: PocketIc;
-    let actor: Actor<_SERVICE>;
+    // Define variables to hold our PocketIC instance, canister ID,
+    // and an actor to interact with our canister.
+    // let pic: PocketIc;
+    // let canisterId: Principal;
+    let actor: ActorSubclass<_SERVICE>;
 
-    const alice = createIdentity("superSecretAlicePassword");
+    const identity = getRandomIdentity();
 
-    beforeAll(async () => {
-        pic = await PocketIc.create(process.env.PIC_URL);
-        const currentTime = new Date(1734434601000);
-        await pic.setTime(currentTime.getTime());
-
-        await pic.tick(1);
-
-        // Setup the canister and actor
-        const fixture = await pic.setupCanister<_SERVICE>({
-            idlFactory,
-            wasm: WASM_PATH,
-        });
-
-        actor = fixture.actor;
-    });
-
-    afterAll(async () => {
-        await pic.tearDown();
-    });
-
+    // The `beforeEach` hook runs before each test.
+    //
+    // This can be replaced with a `beforeAll` hook to persist canister
+    // state between tests.
     beforeEach(async () => {
-        await pic.advanceTime(5 * 60 * 1000);
-        await pic.tick(50);
+        // create a new PocketIC instance
+        // pic = await PocketIc.create(process.env.PIC_URL);
+
+        // // Setup the canister and actor
+        // const fixture = await pic.setupCanister<_SERVICE>({
+        //     idlFactory,
+        //     wasm: WASM_PATH,
+        // });
+
+        // Save the actor and canister ID for use in tests
+        actor = initLocalAgent("jjio5-5aaaa-aaaam-adhaq-cai", identity);
     });
 
-    describe("With Alice", () => {
-        beforeEach(() => {
-            actor.setIdentity(alice);
-        });
-        it("should return error if user didn't exist", async () => {
-            const user = await actor.get_user();
+    // The `afterEach` hook runs after each test.
+    //
+    // This should be replaced with an `afterAll` hook if you use
+    // a `beforeAll` hook instead of a `beforeEach` hook.
+    // afterEach(async () => {
+    //     // tear down the PocketIC instance
+    //     await pic.tearDown();
+    // });
 
-            expect(user).toEqual({ Err: "User not found" });
-        });
+    // The `it` function is used to define individual tests
+    it("should return error if user didn't exist", async () => {
+        // Arrange
 
-        it("should create new user successfully", async () => {
-            const result = await actor.create_user();
-            const user = parseResultResponse(result);
+        // Act
+        const user = await actor.get_user();
 
-            expect(result).toHaveProperty("Ok");
-            expect(result).not.toHaveProperty("Err");
+        // Assert
+        expect(user).toEqual({ Err: "User not found" });
+    });
 
-            expect(user).toHaveProperty("wallet");
-            expect(user.wallet).toBe(alice.getPrincipal().toText());
-        });
+    it("should create new user successfully", async () => {
+        // Act
+        const result = await actor.create_user();
+        const user = parseResultResponse(result);
+
+        // Assert
+        expect(result).toHaveProperty("Ok");
+        expect(result).not.toHaveProperty("Err");
+
+        expect(user).toHaveProperty("wallet");
+        expect(user.wallet).toBe(identity.getPrincipal().toText());
+    });
+
+    it("should create link success", async () => {
+        const input: CreateLinkInput = {
+            link_type: {
+                TipLink: null,
+            },
+        };
+
+        const createLinkRes = await actor.create_link(input);
+
+        // Assert
+        expect(createLinkRes).toHaveProperty("Ok");
     });
 });

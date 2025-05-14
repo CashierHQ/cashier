@@ -8,7 +8,7 @@ import {
 } from "@nfid/identitykit/react";
 import { LuWallet2 } from "react-icons/lu";
 import copy from "copy-to-clipboard";
-import { buttonVariants } from "./ui/button";
+import { Button } from "./ui/button";
 
 interface ExtendedConnectWalletDropdownMenuProps extends ConnectWalletDropdownMenuProps {
     connectedAccount: string;
@@ -30,14 +30,10 @@ function ConnectedWalletDropdownIcon({
 
     return (
         <ConnectWalletDropdownMenu>
-            <ConnectWalletDropdownMenuButton
-                className={buttonVariants({
-                    variant: "outline",
-                    size: "icon",
-                    className: "rounded-sm",
-                })}
-            >
-                <LuWallet2 color="green" size={24} />
+            <ConnectWalletDropdownMenuButton>
+                <Button variant="outline" size="icon" className="rounded-sm">
+                    <LuWallet2 color="green" size={24} />
+                </Button>
             </ConnectWalletDropdownMenuButton>
             <ConnectWalletDropdownMenuItems>
                 <ConnectWalletDropdownMenuAddressItem

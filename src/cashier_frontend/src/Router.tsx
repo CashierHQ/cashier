@@ -1,24 +1,18 @@
-import { createHashRouter, RouterProvider } from "react-router-dom";
-import { useResponsive } from "./hooks/responsive-hook";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LinkPage from "./pages/edit/[id]";
 import HomePage from "@/pages";
 import ClaimPage from "./pages/[id]";
 import DetailPage from "./pages/details/[id]";
-import RequireAuth from "./router/RequireAuth";
-import { WalletProvider } from "./contexts/wallet-context";
+import { useResponsive } from "./hooks/responsive-hook";
 
-const router = createHashRouter([
+const router = createBrowserRouter([
     {
         path: "/",
         element: <HomePage />,
     },
     {
         path: "/edit/:linkId",
-        element: (
-            <RequireAuth>
-                <LinkPage />
-            </RequireAuth>
-        ),
+        element: <LinkPage />,
     },
     {
         path: "/:linkId",
@@ -26,31 +20,20 @@ const router = createHashRouter([
     },
     {
         path: "/details/:linkId",
-        element: (
-            <RequireAuth>
-                <DetailPage />
-            </RequireAuth>
-        ),
+        element: <DetailPage />,
     },
 ]);
-
-// Create a wrapper component that provides wallet context
-const RouterWithWalletProvider = () => {
+export default function AppRouter() {
     const { isSmallDevice } = useResponsive();
-
     return (
         <div
             className={
                 isSmallDevice
-                    ? "min-h-screen h-full"
-                    : "bg-gradient-to-r h-[100vh] from-[#F4FCF9] to-[#F7FAF8] flex items-center justify-center"
+                    ? ""
+                    : "bg-gradient-to-r from-[#F4FCF9] to-[#F7FAF8] h-[100vh] flex items-center justify-center"
             }
         >
-            <WalletProvider>
-                <RouterProvider router={router} />
-            </WalletProvider>
+            <RouterProvider router={router} />
         </div>
     );
-};
-
-export default RouterWithWalletProvider;
+}
