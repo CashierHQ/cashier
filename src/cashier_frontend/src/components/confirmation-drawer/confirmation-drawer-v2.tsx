@@ -142,7 +142,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
 
                     <ConfirmationPopupLegalSection />
                     <Button
-                        className="my-3 mx-auto py-6 w-[95%] disabled:bg-disabledgreen"
+                        className="my-2 mx-auto w-[95%] disabled:bg-disabledgreen"
                         disabled={isButtonDisabled}
                         onClick={onClickSubmit}
                     >
