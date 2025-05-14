@@ -114,8 +114,6 @@ const AssetButton: React.FC<AssetButtonProps> = ({
         return value;
     };
 
-    console.log("is tip: ", isTip);
-
     return (
         <div className="flex flex-col w-full">
             {/* Asset selector with input */}
