@@ -1,10 +1,10 @@
+use cashier_types::Link;
 use uuid::Uuid;
 
 use crate::{
-    repositories::{link_store, user_link_store},
+    repositories::{link, user_link},
     types::{
         chain::Chain,
-        link::{link_state::LinkState, link_type::LinkType, template::Template, AssetInfo, Link},
         user_link::UserLink,
     },
 };
@@ -35,19 +35,19 @@ pub fn create_example_link(user_id: String) -> Result<(), String> {
         total_claim: 1,
     };
 
-    let new_link_1 = Link::new(
-        link1_id_str.clone(),
-        LINK_1_TITLE.to_string().into(),
-        LINK_1_DESCRIPTION.to_string().into(),
-        LinkType::NftCreateAndAirdrop.to_string().into(),
-        Some(vec![asset_info.clone()]),
-        Template::Central.to_string().into(),
-        LinkState::Active.to_string().into(),
-        user_id.clone().into(),
-        ts.into(),
-        Some(LINK_1_LINK_URL.to_string()),
-        Some(LINK_1_NFT_IMAGE.to_string()),
-    );
+    let new_link_1 = Link {
+        id: link1_id_str.clone(),
+        title: Some(LINK_1_TITLE.to_string().into()),
+        description: Some(LINK_1_DESCRIPTION.to_string().into()),
+        nft_image: Some(LINK_1_NFT_IMAGE.to_string().into()),
+        link_image_url: Some(LINK_1_LINK_URL.to_string().into()),
+        link_type: Some(LinkType::NftCreateAndAirdrop.to_string().into()),
+        asset_info: Some(vec![asset_info.clone()]),
+        template: Some(Template::Central.to_string().into()),
+        state: LinkState::Active.to_string().into(),
+        creator: Some(user_id.clone().into()),
+        create_at: Some(ts.into()),
+    }
     let new_user_link_1 = UserLink::new(user_id.clone(), link1_id_str, ts);
 
     let new_link_2 = Link::new(
@@ -74,8 +74,8 @@ pub fn create_example_link(user_id: String) -> Result<(), String> {
         new_user_link_2.to_persistence(),
     ];
 
-    link_store::batch_create(links_to_create);
-    user_link_store::batch_create(user_links_to_create);
+    link::batch_create(links_to_create);
+    user_link::batch_create(user_links_to_create);
 
     //TODO: create intent for user
 

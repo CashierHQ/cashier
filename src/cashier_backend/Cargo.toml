@@ -9,21 +9,36 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = "0.10"
-ic-cdk = "0.16"
-ic-stable-structures = "0.6.5"
-serde = "1.0.210"
-serde_json = "1.0.128"
-getrandom = { version = "0.2", features = ["custom"] }
-rand = { version = "0.8.5", features = ["getrandom"]}
-ic-cdk-timers = "0.11.0"
-uuid = {version = "1.10.0", features = [ "v4" ]}
-proc-macro2 = "1.0.86"
-quote = "1.0.37"
-syn = "2.0.77"
-serde_bytes = "0.11.15"
-itertools = "0.13.0"
-icrc-ledger-types = "0.1.6"
-base64 = "0.22.1"
-rm = "0.3.2"
+candid = {workspace = true}
+ic-cdk = {workspace = true}
+ic-stable-structures = {workspace = true}
+serde = { workspace = true, features = ['derive'] }
+serde_cbor = { workspace = true }
+serde_json = {workspace = true}
+getrandom = {workspace = true, features = ["custom"]}
+rand = {workspace = true, features = ["getrandom"]}
+ic-cdk-timers = {workspace = true}
+uuid = {workspace = true, features = ["v4"]}
+proc-macro2 = {workspace = true}
+quote = {workspace = true}
+syn = {workspace = true}
+serde_bytes = {workspace = true}
+itertools = {workspace = true}
+icrc-ledger-types = {workspace = true}
+base64 = {workspace = true}
+rm = {workspace = true}
+ic-icrc-tx = {workspace = true}
+cashier-types = { path = "../lib/cashier-types" }
+thiserror = "2.0.11"
+
+
+[dev-dependencies]
+async-trait = "0.1.86"
+tokio =  {version = "1.43.0", features = ["full"]}
+faux = { version = "0.1.12" }
+
+# [features]
+# test = ["faux"]
+
+
 
