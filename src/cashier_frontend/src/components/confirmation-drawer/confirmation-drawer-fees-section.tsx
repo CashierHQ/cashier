@@ -12,6 +12,7 @@ import { Avatar } from "../ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/utils/helpers/currency";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -139,7 +140,18 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 const tokenAddress = intent.fee?.address;
                 const token = tokenInfoMap.get(tokenAddress!);
                 const tokenInfo = getToken(tokenAddress!);
-                const tokenAmount = Number(intent.fee?.amount) / 10 ** (tokenInfo?.decimals || 0);
+
+                // Skip if tokenInfo is undefined
+                if (!tokenInfo) {
+                    console.warn(`Token info not found for address ${tokenAddress}`);
+                    continue;
+                }
+
+                // Safe conversion from bigint to number for calculation
+                // Use Number() for explicit conversion and provide defaults for undefined values
+                const tokenFee = tokenInfo.fee;
+                const tokenDecimals = tokenInfo.decimals;
+                const tokenAmount = Number(tokenFee) / Math.pow(10, tokenDecimals);
 
                 let tokenPrice = getTokenPrice(tokenAddress!);
                 if (tokenPrice === undefined) {
@@ -153,11 +165,13 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                         feeType === "link_creation_fee"
                             ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
                             : t("confirmation_drawer.fee-breakdown.network_fee"),
-                    amount: tokenAmount.toFixed(4),
+                    amount: formatNumber(tokenAmount.toString()),
                     tokenSymbol: token?.symbol || "Unknown",
                     tokenAddress: tokenAddress!,
-                    usdAmount: usdValue.toFixed(4),
+                    usdAmount: formatNumber(usdValue.toString()),
                 };
+
+                console.log("breakdownItem", breakdownItem);
 
                 breakdown.push(breakdownItem);
                 setFeesBreakdown(breakdown);

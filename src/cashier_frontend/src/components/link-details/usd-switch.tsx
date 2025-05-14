@@ -1,6 +1,6 @@
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { formatPrice } from "@/utils/helpers/currency";
-import { ArrowUpDown, Repeat2 } from "lucide-react";
+import { formatNumber } from "@/utils/helpers/currency";
+import { Repeat2 } from "lucide-react";
 import { FC, useMemo, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -61,14 +61,14 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             tokenAmount,
             usdAmount,
             tokenFormatted: formatAmount(tokenAmount, tokenDecimals),
-            usdFormatted: formatPrice(usdAmount.toString()),
+            usdFormatted: formatNumber(usdAmount.toString()),
         };
     }, [amount, token.usdConversionRate, tokenDecimals, usdDecimals]);
 
     // Choose what to display based on isUsd
     const valueToDisplay = useMemo(() => {
         if (isUsd) {
-            return `${formatPrice(amount?.toString() || "0")} ${symbol}`;
+            return `${formatNumber(amount?.toString() || "0")} ${symbol}`;
         }
 
         // Handle special case for zero to avoid double dollar signs

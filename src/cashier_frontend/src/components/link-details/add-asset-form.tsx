@@ -26,7 +26,7 @@ import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { formatPrice } from "@/utils/helpers/currency";
+import { formatNumber } from "@/utils/helpers/currency";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Separator } from "../ui/separator";
 
@@ -695,7 +695,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                                 <Label>Total amount</Label>
                                 <div className="flex items-center gap-1 bg-lightgreen rounded-[8px] flex-1 px-4 justify-between">
                                     <p className="text-[16px] font-normal">
-                                        {formatPrice(
+                                        {formatNumber(
                                             (() => {
                                                 const asset = getValues("assets")[0];
                                                 const token = getToken(asset?.tokenAddress || "");

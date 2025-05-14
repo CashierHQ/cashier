@@ -1,8 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { LinkDetailModel } from "../../services/types/link.service.types";
 import { LINK_TYPE } from "../../services/types/enum";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
+import { formatNumber } from "@/utils/helpers/currency";
 
 export const getTitleForLink = (
     linkData?: LinkDetailModel,
@@ -71,37 +72,51 @@ export const getDisplayComponentForLink = (
         case LINK_TYPE.SEND_TIP:
         case LINK_TYPE.SEND_AIRDROP:
         case LINK_TYPE.RECEIVE_PAYMENT:
-            return (
-                <img
-                    src={token?.logo || logoFallback}
-                    alt="Tip Link"
-                    className="w-[200px] rounded-3xl"
-                    onError={(e) => {
-                        console.log("error: ", e);
-                        e.currentTarget.src = logoFallback;
-                    }}
-                />
-            );
+            return <TokenImage token={token} logoFallback={logoFallback} />;
         case LINK_TYPE.SEND_TOKEN_BASKET:
             const tokens = linkData?.asset_info?.map((asset) => {
                 return { ...getToken(asset.address)!, amount: asset.amountPerUse };
             });
             return (
                 <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col gap-4">
-                    {tokens?.map((token, index) => (
-                        <div key={index} className="flex items-center">
-                            <AssetAvatarV2 token={token} className="w-8 h-8 rounded-sm" />
-                            <p className="text-[18px] font-normal ml-2">
-                                {Number(token.amount) / 10 ** (token?.decimals ?? 0)}{" "}
-                                {token.symbol || "Token"}
-                            </p>
-                        </div>
-                    ))}
+                    {tokens?.map((token, index) => {
+                        const amount = Number(token.amount) / 10 ** token.decimals;
+
+                        return (
+                            <div key={index} className="flex items-center">
+                                <AssetAvatarV2 token={token} className="w-8 h-8 rounded-sm" />
+                                <p className="text-[14px] font-normal ml-2">
+                                    {formatNumber(amount.toString())} {token.symbol || "Token"}
+                                </p>
+                            </div>
+                        );
+                    })}
                 </div>
             );
         default:
             return null;
     }
+};
+
+const TokenImage = ({ token, logoFallback }: { token?: FungibleToken; logoFallback: string }) => {
+    const [imageSrc, setImageSrc] = useState<string>("");
+
+    useEffect(() => {
+        // Set the image source based on token.logo or logoFallback availability
+        setImageSrc(token?.logo || logoFallback);
+    }, [token?.logo, logoFallback]);
+
+    return (
+        <img
+            src={imageSrc}
+            alt="Token Image"
+            className="w-[200px] rounded-3xl"
+            onError={(e) => {
+                console.log("error: ", e);
+                e.currentTarget.src = logoFallback;
+            }}
+        />
+    );
 };
 
 export const getHeaderTextForLink = (linkData?: LinkDetailModel): string => {
