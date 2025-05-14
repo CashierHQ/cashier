@@ -5,7 +5,6 @@ import { useMemo } from "react";
 import { SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { X } from "lucide-react";
 import { SendReceive } from "../ui/send-receive";
-import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useWalletContext } from "@/contexts/wallet-context";
@@ -14,6 +13,7 @@ import ReceivePanel from "./receive-panel";
 import DetailsPanel from "./details-panel";
 import ManagePanel from "./manage-panel";
 import ImportPanel from "./import-panel";
+import { formatNumber } from "@/utils/helpers/currency";
 
 interface WalletPanelProps {
     onClose: () => void;
@@ -36,7 +36,7 @@ const MainWalletPanel: React.FC<{
         localStorage.setItem(WALLET_BALANCE_VISIBILITY_KEY, JSON.stringify(isVisible));
     }, [isVisible]);
 
-    const usdEquivalentAmount = prettyNumber(totalUsdEquivalent);
+    const usdEquivalentAmount = formatNumber(totalUsdEquivalent.toString());
 
     return (
         <div className="flex-1 overflow-hidden h-full">

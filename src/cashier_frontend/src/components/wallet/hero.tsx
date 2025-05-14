@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
-import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, ChevronLeft } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { formatNumber } from "@/utils/helpers/currency";
 
 interface WalletHeroProps {
     totalUsdEquivalent: number;
@@ -27,7 +27,7 @@ export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
         localStorage.setItem(WALLET_BALANCE_VISIBILITY_KEY, JSON.stringify(isVisible));
     }, [isVisible]);
 
-    const usdEquivalentAmount = prettyNumber(totalUsdEquivalent);
+    const usdEquivalentAmount = formatNumber(totalUsdEquivalent.toString());
 
     const navigateReceivePage = () => navigateToPanel("receive");
     const navigateSendPage = () => navigateToPanel("send");

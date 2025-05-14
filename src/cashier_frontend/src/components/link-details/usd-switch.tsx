@@ -35,11 +35,6 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
 }) => {
     const { t } = useTranslation();
 
-    const formatAmount = (value?: number, decimals: number = 3) => {
-        if (value === undefined || isNaN(value)) return "0";
-        return value.toFixed(decimals);
-    };
-
     // Calculate both USD and token amounts from the current amount
     const conversionResult = useMemo((): ConversionResult => {
         const tokenToUsd = token.usdConversionRate;
@@ -60,7 +55,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
         return {
             tokenAmount,
             usdAmount,
-            tokenFormatted: formatAmount(tokenAmount, tokenDecimals),
+            tokenFormatted: formatNumber(tokenAmount.toString()),
             usdFormatted: formatNumber(usdAmount.toString()),
         };
     }, [amount, token.usdConversionRate, tokenDecimals, usdDecimals]);
@@ -68,6 +63,8 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
     // Choose what to display based on isUsd
     const valueToDisplay = useMemo(() => {
         if (isUsd) {
+            console.log("USD amount:", conversionResult.usdAmount);
+            console.log("USD formatted:", amount);
             return `${formatNumber(amount?.toString() || "0")} ${symbol}`;
         }
 
