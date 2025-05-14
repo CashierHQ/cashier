@@ -10,9 +10,9 @@ use uuid::Uuid;
 
 use crate::{
     constant::{
-        ICP_CANISTER_ID, INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
-        INTENT_LABEL_SEND_AIRDROP_ASSET, INTENT_LABEL_SEND_TIP_ASSET,
-        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+        FEE_TREASURY_ADDRESS, ICP_CANISTER_ID, INTENT_LABEL_LINK_CREATION_FEE,
+        INTENT_LABEL_RECEIVE_PAYMENT_ASSET, INTENT_LABEL_SEND_AIRDROP_ASSET,
+        INTENT_LABEL_SEND_TIP_ASSET, INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     },
     core::link::types::{
         CreateLinkInputV2, LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto,
@@ -425,8 +425,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     };
                     let vault_wallet = Wallet {
                         address: Account {
-                            // TODO: change to treasury account
-                            owner: self.ic_env.id(),
+                            owner: Principal::from_str(FEE_TREASURY_ADDRESS).unwrap(),
                             subaccount: None,
                         }
                         .to_string(),
