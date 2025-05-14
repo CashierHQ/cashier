@@ -4,7 +4,7 @@ import { UsdSwitch } from "./link-details/usd-switch";
 import { AmountActionButtons } from "./link-details/amount-action-buttons";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { convertDecimalBigIntToNumber } from "@/utils";
-import { formatPrice } from "@/utils/helpers/currency";
+import { formatNumber } from "@/utils/helpers/currency";
 
 interface AssetButtonProps {
     handleClick: () => void;
@@ -158,7 +158,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({
                     <p className="text-[10px] font-light text-grey-400/60">
                         Balance{" "}
                         {token?.amount
-                            ? formatPrice(
+                            ? formatNumber(
                                   convertDecimalBigIntToNumber(
                                       token.amount,
                                       token.decimals,

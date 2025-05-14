@@ -4,7 +4,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "./ui/asset-avatar";
 import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { convertDecimalBigIntToNumber } from "@/utils";
-import { formatPrice } from "@/utils/helpers/currency";
+import { formatNumber } from "@/utils/helpers/currency";
 import { IconInput } from "./icon-input";
 import { Search, X } from "lucide-react";
 interface AssetDrawerProps {
@@ -38,7 +38,7 @@ const SelectableToken: React.FC<{
 
                     {token.usdConversionRate ? (
                         <span className="flex flex-row items-center text-grey text-xs font-light leading-none">
-                            ${formatPrice(token.usdConversionRate.toString())}
+                            ${formatNumber(token.usdConversionRate.toString())}
                         </span>
                     ) : (
                         <span className="text-grey text-xs font-light leading-none">-</span>
@@ -61,7 +61,7 @@ const SelectableToken: React.FC<{
 
                 {token.usdEquivalent ? (
                     <span className="flex flex-row items-center justify-end text-grey text-xs font-light leading-none">
-                        ${formatPrice(token.usdEquivalent.toString())}
+                        ${formatNumber(token.usdEquivalent.toString())}
                     </span>
                 ) : (
                     <span className="text-right text-grey text-xs font-light leading-none">-</span>

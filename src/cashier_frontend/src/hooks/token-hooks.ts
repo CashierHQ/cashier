@@ -350,10 +350,10 @@ export function useTokenPricesQuery() {
                 throw error;
             }
         },
-        staleTime: TIME_CONSTANTS.ONE_MINUTE,
-        refetchInterval: TIME_CONSTANTS.ONE_MINUTE,
+        staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
+        refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
         retry: 10, // Retry failed requests up to 10 times
         retryDelay: (attemptIndex) =>
-            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
+            Math.min(1000 * 0.1 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
 }

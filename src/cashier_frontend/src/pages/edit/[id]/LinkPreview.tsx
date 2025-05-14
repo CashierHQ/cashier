@@ -9,7 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { formatPrice } from "@/utils/helpers/currency";
+import { formatNumber } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/link-action-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import {
@@ -450,11 +450,11 @@ export default function LinkPreview({
                                     <div className="flex flex-col items-end">
                                         <div className="flex items-center gap-1">
                                             <p className="text-[14px] font-normal">
-                                                {formatPrice(totalTokenAmount.toString())}
+                                                {formatNumber(totalTokenAmount.toString())}
                                             </p>
                                         </div>
                                         <p className="text-[10px] font-normal text-grey-400/50">
-                                            ~${formatPrice(approximateUsdValue.toString())}
+                                            ~${formatNumber(approximateUsdValue.toString())}
                                         </p>
                                     </div>
                                 </div>
@@ -504,11 +504,11 @@ export default function LinkPreview({
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center gap-1">
                                         <p className="text-[14px] font-normal">
-                                            {formatPrice(displayAmount.toString())}
+                                            {formatNumber(displayAmount.toString())}
                                         </p>
                                     </div>
                                     <p className="text-[10px] font-normal text-grey-400/50">
-                                        ~${formatPrice(usdValue.toString())}
+                                        ~${formatNumber(usdValue.toString())}
                                     </p>
                                 </div>
                             </div>

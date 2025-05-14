@@ -27,6 +27,7 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
+import { formatNumber } from "@/utils/helpers/currency";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -346,10 +347,24 @@ export default function DetailPage() {
                                     );
 
                                     // Calculate remaining asset amount using amountPerUse
-                                    const remainingAmount = remainingActions * asset.amountPerUse;
+                                    const remainingAmountInDecimal =
+                                        remainingActions * asset.amountPerUse;
 
                                     // Calculate total asset amount allocated to this link
-                                    const totalAmount = link.maxActionNumber * asset.amountPerUse;
+                                    const totalAmountInDecimal =
+                                        link.maxActionNumber * asset.amountPerUse;
+
+                                    console.log(
+                                        "remainingAmountInDecimal",
+                                        remainingAmountInDecimal,
+                                    );
+                                    console.log("totalAmountInDecimal", totalAmountInDecimal);
+
+                                    const remainingAmount =
+                                        Number(remainingAmountInDecimal) / 10 ** token.decimals;
+
+                                    const totalAmount =
+                                        Number(totalAmountInDecimal) / 10 ** token.decimals;
 
                                     return (
                                         <div
@@ -359,11 +374,8 @@ export default function DetailPage() {
                                             <p className="font-medium text-sm">Asset left/added</p>
                                             <div className="flex items-center gap-1">
                                                 <p className="text-sm text-primary/80">
-                                                    {Number(remainingAmount) /
-                                                        Math.pow(10, token.decimals)}
-                                                    /
-                                                    {Number(totalAmount) /
-                                                        Math.pow(10, token.decimals)}
+                                                    {formatNumber(remainingAmount.toString())}/
+                                                    {formatNumber(totalAmount.toString())}
                                                 </p>
                                                 <p className="text-sm text-primary/80">
                                                     {token.symbol}

@@ -3,7 +3,7 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useNavigate } from "react-router-dom";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { convertDecimalBigIntToNumber } from "@/utils";
-import { formatPrice } from "@/utils/helpers/currency";
+import { formatNumber } from "@/utils/helpers/currency";
 import { useWalletContext } from "@/contexts/wallet-context";
 
 export interface WalletTokenProps {
@@ -39,7 +39,7 @@ export function WalletToken({ token }: WalletTokenProps) {
 
                     {token.usdConversionRate ? (
                         <span className="flex flex-row items-center text-grey-400 text-xs font-light leading-none">
-                            ${formatPrice(token.usdConversionRate.toString())}
+                            ${formatNumber(token.usdConversionRate.toString())}
                         </span>
                     ) : (
                         <span className="text-grey-400 text-xs font-light leading-none">-</span>
@@ -62,7 +62,7 @@ export function WalletToken({ token }: WalletTokenProps) {
 
                 {token.usdEquivalent ? (
                     <span className="flex flex-row items-center justify-end text-grey-400 text-xs font-light leading-none">
-                        ${formatPrice(token.usdEquivalent.toString())}
+                        ${formatNumber(token.usdEquivalent.toString())}
                     </span>
                 ) : (
                     <span className="text-right text-grey-400 text-xs font-light leading-none">
