@@ -1,5 +1,31 @@
 import React from "react";
 
+/**
+ * Formats a price string for display, handling various number sizes and formats.
+ *
+ * Features:
+ * - Converts scientific notation to decimal format
+ * - For extremely small numbers (< 0.0000001), uses subscript notation for leading zeros
+ * - For regular numbers, applies appropriate decimal place formatting based on magnitude
+ * - Truncates numbers with more than 7 decimal places
+ *
+ * @param price - The price string to format (can be in regular or scientific notation)
+ * @returns A React element with the formatted price
+ *
+ * @example
+ * // Regular numbers
+ * formatPrice("123.456")       // Returns: 123.456
+ * formatPrice("12.3456")       // Returns: 12.3456
+ * formatPrice("1.23456789")    // Returns: 1.2345678
+ *
+ * // Very small numbers
+ * formatPrice("0.00000005123") // Returns: 0.0₈5123
+ * formatPrice("1e-10")         // Returns: 0.0₁₀1
+ *
+ * // Scientific notation
+ * formatPrice("1.23e+3")       // Returns: 1,230
+ * formatPrice("5.67e-6")       // Returns: 0.00000567
+ */
 export function formatPrice(price: string) {
     "worklet";
 
@@ -41,8 +67,8 @@ export function formatPrice(price: string) {
             return React.createElement(React.Fragment, null, decimalPrice);
         }
 
-        // Only apply subscript notation if there's at least one leading zero
-        if (nonZeroIndex > 0) {
+        // Only apply subscript notation if there are 8 or more leading zeros (0.0000001 or smaller)
+        if (nonZeroIndex >= 7) {
             // Calculate the number of zeros to display as a subscript
             const zeroCount = nonZeroIndex;
 
@@ -60,7 +86,7 @@ export function formatPrice(price: string) {
                 significantDigits,
             );
         } else {
-            // If there are no leading zeros, don't use subscript notation
+            // If there are fewer than 8 leading zeros, don't use subscript notation
             return React.createElement(React.Fragment, null, decimalPrice);
         }
     } else {
