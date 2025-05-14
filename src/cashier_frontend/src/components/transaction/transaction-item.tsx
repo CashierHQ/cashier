@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { convert } from "@/utils/helpers/convert";
 import { Avatar } from "@radix-ui/react-avatar";
-import { formatPrice } from "@/utils/helpers/currency";
+import { formatNumber } from "@/utils/helpers/currency";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
@@ -46,10 +46,8 @@ export const TransactionItem: FC<TransactionItemProps> = ({
         // Calculate adjusted amount by subtracting only the network fee
         if (networkFee && token.decimals !== undefined) {
             const networkFeeAmount = Number(networkFee.amount) / 10 ** token.decimals;
-            console.log("networkFeeAmount: ", networkFeeAmount);
-            console.log("assetAmount: ", assetAmount);
             const newAdjustedAmount = assetAmount - networkFeeAmount;
-            console.log("newAdjustedAmount: ", newAdjustedAmount);
+
             setAdjustedAmount(newAdjustedAmount);
         } else {
             setAdjustedAmount(assetAmount);
@@ -86,12 +84,13 @@ export const TransactionItem: FC<TransactionItemProps> = ({
                 >
                     <div className="flex items-center gap-1">
                         <p className="text-[14px] font-normal">
-                            {formatPrice(adjustedAmount?.toString() || "0")}
+                            {formatNumber(adjustedAmount?.toString() || "0")}
                         </p>
                     </div>
                     <p className="text-[10px] font-normal text-grey/50">
                         {tokenUsdPrice && tokenUsdPrice > 0
-                            ? formatPrice((convert(adjustedAmount, tokenUsdPrice) || 0).toString())
+                            ? "~$" +
+                              formatNumber((convert(adjustedAmount, tokenUsdPrice) || 0).toString())
                             : "No price available"}
                     </p>
                 </div>
