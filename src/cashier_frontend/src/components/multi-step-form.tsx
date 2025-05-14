@@ -160,7 +160,6 @@ export function MultiStepFormFooter({ showFixedButton = true }: MultiStepFormFoo
             <Button
                 type="button"
                 variant="default"
-                size="lg"
                 className="w-full disabled:bg-disabledgreen"
                 onClick={buttonState.action || undefined}
                 disabled={buttonState.isDisabled}

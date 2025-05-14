@@ -116,9 +116,7 @@ export function ImportTokenForm({ onSubmit = () => {} }: ImportTokenFormProps) {
                     />
                 </div>
 
-                <Button size="lg" className="mt-auto">
-                    {t("continue")}
-                </Button>
+                <Button className="mt-auto">{t("continue")}</Button>
             </form>
         </Form>
     );

@@ -106,7 +106,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                     </div>
                 </div>
 
-                <Button className="mt-6 py-5" onClick={onClose}>
+                <Button className="mt-6" onClick={onClose}>
                     Close
                 </Button>
             </DrawerContent>
