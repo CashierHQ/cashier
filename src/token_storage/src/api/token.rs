@@ -1,0 +1,499 @@
+// File: src/token_storage/src/api.rs
+use candid::Principal;
+use ic_cdk::{query, update};
+use std::collections::HashSet;
+
+use crate::{
+    ext::icrc::Service,
+    repository::{
+        balance_cache::BalanceCacheRepository, token_registry::TokenRegistryRepository,
+        user_preference::UserPreferenceRepository, user_token::TokenRepository,
+    },
+    types::{
+        AddTokenInput, AddTokensInput, Chain, RegisterTokenInput, RegistryToken, RegistryTokenDto,
+        RemoveTokenInput, TokenDto, TokenId, UserFiltersInput, UserPreference,
+    },
+};
+
+#[query]
+pub fn list_registry_tokens(only_enabled: Option<bool>) -> Result<Vec<RegistryTokenDto>, String> {
+    let registry = TokenRegistryRepository::new();
+    let tokens = registry.list_tokens();
+
+    // Filter tokens if only_enabled parameter is provided
+    let filtered_tokens = if let Some(true) = only_enabled {
+        // Only include tokens with enabled_by_default = true
+        tokens
+            .into_iter()
+            .filter(|token| token.enabled_by_default)
+            .collect()
+    } else {
+        // Return all tokens if only_enabled is None or false
+        tokens
+    };
+
+    let result = filtered_tokens
+        .into_iter()
+        .map(|token| RegistryTokenDto {
+            id: token.id,
+            icrc_ledger_id: token.icrc_ledger_id,
+            icrc_index_id: token.icrc_index_id,
+            symbol: token.symbol,
+            name: token.name,
+            decimals: token.decimals,
+            chain: token.chain.to_str(),
+        })
+        .collect();
+
+    Ok(result)
+}
+
+// User Token Management APIs
+// if token is not found, add it to registry
+#[update]
+pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let token_id = match input.ledger_id.clone() {
+        Some(id) => {
+            // Generate token ID if not provided
+            let chain = crate::types::Chain::from_str(&input.chain)
+                .map_err(|e| format!("Invalid chain: {}", e))?;
+
+            crate::types::RegistryToken::generate_id(&chain, Some(&id))
+                .map_err(|e| format!("Failed to generate token ID: {}", e))?
+        }
+        None => {
+            return Err("Ledger ID is required for IC chain".to_string());
+        }
+    };
+
+    let registry = TokenRegistryRepository::new();
+    let repository = TokenRepository::new();
+
+    if registry.get_token(&token_id).is_none() {
+        let ledger_pid = input
+            .ledger_id
+            .ok_or("Ledger ID is required for IC chain")?;
+
+        // Use metadata from input if provided, otherwise fetch from service
+        let (symbol, name, decimals) = (
+            input.symbol.unwrap(),
+            input.name.unwrap(),
+            input.decimals.unwrap(),
+        );
+
+        let chain = Chain::from_str(&input.chain)?;
+        let token_id = RegistryToken::generate_id(&chain, Some(&ledger_pid))?;
+        registry
+            .register_token(RegisterTokenInput {
+                id: token_id.clone(),
+                chain: input.chain,
+                ledger_id: Some(ledger_pid),
+                index_id: input.index_id,
+                symbol,
+                name,
+                decimals,
+                enabled_by_default: false,
+            })
+            .map_err(|e| format!("Failed to register token: {}", e))?;
+
+        let _ = repository.add_token(caller.to_text(), token_id)?;
+        let _ = repository.sync_registry_tokens(&caller.to_text())?;
+
+        Ok(())
+    } else {
+        return Err(format!(
+            "Token with ID {} already exists in registry",
+            token_id
+        ));
+    }
+}
+
+#[update]
+pub fn remove_token(input: RemoveTokenInput) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let repository = TokenRepository::new();
+    repository.remove_token(&caller.to_text(), &input.token_id)
+}
+
+#[query]
+pub fn list_tokens() -> Result<Vec<TokenDto>, String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let repository = TokenRepository::new();
+    let balance_cache = BalanceCacheRepository::new();
+
+    let tokens = repository.list_tokens(&caller.to_text());
+    let balances = balance_cache
+        .get_all_balances(&caller.to_text())
+        .into_iter()
+        .collect::<std::collections::HashMap<_, _>>();
+
+    // Add balance information to tokens
+    let result = tokens
+        .into_iter()
+        .map(|mut token| {
+            if let Some(balance) = balances.get(&token.get_address_from_id()) {
+                token.balance = Some(balance.clone());
+            }
+            token
+        })
+        .collect();
+
+    Ok(result)
+}
+
+// User Preference APIs
+#[query]
+pub fn get_user_preference() -> Result<UserPreference, String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let user_preference = UserPreferenceRepository::new();
+    let result = user_preference.get(&caller.to_text());
+
+    Ok(result)
+}
+
+#[update]
+pub fn update_user_filters(input: UserFiltersInput) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let user_preference = UserPreferenceRepository::new();
+    let old_record = user_preference.get(&caller.to_text());
+
+    // Update only the filter-related fields
+    let mut updated_record = old_record.clone();
+
+    if let Some(hide_zero) = input.hide_zero_balance {
+        updated_record.hide_zero_balance = hide_zero;
+    }
+
+    if let Some(hide_unknown) = input.hide_unknown_token {
+        updated_record.hide_unknown_token = hide_unknown;
+    }
+
+    if let Some(chains) = input.selected_chain {
+        let mut chain_enums = Vec::with_capacity(chains.len());
+        for chain_str in chains {
+            match Chain::from_str(&chain_str) {
+                Ok(chain) => chain_enums.push(chain),
+                Err(e) => return Err(e),
+            }
+        }
+
+        // Only update if at least one valid chain is provided
+        if !chain_enums.is_empty() {
+            updated_record.selected_chain = chain_enums;
+        }
+    }
+
+    user_preference.update(caller.to_text(), updated_record);
+    Ok(())
+}
+
+#[update]
+pub fn toggle_token_visibility(token_id: String, hidden: bool) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let user_preference = UserPreferenceRepository::new();
+    let repository = TokenRepository::new();
+
+    let mut preferences = user_preference.get(&caller.to_text());
+
+    if hidden {
+        // Add token to hidden list if not already there (deduplicate)
+        if !preferences.hidden_tokens.contains(&token_id) {
+            preferences.hidden_tokens.push(token_id.clone());
+        }
+    } else {
+        // Remove token from hidden list
+        preferences
+            .hidden_tokens
+            .retain(|id| id != &token_id.clone());
+    }
+
+    user_preference.update(caller.to_text(), preferences);
+
+    let _ = repository.add_token(caller.to_text(), token_id.clone());
+
+    Ok(())
+}
+
+// Batch toggle multiple tokens at once for efficiency
+#[update]
+pub fn batch_toggle_token_visibility(tokens: Vec<(String, bool)>) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let user_preference = UserPreferenceRepository::new();
+    let mut preferences = user_preference.get(&caller.to_text());
+
+    for (token_id, hidden) in tokens {
+        if hidden {
+            // Add token to hidden list if not already there (deduplicate)
+            if !preferences.hidden_tokens.contains(&token_id) {
+                preferences.hidden_tokens.push(token_id);
+            }
+        } else {
+            // Remove token from hidden list
+            preferences.hidden_tokens.retain(|id| id != &token_id);
+        }
+    }
+
+    user_preference.update(caller.to_text(), preferences);
+
+    Ok(())
+}
+
+// Balance Cache APIs
+#[update]
+pub fn update_token_balance(token_id: String, balance: u128) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    // Verify token exists
+    let registry = TokenRegistryRepository::new();
+    if registry.get_token(&token_id).is_none() {
+        return Err(format!("Token with ID {} not found in registry", token_id));
+    }
+
+    let balance_cache = BalanceCacheRepository::new();
+    balance_cache.update_balance(caller.to_text(), token_id, balance);
+
+    Ok(())
+}
+
+#[update]
+pub fn update_bulk_balances(token_balances: Vec<(String, u128)>) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    ic_cdk::println!("Updating bulk balances for caller: {:#?}", token_balances);
+
+    let balance_cache = BalanceCacheRepository::new();
+    balance_cache.update_bulk_balances(caller.to_text(), token_balances);
+
+    Ok(())
+}
+
+// Init and first login helper
+#[update]
+pub fn initialize_user_tokens() -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let token_repository = TokenRepository::new();
+    let user_preference = UserPreferenceRepository::new();
+
+    let default_perference = UserPreference::default();
+
+    // Add default tokens if user has no tokens yet
+    token_repository.add_default_tokens(&caller.to_text());
+    user_preference.add(caller.to_text(), default_perference);
+
+    Ok(())
+}
+
+/// Add multiple tokens in a single call for efficiency
+#[update]
+pub async fn add_tokens(input: AddTokensInput) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    if input.tokens.is_empty() && input.token_hold.is_empty() {
+        return Err("No tokens provided".to_string());
+    }
+
+    let registry = TokenRegistryRepository::new();
+    let repository = TokenRepository::new();
+    
+    // Get current user tokens to avoid adding duplicates
+    let current_user_tokens = repository.list_token_ids(&caller.to_text());
+    let current_user_tokens_set: HashSet<_> = current_user_tokens.iter().cloned().collect();
+    
+    let mut register_inputs = Vec::new();
+    let token_hold_input_set: HashSet<_> = input.token_hold.clone().into_iter().collect();
+    let mut token_hold_ids_to_add = Vec::new();
+
+    // Process tokens that need registry verification
+    // First pass: generate token IDs and prepare registration data
+    for token_input in input.tokens {
+        // Skip tokens without ledger ID
+        let Some(ledger_pid) = token_input.ledger_id.clone() else {
+            continue;
+        };
+
+        // Generate token ID more efficiently
+        let chain = match Chain::from_str(&token_input.chain) {
+            Ok(chain) => chain,
+            Err(e) => {
+                ic_cdk::println!("Invalid chain {}: {}", token_input.chain, e);
+                continue;
+            }
+        };
+
+        let token_id = match RegistryToken::generate_id(&chain, Some(&ledger_pid)) {
+            Ok(id) => id,
+            Err(e) => {
+                ic_cdk::println!("Failed to generate token ID: {}", e);
+                continue;
+            }
+        };
+
+        // Skip if token is already in user's list
+        if current_user_tokens_set.contains(&token_id) {
+            ic_cdk::println!("Token {} already exists in user {}'s list, skipping", token_id, caller);
+            continue;
+        }
+
+        // For new tokens, we need metadata
+        let (symbol, name, decimals) = if token_input.symbol.is_some()
+            && token_input.name.is_some()
+            && token_input.decimals.is_some()
+        {
+            // Use provided metadata
+            (
+                token_input.symbol.unwrap(),
+                token_input.name.unwrap(),
+                token_input.decimals.unwrap(),
+            )
+        } else {
+            // Create a service for querying token metadata
+            let service = Service::new(ledger_pid.clone());
+
+            // Execute all metadata queries concurrently
+            let symbol_future = service.icrc_1_symbol();
+            let name_future = service.icrc_1_name();
+            let decimals_future = service.icrc_1_decimals();
+
+            // Await all futures at once to save time
+            let symbol_result = symbol_future.await;
+            let name_result = name_future.await;
+            let decimals_result = decimals_future.await;
+
+            // Check if any of the calls failed
+            if let Err((code, msg)) = &symbol_result {
+                ic_cdk::println!(
+                    "Failed to get symbol for token {}: {:#?}, {:#?}",
+                    ledger_pid,
+                    code,
+                    msg
+                );
+                continue;
+            }
+            if let Err((code, msg)) = &name_result {
+                ic_cdk::println!(
+                    "Failed to get name for token {}: {:#?}, {:#?}",
+                    ledger_pid,
+                    code,
+                    msg
+                );
+                continue;
+            }
+            if let Err((code, msg)) = &decimals_result {
+                ic_cdk::println!(
+                    "Failed to get decimals for token {}: {:#?}, {:#?}",
+                    ledger_pid,
+                    code,
+                    msg
+                );
+                continue;
+            }
+
+            // Extract values from results
+            let (symbol,) = symbol_result.unwrap();
+            let (name,) = name_result.unwrap();
+            let (decimals,) = decimals_result.unwrap();
+
+            (symbol, name, decimals)
+        };
+
+        if token_hold_input_set.contains(&ledger_pid.clone().to_text()) {
+            token_hold_ids_to_add.push(token_id.clone());
+        }
+
+        // Create register token input and add to batch
+        register_inputs.push(RegisterTokenInput {
+            id: token_id.clone(),
+            chain: token_input.chain,
+            ledger_id: Some(ledger_pid),
+            index_id: token_input.index_id,
+            symbol,
+            name,
+            decimals,
+            enabled_by_default: false,
+        });
+    }
+
+    // Register new tokens in bulk if any
+    if !register_inputs.is_empty() {
+        match registry.add_bulk_tokens(register_inputs) {
+            Ok(_) => {}
+            Err(e) => {
+                ic_cdk::println!("Error registering tokens in bulk: {}", e);
+                return Err(format!("Error registering tokens: {}", e));
+            }
+        }
+    }
+
+    // Sync registry tokens once at the end
+    let _ = repository.sync_registry_tokens(&caller.to_text());
+
+    // Process token_hold after syncing registry tokens
+    // Filter out tokens that are already in the user's list
+    let filtered_token_hold_ids: Vec<_> = token_hold_ids_to_add
+        .into_iter()
+        .filter(|token_id| !current_user_tokens_set.contains(token_id))
+        .collect();
+    
+    // These tokens are added directly to user's list without checking registry
+    for token_id in &filtered_token_hold_ids {
+        ic_cdk::println!("Adding token {} to user {}", token_id, caller);
+        let _ = repository.add_token(caller.to_text(), token_id.clone());
+    }
+
+    Ok(())
+}
+
+ic_cdk::export_candid!();

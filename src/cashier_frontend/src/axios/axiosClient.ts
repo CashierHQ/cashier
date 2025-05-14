@@ -9,9 +9,6 @@ const icExplorerAxiosClient = axios.create({
         "content-type": "application/json",
         pragma: "no-cache",
         priority: "u=1, i",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
         "Referrer-Policy": "strict-origin-when-cross-origin",
     },
     paramsSerializer: {

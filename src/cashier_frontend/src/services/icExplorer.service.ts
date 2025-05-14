@@ -1,5 +1,6 @@
 import icExplorerAxiosClient from "@/axios/axiosClient";
-import { AssetSelectItem } from "@/components/asset-select";
+import { Principal } from "@dfinity/principal";
+import { toNullable } from "@dfinity/utils";
 
 export const IC_EXPLORER_IMAGES_PATH = "https://api.icexplorer.io/images/";
 
@@ -11,34 +12,191 @@ export interface GetUserTokensRequest {
 }
 
 // This interface is created based on the response from the icexplorer.io API
-export interface UserToken {
+export interface DataSourceToken {
     accountId: string;
     amount: string;
     ledgerId: string;
     symbol: string;
     valueUSD: string;
+    // Additional fields from the response
+    totalSupply?: string;
+    owner?: string;
+    subaccount?: string;
+    tokenDecimal?: number;
+    snapshotTime?: number;
 }
 
-export const initializeDefautGetUserTokenRequest = (princical: string): GetUserTokensRequest => {
+/**
+ * Maps a DataSourceToken to the target interface needed by the token storage
+ * @param token The source token data from icExplorer API
+ * @returns An object with the target structure
+ */
+export function mapDataSourceTokenToAddTokenInput(token: DataSourceToken): {
+    decimals: [] | [number];
+    chain: string;
+    name: [] | [string];
+    ledger_id: [] | [Principal];
+    index_id: [] | [Principal];
+    symbol: [] | [string];
+} {
     return {
-        principal: princical,
-        isDesc: true,
-        page: 1,
-        size: 100,
-    };
-};
+        // Convert tokenDecimal to optional array format
+        decimals: toNullable(token.tokenDecimal),
 
-export const mapAPITokenModelToAssetSelectModel = (token: UserToken): AssetSelectItem => {
+        // Always set chain to 'IC' because úing ICExplorer API
+        chain: "IC",
+
+        // Symbol is mapped as optional array
+        symbol: toNullable(token.symbol),
+
+        // We don't have name in the source, so leave it empty
+        name: toNullable(token.symbol),
+
+        // Convert ledgerId to Principal if it's a valid string
+        ledger_id: token.ledgerId
+            ? (() => {
+                  try {
+                      return [Principal.fromText(token.ledgerId)];
+                  } catch (error) {
+                      console.error("Invalid ledger ID format:", error);
+                      return [];
+                  }
+              })()
+            : [],
+
+        // We don't have index_id in the source, so leave it empty
+        index_id: [],
+    };
+}
+
+/**
+ * Maps a TokenListItem to the target interface needed by the token storage
+ * @param token The source token data from icExplorer token list API
+ * @returns An object with the target structure for adding to token storage
+ */
+export function mapTokenListItemToAddTokenInput(token: TokenListItem): {
+    decimals: [] | [number];
+    chain: string;
+    name: [] | [string];
+    ledger_id: [] | [Principal];
+    index_id: [] | [Principal];
+    symbol: [] | [string];
+} {
     return {
-        name: token.symbol,
-        amount: Number.parseFloat(token.amount),
-        tokenAddress: token.ledgerId,
-    };
-};
+        // Convert token0Decimal to optional array format
+        decimals: toNullable(token.tokenDecimal),
 
-export const icExplorerService = {
-    getUserTokens: (data: GetUserTokensRequest) => {
+        // Always set chain to 'IC' because we're using ICExplorer API
+        chain: "IC",
+
+        // Symbol is mapped as optional array
+        symbol: toNullable(token.symbol),
+
+        // Use token0Symbol for name as well since we don't have a separate name field
+        name: toNullable(token.symbol),
+
+        // Convert token0LedgerId to Principal if it's a valid string
+        ledger_id: token.ledgerId
+            ? (() => {
+                  try {
+                      return [Principal.fromText(token.ledgerId)];
+                  } catch (error) {
+                      console.error("Invalid ledger ID format:", error);
+                      return [];
+                  }
+              })()
+            : [],
+
+        // We don't have index_id in the source, so leave it empty
+        index_id: [],
+    };
+}
+
+export interface UserTokensListResponse {
+    total: string;
+    list: DataSourceToken[];
+    pageNum: number;
+    pageSize: number;
+    size: number;
+    startRow: string;
+    endRow: string;
+    pages: number;
+    prePage: number;
+    nextPage: number;
+    isFirstPage: boolean;
+    isLastPage: boolean;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+    navigatePages: number;
+    navigateFirstPage: number;
+    navigateLastPage: number;
+}
+
+export interface GetUserTokensResponse {
+    statusCode: number;
+    data: UserTokensListResponse;
+}
+
+export interface TokenListResponse {
+    statusCode: number;
+    data: {
+        total: string;
+        list: TokenListItem[];
+        pageNum: number;
+        pageSize: number;
+        size: number;
+        startRow: string;
+        endRow: string;
+        pages: number;
+        prePage: number;
+        nextPage: number;
+        isFirstPage: boolean;
+        isLastPage: boolean;
+        hasPreviousPage: boolean;
+        hasNextPage: boolean;
+        navigatePages: number;
+        navigateFirstPage: number;
+        navigateLastPage: number;
+    };
+}
+
+export interface TokenListItem {
+    ledgerId: string;
+    symbol: string;
+    totalSupply?: string;
+    owner?: string;
+    subaccount?: string;
+    accountId: string;
+    amount: string;
+    tokenDecimal: number;
+    snapshotTime: number;
+    valueUSD: string;
+}
+
+export class ICExplorerService {
+    constructor() {}
+
+    async getUserTokens(principal: string): Promise<DataSourceToken[]> {
         const url = "holder/user";
-        return icExplorerAxiosClient.post(url, data);
-    },
-};
+        const response = await icExplorerAxiosClient.post(url, {
+            principal,
+            page: 1,
+            size: 300,
+            isDesc: true,
+        });
+
+        return response.data.list;
+    }
+
+    async getListToken(): Promise<TokenListItem[]> {
+        const url = "token/list";
+        const response = await icExplorerAxiosClient.post(url, {
+            page: 1,
+            size: 300,
+        });
+
+        console.log("getListToken response", response.data.list);
+
+        return response.data.list;
+    }
+}

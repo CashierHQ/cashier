@@ -3,6 +3,10 @@ import { IcrcLedgerCanister, IcrcTokenMetadata, mapTokenMetadata } from "@dfinit
 import { Principal } from "@dfinity/principal";
 import { defaultAgent } from "@dfinity/utils";
 
+/**
+ *
+ * @deprecated this can replace by useTokens hook
+ */
 const useTokenMetadata = (tokenAddress: string | undefined) => {
     const [metadata, setMetadata] = useState<IcrcTokenMetadata | undefined>(undefined);
     const [loading, setLoading] = useState<boolean>(true);
