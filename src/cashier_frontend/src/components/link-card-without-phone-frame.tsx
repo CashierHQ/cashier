@@ -47,7 +47,7 @@ export default function LinkCardWithoutPhoneFrame({
                 ) : (
                     <div
                         className={cn(
-                            "text-white bg-green rounded-full py-2 px-8 mt-3 text-base w-[100%] text-center",
+                            "text-white bg-green rounded-full py-2 px-8 mt-3 w-[100%] text-center",
                             onClaim ? "cursor-pointer" : "",
                         )}
                         onClick={onClaim}

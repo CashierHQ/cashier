@@ -504,7 +504,7 @@ export default function LinkPreview({
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center gap-1">
                                         <p className="text-[14px] font-normal">
-                                            {formatPrice(displayAmount.toString())} {tokenSymbol}
+                                            {formatPrice(displayAmount.toString())}
                                         </p>
                                     </div>
                                     <p className="text-[10px] font-normal text-grey-400/50">

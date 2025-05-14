@@ -43,10 +43,12 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
                 ) : (
                     <LuWallet2 className="mr-2" color="#35A18B" size={22} />
                 )}
-                <span className="flex-grow text-left">
+                <span className="flex-grow text-left text-[14px]">
                     {transformShortAddress(connectedAccount || "")}
                 </span>{" "}
-                {postfixText && <span className="ml-auto text-[#35A18B]">{postfixText}</span>}
+                {postfixText && (
+                    <span className="ml-auto text-[#35A18B] text-[14px]">{postfixText}</span>
+                )}
             </span>
         </button>
     );

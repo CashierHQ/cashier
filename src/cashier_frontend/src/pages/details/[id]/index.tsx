@@ -390,8 +390,7 @@ export default function DetailPage() {
                                 <Button
                                     id="copy-link-button"
                                     onClick={handleCopyLink}
-                                    size="lg"
-                                    className="w-full"
+                                    className="w-full mb-2"
                                 >
                                     {t("details.copyLink")}
                                 </Button>
@@ -404,7 +403,6 @@ export default function DetailPage() {
                                         handleWithdrawAssets();
                                         setShowConfirmationDrawer(true);
                                     }}
-                                    size="lg"
                                     className="w-full disabled:bg-gray-300"
                                 >
                                     {hasWithdrawableAssets

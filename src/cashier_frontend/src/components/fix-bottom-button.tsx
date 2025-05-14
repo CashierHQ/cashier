@@ -14,7 +14,7 @@ export const FixedBottomButton = React.forwardRef<HTMLButtonElement, FixedBottom
                     className={cn(
                         className,
                         customStyle,
-                        "rounded-full w-full max-w-[350px] py-6 mx-auto text-center flex items-center justify-center",
+                        "rounded-full w-full max-w-[350px] h-[44px] mx-4 text-center flex items-center justify-center",
                     )}
                     ref={ref}
                     {...props}

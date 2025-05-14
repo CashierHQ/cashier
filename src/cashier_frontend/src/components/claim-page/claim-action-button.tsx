@@ -29,7 +29,6 @@ const ClaimActionButton: React.FC<ClaimActionButtonProps> = ({
         <FixedBottomButton
             type="submit"
             variant="default"
-            size="lg"
             className="w-full mt-auto disabled:bg-disabledgreen"
             disabled={isDisabled}
             onClick={onSubmit}

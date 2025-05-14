@@ -127,7 +127,7 @@ export function ImportTokenReview({ token }: ImportTokenReviewProps) {
                 </div>
             </div>
 
-            <Button className="mt-auto" onClick={handleImport} size="lg" disabled={isImporting}>
+            <Button className="mt-auto" onClick={handleImport} disabled={isImporting}>
                 {t("review.import")}
             </Button>
         </div>

@@ -442,7 +442,6 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                         <FixedBottomButton
                             type="submit"
                             variant="default"
-                            size="lg"
                             disabled={isDisabled}
                             className={`mx-auto mt-auto mb-2 ${isDisabled ? "bg-disabledgreen" : ""}`}
                         >
