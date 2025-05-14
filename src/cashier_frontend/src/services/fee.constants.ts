@@ -6,10 +6,8 @@ export const ICP_TOKEN_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const TEST_ICP_TOKEN_ADDRESS = "x5qut-viaaa-aaaar-qajda-cai";
 
 // Default fee amounts in smallest units (e8s for ICP)
-export const DEFAULT_NETWORK_FEE = BigInt(10000); // 0.0001 ICP
-export const DEFAULT_CREATION_FEE = BigInt(100000); // 0.001 ICP
-export const DEFAULT_SERVICE_FEE = BigInt(50000); // 0.0005 ICP
-export const DEFAULT_TOKEN_TRANSFER_FEE = BigInt(10000); // 0.0001 ICP
+// export const DEFAULT_CREATION_FEE = BigInt(100000); // 0.001 ICP
+export const DEFAULT_CREATION_FEE = BigInt(20_000); // 0.0002 ICP
 
 // Create a key from chain and link type for fee table lookups
 export const createFeeKey = (chain: string, linkType: string, feeType: string): string => {
@@ -18,7 +16,7 @@ export const createFeeKey = (chain: string, linkType: string, feeType: string): 
 
 // Default ICP asset info for fees
 export const createDefaultIcpAssetInfo = (amount: bigint): AssetInfo => ({
-    address: TEST_ICP_TOKEN_ADDRESS,
+    address: ICP_TOKEN_ADDRESS,
     chain: CHAIN.IC,
     amount,
     symbol: "ICP",
