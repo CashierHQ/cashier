@@ -10,6 +10,7 @@ export enum STATUS {
 
 export type StatusProps = {
     status: STATUS | undefined;
+    key?: string;
 };
 
 export const Status: FC<StatusProps> = ({ status }) => {
