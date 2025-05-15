@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "./ui/asset-avatar";
-import { prettyNumber } from "@/utils/helpers/number/pretty";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { formatNumber } from "@/utils/helpers/currency";
 import { IconInput } from "./icon-input";
@@ -52,8 +51,11 @@ const SelectableToken: React.FC<{
                         ? "-"
                         : `${
                               token.amount
-                                  ? prettyNumber(
-                                        convertDecimalBigIntToNumber(token.amount, token.decimals),
+                                  ? formatNumber(
+                                        convertDecimalBigIntToNumber(
+                                            token.amount,
+                                            token.decimals,
+                                        ).toString(),
                                     )
                                   : "0"
                           }`}
