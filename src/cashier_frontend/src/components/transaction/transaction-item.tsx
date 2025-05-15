@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { memo } from "react";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
 import { Status } from "@/components/ui/status";
 import { mapIntentsStateToStatus } from "@/utils/map/status.map";
@@ -20,12 +20,13 @@ interface TransactionItemProps {
     networkFee?: FeeModel;
 }
 
-export const TransactionItem: FC<TransactionItemProps> = ({
+// apply memo to prevent unnecessary re-renders
+export const TransactionItem = memo(function TransactionItem({
     intent,
     isLoading,
     isUsd,
     fees = [],
-}) => {
+}: TransactionItemProps) {
     const { t } = useTranslation();
     const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
@@ -58,7 +59,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({
         <div className="flex items-center">
             {mapIntentsStateToStatus(intent.state) !== undefined && (
                 <div className="mr-1.5">
-                    <Status status={mapIntentsStateToStatus(intent.state)} />
+                    <Status key={intent.id} status={mapIntentsStateToStatus(intent.state)} />
                 </div>
             )}
 
@@ -118,4 +119,4 @@ export const TransactionItem: FC<TransactionItemProps> = ({
             {/* </div> */}
         </div>
     );
-};
+});
