@@ -111,9 +111,6 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
         calculateFees();
     }, [intents, getToken, link]);
 
-    console.log("sortedIntents", sortedIntents);
-    console.log("intents", intents);
-
     return (
         <section id="confirmation-popup-section-send" className="my-3">
             <div className="flex items-center w-full justify-between">
