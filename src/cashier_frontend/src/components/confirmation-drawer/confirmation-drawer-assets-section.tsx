@@ -111,6 +111,9 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
         calculateFees();
     }, [intents, getToken, link]);
 
+    console.log("sortedIntents", sortedIntents);
+    console.log("intents", intents);
+
     return (
         <section id="confirmation-popup-section-send" className="my-3">
             <div className="flex items-center w-full justify-between">
@@ -121,6 +124,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 {sortedIntents.map((intent) => (
                     <li key={intent.id}>
                         <TransactionItem
+                            key={intent.id}
                             title={t("confirmation_drawer.asset_label")}
                             intent={intent}
                             isUsd={isUsd}
