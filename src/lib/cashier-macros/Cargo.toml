@@ -3,6 +3,8 @@ name = "cashier-macros"
 version = "0.1.0"
 edition = "2021"
 include = ['src', 'Cargo.toml']
+license = "GPL-3.0-or-later"
+license-file = "../../../LICENSE"
 
 [dependencies]
 proc-macro2 = "1.0.93"
