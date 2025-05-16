@@ -177,7 +177,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({
                             onToggle={onToggleUsd}
                             canConvert={canConvert}
                             tokenDecimals={tokenDecimals}
-                            usdDecimals={2}
+                            usdDecimals={4}
                         />
                     )}
                 </div>
