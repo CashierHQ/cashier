@@ -35,7 +35,7 @@ function App() {
                 targets,
                 maxTimeToLive: 3_600_000_000_000n,
             }}
-            discoverExtensionSigners={false}
+            discoverExtensionSigners={true}
         >
             <QueryClientProvider client={queryClient}>
                 <AppRouter />
