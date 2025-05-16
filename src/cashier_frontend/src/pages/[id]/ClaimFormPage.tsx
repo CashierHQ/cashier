@@ -90,9 +90,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     // Update button text based on action state
     useEffect(() => {
-        console.log("😎 ~~~~~useEffect on ClaimFormPage.tsx~~~~~");
-        console.log("useEffect array: [linkUserState, t]");
-        console.log("LinkUserState:", linkUserState);
         if (!linkUserState?.action) return;
 
         const actionState = linkUserState.action.state;
@@ -120,9 +117,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     // Fetch action data when identity changes
     useEffect(() => {
-        console.log("😎 ~~~~~useEffect on ClaimFormPage.tsx~~~~~");
-        console.log("useEffect array: [identity, linkId, refetchLinkUserState]");
-
         const fetchInitialData = async () => {
             setIsInitialDataLoading(true);
             setIsDisabledButton(true); // Disable button while loading
@@ -146,11 +140,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     // Polling effect to update action state during processing
     useEffect(() => {
-        console.log("😎 ~~~~~useEffect on ClaimFormPage.tsx~~~~~");
-        console.log("useEffect array: [isProcessing]");
         let intervalId: number | null = null;
-
-        console.log("isProcessing changed", isProcessing);
 
         if (isProcessing) {
             intervalId = setInterval(async () => {
@@ -172,8 +162,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
      * Creates an action for authenticated users
      */
     const handleCreateActionForUser = async (): Promise<ActionModel> => {
-        console.log("😎 ~~~~~handleCreateActionForUser on ClaimFormPage.tsx~~~~~");
-        console.log("LinkUserState:", linkUserState);
         if (linkUserState?.action) {
             return linkUserState.action;
         }
@@ -188,7 +176,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
      * Creates an action for anonymous users
      */
     const handleCreateActionAnonymous = async (walletAddress: string): Promise<ActionModel> => {
-        console.log("😎 ~~~~~handleCreateActionAnonymous on ClaimFormPage.tsx~~~~~");
         return await createActionAnonymous({
             linkId: linkId!,
             walletAddress: walletAddress,
@@ -202,14 +189,8 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
      * @param {string} anonymousWalletAddress - The wallet address for anonymous users
      */
     const handleCreateAction = async (anonymousWalletAddress?: string) => {
-        console.log("😎 ~~~~~handleCreateAction on ClaimFormPage.tsx~~~~~");
-        console.log("Link:", link);
-        console.log("LinkUserState:", linkUserState);
-        console.log("isInitialDataLoading:", isInitialDataLoading);
-
         // Don't proceed if initial data is still loading
         if (isInitialDataLoading) {
-            console.log("Initial data still loading, not processing button click");
             return;
         }
 
@@ -221,11 +202,9 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
             setButtonText(t("processing"));
 
             if (linkUserState?.action) {
-                console.log("😎 ~~~~~if (linkUserState?.action)~~~~~");
                 // Display the confirmation drawer if action exists
                 setShowConfirmation(true);
             } else if (identity) {
-                console.log("😎 ~~~~~else if (identity)~~~~~");
                 // Authenticated user flow
                 const action = await handleCreateActionForUser();
                 if (action) {
@@ -233,7 +212,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     setShowConfirmation(true);
                 }
             } else if (anonymousWalletAddress) {
-                console.log("😎 ~~~~~else if (anonymousWalletAddress)~~~~~");
                 // Anonymous user flow
                 const anonymousLinkUserState = await fetchLinkUserState(
                     {
