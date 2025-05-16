@@ -56,6 +56,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const [isDisabledButton, setIsDisabledButton] = useState(false);
     const [buttonText, setButtonText] = useState(t("claim.claim"));
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isInitialDataLoading, setIsInitialDataLoading] = useState(true);
 
     // Button state for confirmation drawer
     const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
@@ -107,27 +108,39 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         }
     }, [linkUserState, t]);
 
-    // Show confirmation drawer when action is available
+    // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
-        if (linkUserState?.action) {
+        if (!isInitialDataLoading && linkUserState?.action) {
             setShowConfirmation(true);
         }
-    }, [linkUserState?.action, link]);
+    }, [linkUserState?.action, link, isInitialDataLoading]);
 
     // Fetch action data when identity changes
     useEffect(() => {
-        if (linkId && identity) {
-            refetchLinkUserState().catch((error) => {
-                console.error("Error fetching action:", error);
-            });
-        }
+        const fetchInitialData = async () => {
+            setIsInitialDataLoading(true);
+            setIsDisabledButton(true); // Disable button while loading
+            if (linkId && identity) {
+                try {
+                    await refetchLinkUserState();
+                } catch (error) {
+                    console.error("Error fetching action:", error);
+                } finally {
+                    setIsInitialDataLoading(false);
+                    setIsDisabledButton(false); // Explicitly re-enable button after loading
+                }
+            } else {
+                setIsInitialDataLoading(false);
+                setIsDisabledButton(false); // Explicitly re-enable button after loading
+            }
+        };
+
+        fetchInitialData();
     }, [identity, linkId, refetchLinkUserState]);
 
     // Polling effect to update action state during processing
     useEffect(() => {
         let intervalId: number | null = null;
-
-        console.log("isProcessing changed", isProcessing);
 
         if (isProcessing) {
             intervalId = setInterval(async () => {
@@ -176,6 +189,11 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
      * @param {string} anonymousWalletAddress - The wallet address for anonymous users
      */
     const handleCreateAction = async (anonymousWalletAddress?: string) => {
+        // Don't proceed if initial data is still loading
+        if (isInitialDataLoading) {
+            return;
+        }
+
         // Validation
         onSubmit();
 
@@ -350,9 +368,9 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     formData={linkData ?? ({} as LinkDetailModel)}
                     onSubmit={handleCreateAction}
                     onBack={onBack}
-                    isDisabled={isDisabledButton}
+                    isDisabled={isDisabledButton || isInitialDataLoading}
                     setDisabled={setIsDisabledButton}
-                    buttonText={buttonText}
+                    buttonText={isInitialDataLoading ? "Loading..." : buttonText}
                 />
             </div>
 
