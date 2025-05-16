@@ -255,5 +255,18 @@
             "total_fees": "Total fees",
             "multiple_tokens": "Multiple tokens"
         }
+    },
+    "main_page": {
+        "unauthenticated_content": {
+            "development_warning_1": "Cashier is still in development",
+            "development_warning_2": "Use with caution",
+            "big_title_1": "Cashier Links - ",
+            "big_title_2": "fast, easy, and ",
+            "big_title_3": "safe",
+            "description_1": "Start creating transaction links with Cashier",
+            "description_2": "create & airdrop NFTs, and more features coming!",
+            "get_started": "Get started",
+            "connect_wallet_title": "Connect your wallet"
+        }
     }
 }

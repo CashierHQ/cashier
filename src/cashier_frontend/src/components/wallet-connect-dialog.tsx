@@ -6,6 +6,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
+import { HoverBorderGradient } from "./ui/hover-border-gradient";
 
 // Wallet option interface
 export interface WalletOption {
@@ -81,13 +82,7 @@ const WalletOption: FC<{
 }> = ({ name, icon, onClick }) => {
     const renderIcon = () => {
         if (typeof icon === "string") {
-            return (
-                <img
-                    src={icon}
-                    alt={`${name} icon`}
-                    className="w-6 h-6 rounded-full border border-gray-300"
-                />
-            );
+            return <img src={icon} alt={`${name} icon`} className="w-6 h-6 rounded-full" />;
         }
         // If icon is a JSX.Element, return it directly
         return React.cloneElement(icon as React.ReactElement, {
@@ -96,13 +91,17 @@ const WalletOption: FC<{
     };
 
     return (
-        <button
+        <HoverBorderGradient
+            containerClassName="rounded-full w-full"
+            as="button"
+            className="dark:bg-black bg-white text-black dark:text-white flex items-center justify-between w-full px-4 py-3"
             onClick={onClick}
-            className="flex items-center gap-3 w-full p-4 rounded-2xl bg-white hover:bg-gray-50 transition-colors text-gray-900 text-left border border-gray-300 hover:border-gray-900"
         >
-            {renderIcon()}
-            <div className="">{name}</div>
-        </button>
+            <div className="flex items-center space-x-3">
+                {renderIcon()}
+                <span>{name}</span>
+            </div>
+        </HoverBorderGradient>
     );
 };
 

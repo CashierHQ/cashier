@@ -32,12 +32,6 @@ export const walletDialogConfigOptions = [
         onClick: () => {}, // This will be set by the component
     },
     // Uncomment when Plug wallet support is added
-    // {
-    //     id: "plug",
-    //     name: "Plug",
-    //     icon: Plug.icon,
-    //     onClick: () => {}, // This will be set by the component
-    // },
 ];
 
 // Internet Identity wallet option for the header
@@ -45,7 +39,7 @@ export const headerWalletOptions = [
     {
         id: "InternetIdentity",
         name: "Internet Identity",
-        icon: InternetIdentity.icon!,
+        icon: "/icpLogo.png",
         onClick: () => {}, // This will be set by the component
     },
 ];
