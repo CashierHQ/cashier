@@ -79,7 +79,12 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
 
                 if (canConvert && tokenUsdPrice) {
                     const usdValue = tokenAmountNumber * tokenUsdPrice;
-                    setLocalUsdAmount(usdValue.toFixed(2));
+                    setLocalUsdAmount(
+                        usdValue.toLocaleString("en-US", {
+                            useGrouping: false,
+                            maximumFractionDigits: 7,
+                        }),
+                    );
                 }
             }
         }
@@ -162,7 +167,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
             // Update USD amount based on token
             if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
                 const usdValue = parseFloat(value) * tokenUsdPrice;
-                setLocalUsdAmount(usdValue.toFixed(2));
+                setLocalUsdAmount(usdValue.toFixed(7));
                 setTokenAmount(value);
             } else {
                 setTokenAmount(value);

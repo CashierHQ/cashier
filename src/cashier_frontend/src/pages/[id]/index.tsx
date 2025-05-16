@@ -161,9 +161,7 @@ export default function ClaimPage() {
                     renderSkeleton()
                 ) : (
                     <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
-                        {(!identity || !linkUserState?.link_user_state) &&
-                        linkData &&
-                        showDefaultPage ? (
+                        {showDefaultPage ? (
                             <LinkCardPage linkData={linkData} onClickClaim={handleClickClaim} />
                         ) : (
                             <MultiStepForm

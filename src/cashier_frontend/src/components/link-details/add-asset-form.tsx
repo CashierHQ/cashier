@@ -562,9 +562,15 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 const hasEnoughBalance = Number(totalAmountNeeded) <= Number(token.amount);
 
                 if (!hasEnoughBalance) {
-                    const availableAmount = token?.amount ? Number(token.amount) : 0;
-                    const requestedAmount = Number(totalAmountNeeded);
-                    const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${availableAmount}, Requested: ${requestedAmount}`;
+                    const availableAmountInDecimal = token?.amount ? Number(token.amount) : 0;
+                    const requestedAmountInDecimal = Number(totalAmountNeeded);
+                    const availableAmount =
+                        availableAmountInDecimal / (Math.pow(10, token.decimals) || 1);
+                    const requestedAmount =
+                        requestedAmountInDecimal / (Math.pow(10, token.decimals) || 1);
+                    const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${formatNumber(
+                        availableAmount.toString(),
+                    )} , Requested: ${formatNumber(requestedAmount.toString())}`;
                     errorMessages.push(errorMsg);
                     isValid = false;
                 }

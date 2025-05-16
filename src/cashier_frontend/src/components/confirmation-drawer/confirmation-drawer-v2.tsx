@@ -139,7 +139,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                         onUsdClick={() => setIsUsd((old) => !old)}
                     />
                     <ConfirmationPopupFeesSection intents={action.intents} />
-
                     <ConfirmationPopupLegalSection />
                     <Button
                         className="my-2 mx-auto w-[95%] disabled:bg-disabledgreen"
