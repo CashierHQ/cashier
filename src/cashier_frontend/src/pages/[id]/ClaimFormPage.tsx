@@ -83,7 +83,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         enableFetchLinkUserState,
     );
 
-    const { link, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
+    const { link, setAction, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
         linkId,
         ACTION_TYPE.CLAIM_LINK,
     );
@@ -113,12 +113,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
-        console.log("😎 ~~~~~useEffect on ClaimFormPage.tsx~~~~~");
-        console.log("useEffect array: [linkUserState?.action, link, isInitialDataLoading]");
-        console.log("[hook] Link:", link);
-        console.log("[hook] Action:", linkUserState?.action);
-        console.log("[hook] isInitialDataLoading:", isInitialDataLoading);
-
         if (!isInitialDataLoading && linkUserState?.action) {
             setShowConfirmation(true);
         }
@@ -160,11 +154,10 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
         if (isProcessing) {
             intervalId = setInterval(async () => {
-                console.log("link id", linkId);
-                console.log("action", linkUserState?.action);
-                await refetchLinkUserState().catch((error) => {
-                    console.error("Error fetching action:", error);
-                });
+                const res = await refetchLinkUserState();
+                if (res.data?.action) {
+                    setAction(res.data.action);
+                }
             }, 2000);
         }
 

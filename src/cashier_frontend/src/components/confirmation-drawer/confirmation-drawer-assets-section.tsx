@@ -121,6 +121,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 {sortedIntents.map((intent) => (
                     <li key={intent.id}>
                         <TransactionItem
+                            key={intent.id}
                             title={t("confirmation_drawer.asset_label")}
                             intent={intent}
                             isUsd={isUsd}

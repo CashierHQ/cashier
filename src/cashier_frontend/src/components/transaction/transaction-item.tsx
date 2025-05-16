@@ -1,8 +1,7 @@
-import { FC } from "react";
+import { memo } from "react";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
 import { Status } from "@/components/ui/status";
 import { mapIntentsStateToStatus } from "@/utils/map/status.map";
-import { useTranslation } from "react-i18next";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { convert } from "@/utils/helpers/convert";
 import { Avatar } from "@radix-ui/react-avatar";
@@ -14,19 +13,16 @@ import { useEffect, useState } from "react";
 interface TransactionItemProps {
     title: string;
     intent: IntentModel;
-    isLoading?: boolean;
     isUsd?: boolean;
     fees?: FeeModel[];
     networkFee?: FeeModel;
 }
 
-export const TransactionItem: FC<TransactionItemProps> = ({
+// apply memo to prevent unnecessary re-renders
+export const TransactionItem = memo(function TransactionItem({
     intent,
-    isLoading,
-    isUsd,
     fees = [],
-}) => {
-    const { t } = useTranslation();
+}: TransactionItemProps) {
     const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
 
@@ -58,7 +54,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({
         <div className="flex items-center">
             {mapIntentsStateToStatus(intent.state) !== undefined && (
                 <div className="mr-1.5">
-                    <Status status={mapIntentsStateToStatus(intent.state)} />
+                    <Status key={intent.id} status={mapIntentsStateToStatus(intent.state)} />
                 </div>
             )}
 
@@ -118,4 +114,4 @@ export const TransactionItem: FC<TransactionItemProps> = ({
             {/* </div> */}
         </div>
     );
-};
+});
