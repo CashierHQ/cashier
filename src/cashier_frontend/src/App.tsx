@@ -100,7 +100,7 @@ function App() {
                         Join Discord
                     </a>
                 </div>
-                <img src="./dist/landing.png" />
+                <img src="./preview.png" />
             </ContainerScroll>
         </div>
     );
