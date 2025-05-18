@@ -566,7 +566,7 @@ mod tests {
 
         let temp_action = TemporaryAction {
             id: action_id.clone(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Created,
             creator: creator.clone(),
             link_id: link_id.clone(),

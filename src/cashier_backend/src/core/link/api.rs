@@ -198,7 +198,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 action_type
             }
             // For Claim, don't return the action (handled separately)
-            Some(ActionType::Claim) => None,
+            Some(ActionType::Use) => None,
             // For other types, pass through
             _ => action_type,
         };
@@ -284,9 +284,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
 
         // check action type is claim
-        if action_type != ActionType::Claim {
+        if action_type != ActionType::Use {
             return Err(CanisterError::ValidationErrors(
-                "Invalid action type, only Claim action type is allowed".to_string(),
+                "Invalid action type, only Claim or Use action type is allowed".to_string(),
             ));
         }
 
@@ -312,7 +312,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // fill in action_type info
             // fill in default_link_user_state info
             let default_link_user_state = match action_type {
-                ActionType::Claim => Some(LinkUserState::ChooseWallet),
+                ActionType::Use => Some(LinkUserState::ChooseWallet),
                 _ => None,
             };
             let mut temp_action = TemporaryAction {
@@ -336,6 +336,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                     ))
                 })?;
             temp_action.intents = intents;
+
+            info!("temp_action: {:#?}", temp_action);
 
             // create real action
             let res = self.tx_manager_service.create_action(&temp_action)?;
@@ -409,7 +411,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // fill in action_type info
             // fill in default_link_user_state info
             let default_link_user_state = match action_type {
-                ActionType::Claim => Some(LinkUserState::ChooseWallet),
+                ActionType::Use => Some(LinkUserState::ChooseWallet),
                 _ => None,
             };
             let mut temp_action = TemporaryAction {
@@ -505,10 +507,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // only support claim action type
         match ActionType::from_str(&input.action_type) {
             Ok(action_type) => {
-                if action_type != ActionType::Claim {
+                if action_type != ActionType::Use {
                     return Err(CanisterError::ValidationErrors(
                         "
-                        Invalid action type, only Claim action type is allowed
+                        Invalid action type, only Claim or Use action type is allowed
                         "
                         .to_string(),
                     ));
@@ -547,11 +549,23 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             return Ok(None);
         }
 
+        info!(
+            "[link_get_user_state] user_id: {:?}, link_id: {:?}, action_type: {:?}",
+            temp_user_id, input.link_id, input.action_type
+        );
+
         // If found "LinkAction" values
         // return action = get action from (action _id)
         // return state = record user_state
         let action_id = link_action.as_ref().unwrap().action_id.clone();
-        let link_user_state = link_action.as_ref().unwrap().link_user_state.clone();
+        let link_user_state = link_action
+            .as_ref()
+            .unwrap()
+            .link_user_state
+            .clone()
+            .ok_or(CanisterError::HandleLogicError(
+                "Link user state is not found".to_string(),
+            ))?;
 
         let action = self
             .action_service
@@ -560,7 +574,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         return Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from_with_tx(action.action, action.intents, action.intent_txs),
-            link_user_state: link_user_state.unwrap().to_string(),
+            link_user_state: link_user_state.to_string(),
         }));
     }
 
@@ -592,10 +606,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // validate action type
         match ActionType::from_str(&input.action_type) {
             Ok(action_type) => {
-                if action_type != ActionType::Claim {
+                if action_type != ActionType::Use {
                     return Err(CanisterError::ValidationErrors(
                         "
-                        Invalid action type, only Claim action type is allowed
+                        Invalid action type, only Claim or Use  action type is allowed
                         "
                         .to_string(),
                     ));

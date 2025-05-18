@@ -27,7 +27,7 @@ impl ActionDomainLogic {
                     ));
                 }
             }
-            ActionType::Claim | ActionType::Use => {
+            ActionType::Use => {
                 // Anyone can claim, but only if link is active
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
@@ -70,7 +70,7 @@ impl ActionDomainLogic {
         match (&action.r#type, &intent.task) {
             (ActionType::CreateLink, IntentTask::TransferWalletToLink) => Ok(()),
             (ActionType::CreateLink, IntentTask::TransferWalletToTreasury) => Ok(()),
-            (ActionType::Claim, IntentTask::TransferLinkToWallet) => Ok(()),
+            (ActionType::Use, IntentTask::TransferLinkToWallet) => Ok(()),
             // Other valid combinations...
             _ => Err(CanisterError::ValidationErrors(format!(
                 "Intent task {:?} is not valid for action type {:?}",
