@@ -1,5 +1,5 @@
 /* eslint-disable no-var */
-import { PocketIcServer } from "@hadronous/pic";
+import { PocketIcServer } from "@dfinity/pic";
 
 declare global {
     declare var __PIC__: PocketIcServer;
