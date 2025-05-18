@@ -30,7 +30,7 @@
         "src/cashier_frontend"
     ],
     "devDependencies": {
-        "@dfinity/pic": "^0.11.0",
+        "@dfinity/pic": "^0.13.1",
         "@types/jest": "^29.5.14",
         "@types/node": "^22.13.2",
         "dotenv": "^16.4.5",
