@@ -1,10 +1,38 @@
 use std::collections::HashMap;
 
+use cashier_types::ActionState;
+
 #[derive(Debug, Clone)]
 pub struct ActionData {
     pub action: cashier_types::Action,
     pub intents: Vec<cashier_types::Intent>,
     pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
+}
+
+pub struct RollUpStateResp {
+    pub previous_state: ActionState,
+    pub current_state: ActionState,
+    pub action: cashier_types::Action,
+    pub link_id: String,
+    pub action_type: cashier_types::ActionType,
+    pub action_id: String,
+    pub intents: Vec<cashier_types::Intent>,
+    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
+}
+
+impl From<(ActionData, ActionState)> for RollUpStateResp {
+    fn from((data, previous_state): (ActionData, ActionState)) -> Self {
+        Self {
+            previous_state,
+            current_state: data.action.state.clone(),
+            action: data.action.clone(),
+            link_id: data.action.link_id.clone(),
+            action_type: data.action.r#type.clone(),
+            action_id: data.action.id.clone(),
+            intents: data.intents.clone(),
+            intent_txs: data.intent_txs.clone(),
+        }
+    }
 }
 
 impl ActionData {

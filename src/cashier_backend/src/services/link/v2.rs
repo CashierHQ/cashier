@@ -513,12 +513,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     };
 
                     intent.r#type = IntentType::Transfer(transfer_data.clone());
-                }
-                _ => {
-                    return Err(CanisterError::HandleLogicError(
-                        "Not found intents config for {link_type}_{action_type}".to_string(),
-                    ));
-                }
+                } // _ => {
+                  //     return Err(CanisterError::HandleLogicError(
+                  //         "Not found intents config for {link_type}_{action_type}".to_string(),
+                  //     ));
+                  // }
             }
         }
 
@@ -714,7 +713,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
 
                 // For send-type links, check usage counter against max allowed
-                if let Some(link_type) = &link.link_type {
+                if let Some(_link_type) = &link.link_type {
                     if link.link_use_action_counter >= link.link_use_action_max_count {
                         return Err(CanisterError::ValidationErrors(format!(
                             "Link maximum usage count reached: {}",
@@ -770,7 +769,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
         }
 
-        Ok(())
+        return Ok(());
     }
 
     // This method mostly use for "Send" link type
@@ -1790,5 +1789,47 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     /// Check if link exists
     pub fn is_link_exist(&self, link_id: String) -> bool {
         self.link_repository.get(&link_id).is_some()
+    }
+
+    pub fn link_handle_tx_update(
+        &self,
+        previous_state: ActionState,
+        current_state: ActionState,
+        link_id: String,
+        action_type: ActionType,
+        action_id: String,
+    ) -> Result<(), CanisterError> {
+        // Return early if state hasn't changed
+        if previous_state == current_state {
+            return Ok(());
+        }
+
+        // Return early if this isn't a claim/use action or if it's not a successful state
+        if (action_type != ActionType::Claim && action_type != ActionType::Use)
+            || current_state != ActionState::Success
+        {
+            return Ok(());
+        }
+
+        // At this point we know:
+        // 1. The state has changed
+        // 2. The action type is either Claim or Use
+        // 3. The current state is Success
+
+        // Update link properties
+        let result = self.update_link_properties(link_id.clone(), action_id.clone());
+        if let Err(err) = result {
+            error!(
+                "[link_handle_tx_update] Failed to update link properties for link_id: {:?}, action_id: {:?}, error: {:?}",
+                link_id, action_id, err
+            );
+
+            return Err(CanisterError::HandleLogicError(format!(
+                "Failed to update link properties: {}",
+                err
+            )));
+        }
+
+        Ok(())
     }
 }
