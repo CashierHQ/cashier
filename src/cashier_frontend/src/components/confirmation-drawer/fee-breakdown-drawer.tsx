@@ -52,7 +52,6 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                 <div className="mt-2 light-borders-green px-4 py-4 flex flex-col gap-4">
                     {feesBreakdown.map((fee, index) => {
                         const token = getToken(fee.tokenAddress);
-                        console.log("fee", fee);
                         return (
                             <div key={index} className="">
                                 <div className="flex justify-between items-center">

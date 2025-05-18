@@ -1,5 +1,5 @@
 import { Principal } from "@dfinity/principal";
-import { Actor, PocketIc } from "@hadronous/pic";
+import { Actor, PocketIc } from "@dfinity/pic";
 import {
     type _SERVICE,
     idlFactory,

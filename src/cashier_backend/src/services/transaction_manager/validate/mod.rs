@@ -1,11 +1,7 @@
-use crate::{
-    repositories::{action, user_wallet},
-    utils::icrc::IcrcService,
-};
+use crate::repositories::{action, user_wallet};
 
 #[cfg_attr(test, faux::create)]
 pub struct ValidateService {
-    icrc_service: IcrcService,
     user_wallet_repository: user_wallet::UserWalletRepository,
     action_repository: action::ActionRepository,
 }
@@ -14,18 +10,15 @@ pub struct ValidateService {
 impl ValidateService {
     pub fn get_instance() -> Self {
         ValidateService::new(
-            IcrcService::new(),
             user_wallet::UserWalletRepository::new(),
             action::ActionRepository::new(),
         )
     }
     pub fn new(
-        icrc_service: IcrcService,
         user_wallet_repository: user_wallet::UserWalletRepository,
         action_repository: action::ActionRepository,
     ) -> Self {
         Self {
-            icrc_service,
             user_wallet_repository,
             action_repository,
         }

@@ -1,4 +1,5 @@
 use crate::repositories;
+use crate::types::transaction_manager::RollUpStateResp;
 use crate::{
     domains::action::ActionDomainLogic,
     types::{error::CanisterError, transaction_manager::ActionData},
@@ -165,10 +166,31 @@ where
         self.get_action_data(action_id)
     }
 
-    pub fn roll_up_state(&self, tx_id: String) -> Result<ActionData, String> {
+    /// Rolls up and updates the state of an action and its associated intents based on a given transaction ID.
+    ///
+    /// This method:
+    /// 1. Retrieves the action data associated with the given transaction ID
+    /// 2. Updates the state of each intent based on its transactions
+    /// 3. Updates the overall action state based on the updated intents
+    /// 4. Persists these state changes to the repositories
+    /// 5. Returns both the updated action data and the previous state
+    ///
+    /// # Parameters
+    /// * `tx_id` - Transaction ID used to lookup the associated action
+    ///
+    /// # Returns
+    /// * `Ok(RollUpStateResp)` - Contains the updated action data and previous state
+    /// * `Err(String)` - Error message if any step in the process fails
+    ///
+    /// # State Changes
+    /// - Updates intent states in the intent repository
+    /// - Updates action state in the action repository
+    pub fn roll_up_state(&self, tx_id: String) -> Result<RollUpStateResp, String> {
         let action_data = self
             .get_action_by_tx_id(tx_id)
             .map_err(|e| format!("get_action_by_tx_id failed: {}", e))?;
+
+        let previous_state = action_data.action.state.clone();
 
         let mut intents = action_data.intents;
         let intent_txs = action_data.intent_txs;
@@ -176,19 +198,23 @@ where
 
         for intent in &mut intents {
             let txs = intent_txs.get(&intent.id).unwrap();
-            let intent_state = self.domain_logic.calculate_intent_state(txs);
+            let intent_state = self.domain_logic.roll_up_intent_state(txs);
             intent.state = intent_state;
         }
 
-        action.state = self.domain_logic.calculate_action_state(&intents);
+        action.state = self.domain_logic.roll_up_action_state(&intents);
+
         self.intent_repository.batch_update(intents.clone());
         self.action_repository.update(action.clone());
 
-        Ok(ActionData {
+        let updated_action_data = ActionData {
             action,
             intents,
             intent_txs,
-        })
+        };
+
+        // Return response with both previous and current states
+        Ok(RollUpStateResp::from((updated_action_data, previous_state)))
     }
 
     pub fn store_action_data(

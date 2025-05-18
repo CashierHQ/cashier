@@ -126,6 +126,41 @@ export default function LinkPreview({
             if (!link) throw new Error("Link is not defined");
             if (!action) throw new Error("Action is not defined");
 
+            // Validate user has sufficient balance for all assets in the link
+            if (action.intents && action.intents.length > 0) {
+                for (const intent of action.intents) {
+                    const token = getToken(intent.asset.address);
+
+                    // this like the useTokens didn't load all tokens
+                    if (!token || token.amount === undefined || token.amount === null) {
+                        throw new Error(`Could not find token balance for ${intent.asset.address}`);
+                    }
+
+                    const totalAmount = BigInt(intent.amount);
+
+                    const userBalance = token.amount;
+
+                    const tokenDecimals = token.decimals || 8;
+
+                    // Check if user has sufficient balance
+                    if (userBalance < totalAmount) {
+                        const formattedRequired = Number(totalAmount) / 10 ** tokenDecimals;
+                        const formattedBalance = Number(userBalance) / 10 ** tokenDecimals;
+
+                        throw new Error(
+                            `Insufficient balance for ${token.symbol}. Required: ${formattedRequired}, Available: ${formattedBalance}`,
+                        );
+                    }
+
+                    console.log("User has sufficient balance for", token.symbol);
+                    console.log(
+                        `Required: ${Number(totalAmount) / 10 ** tokenDecimals}, Available: ${
+                            Number(userBalance) / 10 ** tokenDecimals
+                        }`,
+                    );
+                }
+            }
+
             const start = Date.now();
 
             console.log("[handleStartTransaction] Starting processAction...");

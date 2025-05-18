@@ -9,7 +9,6 @@ use crate::{
     core::{
         action::types::{ActionDto, ProcessActionAnonymousInput, ProcessActionInput},
         guard::is_not_anonymous,
-        link::callback,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
     error, info,
@@ -357,14 +356,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // execute action with our standalone callback
             let update_action_res = self
                 .tx_manager_service
-                .update_action(
-                    UpdateActionArgs {
-                        action_id: action_id.clone(),
-                        link_id: input.link_id.clone(),
-                        execute_wallet_tx: false,
-                    },
-                    Some(callback::update_action_claim_callback),
-                )
+                .update_action(UpdateActionArgs {
+                    action_id: action_id.clone(),
+                    link_id: input.link_id.clone(),
+                    execute_wallet_tx: false,
+                })
                 .await;
 
             update_action_res
@@ -459,14 +455,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // execute action
             let update_action_res = self
                 .tx_manager_service
-                .update_action(
-                    UpdateActionArgs {
-                        action_id: action_id.clone(),
-                        link_id: input.link_id.clone(),
-                        execute_wallet_tx: false,
-                    },
-                    Some(callback::update_action_claim_callback),
-                )
+                .update_action(UpdateActionArgs {
+                    action_id: action_id.clone(),
+                    link_id: input.link_id.clone(),
+                    execute_wallet_tx: false,
+                })
                 .await?;
 
             Ok(update_action_res)
@@ -689,7 +682,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let update_action_res = self
             .tx_manager_service
-            .update_action::<fn(ActionState, ActionState, String, ActionType, String)>(args, None)
+            .update_action(args)
             .await
             .map_err(|e| {
                 CanisterError::HandleLogicError(format!("Failed to update action: {}", e))

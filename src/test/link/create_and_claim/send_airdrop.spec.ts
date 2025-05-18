@@ -2,6 +2,7 @@
 import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
 import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
+import { FEE_CANISTER_ID } from "../../constant";
 
 describe("Test create and claim token airdrop link", () => {
     const fixture = new LinkTestFixture();
@@ -20,7 +21,7 @@ describe("Test create and claim token airdrop link", () => {
 
     const assetInfo: AssetInfo = {
         chain: "IC",
-        address: "x5qut-viaaa-aaaar-qajda-cai",
+        address: FEE_CANISTER_ID,
         label: "SEND_AIRDROP_ASSET",
         amount_per_claim: BigInt(10_0000_0000),
     };

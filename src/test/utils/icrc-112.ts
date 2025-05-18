@@ -1,5 +1,5 @@
 import { _SERVICE, Icrc112Request } from "../../declarations/cashier_backend/cashier_backend.did";
-import { Actor } from "@hadronous/pic";
+import { Actor } from "@dfinity/pic";
 import { TokenHelper } from "../utils/token-helper";
 import { Principal } from "@dfinity/principal";
 import { linkIdToSubaccount } from "../utils";

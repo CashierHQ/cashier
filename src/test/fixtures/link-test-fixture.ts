@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc, SubnetStateType } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc, SubnetStateType } from "@dfinity/pic";
 import { Principal } from "@dfinity/principal";
 import {
     idlFactory,
@@ -23,6 +23,7 @@ import LinkHelper from "../utils/link-helper";
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { Identity } from "@dfinity/agent";
 import { Icrc112ExecutorV2 } from "../utils/icrc-112-v2";
+import { FEE_CANISTER_ID } from "../constant";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -93,6 +94,11 @@ export class LinkTestFixture {
                     },
                 },
             ],
+            nns: {
+                state: {
+                    type: SubnetStateType.New,
+                },
+            },
         });
 
         // Set time and tick
@@ -166,14 +172,14 @@ export class LinkTestFixture {
         }
 
         const canisterSubnetId2 = await this.pic.getCanisterSubnetId(
-            Principal.fromText("x5qut-viaaa-aaaar-qajda-cai"),
+            Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
         );
 
-        console.log("subnets x5qut-viaaa-aaaar-qajda-cai", canisterSubnetId2?.toText());
+        console.log("subnets ryjl3-tyaaa-aaaaa-aaaba-cai", canisterSubnetId2?.toText());
 
         // Setup link helper
         this.linkHelper = new LinkHelper(this.pic);
-        this.linkHelper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
+        this.linkHelper.setupActor("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
         // Advance time to ensure we're ready for transactions
         await this.pic.advanceTime(advanceTimeAfterSetup);
@@ -401,13 +407,12 @@ export class LinkTestFixture {
         await executor.executeIcrc1Transfer(options?.icrc1TransferAmount);
         await executor.executeIcrc2Approve();
 
+        await executor.triggerTransaction();
         await this.actor.update_action({
             action_id: actionId,
             link_id: linkId,
             external: true,
         });
-
-        await executor.triggerTransaction();
     }
 
     async executeIcrc112V2(
@@ -616,7 +621,7 @@ export class LinkTestFixture {
 
         const defaultAssetInfo: AssetInfo = {
             chain: "IC",
-            address: "x5qut-viaaa-aaaar-qajda-cai",
+            address: FEE_CANISTER_ID,
             label: "SEND_TIP_ASSET",
             amount_per_claim: BigInt(10_0000_0000),
         };
@@ -678,6 +683,14 @@ export class LinkTestFixture {
         };
     }
 
+    async advanceTimeAndTick(milliseconds: number): Promise<void> {
+        if (!this.pic) {
+            throw new Error("PocketIc is not initialized");
+        }
+        await this.pic.advanceTime(milliseconds);
+        await this.pic.tick(1);
+    }
+
     // Complete link creation flow in one function
     async completeActiveLinkFlow(
         linkType: string,
@@ -692,13 +705,17 @@ export class LinkTestFixture {
         // Create link
         const linkId = await this.createLinkV2(linkType, config, assets, maxUseCount);
 
+        await this.advanceTimeAndTick(2000);
+
         // Create action
         const actionId = await this.createAction(linkId, "CreateLink");
 
-        console.log("actionId", actionId);
+        await this.advanceTimeAndTick(2000);
 
         // Confirm action
         const confirmResult = await this.confirmAction(linkId, actionId, "CreateLink");
+
+        await this.advanceTimeAndTick(2000);
 
         // Execute ICRC-112 requests
         if (confirmResult.icrc_112_requests && confirmResult.icrc_112_requests[0]) {
@@ -722,6 +739,8 @@ export class LinkTestFixture {
                 await this.executeIcrc112V2(requests, linkId, actionId, this.identities.alice);
             }
         }
+
+        await this.advanceTimeAndTick(2000);
 
         // Activate link
         await this.activateLink(linkId);

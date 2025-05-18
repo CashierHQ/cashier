@@ -164,7 +164,7 @@ mod tests {
             create_test_transaction(TransactionState::Created),
         ];
 
-        let result = domain_logic.calculate_intent_state(&transactions);
+        let result = domain_logic.roll_up_intent_state(&transactions);
 
         assert_eq!(
             result,
@@ -182,7 +182,7 @@ mod tests {
             create_test_transaction(TransactionState::Processing),
         ];
 
-        let result = domain_logic.calculate_intent_state(&transactions);
+        let result = domain_logic.roll_up_intent_state(&transactions);
 
         assert_eq!(
             result,
@@ -199,7 +199,7 @@ mod tests {
             create_test_transaction(TransactionState::Success),
         ];
 
-        let result = domain_logic.calculate_intent_state(&transactions);
+        let result = domain_logic.roll_up_intent_state(&transactions);
 
         assert_eq!(
             result,
@@ -216,7 +216,7 @@ mod tests {
             create_test_transaction(TransactionState::Processing),
         ];
 
-        let result = domain_logic.calculate_intent_state(&transactions);
+        let result = domain_logic.roll_up_intent_state(&transactions);
 
         assert_eq!(
             result,

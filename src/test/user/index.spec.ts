@@ -5,7 +5,7 @@ import {
     idlFactory,
 } from "../../declarations/cashier_backend/cashier_backend.did";
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { parseResultResponse } from "../utils/parser";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");

@@ -11,7 +11,7 @@ import {
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { parseResultResponse } from "../../utils/parser";
 import { Principal } from "@dfinity/principal";
 import { flattenAndFindByMethod } from "../../utils/icrc-112";
