@@ -147,7 +147,7 @@ const TransactionToast: FC<TransactionToastProps> = ({
                     </div> */}
                 </div>
             </Toast>
-            <ToastViewport className="fixed bottom-20 sm:bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-full" />
+            <ToastViewport className="fixed bottom-20 sm:bottom-20 left-1/2 -translate-x-1/2 z-60 pointer-events-none w-full" />
         </ToastProvider>
     );
 };

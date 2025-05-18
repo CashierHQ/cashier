@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { FEE_CANISTER_ID } from "../constant";
 import { LinkTestFixture, LinkConfig, AssetInfo } from "../fixtures/link-test-fixture";
 
 describe("Test create and claim tip link", () => {
@@ -16,7 +17,7 @@ describe("Test create and claim tip link", () => {
 
     const assetInfo: AssetInfo = {
         chain: "IC",
-        address: "x5qut-viaaa-aaaar-qajda-cai",
+        address: FEE_CANISTER_ID,
         label: "SEND_TIP_ASSET",
         amount_per_claim: BigInt(10_0000_0000),
     };
