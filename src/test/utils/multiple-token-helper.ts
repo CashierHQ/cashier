@@ -1,6 +1,6 @@
 import { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { resolve } from "path";
 
 import {
@@ -48,7 +48,7 @@ export class MultipleTokenHelper {
     };
 
     public init = async () => {
-        const LEDGER_ID = Principal.fromText("x5qut-viaaa-aaaar-qajda-cai");
+        const LEDGER_ID = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
         const init_args: InitArgs = {
             send_whitelist: [],
@@ -77,11 +77,14 @@ export class MultipleTokenHelper {
             [ledgerCanisterPayload],
         );
 
+        const subnet = await this.pic.getNnsSubnet();
+
         const canister_id = await this.pic.createCanister({
             cycles: BigInt(1e13),
             sender: this.deployer.getPrincipal(),
             // targetSubnetId: subnetId,
             targetCanisterId: LEDGER_ID,
+            targetSubnetId: subnet?.id,
         });
 
         await this.pic.installCode({
