@@ -4,7 +4,7 @@ import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend
 import { fromNullable } from "@dfinity/utils";
 import { FEE_CANISTER_ID } from "../../constant";
 
-describe("Test create and claim tip link", () => {
+describe("Test double claim for tip link", () => {
     const fixture = new LinkTestFixture();
     let linkId: string;
     // Common test configuration
@@ -74,8 +74,8 @@ describe("Test create and claim tip link", () => {
             await fixture.advanceTime(1 * 60 * 1000); // 1 minute
         });
 
-        it("should retrieve empty user state initially", async () => {
-            const result = fixture.createAction(linkId, "Claim");
+        it("shouold get error if try to claim tip link again", async () => {
+            const result = fixture.createAction(linkId, "Use");
 
             await expect(result).rejects.toThrow(
                 '{"ValidationErrors":"Action is already success"}',
