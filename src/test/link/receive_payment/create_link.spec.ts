@@ -11,7 +11,7 @@ import {
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
@@ -48,7 +48,7 @@ describe("Test create airdrop and claim", () => {
 
     const assetInfoTest = {
         chain: "IC",
-        address: "x5qut-viaaa-aaaar-qajda-cai",
+        address: FEE_CANISTER_ID,
         payment_amount: BigInt(1_0000_0000),
         // total 10
         label: "RECEIVE_PAYMENT_ASSET",
@@ -228,10 +228,10 @@ describe("Test create airdrop and claim", () => {
             await executeHelper.triggerTransaction();
 
             const link_helper = new LinkHelper(pic);
-            link_helper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
+            link_helper.setupActor(FEE_CANISTER_ID);
 
             const balanceOfLink = await link_helper.checkAccountBalanceWithSubAccount(
-                "x5qut-viaaa-aaaar-qajda-cai",
+                FEE_CANISTER_ID,
                 linkId,
             );
 
@@ -369,7 +369,7 @@ describe("Test create airdrop and claim", () => {
             });
 
             const link_helper = new LinkHelper(pic);
-            link_helper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
+            link_helper.setupActor(FEE_CANISTER_ID);
 
             const balanceOfLink = await link_helper.checkAccountBalanceWithSubAccount(
                 "jjio5-5aaaa-aaaam-adhaq-cai",

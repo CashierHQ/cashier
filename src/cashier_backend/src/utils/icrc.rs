@@ -136,11 +136,15 @@ impl IcrcService {
         match res {
             Ok((call_res,)) => match call_res {
                 Ok(_block_id) => Ok(_block_id),
-                Err(error) => Err(CanisterError::CanisterCallError {
-                    method: "icrc2_transfer_from".to_string(),
-                    canister_id: token_service.get_canister_id().to_string(),
-                    message: error.to_string(),
-                }),
+                Err(error) => match error {
+                    // likely a duplicate transfer, return the original transfer id
+                    TransferFromError::Duplicate { duplicate_of } => return Ok(duplicate_of),
+                    _ => Err(CanisterError::CanisterCallError {
+                        method: "icrc2_transfer_from".to_string(),
+                        canister_id: token_service.get_canister_id().to_string(),
+                        message: error.to_string(),
+                    }),
+                },
             },
             Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
                 method: "icrc2_transfer_from".to_string(),

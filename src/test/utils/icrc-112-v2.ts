@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { _SERVICE, Icrc112Request } from "../../declarations/cashier_backend/cashier_backend.did";
-import { Actor } from "@hadronous/pic";
+import { Actor } from "@dfinity/pic";
 import { Principal } from "@dfinity/principal";
 import { linkIdToSubaccount } from "../utils";
 import { Account } from "@dfinity/ledger-icp";

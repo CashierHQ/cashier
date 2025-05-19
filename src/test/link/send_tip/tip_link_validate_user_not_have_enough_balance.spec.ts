@@ -9,7 +9,7 @@ import {
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
 
@@ -36,7 +36,7 @@ describe("Tip Link validate user not have enough balance", () => {
 
     const assetInfoTest = {
         chain: "IC",
-        address: "x5qut-viaaa-aaaar-qajda-cai",
+        address: FEE_CANISTER_ID,
         amount_per_claim: BigInt(10_0000_0000),
         total_amount: BigInt(10_0000_0000),
     };

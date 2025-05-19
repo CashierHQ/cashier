@@ -83,7 +83,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         enableFetchLinkUserState,
     );
 
-    const { link, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
+    const { link, setAction, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
         linkId,
         ACTION_TYPE.CLAIM_LINK,
     );
@@ -113,12 +113,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
-        console.log("😎 ~~~~~useEffect on ClaimFormPage.tsx~~~~~");
-        console.log("useEffect array: [linkUserState?.action, link, isInitialDataLoading]");
-        console.log("[hook] Link:", link);
-        console.log("[hook] Action:", linkUserState?.action);
-        console.log("[hook] isInitialDataLoading:", isInitialDataLoading);
-
         if (!isInitialDataLoading && linkUserState?.action) {
             setShowConfirmation(true);
         }
@@ -126,9 +120,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     // Fetch action data when identity changes
     useEffect(() => {
-        console.log("😎 ~~~~~useEffect on ClaimFormPage.tsx~~~~~");
-        console.log("useEffect array: [identity, linkId, refetchLinkUserState]");
-
         const fetchInitialData = async () => {
             setIsInitialDataLoading(true);
             setIsDisabledButton(true); // Disable button while loading
@@ -156,15 +147,12 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         console.log("useEffect array: [isProcessing]");
         let intervalId: number | null = null;
 
-        console.log("isProcessing changed", isProcessing);
-
         if (isProcessing) {
             intervalId = setInterval(async () => {
-                console.log("link id", linkId);
-                console.log("action", linkUserState?.action);
-                await refetchLinkUserState().catch((error) => {
-                    console.error("Error fetching action:", error);
-                });
+                const res = await refetchLinkUserState();
+                if (res.data?.action) {
+                    setAction(res.data.action);
+                }
             }, 2000);
         }
 
@@ -209,11 +197,6 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
      * @param {string} anonymousWalletAddress - The wallet address for anonymous users
      */
     const handleCreateAction = async (anonymousWalletAddress?: string) => {
-        console.log("😎 ~~~~~handleCreateAction on ClaimFormPage.tsx~~~~~");
-        console.log("Link:", link);
-        console.log("LinkUserState:", linkUserState);
-        console.log("isInitialDataLoading:", isInitialDataLoading);
-
         // Don't proceed if initial data is still loading
         if (isInitialDataLoading) {
             console.log("Initial data still loading, not processing button click");

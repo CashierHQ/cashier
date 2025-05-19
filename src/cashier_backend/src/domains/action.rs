@@ -3,7 +3,7 @@ use cashier_types::{
     LinkState, Transaction, TransactionState,
 };
 
-use crate::{error, types::error::CanisterError};
+use crate::types::error::CanisterError;
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -80,7 +80,7 @@ impl ActionDomainLogic {
     }
 
     // Calculate intent state based on its transactions
-    pub fn calculate_intent_state(&self, transactions: &[Transaction]) -> IntentState {
+    pub fn roll_up_intent_state(&self, transactions: &[Transaction]) -> IntentState {
         if transactions
             .iter()
             .all(|tx| tx.state == TransactionState::Created)
@@ -102,7 +102,7 @@ impl ActionDomainLogic {
     }
 
     // Calculate action state based on intents
-    pub fn calculate_action_state(&self, intents: &[Intent]) -> ActionState {
+    pub fn roll_up_action_state(&self, intents: &[Intent]) -> ActionState {
         if intents
             .iter()
             .all(|intent| intent.state == IntentState::Created)

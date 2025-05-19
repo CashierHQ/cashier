@@ -2,6 +2,7 @@
     "name": "cashier_frontend",
     "private": true,
     "version": "0.0.3",
+    "license": "GPL-3.0-or-later",
     "type": "module",
     "scripts": {
         "setup": "npm i && dfx canister create cashier_backend && dfx generate cashier_backend",
@@ -53,6 +54,7 @@
         "clsx": "^2.1.1",
         "copy-to-clipboard": "^3.3.3",
         "embla-carousel-react": "^8.5.1",
+        "framer-motion": "^12.11.4",
         "i18next": "^23.15.1",
         "jest": "^29.7.0",
         "lodash": "^4.17.21",
