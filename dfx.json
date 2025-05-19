@@ -18,7 +18,7 @@
             "build": "bash ./scripts/build_package.sh token_storage"
         },
         "cashier_frontend": {
-            "source": ["src/cashier_frontend/dist"],
+            "source": ["src/cashier_frontend/dist", "src/cashier_frontend/public/.well-known"],
             "type": "assets",
             "workspace": "cashier_frontend",
             "build": "bash scripts/build_frontend.sh"
