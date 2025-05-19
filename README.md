@@ -127,7 +127,8 @@ See the [LICENSE] file for full details.
 
 # Acknowledgements
 
--   Cashier has received help from the following projects.
+Cashier has received help from the following projects.
+
 -   Cashier is using NFID's Identity Kit.
 -   Cashier benchmarked Kong Swap's transaction architecture.
 -   Cashier benchmarked Oisy's token management architecture.
