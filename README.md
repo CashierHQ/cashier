@@ -21,7 +21,33 @@ Technically, Cashier is all about flexibly configuring and executing different t
 
 ## Prerequisites
 
+-   [Rust](https://www.rust-lang.org/tools/install)
+-   [DFX](https://internetcomputer.org/docs/building-apps/getting-started/install)
+-   [NodeJS](https://nodejs.org/en)
+
 ## Install
+
+`frontend`
+
+```bash
+// install all dependecies
+npm install
+
+// run local
+npm start
+```
+
+`cashier_backend`
+
+```bash
+make build-backend
+```
+
+`token_storage`
+
+```bash
+make build-token-storage
+```
 
 # Usage
 
@@ -53,6 +79,18 @@ Please find more documentation of the project in the following links:
 -   Intent <> Tx mapping
 
 # Testing
+
+For backend unit test, go to `src/cashier_backend` and run
+
+```
+cargo test
+```
+
+For intergration test, run
+
+```
+npx jest -- src/test/link
+```
 
 # Roadmap
 
