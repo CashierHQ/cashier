@@ -19,6 +19,19 @@ setup-test:
 test:
 	@npm run test:integration-backend
 
+# Interactive test command that asks for test file and runs it
+run-test:
+	make build-backend && make setup-test
+	@bash scripts/test/run_test_and_dump_logs.sh
+
+# Run a specific test file if provided, otherwise ask for the file path
+test-file:
+	@if [ -z "$(file)" ]; then \
+		bash scripts/test/run_test_and_dump_logs.sh; \
+	else \
+		bash scripts/test/run_test_and_dump_logs.sh "$(file)"; \
+	fi
+
 # have to run local-setup before running this, need create did file in .dfx
 g: 
 	@dfx generate cashier_backend
@@ -56,3 +69,4 @@ frontend-setup:
 	# @bash scripts/local/setup_icp_ledger.sh
 	make g
 	# dfx stop
+

@@ -37,7 +37,7 @@ type ClaimFormPageProps = {
     onBack?: () => void;
 };
 
-export const ClaimFormPage: FC<ClaimFormPageProps> = ({
+export const UseFormPage: FC<ClaimFormPageProps> = ({
     form,
     linkData,
     onCashierError = () => {},
@@ -76,7 +76,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     const { data: linkUserState, refetch: refetchLinkUserState } = useLinkUserState(
         {
-            action_type: ACTION_TYPE.CLAIM_LINK,
+            action_type: ACTION_TYPE.USE_LINK,
             link_id: linkId ?? "",
             anonymous_wallet_address: "",
         },
@@ -85,7 +85,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     const { link, setAction, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
         linkId,
-        ACTION_TYPE.CLAIM_LINK,
+        ACTION_TYPE.USE_LINK,
     );
 
     // Update button text based on action state
@@ -168,7 +168,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
         return await createAction({
             linkId: linkId!,
-            actionType: ACTION_TYPE.CLAIM_LINK,
+            actionType: ACTION_TYPE.USE_LINK,
         });
     };
 
@@ -179,7 +179,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         return await createActionAnonymous({
             linkId: linkId!,
             walletAddress: walletAddress,
-            actionType: ACTION_TYPE.CLAIM_LINK,
+            actionType: ACTION_TYPE.USE_LINK,
         });
     };
 
@@ -215,7 +215,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                 // Anonymous user flow
                 const anonymousLinkUserState = await fetchLinkUserState(
                     {
-                        action_type: ACTION_TYPE.CLAIM_LINK,
+                        action_type: ACTION_TYPE.USE_LINK,
                         link_id: linkId ?? "",
                         anonymous_wallet_address: anonymousWalletAddress,
                     },
@@ -229,7 +229,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     // Refetch to get the action
                     await fetchLinkUserState(
                         {
-                            action_type: ACTION_TYPE.CLAIM_LINK,
+                            action_type: ACTION_TYPE.USE_LINK,
                             link_id: linkId ?? "",
                             anonymous_wallet_address: anonymousWalletAddress,
                         },
@@ -279,7 +279,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                 // Step 1: Process the action
                 const processActionResult = await processAction({
                     linkId: linkId,
-                    actionType: action?.type ?? ACTION_TYPE.CLAIM_LINK,
+                    actionType: action?.type ?? ACTION_TYPE.USE_LINK,
                     actionId: action.id,
                 });
 
@@ -314,7 +314,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     linkId: link!.id,
                     actionId: action!.id,
                     walletAddress: anonymousWalletAddress ?? "",
-                    actionType: ACTION_TYPE.CLAIM_LINK,
+                    actionType: ACTION_TYPE.USE_LINK,
                 });
 
                 if (processActionResult) {
@@ -348,7 +348,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const handleUpdateLinkUserState = async () => {
         const result = await updateLinkUserState.mutateAsync({
             input: {
-                action_type: ACTION_TYPE.CLAIM_LINK,
+                action_type: ACTION_TYPE.USE_LINK,
                 link_id: linkId ?? "",
                 isContinue: true,
                 anonymous_wallet_address: anonymousWalletAddress,

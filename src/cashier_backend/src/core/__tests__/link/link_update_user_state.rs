@@ -45,7 +45,7 @@ mod tests {
         let action = Action {
             id: action_id.clone(),
             link_id: link_id.clone(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Success,
             creator: user_id.clone(),
         };
@@ -95,7 +95,7 @@ mod tests {
         let output = result.unwrap().unwrap();
         assert_eq!(output.link_user_state, "User_state_completed_link");
         assert_eq!(output.action.state, ActionState::Success.to_string());
-        assert_eq!(output.action.r#type, ActionType::Claim.to_string());
+        assert_eq!(output.action.r#type, ActionType::Use .to_string());
     }
 
     #[tokio::test]

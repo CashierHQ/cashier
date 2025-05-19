@@ -40,7 +40,7 @@ mod tests {
         let action = Action {
             id: action_id.clone(),
             link_id: link_id.clone(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Created,
             creator: user_id.clone(),
         };
@@ -70,7 +70,7 @@ mod tests {
         let output = result.unwrap().unwrap();
         assert_eq!(output.link_user_state, "User_state_choose_wallet");
         assert_eq!(output.action.state, ActionState::Created.to_string());
-        assert_eq!(output.action.r#type, ActionType::Claim.to_string());
+        assert_eq!(output.action.r#type, ActionType::Use .to_string());
     }
 
     #[tokio::test]

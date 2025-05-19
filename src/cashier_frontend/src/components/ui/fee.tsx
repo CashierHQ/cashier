@@ -22,7 +22,7 @@ export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading,
     };
 
     const getPrefixAmount = () => {
-        if (action?.type === ACTION_TYPE.CLAIM_LINK) {
+        if (action?.type === ACTION_TYPE.USE_LINK) {
             return "-";
         }
         return "+";

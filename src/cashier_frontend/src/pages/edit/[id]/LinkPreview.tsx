@@ -457,44 +457,48 @@ export default function LinkPreview({
                         </button>
                     </div>
                     <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
-                        {enhancedAssets.map((asset, index) => {
-                            // Calculate token amount with proper decimals
-                            const token = getToken(asset.address);
+                        {enhancedAssets
+                            .sort((a, b) => {
+                                return (a.address ?? "").localeCompare(b.address ?? "");
+                            })
+                            .map((asset, index) => {
+                                // Calculate token amount with proper decimals
+                                const token = getToken(asset.address);
 
-                            const tokenDecimals = token?.decimals ?? 8;
-                            const totalTokenAmount =
-                                (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
-                                10 ** tokenDecimals;
-                            const tokenSymbol = token?.symbol;
+                                const tokenDecimals = token?.decimals ?? 8;
+                                const totalTokenAmount =
+                                    (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
+                                    10 ** tokenDecimals;
+                                const tokenSymbol = token?.symbol;
 
-                            // Calculate approximate USD value
-                            const tokenPrice = getTokenPrice(asset.address) || 0;
-                            const approximateUsdValue = totalTokenAmount * tokenPrice;
+                                // Calculate approximate USD value
+                                const tokenPrice = getTokenPrice(asset.address) || 0;
+                                const approximateUsdValue = totalTokenAmount * tokenPrice;
 
-                            return (
-                                <div key={index} className="flex justify-between items-center">
-                                    <div className="flex items-center gap-1.5">
-                                        <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                                            <AssetAvatarV2
-                                                token={token}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </Avatar>
-                                        <p className="text-[14px] font-normal">{tokenSymbol}</p>
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <div className="flex items-center gap-1">
-                                            <p className="text-[14px] font-normal">
-                                                {formatNumber(totalTokenAmount.toString())}
+                                return (
+                                    <div key={index} className="flex justify-between items-center">
+                                        <div className="flex items-center gap-1.5">
+                                            <Avatar className="w-5 h-5 rounded-full overflow-hidden">
+                                                <AssetAvatarV2
+                                                    token={token}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </Avatar>
+                                            <p className="text-[14px] font-normal">{tokenSymbol}</p>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <div className="flex items-center gap-1">
+                                                <p className="text-[14px] font-normal">
+                                                    {formatNumber(totalTokenAmount.toString())}
+                                                </p>
+                                            </div>
+                                            <p className="text-[10px] font-normal text-grey-400/50">
+                                                ~${formatNumber(approximateUsdValue.toString())}
                                             </p>
                                         </div>
-                                        <p className="text-[10px] font-normal text-grey-400/50">
-                                            ~${formatNumber(approximateUsdValue.toString())}
-                                        </p>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
                     </div>
                 </div>
             )}
