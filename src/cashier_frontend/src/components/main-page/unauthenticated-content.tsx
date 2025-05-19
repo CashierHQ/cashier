@@ -33,12 +33,11 @@ export const UnauthenticatedContent = ({
 
     return (
         <>
-            {/* <p className="text-yellow text-center text-sm font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow mt-4 mb-2">
+            <p className="text-yellow text-center text-lg font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow mt-4 mb-2">
                 {t("main_page.unauthenticated_content.development_warning_1")}
                 {responsive.isSmallDevice ? <br /> : <span> </span>}
                 {t("main_page.unauthenticated_content.development_warning_2")}
-            </p> */}
-
+            </p>
             <div
                 className={`flex ${responsive.isSmallDevice ? "flex-col" : "flex-row gap-16 mt-[10vh]"}`}
             >

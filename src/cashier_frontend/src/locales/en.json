@@ -260,7 +260,7 @@
     },
     "main_page": {
         "unauthenticated_content": {
-            "development_warning_1": "Cashier is still in development",
+            "development_warning_1": "Cashier is still in development.",
             "development_warning_2": "Use with caution",
             "big_title_1": "Cashier Links - ",
             "big_title_2": "fast, easy, and ",
