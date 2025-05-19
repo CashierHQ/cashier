@@ -97,7 +97,10 @@ export default function ClaimPage() {
         if (!linkData) return;
 
         // If we have a linkUserState and it's COMPLETE, always show the default page
-        if (linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE) {
+        if (
+            linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE &&
+            linkData.maxActionNumber === linkData.useActionCounter
+        ) {
             setShowDefaultPage(true);
             return;
         }

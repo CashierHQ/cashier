@@ -24,6 +24,8 @@
     },
     "details": {
         "linkInfo": "Link info",
+        "usageInfo": "Usage info",
+        "assetsInLink": "Assets in link",
         "copyLink": "Copy link",
         "withdrawAssets": "Withdraw assets"
     },

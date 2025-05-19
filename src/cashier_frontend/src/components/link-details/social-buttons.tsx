@@ -34,7 +34,6 @@ export default function SocialButtons({
 
     return (
         <div className="flex flex-col w-full">
-            <p className="font-medium leading-none text-black my-2">Share your link</p>
             <div
                 className={`flex items-center gap-4 justify-between ${responsive.isSmallDevice ? " mb-4" : ""}`}
             >
