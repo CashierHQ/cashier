@@ -55,6 +55,9 @@ function App1() {
                     <>
                         <h1 className="text-4xl font-semibold text-black dark:text-white">
                             We're developing
+                            <span className="block text-xl italic text-gray-600 dark:text-gray-300">
+                                Coming soon, but not quite there yet
+                            </span>
                             <br />
                             <span className="text-4xl md:text-[6rem] font-bold mt-1 leading-none text-green">
                                 CashierApp
