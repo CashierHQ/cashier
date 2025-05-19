@@ -53,16 +53,29 @@ const Header: React.FC<HeaderProps> = () => {
             <div
                 className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4 pt-4" : `px-8 py-3 mb-4 ${location.pathname === "/" ? "" : "bg-white"}`}`}
             >
-                <img
-                    src={
-                        responsive.showCompactHeader(location.pathname)
-                            ? "./cLogo.svg"
-                            : "./logo.svg"
-                    }
-                    alt="Cashier logo"
-                    className="max-w-[130px]"
-                    onClick={() => navigate("/")}
-                />
+                {responsive.showHeaderWithBackButtonAndWalletButton(
+                    location.pathname,
+                    location.search,
+                    !user,
+                ) ? (
+                    <ChevronLeft
+                        size={24}
+                        className="cursor-pointer"
+                        onClick={() => navigate(-1)}
+                    />
+                ) : (
+                    <img
+                        src={
+                            responsive.showCompactHeader(location.pathname)
+                                ? "./cLogo.svg"
+                                : "./logo.svg"
+                        }
+                        alt="Cashier logo"
+                        className="max-w-[130px]"
+                        onClick={() => navigate("/")}
+                    />
+                )}
+
                 <LoginButton
                     onClick={() => {
                         setIsWalletDialogOpen(true);

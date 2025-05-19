@@ -8,7 +8,11 @@ export interface MediaQuery {
     isSmallDevice: boolean;
     showCompactHeader: (pathname: string) => boolean;
     hideHeader: (pathname: string) => boolean;
-    showHeaderWithBackButtonAndWalletButton: (pathname: string, search?: string) => boolean;
+    showHeaderWithBackButtonAndWalletButton: (
+        pathname: string,
+        search?: string,
+        isSignedOut?: boolean,
+    ) => boolean;
 }
 
 export function useResponsive(): MediaQuery {
@@ -40,14 +44,18 @@ export function useResponsive(): MediaQuery {
         [hideHeaderPaths],
     );
     const showHeaderWithBackButtonAndWalletButton = useCallback(
-        (pathname: string, search?: string) => {
+        (pathname: string, search?: string, isSignedOut?: boolean) => {
             const matchesPath = headerWithBackButtonAndWalletButtonPaths.some((pattern) =>
                 pattern.test(pathname),
             );
             const matchesQuery = search
                 ? new URLSearchParams(search).get("step") === "claim"
                 : false;
-            return matchesPath && matchesQuery;
+            return (
+                (matchesPath && matchesQuery) ||
+                (matchesPath && matchesQuery && isSignedOut) ||
+                false
+            );
         },
         [headerWithBackButtonAndWalletButtonPaths],
     );
