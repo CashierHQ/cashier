@@ -5,6 +5,9 @@ Cashier is a no-code transaction builder for non-technical users, such as market
 With Cashier, users can build and share payment, donation, tip, airdrop, swap, etc in minutes from their phone. Its quick, easy, and cheap. For custom needs, Cashier also supports flexible transaction flows and gating rules. Users can focus on their transaction needs rather than implementation.
 
 URL: cashierapp.io
+
+[![Cashier Demo](https://img.shields.io/badge/Watch_Demo-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=H8Qetnjz1Zs)
+
 Video: Introducing Cashier!
 
 # Introduction
