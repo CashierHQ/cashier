@@ -11,7 +11,6 @@ build-icp-ledger:
 	dfx build icp_ledger_canister
 	dfx stop
 
-
 setup-test:
 	make build-backend
 	bash scripts/setup_test.sh
