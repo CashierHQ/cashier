@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { UpdateLinkParams } from "@/hooks/link-action-hooks";
+import { UpdateLinkParams } from "@/hooks/useLinkAction";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { create } from "zustand";

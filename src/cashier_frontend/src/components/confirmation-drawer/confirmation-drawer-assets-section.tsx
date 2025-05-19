@@ -21,7 +21,7 @@ import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
 import { TASK, FEE_TYPE } from "@/services/types/enum";
 import { feeService } from "@/services/fee.service";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 
 type ConfirmationPopupAssetsSectionProps = {
     intents: IntentModel[];

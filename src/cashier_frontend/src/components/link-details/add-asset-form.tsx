@@ -37,7 +37,7 @@ import TransactionToast from "../transaction/transaction-toast";
 import { Plus, Minus } from "lucide-react";
 import { AssetFormInput } from "./asset-form-input";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../ui/label";
