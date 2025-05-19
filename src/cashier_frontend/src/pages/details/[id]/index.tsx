@@ -370,27 +370,33 @@ export default function DetailPage() {
                                 <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
                                     <p className="font-medium text-sm">User claims</p>
                                     <div className="flex flex-col items-end gap-2">
-                                        {link.asset_info.map((asset) => {
-                                            const token = getToken(asset.address);
-                                            if (!token) return null;
-                                            return (
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-sm text-primary/80">
-                                                        {formatNumber(
-                                                            (
-                                                                Number(asset.amountPerUse) /
-                                                                10 ** token.decimals
-                                                            ).toString(),
-                                                        )}{" "}
-                                                        {token.symbol}
-                                                    </p>
-                                                    <AssetAvatarV2
-                                                        token={token}
-                                                        className="w-4 h-4"
-                                                    />
-                                                </div>
-                                            );
-                                        })}
+                                        {link.asset_info
+                                            .sort((a, b) => {
+                                                return (a.address ?? "").localeCompare(
+                                                    b.address ?? "",
+                                                );
+                                            })
+                                            .map((asset) => {
+                                                const token = getToken(asset.address);
+                                                if (!token) return null;
+                                                return (
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm text-primary/80">
+                                                            {formatNumber(
+                                                                (
+                                                                    Number(asset.amountPerUse) /
+                                                                    10 ** token.decimals
+                                                                ).toString(),
+                                                            )}{" "}
+                                                            {token.symbol}
+                                                        </p>
+                                                        <AssetAvatarV2
+                                                            token={token}
+                                                            className="w-4 h-4"
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
                                     </div>
                                 </div>
                                 <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
@@ -413,32 +419,39 @@ export default function DetailPage() {
                                         {t("details.assetsInLink")}
                                     </p>
                                     <div className="flex flex-col items-end gap-2">
-                                        {link.asset_info.map((asset) => {
-                                            const token = getToken(asset.address);
-                                            if (!token) return null;
+                                        {link.asset_info
+                                            .sort((a, b) => {
+                                                return (a.address ?? "").localeCompare(
+                                                    b.address ?? "",
+                                                );
+                                            })
+                                            .map((asset) => {
+                                                const token = getToken(asset.address);
+                                                if (!token) return null;
 
-                                            const amountPerUse =
-                                                Number(asset.amountPerUse) / 10 ** token.decimals;
-                                            const totalNumberOfAssets =
-                                                amountPerUse * Number(link.maxActionNumber);
-                                            const numberOfAssetsLeft =
-                                                totalNumberOfAssets -
-                                                amountPerUse * Number(link.useActionCounter);
-                                            return (
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-sm text-primary/80">
-                                                        {formatNumber(
-                                                            numberOfAssetsLeft.toString(),
-                                                        )}{" "}
-                                                        {token.symbol}
-                                                    </p>
-                                                    <AssetAvatarV2
-                                                        token={token}
-                                                        className="w-4 h-4"
-                                                    />
-                                                </div>
-                                            );
-                                        })}
+                                                const amountPerUse =
+                                                    Number(asset.amountPerUse) /
+                                                    10 ** token.decimals;
+                                                const totalNumberOfAssets =
+                                                    amountPerUse * Number(link.maxActionNumber);
+                                                const numberOfAssetsLeft =
+                                                    totalNumberOfAssets -
+                                                    amountPerUse * Number(link.useActionCounter);
+                                                return (
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-sm text-primary/80">
+                                                            {formatNumber(
+                                                                numberOfAssetsLeft.toString(),
+                                                            )}{" "}
+                                                            {token.symbol}
+                                                        </p>
+                                                        <AssetAvatarV2
+                                                            token={token}
+                                                            className="w-4 h-4"
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
                                     </div>
                                 </div>
                                 <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">

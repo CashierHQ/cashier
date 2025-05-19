@@ -133,7 +133,7 @@ const AssetButton: React.FC<AssetButtonProps> = ({
                                             </span>
                                         )}
                                         <input
-                                            id="asset-input"
+                                            id={`asset-input-${token?.address}`}
                                             value={formatDisplayValue(localInputValue)}
                                             onChange={(e) => handleInputChange(e.target.value)}
                                             type="text"
@@ -150,8 +150,9 @@ const AssetButton: React.FC<AssetButtonProps> = ({
                                         {/* Overlay rendered after input, with higher z-index */}
                                         <div
                                             onClick={() => {
-                                                const input =
-                                                    document.getElementById("asset-input");
+                                                const input = document.getElementById(
+                                                    `asset-input-${token?.address}`,
+                                                );
                                                 input?.focus();
                                             }}
                                             className="absolute right-0 top-0 h-full w-[100px] z-20 cursor-pointer"
