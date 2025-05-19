@@ -33,7 +33,7 @@ mod tests {
 
         let temp_action = TemporaryAction {
             id: Uuid::new_v4().to_string(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Created,
             creator: format!("ANON#{}", wallet_address),
             link_id: link_id.clone(),
@@ -79,7 +79,7 @@ mod tests {
         assert!(result.is_ok());
         let action = result.unwrap();
         assert_eq!(action.state, ActionState::Created.to_string());
-        assert_eq!(action.r#type, ActionType::Claim.to_string());
+        assert_eq!(action.r#type, ActionType::Use .to_string());
     }
 
     #[tokio::test]
@@ -97,7 +97,7 @@ mod tests {
 
         let existing_action = ActionDto {
             id: Uuid::new_v4().to_string(),
-            r#type: ActionType::Claim.to_string(),
+            r#type: ActionType::Use .to_string(),
             state: ActionState::Processing.to_string(),
             creator: format!("ANON#{}", wallet_address),
             intents: vec![],
@@ -108,7 +108,7 @@ mod tests {
         when!(link_service.get_action_of_link).then_return(Some(Action {
             id: existing_action.id.clone(),
             link_id: link_id.clone(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Created,
             creator: existing_action.creator.clone(),
         }));
@@ -135,7 +135,7 @@ mod tests {
         assert!(result.is_ok());
         let action = result.unwrap();
         assert_eq!(action.state, ActionState::Processing.to_string());
-        assert_eq!(action.r#type, ActionType::Claim.to_string());
+        assert_eq!(action.r#type, ActionType::Use .to_string());
     }
 
     #[tokio::test]

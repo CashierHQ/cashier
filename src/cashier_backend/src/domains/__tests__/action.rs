@@ -11,7 +11,7 @@ mod tests {
     fn create_test_action() -> Action {
         Action {
             id: uuid::Uuid::new_v4().to_string(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Created,
             creator: uuid::Uuid::new_v4().to_string(),
             link_id: uuid::Uuid::new_v4().to_string(),
@@ -99,7 +99,7 @@ mod tests {
     fn test_validate_action_claim_inactive_link() {
         let domain_logic = ActionDomainLogic::new();
         let mut action = create_test_action();
-        action.r#type = ActionType::Claim;
+        action.r#type = ActionType::Use ;
         let link = create_test_link(LinkState::ChooseLinkType, "test-creator");
 
         let result = domain_logic.validate_action(&action, &link);
@@ -114,7 +114,7 @@ mod tests {
     fn test_validate_action_claim_active_link() {
         let domain_logic = ActionDomainLogic::new();
         let mut action = create_test_action();
-        action.r#type = ActionType::Claim;
+        action.r#type = ActionType::Use ;
         let link = create_test_link(LinkState::Active, "different-creator");
 
         let result = domain_logic.validate_action(&action, &link);

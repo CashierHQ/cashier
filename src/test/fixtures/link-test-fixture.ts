@@ -653,7 +653,7 @@ export class LinkTestFixture {
         await this.advanceTime(1 * 60 * 1000);
 
         // Create claim action
-        const createdClaimActionId = await this.createAction(createdLinkId, "Claim");
+        const createdClaimActionId = await this.createAction(createdLinkId, "Use");
 
         // Process claim action
         const bobAccount = {
@@ -665,13 +665,13 @@ export class LinkTestFixture {
         const balanceBefore = await this.tokenHelper!.balanceOf(bobAccount);
 
         // Confirm the claim
-        const claimResult = await this.confirmAction(createdLinkId, createdClaimActionId, "Claim");
+        const claimResult = await this.confirmAction(createdLinkId, createdClaimActionId, "Use");
         if (claimResult.state !== "Action_state_success") {
-            throw new Error(`Claim action failed. State: ${claimResult.state}`);
+            throw new Error(`Use action failed. State: ${claimResult.state}`);
         }
 
         // Complete the claim process
-        await this.updateUserState(createdLinkId, "Claim", "Continue");
+        await this.updateUserState(createdLinkId, "Use", "Continue");
 
         // back to Alice
         this.switchToUser("alice");

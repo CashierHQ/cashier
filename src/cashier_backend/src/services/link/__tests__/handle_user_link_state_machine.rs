@@ -40,7 +40,7 @@ mod tests {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             link_id: link_id.clone(),
-            r#type: cashier_types::ActionType::Claim,
+            r#type: cashier_types::ActionType::Use ,
             state: ActionState::Success,
             creator: user_id.clone(),
         };

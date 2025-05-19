@@ -34,6 +34,7 @@ impl UserActionKey {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct LinkActionKey {
     pub link_id: String,
     pub action_type: String,

@@ -13,7 +13,7 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { LinkCardPage } from "./LinkCardPage";
 
-import { ClaimFormPage } from "./ClaimFormPage";
+import { UseFormPage } from "./UseFormPage";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
@@ -59,12 +59,12 @@ export default function ClaimPage() {
         link: linkData,
         isLoading: isLoadingLinkData,
         getLinkDetail,
-    } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
+    } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
 
     // Fetch link user state when user is logged in and there's link data
     const { data: linkUserState } = useLinkUserState(
         {
-            action_type: ACTION_TYPE.CLAIM_LINK,
+            action_type: ACTION_TYPE.USE_LINK,
             link_id: linkId ?? "",
             anonymous_wallet_address: "",
         },
@@ -173,7 +173,7 @@ export default function ClaimPage() {
                                 <MultiStepForm.Header showIndicator={false} showHeader={false} />
                                 <MultiStepForm.Items>
                                     <MultiStepForm.Item name="Choose wallet">
-                                        <ClaimFormPage
+                                        <UseFormPage
                                             form={form}
                                             onSubmit={handleClaim}
                                             linkData={linkData}

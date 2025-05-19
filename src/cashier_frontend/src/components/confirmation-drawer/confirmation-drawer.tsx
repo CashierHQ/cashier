@@ -157,7 +157,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 linkId: link!.id,
                 actionId: action!.id,
                 walletAddress: anonymousWalletAddress ?? "",
-                actionType: ACTION_TYPE.CLAIM_LINK,
+                actionType: ACTION_TYPE.USE_LINK,
             });
             if (processActionResult) {
                 console.log(
@@ -235,7 +235,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const startTransaction = async () => {
         try {
             if (action?.state != ACTION_STATE.SUCCESS) {
-                if (action?.type === ACTION_TYPE.CLAIM_LINK) {
+                if (action?.type === ACTION_TYPE.USE_LINK) {
                     await handleProcessClaimAction();
                 } else {
                     await handleProcessCreateAction();
