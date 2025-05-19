@@ -256,7 +256,8 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     /**
      * Handle max amount button click
      */
-    const handleMaxAmount = () => {
+    const handleMaxAmount = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
         if (!selectedToken) return;
 
         if (maxAvailableAmount > 0) {

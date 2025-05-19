@@ -115,33 +115,49 @@ const AssetButton: React.FC<AssetButtonProps> = ({
     };
 
     return (
-        <div className="flex flex-col w-full">
+        <div className="flex flex-col w-full relative">
             {/* Asset selector with input */}
-            <div className={cn("input-field-asset flex items-center")}>
+            <div className={cn("input-field-asset flex items-center relative")}>
                 {childrenNode ? (
-                    <span className="flex items-center w-full">
+                    <span className="flex items-center w-full relative">
                         <span onClick={handleClick} className="text-left w-fit">
                             {childrenNode}
                         </span>
-                        <div className="flex w-fit items-center ml-auto">
+                        <div className="flex w-fit items-center ml-auto relative">
                             {showInput && (
-                                <div className="relative flex items-center">
-                                    {isUsd && (
-                                        <span className="text-[14px] text-gray-400 mr-1">$</span>
-                                    )}
-                                    <input
-                                        value={formatDisplayValue(localInputValue)}
-                                        onChange={(e) => handleInputChange(e.target.value)}
-                                        type="text"
-                                        inputMode="decimal"
-                                        className="w-auto min-w-[30px] ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                        placeholder="0"
-                                        style={{
-                                            width: `${Math.max((formatDisplayValue(localInputValue) || "").length * 9, 30)}px`,
-                                            maxWidth: "250px",
-                                        }}
-                                    />
-                                </div>
+                                <>
+                                    <div className="relative flex items-center">
+                                        {isUsd && (
+                                            <span className="text-[14px] text-gray-400 mr-1">
+                                                $
+                                            </span>
+                                        )}
+                                        <input
+                                            id="asset-input"
+                                            value={formatDisplayValue(localInputValue)}
+                                            onChange={(e) => handleInputChange(e.target.value)}
+                                            type="text"
+                                            inputMode="decimal"
+                                            className="w-auto min-w-[30px] ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            placeholder="0"
+                                            style={{
+                                                width: `${Math.max((formatDisplayValue(localInputValue) || "").length * 9, 30)}px`,
+                                                maxWidth: "250px",
+                                                position: "relative",
+                                                zIndex: 0,
+                                            }}
+                                        />
+                                        {/* Overlay rendered after input, with higher z-index */}
+                                        <div
+                                            onClick={() => {
+                                                const input =
+                                                    document.getElementById("asset-input");
+                                                input?.focus();
+                                            }}
+                                            className="absolute right-0 top-0 h-full w-[100px] z-20 cursor-pointer"
+                                        />
+                                    </div>
+                                </>
                             )}
                         </div>
                     </span>
