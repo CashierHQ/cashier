@@ -52,7 +52,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
     const { linkId } = useParams();
     const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
-    const { link } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
+    const { link } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
     const { updateTokenInit } = useTokens();
 
     const isGoogleLogin = signer?.id === "GoogleSigner";

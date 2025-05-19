@@ -1,3 +1,5 @@
+use crate::info;
+
 use super::LINK_ACTION_STORE;
 use cashier_types::{keys::ActionTypeKey, LinkAction, LinkActionKey, LinkKey};
 
@@ -54,6 +56,8 @@ impl LinkActionRepository {
                 user_id: user_id.clone(),
                 action_id: "".to_string(),
             };
+
+            info!("get_by_prefix: {:#?}", key);
 
             let prefix = key.to_str().clone();
 

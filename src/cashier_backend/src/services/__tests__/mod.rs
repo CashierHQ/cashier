@@ -306,7 +306,7 @@ pub mod tests {
             match rng.gen_range(0..=2) {
                 0 => ActionType::CreateLink,
                 1 => ActionType::Withdraw,
-                _ => ActionType::Claim,
+                _ => ActionType::Use ,
             }
         }
     }
