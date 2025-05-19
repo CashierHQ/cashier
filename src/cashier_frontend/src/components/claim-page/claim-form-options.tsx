@@ -219,9 +219,11 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
             <div id="asset-section" className="">
                 <h2 className="text-[16px] font-medium mb-2">{t("claim.asset")}</h2>
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
-                    {link?.asset_info.map((asset, index) => (
-                        <TokenItem key={index} asset={asset} />
-                    ))}
+                    {link?.asset_info
+                        .sort((a, b) => {
+                            return (a.address ?? "").localeCompare(b.address ?? "");
+                        })
+                        .map((asset, index) => <TokenItem key={index} asset={asset} />)}
                 </div>
             </div>
 

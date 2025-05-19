@@ -79,18 +79,22 @@ export const getDisplayComponentForLink = (
             });
             return (
                 <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col gap-4">
-                    {tokens?.map((token, index) => {
-                        const amount = Number(token.amount) / 10 ** token.decimals;
+                    {tokens
+                        ?.sort((a, b) => {
+                            return (a.address ?? "").localeCompare(b.address ?? "");
+                        })
+                        .map((token, index) => {
+                            const amount = Number(token.amount) / 10 ** token.decimals;
 
-                        return (
-                            <div key={index} className="flex items-center">
-                                <AssetAvatarV2 token={token} className="w-8 h-8 rounded-sm" />
-                                <p className="text-[14px] font-normal ml-2">
-                                    {formatNumber(amount.toString())} {token.symbol || "Token"}
-                                </p>
-                            </div>
-                        );
-                    })}
+                            return (
+                                <div key={index} className="flex items-center">
+                                    <AssetAvatarV2 token={token} className="w-8 h-8 rounded-sm" />
+                                    <p className="text-[14px] font-normal ml-2">
+                                        {formatNumber(amount.toString())} {token.symbol || "Token"}
+                                    </p>
+                                </div>
+                            );
+                        })}
                 </div>
             );
         default:

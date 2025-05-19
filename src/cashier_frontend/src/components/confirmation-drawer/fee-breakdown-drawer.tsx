@@ -50,32 +50,36 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                 </DrawerHeader>
 
                 <div className="mt-2 light-borders-green px-4 py-4 flex flex-col gap-4">
-                    {feesBreakdown.map((fee, index) => {
-                        const token = getToken(fee.tokenAddress);
-                        return (
-                            <div key={index} className="">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[14px] font-normal">{fee.name}</span>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-[14px] font-normal">
-                                                {fee.amount} {fee.tokenSymbol}
-                                            </span>
-                                            <AssetAvatarV2
-                                                token={token}
-                                                className="w-5 h-5 rounded-full"
-                                            />
+                    {feesBreakdown
+                        .sort((a, b) => {
+                            return (a.tokenAddress ?? "").localeCompare(b.tokenAddress ?? "");
+                        })
+                        .map((fee, index) => {
+                            const token = getToken(fee.tokenAddress);
+                            return (
+                                <div key={index} className="">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[14px] font-normal">{fee.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-[14px] font-normal">
+                                                    {fee.amount} {fee.tokenSymbol}
+                                                </span>
+                                                <AssetAvatarV2
+                                                    token={token}
+                                                    className="w-5 h-5 rounded-full"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="flex justify-end">
+                                        <p className="text-[10px] font-normal text-grey/50">
+                                            ~${fee.usdAmount}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="flex justify-end">
-                                    <p className="text-[10px] font-normal text-grey/50">
-                                        ~${fee.usdAmount}
-                                    </p>
-                                </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
                 </div>
 
                 <div className="mt-2 light-borders-green px-4 py-4 flex flex-col">
