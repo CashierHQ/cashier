@@ -7,7 +7,7 @@ import useToast from "@/hooks/useToast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
-import { ChevronLeftIcon } from "@radix-ui/react-icons";
+import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 import QRCode from "react-qr-code";
 import { ACTION_TYPE, ACTION_STATE, getLinkTypeString } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
@@ -28,6 +28,7 @@ import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { formatNumber } from "@/utils/helpers/currency";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -61,6 +62,8 @@ export default function DetailPage() {
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
+
+    const [shareExpanded, setShareExpanded] = React.useState(true);
 
     React.useEffect(() => {
         const driver = initializeDriver();
@@ -273,12 +276,16 @@ export default function DetailPage() {
 
     return (
         <MainAppLayout>
-            <div className="w-full flex flex-grow flex-col">
+            <div className="w-full flex flex-col h-full relative pb-24">
                 {isLoading || !link ? (
                     renderSkeleton()
                 ) : (
                     <>
-                        <div id="heading-section" className="flex mb-5 items-center relative">
+                        {/* Fixed Header */}
+                        <div
+                            id="heading-section"
+                            className="flex items-center sticky top-0 bg-white z-10 py-3"
+                        >
                             <div
                                 className="absolute left-0 cursor-pointer"
                                 onClick={() => {
@@ -287,113 +294,170 @@ export default function DetailPage() {
                             >
                                 <ChevronLeftIcon width={26} height={26} />
                             </div>
-                            <h4 className="scroll-m-20 text-xl font-semibold tracking-tight mx-auto flex-grow text-center">
+                            <h4 className="scroll-m-20 text-lg font-semibold tracking-tight mx-auto flex-grow text-center">
                                 {link?.title}
                             </h4>
                         </div>
-                        <div
-                            className={`flex ${responsive.isSmallDevice ? "flex-col gap-2" : "flex-row justify-start items-between gap-8 mb-4"}`}
-                        >
+
+                        {/* Scrollable Content Area */}
+                        <div className="flex-grow overflow-y-auto pb-24">
                             <div
-                                className={`flex items-center justify-center ${responsive.isSmallDevice ? "" : "hidden"}`}
+                                className="flex justify-between items-center mb-4 cursor-pointer"
+                                onClick={() => setShareExpanded(!shareExpanded)}
                             >
-                                <StateBadge state={link?.state} />
-                            </div>
-                            <div
-                                className={`flex items-center justify-center ${responsive.isSmallDevice ? " my-3" : "order-1"}`}
-                            >
-                                <QRCode
-                                    size={responsive.isSmallDevice ? 100 : 130}
-                                    value={window.location.href.replace("details/", "")}
-                                />
+                                <Label>Share your link</Label>
+                                {shareExpanded ? (
+                                    <ChevronUp
+                                        color={"green"}
+                                        width={20}
+                                        height={20}
+                                        strokeWidth={2}
+                                    />
+                                ) : (
+                                    <ChevronDown
+                                        color={"green"}
+                                        width={20}
+                                        height={20}
+                                        strokeWidth={2}
+                                    />
+                                )}
                             </div>
 
                             <div
-                                className={`${responsive.isSmallDevice ? "" : "order-2 flex flex-col items-start justify-between w-full"}`}
+                                className={`overflow-hidden transition-all duration-300 ease-in-out ${shareExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}
                             >
-                                <div className={`${responsive.isSmallDevice ? "hidden" : ""}`}>
+                                <div
+                                    className={`flex ${responsive.isSmallDevice ? "flex-col gap-2" : "flex-row justify-start items-between gap-8 mb-4"}`}
+                                >
+                                    <div
+                                        className={`flex items-center justify-center ${responsive.isSmallDevice ? " my-3" : "order-1"}`}
+                                    >
+                                        <QRCode
+                                            size={responsive.isSmallDevice ? 100 : 130}
+                                            value={window.location.href.replace("details/", "")}
+                                        />
+                                    </div>
+
+                                    <div
+                                        className={`${responsive.isSmallDevice ? "" : "order-2 flex flex-col items-start justify-between w-full"}`}
+                                    >
+                                        <SocialButtons handleCopyLink={handleCopyLink} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 items-center mb-2">
+                                <Label>{t("details.linkInfo")}</Label>
+                            </div>
+                            <div
+                                id="link-detail-section"
+                                className="flex flex-col border-[1px] rounded-lg border-lightgreen"
+                            >
+                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
+                                    <p className="font-medium text-sm">Status</p>
                                     <StateBadge state={link?.state} />
                                 </div>
-                                <SocialButtons handleCopyLink={handleCopyLink} />
+                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
+                                    <p className="font-medium text-sm">Type</p>
+                                    <p className="text-sm text-primary/80">
+                                        {getLinkTypeString(link.linkType!)}
+                                    </p>
+                                </div>
+                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
+                                    <p className="font-medium text-sm">User pays</p>
+                                    <p className="text-sm text-primary/80">-</p>
+                                </div>
+                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
+                                    <p className="font-medium text-sm">User claims</p>
+                                    <div className="flex flex-col items-end gap-2">
+                                        {link.asset_info.map((asset) => {
+                                            const token = getToken(asset.address);
+                                            if (!token) return null;
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm text-primary/80">
+                                                        {formatNumber(
+                                                            (
+                                                                Number(asset.amountPerUse) /
+                                                                10 ** token.decimals
+                                                            ).toString(),
+                                                        )}{" "}
+                                                        {token.symbol}
+                                                    </p>
+                                                    <AssetAvatarV2
+                                                        token={token}
+                                                        className="w-4 h-4"
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
+                                    <p className="font-medium text-sm">Max use</p>
+                                    <p className="text-sm text-primary/80">
+                                        {link.maxActionNumber.toString()}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 items-center mb-2 mt-4">
+                                <Label>{t("details.usageInfo")}</Label>
+                            </div>
+                            <div
+                                id="link-detail-section"
+                                className="flex flex-col border-[1px] rounded-lg border-lightgreen"
+                            >
+                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
+                                    <p className="font-medium text-sm">
+                                        {t("details.assetsInLink")}
+                                    </p>
+                                    <div className="flex flex-col items-end gap-2">
+                                        {link.asset_info.map((asset) => {
+                                            const token = getToken(asset.address);
+                                            if (!token) return null;
+
+                                            const amountPerUse =
+                                                Number(asset.amountPerUse) / 10 ** token.decimals;
+                                            const totalNumberOfAssets =
+                                                amountPerUse * Number(link.maxActionNumber);
+                                            const numberOfAssetsLeft =
+                                                totalNumberOfAssets -
+                                                amountPerUse * Number(link.useActionCounter);
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm text-primary/80">
+                                                        {formatNumber(
+                                                            numberOfAssetsLeft.toString(),
+                                                        )}{" "}
+                                                        {token.symbol}
+                                                    </p>
+                                                    <AssetAvatarV2
+                                                        token={token}
+                                                        className="w-4 h-4"
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
+                                    <p className="font-medium text-sm">Used</p>
+                                    <p className="text-sm text-primary/80">
+                                        {link.useActionCounter.toString()}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex gap-2 items-center mb-2">
-                            <Label>{t("details.linkInfo")}</Label>
-                        </div>
-                        <div
-                            id="link-detail-section"
-                            className="flex flex-col border-[1px] rounded-xl border-lightgreen"
-                        >
-                            <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
-                                <p className="font-medium text-sm">Link Type</p>
-                                <p className="text-sm text-primary/80">
-                                    {getLinkTypeString(link.linkType!)}
-                                </p>
-                            </div>
-                            <div className="flex flex-row items-center justify-between border-lightgreen border-b px-5 py-2.5">
-                                <p className="font-medium text-sm">Chain</p>
-                                <p className="text-sm text-primary/80">ICP</p>
-                            </div>
-
-                            {link.asset_info.length > 0 &&
-                                link.asset_info.map((asset) => {
-                                    const token = getToken(asset.address);
-                                    if (!token) return null;
-
-                                    const { remainingActions } = calculateRemainingInfo(
-                                        link.maxActionNumber,
-                                        link.useActionCounter,
-                                    );
-
-                                    // Calculate remaining asset amount using amountPerUse
-                                    const remainingAmountInDecimal =
-                                        remainingActions * asset.amountPerUse;
-
-                                    // Calculate total asset amount allocated to this link
-                                    const totalAmountInDecimal =
-                                        link.maxActionNumber * asset.amountPerUse;
-
-                                    console.log(
-                                        "remainingAmountInDecimal",
-                                        remainingAmountInDecimal,
-                                    );
-                                    console.log("totalAmountInDecimal", totalAmountInDecimal);
-
-                                    const remainingAmount =
-                                        Number(remainingAmountInDecimal) / 10 ** token.decimals;
-
-                                    const totalAmount =
-                                        Number(totalAmountInDecimal) / 10 ** token.decimals;
-
-                                    return (
-                                        <div
-                                            key={asset.address}
-                                            className="flex flex-row items-center justify-between border-lightgreen px-5 py-2.5"
-                                        >
-                                            <p className="font-medium text-sm">Asset left/added</p>
-                                            <div className="flex items-center gap-1">
-                                                <p className="text-sm text-primary/80">
-                                                    {formatNumber(remainingAmount.toString())}/
-                                                    {formatNumber(totalAmount.toString())}
-                                                </p>
-                                                <p className="text-sm text-primary/80">
-                                                    {token.symbol}
-                                                </p>
-                                                <AssetAvatarV2 token={token} className="w-4 h-4" />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-
-                        <div className="flex flex-col items-center gap-4 mb-2 mt-auto">
+                        {/* Fixed Footer */}
+                        <div className="absolute bottom-0 left-0 right-0 pt-4 pb-6 px-5 flex flex-col items-center gap-4">
                             {link?.state == LINK_STATE.ACTIVE && (
                                 <button
                                     onClick={() => {
                                         setShowEndLinkDrawer(true);
                                     }}
-                                    className="text-[#D26060] text-[14px] font-semibold"
+                                    className="w-full border bg-white border-[#D26060] mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] h-[44px] hover:bg-[#D26060] hover:text-white transition-colors"
                                 >
                                     End Link
                                 </button>
@@ -402,7 +466,7 @@ export default function DetailPage() {
                                 <Button
                                     id="copy-link-button"
                                     onClick={handleCopyLink}
-                                    className="w-full mb-2"
+                                    className="w-full"
                                 >
                                     {t("details.copyLink")}
                                 </Button>
