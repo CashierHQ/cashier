@@ -16,38 +16,38 @@ console.log(import.meta.env.MODE);
 console.log(import.meta.env.VITE_BACKEND_CANISTER_ID);
 console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
 
-// function App() {
-//     const queryClient = new QueryClient();
-//     const { signers } = useSignerStore();
+function App() {
+    const queryClient = new QueryClient();
+    const { signers } = useSignerStore();
 
-//     return (
-//         <IdentityKitProvider
-//             featuredSigner={false}
-//             onConnectFailure={(e: Error) => {
-//                 console.log("Connect to Identity fail: " + e);
-//             }}
-//             onConnectSuccess={() => {}}
-//             onDisconnect={() => {
-//                 queryClient.clear();
-//             }}
-//             authType={IdentityKitAuthType.DELEGATION}
-//             signers={signers}
-//             signerClientOptions={{
-//                 targets,
-//                 maxTimeToLive: 3_600_000_000_000n,
-//             }}
-//             discoverExtensionSigners={true}
-//         >
-//             <QueryClientProvider client={queryClient}>
-//                 <AppRouter />
-//                 <Toaster />
-//             </QueryClientProvider>
-//         </IdentityKitProvider>
-//     );
-// }
+    return (
+        <IdentityKitProvider
+            featuredSigner={false}
+            onConnectFailure={(e: Error) => {
+                console.log("Connect to Identity fail: " + e);
+            }}
+            onConnectSuccess={() => {}}
+            onDisconnect={() => {
+                queryClient.clear();
+            }}
+            authType={IdentityKitAuthType.DELEGATION}
+            signers={signers}
+            signerClientOptions={{
+                targets,
+                maxTimeToLive: 3_600_000_000_000n,
+            }}
+            discoverExtensionSigners={true}
+        >
+            <QueryClientProvider client={queryClient}>
+                <AppRouter />
+                <Toaster />
+            </QueryClientProvider>
+        </IdentityKitProvider>
+    );
+}
 
 // TODO: remove this after release
-function App() {
+function App1() {
     return (
         <div>
             <ContainerScroll
@@ -64,17 +64,18 @@ function App() {
                 }
             >
                 {/* Social Media Links */}
-                <div className="flex justify-center gap-4 mb-12">
+                <div className="flex justify-center gap-2 sm:gap-4 mb-12">
                     <a
                         href="https://x.com/thecashierapp"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-6 py-3 bg-blue-400 hover:bg-blue-500 text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-300"
+                        className="px-3 py-2 sm:px-6 sm:py-3 bg-blue-400 hover:bg-blue-500 text-white font-medium rounded-lg flex items-center gap-1 sm:gap-2 transition-colors duration-300 text-xs sm:text-base"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
+                            width="16"
+                            height="16"
+                            className="sm:w-5 sm:h-5"
                             fill="currentColor"
                             viewBox="0 0 16 16"
                         >
@@ -86,12 +87,13 @@ function App() {
                         href="https://discord.gg/GmT54Tsw"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors duration-300"
+                        className="px-3 py-2 sm:px-6 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg flex items-center gap-1 sm:gap-2 transition-colors duration-300 text-xs sm:text-base"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
+                            width="16"
+                            height="16"
+                            className="sm:w-5 sm:h-5"
                             fill="currentColor"
                             viewBox="0 0 16 16"
                         >
@@ -100,7 +102,7 @@ function App() {
                         Join Discord
                     </a>
                 </div>
-                <img src="./preview.png" />
+                <img src="/preview.png" alt="CashierApp Preview" />
             </ContainerScroll>
         </div>
     );

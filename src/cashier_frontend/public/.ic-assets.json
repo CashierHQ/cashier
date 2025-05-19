@@ -16,7 +16,19 @@
 
             "X-XSS-Protection": "1; mode=block",
 
-            "Cache-control": "public, max-age=43200"
+            "Cache-control": "public, max-age=0"
         }
+    },
+    {
+        "match": ".well-known/ii-alternative-origins",
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "application/json"
+        },
+        "ignore": false
+    },
+    {
+        "match": ".well-known",
+        "ignore": false
     }
 ]
