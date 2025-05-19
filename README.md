@@ -6,9 +6,7 @@ With Cashier, users can build and share payment, donation, tip, airdrop, swap, e
 
 URL: cashierapp.io
 
-[![Cashier Demo](https://img.shields.io/badge/Watch_Demo-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=H8Qetnjz1Zs)
-
-Video: Introducing Cashier!
+[![Video: Introducing Cashier](https://img.shields.io/badge/Watch_Demo-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=H8Qetnjz1Zs)
 
 # Introduction
 
@@ -19,6 +17,8 @@ Technically, Cashier is all about flexibly configuring and executing different t
 -   Each transaction is defined by what type of transfers it makes (i.e. a tip link will transfer an asset from the transaction link to the user wallet). Such behaviors for each transaction / link type is pre-configured in link service.
 -   The frontend collects user input on what type of assets the users want to use in the transactions.
 -   The transaction manager generates blockchain level requests and executes the transactions. Link to wallet transactions are executed on the backend while wallet to link transactions are executed by triggering the connected wallet.
+
+![Cashier Architecture](docs/architecture.png)
 
 # Installation
 
@@ -66,7 +66,7 @@ And share the link for others to use.
 
 The link user can use the link in following steps:
 
--   tap on link to open the transaction page.
+-   Tap on link to open the transaction page.
 -   Pick a wallet to transact with.
 -   Execute the transaction.
 
@@ -74,12 +74,12 @@ The link user can use the link in following steps:
 
 Please find more documentation of the project in the following links:
 
--   Cashier project overview
--   High level architecture overview
--   Link service
--   Tx manager
--   Link <> Intent mapping
--   Intent <> Tx mapping
+-   [Cashier project overview](https://doc.clickup.com/9012452868/d/h/8cjy7g4-4292/9a3796b6e853ef0)
+-   [High level architecture overview](https://doc.clickup.com/9012452868/d/h/8cjy7g4-5612/2e2ccfa01dd19ed)
+-   [Link service](https://doc.clickup.com/9012452868/d/h/8cjy7g4-5632/4eeacf618d589c1)
+-   [Tx manager](https://doc.clickup.com/9012452868/d/h/8cjy7g4-5552/d32e7c7bddd8747)
+-   [Link <> Intent mapping](https://doc.clickup.com/9012452868/d/h/8cjy7g4-5572/2061969b0764510)
+-   [Intent <> Tx mapping](https://doc.clickup.com/9012452868/d/h/8cjy7g4-5592/5bcdb847ae9a219)
 
 # Testing
 
@@ -136,7 +136,7 @@ We extend big thanks to aforementioned teams.
 
 # References
 
--   Internet Computer
--   ICRC-112: Batch Call Canister
--   NFID Identity Kit
--   ICRC ledger
+-   [Internet Computer](https://internetcomputer.org/)
+-   [ICRC-112: Batch Call Canister](https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_112_batch_call_canister.md#partial-responses)
+-   [NFID Identity Kit](https://identitykit.xyz/)
+-   [ICRC ledger](https://github.com/dfinity/ic/tree/master/rs/rosetta-api/icrc1)
