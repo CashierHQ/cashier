@@ -264,6 +264,14 @@ class LinkLocalStorageService {
                     throw new Error("Maximum action count must be greater than zero");
                 }
 
+                // Validate link type specific requirements
+                if (updateLinkInput.linkType) {
+                    this.validateLinkTypeSpecificRequirements(
+                        updateLinkInput.linkType,
+                        updateLinkInput.assets,
+                        updateLinkInput.maxActionNumber,
+                    );
+                }
                 // For ADD_ASSET state, assets and maxActionNumber can change
                 const whitelist = ["assets", "maxActionNumber"];
                 if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {
@@ -311,6 +319,99 @@ class LinkLocalStorageService {
 
         // Default: transition not allowed
         throw new Error(`Invalid state transition from ${link.state}`);
+    }
+
+    /**
+     * Validates link type specific requirements for assets and action count
+     * @param linkType The type of link being created
+     * @param assets The assets attached to the link
+     * @param maxActionNumber The maximum number of actions allowed for this link
+     * @throws Error with a descriptive message if validation fails
+     */
+    private validateLinkTypeSpecificRequirements(
+        linkType: string,
+        assets?: UserInputAsset[],
+        maxActionNumber?: bigint,
+    ): void {
+        if (!assets || assets.length === 0) {
+            throw new Error("Assets are required for link creation");
+        }
+
+        // Validate common asset fields across all link types
+        for (let i = 0; i < assets.length; i++) {
+            const asset = assets[i];
+            if (!asset.address) {
+                throw new Error(`Asset ${i + 1} must have an address`);
+            }
+            if (!asset.chain) {
+                throw new Error(`Asset ${i + 1} must have a chain`);
+            }
+            if (!asset.label) {
+                throw new Error(`Asset ${i + 1} must have a label`);
+            }
+            if (!asset.linkUseAmount || asset.linkUseAmount <= BigInt(0)) {
+                throw new Error(`Asset ${i + 1} must have a positive amount per use`);
+            }
+        }
+
+        switch (linkType) {
+            case LINK_TYPE.SEND_TIP:
+                // For SendTip:
+                // - exactly 1 action count
+                // - exactly 1 asset
+                if (maxActionNumber !== undefined && maxActionNumber !== BigInt(1)) {
+                    throw new Error("SendTip links must have exactly 1 action count");
+                }
+                if (assets.length !== 1) {
+                    throw new Error("SendTip links must have exactly 1 asset");
+                }
+                break;
+
+            case LINK_TYPE.SEND_AIRDROP:
+                // For SendAirdrop:
+                // - at least 1 action count
+                // - exactly 1 asset
+                if (maxActionNumber !== undefined && maxActionNumber < BigInt(1)) {
+                    throw new Error("SendAirdrop links must have at least 1 action count");
+                }
+                if (assets.length !== 1) {
+                    throw new Error("SendAirdrop links must have exactly 1 asset");
+                }
+                break;
+
+            case LINK_TYPE.SEND_TOKEN_BASKET:
+                // For SendTokenBasket:
+                // - exactly 1 action count
+                // - multiple assets (at least 1)
+                if (maxActionNumber !== undefined && maxActionNumber !== BigInt(1)) {
+                    throw new Error("SendTokenBasket links must have exactly 1 action count");
+                }
+                if (assets.length < 1) {
+                    throw new Error("SendTokenBasket links must have at least 1 asset");
+                }
+                break;
+
+            case LINK_TYPE.RECEIVE_PAYMENT:
+                // For ReceivePayment:
+                // - exactly 1 action count
+                // - exactly 1 asset
+                if (maxActionNumber !== undefined && maxActionNumber !== BigInt(1)) {
+                    throw new Error("ReceivePayment links must have exactly 1 action count");
+                }
+                if (assets.length !== 1) {
+                    throw new Error("ReceivePayment links must have exactly 1 asset");
+                }
+                break;
+
+            default:
+                // For other link types, use default validation
+                if (maxActionNumber !== undefined && maxActionNumber <= BigInt(0)) {
+                    throw new Error("Maximum action count must be greater than zero");
+                }
+                if (assets.length < 1) {
+                    throw new Error("At least one asset is required");
+                }
+        }
     }
 
     /**

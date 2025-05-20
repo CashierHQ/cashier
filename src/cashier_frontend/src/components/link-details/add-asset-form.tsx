@@ -111,7 +111,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             link.linkType
         ) {
             // Create default values with the first available token if no values exist
-            console.log("link", link);
             let label: string = getAssetLabelForLinkType(link.linkType);
             const tokenAddress = allAvailableTokens[0].address;
 
