@@ -24,6 +24,7 @@ interface CustomConnectedWalletButtonProps {
     postfixText?: string;
     postfixIcon?: React.ReactNode;
     handleConnect: () => void;
+    disabled?: boolean;
 }
 
 const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = ({
@@ -31,6 +32,7 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
     postfixText,
     postfixIcon,
     handleConnect,
+    disabled,
 }) => {
     return (
         <button
@@ -44,6 +46,7 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
                 "ring-offset-background",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 "flex items-center justify-start",
+                disabled && "opacity-50 cursor-not-allowed",
             )}
             onClick={(e) => {
                 // Prevent form submission
@@ -52,6 +55,7 @@ const CustomConnectedWalletButton: React.FC<CustomConnectedWalletButtonProps> = 
                 console.log("Connected account:", connectedAccount);
                 handleConnect();
             }}
+            disabled={disabled}
         >
             <span className="flex items-center w-full">
                 {postfixIcon ? (
