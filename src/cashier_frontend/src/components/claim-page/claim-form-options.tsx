@@ -29,7 +29,6 @@ import CustomConnectedWalletButton from "./connected-wallet-button";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { Principal } from "@dfinity/principal";
-import { FaCheck } from "react-icons/fa6";
 import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
@@ -37,9 +36,7 @@ import { useParams } from "react-router-dom";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
-import { ClipboardIcon } from "lucide-react";
 import TokenItem from "./token-item";
-import { IoMdClose } from "react-icons/io";
 import WalletConnectDialog from "@/components/wallet-connect-dialog";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import {
@@ -49,6 +46,9 @@ import {
     GoogleSigner,
 } from "@/constants/wallet-options";
 import { LuWallet2 } from "react-icons/lu";
+import { IoMdClose } from "react-icons/io";
+import { FaCheck } from "react-icons/fa";
+import { ClipboardIcon } from "lucide-react";
 
 interface ClaimFormOptionsProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -191,6 +191,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
         walletOption: WALLET_OPTIONS,
         title: string,
         iconOrImage?: string | JSX.Element,
+        disabled?: boolean,
     ) => {
         // Get the icon from centralized function if not provided
         const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
@@ -215,6 +216,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                         ) : null
                     }
                     handleConnect={() => handleConnectWallet(walletOption)}
+                    disabled={disabled}
                 />
             );
         }
@@ -225,6 +227,8 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                 handleConnect={() => handleConnectWallet(walletOption)}
                 image={typeof finalIconOrImage === "string" ? finalIconOrImage : undefined}
                 icon={typeof finalIconOrImage !== "string" ? finalIconOrImage : undefined}
+                disabled={disabled}
+                postfixText={disabled ? "Coming Soon" : undefined}
             />
         );
     };
@@ -246,9 +250,9 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                 <h2 className="text-[16px] font-medium mb-2">{t("claim.receive_options")}</h2>
 
                 <div className="flex flex-col gap-2">
-                    {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login")}
+                    {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)}
                     {renderWalletButton(WALLET_OPTIONS.INTERNET_IDENTITY, "Internet Identity")}
-                    {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets")}
+                    {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets", undefined, true)}
                     {identity ? (
                         <WalletButton
                             title={t("claim.addressPlaceholder")}
@@ -296,9 +300,11 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                                                 )
                                             }
                                             onRightIconClick={() => {
-                                                field.value
-                                                    ? field.onChange("")
-                                                    : handlePasteClick(field);
+                                                if (field.value) {
+                                                    field.onChange("");
+                                                } else {
+                                                    handlePasteClick(field);
+                                                }
                                             }}
                                             placeholder={t("claim.addressPlaceholder")}
                                             className="py-5 h-14 text-md rounded-xl placeholder:text-primary"
