@@ -16,7 +16,6 @@
 
 import React, { useEffect, useState } from "react";
 import { IoWalletOutline } from "react-icons/io5";
-import { PiWallet } from "react-icons/pi";
 import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
@@ -36,7 +35,7 @@ import { useSignerStore } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import { ClipboardIcon } from "lucide-react";
 import TokenItem from "./token-item";

@@ -26,7 +26,7 @@ import { FeeBreakdownDrawer } from "./fee-breakdown-drawer";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "../ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTranslation } from "react-i18next";
 import { formatNumber } from "@/utils/helpers/currency";
 

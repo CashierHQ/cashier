@@ -29,7 +29,7 @@ import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { stateToStepIndex } from ".";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     const supportedLinkTypes = [

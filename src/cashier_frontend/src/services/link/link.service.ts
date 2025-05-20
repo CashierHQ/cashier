@@ -37,7 +37,7 @@ import {
 } from "../types/link.service.types";
 import {
     MapLinkDetailModel,
-    MapLinkDetailModelToUpdateLinkInputModel,
+    mapLinkDetailModelToUpdateLinkInputModel,
     mapPartialDtoToLinkDetailModel,
     mapLinkUserStateModel,
 } from "../types/mapper/link.service.mapper";
@@ -147,7 +147,7 @@ class LinkService {
     }
 
     async updateLink(linkId: string, data: Partial<UserInputItem>, isContinue: boolean) {
-        const completeData = MapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
+        const completeData = mapLinkDetailModelToUpdateLinkInputModel(linkId, data, isContinue);
         const response = parseResultResponse(await this.actor.update_link(completeData));
 
         return response;
