@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
-import { LINK_TYPE } from "@/services/types/enum";
+import { getAssetLabelForLinkType, LINK_TYPE } from "@/services/types/enum";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -78,12 +78,18 @@ export default function LinkTemplate({
                 return;
             }
 
+            // force the asset should change the label if transition from multiple to single asset
             if (
                 !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
                 currentLink.assets &&
                 currentLink.assets.length > 1
             ) {
-                currentLink.assets = [currentLink.assets[0]];
+                const forceNewAsset = currentLink.assets[0];
+                forceNewAsset.label = getAssetLabelForLinkType(
+                    currentLink.linkType as LINK_TYPE,
+                    forceNewAsset.address,
+                );
+                currentLink.assets = [forceNewAsset];
             }
 
             try {

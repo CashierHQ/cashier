@@ -237,14 +237,14 @@ export const mapStringToLabel = (label: string) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getAssetLabelForLinkType = (linkType: string) => {
+export const getAssetLabelForLinkType = (linkType: string, address: string) => {
     switch (linkType) {
         case LINK_TYPE.SEND_TIP:
             return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
         case LINK_TYPE.SEND_AIRDROP:
             return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
         case LINK_TYPE.SEND_TOKEN_BASKET:
-            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET;
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET + "_" + address;
         case LINK_TYPE.RECEIVE_PAYMENT:
             return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
         default:

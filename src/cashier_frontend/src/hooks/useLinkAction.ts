@@ -189,8 +189,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
 
     // Update state when identity changes
     useEffect(() => {
-        console.log("[useEffect] identity changed:", identity?.getPrincipal().toString());
-
         const refetchData = async () => {
             if (identity && linkId) {
                 await refetchAction(linkId, actionType);

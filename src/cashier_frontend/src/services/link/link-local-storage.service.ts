@@ -225,8 +225,6 @@ class LinkLocalStorageService {
     ): boolean {
         if (!updateLinkInput) throw new Error("Missing update link input data");
 
-        console.log("Validating state transition:", link.state, action, updateLinkInput);
-
         // CHOOSE_TEMPLATE -> ADD_ASSET
         if (link.state === LINK_STATE.CHOOSE_TEMPLATE) {
             if (action === "Continue") {
