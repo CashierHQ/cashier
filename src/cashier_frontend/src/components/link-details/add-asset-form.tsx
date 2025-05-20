@@ -111,7 +111,10 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             link.linkType
         ) {
             // Create default values with the first available token if no values exist
-            let label: string = getAssetLabelForLinkType(link.linkType);
+            let label: string = getAssetLabelForLinkType(
+                link.linkType,
+                allAvailableTokens[0].address,
+            );
             const tokenAddress = allAvailableTokens[0].address;
 
             if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
@@ -308,7 +311,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const handleAddAsset = () => {
         const nextToken = getNextAvailableToken();
         if (nextToken && link && link.linkType) {
-            const label = getAssetLabelForLinkType(link?.linkType);
+            const label = getAssetLabelForLinkType(link?.linkType, nextToken.address);
 
             assetFields.append({
                 tokenAddress: nextToken.address,
@@ -449,7 +452,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         // Check if link already has assets we can use instead of default values
         if (link.asset_info && link.asset_info.length > 0) {
             const firstAsset = link.asset_info[0];
-            let label: string = getAssetLabelForLinkType(link.linkType);
+            let label: string = getAssetLabelForLinkType(link.linkType, firstAsset.address);
 
             if (label == LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET) {
                 label =
@@ -472,7 +475,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
         // If no existing assets, create a default one
         const firstToken = allAvailableTokens[0];
-        const label = getAssetLabelForLinkType(link.linkType);
+        const label = getAssetLabelForLinkType(link.linkType, firstToken.address);
 
         assetFields.append({
             tokenAddress: firstToken.address,
