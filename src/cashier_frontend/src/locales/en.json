@@ -261,8 +261,7 @@
     },
     "main_page": {
         "unauthenticated_content": {
-            "development_warning_1": "Cashier is still in development",
-            "development_warning_2": "Use with caution",
+            "development_warning_1": "Disclaimer: This website is currently in development and provided for demonstration purposes only. It is not intended for public use. Any data entered or actions taken on this site may not be secure, saved, or processed correctly. Use is at your own risk.",
             "big_title_1": "Cashier Links - ",
             "big_title_2": "fast, easy, and ",
             "big_title_3": "safe",
