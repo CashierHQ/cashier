@@ -257,7 +257,12 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                     {identity ? (
                         <WalletButton
                             title={t("claim.addressPlaceholder")}
+                            disabled={true}
+                            postfixText={t("claim.addressPlaceholderComingSoon")}
+                            className="opacity-50 cursor-not-allowed"
                             handleConnect={() => {
+                                // TODO: Enable when working
+                                return;
                                 showDialog({
                                     title: "Are you sure?",
                                     description:
@@ -274,6 +279,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                                 <FormItem className="mx-0">
                                     <FormControl>
                                         <IconInput
+                                            disabled
                                             isCurrencyInput={false}
                                             icon={
                                                 <IoWalletOutline
@@ -282,23 +288,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                                                 />
                                             }
                                             rightIcon={
-                                                field.value && form.formState.errors.address ? (
-                                                    <IoMdClose
-                                                        color="red"
-                                                        className="mr-1 h-5 w-5"
-                                                    />
-                                                ) : field.value &&
-                                                  !form.formState.errors.address ? (
-                                                    <FaCheck
-                                                        color="#36A18B"
-                                                        className="mr-1 h-5 w-5"
-                                                    />
-                                                ) : (
-                                                    <ClipboardIcon
-                                                        color="#359F89"
-                                                        className="mr-2 h-5 w-5"
-                                                    />
-                                                )
+                                                <span className="text-[14px]">Coming Soon</span>
                                             }
                                             onRightIconClick={() => {
                                                 field.value
@@ -306,8 +296,8 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                                                     : handlePasteClick(field);
                                             }}
                                             placeholder={t("claim.addressPlaceholder")}
-                                            className="py-5 h-14 text-md rounded-xl placeholder:text-primary"
-                                            onFocusShowIcon={true}
+                                            className="py-0 h-12 text-md placeholder:text-primary bg-gray-100 text-gray-500 cursor-not-allowed"
+                                            onFocusShowIcon={false}
                                             onFocusText={true}
                                             {...field}
                                             onChange={(e) => {
