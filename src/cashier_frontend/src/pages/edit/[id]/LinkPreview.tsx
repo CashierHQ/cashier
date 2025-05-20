@@ -374,7 +374,6 @@ export default function LinkPreview({
      * @returns {Promise<void>}
      */
     const handleSubmit = async () => {
-        console.log("handleSubmit");
         setIsDisabled(true);
 
         try {

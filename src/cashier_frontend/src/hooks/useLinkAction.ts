@@ -117,7 +117,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         try {
             // Clone the same logic from useLinkDetailQuery to ensure consistency
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
-                console.log("[refetchAction] Using local storage for", linkId);
                 const linkLocalStorageService = new LinkLocalStorageService(
                     identity.getPrincipal().toString(),
                 );
@@ -138,10 +137,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
                     throw new Error("Link not found in local storage");
                 }
             } else {
-                console.log("[refetchAction] Fetching from backend for", linkId);
-                console.log("[refetchAction] With identity", identity?.getPrincipal().toString());
-                console.log("[refetchAction] With actionType", actionType);
-
                 const linkService = new LinkService(identity);
                 const res = await linkService.getLink(linkId, actionType);
 
