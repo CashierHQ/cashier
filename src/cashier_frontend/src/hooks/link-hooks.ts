@@ -18,7 +18,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { UpdateLinkParams } from "./link-action-hooks";
+import { UpdateLinkParams } from "./useLinkAction";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service";
@@ -131,7 +131,7 @@ export function useUpdateLinkMutation() {
             const linkId = data.linkId;
 
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
-                const localStorageLink = linkLocalStorageService.updateStateMachine(
+                const localStorageLink = linkLocalStorageService.callUpdateLink(
                     data.linkId,
                     data.linkModel,
                     data.isContinue,
@@ -145,7 +145,8 @@ export function useUpdateLinkMutation() {
                     data.isContinue,
                 );
                 try {
-                    const localStorage = linkLocalStorageService.updateStateMachine(
+                    // link can be deleted, need to handle
+                    const localStorage = linkLocalStorageService.callUpdateLink(
                         localLinkId,
                         data.linkModel,
                         data.isContinue,

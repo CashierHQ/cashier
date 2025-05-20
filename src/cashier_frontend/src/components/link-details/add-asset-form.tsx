@@ -37,7 +37,7 @@ import TransactionToast from "../transaction/transaction-toast";
 import { Plus, Minus } from "lucide-react";
 import { AssetFormInput } from "./asset-form-input";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../ui/label";
@@ -111,7 +111,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             link.linkType
         ) {
             // Create default values with the first available token if no values exist
-            console.log("link", link);
             let label: string = getAssetLabelForLinkType(link.linkType);
             const tokenAddress = allAvailableTokens[0].address;
 

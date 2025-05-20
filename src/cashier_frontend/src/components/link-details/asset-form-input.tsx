@@ -26,7 +26,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { convertDecimalBigIntToNumber } from "@/utils";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];

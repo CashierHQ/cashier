@@ -35,7 +35,7 @@ import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 export function stateToStepIndex(state: string | undefined): number {

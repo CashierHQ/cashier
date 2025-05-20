@@ -41,7 +41,7 @@ import { mapActionModel } from "./action.service.mapper";
 import { UserInputAsset, UserInputItem } from "@/stores/linkCreationFormStore";
 
 // Map front-end 'Link' model to back-end model
-export const MapLinkDetailModelToUpdateLinkInputModel = (
+export const mapLinkDetailModelToUpdateLinkInputModel = (
     linkId: string,
     linkDetailModel: Partial<UserInputItem>,
     isContinue: boolean,
