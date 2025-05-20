@@ -192,6 +192,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
         walletOption: WALLET_OPTIONS,
         title: string,
         iconOrImage?: string | JSX.Element,
+        disabled?: boolean,
     ) => {
         // Get the icon from centralized function if not provided
         const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
@@ -216,6 +217,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                         ) : null
                     }
                     handleConnect={() => handleConnectWallet(walletOption)}
+                    disabled={disabled}
                 />
             );
         }
@@ -226,6 +228,8 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                 handleConnect={() => handleConnectWallet(walletOption)}
                 image={typeof finalIconOrImage === "string" ? finalIconOrImage : undefined}
                 icon={typeof finalIconOrImage !== "string" ? finalIconOrImage : undefined}
+                disabled={disabled}
+                postfixText={disabled ? "Coming Soon" : undefined}
             />
         );
     };
@@ -247,7 +251,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                 <h2 className="text-[16px] font-medium mb-2">{t("claim.receive_options")}</h2>
 
                 <div className="flex flex-col gap-2">
-                    {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login")}
+                    {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)}
                     {renderWalletButton(WALLET_OPTIONS.INTERNET_IDENTITY, "Internet Identity")}
                     {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets")}
                     {identity ? (
