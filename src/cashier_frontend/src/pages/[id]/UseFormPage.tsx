@@ -41,7 +41,7 @@ import {
     useProcessActionAnonymous,
     useUpdateAction,
 } from "@/hooks/action-hooks";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 
 type ClaimFormPageProps = {

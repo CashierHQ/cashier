@@ -27,7 +27,7 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useTokens } from "@/hooks/useTokens";
 import LinkLocalStorageService from "@/services/link/link-local-storage.service";
 import { useLinksListQuery } from "@/hooks/link-hooks";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { AuthenticatedContent, UnauthenticatedContent } from "@/components/main-page";
 
 export default function HomePage() {
