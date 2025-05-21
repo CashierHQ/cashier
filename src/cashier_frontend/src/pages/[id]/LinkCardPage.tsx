@@ -18,8 +18,7 @@ import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-fram
 import {
     getDisplayComponentForLink,
     getHeaderInfoForLink,
-    getHeaderTextForLink,
-    getIconForLink,
+    getClaimButtonLabel,
     getMessageForLink,
     getTitleForLink,
 } from "@/components/page/linkCardPage";
@@ -41,7 +40,7 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
 
     return (
         <LinkCardWithoutPhoneFrame
-            label="Claim"
+            label={getClaimButtonLabel(linkData)}
             displayComponent={getDisplayComponentForLink(linkData, getToken)}
             message={getMessageForLink(linkData, getToken)}
             title={getTitleForLink(linkData, getToken)}
