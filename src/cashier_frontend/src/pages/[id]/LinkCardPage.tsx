@@ -17,7 +17,9 @@
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import {
     getDisplayComponentForLink,
+    getHeaderInfoForLink,
     getHeaderTextForLink,
+    getIconForLink,
     getMessageForLink,
     getTitleForLink,
 } from "@/components/page/linkCardPage";
@@ -25,6 +27,7 @@ import { useTokens } from "@/hooks/useTokens";
 import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { FC } from "react";
+import { PiWallet } from "react-icons/pi";
 
 type LinkCardPageProps = {
     linkData?: LinkDetailModel;
@@ -34,6 +37,8 @@ type LinkCardPageProps = {
 export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) => {
     const { getToken } = useTokens();
 
+    const linkHeaderInfo = getHeaderInfoForLink(linkData);
+
     return (
         <LinkCardWithoutPhoneFrame
             label="Claim"
@@ -42,8 +47,11 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
             title={getTitleForLink(linkData, getToken)}
             onClaim={onClickClaim}
             disabled={linkData === undefined}
-            showHeader={linkData?.linkType === LINK_TYPE.SEND_AIRDROP}
-            headerText={getHeaderTextForLink(linkData)}
+            showHeader={true}
+            headerText={linkHeaderInfo.headerText}
+            headerIcon={linkHeaderInfo.headerIcon}
+            headerColor={linkHeaderInfo.headerColor}
+            headerTextColor={linkHeaderInfo.headerTextColor}
         />
     );
 };

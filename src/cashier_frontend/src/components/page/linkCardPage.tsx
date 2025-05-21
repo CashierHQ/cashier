@@ -20,6 +20,7 @@ import { LINK_TYPE } from "../../services/types/enum";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatNumber } from "@/utils/helpers/currency";
+import { ArrowDownFromLine, ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
 
 export const getTitleForLink = (
     linkData?: LinkDetailModel,
@@ -139,13 +140,93 @@ const TokenImage = ({ token, logoFallback }: { token?: FungibleToken; logoFallba
     );
 };
 
+export const getHeaderInfoForLink = (
+    linkData?: LinkDetailModel,
+): {
+    headerText: string;
+    headerIcon: ReactNode;
+    headerColor: string;
+    headerTextColor: string;
+} => {
+    return {
+        headerText: getHeaderTextForLink(linkData),
+        headerIcon: getIconForLink(linkData),
+        headerColor: getHeaderColorsForLink(linkData),
+        headerTextColor: getHeaderTextColorForLink(linkData),
+    };
+};
+
 export const getHeaderTextForLink = (linkData?: LinkDetailModel): string => {
     if (!linkData) return "";
 
     switch (linkData?.linkType) {
         case LINK_TYPE.SEND_AIRDROP:
             return `${linkData.useActionCounter}/${linkData.maxActionNumber} claimed`;
+        case LINK_TYPE.SEND_TIP:
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return "Receive";
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return "Send";
         default:
             return "";
+    }
+};
+
+export const getIconForLink = (linkData?: LinkDetailModel): ReactNode => {
+    if (!linkData) return null;
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.SEND_TIP:
+        case LINK_TYPE.SEND_AIRDROP:
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return (
+                <ArrowDownToLine
+                    className="text-[18px]"
+                    color={getHeaderTextColorForLink(linkData)}
+                />
+            );
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return (
+                <ArrowUpFromLine
+                    className="text-[18px]"
+                    color={getHeaderTextColorForLink(linkData)}
+                />
+            );
+        default:
+            return <Wallet2 className="text-[18px]" color={getHeaderTextColorForLink(linkData)} />;
+    }
+};
+
+export const getHeaderColorsForLink = (linkData?: LinkDetailModel): string => {
+    if (!linkData) return "";
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.SEND_TIP:
+            return "#35A18B";
+        case LINK_TYPE.SEND_AIRDROP:
+            return "#FF8F8F";
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return "#BCD8EC";
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return "#DCCCEA";
+        default:
+            return "#35A18B";
+    }
+};
+
+export const getHeaderTextColorForLink = (linkData?: LinkDetailModel): string => {
+    if (!linkData) return "";
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.SEND_TIP:
+            return "#fff";
+        case LINK_TYPE.SEND_AIRDROP:
+            return "#fff";
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return "#252525";
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return "#252525";
+        default:
+            return "#fff";
     }
 };
