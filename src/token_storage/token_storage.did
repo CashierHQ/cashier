@@ -1,34 +1,13 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 type AddTokenInput = record {
-  decimals : opt nat8;
-  chain : text;
-  name : opt text;
-  ledger_id : opt principal;
-  index_id : opt principal;
-  symbol : opt text;
+  token_id : text;
+  token_data : opt RegisterTokenInput;
 };
 type AddTokensInput = record {
-  tokens : vec AddTokenInput;
-  token_hold : vec text;
+  tokens : vec record { text; opt RegisterTokenInput };
 };
-type Chain = variant { IC };
 type RegisterTokenInput = record {
   id : text;
+  fee : opt nat;
   decimals : nat8;
   chain : text;
   name : text;
@@ -37,23 +16,12 @@ type RegisterTokenInput = record {
   index_id : opt principal;
   symbol : text;
 };
-type RegistryTokenDto = record {
-  id : text;
-  decimals : nat8;
-  chain : text;
-  name : text;
-  icrc_ledger_id : opt principal;
-  icrc_index_id : opt principal;
-  symbol : text;
-};
-type RemoveTokenInput = record { token_id : text };
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : UserPreference; Err : text };
-type Result_2 = variant { Ok : vec RegistryTokenDto; Err : text };
-type Result_3 = variant { Ok : vec TokenDto; Err : text };
-type Result_4 = variant { Ok : text; Err : text };
+type Result_1 = variant { Ok : vec text; Err : text };
+type Result_2 = variant { Ok : TokenListResponse; Err : text };
 type TokenDto = record {
   id : text;
+  fee : opt nat;
   decimals : nat8;
   balance : opt nat;
   chain : text;
@@ -63,33 +31,21 @@ type TokenDto = record {
   icrc_index_id : opt principal;
   symbol : text;
 };
-type UserFiltersInput = record {
-  hide_zero_balance : opt bool;
-  selected_chain : opt vec text;
-  hide_unknown_token : opt bool;
+type TokenListResponse = record {
+  need_update_version : bool;
+  tokens : vec TokenDto;
 };
-type UserPreference = record {
-  token_registry_version : nat64;
-  hide_zero_balance : bool;
-  hidden_tokens : vec text;
-  selected_chain : vec Chain;
-  hide_unknown_token : bool;
-};
-service : {
+type TokenRegistryMetadata = record { last_updated : nat64; version : nat64 };
+type UpdateTokenStatusInput = record { token_id : text; is_enabled : bool };
+service : () -> {
   add_token : (AddTokenInput) -> (Result);
-  add_tokens : (AddTokensInput) -> (Result);
-  batch_toggle_token_visibility : (vec record { text; bool }) -> (Result);
-  get_user_preference : () -> (Result_1) query;
+  add_tokens : (AddTokensInput) -> (Result_1);
+  get_registry_metadata : () -> (TokenRegistryMetadata) query;
+  get_registry_tokens : () -> (vec TokenDto) query;
+  get_registry_version : () -> (nat64) query;
   initialize_registry : () -> (Result);
-  initialize_user_tokens : () -> (Result);
-  list_registry_tokens : (opt bool) -> (Result_2) query;
-  list_tokens : () -> (Result_3) query;
-  query_user_token : (text) -> (Result_3);
-  register_token : (RegisterTokenInput) -> (Result_4);
-  remove_token : (RemoveTokenInput) -> (Result);
+  list_tokens : () -> (Result_2) query;
   reset_user_tokens : (text) -> (Result);
-  toggle_token_visibility : (text, bool) -> (Result);
-  update_bulk_balances : (vec record { text; nat }) -> (Result);
-  update_token_balance : (text, nat) -> (Result);
-  update_user_filters : (UserFiltersInput) -> (Result);
+  sync_token_list : () -> (Result);
+  update_token_status : (UpdateTokenStatusInput) -> (Result);
 }

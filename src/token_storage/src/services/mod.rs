@@ -14,16 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod api;
-pub mod constant;
-pub mod ext;
-pub mod init_and_upgrade;
-pub mod repository;
-pub mod services;
-pub mod types;
-pub mod utils;
-
-use crate::api::token::*;
-use crate::types::*;
-
-ic_cdk::export_candid!();
+pub mod token_registry;
+pub mod user_preference;
+pub mod user_token;
