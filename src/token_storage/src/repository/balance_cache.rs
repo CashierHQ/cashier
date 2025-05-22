@@ -101,6 +101,16 @@ impl BalanceCacheRepository {
         })
     }
 
+    pub fn reset_balances(&self, user_id: &str) {
+        BALANCE_CACHE_STORE.with_borrow_mut(|store| {
+            store.remove(&user_id.to_string());
+            store.insert(
+                user_id.to_string(),
+                Candid(HashMap::<TokenId, TokenBalance>::new()),
+            );
+        });
+    }
+
     pub fn get_balances_batch(
         &self,
         user_id: &str,

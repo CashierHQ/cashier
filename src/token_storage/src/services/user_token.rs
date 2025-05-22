@@ -76,10 +76,8 @@ impl UserTokenService {
 
         // Get balances for enabled tokens
         let balances = if !user_token_list.enable_list.is_empty() {
-            self.balance_cache_repository.get_balances_batch(
-                user_id,
-                user_token_list.enable_list.iter().cloned().collect(),
-            )
+            let balances_vec = self.balance_cache_repository.get_all_balances(user_id);
+            balances_vec.into_iter().collect()
         } else {
             std::collections::HashMap::new()
         };
@@ -209,8 +207,8 @@ impl UserTokenService {
         let mut user_token_list = match self.token_repository.list_tokens(user_id) {
             Ok(list) => list,
             Err(_) => {
-                // Initialize an empty list if not found
-                self.token_repository.reset_token_list(user_id);
+                // Ensure user has a token list initialized
+                self.ensure_token_list_initialized(user_id)?;
                 UserTokenList::default()
             }
         };
@@ -255,5 +253,34 @@ impl UserTokenService {
     /// This gives access to the raw UserTokenList structure with version info
     pub fn get_token_list(&self, user_id: &str) -> Result<UserTokenList, String> {
         self.token_repository.list_tokens(user_id)
+    }
+
+    /// Update balances for multiple tokens at once
+    pub fn update_bulk_balances(&self, user_id: &str, updates: Vec<(TokenId, u128)>) {
+        if !updates.is_empty() {
+            self.balance_cache_repository
+                .update_bulk_balances(user_id, updates);
+        }
+    }
+
+    pub fn get_bulk_balances(
+        &self,
+        user_id: &str,
+        token_ids: Vec<TokenId>,
+    ) -> std::collections::HashMap<TokenId, u128> {
+        self.balance_cache_repository
+            .get_balances_batch(user_id, token_ids)
+    }
+
+    pub fn get_all_cached_balances(
+        &self,
+        user_id: &str,
+    ) -> std::collections::HashMap<std::string::String, u128> {
+        let balances_vec = self.balance_cache_repository.get_all_balances(user_id);
+        balances_vec.into_iter().collect()
+    }
+
+    pub fn reset_cached_balances(&self, user_id: &str) {
+        self.balance_cache_repository.reset_balances(user_id);
     }
 }

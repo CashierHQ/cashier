@@ -31,6 +31,13 @@ pub struct UpdateTokenStatusInput {
     pub is_enabled: bool,
 }
 
+/// The input for updating a token's status (enable/disable)
+#[derive(CandidType, Deserialize, Clone)]
+pub struct UpdateTokenBalanceInput {
+    pub token_id: TokenId,
+    pub balance: u128,
+}
+
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct RegisterTokenInput {
     pub id: String,
@@ -46,7 +53,6 @@ pub struct RegisterTokenInput {
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct AddTokenItem {
-    pub address: String,
     pub chain: String,
     pub ledger_id: Option<LedgerId>,
     pub index_id: Option<IndexId>,
@@ -59,7 +65,6 @@ pub struct AddTokenItem {
 impl From<RegisterTokenInput> for AddTokenItem {
     fn from(input: RegisterTokenInput) -> Self {
         Self {
-            address: input.id,
             chain: input.chain,
             ledger_id: input.ledger_id,
             index_id: input.index_id,
@@ -73,8 +78,9 @@ impl From<RegisterTokenInput> for AddTokenItem {
 
 impl From<AddTokenItem> for RegisterTokenInput {
     fn from(item: AddTokenItem) -> Self {
+        let id = format!("{}:{}", item.chain, item.ledger_id.unwrap());
         Self {
-            id: item.address,
+            id: id,
             chain: item.chain,
             ledger_id: item.ledger_id,
             index_id: item.index_id,

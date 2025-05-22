@@ -23,7 +23,7 @@ pub mod services;
 pub mod types;
 pub mod utils;
 
-use crate::api::token::*;
+use crate::api::token::types::*;
 use crate::types::*;
 
 ic_cdk::export_candid!();

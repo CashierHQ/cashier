@@ -1,6 +1,6 @@
 use candid::Principal;
 use ic_cdk::{query, update};
-use types::RegisterTokenInput;
+use types::{RegisterTokenInput, UpdateTokenBalanceInput};
 
 use crate::{
     services::{
@@ -74,8 +74,11 @@ impl TokenApi {
                         Some(user_preferences),
                     );
                 } else {
-                    // Otherwise, return the user's tokens
-                    let tokens = self.user_token_service.list_tokens(&caller.to_string());
+                    // Get user's tokens
+                    let tokens = self
+                        .user_token_service
+                        .convert_to_token_dtos(&caller.to_string(), &list);
+
                     return (tokens, need_update_version, Some(user_preferences));
                 }
             }
@@ -179,6 +182,36 @@ impl TokenApi {
         self.user_token_service
             .update_token_status(&caller.to_text(), token_id, input.is_enabled)
     }
+
+    pub fn update_tokens_balance(
+        &self,
+        caller: &Principal,
+        input: Vec<UpdateTokenBalanceInput>,
+    ) -> Result<(), String> {
+        let user_id = caller.to_text();
+
+        // Convert input to Vec<(TokenId, u128)> format
+        let updates: Vec<(TokenId, u128)> = input
+            .iter()
+            .filter_map(|token| {
+                return Some((token.token_id.clone(), token.balance));
+            })
+            .collect();
+
+        // Update token balances in bulk
+        if !updates.is_empty() {
+            self.user_token_service
+                .update_bulk_balances(&user_id, updates);
+        }
+
+        Ok(())
+    }
+
+    pub fn reset_all_cache(&self, caller: &Principal) -> Result<(), String> {
+        let user_id = caller.to_text();
+        self.user_token_service.reset_cached_balances(&user_id);
+        Ok(())
+    }
 }
 
 // ==================== USER TOKENS API ====================
@@ -259,4 +292,30 @@ pub fn sync_token_list() -> Result<(), String> {
 
     let user_token_service = UserTokenService::new();
     user_token_service.sync_token_version(&caller.to_string())
+}
+
+#[update]
+pub fn update_token_balance(input: Vec<UpdateTokenBalanceInput>) -> Result<(), String> {
+    let caller = ic_cdk::caller();
+
+    if caller == Principal::anonymous() {
+        return Err("Not allowed for anonymous calls".to_string());
+    }
+
+    let api = TokenApi::new();
+    api.update_tokens_balance(&caller, input)
+}
+
+#[query]
+pub fn get_balance_cache(
+    wallet: String,
+) -> Result<std::collections::HashMap<std::string::String, u128>, String> {
+    let user_token_service = UserTokenService::new();
+    Ok(user_token_service.get_all_cached_balances(&wallet))
+}
+
+#[update]
+pub fn reset_cache(wallet: String) -> Result<(), String> {
+    let api = TokenApi::new();
+    api.reset_all_cache(&Principal::from_text(wallet).unwrap())
 }
