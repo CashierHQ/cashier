@@ -17,15 +17,17 @@
 use crate::{
     repository::{
         balance_cache::BalanceCacheRepository, token_registry::TokenRegistryRepository,
-        token_registry_metadata::TokenRegistryMetadataRepository, user_token::TokenRepository,
+        token_registry_metadata::TokenRegistryMetadataRepository,
+        user_preference::UserPreferenceRepository, user_token::TokenRepository,
     },
-    types::{TokenDto, TokenId, UserTokenList},
+    types::{TokenDto, TokenId, UserPreference, UserTokenList},
 };
 
 pub struct UserTokenService {
     token_repository: TokenRepository,
     registry_repository: TokenRegistryRepository,
     metadata_repository: TokenRegistryMetadataRepository,
+    user_preference_repository: UserPreferenceRepository,
     balance_cache_repository: BalanceCacheRepository,
 }
 
@@ -35,6 +37,7 @@ impl UserTokenService {
             token_repository: TokenRepository::new(),
             registry_repository: TokenRegistryRepository::new(),
             metadata_repository: TokenRegistryMetadataRepository::new(),
+            user_preference_repository: UserPreferenceRepository::new(),
             balance_cache_repository: BalanceCacheRepository::new(),
         }
     }
@@ -115,26 +118,41 @@ impl UserTokenService {
         result
     }
 
+    /// Ensures the user has a token list initialized
+    /// If the user doesn't have a token list, creates one with default settings
+    fn ensure_token_list_initialized(&self, user_id: &str) -> Result<(), String> {
+        match self.token_repository.list_tokens(user_id) {
+            Ok(_) => Ok(()), // Token list already exists
+            Err(_) => {
+                // Initialize with registry tokens
+                let default_token_list = self.registry_repository.list_tokens();
+                let mut user_token_list = UserTokenList::default();
+                let user_preference = UserPreference::default();
+                let version = self.metadata_repository.get().version;
+
+                // Initialize with current registry tokens
+                user_token_list.init_with_current_registry(default_token_list, version)?;
+
+                // Save the new token list
+                self.token_repository
+                    .update_token_list(user_id, &user_token_list)?;
+                self.user_preference_repository
+                    .update(user_id.to_string(), user_preference);
+
+                Ok(())
+            }
+        }
+    }
+
     /// Add a single token to the user's list
     /// If the token is not in either list, it will be added to the enable list
     /// If the token is in the disable list, it will be moved to the enable list
     pub fn add_token(&self, user_id: &str, token_id: &TokenId) -> Result<(), String> {
-        // Verify that the token exists in the registry
-        if self.registry_repository.get_token(token_id).is_none() {
-            return Err(format!("Token {} not found in registry", token_id));
-        }
+        // Ensure user has a token list initialized
+        self.ensure_token_list_initialized(user_id)?;
 
         // Add the token to the user's list
-        let result = self.token_repository.add_token(user_id, token_id);
-
-        // If this is a new token for the user, we might want to fetch its balance
-        // This is optional and depends on your application's requirements
-        if result.is_ok() {
-            // You might want to trigger a balance update here
-            // For now, we'll just return success
-        }
-
-        result
+        self.token_repository.add_token(user_id, token_id)
     }
 
     /// Add multiple tokens to the user's list
@@ -143,6 +161,9 @@ impl UserTokenService {
         if token_ids.is_empty() {
             return Ok(vec![]);
         }
+
+        // Ensure user has a token list initialized
+        self.ensure_token_list_initialized(user_id)?;
 
         // Filter tokens to only include those that exist in the registry
         let valid_tokens: Vec<TokenId> = token_ids
@@ -172,10 +193,8 @@ impl UserTokenService {
         token_id: &TokenId,
         is_enabled: bool,
     ) -> Result<(), String> {
-        // Verify that the token exists in the registry
-        if self.registry_repository.get_token(token_id).is_none() {
-            return Err(format!("Token {} not found in registry", token_id));
-        }
+        // Ensure user has a token list initialized
+        self.ensure_token_list_initialized(user_id)?;
 
         // Update the token's status
         self.token_repository

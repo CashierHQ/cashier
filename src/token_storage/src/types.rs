@@ -112,7 +112,7 @@ pub struct RegistryToken {
 }
 
 impl RegistryToken {
-    pub fn generate_id(chain: &Chain, ledger_id: Option<&LedgerId>) -> Result<TokenId, String> {
+    pub fn generate_id(chain: &Chain, ledger_id: Option<LedgerId>) -> Result<TokenId, String> {
         match (chain, ledger_id) {
             (Chain::IC, Some(id)) => Ok(format!("IC:{}", id.to_text())),
             _ => Err("Cannot generate token ID: missing required fields".to_string()),
@@ -280,5 +280,24 @@ impl Default for UserTokenList {
             enable_list: HashSet::new(),
             disable_list: HashSet::new(),
         }
+    }
+}
+
+impl UserTokenList {
+    pub fn init_with_current_registry(
+        &mut self,
+        registry_tokens: Vec<RegistryToken>,
+        version: u64,
+    ) -> Result<(), String> {
+        for token in registry_tokens {
+            if token.enabled_by_default {
+                self.enable_list.insert(token.id.clone());
+            } else {
+                self.disable_list.insert(token.id.clone());
+            }
+        }
+
+        self.version = version;
+        Ok(())
     }
 }

@@ -66,7 +66,7 @@ pub fn get_default_tokens() -> Vec<RegisterTokenInput> {
             fee: Some(Nat::from(10_000u64)),
         },
         RegisterTokenInput {
-            id: "x5qut-viaaa-aaaar-qajda-cai".to_string(),
+            id: "IC:x5qut-viaaa-aaaar-qajda-cai".to_string(),
             chain: "IC".to_string(),
             ledger_id: Some(Principal::from_text("x5qut-viaaa-aaaar-qajda-cai").unwrap()),
             index_id: None,

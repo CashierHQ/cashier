@@ -1,8 +1,8 @@
 use candid::Principal;
 use ic_cdk::{query, update};
+use types::RegisterTokenInput;
 
 use crate::{
-    repository::user_preference,
     services::{
         token_registry::TokenRegistryService, user_preference::UserPreferenceService,
         user_token::UserTokenService,
@@ -101,7 +101,8 @@ impl TokenApi {
         if self.token_registry_service.get_token(token_id).is_none() {
             // If token doesn't exist, try to register it first
             if let Some(token_data) = input.token_data.clone() {
-                self.token_registry_service.register_token(token_data)?;
+                self.token_registry_service
+                    .register_token(RegisterTokenInput::from(token_data))?;
                 // Update registry metadata after registration
                 self.token_registry_service.increase_version();
             } else {
@@ -112,16 +113,12 @@ impl TokenApi {
             }
         }
 
-        // Now add the token to the user's list
+        // Add the token to the user's list, initialization is handled by the service
         self.user_token_service
             .add_token(&caller.to_text(), token_id)
     }
 
-    pub fn add_tokens(
-        &self,
-        caller: &Principal,
-        input: AddTokensInput,
-    ) -> Result<Vec<TokenId>, String> {
+    pub fn add_tokens(&self, caller: &Principal, input: AddTokensInput) -> Result<(), String> {
         let user_id = caller.to_text();
         let mut tokens_to_add: Vec<TokenId> = Vec::new();
         let mut registry_updated = false;
@@ -132,14 +129,17 @@ impl TokenApi {
             if self.token_registry_service.get_token(&token_id).is_none() {
                 // If token doesn't exist, try to register it
                 if let Some(token_data) = maybe_token_data {
-                    match self.token_registry_service.register_token(token_data) {
+                    match self
+                        .token_registry_service
+                        .register_token(RegisterTokenInput::from(token_data))
+                    {
                         Ok(_) => {
                             registry_updated = true;
                             tokens_to_add.push(token_id);
                         }
                         Err(e) => {
                             ic_cdk::println!("Failed to register token {}: {}", token_id, e);
-                            return Err(format!("Failed to register token {}: {}", token_id, e));
+                            continue; // Skip this token but continue processing others
                         }
                     }
                 }
@@ -158,8 +158,9 @@ impl TokenApi {
             return Err("No valid tokens to add".to_string());
         }
 
-        // Add all valid tokens to the user's list
-        self.user_token_service.add_tokens(&user_id, &tokens_to_add)
+        // sync after adding tokens
+        self.user_token_service
+            .sync_token_version(&caller.to_string())
     }
 
     pub fn update_token_status(
@@ -174,7 +175,7 @@ impl TokenApi {
             return Err(format!("Token {} not found in registry", token_id));
         }
 
-        // Update the token's status
+        // Update the token's status, initialization is handled by the service
         self.user_token_service
             .update_token_status(&caller.to_text(), token_id, input.is_enabled)
     }
@@ -220,7 +221,7 @@ pub fn add_token(input: AddTokenInput) -> Result<(), String> {
 /// Returns the list of tokens that were successfully added
 /// Returns an error if the user is anonymous or if none of the tokens could be processed
 #[update]
-pub fn add_tokens(input: AddTokensInput) -> Result<Vec<TokenId>, String> {
+pub fn add_tokens(input: AddTokensInput) -> Result<(), String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {

@@ -45,7 +45,7 @@ impl TokenRegistryRepository {
             decimals: input.decimals,
             chain,
             enabled_by_default: input.enabled_by_default,
-            fee: None,
+            fee: input.fee,
         };
 
         let is_new_token = !TOKEN_REGISTRY_STORE.with_borrow(|store| store.contains_key(&input.id));
