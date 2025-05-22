@@ -29,6 +29,7 @@ export type TokenModel = {
     logo: string;
     // only use for display, enrich from ledger metadata
     logoFallback?: string;
+    fee?: bigint;
 };
 
 export interface TokenMetadata {

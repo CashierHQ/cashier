@@ -17,6 +17,7 @@
 import icExplorerAxiosClient from "@/axios/axiosClient";
 import { Principal } from "@dfinity/principal";
 import { toNullable } from "@dfinity/utils";
+import { AddTokenItem } from "../../../declarations/token_storage/token_storage.did";
 
 export const IC_EXPLORER_IMAGES_PATH = "https://api.icexplorer.io/images/";
 
@@ -97,6 +98,7 @@ export function mapTokenListItemToAddTokenInput(token: TokenListItem): {
     ledger_id: [] | [Principal];
     index_id: [] | [Principal];
     symbol: [] | [string];
+    fee: [] | [bigint];
 } {
     return {
         // Convert token0Decimal to optional array format
@@ -125,6 +127,35 @@ export function mapTokenListItemToAddTokenInput(token: TokenListItem): {
 
         // We don't have index_id in the source, so leave it empty
         index_id: [],
+
+        fee: toNullable(0n),
+    };
+}
+
+export function mapTokenListItemToAddTokenItem(token: IcExplorerTokenDetail): AddTokenItem {
+    return {
+        fee: token.fee
+            ? (() => {
+                  try {
+                      // Parse the fee string to handle decimal values
+                      // Remove decimal part if present, as BigInt can't handle decimals
+                      const feeValue = token.fee.includes(".")
+                          ? token.fee.substring(0, token.fee.indexOf("."))
+                          : token.fee;
+                      return toNullable(BigInt(feeValue));
+                  } catch (error) {
+                      console.error("Error converting fee to BigInt:", error);
+                      return toNullable(0n);
+                  }
+              })()
+            : toNullable(0n),
+        decimals: token.tokenDecimal,
+        chain: "IC",
+        name: token.name,
+        ledger_id: toNullable(Principal.fromText(token.ledgerId)),
+        index_id: [],
+        symbol: token.symbol,
+        address: token.ledgerId,
     };
 }
 
@@ -189,6 +220,35 @@ export interface TokenListItem {
     valueUSD: string;
 }
 
+/**
+ * Detailed token information from IC Explorer
+ */
+export interface IcExplorerTokenDetail {
+    controllerArray: string[];
+    cycleBalance: string;
+    fee: string;
+    fullyDilutedMarketCap: string;
+    holderAmount: number;
+    ledgerId: string;
+    marketCap: string;
+    memorySize: string;
+    mintingAccount: string;
+    moduleHash: string;
+    name: string;
+    price: string;
+    priceChange24: string;
+    priceICP: string;
+    source: string;
+    standardArray: string[];
+    supplyCap: string;
+    symbol: string;
+    tokenDecimal: number;
+    totalSupply: string;
+    transactionAmount: number;
+    tvl: string;
+    txVolume24: string;
+}
+
 export class ICExplorerService {
     constructor() {}
 
@@ -204,7 +264,7 @@ export class ICExplorerService {
         return response.data.list;
     }
 
-    async getListToken(): Promise<TokenListItem[]> {
+    async getListToken(): Promise<IcExplorerTokenDetail[]> {
         const url = "token/list";
         const response = await icExplorerAxiosClient.post(url, {
             page: 1,

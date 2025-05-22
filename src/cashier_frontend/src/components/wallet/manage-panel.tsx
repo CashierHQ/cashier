@@ -14,12 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { Search as SearchIcon, RefreshCw, Plus, ChevronLeft } from "lucide-react";
 import { ManageTokensList } from "@/components/manage-tokens/token-list";
 import { ManageTokensMissingTokenMessage } from "@/components/manage-tokens/missing-token-message";
 import { useTranslation } from "react-i18next";
-import { Link } from "@/components/ui/link";
 import { useTokens } from "@/hooks/useTokens";
 import { Spinner } from "@/components/ui/spinner";
 import { IconInput } from "@/components/icon-input";
@@ -44,12 +43,17 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
     const [displayLimit, setDisplayLimit] = useState<number>(30); // Initial load of 30 tokens
     const loaderRef = useRef<HTMLDivElement>(null);
 
-    // Use either user tokens or raw tokens based on authentication status
-    const tokens = rawTokenList;
+    // Add this debug effect to verify when rawTokenList changes
+    useEffect(() => {
+        console.log("rawTokenList changed:", rawTokenList.length);
+    }, [rawTokenList]);
 
-    // Sort tokens by enabled status
+    // Sort tokens by enabled status - with explicit dependency on rawTokenList
     const sortedTokens = useMemo(() => {
-        return [...tokens].sort((a, b) => {
+        console.log("Sorting tokens", rawTokenList.length, "items");
+        if (!rawTokenList || rawTokenList.length === 0) return [];
+
+        return [...rawTokenList].sort((a, b) => {
             // If both have the same 'enabled' status, maintain original order
             if ((a.enabled ?? true) === (b.enabled ?? true)) {
                 return 0;
@@ -57,10 +61,12 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
             // Enabled tokens come first (true > false)
             return (a.enabled ?? true) ? -1 : 1;
         });
-    }, [tokens]);
+    }, [rawTokenList, isExplorerLoading]);
 
-    // Search function to filter tokens - moved inside useMemo
+    // Search function to filter tokens - simplified dependencies
     const filteredTokens = useMemo(() => {
+        console.log("Filtering tokens from", sortedTokens.length, "items");
+
         const lcQuery = searchQuery.toLowerCase().trim();
         if (!lcQuery) return sortedTokens;
 
@@ -69,7 +75,13 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
                 token.name.toLowerCase().includes(lcQuery) ||
                 token.symbol.toLowerCase().includes(lcQuery),
         );
-    }, [searchQuery, sortedTokens]);
+    }, [searchQuery, sortedTokens, isExplorerLoading]);
+
+    // Get the tokens to display based on display limit - with improved memoization
+    const displayedTokens = useMemo(() => {
+        console.log("Calculating displayed tokens from", filteredTokens.length, "filtered items");
+        return filteredTokens.slice(0, displayLimit);
+    }, [filteredTokens, displayLimit]);
 
     // Custom animation style
     const halfSpinStyle = {
@@ -131,29 +143,26 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
         setDisplayLimit(30); // Reset display limit when clearing search
     };
 
-    const handleUpdateExplorer = async () => {
+    // Handle update with feedback
+    const handleUpdateExplorer = useCallback(async () => {
         setIsExplorerLoading(true);
         try {
+            console.log("Updating token explorer...");
             await updateTokenExplorer();
-            await updateTokenBalance();
+            console.log("Token data refresh complete");
         } catch (error) {
             console.error("Error updating token explorer", error);
         } finally {
             setIsExplorerLoading(false);
         }
-    };
+    }, [updateTokenExplorer, updateTokenBalance]);
 
     // Reset display limit when search query changes
     useEffect(() => {
         setDisplayLimit(30);
     }, [searchQuery]);
 
-    // Get the tokens to display based on display limit
-    const displayedTokens = useMemo(() => {
-        return filteredTokens.slice(0, displayLimit);
-    }, [filteredTokens, displayLimit]);
-
-    const isNoTokens = tokens.length === 0;
+    const isNoTokens = rawTokenList.length === 0;
     const noSearchResults = !isNoTokens && searchQuery && filteredTokens.length === 0;
     const hasMoreTokens = displayLimit < filteredTokens.length;
 

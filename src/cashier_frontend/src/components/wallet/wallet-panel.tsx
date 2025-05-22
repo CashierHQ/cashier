@@ -106,31 +106,8 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
         navigateToPanel("send");
     };
 
-    const navigateDetailsPage = (tokenId: string) => {
-        navigateToPanel("details", { tokenId });
-    };
-
     const navigateToMainWallet = () => {
         navigateToPanel("wallet");
-    };
-
-    // Get panel title based on active panel
-    const getPanelTitle = (): string => {
-        switch (activePanel) {
-            case "send":
-                return "Send";
-            case "receive":
-                return "Receive";
-            case "details":
-                return "Token Details";
-            case "manage":
-                return "Manage Tokens";
-            case "import":
-                return "Import Token";
-            case "wallet":
-            default:
-                return "Wallet";
-        }
     };
 
     // Render panel content based on active panel type

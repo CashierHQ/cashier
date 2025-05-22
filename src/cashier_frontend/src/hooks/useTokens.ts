@@ -14,22 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useTokenStore } from "@/stores/tokenStore";
-import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
-import { TokenFilters } from "@/types/token-store.type";
 import {
     useAddTokenMutation,
-    useAddTokensMutation,
-    useToggleTokenVisibilityMutation,
+    useUpdateTokenStateMutation,
     useTokenBalancesQuery,
-    useTokenListQuery,
     useTokenMetadataQuery,
     useTokenPricesQuery,
-    useTokenRawListQuery,
-    useUpdateUserFiltersMutation,
-    useUserPreferencesQuery,
+    useTokenListQuery,
+    useSyncTokenList,
+    useMultipleTokenMutation,
 } from "./token-hooks";
 import {
     FungibleToken,
@@ -38,9 +34,14 @@ import {
 } from "@/types/fungible-token.speculative";
 import {
     ICExplorerService,
-    mapTokenListItemToAddTokenInput,
-    TokenListItem,
+    IcExplorerTokenDetail,
+    mapTokenListItemToAddTokenItem,
 } from "@/services/icExplorer.service";
+import {
+    AddTokenInput,
+    AddTokenItem,
+    AddTokensInput,
+} from "../../../declarations/token_storage/token_storage.did";
 
 // Main hook that components should use
 export function useTokens() {
@@ -49,83 +50,45 @@ export function useTokens() {
     // Get Zustand store actions
     const {
         setRawTokenList,
-        setUserTokens,
-        setFilters,
         setIsLoading,
         setIsLoadingBalances,
         setIsLoadingPrices,
         setIsSyncPreferences,
         setIsImporting,
-        filters,
+        setFilters,
     } = useTokenStore();
 
+    const tokenListQuery = useTokenListQuery(identity);
     // Use React Query hooks
-    const tokenRawListQuery = useTokenRawListQuery();
-    const tokenUserListQuery = useTokenListQuery(identity);
-    const userPreferencesQuery = useUserPreferencesQuery(identity);
-    const tokenMetadataQuery = useTokenMetadataQuery(
-        identity ? tokenUserListQuery.data : tokenRawListQuery.data,
-    );
-    const tokenBalancesQuery = useTokenBalancesQuery(identity ? tokenUserListQuery.data : []);
+    const tokenMetadataQuery = useTokenMetadataQuery(tokenListQuery.data?.tokens);
+    const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data?.tokens);
     const tokenPricesQuery = useTokenPricesQuery();
 
     // Mutations
+    const syncTokenListMutation = useSyncTokenList(identity);
     const addTokenMutation = useAddTokenMutation(identity);
-    const addMultpleTokensMutation = useAddTokensMutation(identity);
-    const toggleTokenVisibilityMutation = useToggleTokenVisibilityMutation(identity);
-    const updateUserFiltersMutation = useUpdateUserFiltersMutation(identity);
+    const addMultipleTokenMutation = useMultipleTokenMutation(identity);
+    const updateTokenState = useUpdateTokenStateMutation(identity);
 
     // Implement operation functions
     const addToken = async (input: AddTokenInput) => {
         setIsImporting(true);
         await addTokenMutation.mutateAsync(input);
         setIsImporting(false);
-
-        await updateToken();
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const removeToken = async (tokenId: string) => {
-        await tokenUserListQuery.refetch();
     };
 
     // Toggle a single token's visibility in preferences
     const toggleTokenVisibility = async (tokenId: string, hidden: boolean) => {
         setIsSyncPreferences(true);
-        await toggleTokenVisibilityMutation.mutateAsync({ tokenId, hidden });
-        await tokenUserListQuery.refetch();
+        await updateTokenState.mutateAsync({ tokenId, hidden });
         setIsSyncPreferences(false);
     };
 
-    // Update user filter preferences
-    const updateUserFilters = async (filterUpdates: Partial<TokenFilters>) => {
-        // Merge with current filters to ensure we have complete data
-        const updatedFilters = {
-            ...filters,
-            ...filterUpdates,
-        };
-
-        await updateUserFiltersMutation.mutateAsync(updatedFilters);
-        await userPreferencesQuery.refetch();
-    };
-
     const updateTokenInit = async () => {
-        await tokenRawListQuery.refetch();
-        if (identity) {
-            await tokenUserListQuery.refetch();
-            await userPreferencesQuery.refetch();
-        }
+        await tokenListQuery.refetch();
     };
 
-    const updateToken = async () => {
-        await tokenRawListQuery.refetch();
-        if (identity) {
-            await tokenUserListQuery.refetch();
-            await userPreferencesQuery.refetch();
-            await tokenBalancesQuery.refetch();
-        }
-    };
-
+    // TODO: update this
     const updateTokenExplorer = async () => {
         const explorerService = new ICExplorerService();
         if (!identity) {
@@ -133,16 +96,14 @@ export function useTokens() {
             return;
         }
 
-        // Get user tokens
-        const tokenHold = await explorerService.getUserTokens(identity.getPrincipal().toText());
-        const tokenHoldId = tokenHold.map((token) => token.ledgerId);
-
         // Add retry logic for getting token list
         const MAX_RETRIES = 3;
         const RETRY_DELAY = 1000; // 1 second delay between retries
 
         // Implement retry function with exponential backoff
-        const getTokenListWithRetry = async (retries: number = 0): Promise<TokenListItem[]> => {
+        const getTokenListWithRetry = async (
+            retries: number = 0,
+        ): Promise<IcExplorerTokenDetail[]> => {
             try {
                 const result = await explorerService.getListToken();
                 console.log(`Successfully retrieved token list with ${result.length} items`);
@@ -169,101 +130,41 @@ export function useTokens() {
         const tokenList = await getTokenListWithRetry();
 
         if (tokenList.length > 0) {
-            const tokensToAdd: AddTokenInput[] = tokenList.map((token) => {
-                return mapTokenListItemToAddTokenInput(token);
-            });
+            // Format tokens as required by the AddTokensInput interface: Array<[string, [] | [RegisterTokenInput]]>
+            const tokenTuples = tokenList.map((token) => {
+                const tokenId = `IC:${token.ledgerId}`; // Create token ID using proper format
+                const tokenData = mapTokenListItemToAddTokenItem(token); // Convert to TokenListItem
+                return [tokenId, [tokenData]];
+            }) as Array<[string, [] | [AddTokenItem]]>;
 
-            await addMultpleTokensMutation.mutateAsync({
-                tokens: tokensToAdd,
-                token_hold: tokenHoldId,
-            });
+            // Create the proper AddTokensInput object
+            const tokensToAdd: AddTokensInput = {
+                tokens: tokenTuples,
+            };
+
+            console.log("tokensToAdd", tokensToAdd);
+
+            try {
+                await addMultipleTokenMutation.mutateAsync({
+                    tokens: tokensToAdd.tokens,
+                });
+            } catch (error) {
+                console.error("Error adding tokens:", error);
+            } finally {
+                tokenListQuery.refetch();
+            }
         }
-
-        await tokenUserListQuery.refetch();
     };
 
     const updateTokenBalance = async () => {
         await tokenBalancesQuery.refetch();
     };
 
-    // Process raw tokens list (all tokens from registry) and merge with user token enabled status
-    const metadataQueryTriggeredRef = useRef(false);
-
-    useEffect(() => {
-        if (!tokenRawListQuery.data) return;
-
-        // Create a lookup map for user tokens by address
-        const userTokenMap: Record<string, FungibleToken> = {};
-
-        // Only populate the map if the user is authenticated and has tokens
-        if (identity && tokenUserListQuery.data) {
-            const userTokens: FungibleToken[] = tokenUserListQuery.data.map((token: TokenModel) => {
-                return mapTokenModelToFungibleToken(token);
-            });
-
-            // Create a map of user tokens by address for fast lookup
-            userTokens.forEach((token) => {
-                if (token.address) {
-                    userTokenMap[token.address] = token;
-                }
-            });
-        }
-
-        const rawTokens: FungibleToken[] = tokenRawListQuery.data.map((token: TokenModel) => {
-            const baseToken = mapTokenModelToFungibleToken(token);
-
-            // If this token exists in user tokens, merge the enabled status
-            if (baseToken.address && userTokenMap[baseToken.address]) {
-                baseToken.enabled = userTokenMap[baseToken.address].enabled;
-            }
-
-            return baseToken;
-        });
-
-        // Enrich with metadata and prices
-        const enrichedRawTokens = rawTokens.map((token) => {
-            const enrichedToken = { ...token };
-
-            // Enrich with metadata
-            if (tokenMetadataQuery.data && !metadataQueryTriggeredRef.current) {
-                const metadataMap = tokenMetadataQuery.data;
-                const metadata = metadataMap[token.address];
-                if (metadata?.fee !== undefined) {
-                    enrichedToken.fee = metadata.fee;
-                    enrichedToken.logoFallback = metadata.logo;
-                }
-                metadataQueryTriggeredRef.current = true;
-            }
-
-            // Enrich with price data
-            if (tokenPricesQuery.data) {
-                const priceMap = tokenPricesQuery.data;
-                const price = priceMap[token.address];
-
-                if (price) {
-                    enrichedToken.usdConversionRate = price;
-                    enrichedToken.usdEquivalent = 0; // Default to 0 for raw tokens without balances
-                }
-            }
-
-            return enrichedToken;
-        });
-
-        // Update raw token list
-        setRawTokenList(enrichedRawTokens);
-    }, [
-        tokenRawListQuery.data,
-        tokenMetadataQuery.data,
-        tokenPricesQuery.data,
-        tokenUserListQuery.data,
-        identity,
-    ]);
-
     // Process user tokens list (if authenticated)
     useEffect(() => {
-        if (!identity || !tokenUserListQuery.data) return;
+        if (!identity || !tokenListQuery.data) return;
 
-        const userTokens: FungibleToken[] = tokenUserListQuery.data.map((token: TokenModel) => {
+        const userTokens: FungibleToken[] = tokenListQuery.data.tokens.map((token: TokenModel) => {
             return mapTokenModelToFungibleToken(token);
         });
 
@@ -313,32 +214,8 @@ export function useTokens() {
         });
 
         // Update user token list
-        setUserTokens(enrichedUserTokens);
-
-        if (userPreferencesQuery.data) {
-            setFilters(userPreferencesQuery.data);
-        }
-    }, [
-        identity,
-        tokenUserListQuery.data,
-        tokenBalancesQuery.data,
-        tokenMetadataQuery.data,
-        tokenPricesQuery.data,
-        userPreferencesQuery.data,
-    ]);
-
-    // Separate useEffect for loading states
-    useEffect(() => {
-        setIsLoading(
-            tokenRawListQuery.isLoading ||
-                (!!identity && (tokenUserListQuery.isLoading || userPreferencesQuery.isLoading)),
-        );
-    }, [
-        identity,
-        tokenRawListQuery.isLoading,
-        tokenUserListQuery.isLoading,
-        userPreferencesQuery.isLoading,
-    ]);
+        setRawTokenList(enrichedUserTokens);
+    }, [identity, tokenBalancesQuery.data, tokenMetadataQuery.data, tokenPricesQuery.data]);
 
     // Separate useEffect for token balances loading state
     useEffect(() => {
@@ -350,15 +227,28 @@ export function useTokens() {
         setIsLoadingPrices(tokenPricesQuery.isLoading || tokenPricesQuery.isFetching);
     }, [tokenPricesQuery.isLoading, tokenPricesQuery.isFetching]);
 
+    useEffect(() => {
+        // onloading when first load
+        if (tokenListQuery.isLoading && !tokenListQuery.data) {
+            setIsLoading(true);
+        } else {
+            setIsLoading(false);
+        }
+        if (tokenListQuery.data?.needUpdateVersion) {
+            syncTokenListMutation.mutateAsync();
+        }
+
+        if (tokenListQuery.data?.perference) {
+            setFilters(tokenListQuery.data?.perference);
+        }
+    }, [tokenListQuery.data]);
+
     // Update operation functions in Zustand
     useEffect(() => {
         useTokenStore.setState({
             addToken,
-            removeToken,
             toggleTokenVisibility,
-            updateUserFilters,
             updateTokenInit,
-            updateToken,
             updateTokenExplorer,
             updateTokenBalance,
         });
