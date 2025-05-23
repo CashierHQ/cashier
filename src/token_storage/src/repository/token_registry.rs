@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::types::{Chain, RegisterTokenInput, RegistryToken, TokenId};
+use crate::{
+    api::token::types::RegisterTokenInput,
+    types::{Chain, RegistryToken, TokenId},
+};
 
 use super::{token_registry_metadata::TokenRegistryMetadataRepository, TOKEN_REGISTRY_STORE};
 
@@ -42,6 +45,7 @@ impl TokenRegistryRepository {
             decimals: input.decimals,
             chain,
             enabled_by_default: input.enabled_by_default,
+            fee: input.fee,
         };
 
         let is_new_token = !TOKEN_REGISTRY_STORE.with_borrow(|store| store.contains_key(&input.id));
@@ -91,6 +95,21 @@ impl TokenRegistryRepository {
 
     pub fn get_token(&self, token_id: &TokenId) -> Option<RegistryToken> {
         TOKEN_REGISTRY_STORE.with_borrow(|store| store.get(token_id))
+    }
+
+    /// Get multiple tokens by their IDs in a batch
+    /// Returns a HashMap with token_id as key and RegistryToken as value
+    /// Only includes tokens that were found in the registry
+    pub fn get_tokens_batch(
+        &self,
+        token_ids: &[TokenId],
+    ) -> std::collections::HashMap<TokenId, RegistryToken> {
+        TOKEN_REGISTRY_STORE.with_borrow(|store| {
+            token_ids
+                .iter()
+                .filter_map(|id| store.get(id).map(|token| (id.clone(), token)))
+                .collect()
+        })
     }
 
     pub fn list_tokens(&self) -> Vec<RegistryToken> {

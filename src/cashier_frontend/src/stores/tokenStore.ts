@@ -25,9 +25,6 @@ interface TokenState {
     // Original data
     rawTokenList: FungibleToken[];
 
-    // Filtered data
-    userTokens: FungibleToken[];
-
     // Filter settings
     filters: TokenFilters;
 
@@ -42,15 +39,13 @@ interface TokenState {
 
     // Setters
     setRawTokenList: (tokens: FungibleToken[]) => void;
-    setUserTokens: (tokens: FungibleToken[]) => void;
-    setFilteredTokens: (tokens: FungibleToken[]) => void;
-    setFilters: (filters: TokenFilters) => void;
     setIsLoading: (isLoading: boolean) => void;
     setIsLoadingBalances: (isLoadingBalances: boolean) => void;
     setIsLoadingPrices: (isLoadingPrices: boolean) => void;
     setIsSyncPreferences: (isSyncPreferences: boolean) => void;
     setIsImporting: (isImporting: boolean) => void;
     setError: (error: Error | null) => void;
+    setFilters: (filters: Partial<TokenFilters>) => void;
 
     // Getters
     getToken(tokenAddress: string): FungibleToken | undefined;
@@ -74,6 +69,8 @@ interface TokenState {
     updateToken: () => Promise<void>;
     updateTokenExplorer: () => Promise<void>;
     updateTokenBalance: () => Promise<void>;
+
+    refetchData: () => Promise<void>;
 }
 
 // Create the Zustand store with updated implementation
@@ -99,25 +96,24 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     setRawTokenList: (tokens) => {
         set({ rawTokenList: tokens });
     },
-    setUserTokens: (tokens) => {
-        set({ userTokens: tokens });
-    },
-    setFilteredTokens: (filteredTokens) => set({ userTokens: filteredTokens }),
-    setFilters: (filters) => {
-        set({ filters });
-    },
     setIsLoading: (isLoading) => set({ isLoading }),
     setIsLoadingBalances: (isLoadingBalances) => set({ isLoadingBalances }),
     setIsLoadingPrices: (isLoadingPrices) => set({ isLoadingPrices }),
     setIsSyncPreferences: (isSyncPreferences) => set({ isSyncPreferences }),
     setIsImporting: (isImporting) => set({ isImporting }),
     setError: (error) => set({ error }),
+    setFilters: (filters) => {
+        set((state) => ({
+            filters: {
+                ...state.filters,
+                ...filters,
+            },
+        }));
+    },
 
     // Getters
     getToken: (tokenAddress) => {
-        const { userTokens, rawTokenList } = get();
-        const token = userTokens.find((token) => token.address === tokenAddress);
-        if (token) return token;
+        const { rawTokenList } = get();
         const tokenFromRawList = rawTokenList.find((token) => token.address === tokenAddress);
         return tokenFromRawList;
     },
@@ -141,9 +137,9 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     },
 
     getDisplayTokens: () => {
-        const { userTokens: tokens, filters } = get();
+        const { rawTokenList, filters } = get();
 
-        let filtered = tokens.slice();
+        let filtered = rawTokenList.slice();
 
         // Apply hide zero balance filter
         if (filters.hideZeroBalance) {
@@ -168,10 +164,9 @@ export const useTokenStore = create<TokenState>((set, get) => ({
             );
         }
 
-        // Apply hidden tokens filter
-        if (filters.hidden_tokens && filters.hidden_tokens.length > 0) {
-            filtered = filtered.filter((token) => !filters.hidden_tokens.includes(token.id));
-        }
+        filtered = filtered.filter((token) => token.enabled);
+
+        console.log("[getDisplayTokens] rawTokenList 4", filtered);
 
         // Sort tokens by USD equivalent, then by balance
         filtered.sort((a, b) => {
@@ -238,6 +233,9 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         throw new Error("Not implemented - will be set by useTokens hook");
     },
     updateTokenBalance: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    refetchData: async () => {
         throw new Error("Not implemented - will be set by useTokens hook");
     },
 }));
