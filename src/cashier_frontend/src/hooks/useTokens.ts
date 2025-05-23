@@ -58,7 +58,7 @@ export function useTokens() {
         setFilters,
     } = useTokenStore();
 
-    const tokenListQuery = useTokenListQuery(identity);
+    const tokenListQuery = useTokenListQuery();
     // Use React Query hooks
     const tokenMetadataQuery = useTokenMetadataQuery(tokenListQuery.data?.tokens);
     const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data?.tokens);
@@ -74,13 +74,15 @@ export function useTokens() {
     const addToken = async (input: AddTokenInput) => {
         setIsImporting(true);
         await addTokenMutation.mutateAsync(input);
+        await tokenListQuery.refetch();
         setIsImporting(false);
     };
 
     // Toggle a single token's visibility in preferences
-    const toggleTokenVisibility = async (tokenId: string, hidden: boolean) => {
+    const toggleTokenVisibility = async (tokenId: string, enable: boolean) => {
         setIsSyncPreferences(true);
-        await updateTokenState.mutateAsync({ tokenId, hidden });
+        await updateTokenState.mutateAsync({ tokenId, enable });
+        await tokenListQuery.refetch();
         setIsSyncPreferences(false);
     };
 
@@ -88,7 +90,6 @@ export function useTokens() {
         await tokenListQuery.refetch();
     };
 
-    // TODO: update this
     const updateTokenExplorer = async () => {
         const explorerService = new ICExplorerService();
         if (!identity) {
@@ -139,15 +140,14 @@ export function useTokens() {
 
             // Create the proper AddTokensInput object
             const tokensToAdd: AddTokensInput = {
-                tokens: tokenTuples,
+                tokens_disable: tokenTuples,
+                tokens_enable: [],
             };
 
             console.log("tokensToAdd", tokensToAdd);
 
             try {
-                await addMultipleTokenMutation.mutateAsync({
-                    tokens: tokensToAdd.tokens,
-                });
+                await addMultipleTokenMutation.mutateAsync(tokensToAdd);
             } catch (error) {
                 console.error("Error adding tokens:", error);
             } finally {
@@ -215,7 +215,13 @@ export function useTokens() {
 
         // Update user token list
         setRawTokenList(enrichedUserTokens);
-    }, [identity, tokenBalancesQuery.data, tokenMetadataQuery.data, tokenPricesQuery.data]);
+    }, [
+        identity,
+        tokenListQuery.data,
+        tokenBalancesQuery.data,
+        tokenMetadataQuery.data,
+        tokenPricesQuery.data,
+    ]);
 
     // Separate useEffect for token balances loading state
     useEffect(() => {
@@ -229,10 +235,13 @@ export function useTokens() {
 
     useEffect(() => {
         // onloading when first load
-        if (tokenListQuery.isLoading && !tokenListQuery.data) {
+        if (tokenListQuery.isFetching && !tokenListQuery.data) {
             setIsLoading(true);
         } else {
             setIsLoading(false);
+        }
+        if (tokenListQuery.data?.tokens) {
+            setRawTokenList(tokenListQuery.data.tokens);
         }
         if (tokenListQuery.data?.needUpdateVersion) {
             syncTokenListMutation.mutateAsync();
@@ -242,6 +251,10 @@ export function useTokens() {
             setFilters(tokenListQuery.data?.perference);
         }
     }, [tokenListQuery.data]);
+
+    // useEffect(() => {
+    //     tokenListQuery.refetch();
+    // }, [identity])
 
     // Update operation functions in Zustand
     useEffect(() => {

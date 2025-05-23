@@ -155,7 +155,6 @@ export function mapTokenListItemToAddTokenItem(token: IcExplorerTokenDetail): Ad
         ledger_id: toNullable(Principal.fromText(token.ledgerId)),
         index_id: [],
         symbol: token.symbol,
-        address: token.ledgerId,
     };
 }
 

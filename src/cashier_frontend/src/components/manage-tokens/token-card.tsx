@@ -38,14 +38,15 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
 
     const { toggleTokenVisibility } = useTokens();
 
-    const handleToggle = (e: React.MouseEvent) => {
+    const handleToggle = async (e: React.MouseEvent) => {
         // Stop propagation to prevent the article onClick from firing
         e.stopPropagation();
 
         // Toggle the visibility state locally for immediate feedback
         const newVisibility = !isVisible;
+        console.log("Toggling token visibility:", token.id, newVisibility);
+        await toggleTokenVisibility(token.id, newVisibility);
         setIsVisible(newVisibility);
-        toggleTokenVisibility(token.id, !newVisibility);
     };
 
     return (

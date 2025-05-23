@@ -45,7 +45,6 @@ export default function HomePage() {
     const { showToast } = useToast();
     const navigate = useNavigate();
 
-    const { updateTokenInit } = useTokens();
     const { resetLinkAndAction } = useLinkAction();
 
     const handleCreateLink = async () => {
@@ -141,12 +140,6 @@ export default function HomePage() {
             });
         }
     }, [linkData]);
-
-    useEffect(() => {
-        if (identity) {
-            updateTokenInit();
-        }
-    }, [identity]);
 
     useEffect(() => {
         if (isLinksLoading) {

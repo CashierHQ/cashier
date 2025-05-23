@@ -29,6 +29,7 @@ interface ManagePanelProps {
     onBack: () => void;
 }
 
+// eslint-disable-next-line react/prop-types
 const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
     const { t } = useTranslation();
     const { navigateToPanel } = useWalletContext();
@@ -43,43 +44,28 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
     const [displayLimit, setDisplayLimit] = useState<number>(30); // Initial load of 30 tokens
     const loaderRef = useRef<HTMLDivElement>(null);
 
-    // Add this debug effect to verify when rawTokenList changes
-    useEffect(() => {
-        console.log("rawTokenList changed:", rawTokenList.length);
-    }, [rawTokenList]);
-
-    // Sort tokens by enabled status - with explicit dependency on rawTokenList
-    const sortedTokens = useMemo(() => {
-        console.log("Sorting tokens", rawTokenList.length, "items");
-        if (!rawTokenList || rawTokenList.length === 0) return [];
-
-        return [...rawTokenList].sort((a, b) => {
-            // If both have the same 'enabled' status, maintain original order
-            if ((a.enabled ?? true) === (b.enabled ?? true)) {
-                return 0;
-            }
-            // Enabled tokens come first (true > false)
-            return (a.enabled ?? true) ? -1 : 1;
-        });
-    }, [rawTokenList, isExplorerLoading]);
-
-    // Search function to filter tokens - simplified dependencies
+    // Get filtered tokens based on search query - with stable references
     const filteredTokens = useMemo(() => {
-        console.log("Filtering tokens from", sortedTokens.length, "items");
+        console.log("Getting display tokens with search", searchQuery);
+
+        if (!rawTokenList || rawTokenList.length === 0) {
+            return [];
+        }
+
+        if (!searchQuery.trim()) {
+            return rawTokenList;
+        }
 
         const lcQuery = searchQuery.toLowerCase().trim();
-        if (!lcQuery) return sortedTokens;
-
-        return sortedTokens.filter(
+        return rawTokenList.filter(
             (token) =>
                 token.name.toLowerCase().includes(lcQuery) ||
                 token.symbol.toLowerCase().includes(lcQuery),
         );
-    }, [searchQuery, sortedTokens, isExplorerLoading]);
+    }, [rawTokenList, searchQuery]); // <-- Removed unnecessary dependencies
 
-    // Get the tokens to display based on display limit - with improved memoization
+    // Get the tokens to display based on display limit - with identity function for stable references
     const displayedTokens = useMemo(() => {
-        console.log("Calculating displayed tokens from", filteredTokens.length, "filtered items");
         return filteredTokens.slice(0, displayLimit);
     }, [filteredTokens, displayLimit]);
 

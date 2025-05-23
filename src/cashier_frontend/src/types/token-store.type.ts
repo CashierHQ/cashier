@@ -21,6 +21,7 @@ import {
 import { TokenModel } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
 import { IC_EXPLORER_IMAGES_PATH } from "@/const";
+import { fromNullable } from "@dfinity/utils";
 
 export interface TokenFilters {
     hideZeroBalance: boolean;
@@ -82,6 +83,6 @@ export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
         logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
         decimals: token.decimals || 8,
         enabled: enable,
-        fee: token.fee || undefined,
+        fee: fromNullable(token.fee || undefined),
     };
 };

@@ -20,7 +20,7 @@ import { UIResponsiveType } from "@/pages/edit/[id]/index_responsive";
 import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
-export const safeParseJSON = (arg: Record<string, unknown>): string => {
+export const safeParseJSON = (arg: Record<string, unknown | undefined>): string => {
     return JSON.stringify(arg, (key, value) =>
         typeof value === "bigint" ? value.toString() : value,
     );

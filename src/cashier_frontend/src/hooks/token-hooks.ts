@@ -73,10 +73,12 @@ export function chainToString(chain: Chain): string {
     return chainKey || "";
 }
 
-export function useTokenListQuery(identity: Identity | undefined) {
+export function useTokenListQuery() {
+    const identity = useIdentity();
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.all,
         queryFn: async () => {
+            console.log("Fetching token list...", identity?.getPrincipal().toString());
             const tokenService = new TokenStorageService(identity);
             let tokens: TokenDto[] = [];
 
@@ -85,7 +87,6 @@ export function useTokenListQuery(identity: Identity | undefined) {
             if (res && res.tokens) {
                 tokens = res.tokens;
             }
-            console.log("Fetched token list:", res);
 
             return {
                 tokens,
@@ -95,13 +96,20 @@ export function useTokenListQuery(identity: Identity | undefined) {
         },
         select: (data) => {
             // Transform to frontend model
-            const tokens = data.tokens.map((token) => mapTokenDtoToTokenModel(token));
+            const tokens = data.tokens.map((token) => {
+                return {
+                    ...mapTokenDtoToTokenModel(token),
+                    amount: fromNullable(token.balance),
+                };
+            });
+
             const perference: TokenFilters = {
                 hideZeroBalance: data.perference?.hide_zero_balance || false,
                 hideUnknownToken: data.perference?.hide_unknown_token || false,
                 selectedChain:
                     data.perference?.selected_chain?.map((chain) => chainToString(chain)) || [],
             };
+
             return {
                 tokens,
                 needUpdateVersion: data.needUpdateVersion,
@@ -115,7 +123,6 @@ export function useTokenListQuery(identity: Identity | undefined) {
     });
 }
 
-// Separate hook for syncing token list
 export function useSyncTokenList(identity: Identity | undefined) {
     const queryClient = useQueryClient();
     return useMutation({
@@ -138,14 +145,8 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
         queryFn: async () => {
             if (!tokens || tokens.length === 0) return {};
 
-            // Sleep for 5 seconds before continuing
-
-            console.log("Fetching token metadata...");
-
-            // Create a map of token address to metadata
             const metadataMap: TokenMetadataMap = {};
 
-            // Process tokens in batches to avoid overwhelming the network
             const batchSize = 300;
             const start = Date.now();
             for (let i = 0; i < tokens.length; i += batchSize) {
@@ -176,16 +177,39 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
                 metadataMap,
             );
 
-            console.log("Fetched token metadata:", metadataMap);
-
             return metadataMap;
         },
         enabled: !!tokens,
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) =>
             Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
+        staleTime: TIME_CONSTANTS.FIVE_MINUTES,
+        refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
     });
 }
+
+export function useTokenPricesQuery() {
+    return useQuery({
+        queryKey: TOKEN_QUERY_KEYS.prices(),
+        queryFn: async () => {
+            try {
+                const prices = await tokenPriceService.getAllPrices();
+                // Return null instead of empty object if no prices are fetched
+                console.log(`[${new Date().toISOString()}] Fetched token prices:`, prices);
+                return Object.keys(prices).length > 0 ? prices : null;
+            } catch (error) {
+                console.error("Failed to fetch token prices:", error);
+                throw error;
+            }
+        },
+        staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
+        refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
+        retry: 10, // Retry failed requests up to 10 times
+        retryDelay: (attemptIndex) =>
+            Math.min(1000 * 0.1 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
+    });
+}
+
 // Hook 2: Fetch token balances
 export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
     const identity = useIdentity();
@@ -214,10 +238,13 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
                     const balance = await tokenUtilService.balanceOf(token.address);
 
                     // Update the balance map
-                    balanceMap[token.address] = { amount: balance };
+
+                    const id = `${token.chain}:${token.address}`;
+
+                    balanceMap[id] = { amount: balance };
 
                     return {
-                        id: token.id,
+                        id: id,
                         address: token.address,
                         amount: balance,
                     };
@@ -301,43 +328,21 @@ export function useUpdateTokenStateMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ tokenId, hidden }: { tokenId: string; hidden: boolean }) => {
+        mutationFn: async ({ tokenId, enable }: { tokenId: string; enable: boolean }) => {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
             const input: UpdateTokenStatusInput = {
                 token_id: tokenId,
-                is_enabled: !hidden,
+                is_enabled: enable,
             };
             await tokenService.updateToken(input);
-            return { tokenId, hidden };
+            return { tokenId, hidden: enable };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: TOKEN_QUERY_KEYS.all,
             });
         },
-    });
-}
-
-export function useTokenPricesQuery() {
-    return useQuery({
-        queryKey: TOKEN_QUERY_KEYS.prices(),
-        queryFn: async () => {
-            try {
-                const prices = await tokenPriceService.getAllPrices();
-                // Return null instead of empty object if no prices are fetched
-                console.log(`[${new Date().toISOString()}] Fetched token prices:`, prices);
-                return Object.keys(prices).length > 0 ? prices : null;
-            } catch (error) {
-                console.error("Failed to fetch token prices:", error);
-                throw error;
-            }
-        },
-        staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
-        refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
-        retry: 10, // Retry failed requests up to 10 times
-        retryDelay: (attemptIndex) =>
-            Math.min(1000 * 0.1 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
 }

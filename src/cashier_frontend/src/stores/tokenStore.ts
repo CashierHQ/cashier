@@ -69,6 +69,8 @@ interface TokenState {
     updateToken: () => Promise<void>;
     updateTokenExplorer: () => Promise<void>;
     updateTokenBalance: () => Promise<void>;
+
+    refetchData: () => Promise<void>;
 }
 
 // Create the Zustand store with updated implementation
@@ -164,6 +166,8 @@ export const useTokenStore = create<TokenState>((set, get) => ({
 
         filtered = filtered.filter((token) => token.enabled);
 
+        console.log("[getDisplayTokens] rawTokenList 4", filtered);
+
         // Sort tokens by USD equivalent, then by balance
         filtered.sort((a, b) => {
             // First sort tokens with USD value to the top
@@ -185,8 +189,6 @@ export const useTokenStore = create<TokenState>((set, get) => ({
 
             return bBalance - aBalance;
         });
-
-        console.log("Filtered tokens:", filtered);
 
         return filtered;
     },
@@ -231,6 +233,9 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         throw new Error("Not implemented - will be set by useTokens hook");
     },
     updateTokenBalance: async () => {
+        throw new Error("Not implemented - will be set by useTokens hook");
+    },
+    refetchData: async () => {
         throw new Error("Not implemented - will be set by useTokens hook");
     },
 }));

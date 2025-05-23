@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Sheet } from "@/components/ui/sheet";
 import WalletPanel from "./wallet-panel";
+import { useTokens } from "@/hooks/useTokens";
 
 interface WalletSheetWrapperProps {
     children: React.ReactNode;
