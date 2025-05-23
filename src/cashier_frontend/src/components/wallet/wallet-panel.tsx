@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 // Cashier — No-code blockchain transaction builder
 // Copyright (C) 2025 TheCashierApp LLC
 //
@@ -30,6 +31,7 @@ import DetailsPanel from "./details-panel";
 import ManagePanel from "./manage-panel";
 import ImportPanel from "./import-panel";
 import { formatNumber } from "@/utils/helpers/currency";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 interface WalletPanelProps {
     onClose: () => void;
@@ -39,7 +41,7 @@ const MainWalletPanel: React.FC<{
     navigateSendPage: () => void;
     navigateReceivePage: () => void;
     totalUsdEquivalent: number;
-    filteredTokens: any[];
+    filteredTokens: FungibleToken[];
 }> = ({ navigateSendPage, navigateReceivePage, totalUsdEquivalent, filteredTokens }) => {
     // Balance visibility state
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
@@ -83,9 +85,18 @@ const MainWalletPanel: React.FC<{
 };
 
 const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
-    const { isLoading, getDisplayTokens } = useTokens();
-    const filteredTokens = getDisplayTokens();
+    const { isLoading, getDisplayTokens, rawTokenList } = useTokens();
+    const [filteredTokens, setFilteredTokens] = useState<FungibleToken[]>([]);
     const { activePanel, panelParams, navigateToPanel } = useWalletContext();
+
+    // Update filteredTokens state when tokens change
+    useEffect(() => {
+        // Only update when not loading to prevent flickering
+        if (!isLoading) {
+            const displayTokens = getDisplayTokens();
+            setFilteredTokens(displayTokens);
+        }
+    }, [isLoading, rawTokenList, getDisplayTokens]);
 
     // Calculate the total USD equivalent from the tokens
     const totalUsdEquivalent = useMemo(() => {
@@ -106,31 +117,8 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
         navigateToPanel("send");
     };
 
-    const navigateDetailsPage = (tokenId: string) => {
-        navigateToPanel("details", { tokenId });
-    };
-
     const navigateToMainWallet = () => {
         navigateToPanel("wallet");
-    };
-
-    // Get panel title based on active panel
-    const getPanelTitle = (): string => {
-        switch (activePanel) {
-            case "send":
-                return "Send";
-            case "receive":
-                return "Receive";
-            case "details":
-                return "Token Details";
-            case "manage":
-                return "Manage Tokens";
-            case "import":
-                return "Import Token";
-            case "wallet":
-            default:
-                return "Wallet";
-        }
     };
 
     // Render panel content based on active panel type

@@ -21,7 +21,7 @@ import { PartialIdentity } from "@dfinity/identity";
 
 const LAST_CACHE_TIME_KEY = "lastTokenBalanceCacheTime";
 const LAST_CACHED_BALANCES_KEY = "lastCachedTokenBalances";
-const CACHE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes in milliseconds
+const CACHE_THRESHOLD_MS = 1 * 30 * 1000; // 30 second in milliseconds
 
 class TokenCacheService {
     private TokenStorageService: TokenStorageService;
@@ -100,13 +100,15 @@ class TokenCacheService {
                     localStorage.setItem(cacheKey, balanceMapJson);
 
                     if (balancesChanged) {
-                        await this.TokenStorageService.updateBulkTokenBalance(balancesToCache);
+                        await this.TokenStorageService.updateTokenBalances(balancesToCache);
                         // Check what was actually stored in localStorage
 
                         console.log(
                             `Caching complete (${balancesChanged ? "balances changed" : "time threshold reached"})`,
                         );
                     }
+
+                    console.log("Cached balances:", balancesToCache);
                 } else {
                     console.log("No balances to cache (all undefined)");
                 }

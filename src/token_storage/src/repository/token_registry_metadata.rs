@@ -41,12 +41,12 @@ impl TokenRegistryMetadataRepository {
     pub fn increase_version(&self) -> u64 {
         TOKEN_REGISTRY_METADATA_STORE.with_borrow_mut(|store| {
             let mut metadata = store.get().clone();
-            metadata.current_version += 1;
+            metadata.version += 1;
             metadata.last_updated = time();
             let _ = store.set(metadata);
 
             let updated_metadata = store.get().clone();
-            updated_metadata.current_version
+            updated_metadata.version
         })
     }
 }

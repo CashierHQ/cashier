@@ -176,14 +176,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
                 const linkModel = mapUserInputItemToLinkDetailModel(userInput);
                 setLink(linkModel);
             }
-
-            // Then refetch data
-            const refetchData = async () => {
-                await refetchLinkDetail();
-                await refetchAction(linkId, actionType);
-            };
-
-            refetchData();
         }
     }, [linkId]);
 

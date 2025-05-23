@@ -18,7 +18,7 @@ import { IC_HOST } from "@/const";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Agent, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { IcrcLedgerCanister, IcrcTokenMetadata, mapTokenMetadata } from "@dfinity/ledger-icrc";
+import { IcrcLedgerCanister, mapTokenMetadata } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import { defaultAgent, Token, TokenAmountV2 } from "@dfinity/utils";
 
@@ -61,29 +61,6 @@ export class TokenUtilService {
         }
 
         return Number(amount) / 10 ** token.decimals;
-    }
-
-    // Helper method to keep the implementation clean
-    private static async getHumanReadableAmountFromAddress(
-        amount: bigint,
-        tokenAddress: string,
-    ): Promise<number> {
-        const tokenMetadata = await this.getTokenMetadata(tokenAddress);
-        const tokenV2 = TokenAmountV2.fromUlps({ amount, token: tokenMetadata as Token });
-        const upls = tokenV2.toUlps();
-        return Number(upls) / 10 ** tokenV2.token.decimals;
-    }
-
-    public static getHumanReadableAmountFromMetadata(
-        amount: bigint,
-        tokenMetadata: IcrcTokenMetadata | undefined,
-    ) {
-        if (!amount || !tokenMetadata) {
-            return 0;
-        }
-        const tokenV2 = TokenAmountV2.fromUlps({ amount, token: tokenMetadata as Token });
-        const upls = tokenV2.toUlps();
-        return Number(upls) / 10 ** tokenV2.token.decimals;
     }
 
     async balanceOf(tokenAddress: string) {

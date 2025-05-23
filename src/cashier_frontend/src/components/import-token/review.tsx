@@ -26,9 +26,9 @@ import { AddTokenInput } from "../../../../declarations/token_storage/token_stor
 import { Principal } from "@dfinity/principal";
 import { toNullable } from "@dfinity/utils";
 import { useTokens } from "@/hooks/useTokens";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Spinner } from "../ui/spinner";
+import { useWalletContext } from "@/contexts/wallet-context";
 
 interface ImportTokenReviewProps {
     token: {
@@ -39,38 +39,43 @@ interface ImportTokenReviewProps {
         address: string;
         decimals: number;
         index_id?: string;
+        fee?: string;
     };
 }
 
 export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
-    const navigate = useNavigate();
-    const { addToken } = useTokens();
-    const [isImporting, setIsImporting] = useState(false);
+    const { addToken, isImporting } = useTokens();
     const [importError, setImportError] = useState<string | null>(null);
+    const { navigateToPanel } = useWalletContext();
 
     async function handleImport() {
-        setIsImporting(true);
         setImportError(null);
 
         try {
+            const id = `${token.chain}:${token.address}`;
             const addTokenInput: AddTokenInput = {
-                chain: token.chain,
-                ledger_id: toNullable(Principal.fromText(token.address)),
-                index_id: toNullable(
-                    token.index_id ? Principal.fromText(token.index_id) : undefined,
-                ),
-                decimals: toNullable(token.decimals),
-                name: toNullable(token.name),
-                symbol: toNullable(token.symbol),
+                token_id: id,
+                token_data: toNullable({
+                    // Fix the structure to match AddTokenItem
+                    address: token.address,
+                    chain: token.chain,
+                    decimals: token.decimals,
+                    name: token.name,
+                    symbol: token.symbol,
+                    // Only include optional fields if they exist
+                    index_id: token.index_id ? [Principal.fromText(token.index_id)] : [],
+                    ledger_id: [Principal.fromText(token.address)],
+                    fee: token.fee ? [BigInt(token.fee)] : [],
+                }),
             };
 
             await addToken(addTokenInput);
-            navigate(-2);
+            navigateToPanel("wallet");
         } catch (error) {
             console.error("Failed to import token:", error);
             setImportError(error instanceof Error ? error.message : "Failed to import token");
-            setIsImporting(false);
+            navigateToPanel("wallet");
         }
     }
 

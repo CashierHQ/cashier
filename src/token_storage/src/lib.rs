@@ -19,5 +19,11 @@ pub mod constant;
 pub mod ext;
 pub mod init_and_upgrade;
 pub mod repository;
+pub mod services;
 pub mod types;
 pub mod utils;
+
+use crate::api::token::types::*;
+use crate::types::*;
+
+ic_cdk::export_candid!();
