@@ -138,7 +138,7 @@ export const UnauthenticatedContent = ({
                     </div>
                     <div
                         id="image-container"
-                        className="flex flex-col items-center justify-center mt-6 lg:w-[50%]"
+                        className="flex flex-col items-center justify-center mt-6 lg:w-[40%]"
                     >
                         <img src="/LandingPageMainImage.svg" className="mx-auto w-[55%]" />
 
