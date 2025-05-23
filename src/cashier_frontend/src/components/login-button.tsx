@@ -30,7 +30,7 @@ const LoginButton: React.FC<ConnectWalletButtonProps> = ({ onClick, className, c
             onClick={onClick}
             className={cn(
                 className,
-                "min-w-[75px] min-h-[45px] font-500 bg-transparent border-lightgreen text-green shadow hover:bg-green/90 hover:text-white transition-all duration-300",
+                "min-w-[75px] min-h-[45px] font-500 bg-transparent light-borders-green text-green hover:bg-green/90 hover:text-white transition-all duration-300",
             )}
         >
             {children}
