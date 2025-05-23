@@ -25,6 +25,9 @@ export default function LinkCardWithoutPhoneFrame({
     disabled,
     showHeader = false,
     headerText = "",
+    headerIcon = null,
+    headerColor = "green",
+    headerTextColor = "white",
 }: {
     displayComponent?: React.ReactNode;
     title: string;
@@ -34,12 +37,24 @@ export default function LinkCardWithoutPhoneFrame({
     disabled?: boolean;
     showHeader?: boolean;
     headerText?: string;
+    headerIcon?: React.ReactNode;
+    headerColor?: string;
+    headerTextColor?: string;
 }) {
     return (
         <div className="w-full flex relative flex-col items-center bg-lightgreen rounded-xl py-5 px-8">
             {showHeader && (
-                <div className="w-full absolute top-0 left-0 flex flex-col items-center bg-green rounded-t-xl">
-                    <h3 className="text-[18px] text-white font-medium py-1">{headerText}</h3>
+                <div
+                    className="w-full absolute top-0 left-0 flex flex-col items-center rounded-t-xl"
+                    style={{ backgroundColor: headerColor }}
+                >
+                    <div
+                        className="flex mx-auto items-center justify-center gap-2"
+                        style={{ color: headerTextColor }}
+                    >
+                        <div>{headerIcon}</div>
+                        <h3 className="text-[18px] font-medium py-1">{headerText}</h3>
+                    </div>
                 </div>
             )}
             <div

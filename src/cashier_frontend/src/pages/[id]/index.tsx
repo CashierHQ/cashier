@@ -41,6 +41,9 @@ import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import {
     getDisplayComponentForLink,
+    getHeaderColorsForLink,
+    getHeaderInfoForLink,
+    getHeaderTextColorForLink,
     getMessageForLink,
     getTitleForLink,
 } from "@/components/page/linkCardPage";
@@ -211,6 +214,13 @@ export default function ClaimPage() {
                                                 linkData,
                                                 getToken,
                                             )}
+                                            showHeader={true}
+                                            headerColor={getHeaderInfoForLink(linkData).headerColor}
+                                            headerTextColor={
+                                                getHeaderInfoForLink(linkData).headerTextColor
+                                            }
+                                            headerText={getHeaderInfoForLink(linkData).headerText}
+                                            headerIcon={getHeaderInfoForLink(linkData).headerIcon}
                                             disabled={true}
                                         />
                                     </MultiStepForm.Item>
