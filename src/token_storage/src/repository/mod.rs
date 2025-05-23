@@ -28,6 +28,7 @@ use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
 use crate::types::{
     Candid, RegistryToken, TokenBalance, TokenId, TokenRegistryMetadata, UserPreference,
+    UserTokenList,
 };
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
@@ -45,12 +46,14 @@ thread_local! {
     );
 
     // Store user's token references (not full token data)
-    pub static USER_TOKEN_STORE: RefCell<StableBTreeMap<String, Candid<Vec<TokenId>>, Memory>> =
+    // user enable list
+    pub static USER_TOKEN_STORE: RefCell<StableBTreeMap<String, UserTokenList, Memory>> =
         RefCell::new(
             StableBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_MEMORY_ID)),
             )
         );
+
 
     // Store user preferences
     pub static USER_PREFERENCE_STORE: RefCell<StableBTreeMap<String, UserPreference, Memory>> =

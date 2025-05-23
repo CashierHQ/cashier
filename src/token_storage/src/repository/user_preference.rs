@@ -34,7 +34,7 @@ impl UserPreferenceRepository {
     pub fn get(&self, id: &String) -> UserPreference {
         USER_PREFERENCE_STORE
             .with_borrow(|store| store.get(id))
-            .unwrap_or_default()
+            .unwrap_or(UserPreference::default())
     }
 
     pub fn update(&self, id: String, user_preference: UserPreference) {

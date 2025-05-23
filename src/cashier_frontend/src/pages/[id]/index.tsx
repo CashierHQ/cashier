@@ -106,7 +106,7 @@ export default function ClaimPage() {
             setEnableFetchLinkUserState(true);
             updateTokenInit();
         }
-    }, [linkData, updateTokenInit]);
+    }, [linkData]);
 
     // Update UI state based on linkUserState and URL params
     useEffect(() => {

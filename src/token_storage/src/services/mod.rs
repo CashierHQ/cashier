@@ -14,28 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import React, { useEffect } from "react";
-import { Sheet } from "@/components/ui/sheet";
-import WalletPanel from "./wallet-panel";
-import { useTokens } from "@/hooks/useTokens";
-
-interface WalletSheetWrapperProps {
-    children: React.ReactNode;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
-
-const WalletSheetWrapper: React.FC<WalletSheetWrapperProps> = ({
-    children,
-    open,
-    onOpenChange,
-}) => {
-    return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
-            {children}
-            <WalletPanel onClose={() => onOpenChange(false)} />
-        </Sheet>
-    );
-};
-
-export default WalletSheetWrapper;
+pub mod token_registry;
+pub mod user_preference;
+pub mod user_token;
