@@ -23,6 +23,7 @@ import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "./components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
+import { ImageCacheProvider } from "@/contexts/image-cache-context";
 
 const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
 
@@ -54,7 +55,9 @@ function App() {
             discoverExtensionSigners={true}
         >
             <QueryClientProvider client={queryClient}>
-                <AppRouter />
+                <ImageCacheProvider>
+                    <AppRouter />
+                </ImageCacheProvider>
                 <Toaster />
             </QueryClientProvider>
         </IdentityKitProvider>

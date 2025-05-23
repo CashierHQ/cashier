@@ -25,7 +25,7 @@ export default [
         rules: {
             "react/react-in-jsx-scope": "off",
             // ignore for shadcn components
-            "react/prop-types": [2, { ignore: ["className"] }],
+            "react/prop-types": "off",
         },
     },
 ];

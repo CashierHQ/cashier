@@ -17,6 +17,7 @@
 // File: src/token_storage/src/types.rs
 
 use std::borrow::Cow;
+use std::collections::HashSet;
 
 use candid::CandidType;
 use candid::Principal;
@@ -98,17 +99,20 @@ impl Chain {
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 pub struct RegistryToken {
     pub id: TokenId,
-    pub icrc_ledger_id: Option<LedgerId>,
-    pub icrc_index_id: Option<IndexId>,
     pub symbol: String,
     pub name: String,
     pub decimals: u8,
     pub chain: Chain,
-    pub enabled_by_default: bool, // Whether this token is enabled by default for users
+    pub enabled_by_default: bool,
+    // this part belong to IC
+    pub icrc_ledger_id: Option<LedgerId>,
+    pub icrc_index_id: Option<IndexId>,
+    // ledger fee, not usually change in IC
+    pub fee: Option<candid::Nat>,
 }
 
 impl RegistryToken {
-    pub fn generate_id(chain: &Chain, ledger_id: Option<&LedgerId>) -> Result<TokenId, String> {
+    pub fn generate_id(chain: &Chain, ledger_id: Option<LedgerId>) -> Result<TokenId, String> {
         match (chain, ledger_id) {
             (Chain::IC, Some(id)) => Ok(format!("IC:{}", id.to_text())),
             _ => Err("Cannot generate token ID: missing required fields".to_string()),
@@ -139,8 +143,6 @@ pub struct UserPreference {
     pub hide_zero_balance: bool,
     pub hide_unknown_token: bool,
     pub selected_chain: Vec<Chain>,
-    pub hidden_tokens: Vec<TokenId>,
-    pub token_registry_version: u64, // Track which version of the registry the user has
 }
 
 impl Default for UserPreference {
@@ -149,51 +151,8 @@ impl Default for UserPreference {
             hide_zero_balance: false,
             hide_unknown_token: false,
             selected_chain: vec![Chain::IC],
-            hidden_tokens: vec![],
-            token_registry_version: 1,
         }
     }
-}
-
-#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct UserFiltersInput {
-    pub hide_zero_balance: Option<bool>,
-    pub hide_unknown_token: Option<bool>,
-    pub selected_chain: Option<Vec<String>>,
-}
-
-#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct AddTokenInput {
-    pub chain: String,
-    pub ledger_id: Option<LedgerId>,
-    pub index_id: Option<IndexId>,
-    pub name: Option<String>,
-    pub symbol: Option<String>,
-    pub decimals: Option<u8>,
-}
-
-#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct AddTokensInput {
-    pub tokens: Vec<AddTokenInput>,
-    // sub set of tokens to be added, balance > 0
-    pub token_hold: Vec<String>,
-}
-
-#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct RemoveTokenInput {
-    pub token_id: String,
-}
-
-#[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct RegisterTokenInput {
-    pub id: String,
-    pub chain: String,
-    pub ledger_id: Option<LedgerId>,
-    pub index_id: Option<IndexId>,
-    pub symbol: String,
-    pub name: String,
-    pub decimals: u8,
-    pub enabled_by_default: bool,
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -205,6 +164,58 @@ pub struct RegistryTokenDto {
     pub name: String,
     pub decimals: u8,
     pub chain: String,
+    pub fee: Option<candid::Nat>,
+}
+
+// Implementation for converting RegistryToken to RegistryTokenDto
+impl From<RegistryToken> for RegistryTokenDto {
+    fn from(token: RegistryToken) -> Self {
+        Self {
+            id: token.id,
+            icrc_ledger_id: token.icrc_ledger_id,
+            icrc_index_id: token.icrc_index_id,
+            symbol: token.symbol,
+            name: token.name,
+            decimals: token.decimals,
+            chain: token.chain.to_str(),
+            fee: token.fee,
+        }
+    }
+}
+
+// Implement From trait to convert RegistryTokenDto to TokenDto
+impl From<RegistryTokenDto> for TokenDto {
+    fn from(registry_token: RegistryTokenDto) -> Self {
+        Self {
+            id: registry_token.id,
+            icrc_ledger_id: registry_token.icrc_ledger_id,
+            icrc_index_id: registry_token.icrc_index_id,
+            symbol: registry_token.symbol,
+            name: registry_token.name,
+            decimals: registry_token.decimals,
+            chain: registry_token.chain,
+            enabled: true,    // Default to enabled
+            balance: Some(0), // Default balance to 0
+            fee: registry_token.fee,
+        }
+    }
+}
+
+impl From<RegistryToken> for TokenDto {
+    fn from(registry_token: RegistryToken) -> Self {
+        Self {
+            id: registry_token.id,
+            icrc_ledger_id: registry_token.icrc_ledger_id,
+            icrc_index_id: registry_token.icrc_index_id,
+            symbol: registry_token.symbol,
+            name: registry_token.name,
+            decimals: registry_token.decimals,
+            chain: registry_token.chain.to_str(),
+            enabled: registry_token.enabled_by_default, // Default to enabled
+            balance: Some(0),                           // Default balance to 0
+            fee: registry_token.fee,
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -218,6 +229,7 @@ pub struct TokenDto {
     pub chain: String,
     pub enabled: bool,
     pub balance: Option<u128>,
+    pub fee: Option<candid::Nat>,
 }
 
 impl TokenDto {
@@ -239,15 +251,53 @@ pub struct UpdateBulkBalancesInput {
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 pub struct TokenRegistryMetadata {
-    pub current_version: u64,
+    pub version: u64,
     pub last_updated: u64, // Timestamp
 }
 
 impl Default for TokenRegistryMetadata {
     fn default() -> Self {
         Self {
-            current_version: 1,
+            version: 1,
             last_updated: 0,
         }
+    }
+}
+
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct UserTokenList {
+    // version only used for sync from registry to UserTokenList, do not use for other purpose
+    pub version: u64,
+    pub enable_list: HashSet<TokenId>,
+    pub disable_list: HashSet<TokenId>,
+}
+
+impl Default for UserTokenList {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            enable_list: HashSet::new(),
+            disable_list: HashSet::new(),
+        }
+    }
+}
+
+impl UserTokenList {
+    pub fn init_with_current_registry(
+        &mut self,
+        registry_tokens: Vec<RegistryToken>,
+        version: u64,
+    ) -> Result<(), String> {
+        for token in registry_tokens {
+            if token.enabled_by_default {
+                self.enable_list.insert(token.id.clone());
+            } else {
+                self.disable_list.insert(token.id.clone());
+            }
+        }
+
+        self.version = version;
+        Ok(())
     }
 }
