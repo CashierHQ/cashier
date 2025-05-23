@@ -65,16 +65,29 @@ export const UnauthenticatedContent = ({
 
     return (
         <>
-            {/* <p className="text-yellow text-center text-sm font-semibold border-2 border-yellow p-2 mx-auto rounded-sm bg-lightyellow mt-4 mb-2 whitespace-pre-wrap">
-                {t("main_page.unauthenticated_content.development_warning_1")
-                    .split(". ")
-                    .join(".\n")}
-            </p> */}
-
             <div
                 id="main-container"
                 className="flex flex-col lg:bg-[url('/LandingPageBackgroundPattern.svg')] lg:bg-cover lg:bg-center lg:w-full lg:h-full lg:pt-24"
             >
+                <div
+                    id="development-disclaimer"
+                    className="mx-auto px-4 py-2 bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] w-10/12 lg:fixed lg:top-10 lg:w-96 lg:left-1/2 lg:-translate-x-1/2"
+                >
+                    <div className="max-w-[1200px] mx-auto">
+                        <div className="flex flex-col gap-2 items-center text-[#35A18B] text-[11px] lg:text-[14px]">
+                            <div className="flex flex-row gap-1.5 items-center">
+                                <Lock strokeWidth={2.5} className="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5" />
+                                <span>In Development</span>
+                            </div>
+                            <p className="text-[10px] lg:text-[12px] text-[#475467] text-center">
+                                This website is currently in development and provided for
+                                demonstration purposes only. It is not intended for public use. Any
+                                data entered or actions taken on this site may not be secure, saved,
+                                or processed correctly. Use is at your own risk.
+                            </p>
+                        </div>
+                    </div>
+                </div>
                 <div
                     id="main-content"
                     className="flex flex-col lg:flex-row lg:w-full lg:justify-center lg:px-[200px]"
@@ -84,7 +97,7 @@ export const UnauthenticatedContent = ({
                         className="flex flex-col items-center lg:items-start lg:justify-center lg:w-[60%]"
                     >
                         <div id="badges" className="flex gap-4 items-center mt-4">
-                            {badges.map((badge) => (
+                            {badges.slice(0, 3).map((badge) => (
                                 <div
                                     key={badge.label}
                                     className="flex flex-row gap-1.5 items-center text-[#35A18B] text-[11px] lg:text-[14px] bg-[#ECFEF3] rounded-full w-fit px-3 py-1 border border-[#ACEFC6]"
@@ -147,15 +160,6 @@ export const UnauthenticatedContent = ({
                     <img src="/icpToken.png" alt="Internet Computer" className="w-4 h-4" />
                 </div>
             </div>
-            {/* {responsive.isSmallDevice && (
-                <Button
-                    type="button"
-                    onClick={() => setIsWalletDialogOpen(true)}
-                    className="fixed h-11 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full left-1/2 -translate-x-1/2"
-                >
-                    {t("main_page.unauthenticated_content.get_started")}
-                </Button>
-            )} */}
             <WalletConnectDialog
                 open={isWalletDialogOpen}
                 onOpenChange={setIsWalletDialogOpen}
