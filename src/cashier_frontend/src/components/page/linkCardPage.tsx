@@ -20,6 +20,7 @@ import { LINK_TYPE } from "../../services/types/enum";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatNumber } from "@/utils/helpers/currency";
+import { ArrowDownFromLine, ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
 
 export const getTitleForLink = (
     linkData?: LinkDetailModel,
@@ -120,23 +121,74 @@ export const getDisplayComponentForLink = (
 
 const TokenImage = ({ token, logoFallback }: { token?: FungibleToken; logoFallback: string }) => {
     const [imageSrc, setImageSrc] = useState<string>("");
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Set the image source based on token.logo or logoFallback availability
-        setImageSrc(token?.logo || logoFallback);
+        if (token?.logo) {
+            setImageSrc(token.logo);
+        } else {
+            setImageSrc(logoFallback);
+            setIsLoading(false);
+        }
     }, [token?.logo, logoFallback]);
 
+    const handleImageLoad = () => {
+        setIsLoading(false);
+    };
+
+    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        console.log("error: ", e);
+        e.currentTarget.src = logoFallback;
+        setIsLoading(false);
+    };
+
     return (
-        <img
-            src={imageSrc}
-            alt="Token Image"
-            className="w-[200px] rounded-3xl"
-            onError={(e) => {
-                console.log("error: ", e);
-                e.currentTarget.src = logoFallback;
-            }}
-        />
+        <>
+            {isLoading && (
+                <div className="w-[200px] h-[200px] rounded-3xl bg-gray-200 animate-pulse flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-gray-300" />
+                </div>
+            )}
+            <img
+                src={imageSrc}
+                alt="Token Image"
+                className={`w-[200px] rounded-3xl ${isLoading ? "hidden" : "block"}`}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+            />
+        </>
     );
+};
+
+const headerColors = {
+    send: {
+        background: "#35A18B",
+        text: "#fff",
+    },
+    receive: {
+        background: "#FF8F8F",
+        text: "#fff",
+    },
+    miscellaneous: {
+        background: "#8F9EFF",
+        text: "#fff",
+    },
+};
+
+export const getHeaderInfoForLink = (
+    linkData?: LinkDetailModel,
+): {
+    headerText: string;
+    headerIcon: ReactNode;
+    headerColor: string;
+    headerTextColor: string;
+} => {
+    return {
+        headerText: getHeaderTextForLink(linkData),
+        headerIcon: getIconForLink(linkData),
+        headerColor: getHeaderColorsForLink(linkData),
+        headerTextColor: getHeaderTextColorForLink(linkData),
+    };
 };
 
 export const getHeaderTextForLink = (linkData?: LinkDetailModel): string => {
@@ -145,7 +197,82 @@ export const getHeaderTextForLink = (linkData?: LinkDetailModel): string => {
     switch (linkData?.linkType) {
         case LINK_TYPE.SEND_AIRDROP:
             return `${linkData.useActionCounter}/${linkData.maxActionNumber} claimed`;
+        case LINK_TYPE.SEND_TIP:
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return "Receive";
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return "Send";
         default:
             return "";
+    }
+};
+
+export const getIconForLink = (linkData?: LinkDetailModel): ReactNode => {
+    if (!linkData) return null;
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.SEND_TIP:
+        case LINK_TYPE.SEND_AIRDROP:
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return (
+                <ArrowDownToLine
+                    className="text-[18px]"
+                    color={getHeaderTextColorForLink(linkData)}
+                />
+            );
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return (
+                <ArrowUpFromLine
+                    className="text-[18px]"
+                    color={getHeaderTextColorForLink(linkData)}
+                />
+            );
+        default:
+            return <Wallet2 className="text-[18px]" color={getHeaderTextColorForLink(linkData)} />;
+    }
+};
+
+export const getHeaderColorsForLink = (linkData?: LinkDetailModel): string => {
+    if (!linkData) return "";
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.SEND_TIP:
+            return headerColors.send.background;
+        case LINK_TYPE.SEND_AIRDROP:
+            return headerColors.send.background;
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return headerColors.send.background;
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return headerColors.receive.background;
+        default:
+            return headerColors.miscellaneous.background;
+    }
+};
+
+export const getHeaderTextColorForLink = (linkData?: LinkDetailModel): string => {
+    if (!linkData) return "";
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.SEND_TIP:
+            return headerColors.send.text;
+        case LINK_TYPE.SEND_AIRDROP:
+            return headerColors.send.text;
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            return headerColors.send.text;
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return headerColors.receive.text;
+        default:
+            return headerColors.miscellaneous.text;
+    }
+};
+
+export const getClaimButtonLabel = (linkData?: LinkDetailModel): string => {
+    if (!linkData) return "";
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            return "Pay";
+        default:
+            return "Claim";
     }
 };
