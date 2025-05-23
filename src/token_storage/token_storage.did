@@ -8,11 +8,14 @@ type AddTokenItem = record {
   index_id : opt principal;
   symbol : text;
 };
-type AddTokensInput = record { tokens : vec record { text; opt AddTokenItem } };
+type AddTokensInput = record {
+  tokens_disable : vec record { text; opt AddTokenItem };
+  tokens_enable : vec record { text; opt AddTokenItem };
+};
 type Chain = variant { IC };
-type Result = variant { Ok; Err : text };
+type Result = variant { Ok : TokenListResponse; Err : text };
 type Result_1 = variant { Ok : vec record { text; nat }; Err : text };
-type Result_2 = variant { Ok : TokenListResponse; Err : text };
+type Result_2 = variant { Ok; Err : text };
 type TokenDto = record {
   id : text;
   fee : opt nat;
@@ -45,11 +48,12 @@ service : () -> {
   get_registry_metadata : () -> (TokenRegistryMetadata) query;
   get_registry_tokens : () -> (vec TokenDto) query;
   get_registry_version : () -> (nat64) query;
-  initialize_registry : () -> (Result);
-  list_tokens : () -> (Result_2) query;
-  reset_cache : (text) -> (Result);
-  reset_user_tokens : (text) -> (Result);
-  sync_token_list : () -> (Result);
-  update_token_balance : (vec UpdateTokenBalanceInput) -> (Result);
+  initialize_registry : () -> (Result_2);
+  list_tokens : () -> (Result) query;
+  list_user_tokens : (text) -> (Result) query;
+  reset_cache : (text) -> (Result_2);
+  reset_user_tokens : (text) -> (Result_2);
+  sync_token_list : () -> (Result_2);
+  update_token_balance : (vec UpdateTokenBalanceInput) -> (Result_2);
   update_token_status : (UpdateTokenStatusInput) -> (Result);
 }

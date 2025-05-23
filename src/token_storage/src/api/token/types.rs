@@ -21,7 +21,8 @@ pub struct AddTokenInput {
 /// The input for adding multiple tokens to a user's list
 #[derive(CandidType, Deserialize, Clone)]
 pub struct AddTokensInput {
-    pub tokens: Vec<(TokenId, Option<AddTokenItem>)>, // (token_id, optional registration data)
+    pub tokens_enable: Vec<(TokenId, Option<AddTokenItem>)>, // (token_id, optional registration data)
+    pub tokens_disable: Vec<(TokenId, Option<AddTokenItem>)>, // (token_id, optional registration data)
 }
 
 /// The input for updating a token's status (enable/disable)

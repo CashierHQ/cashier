@@ -182,6 +182,14 @@ impl UserTokenService {
         Ok(valid_tokens)
     }
 
+    pub fn add_disable_token(&self, user_id: &str, token_id: &TokenId) -> Result<(), String> {
+        // Ensure user has a token list initialized
+        self.ensure_token_list_initialized(user_id)?;
+
+        // Add the token to the user's disable list
+        self.token_repository.add_disable_token(user_id, token_id)
+    }
+
     /// Update a token's status (enable/disable)
     /// This only swaps a token between the enable and disable lists
     /// Returns an error if the token doesn't exist in the registry
@@ -203,14 +211,12 @@ impl UserTokenService {
     /// This will add any new tokens from the registry to the user's list
     /// If a token is in the user's disable list, it will remain there even if enabled_by_default is true
     pub fn sync_token_version(&self, user_id: &str) -> Result<(), String> {
+        let _ = self.ensure_token_list_initialized(user_id);
+
         // Get the user's token list
         let mut user_token_list = match self.token_repository.list_tokens(user_id) {
             Ok(list) => list,
-            Err(_) => {
-                // Ensure user has a token list initialized
-                self.ensure_token_list_initialized(user_id)?;
-                UserTokenList::default()
-            }
+            Err(_) => UserTokenList::default(),
         };
 
         // Get the registry metadata to check version

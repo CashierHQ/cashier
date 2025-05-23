@@ -211,8 +211,8 @@ impl From<RegistryToken> for TokenDto {
             name: registry_token.name,
             decimals: registry_token.decimals,
             chain: registry_token.chain.to_str(),
-            enabled: true,    // Default to enabled
-            balance: Some(0), // Default balance to 0
+            enabled: registry_token.enabled_by_default, // Default to enabled
+            balance: Some(0),                           // Default balance to 0
             fee: registry_token.fee,
         }
     }

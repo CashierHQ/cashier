@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use candid::Principal;
 use ic_cdk::{query, update};
 use types::{RegisterTokenInput, UpdateTokenBalanceInput};
@@ -97,7 +99,11 @@ impl TokenApi {
         };
     }
 
-    pub fn add_token(&self, caller: &Principal, input: AddTokenInput) -> Result<(), String> {
+    pub fn add_token(
+        &self,
+        caller: &Principal,
+        input: AddTokenInput,
+    ) -> Result<(Vec<TokenDto>, bool, Option<UserPreference>), String> {
         let token_id = &input.token_id;
 
         // Check if token exists in registry
@@ -118,59 +124,78 @@ impl TokenApi {
 
         // Add the token to the user's list, initialization is handled by the service
         self.user_token_service
-            .add_token(&caller.to_text(), token_id)
+            .add_token(&caller.to_text(), token_id)?;
+
+        Ok(self.list_tokens(caller))
     }
 
-    pub fn add_tokens(&self, caller: &Principal, input: AddTokensInput) -> Result<(), String> {
+    pub fn add_tokens(
+        &self,
+        caller: &Principal,
+        input: AddTokensInput,
+    ) -> Result<(Vec<TokenDto>, bool, Option<UserPreference>), String> {
         let user_id = caller.to_text();
-        let mut tokens_to_add: Vec<TokenId> = Vec::new();
         let mut registry_updated = false;
 
-        // Process each token
-        for (token_id, maybe_token_data) in input.tokens.clone() {
-            // Check if token exists in registry
-            if self.token_registry_service.get_token(&token_id).is_none() {
-                // If token doesn't exist, try to register it
+        // First check if all tokens exist in the registry
+        // if token doesn't exist, try to register it
+        for (token_id, maybe_token_data) in input.tokens_enable.iter() {
+            if self.token_registry_service.get_token(token_id).is_none() {
+                // Token doesn't exist in registry, try to register it
                 if let Some(token_data) = maybe_token_data {
-                    match self
+                    if let Ok(_) = self
                         .token_registry_service
-                        .register_token(RegisterTokenInput::from(token_data))
+                        .register_token(RegisterTokenInput::from(token_data.clone()))
                     {
-                        Ok(_) => {
-                            registry_updated = true;
-                            tokens_to_add.push(token_id);
-                        }
-                        Err(e) => {
-                            ic_cdk::println!("Failed to register token {}: {}", token_id, e);
-                            continue; // Skip this token but continue processing others
-                        }
+                        registry_updated = true;
+                        ic_cdk::println!("Registered new token {}", token_id);
+                    } else {
+                        ic_cdk::println!("Failed to register token {}", token_id);
                     }
+                } else {
+                    ic_cdk::println!("Token {} not in registry and no data provided", token_id);
                 }
-                // Skip if no registration data provided
-            } else {
-                tokens_to_add.push(token_id);
             }
         }
 
-        // Update registry metadata if any tokens were registered
+        for (token_id, maybe_token_data) in input.tokens_disable.iter() {
+            if self.token_registry_service.get_token(token_id).is_none() {
+                // Token doesn't exist in registry, try to register it
+                if let Some(token_data) = maybe_token_data {
+                    if let Ok(_) = self
+                        .token_registry_service
+                        .register_token(RegisterTokenInput::from(token_data.clone()))
+                    {
+                        registry_updated = true;
+                        ic_cdk::println!("Registered new token {}", token_id);
+                    } else {
+                        ic_cdk::println!("Failed to register token {}", token_id);
+                    }
+                } else {
+                    ic_cdk::println!("Token {} not in registry and no data provided", token_id);
+                }
+            }
+        }
+
+        // Update registry version if we added new tokens
         if registry_updated {
             self.token_registry_service.increase_version();
         }
 
-        if tokens_to_add.is_empty() {
-            return Err("No valid tokens to add".to_string());
-        }
-
-        // sync after adding tokens
+        // then sync the version, except token already exists, all token will go to disable list
+        // Initialize user's token list with all registry tokens in disabled state
         self.user_token_service
-            .sync_token_version(&caller.to_string())
+            .sync_token_version(&caller.to_text())?;
+
+        // Return the updated token list
+        Ok(self.list_tokens(caller))
     }
 
     pub fn update_token_status(
         &self,
         caller: &Principal,
         input: UpdateTokenStatusInput,
-    ) -> Result<(), String> {
+    ) -> Result<(Vec<TokenDto>, bool, Option<UserPreference>), String> {
         let token_id = &input.token_id;
 
         // Check if token exists in registry
@@ -179,8 +204,16 @@ impl TokenApi {
         }
 
         // Update the token's status, initialization is handled by the service
-        self.user_token_service
-            .update_token_status(&caller.to_text(), token_id, input.is_enabled)
+        if let Err(e) = self.user_token_service.update_token_status(
+            &caller.to_text(),
+            token_id,
+            input.is_enabled,
+        ) {
+            return Err(e);
+        }
+
+        // Return the updated token list
+        Ok(self.list_tokens(caller))
     }
 
     pub fn update_tokens_balance(
@@ -235,9 +268,10 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 
 /// Adds a token to the current user's enable list
 /// If the token doesn't exist in registry, it registers it first using the provided data
+/// This method add token to user token list by default
 /// Returns an error if the user is anonymous or if the token doesn't exist and no data was provided
 #[update]
-pub fn add_token(input: AddTokenInput) -> Result<(), String> {
+pub fn add_token(input: AddTokenInput) -> Result<TokenListResponse, String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
@@ -246,15 +280,21 @@ pub fn add_token(input: AddTokenInput) -> Result<(), String> {
 
     let api = TokenApi::new();
 
-    api.add_token(&caller, input)
+    let (tokens, need_update_version, perference) = api.add_token(&caller, input)?;
+
+    Ok(TokenListResponse {
+        tokens,
+        need_update_version,
+        perference,
+    })
 }
 
 /// Adds multiple tokens at once to the current user's enable list
 /// For each token, if it doesn't exist in registry, it registers it first using the provided data
-/// Returns the list of tokens that were successfully added
+/// Returns the updated list of tokens
 /// Returns an error if the user is anonymous or if none of the tokens could be processed
 #[update]
-pub fn add_tokens(input: AddTokensInput) -> Result<(), String> {
+pub fn add_tokens(input: AddTokensInput) -> Result<TokenListResponse, String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
@@ -262,13 +302,20 @@ pub fn add_tokens(input: AddTokensInput) -> Result<(), String> {
     }
 
     let api = TokenApi::new();
-    api.add_tokens(&caller, input)
+    let (tokens, need_update_version, perference) = api.add_tokens(&caller, input)?;
+
+    Ok(TokenListResponse {
+        tokens,
+        need_update_version,
+        perference,
+    })
 }
 
 /// Updates a token's status (enable/disable) for the current user
+/// Returns the updated list of tokens
 /// Returns an error if the user is anonymous or if the token doesn't exist in the registry
 #[update]
-pub fn update_token_status(input: UpdateTokenStatusInput) -> Result<(), String> {
+pub fn update_token_status(input: UpdateTokenStatusInput) -> Result<TokenListResponse, String> {
     let caller = ic_cdk::caller();
 
     if caller == Principal::anonymous() {
@@ -276,7 +323,13 @@ pub fn update_token_status(input: UpdateTokenStatusInput) -> Result<(), String> 
     }
 
     let api = TokenApi::new();
-    api.update_token_status(&caller, input)
+    let (tokens, need_update_version, perference) = api.update_token_status(&caller, input)?;
+
+    Ok(TokenListResponse {
+        tokens,
+        need_update_version,
+        perference,
+    })
 }
 
 /// Synchronize the user's token list with the registry
@@ -318,4 +371,17 @@ pub fn get_balance_cache(
 pub fn reset_cache(wallet: String) -> Result<(), String> {
     let api = TokenApi::new();
     api.reset_all_cache(&Principal::from_text(wallet).unwrap())
+}
+
+#[query]
+pub fn list_user_tokens(wallet: String) -> Result<TokenListResponse, String> {
+    let caller = Principal::from_text(wallet).unwrap();
+    let api = TokenApi::new();
+    let (tokens, need_update_version, user_preference) = api.list_tokens(&caller);
+
+    Ok(TokenListResponse {
+        tokens,
+        need_update_version,
+        perference: user_preference,
+    })
 }
