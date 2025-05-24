@@ -30,6 +30,7 @@ export type TokenModel = {
     // only use for display, enrich from ledger metadata
     logoFallback?: string;
     fee?: bigint;
+    amount?: bigint;
 };
 
 export interface TokenMetadata {
@@ -54,14 +55,13 @@ export type TokenPriceMap = Record<string, number>;
 export const mapTokenModelToFungibleToken = (
     token: TokenModel,
     fee: bigint | undefined = undefined,
-    amount: bigint | undefined = undefined,
     usdEquivalent: number | undefined = undefined,
     usdConversionRate: number | undefined = undefined,
 ): FungibleToken => {
     return {
         ...token,
         fee,
-        amount,
+        amount: token.amount,
         usdEquivalent,
         usdConversionRate,
     };
