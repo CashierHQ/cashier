@@ -41,8 +41,7 @@ const MainWalletPanel: React.FC<{
     navigateSendPage: () => void;
     navigateReceivePage: () => void;
     totalUsdEquivalent: number;
-    filteredTokens: FungibleToken[];
-}> = ({ navigateSendPage, navigateReceivePage, totalUsdEquivalent, filteredTokens }) => {
+}> = ({ navigateSendPage, navigateReceivePage, totalUsdEquivalent }) => {
     // Balance visibility state
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
     const [isVisible, setIsVisible] = useState(() => {
@@ -78,7 +77,7 @@ const MainWalletPanel: React.FC<{
             </div>
 
             <div className="flex-1 overflow-hidden h-full">
-                <WalletTabs fungibleTokens={filteredTokens} />
+                <WalletTabs />
             </div>
         </div>
     );
@@ -170,7 +169,6 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
                         navigateSendPage={navigateSendPage}
                         navigateReceivePage={navigateReceivePage}
                         totalUsdEquivalent={totalUsdEquivalent}
-                        filteredTokens={filteredTokens}
                     />
                 );
         }

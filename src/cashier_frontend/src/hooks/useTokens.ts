@@ -160,6 +160,18 @@ export function useTokens() {
         await tokenBalancesQuery.refetch();
     };
 
+    // Create a refetch function to manually trigger token data refresh
+    const refetchAllTokenData = async () => {
+        await tokenListQuery.refetch();
+        if (tokenListQuery.data?.tokens) {
+            await Promise.all([
+                tokenBalancesQuery.refetch(),
+                tokenMetadataQuery.refetch(),
+                tokenPricesQuery.refetch(),
+            ]);
+        }
+    };
+
     // Process user tokens list (if authenticated)
     useEffect(() => {
         if (!identity || !tokenListQuery.data) return;
@@ -181,6 +193,9 @@ export function useTokens() {
                 if (balanceData?.amount !== undefined) {
                     enrichedToken.amount = balanceData.amount;
                 }
+            } else if (token.amount) {
+                // Use the amount from tokenListQuery if balance query is still loading
+                enrichedToken.amount = token.amount;
             }
 
             // 2. Enrich with metadata
@@ -191,6 +206,9 @@ export function useTokens() {
                     enrichedToken.fee = metadata.fee;
                     enrichedToken.logoFallback = metadata.logo;
                 }
+            } else if (token.fee !== undefined) {
+                // Use fee from tokenListQuery if metadata query is still loading
+                enrichedToken.fee = token.fee;
             }
 
             // 3. Enrich with price data
@@ -208,6 +226,10 @@ export function useTokens() {
                         enrichedToken.usdEquivalent = 0;
                     }
                 }
+            } else if (token.usdConversionRate !== undefined) {
+                // Use price data from tokenListQuery if prices query is still loading
+                enrichedToken.usdConversionRate = token.usdConversionRate;
+                enrichedToken.usdEquivalent = token.usdEquivalent;
             }
 
             return enrichedToken;
@@ -221,17 +243,33 @@ export function useTokens() {
         tokenBalancesQuery.data,
         tokenMetadataQuery.data,
         tokenPricesQuery.data,
+        // Also update when loading states change
+        tokenBalancesQuery.isLoading,
+        tokenMetadataQuery.isLoading,
+        tokenPricesQuery.isLoading,
     ]);
 
     // Separate useEffect for token balances loading state
     useEffect(() => {
-        setIsLoadingBalances(tokenBalancesQuery.isLoading || tokenBalancesQuery.isFetching);
-    }, [tokenBalancesQuery.isLoading, tokenBalancesQuery.isFetching]);
+        const isLoading = tokenBalancesQuery.isLoading || tokenBalancesQuery.isFetching;
+        setIsLoadingBalances(isLoading);
+
+        // If loading completes, update the enriched token list
+        if (!isLoading && tokenBalancesQuery.data && tokenListQuery.data?.tokens) {
+            // This triggers a re-run of the main useEffect that enriches tokens
+        }
+    }, [tokenBalancesQuery.isLoading, tokenBalancesQuery.isFetching, tokenBalancesQuery.data]);
 
     // Separate useEffect for token prices loading state
     useEffect(() => {
-        setIsLoadingPrices(tokenPricesQuery.isLoading || tokenPricesQuery.isFetching);
-    }, [tokenPricesQuery.isLoading, tokenPricesQuery.isFetching]);
+        const isLoading = tokenPricesQuery.isLoading || tokenPricesQuery.isFetching;
+        setIsLoadingPrices(isLoading);
+
+        // If loading completes, update the enriched token list
+        if (!isLoading && tokenPricesQuery.data && tokenListQuery.data?.tokens) {
+            // This triggers a re-run of the main useEffect that enriches tokens
+        }
+    }, [tokenPricesQuery.isLoading, tokenPricesQuery.isFetching, tokenPricesQuery.data]);
 
     useEffect(() => {
         // onloading when first load
@@ -240,17 +278,25 @@ export function useTokens() {
         } else {
             setIsLoading(false);
         }
+
+        // Only update raw tokens list directly if needed
         if (tokenListQuery.data?.tokens) {
+            console.log(`Received ${tokenListQuery.data.tokens.length} tokens from backend`);
             setRawTokenList(tokenListQuery.data.tokens);
         }
+
+        // Check if we need to sync with backend version
         if (tokenListQuery.data?.needUpdateVersion) {
+            console.log("Token list needs version update, syncing with backend...");
             syncTokenListMutation.mutateAsync();
         }
 
+        // Update filter preferences if they exist
         if (tokenListQuery.data?.perference) {
-            setFilters(tokenListQuery.data?.perference);
+            console.log("Applying token preferences from backend:", tokenListQuery.data.perference);
+            setFilters(tokenListQuery.data.perference);
         }
-    }, [tokenListQuery.data]);
+    }, [tokenListQuery.data, tokenListQuery.isFetching]);
 
     // useEffect(() => {
     //     tokenListQuery.refetch();
@@ -264,6 +310,8 @@ export function useTokens() {
             updateTokenInit,
             updateTokenExplorer,
             updateTokenBalance,
+            // Add the new refetch function
+            refetchData: refetchAllTokenData,
         });
     }, []);
 
