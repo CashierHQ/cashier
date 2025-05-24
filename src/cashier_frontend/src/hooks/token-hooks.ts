@@ -37,6 +37,15 @@ import TokenCacheService from "@/services/backend/tokenCache.service";
 import { mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
 import { fromNullable } from "@dfinity/utils";
 
+/**
+ * Response from tokenListQuery with combined token list data
+ */
+export interface TokenListResponse {
+    tokens: FungibleToken[];
+    needUpdateVersion: boolean;
+    perference: TokenFilters;
+}
+
 // Centralized time constants (in milliseconds)
 const TIME_CONSTANTS = {
     ONE_MINUTE: 60 * 1000,
@@ -94,7 +103,7 @@ export function useTokenListQuery() {
                 perference: fromNullable(res?.perference),
             };
         },
-        select: (data) => {
+        select: (data): TokenListResponse => {
             // Transform to frontend model
             const tokens = data.tokens.map((token) => {
                 return {
@@ -117,6 +126,10 @@ export function useTokenListQuery() {
             };
         },
         staleTime: TIME_CONSTANTS.FIVE_MINUTES,
+        // Improved refetching behavior
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
+        refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) =>
             Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff

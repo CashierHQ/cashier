@@ -139,6 +139,12 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     getDisplayTokens: () => {
         const { rawTokenList, filters } = get();
 
+        // Return early if no tokens to filter
+        if (!rawTokenList || rawTokenList.length === 0) {
+            return [];
+        }
+
+        // Create a shallow copy of the array for filtering
         let filtered = rawTokenList.slice();
 
         // Apply hide zero balance filter
@@ -158,15 +164,14 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         }
 
         // Apply chain filter if any chains are selected
-        if (filters.selectedChain.length > 0) {
+        if (filters.selectedChain && filters.selectedChain.length > 0) {
             filtered = filtered.filter((token) =>
                 filters.selectedChain.includes(mapChainToString(token.chain)),
             );
         }
 
+        // Filter enabled tokens only
         filtered = filtered.filter((token) => token.enabled);
-
-        console.log("[getDisplayTokens] rawTokenList 4", filtered);
 
         // Sort tokens by USD equivalent, then by balance
         filtered.sort((a, b) => {
