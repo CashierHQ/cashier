@@ -51,7 +51,7 @@ jobs:
               run: dfx --version
 
             - name: Install project dependencies
-              run: npm install --force
+              run: npm install
 
             - name: Build project for ${{ needs.setup_environment.outputs.environment }} validation
               env:
@@ -83,32 +83,3 @@ jobs:
                   dfx generate token_storage
                   make g  # Generate types
                   npm run build
-
-            - name: Cleanup workflow artifacts
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      const runs = await github.rest.actions.listWorkflowRuns({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        workflow_id: 'pr-gate.yml',
-                        status: 'completed'
-                      });
-
-                      // Sort runs by date
-                      const sortedRuns = runs.data.workflow_runs.sort((a, b) => 
-                        new Date(b.created_at) - new Date(a.created_at)
-                      );
-
-                      // Keep only the latest 10 runs
-                      const runsToDelete = sortedRuns.slice(10);
-
-                      // Delete the older runs
-                      for (const run of runsToDelete) {
-                        console.log(`Deleting workflow run ${run.id} from ${run.created_at}`);
-                        await github.rest.actions.deleteWorkflowRun({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          run_id: run.id
-                        });
-                      }
