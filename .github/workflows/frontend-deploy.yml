@@ -124,17 +124,21 @@ jobs:
                       const runs = await github.rest.actions.listWorkflowRuns({
                         owner: context.repo.owner,
                         repo: context.repo.repo,
-                        workflow_id: 'frontend-deploy.yml',
-                        status: 'completed'
+                        workflow_id: 'frontend-deploy.yml'
                       });
 
-                      // Sort runs by date
+                      console.log(`Found ${runs.data.workflow_runs.length} workflow runs in total.`);
+
+                      // Sort runs by date (newest first)
                       const sortedRuns = runs.data.workflow_runs.sort((a, b) => 
                         new Date(b.created_at) - new Date(a.created_at)
                       );
 
                       // Keep only the latest 10 runs
-                      const runsToDelete = sortedRuns.slice(10);
+                      const keepCount = 10;
+                      const runsToDelete = sortedRuns.slice(keepCount);
+
+                      console.log(`Keeping ${keepCount} latest runs, deleting ${runsToDelete.length} older runs.`);
 
                       // Delete the older runs
                       for (const run of runsToDelete) {
