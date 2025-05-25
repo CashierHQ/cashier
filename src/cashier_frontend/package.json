@@ -9,6 +9,7 @@
         "start": "vite --port 3000 --host --mode staging",
         "build": "tsc && vite build",
         "build:local": "tsc && vite build --mode local",
+        "build:dev": "tsc && vite build --mode dev",
         "build:staging": "tsc && vite build --mode staging",
         "build:prod": "tsc && vite build --mode production",
         "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
