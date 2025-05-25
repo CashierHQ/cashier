@@ -121,50 +121,20 @@ jobs:
               uses: actions/github-script@v7
               with:
                   script: |
-                      // Function to fetch all workflow runs (handling pagination)
-                      async function fetchAllWorkflowRuns() {
-                        const allRuns = [];
-                        let page = 1;
-                        let hasMorePages = true;
-                        
-                        while (hasMorePages) {
-                          console.log(`Fetching workflow runs page ${page}...`);
-                          const response = await github.rest.actions.listWorkflowRuns({
-                            owner: context.repo.owner,
-                            repo: context.repo.repo,
-                            workflow_id: 'frontend-deploy.yml',
-                            per_page: 100,  // Maximum allowed
-                            page: page
-                          });
-                          
-                          const runs = response.data.workflow_runs;
-                          allRuns.push(...runs);
-                          
-                          // Check if we've reached the last page
-                          if (runs.length < 100) {
-                            hasMorePages = false;
-                          } else {
-                            page++;
-                          }
-                        }
-                        
-                        return allRuns;
-                      }
+                      const runs = await github.rest.actions.listWorkflowRuns({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        workflow_id: 'frontend-deploy.yml',
+                        status: 'completed'
+                      });
 
-                      // Fetch all workflow runs
-                      const allWorkflowRuns = await fetchAllWorkflowRuns();
-                      console.log(`Found ${allWorkflowRuns.length} workflow runs in total.`);
-
-                      // Sort runs by date (newest first)
-                      const sortedRuns = allWorkflowRuns.sort((a, b) => 
+                      // Sort runs by date
+                      const sortedRuns = runs.data.workflow_runs.sort((a, b) => 
                         new Date(b.created_at) - new Date(a.created_at)
                       );
 
                       // Keep only the latest 10 runs
-                      const keepCount = 10;
-                      const runsToDelete = sortedRuns.slice(keepCount);
-
-                      console.log(`Keeping ${keepCount} latest runs, deleting ${runsToDelete.length} older runs.`);
+                      const runsToDelete = sortedRuns.slice(10);
 
                       // Delete the older runs
                       for (const run of runsToDelete) {
