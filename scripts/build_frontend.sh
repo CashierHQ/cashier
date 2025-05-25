@@ -25,6 +25,10 @@ elif [ "$NETWORK" == "staging" ]; then
   # Staging build
   echo "Building for staging..."
   npm run build:staging
+elif [ "$NETWORK" == "dev" ]; then
+  # Staging build
+  echo "Building for dev..."
+  npm run build:dev
 else
   # Local build
   echo "Building for local development..."
