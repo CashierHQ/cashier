@@ -50,6 +50,10 @@
             "type": "persistent",
             "providers": ["https://icp0.io"]
         },
+        "dev": {
+            "type": "persistent",
+            "providers": ["https://icp0.io"]
+        },
         "local": {
             "bind": "localhost:4943",
             "type": "ephemeral",
