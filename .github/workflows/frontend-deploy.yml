@@ -1,12 +1,25 @@
 name: Frontend Deployment
 on:
+    # For main and staging branches, only trigger on closed PRs
     pull_request:
-        branches:
-            - "*" # Any branch can trigger the workflow
-        types:
-            - closed
         paths:
             - "src/cashier_frontend/**"
+        branches:
+            - main
+            - staging
+        types:
+            - closed
+    # For all other branches, trigger on any PR event
+    # Including open, synchronize, reopened, etc.
+    workflow_dispatch:
+    push:
+        paths:
+            - "src/cashier_frontend/**"
+        types:
+            - opened
+        branches-ignore:
+            - main
+            - staging
 
 jobs:
     setup_environment:
@@ -17,9 +30,18 @@ jobs:
             - name: Set deployment environment
               id: set-env
               run: |
-                  if [[ "${{ github.base_ref }}" == "main" ]]; then
+                  # For pull requests, use base_ref, for pushes use ref_name
+                  if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                    TARGET_BRANCH="${{ github.base_ref }}"
+                  else
+                    TARGET_BRANCH="${{ github.ref_name }}"
+                  fi
+
+                  echo "Detected branch: $TARGET_BRANCH"
+
+                  if [[ "$TARGET_BRANCH" == "main" ]]; then
                     echo "environment=production" >> $GITHUB_OUTPUT
-                  elif [[ "${{ github.base_ref }}" == "staging" ]]; then
+                  elif [[ "$TARGET_BRANCH" == "staging" ]]; then
                     echo "environment=staging" >> $GITHUB_OUTPUT
                   else
                     # Any other branch will deploy to dev environment
