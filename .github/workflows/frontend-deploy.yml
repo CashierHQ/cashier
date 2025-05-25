@@ -9,14 +9,9 @@ on:
             - staging
         types:
             - closed
-    # For all other branches, trigger on any PR event
-    # Including open, synchronize, reopened, etc.
-    workflow_dispatch:
     push:
         paths:
             - "src/cashier_frontend/**"
-        types:
-            - opened
         branches-ignore:
             - main
             - staging
