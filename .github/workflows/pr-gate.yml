@@ -51,7 +51,7 @@ jobs:
               run: dfx --version
 
             - name: Install project dependencies
-              run: npm install --force
+              run: npm install
 
             - name: Build project for ${{ needs.setup_environment.outputs.environment }} validation
               env:
