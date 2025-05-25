@@ -70,16 +70,16 @@ jobs:
 
             - name: Create private key file
               run: |
-                  echo "${{ secrets.CASHIER_DEV }}" > private_key.pem
+                  echo "${{ secrets.DEPLOYER }}" > private_key.pem
 
             # DANGEROUS: This is a plaintext identity import
             - name: Import identity
-              run: dfx identity import cashier-dev private_key.pem --storage-mode=plaintext
+              run: dfx identity import deployer private_key.pem --storage-mode=plaintext
             # DANGEROUS: Do not echo the private key to the console
 
             - name: Get cashier dev address
               run: |
-                  dfx identity use cashier-dev
+                  dfx identity use deployer
                   dfx identity get-principal
 
             - name: Install project dependencies
