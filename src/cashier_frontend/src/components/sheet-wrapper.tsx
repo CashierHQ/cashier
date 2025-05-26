@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import React, { useEffect, useState } from "react";
-import { Sheet, SheetClose } from "@/components/ui/sheet";
+import { Sheet } from "@/components/ui/sheet";
 import AppSidebar from "./app-sidebar";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useTokens } from "@/hooks/useTokens";
