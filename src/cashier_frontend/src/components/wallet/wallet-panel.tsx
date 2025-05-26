@@ -179,16 +179,8 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
         return (
             <SheetContent side="right" className="w-[100%] p-4 flex flex-col h-full">
                 <SheetHeader>
-                    <SheetTitle className="flex justify-between items-center">
+                    <SheetTitle className="flex justify-between items-center mt-2">
                         <span>Wallet</span>
-                        <SheetClose asChild>
-                            <button
-                                onClick={onClose}
-                                className="rounded-full p-1 hover:bg-gray-100"
-                            >
-                                <X size={20} />
-                            </button>
-                        </SheetClose>
                     </SheetTitle>
                 </SheetHeader>
                 <div className="flex-1 overflow-hidden h-full">

@@ -25,9 +25,7 @@ dist/
 
 # environment variables
 .env
-.env.local
-.env.staging
-.env.production
+.env.*
 artifacts
 
 logs/*
