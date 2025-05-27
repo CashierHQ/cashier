@@ -75,7 +75,15 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         if (link?.maxActionNumber) {
             return Number(link.maxActionNumber);
         }
-        return isAirdrop ? 1 : 1;
+
+        if (!isAirdrop) {
+            return 1;
+        } else {
+            if (link?.maxActionNumber) return Number(link?.maxActionNumber);
+            else {
+                return 1;
+            }
+        }
     });
 
     useEffect(() => {
@@ -364,10 +372,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             if (!input) throw new Error("Input not found");
 
             console.log("Submitting form with input:", input);
-
-            const previousState = link.state;
-
-            if (!previousState) throw new Error("Previous state not found");
 
             const stateMachineResponse = await callLinkStateMachine({
                 linkId: link.id,

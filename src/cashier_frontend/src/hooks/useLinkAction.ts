@@ -46,7 +46,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         useLinkActionStore();
 
     const { getUserInput } = useLinkCreationFormStore();
-    const userInput = linkId ? getUserInput(linkId) : undefined;
 
     const linkDetailQuery = useLinkDetailQuery(linkId, actionType);
     const updateLinkMutation = useUpdateLinkMutation();
@@ -60,6 +59,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
 
     const callLinkStateMachine = async (params: UpdateLinkParams) => {
         const { linkId, linkModel, isContinue } = params;
+        console.log("callLinkStateMachine userInput", getUserInput(linkId));
         setIsUpdating(true);
         // this already invalidates the query no need to refetch
         try {
@@ -170,6 +170,8 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     useEffect(() => {
         if (linkId) {
             console.log("[useEffect] linkId changed:", linkId);
+
+            const userInput = linkId ? getUserInput(linkId) : undefined;
 
             // First update with user input if available
             if (userInput) {

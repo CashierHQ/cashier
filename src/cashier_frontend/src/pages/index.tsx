@@ -24,7 +24,6 @@ import { headerWalletOptions } from "@/constants/wallet-options";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import { useTokens } from "@/hooks/useTokens";
 import LinkLocalStorageService from "@/services/link/link-local-storage.service";
 import { useLinksListQuery } from "@/hooks/link-hooks";
 import { useLinkAction } from "@/hooks/useLinkAction";
