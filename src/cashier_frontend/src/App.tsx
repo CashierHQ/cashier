@@ -32,6 +32,8 @@ console.log(import.meta.env.MODE);
 console.log(import.meta.env.VITE_BACKEND_CANISTER_ID);
 console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
 
+const TIMEOUT = 15n * 60n * 1_000_000_000n; // 15 minutes
+
 function App() {
     const queryClient = new QueryClient();
     const { signers } = useSignerStore();
@@ -50,7 +52,7 @@ function App() {
             signers={signers}
             signerClientOptions={{
                 targets,
-                maxTimeToLive: 3_600_000_000_000n,
+                maxTimeToLive: TIMEOUT,
             }}
             discoverExtensionSigners={true}
         >

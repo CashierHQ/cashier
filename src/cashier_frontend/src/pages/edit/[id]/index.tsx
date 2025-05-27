@@ -81,9 +81,15 @@ export default function LinkPage() {
           ? getUserInput(linkId)
           : undefined;
 
+    // NOTE: this hook might conflict with LinkPreview step, use it carefully
     useEffect(() => {
         // Reset button state when component mounts
-        resetButtonState();
+        if (link) {
+            // not reset in Preview state, because it handled inside the component
+            if (link.state !== LINK_STATE.PREVIEW && link.state !== LINK_STATE.CREATE_LINK) {
+                resetButtonState();
+            }
+        }
 
         if (link) {
             const userInput: Partial<UserInputItem> = {
@@ -99,6 +105,7 @@ export default function LinkPage() {
                     chain: asset.chain!,
                     label: asset.label!,
                 })),
+                maxActionNumber: link.maxActionNumber,
             };
 
             addUserInput(link.id, userInput);
@@ -124,11 +131,7 @@ export default function LinkPage() {
                 } else {
                     const res = await callLinkStateMachine({
                         linkId: linkId,
-                        linkModel: {
-                            ...input,
-                            // TODO: remove this, not using 1 as default
-                            maxActionNumber: BigInt(1),
-                        },
+                        linkModel: input,
                         isContinue: false,
                     });
 
