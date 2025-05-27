@@ -20,6 +20,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { useMemo } from "react";
 
 export interface WalletTokenProps {
     token: FungibleToken;
@@ -44,6 +45,30 @@ export function WalletToken({ token }: WalletTokenProps) {
         }
     };
 
+    // Memoize formatted token amount
+    const formattedAmount = useMemo(() => {
+        if (token.amount === null) return "-";
+
+        if (token.amount) {
+            const numberValue = convertDecimalBigIntToNumber(token.amount, token.decimals);
+            return formatNumber(numberValue.toString());
+        }
+
+        return "0";
+    }, [token.amount, token.decimals]);
+
+    // Memoize formatted USD equivalent
+    const formattedUsdEquivalent = useMemo(() => {
+        if (!token.usdEquivalent) return "-";
+        return `$${formatNumber(token.usdEquivalent.toString())}`;
+    }, [token.usdEquivalent]);
+
+    // Memoize formatted USD conversion rate
+    const formattedUsdRate = useMemo(() => {
+        if (!token.usdConversionRate) return "-";
+        return `$${formatNumber(token.usdConversionRate.toString())}`;
+    }, [token.usdConversionRate]);
+
     return (
         <article className="flex justify-between" onClick={handleTokenClick}>
             <div className="flex flex-row items-center gap-2">
@@ -54,7 +79,7 @@ export function WalletToken({ token }: WalletTokenProps) {
 
                     {token.usdConversionRate ? (
                         <span className="flex flex-row items-center text-grey-400 text-xs font-light leading-none">
-                            ${formatNumber(token.usdConversionRate.toString())}
+                            {formattedUsdRate}
                         </span>
                     ) : (
                         <span className="text-grey-400 text-xs font-light leading-none">-</span>
@@ -63,24 +88,11 @@ export function WalletToken({ token }: WalletTokenProps) {
             </div>
 
             <div className="flex flex-col gap-1.5">
-                <span className="text-right leading-4">
-                    {token.amount === null
-                        ? "-"
-                        : `${
-                              token.amount
-                                  ? formatNumber(
-                                        convertDecimalBigIntToNumber(
-                                            token.amount,
-                                            token.decimals,
-                                        ).toString(),
-                                    )
-                                  : "0"
-                          }`}
-                </span>
+                <span className="text-right leading-4">{formattedAmount}</span>
 
                 {token.usdEquivalent ? (
                     <span className="flex flex-row items-center justify-end text-grey-400 text-xs font-light leading-none">
-                        ${formatNumber(token.usdEquivalent.toString())}
+                        {formattedUsdEquivalent}
                     </span>
                 ) : (
                     <span className="text-right text-grey-400 text-xs font-light leading-none">

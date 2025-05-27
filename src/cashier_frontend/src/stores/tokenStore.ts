@@ -69,8 +69,6 @@ interface TokenState {
     updateToken: () => Promise<void>;
     updateTokenExplorer: () => Promise<void>;
     updateTokenBalance: () => Promise<void>;
-
-    refetchData: () => Promise<void>;
 }
 
 // Create the Zustand store with updated implementation
@@ -238,9 +236,6 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         throw new Error("Not implemented - will be set by useTokens hook");
     },
     updateTokenBalance: async () => {
-        throw new Error("Not implemented - will be set by useTokens hook");
-    },
-    refetchData: async () => {
         throw new Error("Not implemented - will be set by useTokens hook");
     },
 }));
