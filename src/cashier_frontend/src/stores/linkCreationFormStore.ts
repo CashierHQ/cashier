@@ -80,6 +80,7 @@ export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, ge
 
     updateUserInput: (linkId, input) =>
         set((state) => {
+            console.log("Updating user input for linkId:", linkId, "with input:", input);
             const newUserInputs = new Map(state.userInputs);
             if (newUserInputs.has(linkId)) {
                 const updatedInput = { ...newUserInputs.get(linkId), ...input };
@@ -107,10 +108,22 @@ export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, ge
         return get().userInputs.get(linkId);
     },
 
-    setButtonState: (buttonState) =>
-        set((state) => ({
+    /**
+     * Updates the button state with provided partial button state properties
+     * @param buttonState - Partial button state properties to update (label, isDisabled, action)
+     * @example
+     * // Enable the button with a new label and action
+     * setButtonState({
+     *   label: "Submit",
+     *   isDisabled: false,
+     *   action: async () => await submitForm()
+     * })
+     */
+    setButtonState: (buttonState) => {
+        return set((state) => ({
             buttonState: { ...state.buttonState, ...buttonState },
-        })),
+        }));
+    },
 
     resetButtonState: () =>
         set({
