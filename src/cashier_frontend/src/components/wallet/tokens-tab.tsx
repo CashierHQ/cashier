@@ -19,52 +19,24 @@ import { useTranslation } from "react-i18next";
 import { useWalletContext } from "@/contexts/wallet-context";
 import { useTokens } from "@/hooks/useTokens";
 import { useTokenStore } from "@/stores/tokenStore";
-import { useEffect, useState } from "react";
-import { FungibleToken } from "@/types/fungible-token.speculative";
+import { useMemo } from "react";
 
 export function WalletTokensTab() {
     const { t } = useTranslation();
     const { navigateToPanel } = useWalletContext();
     const tokenStore = useTokens();
-    // Add state to hold the display tokens
-    const [displayTokens, setDisplayTokens] = useState<FungibleToken[]>([]);
-    // Add state for refresh operation
-    const [isRefreshing, setIsRefreshing] = useState(false);
     // Subscribe to rawTokenList and filters changes from the token store
-    const { rawTokenList, filters, refetchData, isLoadingBalances, isLoadingPrices } =
-        useTokenStore();
+    const { rawTokenList, filters } = useTokenStore();
 
-    // Refresh token data when component mounts
-    useEffect(() => {
-        // Refresh all token data when this component mounts
-        refetchData?.();
-    }, [refetchData]);
-
-    // Update display tokens whenever rawTokenList or filters change
-    useEffect(() => {
-        const tokens = tokenStore.getDisplayTokens();
-        setDisplayTokens(tokens);
+    // Use useMemo to calculate and cache displayTokens based on dependencies
+    const displayTokens = useMemo(() => {
+        return tokenStore.getDisplayTokens();
     }, [tokenStore, rawTokenList, filters]);
-
-    // Handle manual refresh
-    const handleRefresh = async () => {
-        if (isRefreshing) return;
-
-        setIsRefreshing(true);
-        try {
-            await refetchData?.();
-        } finally {
-            // Reset refresh state after a short delay to show feedback to the user
-            setTimeout(() => setIsRefreshing(false), 500);
-        }
-    };
 
     const handleManageClick = (e: React.MouseEvent) => {
         e.preventDefault();
         navigateToPanel("manage");
     };
-
-    const isLoading = isRefreshing || isLoadingBalances || isLoadingPrices;
 
     return (
         <div className="relative h-full w-full">

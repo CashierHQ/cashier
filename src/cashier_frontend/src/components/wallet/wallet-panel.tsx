@@ -18,11 +18,10 @@
 import { WalletTabs } from "@/components/wallet/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTokens } from "@/hooks/useTokens";
-import { useMemo } from "react";
-import { SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
-import { X } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SendReceive } from "../ui/send-receive";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useWalletContext } from "@/contexts/wallet-context";
 import SendPanel from "./send-panel";
@@ -31,7 +30,6 @@ import DetailsPanel from "./details-panel";
 import ManagePanel from "./manage-panel";
 import ImportPanel from "./import-panel";
 import { formatNumber } from "@/utils/helpers/currency";
-import { FungibleToken } from "@/types/fungible-token.speculative";
 
 interface WalletPanelProps {
     onClose: () => void;
@@ -85,17 +83,20 @@ const MainWalletPanel: React.FC<{
 
 const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
     const { isLoading, getDisplayTokens, rawTokenList } = useTokens();
-    const [filteredTokens, setFilteredTokens] = useState<FungibleToken[]>([]);
     const { activePanel, panelParams, navigateToPanel } = useWalletContext();
 
-    // Update filteredTokens state when tokens change
-    useEffect(() => {
-        // Only update when not loading to prevent flickering
-        if (!isLoading) {
-            const displayTokens = getDisplayTokens();
-            setFilteredTokens(displayTokens);
+    // Use useMemo for filteredTokens instead of useState + useEffect
+    const filteredTokens = useMemo(() => {
+        // Make sure we have tokens to work with
+        if (!rawTokenList || rawTokenList.length === 0) {
+            console.log("WalletPanel: No tokens in rawTokenList");
+            return [];
         }
-    }, [isLoading, rawTokenList, getDisplayTokens]);
+
+        // Get tokens that should be displayed based on filters
+        const displayTokens = getDisplayTokens();
+        return displayTokens;
+    }, [rawTokenList, isLoading]);
 
     // Calculate the total USD equivalent from the tokens
     const totalUsdEquivalent = useMemo(() => {
@@ -105,7 +106,9 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
             return total + (token.usdEquivalent || 0);
         }, 0);
 
-        return Number(total.toFixed(2));
+        const formattedTotal = Number(total.toFixed(2));
+        console.log(`WalletPanel: Calculated total USD equivalent: $${formattedTotal}`);
+        return formattedTotal;
     }, [filteredTokens]);
 
     const navigateReceivePage = () => {
@@ -122,7 +125,7 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
 
     // Render panel content based on active panel type
     const renderPanelContent = () => {
-        if (isLoading && activePanel === "wallet") {
+        if (isLoading && activePanel === "wallet" && (!rawTokenList || rawTokenList.length === 0)) {
             return (
                 <div className="flex-1 overflow-hidden h-full">
                     <div className="p-4">
@@ -174,10 +177,11 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
         }
     };
 
-    // Show loading skeleton when tokens are loading
-    if (isLoading && activePanel === "wallet") {
-        return (
-            <SheetContent side="right" className="w-[100%] p-4 flex flex-col h-full">
+    // Show loading skeleton when tokens are loading and we don't have any token data yet
+    // The content to render inside the sheet
+    const content =
+        isLoading && activePanel === "wallet" && (!rawTokenList || rawTokenList.length === 0) ? (
+            <>
                 <SheetHeader>
                     <SheetTitle className="flex justify-between items-center mt-2">
                         <span>Wallet</span>
@@ -207,24 +211,30 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
                         ))}
                     </div>
                 </div>
-            </SheetContent>
+            </>
+        ) : (
+            <>
+                {activePanel === "wallet" && (
+                    <SheetHeader>
+                        <SheetTitle className="flex justify-between items-center">
+                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                        </SheetTitle>
+                    </SheetHeader>
+                )}
+                {renderPanelContent()}
+            </>
         );
-    }
 
+    // Use forceMount to prevent unmounting when the sheet is closed
     return (
         <SheetContent
             side="right"
             hideCloseButton={activePanel !== "wallet"}
             className="w-[100%] py-4 px-2 flex flex-col h-full"
+            // this flag force content not clear while loading
+            // forceMount={true}
         >
-            {activePanel === "wallet" && (
-                <SheetHeader>
-                    <SheetTitle className="flex justify-between items-center">
-                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                    </SheetTitle>
-                </SheetHeader>
-            )}
-            {renderPanelContent()}
+            {content}
         </SheetContent>
     );
 };
