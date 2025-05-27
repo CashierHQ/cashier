@@ -512,6 +512,7 @@ class LinkLocalStorageService {
                             userAsset.chain !== matchingAsset.chain ||
                             userAsset.linkUseAmount !== matchingAsset.amountPerUse
                         ) {
+                            console.log("Assets changed");
                             return true;
                         }
                     }
