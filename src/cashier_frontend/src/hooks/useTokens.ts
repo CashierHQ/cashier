@@ -28,11 +28,6 @@ import {
     useMultipleTokenMutation,
 } from "./token-hooks";
 import {
-    FungibleToken,
-    mapTokenModelToFungibleToken,
-    TokenModel,
-} from "@/types/fungible-token.speculative";
-import {
     ICExplorerService,
     IcExplorerTokenDetail,
     mapTokenListItemToAddTokenItem,
@@ -160,93 +155,123 @@ export function useTokens() {
         await tokenBalancesQuery.refetch();
     };
 
-    // Create a refetch function to manually trigger token data refresh
-    const refetchAllTokenData = async () => {
-        await tokenListQuery.refetch();
-        if (tokenListQuery.data?.tokens) {
-            await Promise.all([
-                tokenBalancesQuery.refetch(),
-                tokenMetadataQuery.refetch(),
-                tokenPricesQuery.refetch(),
-            ]);
-        }
-    };
-
-    // Process user tokens list (if authenticated)
+    // Combined enrichment effect that handles all data stages
     useEffect(() => {
-        if (!identity || !tokenListQuery.data) return;
+        // Do nothing if we don't have the base token list
+        if (!tokenListQuery.data) return;
 
-        const userTokens: FungibleToken[] = tokenListQuery.data.tokens.map((token: TokenModel) => {
-            return mapTokenModelToFungibleToken(token);
-        });
+        // Start with raw token list from backend - make a fresh copy to avoid mutation issues
+        let currentTokens = [...tokenListQuery.data.tokens];
 
-        // Create an enriched token list by merging all data sources
-        const enrichedUserTokens = userTokens.map((token) => {
-            // Basic token model
-            const enrichedToken = { ...token };
+        console.log(
+            `Starting token enrichment process with ${currentTokens.length} tokens from backend`,
+        );
 
-            // 1. Enrich with balance data
-            if (tokenBalancesQuery.data) {
-                const balanceData = tokenBalancesQuery.data.find(
-                    (t) => t.address === token.address,
-                );
-                if (balanceData?.amount !== undefined) {
-                    enrichedToken.amount = balanceData.amount;
+        const isHaveBalance = tokenBalancesQuery.data?.some((balance) => balance.amount > 0);
+        console.log(
+            `Token list loaded with ${tokenListQuery.data.tokens.length} tokens, has balance: ${isHaveBalance}`,
+        );
+
+        // 1. Enrich with balances if available
+        if (tokenBalancesQuery.data) {
+            console.log(`Enriching tokens with ${tokenBalancesQuery.data.length} balances`);
+
+            // Convert tokenBalancesQuery.data array to a map for more efficient lookups
+            const balanceMap: Record<string, bigint | undefined> = {};
+            tokenBalancesQuery.data.forEach((balance) => {
+                if (balance.address && balance.amount !== undefined) {
+                    balanceMap[balance.address] = balance.amount;
                 }
-            } else if (token.amount) {
-                // Use the amount from tokenListQuery if balance query is still loading
-                enrichedToken.amount = token.amount;
-            }
+            });
 
-            // 2. Enrich with metadata
-            if (tokenMetadataQuery.data) {
-                const metadataMap = tokenMetadataQuery.data;
-                const metadata = metadataMap[token.address];
+            currentTokens = currentTokens.map((token) => {
+                // Look up balance directly from the map (O(1) operation)
+                const amount = balanceMap[token.address];
+
+                // If balance data exists, enrich the token
+                if (amount !== undefined) {
+                    return {
+                        ...token,
+                        amount,
+                    };
+                }
+                // Otherwise, return the token as is
+                return token;
+            });
+        }
+
+        // 2. Enrich with metadata if available
+        if (tokenMetadataQuery.data) {
+            console.log(
+                `Enriching tokens with metadata for ${Object.keys(tokenMetadataQuery.data).length} tokens`,
+            );
+
+            currentTokens = currentTokens.map((token) => {
+                const metadata = tokenMetadataQuery.data[token.address];
                 if (metadata?.fee !== undefined) {
-                    enrichedToken.fee = metadata.fee;
-                    enrichedToken.logoFallback = metadata.logo;
+                    return {
+                        ...token,
+                        fee: metadata.fee,
+                        logoFallback: metadata.logo,
+                    };
                 }
-            } else if (token.fee !== undefined) {
-                // Use fee from tokenListQuery if metadata query is still loading
-                enrichedToken.fee = token.fee;
-            }
+                return token;
+            });
+        }
 
-            // 3. Enrich with price data
-            if (tokenPricesQuery.data) {
-                const priceMap = tokenPricesQuery.data;
-                const price = priceMap[token.address];
+        // 3. Enrich with prices if available
+        if (tokenPricesQuery.data) {
+            console.log(
+                `Enriching tokens with prices for ${Object.keys(tokenPricesQuery.data).length} tokens`,
+            );
 
+            currentTokens = currentTokens.map((token) => {
+                const price = tokenPricesQuery.data[token.address];
                 if (price) {
-                    enrichedToken.usdConversionRate = price;
-                    if (enrichedToken.amount) {
-                        const amountInNumber =
-                            Number(enrichedToken.amount) / Math.pow(10, enrichedToken.decimals);
+                    const enrichedToken = {
+                        ...token,
+                        usdConversionRate: price,
+                    };
+
+                    if (token.amount) {
+                        console.log(
+                            `Enriching price token ${token.address} with amount ${token.amount} and price ${price}`,
+                        );
+                        const amountInNumber = Number(token.amount) / Math.pow(10, token.decimals);
                         enrichedToken.usdEquivalent = price * amountInNumber;
                     } else {
                         enrichedToken.usdEquivalent = 0;
                     }
+
+                    return enrichedToken;
                 }
-            } else if (token.usdConversionRate !== undefined) {
-                // Use price data from tokenListQuery if prices query is still loading
-                enrichedToken.usdConversionRate = token.usdConversionRate;
-                enrichedToken.usdEquivalent = token.usdEquivalent;
-            }
+                return token;
+            });
+        }
 
-            return enrichedToken;
-        });
+        const tokenHaveBalance = currentTokens.filter(
+            (token) => token.amount && token.amount > 0 && token.usdEquivalent,
+        );
+        const time = new Date().toISOString();
+        console.log(`Token enrichment completed at ${time}`);
+        console.log(`Found ${tokenHaveBalance.length} tokens with balance and USD value`);
 
-        // Update user token list
-        setRawTokenList(enrichedUserTokens);
+        // We specifically log the token IDs to make debugging easier
+        if (tokenHaveBalance.length > 0) {
+            console.log(
+                "Tokens with balance:",
+                tokenHaveBalance.map((t) => `${t.symbol} (${t.id}): ${t.amount?.toString()}`),
+            );
+        }
+
+        // Update the state with all enrichments in one go - this is now our single source of truth
+        // The state update here is batched and will cause a single re-render with the complete data
+        setRawTokenList(currentTokens);
     }, [
-        identity,
         tokenListQuery.data,
         tokenBalancesQuery.data,
         tokenMetadataQuery.data,
         tokenPricesQuery.data,
-        // Also update when loading states change
-        tokenBalancesQuery.isLoading,
-        tokenMetadataQuery.isLoading,
-        tokenPricesQuery.isLoading,
     ]);
 
     // Separate useEffect for token balances loading state
@@ -279,12 +304,6 @@ export function useTokens() {
             setIsLoading(false);
         }
 
-        // Only update raw tokens list directly if needed
-        if (tokenListQuery.data?.tokens) {
-            console.log(`Received ${tokenListQuery.data.tokens.length} tokens from backend`);
-            setRawTokenList(tokenListQuery.data.tokens);
-        }
-
         // Check if we need to sync with backend version
         if (tokenListQuery.data?.needUpdateVersion) {
             console.log("Token list needs version update, syncing with backend...");
@@ -296,11 +315,10 @@ export function useTokens() {
             console.log("Applying token preferences from backend:", tokenListQuery.data.perference);
             setFilters(tokenListQuery.data.perference);
         }
-    }, [tokenListQuery.data, tokenListQuery.isFetching]);
 
-    // useEffect(() => {
-    //     tokenListQuery.refetch();
-    // }, [identity])
+        // We'll handle setting rawTokenList in the main enrichment useEffect
+        // to avoid race conditions between this effect and the enrichment effect
+    }, [tokenListQuery.data, tokenListQuery.isFetching]);
 
     // Update operation functions in Zustand
     useEffect(() => {
@@ -310,8 +328,6 @@ export function useTokens() {
             updateTokenInit,
             updateTokenExplorer,
             updateTokenBalance,
-            // Add the new refetch function
-            refetchData: refetchAllTokenData,
         });
     }, []);
 
