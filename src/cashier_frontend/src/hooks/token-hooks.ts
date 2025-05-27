@@ -53,7 +53,7 @@ const TIME_CONSTANTS = {
     FIVE_MINUTES: 5 * 60 * 1000,
     THIRTY_MINUTES: 30 * 60 * 1000,
     ONE_HOUR: 60 * 60 * 1000,
-    THIRTY_SECONDS: 5 * 1000,
+    THIRTY_SECONDS: 2 * 1000,
 
     // Retry intervals
     THREE_SECONDS: 3000,
@@ -194,8 +194,8 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) =>
             Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
-        staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
-        refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
+        staleTime: TIME_CONSTANTS.FIVE_MINUTES,
+        refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
     });
 }
 
