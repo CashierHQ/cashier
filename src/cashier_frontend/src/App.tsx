@@ -50,7 +50,7 @@ function App() {
             signers={signers}
             signerClientOptions={{
                 targets,
-                maxTimeToLive: 300_000_000_000n,
+                maxTimeToLive: 50_000_000_000n,
             }}
             discoverExtensionSigners={true}
         >
