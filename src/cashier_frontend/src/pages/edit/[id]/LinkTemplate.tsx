@@ -22,7 +22,6 @@ import { getAssetLabelForLinkType, LINK_TYPE } from "@/services/types/enum";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";

@@ -99,6 +99,7 @@ export default function LinkPage() {
                     chain: asset.chain!,
                     label: asset.label!,
                 })),
+                maxActionNumber: link.maxActionNumber,
             };
 
             addUserInput(link.id, userInput);
@@ -124,11 +125,7 @@ export default function LinkPage() {
                 } else {
                     const res = await callLinkStateMachine({
                         linkId: linkId,
-                        linkModel: {
-                            ...input,
-                            // TODO: remove this, not using 1 as default
-                            maxActionNumber: BigInt(1),
-                        },
+                        linkModel: input,
                         isContinue: false,
                     });
 

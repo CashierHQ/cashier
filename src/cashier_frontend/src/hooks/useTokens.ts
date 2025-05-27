@@ -163,19 +163,8 @@ export function useTokens() {
         // Start with raw token list from backend - make a fresh copy to avoid mutation issues
         let currentTokens = [...tokenListQuery.data.tokens];
 
-        console.log(
-            `Starting token enrichment process with ${currentTokens.length} tokens from backend`,
-        );
-
-        const isHaveBalance = tokenBalancesQuery.data?.some((balance) => balance.amount > 0);
-        console.log(
-            `Token list loaded with ${tokenListQuery.data.tokens.length} tokens, has balance: ${isHaveBalance}`,
-        );
-
         // 1. Enrich with balances if available
         if (tokenBalancesQuery.data) {
-            console.log(`Enriching tokens with ${tokenBalancesQuery.data.length} balances`);
-
             // Convert tokenBalancesQuery.data array to a map for more efficient lookups
             const balanceMap: Record<string, bigint | undefined> = {};
             tokenBalancesQuery.data.forEach((balance) => {
@@ -221,10 +210,6 @@ export function useTokens() {
 
         // 3. Enrich with prices if available
         if (tokenPricesQuery.data) {
-            console.log(
-                `Enriching tokens with prices for ${Object.keys(tokenPricesQuery.data).length} tokens`,
-            );
-
             currentTokens = currentTokens.map((token) => {
                 const price = tokenPricesQuery.data[token.address];
                 if (price) {
@@ -234,9 +219,6 @@ export function useTokens() {
                     };
 
                     if (token.amount) {
-                        console.log(
-                            `Enriching price token ${token.address} with amount ${token.amount} and price ${price}`,
-                        );
                         const amountInNumber = Number(token.amount) / Math.pow(10, token.decimals);
                         enrichedToken.usdEquivalent = price * amountInNumber;
                     } else {
@@ -247,21 +229,6 @@ export function useTokens() {
                 }
                 return token;
             });
-        }
-
-        const tokenHaveBalance = currentTokens.filter(
-            (token) => token.amount && token.amount > 0 && token.usdEquivalent,
-        );
-        const time = new Date().toISOString();
-        console.log(`Token enrichment completed at ${time}`);
-        console.log(`Found ${tokenHaveBalance.length} tokens with balance and USD value`);
-
-        // We specifically log the token IDs to make debugging easier
-        if (tokenHaveBalance.length > 0) {
-            console.log(
-                "Tokens with balance:",
-                tokenHaveBalance.map((t) => `${t.symbol} (${t.id}): ${t.amount?.toString()}`),
-            );
         }
 
         // Update the state with all enrichments in one go - this is now our single source of truth
