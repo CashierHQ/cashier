@@ -308,6 +308,9 @@ class LinkLocalStorageService {
             } else if (action === "Back") {
                 // When going back from PREVIEW, no property changes are allowed
                 const whitelist: string[] = [];
+                console.log("link ", link);
+                console.log("updateLinkInput ", updateLinkInput);
+
                 if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {
                     throw new Error("Cannot modify any properties when going back");
                 }
