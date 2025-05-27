@@ -119,10 +119,11 @@ export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, ge
      *   action: async () => await submitForm()
      * })
      */
-    setButtonState: (buttonState) =>
-        set((state) => ({
+    setButtonState: (buttonState) => {
+        return set((state) => ({
             buttonState: { ...state.buttonState, ...buttonState },
-        })),
+        }));
+    },
 
     resetButtonState: () =>
         set({
