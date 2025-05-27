@@ -127,8 +127,6 @@ export function useTokenListQuery() {
         },
         staleTime: TIME_CONSTANTS.FIVE_MINUTES,
         // Improved refetching behavior
-        refetchOnMount: true,
-        refetchOnWindowFocus: true,
         refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) =>
@@ -196,8 +194,8 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) =>
             Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
-        staleTime: TIME_CONSTANTS.FIVE_MINUTES,
-        refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
+        staleTime: TIME_CONSTANTS.THIRTY_MINUTES,
+        refetchInterval: TIME_CONSTANTS.THIRTY_MINUTES,
     });
 }
 
@@ -209,7 +207,7 @@ export function useTokenPricesQuery() {
                 const prices = await tokenPriceService.getAllPrices();
                 // Return null instead of empty object if no prices are fetched
                 console.log(`[${new Date().toISOString()}] Fetched token prices:`, prices);
-                return Object.keys(prices).length > 0 ? prices : null;
+                return Object.keys(prices).length > 0 ? prices : {};
             } catch (error) {
                 console.error("Failed to fetch token prices:", error);
                 throw error;
