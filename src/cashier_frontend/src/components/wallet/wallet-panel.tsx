@@ -245,8 +245,8 @@ const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
             <>
                 {activePanel === "wallet" && (
                     <SheetHeader>
-                        <SheetTitle className="flex justify-between items-center">
-                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                        <SheetTitle className="flex justify-between items-center mt-2">
+                            <span>Wallet</span>
                         </SheetTitle>
                     </SheetHeader>
                 )}
