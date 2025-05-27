@@ -252,6 +252,7 @@ const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
                 )}
                 {renderPanelContent()}
             </>
+
         );
     }, [activePanel, isLoading, rawTokenList, renderPanelContent, loadingSkeleton]);
 
