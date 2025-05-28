@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { FC, useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import AssetButton from "@/components/asset-button";
@@ -10,7 +26,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { convertDecimalBigIntToNumber } from "@/utils";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
@@ -79,7 +95,12 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
 
                 if (canConvert && tokenUsdPrice) {
                     const usdValue = tokenAmountNumber * tokenUsdPrice;
-                    setLocalUsdAmount(usdValue.toFixed(2));
+                    setLocalUsdAmount(
+                        usdValue.toLocaleString("en-US", {
+                            useGrouping: false,
+                            maximumFractionDigits: 7,
+                        }),
+                    );
                 }
             }
         }
@@ -162,7 +183,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
             // Update USD amount based on token
             if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
                 const usdValue = parseFloat(value) * tokenUsdPrice;
-                setLocalUsdAmount(usdValue.toFixed(2));
+                setLocalUsdAmount(usdValue.toFixed(7));
                 setTokenAmount(value);
             } else {
                 setTokenAmount(value);

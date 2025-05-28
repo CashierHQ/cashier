@@ -1,12 +1,27 @@
+/* eslint-disable react/prop-types */
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { WalletTabs } from "@/components/wallet/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTokens } from "@/hooks/useTokens";
-import { useMemo } from "react";
-import { SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
-import { X } from "lucide-react";
+import { useEffect, useMemo, useCallback } from "react";
+import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SendReceive } from "../ui/send-receive";
-import { prettyNumber } from "@/utils/helpers/number/pretty";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useWalletContext } from "@/contexts/wallet-context";
 import SendPanel from "./send-panel";
@@ -14,6 +29,8 @@ import ReceivePanel from "./receive-panel";
 import DetailsPanel from "./details-panel";
 import ManagePanel from "./manage-panel";
 import ImportPanel from "./import-panel";
+import { formatNumber } from "@/utils/helpers/currency";
+import React from "react";
 
 interface WalletPanelProps {
     onClose: () => void;
@@ -23,8 +40,7 @@ const MainWalletPanel: React.FC<{
     navigateSendPage: () => void;
     navigateReceivePage: () => void;
     totalUsdEquivalent: number;
-    filteredTokens: any[];
-}> = ({ navigateSendPage, navigateReceivePage, totalUsdEquivalent, filteredTokens }) => {
+}> = React.memo(({ navigateSendPage, navigateReceivePage, totalUsdEquivalent }) => {
     // Balance visibility state
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
     const [isVisible, setIsVisible] = useState(() => {
@@ -36,7 +52,14 @@ const MainWalletPanel: React.FC<{
         localStorage.setItem(WALLET_BALANCE_VISIBILITY_KEY, JSON.stringify(isVisible));
     }, [isVisible]);
 
-    const usdEquivalentAmount = prettyNumber(totalUsdEquivalent);
+    const usdEquivalentAmount = useMemo(
+        () => formatNumber(totalUsdEquivalent.toString()),
+        [totalUsdEquivalent],
+    );
+
+    const toggleVisibility = useCallback(() => {
+        setIsVisible((prev: boolean) => !prev);
+    }, []);
 
     return (
         <div className="flex-1 overflow-hidden h-full">
@@ -47,7 +70,7 @@ const MainWalletPanel: React.FC<{
                         ${isVisible ? usdEquivalentAmount : "∗∗∗∗"}
                     </span>
 
-                    <button className="" onClick={() => setIsVisible(!isVisible)}>
+                    <button className="" onClick={toggleVisibility}>
                         {isVisible ? (
                             <EyeOff size={24} className="stroke-grey" />
                         ) : (
@@ -60,16 +83,36 @@ const MainWalletPanel: React.FC<{
             </div>
 
             <div className="flex-1 overflow-hidden h-full">
-                <WalletTabs fungibleTokens={filteredTokens} />
+                <WalletTabs />
             </div>
         </div>
     );
-};
+});
 
-const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
-    const { isLoading, getDisplayTokens } = useTokens();
-    const filteredTokens = getDisplayTokens();
+// Memoize panel components
+const MemoizedSendPanel = React.memo(SendPanel);
+const MemoizedReceivePanel = React.memo(ReceivePanel);
+const MemoizedDetailsPanel = React.memo(DetailsPanel);
+const MemoizedManagePanel = React.memo(ManagePanel);
+const MemoizedImportPanel = React.memo(ImportPanel);
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
+    const { isLoading, getDisplayTokens, rawTokenList } = useTokens();
     const { activePanel, panelParams, navigateToPanel } = useWalletContext();
+
+    // Use useMemo for filteredTokens instead of useState + useEffect
+    const filteredTokens = useMemo(() => {
+        // Make sure we have tokens to work with
+        if (!rawTokenList || rawTokenList.length === 0) {
+            console.log("WalletPanel: No tokens in rawTokenList");
+            return [];
+        }
+
+        // Get tokens that should be displayed based on filters
+        const displayTokens = getDisplayTokens();
+        return displayTokens;
+    }, [rawTokenList, getDisplayTokens]);
 
     // Calculate the total USD equivalent from the tokens
     const totalUsdEquivalent = useMemo(() => {
@@ -79,48 +122,35 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
             return total + (token.usdEquivalent || 0);
         }, 0);
 
-        return Number(total.toFixed(2));
+        const formattedTotal = Number(total.toFixed(2));
+        return formattedTotal;
     }, [filteredTokens]);
 
-    const navigateReceivePage = () => {
+    const navigateReceivePage = useCallback(() => {
         navigateToPanel("receive");
-    };
+    }, [navigateToPanel]);
 
-    const navigateSendPage = () => {
+    const navigateSendPage = useCallback(() => {
         navigateToPanel("send");
-    };
+    }, [navigateToPanel]);
 
-    const navigateDetailsPage = (tokenId: string) => {
-        navigateToPanel("details", { tokenId });
-    };
-
-    const navigateToMainWallet = () => {
+    const navigateToMainWallet = useCallback(() => {
         navigateToPanel("wallet");
-    };
+    }, [navigateToPanel]);
 
-    // Get panel title based on active panel
-    const getPanelTitle = (): string => {
-        switch (activePanel) {
-            case "send":
-                return "Send";
-            case "receive":
-                return "Receive";
-            case "details":
-                return "Token Details";
-            case "manage":
-                return "Manage Tokens";
-            case "import":
-                return "Import Token";
-            case "wallet":
-            default:
-                return "Wallet";
-        }
-    };
+    const navigateToManage = useCallback(() => {
+        navigateToPanel("manage");
+    }, [navigateToPanel]);
 
-    // Render panel content based on active panel type
-    const renderPanelContent = () => {
-        if (isLoading && activePanel === "wallet") {
-            return (
+    // Memoize the loading skeleton component to prevent re-renders
+    const loadingSkeleton = useMemo(
+        () => (
+            <>
+                <SheetHeader>
+                    <SheetTitle className="flex justify-between items-center mt-2">
+                        <span>Wallet</span>
+                    </SheetTitle>
+                </SheetHeader>
                 <div className="flex-1 overflow-hidden h-full">
                     <div className="p-4">
                         <Skeleton className="h-8 w-[150px] mb-2" />
@@ -145,20 +175,43 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
                         ))}
                     </div>
                 </div>
-            );
+            </>
+        ),
+        [],
+    );
+
+    // Render panel content based on active panel type
+    const renderPanelContent = useCallback(() => {
+        if (isLoading && activePanel === "wallet" && (!rawTokenList || rawTokenList.length === 0)) {
+            return loadingSkeleton;
         }
 
         switch (activePanel) {
             case "send":
-                return <SendPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
+                return (
+                    <MemoizedSendPanel
+                        tokenId={panelParams.tokenId}
+                        onBack={navigateToMainWallet}
+                    />
+                );
             case "receive":
-                return <ReceivePanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
+                return (
+                    <MemoizedReceivePanel
+                        tokenId={panelParams.tokenId}
+                        onBack={navigateToMainWallet}
+                    />
+                );
             case "details":
-                return <DetailsPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
+                return (
+                    <MemoizedDetailsPanel
+                        tokenId={panelParams.tokenId}
+                        onBack={navigateToMainWallet}
+                    />
+                );
             case "manage":
-                return <ManagePanel onBack={navigateToMainWallet} />;
+                return <MemoizedManagePanel onBack={navigateToMainWallet} />;
             case "import":
-                return <ImportPanel onBack={() => navigateToPanel("manage")} />;
+                return <MemoizedImportPanel onBack={navigateToManage} />;
             case "wallet":
             default:
                 return (
@@ -166,73 +219,56 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
                         navigateSendPage={navigateSendPage}
                         navigateReceivePage={navigateReceivePage}
                         totalUsdEquivalent={totalUsdEquivalent}
-                        filteredTokens={filteredTokens}
                     />
                 );
         }
-    };
+    }, [
+        isLoading,
+        activePanel,
+        rawTokenList,
+        panelParams,
+        navigateToMainWallet,
+        navigateSendPage,
+        navigateReceivePage,
+        totalUsdEquivalent,
+        navigateToManage,
+        loadingSkeleton,
+    ]);
 
-    // Show loading skeleton when tokens are loading
-    if (isLoading && activePanel === "wallet") {
+    // Memoize the content of the sheet
+    const content = useMemo(() => {
+        if (isLoading && activePanel === "wallet" && (!rawTokenList || rawTokenList.length === 0)) {
+            return loadingSkeleton;
+        }
+
         return (
-            <SheetContent side="right" className="w-[100%] p-4 flex flex-col h-full">
-                <SheetHeader>
-                    <SheetTitle className="flex justify-between items-center">
-                        <span>Wallet</span>
-                        <SheetClose asChild>
-                            <button
-                                onClick={onClose}
-                                className="rounded-full p-1 hover:bg-gray-100"
-                            >
-                                <X size={20} />
-                            </button>
-                        </SheetClose>
-                    </SheetTitle>
-                </SheetHeader>
-                <div className="flex-1 overflow-hidden h-full">
-                    <div className="p-4">
-                        <Skeleton className="h-8 w-[150px] mb-2" />
-                        <Skeleton className="h-12 w-[180px]" />
-                    </div>
-                    <div className="p-4">
-                        <Skeleton className="h-10 w-full mb-4" />
-                        {Array.from({ length: 5 }).map((_, index) => (
-                            <div key={index} className="flex justify-between items-center mb-4">
-                                <div className="flex items-center">
-                                    <Skeleton className="h-9 w-9 rounded-full mr-2" />
-                                    <div>
-                                        <Skeleton className="h-4 w-[100px] mb-2" />
-                                        <Skeleton className="h-3 w-[70px]" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <Skeleton className="h-4 w-[80px] mb-2" />
-                                    <Skeleton className="h-3 w-[60px]" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </SheetContent>
+            <>
+                {activePanel === "wallet" && (
+                    <SheetHeader>
+                        <SheetTitle className="mb-2">
+                            <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
+                        </SheetTitle>
+                    </SheetHeader>
+                )}
+                {renderPanelContent()}
+            </>
         );
-    }
+    }, [activePanel, isLoading, rawTokenList, renderPanelContent, loadingSkeleton]);
 
+    // Use forceMount to prevent unmounting when the sheet is closed
     return (
         <SheetContent
             side="right"
             hideCloseButton={activePanel !== "wallet"}
             className="w-[100%] py-4 px-2 flex flex-col h-full"
+            // Enable forceMount to prevent re-rendering when the sheet is closed
+            forceMount={true}
         >
-            {activePanel === "wallet" && (
-                <SheetHeader>
-                    <SheetTitle className="flex justify-between items-center">
-                        <img src="./logo.svg" alt="Cashier logo" className="max-w-[130px]" />
-                    </SheetTitle>
-                </SheetHeader>
-            )}
-            {renderPanelContent()}
+            {content}
         </SheetContent>
     );
-};
+});
 
+WalletPanel.displayName = "WalletPanel";
+MainWalletPanel.displayName = "MainWalletPanel";
 export default WalletPanel;

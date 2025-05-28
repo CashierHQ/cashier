@@ -1,8 +1,25 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { ICP_TOKEN_ADDRESS, TEST_ICP_TOKEN_ADDRESS } from "@/services/fee.constants";
+import CachedImage from "@/components/ui/cached-image";
 
 type AssetAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
     src?: string | undefined;
@@ -17,8 +34,18 @@ export const AssetAvatar = React.forwardRef<React.ElementRef<typeof Avatar>, Ass
     ({ src, symbol, className, ...props }, ref) => {
         return (
             <Avatar ref={ref} className={cn("w-6 h-6", className)} {...props}>
-                <AvatarImage src={src} />
-                <AvatarFallback>{symbol}</AvatarFallback>
+                {src ? (
+                    <div className="w-full h-full overflow-hidden rounded-full">
+                        <CachedImage
+                            src={src}
+                            alt={symbol || "Token"}
+                            className="w-full h-full object-cover"
+                            fallback={<AvatarFallback>{symbol}</AvatarFallback>}
+                        />
+                    </div>
+                ) : (
+                    <AvatarFallback>{symbol}</AvatarFallback>
+                )}
             </Avatar>
         );
     },
@@ -43,40 +70,31 @@ export const AssetAvatarV2 = React.forwardRef<React.ElementRef<typeof Avatar>, A
             );
         }
 
-        if (token.address === ICP_TOKEN_ADDRESS) {
-            return (
-                <Avatar ref={ref} className={cn("w-6 h-6", className)} {...props}>
-                    <AvatarImage src={icpToken} />
-                    <AvatarFallback>{token.logoFallback ?? token.symbol}</AvatarFallback>
-                </Avatar>
-            );
+        let logoSrc = "";
+
+        if (token.address === ICP_TOKEN_ADDRESS || token.address === TEST_ICP_TOKEN_ADDRESS) {
+            logoSrc = icpToken;
+        } else if (token.logoFallback) {
+            logoSrc = token.logoFallback;
+        } else {
+            logoSrc = token.logo || "";
         }
 
-        if (token.address === TEST_ICP_TOKEN_ADDRESS) {
-            return (
-                <Avatar ref={ref} className={cn("w-6 h-6", className)} {...props}>
-                    <AvatarImage src={icpToken} />
-                    <AvatarFallback>{token.logoFallback ?? token.symbol}</AvatarFallback>
-                </Avatar>
-            );
-        }
-
-        if (token.logoFallback) {
-            return (
-                <Avatar ref={ref} className={cn("w-6 h-6", className)} {...props}>
-                    <AvatarImage src={token.logoFallback} />
-                    <AvatarFallback>{token.symbol}</AvatarFallback>
-                </Avatar>
-            );
-        }
+        const fallbackSymbol = token.logoFallback ? token.symbol : token.symbol;
 
         return (
             <Avatar ref={ref} className={cn("w-6 h-6", className)} {...props}>
-                <AvatarImage src={token.logo} />
-                <AvatarFallback>{token.symbol}</AvatarFallback>
+                <div className="w-full h-full overflow-hidden rounded-full">
+                    <CachedImage
+                        src={logoSrc}
+                        alt={token.symbol}
+                        className="w-full h-full object-cover"
+                        fallback={<AvatarFallback>{fallbackSymbol}</AvatarFallback>}
+                    />
+                </div>
             </Avatar>
         );
     },
 );
 
-AssetAvatar.displayName = "AssetAvatar";
+AssetAvatarV2.displayName = "AssetAvatarV2";

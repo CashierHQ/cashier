@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { TokenBalanceMap } from "@/types/fungible-token.speculative";
 import TokenStorageService from "./tokenStorage.service";
 import { Identity } from "@dfinity/agent";
@@ -5,7 +21,7 @@ import { PartialIdentity } from "@dfinity/identity";
 
 const LAST_CACHE_TIME_KEY = "lastTokenBalanceCacheTime";
 const LAST_CACHED_BALANCES_KEY = "lastCachedTokenBalances";
-const CACHE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes in milliseconds
+const CACHE_THRESHOLD_MS = 1 * 30 * 1000; // 30 second in milliseconds
 
 class TokenCacheService {
     private TokenStorageService: TokenStorageService;
@@ -84,13 +100,15 @@ class TokenCacheService {
                     localStorage.setItem(cacheKey, balanceMapJson);
 
                     if (balancesChanged) {
-                        await this.TokenStorageService.updateBulkTokenBalance(balancesToCache);
+                        await this.TokenStorageService.updateTokenBalances(balancesToCache);
                         // Check what was actually stored in localStorage
 
                         console.log(
                             `Caching complete (${balancesChanged ? "balances changed" : "time threshold reached"})`,
                         );
                     }
+
+                    console.log("Cached balances:", balancesToCache);
                 } else {
                     console.log("No balances to cache (all undefined)");
                 }

@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { cn } from "@/lib/utils";
 
 export default function LinkCardWithoutPhoneFrame({
@@ -9,6 +25,9 @@ export default function LinkCardWithoutPhoneFrame({
     disabled,
     showHeader = false,
     headerText = "",
+    headerIcon = null,
+    headerColor = "green",
+    headerTextColor = "white",
 }: {
     displayComponent?: React.ReactNode;
     title: string;
@@ -18,12 +37,24 @@ export default function LinkCardWithoutPhoneFrame({
     disabled?: boolean;
     showHeader?: boolean;
     headerText?: string;
+    headerIcon?: React.ReactNode;
+    headerColor?: string;
+    headerTextColor?: string;
 }) {
     return (
         <div className="w-full flex relative flex-col items-center bg-lightgreen rounded-xl py-5 px-8">
             {showHeader && (
-                <div className="w-full absolute top-0 left-0 flex flex-col items-center bg-green rounded-t-xl">
-                    <h3 className="text-[18px] text-white font-medium py-1">{headerText}</h3>
+                <div
+                    className="w-full absolute top-0 left-0 flex flex-col items-center rounded-t-xl"
+                    style={{ backgroundColor: headerColor }}
+                >
+                    <div
+                        className="flex mx-auto items-center justify-center gap-2"
+                        style={{ color: headerTextColor }}
+                    >
+                        <div>{headerIcon}</div>
+                        <h3 className="text-[18px] font-medium py-1">{headerText}</h3>
+                    </div>
                 </div>
             )}
             <div

@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
@@ -13,18 +29,21 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { LinkCardPage } from "./LinkCardPage";
 
-import { ClaimFormPage } from "./ClaimFormPage";
+import { UseFormPage } from "./UseFormPage";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
 import { IoInformationCircle } from "react-icons/io5";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import {
     getDisplayComponentForLink,
+    getHeaderColorsForLink,
+    getHeaderInfoForLink,
+    getHeaderTextColorForLink,
     getMessageForLink,
     getTitleForLink,
 } from "@/components/page/linkCardPage";
@@ -59,12 +78,12 @@ export default function ClaimPage() {
         link: linkData,
         isLoading: isLoadingLinkData,
         getLinkDetail,
-    } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
+    } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
 
     // Fetch link user state when user is logged in and there's link data
     const { data: linkUserState } = useLinkUserState(
         {
-            action_type: ACTION_TYPE.CLAIM_LINK,
+            action_type: ACTION_TYPE.USE_LINK,
             link_id: linkId ?? "",
             anonymous_wallet_address: "",
         },
@@ -90,14 +109,17 @@ export default function ClaimPage() {
             setEnableFetchLinkUserState(true);
             updateTokenInit();
         }
-    }, [linkData, updateTokenInit]);
+    }, [linkData]);
 
     // Update UI state based on linkUserState and URL params
     useEffect(() => {
         if (!linkData) return;
 
         // If we have a linkUserState and it's COMPLETE, always show the default page
-        if (linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE) {
+        if (
+            linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE &&
+            linkData.maxActionNumber === linkData.useActionCounter
+        ) {
             setShowDefaultPage(true);
             return;
         }
@@ -161,9 +183,7 @@ export default function ClaimPage() {
                     renderSkeleton()
                 ) : (
                     <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
-                        {(!identity || !linkUserState?.link_user_state) &&
-                        linkData &&
-                        showDefaultPage ? (
+                        {showDefaultPage ? (
                             <LinkCardPage linkData={linkData} onClickClaim={handleClickClaim} />
                         ) : (
                             <MultiStepForm
@@ -172,7 +192,7 @@ export default function ClaimPage() {
                                 <MultiStepForm.Header showIndicator={false} showHeader={false} />
                                 <MultiStepForm.Items>
                                     <MultiStepForm.Item name="Choose wallet">
-                                        <ClaimFormPage
+                                        <UseFormPage
                                             form={form}
                                             onSubmit={handleClaim}
                                             linkData={linkData}
@@ -194,6 +214,13 @@ export default function ClaimPage() {
                                                 linkData,
                                                 getToken,
                                             )}
+                                            showHeader={true}
+                                            headerColor={getHeaderInfoForLink(linkData).headerColor}
+                                            headerTextColor={
+                                                getHeaderInfoForLink(linkData).headerTextColor
+                                            }
+                                            headerText={getHeaderInfoForLink(linkData).headerText}
+                                            headerIcon={getHeaderInfoForLink(linkData).headerIcon}
                                             disabled={true}
                                         />
                                     </MultiStepForm.Item>

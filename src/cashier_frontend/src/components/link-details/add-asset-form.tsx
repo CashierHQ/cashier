@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { FC, useState, useEffect, useMemo } from "react";
 import { useFieldArray } from "react-hook-form";
 import AssetDrawer from "@/components/asset-drawer";
@@ -21,7 +37,7 @@ import TransactionToast from "../transaction/transaction-toast";
 import { Plus, Minus } from "lucide-react";
 import { AssetFormInput } from "./asset-form-input";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../ui/label";
@@ -59,7 +75,15 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         if (link?.maxActionNumber) {
             return Number(link.maxActionNumber);
         }
-        return isAirdrop ? 1 : 1;
+
+        if (!isAirdrop) {
+            return 1;
+        } else {
+            if (link?.maxActionNumber) return Number(link?.maxActionNumber);
+            else {
+                return 1;
+            }
+        }
     });
 
     useEffect(() => {
@@ -95,8 +119,10 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             link.linkType
         ) {
             // Create default values with the first available token if no values exist
-            console.log("link", link);
-            let label: string = getAssetLabelForLinkType(link.linkType);
+            let label: string = getAssetLabelForLinkType(
+                link.linkType,
+                allAvailableTokens[0].address,
+            );
             const tokenAddress = allAvailableTokens[0].address;
 
             if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
@@ -293,7 +319,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const handleAddAsset = () => {
         const nextToken = getNextAvailableToken();
         if (nextToken && link && link.linkType) {
-            const label = getAssetLabelForLinkType(link?.linkType);
+            const label = getAssetLabelForLinkType(link?.linkType, nextToken.address);
 
             assetFields.append({
                 tokenAddress: nextToken.address,
@@ -346,10 +372,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             if (!input) throw new Error("Input not found");
 
             console.log("Submitting form with input:", input);
-
-            const previousState = link.state;
-
-            if (!previousState) throw new Error("Previous state not found");
 
             const stateMachineResponse = await callLinkStateMachine({
                 linkId: link.id,
@@ -434,7 +456,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         // Check if link already has assets we can use instead of default values
         if (link.asset_info && link.asset_info.length > 0) {
             const firstAsset = link.asset_info[0];
-            let label: string = getAssetLabelForLinkType(link.linkType);
+            let label: string = getAssetLabelForLinkType(link.linkType, firstAsset.address);
 
             if (label == LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET) {
                 label =
@@ -457,7 +479,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
         // If no existing assets, create a default one
         const firstToken = allAvailableTokens[0];
-        const label = getAssetLabelForLinkType(link.linkType);
+        const label = getAssetLabelForLinkType(link.linkType, firstToken.address);
 
         assetFields.append({
             tokenAddress: firstToken.address,
@@ -562,9 +584,15 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 const hasEnoughBalance = Number(totalAmountNeeded) <= Number(token.amount);
 
                 if (!hasEnoughBalance) {
-                    const availableAmount = token?.amount ? Number(token.amount) : 0;
-                    const requestedAmount = Number(totalAmountNeeded);
-                    const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${availableAmount}, Requested: ${requestedAmount}`;
+                    const availableAmountInDecimal = token?.amount ? Number(token.amount) : 0;
+                    const requestedAmountInDecimal = Number(totalAmountNeeded);
+                    const availableAmount =
+                        availableAmountInDecimal / (Math.pow(10, token.decimals) || 1);
+                    const requestedAmount =
+                        requestedAmountInDecimal / (Math.pow(10, token.decimals) || 1);
+                    const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${formatNumber(
+                        availableAmount.toString(),
+                    )} , Requested: ${formatNumber(requestedAmount.toString())}`;
                     errorMessages.push(errorMsg);
                     isValid = false;
                 }

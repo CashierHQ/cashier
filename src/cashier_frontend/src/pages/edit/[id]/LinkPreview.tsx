@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 
@@ -10,7 +26,7 @@ import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { formatNumber } from "@/utils/helpers/currency";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import {
     ACTION_TYPE,
@@ -125,6 +141,41 @@ export default function LinkPreview({
         try {
             if (!link) throw new Error("Link is not defined");
             if (!action) throw new Error("Action is not defined");
+
+            // Validate user has sufficient balance for all assets in the link
+            if (action.intents && action.intents.length > 0) {
+                for (const intent of action.intents) {
+                    const token = getToken(intent.asset.address);
+
+                    // this like the useTokens didn't load all tokens
+                    if (!token || token.amount === undefined || token.amount === null) {
+                        throw new Error(`Could not find token balance for ${intent.asset.address}`);
+                    }
+
+                    const totalAmount = BigInt(intent.amount);
+
+                    const userBalance = token.amount;
+
+                    const tokenDecimals = token.decimals || 8;
+
+                    // Check if user has sufficient balance
+                    if (userBalance < totalAmount) {
+                        const formattedRequired = Number(totalAmount) / 10 ** tokenDecimals;
+                        const formattedBalance = Number(userBalance) / 10 ** tokenDecimals;
+
+                        throw new Error(
+                            `Insufficient balance for ${token.symbol}. Required: ${formattedRequired}, Available: ${formattedBalance}`,
+                        );
+                    }
+
+                    console.log("User has sufficient balance for", token.symbol);
+                    console.log(
+                        `Required: ${Number(totalAmount) / 10 ** tokenDecimals}, Available: ${
+                            Number(userBalance) / 10 ** tokenDecimals
+                        }`,
+                    );
+                }
+            }
 
             const start = Date.now();
 
@@ -323,7 +374,6 @@ export default function LinkPreview({
      * @returns {Promise<void>}
      */
     const handleSubmit = async () => {
-        console.log("handleSubmit");
         setIsDisabled(true);
 
         try {
@@ -422,44 +472,48 @@ export default function LinkPreview({
                         </button>
                     </div>
                     <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
-                        {enhancedAssets.map((asset, index) => {
-                            // Calculate token amount with proper decimals
-                            const token = getToken(asset.address);
+                        {enhancedAssets
+                            .sort((a, b) => {
+                                return (a.address ?? "").localeCompare(b.address ?? "");
+                            })
+                            .map((asset, index) => {
+                                // Calculate token amount with proper decimals
+                                const token = getToken(asset.address);
 
-                            const tokenDecimals = token?.decimals ?? 8;
-                            const totalTokenAmount =
-                                (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
-                                10 ** tokenDecimals;
-                            const tokenSymbol = token?.symbol;
+                                const tokenDecimals = token?.decimals ?? 8;
+                                const totalTokenAmount =
+                                    (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
+                                    10 ** tokenDecimals;
+                                const tokenSymbol = token?.symbol;
 
-                            // Calculate approximate USD value
-                            const tokenPrice = getTokenPrice(asset.address) || 0;
-                            const approximateUsdValue = totalTokenAmount * tokenPrice;
+                                // Calculate approximate USD value
+                                const tokenPrice = getTokenPrice(asset.address) || 0;
+                                const approximateUsdValue = totalTokenAmount * tokenPrice;
 
-                            return (
-                                <div key={index} className="flex justify-between items-center">
-                                    <div className="flex items-center gap-1.5">
-                                        <Avatar className="w-5 h-5 rounded-full overflow-hidden">
-                                            <AssetAvatarV2
-                                                token={token}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </Avatar>
-                                        <p className="text-[14px] font-normal">{tokenSymbol}</p>
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <div className="flex items-center gap-1">
-                                            <p className="text-[14px] font-normal">
-                                                {formatNumber(totalTokenAmount.toString())}
+                                return (
+                                    <div key={index} className="flex justify-between items-center">
+                                        <div className="flex items-center gap-1.5">
+                                            <Avatar className="w-5 h-5 rounded-full overflow-hidden">
+                                                <AssetAvatarV2
+                                                    token={token}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </Avatar>
+                                            <p className="text-[14px] font-normal">{tokenSymbol}</p>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <div className="flex items-center gap-1">
+                                                <p className="text-[14px] font-normal">
+                                                    {formatNumber(totalTokenAmount.toString())}
+                                                </p>
+                                            </div>
+                                            <p className="text-[10px] font-normal text-grey-400/50">
+                                                ~${formatNumber(approximateUsdValue.toString())}
                                             </p>
                                         </div>
-                                        <p className="text-[10px] font-normal text-grey-400/50">
-                                            ~${formatNumber(approximateUsdValue.toString())}
-                                        </p>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
                     </div>
                 </div>
             )}

@@ -1,7 +1,24 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
 import { ActionDto, IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
+import { FEE_CANISTER_ID } from "../../constant";
 
 describe("Test create and claim tip link", () => {
     const fixture = new LinkTestFixture();
@@ -20,7 +37,7 @@ describe("Test create and claim tip link", () => {
 
     const assetInfo: AssetInfo = {
         chain: "IC",
-        address: "x5qut-viaaa-aaaar-qajda-cai",
+        address: FEE_CANISTER_ID,
         label: "SEND_TIP_ASSET",
         amount_per_claim: BigInt(10_0000_0000),
     };
@@ -76,16 +93,16 @@ describe("Test create and claim tip link", () => {
         });
 
         it("should retrieve empty user state initially", async () => {
-            const userState = await fixture.getUserState(linkId, "Claim");
+            const userState = await fixture.getUserState(linkId, "Use");
             expect(userState).toEqual(undefined);
         });
 
         it("should create claim action", async () => {
-            claimActionId = await fixture.createAction(linkId, "Claim");
+            claimActionId = await fixture.createAction(linkId, "Use");
             expect(claimActionId).toBeTruthy();
 
             // Verify user state after creating claim
-            const userState = await fixture.getUserState(linkId, "Claim");
+            const userState = await fixture.getUserState(linkId, "Use");
             expect(userState).toBeTruthy();
 
             if (!userState) {
@@ -105,7 +122,7 @@ describe("Test create and claim tip link", () => {
 
             const balanceBefore = await fixture.tokenHelper!.balanceOf(bobAccount);
 
-            const userState = await fixture.getUserState(linkId, "Claim");
+            const userState = await fixture.getUserState(linkId, "Use");
             console.log("User state before claim:", userState);
             if (!userState) {
                 throw new Error("User state is empty");
@@ -116,13 +133,13 @@ describe("Test create and claim tip link", () => {
 
             let result: ActionDto | undefined;
             try {
-                result = await fixture.confirmAction(linkId, claimActionId, "Claim");
+                result = await fixture.confirmAction(linkId, claimActionId, "Use");
             } catch (e) {
                 console.error("Error during claim action:", e);
             }
-            console.log("Claim result:", result);
+            console.log("Use result:", result);
             if (!result) {
-                throw new Error("Claim result is empty");
+                throw new Error("Use result is empty");
             }
             expect(result.state).toEqual("Action_state_success");
             expect(result.intents[0].state).toEqual("Intent_state_success");
@@ -138,11 +155,11 @@ describe("Test create and claim tip link", () => {
         });
 
         it("should complete the claim process", async () => {
-            const result = await fixture.updateUserState(linkId, "Claim", "Continue");
+            const result = await fixture.updateUserState(linkId, "Use", "Continue");
 
             expect(result[0].link_user_state).toEqual("User_state_completed_link");
             expect(result[0].action.state).toEqual("Action_state_success");
-            expect(result[0].action.type).toEqual("Claim");
+            expect(result[0].action.type).toEqual("Use");
         });
     });
 
@@ -173,25 +190,25 @@ describe("Test create and claim tip link", () => {
             const claimResult = await fixture.processActionAnonymous(
                 linkClaimAnymousId,
                 "",
-                "Claim",
+                "Use",
                 walletAddress,
             );
 
             expect(claimResult).toBeTruthy();
-            expect(claimResult.type).toEqual("Claim");
+            expect(claimResult.type).toEqual("Use");
 
             // Complete anonymous claim
             const confirmResult = await fixture.processActionAnonymous(
                 linkClaimAnymousId,
                 claimResult.id,
-                "Claim",
+                "Use",
                 walletAddress,
             );
 
             expect(confirmResult.state).toEqual("Action_state_success");
 
             // Update user state to completed
-            fixture.updateUserState(linkClaimAnymousId, "Claim", "Continue", walletAddress);
+            fixture.updateUserState(linkClaimAnymousId, "Use", "Continue", walletAddress);
         });
     });
 });

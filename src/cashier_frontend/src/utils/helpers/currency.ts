@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * Formats a price string for display, handling various number sizes and formats.
  *
@@ -101,17 +117,32 @@ export function formatNumber(price: string): string {
             // Extract the significant digits
             const significantDigits = decimalPart.slice(nonZeroIndex);
 
+            // Truncate significant digits to 7 places
+            const truncatedSignificantDigits =
+                significantDigits.length > 7
+                    ? significantDigits.substring(0, 7)
+                    : significantDigits;
+
             // Return with subscript notation for zeros
-            return `${wholePart}.0${subscriptDigits}${significantDigits}`;
+            return `${wholePart}.0${subscriptDigits}${truncatedSignificantDigits}`;
         } else {
             // If there are fewer than 6 leading zeros, don't use subscript notation
+            // But still truncate to 7 decimal places if needed
+            if (decimalPart.length > 7) {
+                const truncatedDecimal = decimalPart.substring(0, 7);
+                return `${wholePart}.${truncatedDecimal}`;
+            }
             return decimalPrice;
         }
     }
     // Small but visible numbers between 0.0000001 and 0.001
     else if (numberPrice > 0.0000001 && numberPrice < 0.001) {
-        // Use direct string representation to avoid rounding to zero
-        // Just return the decimal form directly to preserve all significant digits
+        // Truncate to 7 decimal places if needed
+        const [wholePart, decimalPart] = decimalPrice.split(".");
+        if (decimalPart && decimalPart.length > 7) {
+            const truncatedDecimal = decimalPart.substring(0, 7);
+            return `${wholePart}.${truncatedDecimal}`;
+        }
         return decimalPrice;
     } else {
         // For numbers >= 0.001 that have more than 7 decimal places, truncate to 7 decimals

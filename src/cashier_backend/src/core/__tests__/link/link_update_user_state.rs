@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 mod tests {
     use std::collections::HashMap;
 
@@ -45,7 +61,7 @@ mod tests {
         let action = Action {
             id: action_id.clone(),
             link_id: link_id.clone(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Success,
             creator: user_id.clone(),
         };
@@ -95,7 +111,7 @@ mod tests {
         let output = result.unwrap().unwrap();
         assert_eq!(output.link_user_state, "User_state_completed_link");
         assert_eq!(output.action.state, ActionState::Success.to_string());
-        assert_eq!(output.action.r#type, ActionType::Claim.to_string());
+        assert_eq!(output.action.r#type, ActionType::Use .to_string());
     }
 
     #[tokio::test]

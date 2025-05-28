@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 export enum TEMPLATE {
     LEFT = "Left",
     RIGHT = "Right",
@@ -183,7 +199,6 @@ export enum TASK {
 export enum ACTION_TYPE {
     CREATE_LINK = "CreateLink",
     WITHDRAW_LINK = "Withdraw",
-    CLAIM_LINK = "Claim",
     USE_LINK = "Use",
 }
 
@@ -222,14 +237,14 @@ export const mapStringToLabel = (label: string) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getAssetLabelForLinkType = (linkType: string) => {
+export const getAssetLabelForLinkType = (linkType: string, address: string) => {
     switch (linkType) {
         case LINK_TYPE.SEND_TIP:
             return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
         case LINK_TYPE.SEND_AIRDROP:
             return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
         case LINK_TYPE.SEND_TOKEN_BASKET:
-            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET;
+            return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET + "_" + address;
         case LINK_TYPE.RECEIVE_PAYMENT:
             return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
         default:

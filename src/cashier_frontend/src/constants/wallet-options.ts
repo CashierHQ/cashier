@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { IdentityKitTransportType, InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 
 // Wallet options enum
@@ -32,12 +48,6 @@ export const walletDialogConfigOptions = [
         onClick: () => {}, // This will be set by the component
     },
     // Uncomment when Plug wallet support is added
-    // {
-    //     id: "plug",
-    //     name: "Plug",
-    //     icon: Plug.icon,
-    //     onClick: () => {}, // This will be set by the component
-    // },
 ];
 
 // Internet Identity wallet option for the header
@@ -45,7 +55,7 @@ export const headerWalletOptions = [
     {
         id: "InternetIdentity",
         name: "Internet Identity",
-        icon: InternetIdentity.icon!,
+        icon: "/icpLogo.png",
         onClick: () => {}, // This will be set by the component
     },
 ];

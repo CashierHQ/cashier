@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #[cfg(test)]
 mod tests {
     use crate::domains::action::ActionDomainLogic;
@@ -11,7 +27,7 @@ mod tests {
     fn create_test_action() -> Action {
         Action {
             id: uuid::Uuid::new_v4().to_string(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Created,
             creator: uuid::Uuid::new_v4().to_string(),
             link_id: uuid::Uuid::new_v4().to_string(),
@@ -99,7 +115,7 @@ mod tests {
     fn test_validate_action_claim_inactive_link() {
         let domain_logic = ActionDomainLogic::new();
         let mut action = create_test_action();
-        action.r#type = ActionType::Claim;
+        action.r#type = ActionType::Use ;
         let link = create_test_link(LinkState::ChooseLinkType, "test-creator");
 
         let result = domain_logic.validate_action(&action, &link);
@@ -114,7 +130,7 @@ mod tests {
     fn test_validate_action_claim_active_link() {
         let domain_logic = ActionDomainLogic::new();
         let mut action = create_test_action();
-        action.r#type = ActionType::Claim;
+        action.r#type = ActionType::Use ;
         let link = create_test_link(LinkState::Active, "different-creator");
 
         let result = domain_logic.validate_action(&action, &link);
@@ -164,7 +180,7 @@ mod tests {
             create_test_transaction(TransactionState::Created),
         ];
 
-        let result = domain_logic.calculate_intent_state(&transactions);
+        let result = domain_logic.roll_up_intent_state(&transactions);
 
         assert_eq!(
             result,
@@ -182,7 +198,7 @@ mod tests {
             create_test_transaction(TransactionState::Processing),
         ];
 
-        let result = domain_logic.calculate_intent_state(&transactions);
+        let result = domain_logic.roll_up_intent_state(&transactions);
 
         assert_eq!(
             result,
@@ -199,7 +215,7 @@ mod tests {
             create_test_transaction(TransactionState::Success),
         ];
 
-        let result = domain_logic.calculate_intent_state(&transactions);
+        let result = domain_logic.roll_up_intent_state(&transactions);
 
         assert_eq!(
             result,
@@ -216,7 +232,7 @@ mod tests {
             create_test_transaction(TransactionState::Processing),
         ];
 
-        let result = domain_logic.calculate_intent_state(&transactions);
+        let result = domain_logic.roll_up_intent_state(&transactions);
 
         assert_eq!(
             result,

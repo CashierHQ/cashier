@@ -1,6 +1,21 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import React, { useEffect, useState } from "react";
 import { IoWalletOutline } from "react-icons/io5";
-import { PiWallet } from "react-icons/pi";
 import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
@@ -14,17 +29,14 @@ import CustomConnectedWalletButton from "./connected-wallet-button";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { Principal } from "@dfinity/principal";
-import { FaCheck } from "react-icons/fa6";
 import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
-import { ClipboardIcon } from "lucide-react";
 import TokenItem from "./token-item";
-import { IoMdClose } from "react-icons/io";
 import WalletConnectDialog from "@/components/wallet-connect-dialog";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 import {
@@ -34,6 +46,9 @@ import {
     GoogleSigner,
 } from "@/constants/wallet-options";
 import { LuWallet2 } from "react-icons/lu";
+import { IoMdClose } from "react-icons/io";
+import { FaCheck } from "react-icons/fa";
+import { ClipboardIcon } from "lucide-react";
 
 interface ClaimFormOptionsProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -52,7 +67,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
     const { linkId } = useParams();
     const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
-    const { link } = useLinkAction(linkId, ACTION_TYPE.CLAIM_LINK);
+    const { link } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
     const { updateTokenInit } = useTokens();
 
     const isGoogleLogin = signer?.id === "GoogleSigner";
@@ -176,6 +191,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
         walletOption: WALLET_OPTIONS,
         title: string,
         iconOrImage?: string | JSX.Element,
+        disabled?: boolean,
     ) => {
         // Get the icon from centralized function if not provided
         const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
@@ -200,6 +216,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                         ) : null
                     }
                     handleConnect={() => handleConnectWallet(walletOption)}
+                    disabled={disabled}
                 />
             );
         }
@@ -210,6 +227,8 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                 handleConnect={() => handleConnectWallet(walletOption)}
                 image={typeof finalIconOrImage === "string" ? finalIconOrImage : undefined}
                 icon={typeof finalIconOrImage !== "string" ? finalIconOrImage : undefined}
+                disabled={disabled}
+                postfixText={disabled ? "Coming Soon" : undefined}
             />
         );
     };
@@ -219,9 +238,11 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
             <div id="asset-section" className="">
                 <h2 className="text-[16px] font-medium mb-2">{t("claim.asset")}</h2>
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
-                    {link?.asset_info.map((asset, index) => (
-                        <TokenItem key={index} asset={asset} />
-                    ))}
+                    {link?.asset_info
+                        .sort((a, b) => {
+                            return (a.address ?? "").localeCompare(b.address ?? "");
+                        })
+                        .map((asset, index) => <TokenItem key={index} asset={asset} />)}
                 </div>
             </div>
 
@@ -229,9 +250,9 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                 <h2 className="text-[16px] font-medium mb-2">{t("claim.receive_options")}</h2>
 
                 <div className="flex flex-col gap-2">
-                    {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login")}
+                    {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)}
                     {renderWalletButton(WALLET_OPTIONS.INTERNET_IDENTITY, "Internet Identity")}
-                    {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets")}
+                    {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets", undefined, true)}
                     {identity ? (
                         <WalletButton
                             title={t("claim.addressPlaceholder")}
@@ -279,9 +300,11 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
                                                 )
                                             }
                                             onRightIconClick={() => {
-                                                field.value
-                                                    ? field.onChange("")
-                                                    : handlePasteClick(field);
+                                                if (field.value) {
+                                                    field.onChange("");
+                                                } else {
+                                                    handlePasteClick(field);
+                                                }
                                             }}
                                             placeholder={t("claim.addressPlaceholder")}
                                             className="py-5 h-14 text-md rounded-xl placeholder:text-primary"

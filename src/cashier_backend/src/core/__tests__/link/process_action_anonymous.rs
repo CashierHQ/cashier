@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 mod tests {
     use candid::Principal;
     use cashier_types::{Action, ActionState, ActionType, LinkUserState};
@@ -33,7 +49,7 @@ mod tests {
 
         let temp_action = TemporaryAction {
             id: Uuid::new_v4().to_string(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Created,
             creator: format!("ANON#{}", wallet_address),
             link_id: link_id.clone(),
@@ -79,7 +95,7 @@ mod tests {
         assert!(result.is_ok());
         let action = result.unwrap();
         assert_eq!(action.state, ActionState::Created.to_string());
-        assert_eq!(action.r#type, ActionType::Claim.to_string());
+        assert_eq!(action.r#type, ActionType::Use .to_string());
     }
 
     #[tokio::test]
@@ -97,7 +113,7 @@ mod tests {
 
         let existing_action = ActionDto {
             id: Uuid::new_v4().to_string(),
-            r#type: ActionType::Claim.to_string(),
+            r#type: ActionType::Use .to_string(),
             state: ActionState::Processing.to_string(),
             creator: format!("ANON#{}", wallet_address),
             intents: vec![],
@@ -108,7 +124,7 @@ mod tests {
         when!(link_service.get_action_of_link).then_return(Some(Action {
             id: existing_action.id.clone(),
             link_id: link_id.clone(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use ,
             state: ActionState::Created,
             creator: existing_action.creator.clone(),
         }));
@@ -135,7 +151,7 @@ mod tests {
         assert!(result.is_ok());
         let action = result.unwrap();
         assert_eq!(action.state, ActionState::Processing.to_string());
-        assert_eq!(action.r#type, ActionType::Claim.to_string());
+        assert_eq!(action.r#type, ActionType::Use .to_string());
     }
 
     #[tokio::test]

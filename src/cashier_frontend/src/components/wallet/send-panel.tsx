@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Clipboard, ChevronLeft } from "lucide-react";
@@ -57,6 +73,8 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     const [isDisabled, setIsDisabled] = useState(true);
     const [addressType, setAddressType] = useState<"principal" | "account">("principal");
     const [showAssetDrawer, setShowAssetDrawer] = useState(false);
+    const [isUsd, setIsUsd] = useState(false);
+    const [usdAmount, setUsdAmount] = useState<string>("");
     const { navigateToPanel } = useWalletContext();
 
     // Token data from global store
@@ -194,9 +212,23 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     /**
      * Handle amount input changes
      */
-    const handleAmountInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const value = event.target.value;
-        setTokenAmount(value);
+    const handleAmountInputChange = (value: string) => {
+        if (isUsd && selectedToken?.usdConversionRate) {
+            // If in USD mode, convert USD to token amount
+            const usdValue = parseFloat(value);
+            if (!isNaN(usdValue)) {
+                const tokenValue = usdValue / selectedToken.usdConversionRate;
+                setTokenAmount(tokenValue.toString());
+                setUsdAmount(value);
+            }
+        } else {
+            // If in token mode, convert token to USD amount
+            setTokenAmount(value);
+            if (selectedToken?.usdConversionRate && !isNaN(parseFloat(value))) {
+                const usdValue = parseFloat(value) * selectedToken.usdConversionRate;
+                setUsdAmount(usdValue.toString());
+            }
+        }
 
         // Validate amount against available balance
         const numericValue = parseFloat(value);
@@ -213,6 +245,24 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     };
 
     /**
+     * Handle USD toggle
+     */
+    const handleToggleUsd = (value: boolean) => {
+        setIsUsd(value);
+        const currentAmount = form.getValues("assetNumber")?.toString();
+
+        if (value && selectedToken?.usdConversionRate && currentAmount) {
+            // Convert token amount to USD
+            const usdValue = parseFloat(currentAmount) * selectedToken.usdConversionRate;
+            setUsdAmount(usdValue.toString());
+        } else if (!value && usdAmount && selectedToken?.usdConversionRate) {
+            // Convert USD amount to token
+            const tokenValue = parseFloat(usdAmount) / selectedToken.usdConversionRate;
+            setTokenAmount(tokenValue.toString());
+        }
+    };
+
+    /**
      * Handle wallet address input changes
      */
     const handleSetWalletAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,7 +272,8 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     /**
      * Handle max amount button click
      */
-    const handleMaxAmount = () => {
+    const handleMaxAmount = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
         if (!selectedToken) return;
 
         if (maxAvailableAmount > 0) {
@@ -306,7 +357,15 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                             control={form.control}
                             render={() => (
                                 <FormItem>
-                                    <FormLabel>{t("wallet.send.sendToken")}</FormLabel>
+                                    <div className="flex w-full items-center">
+                                        <FormLabel>{t("wallet.send.sendToken")}</FormLabel>
+                                        <button
+                                            onClick={handleMaxAmount}
+                                            className="ml-auto text-[#36A18B] text-[12px] font-medium"
+                                        >
+                                            Max
+                                        </button>
+                                    </div>
                                     <FormControl>
                                         <AssetButton
                                             handleClick={() => setShowAssetDrawer(true)}
@@ -319,11 +378,14 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                                                 )
                                             }
                                             tokenValue={form.getValues("assetNumber")?.toString()}
-                                            onInputChange={(value) => setTokenAmount(value)}
-                                            isUsd={false}
+                                            usdValue={usdAmount}
+                                            onInputChange={handleAmountInputChange}
+                                            isUsd={isUsd}
                                             token={selectedToken}
-                                            onToggleUsd={() => {}}
-                                            canConvert={selectedToken?.usdEquivalent ? true : false}
+                                            onToggleUsd={handleToggleUsd}
+                                            canConvert={
+                                                selectedToken?.usdConversionRate ? true : false
+                                            }
                                             tokenDecimals={selectedToken?.decimals ?? 8}
                                             showPresetButtons={true}
                                             presetButtons={USD_AMOUNT_PRESETS.map(

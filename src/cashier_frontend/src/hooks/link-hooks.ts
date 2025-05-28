@@ -1,8 +1,24 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { UpdateLinkParams } from "./link-action-hooks";
+import { UpdateLinkParams } from "./useLinkAction";
 import LinkLocalStorageService, {
     LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service";
@@ -60,13 +76,9 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     return useQuery({
         queryKey: LINK_QUERY_KEYS.detail(linkId),
         queryFn: async () => {
-            console.log("[useLinkDetailQuery] linkId 1", linkId);
             if (!linkId) throw new Error("linkId are required");
 
-            console.log("[useLinkDetailQuery] linkId 2", linkId);
-
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
-                console.log("check point 1");
                 const linkLocalStorageService = new LinkLocalStorageService(
                     identity.getPrincipal().toString(),
                 );
@@ -86,13 +98,8 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
 
                 // this should support case identity is undefined = anonymous wallet
             } else {
-                console.log("check point 2");
-                console.log("[useLinkDetailQuery] identity", identity?.getPrincipal());
-                console.log("[useLinkDetailQuery] actionType", actionType);
-
                 const linkService = new LinkService(identity);
                 const res = await linkService.getLink(linkId, actionType);
-                console.log("[useLinkDetailQuery] link detail", res);
                 return res;
             }
         },
@@ -115,7 +122,7 @@ export function useUpdateLinkMutation() {
             const linkId = data.linkId;
 
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
-                const localStorageLink = linkLocalStorageService.updateStateMachine(
+                const localStorageLink = linkLocalStorageService.callUpdateLink(
                     data.linkId,
                     data.linkModel,
                     data.isContinue,
@@ -129,7 +136,8 @@ export function useUpdateLinkMutation() {
                     data.isContinue,
                 );
                 try {
-                    const localStorage = linkLocalStorageService.updateStateMachine(
+                    // link can be deleted, need to handle
+                    const localStorage = linkLocalStorageService.callUpdateLink(
                         localLinkId,
                         data.linkModel,
                         data.isContinue,

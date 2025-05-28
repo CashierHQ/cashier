@@ -2,6 +2,8 @@
 name = "token_storage"
 version = "0.1.0"
 edition = "2021"
+license = "GPL-3.0-or-later"
+license-file = "../../../LICENSE"
 
 [lib]
 crate-type = ["cdylib"]

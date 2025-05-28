@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { useEffect, useState } from "react";
 import { AssetAvatar, AssetAvatarV2 } from "../ui/asset-avatar";
 import Switch from "../ui/switch";
@@ -22,14 +38,15 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
 
     const { toggleTokenVisibility } = useTokens();
 
-    const handleToggle = (e: React.MouseEvent) => {
+    const handleToggle = async (e: React.MouseEvent) => {
         // Stop propagation to prevent the article onClick from firing
         e.stopPropagation();
 
         // Toggle the visibility state locally for immediate feedback
         const newVisibility = !isVisible;
+        console.log("Toggling token visibility:", token.id, newVisibility);
+        await toggleTokenVisibility(token.id, newVisibility);
         setIsVisible(newVisibility);
-        toggleTokenVisibility(token.id, !newVisibility);
     };
 
     return (

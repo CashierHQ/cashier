@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { LinkDetailModel } from "@/services/types/link.service.types";
@@ -25,8 +41,9 @@ import {
     useProcessActionAnonymous,
     useUpdateAction,
 } from "@/hooks/action-hooks";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
+import { getClaimButtonLabel } from "@/components/page/linkCardPage";
 
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -37,7 +54,7 @@ type ClaimFormPageProps = {
     onBack?: () => void;
 };
 
-export const ClaimFormPage: FC<ClaimFormPageProps> = ({
+export const UseFormPage: FC<ClaimFormPageProps> = ({
     form,
     linkData,
     onCashierError = () => {},
@@ -56,6 +73,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const [isDisabledButton, setIsDisabledButton] = useState(false);
     const [buttonText, setButtonText] = useState(t("claim.claim"));
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isInitialDataLoading, setIsInitialDataLoading] = useState(true);
 
     // Button state for confirmation drawer
     const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
@@ -75,16 +93,16 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
     const { data: linkUserState, refetch: refetchLinkUserState } = useLinkUserState(
         {
-            action_type: ACTION_TYPE.CLAIM_LINK,
+            action_type: ACTION_TYPE.USE_LINK,
             link_id: linkId ?? "",
             anonymous_wallet_address: "",
         },
         enableFetchLinkUserState,
     );
 
-    const { link, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
+    const { link, setAction, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
         linkId,
-        ACTION_TYPE.CLAIM_LINK,
+        ACTION_TYPE.USE_LINK,
     );
 
     // Update button text based on action state
@@ -107,37 +125,46 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         }
     }, [linkUserState, t]);
 
-    // Show confirmation drawer when action is available
+    // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
-        console.log("[hook] Link:", link);
-        console.log("[hook] Action:", linkUserState?.action);
-        if (linkUserState?.action) {
+        if (!isInitialDataLoading && linkUserState?.action) {
             setShowConfirmation(true);
         }
-    }, [linkUserState?.action, link]);
+    }, [linkUserState?.action, link, isInitialDataLoading]);
 
     // Fetch action data when identity changes
     useEffect(() => {
-        if (linkId && identity) {
-            refetchLinkUserState().catch((error) => {
-                console.error("Error fetching action:", error);
-            });
-        }
+        const fetchInitialData = async () => {
+            setIsInitialDataLoading(true);
+            setIsDisabledButton(true); // Disable button while loading
+            if (linkId && identity) {
+                try {
+                    await refetchLinkUserState();
+                } catch (error) {
+                    console.error("Error fetching action:", error);
+                } finally {
+                    setIsInitialDataLoading(false);
+                    setIsDisabledButton(false); // Explicitly re-enable button after loading
+                }
+            } else {
+                setIsInitialDataLoading(false);
+                setIsDisabledButton(false); // Explicitly re-enable button after loading
+            }
+        };
+
+        fetchInitialData();
     }, [identity, linkId, refetchLinkUserState]);
 
     // Polling effect to update action state during processing
     useEffect(() => {
         let intervalId: number | null = null;
 
-        console.log("isProcessing changed", isProcessing);
-
         if (isProcessing) {
             intervalId = setInterval(async () => {
-                console.log("link id", linkId);
-                console.log("action", linkUserState?.action);
-                await refetchLinkUserState().catch((error) => {
-                    console.error("Error fetching action:", error);
-                });
+                const res = await refetchLinkUserState();
+                if (res.data?.action) {
+                    setAction(res.data.action);
+                }
             }, 2000);
         }
 
@@ -158,7 +185,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
 
         return await createAction({
             linkId: linkId!,
-            actionType: ACTION_TYPE.CLAIM_LINK,
+            actionType: ACTION_TYPE.USE_LINK,
         });
     };
 
@@ -169,7 +196,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
         return await createActionAnonymous({
             linkId: linkId!,
             walletAddress: walletAddress,
-            actionType: ACTION_TYPE.CLAIM_LINK,
+            actionType: ACTION_TYPE.USE_LINK,
         });
     };
 
@@ -179,6 +206,11 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
      * @param {string} anonymousWalletAddress - The wallet address for anonymous users
      */
     const handleCreateAction = async (anonymousWalletAddress?: string) => {
+        // Don't proceed if initial data is still loading
+        if (isInitialDataLoading) {
+            return;
+        }
+
         // Validation
         onSubmit();
 
@@ -200,7 +232,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                 // Anonymous user flow
                 const anonymousLinkUserState = await fetchLinkUserState(
                     {
-                        action_type: ACTION_TYPE.CLAIM_LINK,
+                        action_type: ACTION_TYPE.USE_LINK,
                         link_id: linkId ?? "",
                         anonymous_wallet_address: anonymousWalletAddress,
                     },
@@ -214,7 +246,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     // Refetch to get the action
                     await fetchLinkUserState(
                         {
-                            action_type: ACTION_TYPE.CLAIM_LINK,
+                            action_type: ACTION_TYPE.USE_LINK,
                             link_id: linkId ?? "",
                             anonymous_wallet_address: anonymousWalletAddress,
                         },
@@ -264,7 +296,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                 // Step 1: Process the action
                 const processActionResult = await processAction({
                     linkId: linkId,
-                    actionType: action?.type ?? ACTION_TYPE.CLAIM_LINK,
+                    actionType: action?.type ?? ACTION_TYPE.USE_LINK,
                     actionId: action.id,
                 });
 
@@ -299,7 +331,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     linkId: link!.id,
                     actionId: action!.id,
                     walletAddress: anonymousWalletAddress ?? "",
-                    actionType: ACTION_TYPE.CLAIM_LINK,
+                    actionType: ACTION_TYPE.USE_LINK,
                 });
 
                 if (processActionResult) {
@@ -333,7 +365,7 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
     const handleUpdateLinkUserState = async () => {
         const result = await updateLinkUserState.mutateAsync({
             input: {
-                action_type: ACTION_TYPE.CLAIM_LINK,
+                action_type: ACTION_TYPE.USE_LINK,
                 link_id: linkId ?? "",
                 isContinue: true,
                 anonymous_wallet_address: anonymousWalletAddress,
@@ -353,9 +385,13 @@ export const ClaimFormPage: FC<ClaimFormPageProps> = ({
                     formData={linkData ?? ({} as LinkDetailModel)}
                     onSubmit={handleCreateAction}
                     onBack={onBack}
-                    isDisabled={isDisabledButton}
+                    isDisabled={isDisabledButton || isInitialDataLoading}
                     setDisabled={setIsDisabledButton}
-                    buttonText={buttonText}
+                    buttonText={
+                        isInitialDataLoading
+                            ? "Loading..."
+                            : getClaimButtonLabel(linkData ?? ({} as LinkDetailModel))
+                    }
                 />
             </div>
 

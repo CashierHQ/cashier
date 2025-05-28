@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { useLinkActionStore } from "@/stores/linkActionStore";
 import {
     useCreateNewLinkMutation,
@@ -30,7 +46,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         useLinkActionStore();
 
     const { getUserInput } = useLinkCreationFormStore();
-    const userInput = linkId ? getUserInput(linkId) : undefined;
 
     const linkDetailQuery = useLinkDetailQuery(linkId, actionType);
     const updateLinkMutation = useUpdateLinkMutation();
@@ -44,6 +59,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
 
     const callLinkStateMachine = async (params: UpdateLinkParams) => {
         const { linkId, linkModel, isContinue } = params;
+        console.log("callLinkStateMachine userInput", getUserInput(linkId));
         setIsUpdating(true);
         // this already invalidates the query no need to refetch
         try {
@@ -101,7 +117,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         try {
             // Clone the same logic from useLinkDetailQuery to ensure consistency
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
-                console.log("[refetchAction] Using local storage for", linkId);
                 const linkLocalStorageService = new LinkLocalStorageService(
                     identity.getPrincipal().toString(),
                 );
@@ -122,10 +137,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
                     throw new Error("Link not found in local storage");
                 }
             } else {
-                console.log("[refetchAction] Fetching from backend for", linkId);
-                console.log("[refetchAction] With identity", identity?.getPrincipal().toString());
-                console.log("[refetchAction] With actionType", actionType);
-
                 const linkService = new LinkService(identity);
                 const res = await linkService.getLink(linkId, actionType);
 
@@ -160,26 +171,18 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         if (linkId) {
             console.log("[useEffect] linkId changed:", linkId);
 
+            const userInput = linkId ? getUserInput(linkId) : undefined;
+
             // First update with user input if available
             if (userInput) {
                 const linkModel = mapUserInputItemToLinkDetailModel(userInput);
                 setLink(linkModel);
             }
-
-            // Then refetch data
-            const refetchData = async () => {
-                await refetchLinkDetail();
-                await refetchAction(linkId, actionType);
-            };
-
-            refetchData();
         }
     }, [linkId]);
 
     // Update state when identity changes
     useEffect(() => {
-        console.log("[useEffect] identity changed:", identity?.getPrincipal().toString());
-
         const refetchData = async () => {
             if (identity && linkId) {
                 await refetchAction(linkId, actionType);

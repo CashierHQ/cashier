@@ -1,10 +1,54 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use std::collections::HashMap;
+
+use cashier_types::ActionState;
 
 #[derive(Debug, Clone)]
 pub struct ActionData {
     pub action: cashier_types::Action,
     pub intents: Vec<cashier_types::Intent>,
     pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
+}
+
+pub struct RollUpStateResp {
+    pub previous_state: ActionState,
+    pub current_state: ActionState,
+    pub action: cashier_types::Action,
+    pub link_id: String,
+    pub action_type: cashier_types::ActionType,
+    pub action_id: String,
+    pub intents: Vec<cashier_types::Intent>,
+    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
+}
+
+impl From<(ActionData, ActionState)> for RollUpStateResp {
+    fn from((data, previous_state): (ActionData, ActionState)) -> Self {
+        Self {
+            previous_state,
+            current_state: data.action.state.clone(),
+            action: data.action.clone(),
+            link_id: data.action.link_id.clone(),
+            action_type: data.action.r#type.clone(),
+            action_id: data.action.id.clone(),
+            intents: data.intents.clone(),
+            intent_txs: data.intent_txs.clone(),
+        }
+    }
 }
 
 impl ActionData {

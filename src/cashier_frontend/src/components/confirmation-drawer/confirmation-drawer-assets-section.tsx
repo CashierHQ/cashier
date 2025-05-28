@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TransactionItem } from "@/components/transaction/transaction-item";
@@ -5,7 +21,7 @@ import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
 import { TASK, FEE_TYPE } from "@/services/types/enum";
 import { feeService } from "@/services/fee.service";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 
 type ConfirmationPopupAssetsSectionProps = {
     intents: IntentModel[];
@@ -118,16 +134,21 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
             </div>
 
             <ol className="flex flex-col gap-3 light-borders-green px-4 py-3 overflow-y-auto max-h-[200px]">
-                {sortedIntents.map((intent) => (
-                    <li key={intent.id}>
-                        <TransactionItem
-                            title={t("confirmation_drawer.asset_label")}
-                            intent={intent}
-                            isUsd={isUsd}
-                            fees={feesMap.get(intent.asset.address) || []}
-                        />
-                    </li>
-                ))}
+                {sortedIntents
+                    .sort((a, b) => {
+                        return (a.asset.address ?? "").localeCompare(b.asset.address ?? "");
+                    })
+                    .map((intent) => (
+                        <li key={intent.id}>
+                            <TransactionItem
+                                key={intent.id}
+                                title={t("confirmation_drawer.asset_label")}
+                                intent={intent}
+                                isUsd={isUsd}
+                                fees={feesMap.get(intent.asset.address) || []}
+                            />
+                        </li>
+                    ))}
             </ol>
         </section>
     );

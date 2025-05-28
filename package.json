@@ -4,6 +4,7 @@
         "npm": ">=7.0.0"
     },
     "name": "cashier",
+    "license": "GPL-3.0-or-later",
     "scripts": {
         "prebuild": "make g",
         "build": "npm run build --workspaces --if-present",
@@ -29,7 +30,7 @@
         "src/cashier_frontend"
     ],
     "devDependencies": {
-        "@hadronous/pic": "^0.11.0",
+        "@dfinity/pic": "^0.13.1",
         "@types/jest": "^29.5.14",
         "@types/node": "^22.13.2",
         "dotenv": "^16.4.5",

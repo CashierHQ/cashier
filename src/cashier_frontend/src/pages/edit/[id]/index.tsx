@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { useEffect, useState } from "react";
 import LinkTemplate from "./LinkTemplate";
 import LinkDetails from "./LinkDetails";
@@ -10,6 +26,7 @@ import {
     ACTION_STATE,
     ACTION_TYPE,
     LINK_STATE,
+    LINK_TYPE,
     mapStringToLinkState,
     mapStringToLinkType,
 } from "@/services/types/enum";
@@ -19,7 +36,7 @@ import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 export function stateToStepIndex(state: string | undefined): number {
@@ -64,9 +81,15 @@ export default function LinkPage() {
           ? getUserInput(linkId)
           : undefined;
 
+    // NOTE: this hook might conflict with LinkPreview step, use it carefully
     useEffect(() => {
         // Reset button state when component mounts
-        resetButtonState();
+        if (link) {
+            // not reset in Preview state, because it handled inside the component
+            if (link.state !== LINK_STATE.PREVIEW && link.state !== LINK_STATE.CREATE_LINK) {
+                resetButtonState();
+            }
+        }
 
         if (link) {
             const userInput: Partial<UserInputItem> = {
@@ -82,6 +105,7 @@ export default function LinkPage() {
                     chain: asset.chain!,
                     label: asset.label!,
                 })),
+                maxActionNumber: link.maxActionNumber,
             };
 
             addUserInput(link.id, userInput);
@@ -107,11 +131,7 @@ export default function LinkPage() {
                 } else {
                     const res = await callLinkStateMachine({
                         linkId: linkId,
-                        linkModel: {
-                            ...input,
-                            // TODO: remove this, not using 1 as default
-                            maxActionNumber: BigInt(1),
-                        },
+                        linkModel: input,
                         isContinue: false,
                     });
 
@@ -218,7 +238,13 @@ export default function LinkPage() {
                                     />
                                 </MultiStepForm.Item>
 
-                                <MultiStepForm.Item name={t("create.addAssets")}>
+                                <MultiStepForm.Item
+                                    name={
+                                        link?.linkType === LINK_TYPE.RECEIVE_PAYMENT
+                                            ? t("create.selectAssets")
+                                            : t("create.addAssets")
+                                    }
+                                >
                                     <LinkDetails />
                                 </MultiStepForm.Item>
 

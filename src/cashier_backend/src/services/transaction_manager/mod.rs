@@ -1,16 +1,35 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use std::{collections::HashMap, str::FromStr, time::Duration};
 
 use candid::Nat;
 use cashier_types::{
-    ActionState, ActionType, Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve,
-    Icrc2TransferFrom, Intent, IntentTask, LinkAction, Protocol, Transaction, TransactionState,
+    Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
+    IntentTask, LinkAction, Protocol, Transaction, TransactionState,
 };
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::transfer_from::TransferFromArgs,
 };
 
-use super::{action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService};
+use super::{
+    action::ActionService, adapter::IntentAdapterImpl, link::v2::LinkService,
+    transaction::TransactionService,
+};
 use crate::{
     constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
     core::action::types::ActionDto,
@@ -42,6 +61,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     action_service: ActionService<E>,
     ic_env: E,
     icrc_service: IcrcService,
+    link_service: LinkService<E>,
     // Adapter registry
     intent_adapter: IntentAdapterImpl<E>,
 }
@@ -53,6 +73,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         action_service: ActionService<E>,
         ic_env: E,
         icrc_service: IcrcService,
+        link_service: LinkService<E>,
         intent_adapter: IntentAdapterImpl<E>,
     ) -> Self {
         Self {
@@ -60,6 +81,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             action_service,
             ic_env,
             icrc_service,
+            link_service,
             intent_adapter,
         }
     }
@@ -70,6 +92,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             ActionService::get_instance(),
             IcEnvironment::new(),
             IcrcService::new(),
+            LinkService::get_instance(),
             IntentAdapterImpl::new(),
         )
     }
@@ -212,44 +235,41 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                 ))
                             })?;
 
-                        info!(
-                            "[execute_canister_tx] intent_belong: {:?}, task {:?}, state {:?}",
-                            intent_belong.id, intent_belong.task, intent_belong.state
-                        );
-
                         if intent_belong.task == IntentTask::TransferWalletToTreasury {
-                            // Get mutable access to the transaction you need to update
-                            if txs.len() == 2 {
-                                // Clone the transaction first since we can't mutate it directly
-                                let mut approve_tx_clone = txs[0].clone();
-                                info!(
-                                    "[execute_canister_tx] approve tx: {:?}, type {:?}, state {:?}",
-                                    approve_tx_clone.id,
-                                    approve_tx_clone.get_tx_type(),
-                                    approve_tx_clone.state
-                                );
-                                self.update_tx_state(
-                                    &mut approve_tx_clone,
-                                    &TransactionState::Success,
-                                )
-                                .map_err(|e| {
-                                    CanisterError::HandleLogicError(format!(
-                                        "Error updating tx state: {}",
-                                        e
-                                    ))
-                                })?;
-
-                                self.update_tx_state(
-                                    &mut approve_tx_clone,
-                                    &TransactionState::Success,
-                                )
-                                .map_err(|e| {
-                                    CanisterError::HandleLogicError(format!(
-                                        "Error updating tx state: {}",
-                                        e
-                                    ))
-                                })?;
+                            if txs.len() == 2 && tx.state == TransactionState::Success {
+                                // Find the transaction that is not the current one
+                                let other_tx = txs.iter().find(|t| t.id != tx.id);
+                                if let Some(other_tx) = other_tx {
+                                    let mut other_tx_clone = other_tx.clone();
+                                    info!(
+                                            "[execute_canister_tx] other tx: {:?}, type {:?}, state {:?}",
+                                            other_tx_clone.id,
+                                            other_tx_clone.get_tx_type(),
+                                            other_tx_clone.state
+                                        );
+                                    self.update_tx_state(
+                                        &mut other_tx_clone,
+                                        &TransactionState::Success,
+                                    )
+                                    .map_err(|e| {
+                                        CanisterError::HandleLogicError(format!(
+                                            "Error updating tx state: {}",
+                                            e
+                                        ))
+                                    })?;
+                                } else {
+                                    error!(
+                                            "[execute_canister_tx] Error: Could not find other transaction"
+                                        );
+                                    return Err(CanisterError::HandleLogicError(
+                                        "Could not find other transaction".to_string(),
+                                    ));
+                                }
                             } else {
+                                error!(
+                                        "[execute_canister_tx] Error: Expected 2 transactions, found {}",
+                                        txs.len()
+                                    );
                                 return Err(CanisterError::HandleLogicError(
                                     "Invalid approve tx".to_string(),
                                 ));
@@ -403,20 +423,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 ));
             }
         }
-    }
-
-    /// Process transaction execution
-    pub fn execute_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
-        self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
-            CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {}", e))
-        })?;
-
-        self.update_tx_state(tx, &TransactionState::Processing)
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
-            })?;
-
-        Ok(())
     }
 
     pub fn is_group_has_dependency(
@@ -743,30 +749,14 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     ///
     /// # Arguments
     /// * `args` - UpdateActionArgs containing action_id, link_id, and execute_wallet_tx flag
-    /// * `callback` - Function called with (before_state, after_state, link_id, action_type, action_id)
     ///
     /// # Returns
     /// * `Result<ActionDto, CanisterError>` - The updated action data or an error
-    pub async fn update_action<F>(
-        &self,
-        args: UpdateActionArgs,
-        callback: Option<F>,
-    ) -> Result<ActionDto, CanisterError>
-    where
-        // args
-        // 1. update_action_before_update
-        // 2. update_action_after_update
-        // 3. link id
-        // 4. action type
-        // 5. action id
-        F: Fn(ActionState, ActionState, String, ActionType, String) + 'static + Send,
-    {
+    pub async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
         let action_data = self
             .action_service
             .get_action_data(args.action_id.clone())
             .map_err(|e| CanisterError::NotFound(e))?;
-
-        let action_state_before_update = action_data.action.state.clone();
 
         let txs = utils::collections::flatten_hashmap_values(&action_data.intent_txs);
 
@@ -872,24 +862,40 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
             // Wallet tx are executed by the client, when it receives the ICRC-112 request this method returns
             // and tx status is 'processing' until client updates tx manager with response of ICRC-112
-            for mut tx in eligible_wallet_txs {
-                self.execute_tx(&mut tx).map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Error executing tx: {}", e))
+            for tx in eligible_wallet_txs.iter_mut() {
+                self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+                    CanisterError::HandleLogicError(format!(
+                        "Error spawning tx timeout task: {}",
+                        e
+                    ))
                 })?;
+
+                self.update_tx_state(tx, &TransactionState::Processing)
+                    .map_err(|e| {
+                        CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                    })?;
             }
 
             // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
             // First loop: update the transactions to processing state
             for tx in eligible_canister_txs.iter_mut() {
-                self.execute_tx(tx).map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Error executing tx: {}", e))
+                self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
+                    CanisterError::HandleLogicError(format!(
+                        "Error spawning tx timeout task: {}",
+                        e
+                    ))
                 })?;
+
+                self.update_tx_state(tx, &TransactionState::Processing)
+                    .map_err(|e| {
+                        CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                    })?;
             }
 
             // Second loop: execute the transactions
-            for mut tx in eligible_canister_txs {
+            for tx in eligible_canister_txs.iter_mut() {
                 // this method update the tx state to success or fail inside of it
-                self.execute_canister_tx(&mut tx).await?;
+                self.execute_canister_tx(tx).await?;
             }
         }
 
@@ -899,26 +905,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .map_err(|e| CanisterError::InvalidDataError(format!("Error getting action: {}", e)))?;
 
         let action_dto = ActionDto::build(&get_resp, request);
-
-        let callback_clone = callback;
-        if callback_clone.is_some() {
-            ic_cdk::spawn(async move {
-                let action_after = get_resp.action;
-                let action_state_after_update = action_after.state.clone();
-                let action_type = action_after.r#type.clone();
-                let action_id = action_after.id.clone();
-
-                let unwrap_callback = callback_clone.unwrap();
-
-                unwrap_callback(
-                    action_state_before_update,
-                    action_state_after_update,
-                    args.link_id.clone(),
-                    action_type,
-                    action_id,
-                );
-            });
-        }
 
         Ok(action_dto)
     }
@@ -931,7 +917,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // update tx state
         self.transaction_service.update_tx_state(tx, state)?;
         // roll up
-        self.action_service
+        let roll_up_resp = self
+            .action_service
             .roll_up_state(tx.id.clone())
             .map_err(|e| {
                 CanisterError::HandleLogicError(format!(
@@ -939,6 +926,15 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                     e
                 ))
             })?;
+
+        // Pass the action state info to link_handle_tx_update
+        self.link_service.link_handle_tx_update(
+            roll_up_resp.previous_state,
+            roll_up_resp.current_state,
+            roll_up_resp.link_id,
+            roll_up_resp.action_type,
+            roll_up_resp.action_id,
+        )?;
 
         Ok(())
     }

@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     CreateLinkInput,
@@ -11,7 +27,7 @@ import {
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { parseResultResponse } from "../../utils/parser";
 import { TokenHelper } from "../../utils/token-helper";
 import { Principal } from "@dfinity/principal";
@@ -48,7 +64,7 @@ describe("Test create airdrop and claim", () => {
 
     const assetInfoTest = {
         chain: "IC",
-        address: "x5qut-viaaa-aaaar-qajda-cai",
+        address: FEE_CANISTER_ID,
         payment_amount: BigInt(1_0000_0000),
         // total 10
         label: "RECEIVE_PAYMENT_ASSET",
@@ -228,10 +244,10 @@ describe("Test create airdrop and claim", () => {
             await executeHelper.triggerTransaction();
 
             const link_helper = new LinkHelper(pic);
-            link_helper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
+            link_helper.setupActor(FEE_CANISTER_ID);
 
             const balanceOfLink = await link_helper.checkAccountBalanceWithSubAccount(
-                "x5qut-viaaa-aaaar-qajda-cai",
+                FEE_CANISTER_ID,
                 linkId,
             );
 
@@ -369,7 +385,7 @@ describe("Test create airdrop and claim", () => {
             });
 
             const link_helper = new LinkHelper(pic);
-            link_helper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
+            link_helper.setupActor(FEE_CANISTER_ID);
 
             const balanceOfLink = await link_helper.checkAccountBalanceWithSubAccount(
                 "jjio5-5aaaa-aaaam-adhaq-cai",

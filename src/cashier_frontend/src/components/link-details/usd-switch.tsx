@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { formatNumber } from "@/utils/helpers/currency";
 import { Repeat2 } from "lucide-react";
@@ -35,11 +51,6 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
 }) => {
     const { t } = useTranslation();
 
-    const formatAmount = (value?: number, decimals: number = 3) => {
-        if (value === undefined || isNaN(value)) return "0";
-        return value.toFixed(decimals);
-    };
-
     // Calculate both USD and token amounts from the current amount
     const conversionResult = useMemo((): ConversionResult => {
         const tokenToUsd = token.usdConversionRate;
@@ -60,7 +71,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
         return {
             tokenAmount,
             usdAmount,
-            tokenFormatted: formatAmount(tokenAmount, tokenDecimals),
+            tokenFormatted: formatNumber(tokenAmount.toString()),
             usdFormatted: formatNumber(usdAmount.toString()),
         };
     }, [amount, token.usdConversionRate, tokenDecimals, usdDecimals]);
@@ -68,6 +79,8 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
     // Choose what to display based on isUsd
     const valueToDisplay = useMemo(() => {
         if (isUsd) {
+            console.log("USD amount:", conversionResult.usdAmount);
+            console.log("USD formatted:", amount);
             return `${formatNumber(amount?.toString() || "0")} ${symbol}`;
         }
 

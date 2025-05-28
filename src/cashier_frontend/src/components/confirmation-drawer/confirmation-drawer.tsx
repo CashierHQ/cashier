@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
@@ -11,7 +27,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { isCashierError } from "@/services/errorProcess.service";
 import { useIdentity } from "@nfid/identitykit/react";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
@@ -157,7 +173,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                 linkId: link!.id,
                 actionId: action!.id,
                 walletAddress: anonymousWalletAddress ?? "",
-                actionType: ACTION_TYPE.CLAIM_LINK,
+                actionType: ACTION_TYPE.USE_LINK,
             });
             if (processActionResult) {
                 console.log(
@@ -235,7 +251,7 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const startTransaction = async () => {
         try {
             if (action?.state != ACTION_STATE.SUCCESS) {
-                if (action?.type === ACTION_TYPE.CLAIM_LINK) {
+                if (action?.type === ACTION_TYPE.USE_LINK) {
                     await handleProcessClaimAction();
                 } else {
                     await handleProcessCreateAction();

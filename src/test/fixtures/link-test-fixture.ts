@@ -1,6 +1,22 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { resolve } from "path";
-import { Actor, createIdentity, PocketIc, SubnetStateType } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc, SubnetStateType } from "@dfinity/pic";
 import { Principal } from "@dfinity/principal";
 import {
     idlFactory,
@@ -23,6 +39,7 @@ import LinkHelper from "../utils/link-helper";
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { Identity } from "@dfinity/agent";
 import { Icrc112ExecutorV2 } from "../utils/icrc-112-v2";
+import { FEE_CANISTER_ID } from "../constant";
 
 export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
 
@@ -93,6 +110,11 @@ export class LinkTestFixture {
                     },
                 },
             ],
+            nns: {
+                state: {
+                    type: SubnetStateType.New,
+                },
+            },
         });
 
         // Set time and tick
@@ -166,14 +188,14 @@ export class LinkTestFixture {
         }
 
         const canisterSubnetId2 = await this.pic.getCanisterSubnetId(
-            Principal.fromText("x5qut-viaaa-aaaar-qajda-cai"),
+            Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
         );
 
-        console.log("subnets x5qut-viaaa-aaaar-qajda-cai", canisterSubnetId2?.toText());
+        console.log("subnets ryjl3-tyaaa-aaaaa-aaaba-cai", canisterSubnetId2?.toText());
 
         // Setup link helper
         this.linkHelper = new LinkHelper(this.pic);
-        this.linkHelper.setupActor("x5qut-viaaa-aaaar-qajda-cai");
+        this.linkHelper.setupActor("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
         // Advance time to ensure we're ready for transactions
         await this.pic.advanceTime(advanceTimeAfterSetup);
@@ -401,13 +423,12 @@ export class LinkTestFixture {
         await executor.executeIcrc1Transfer(options?.icrc1TransferAmount);
         await executor.executeIcrc2Approve();
 
+        await executor.triggerTransaction();
         await this.actor.update_action({
             action_id: actionId,
             link_id: linkId,
             external: true,
         });
-
-        await executor.triggerTransaction();
     }
 
     async executeIcrc112V2(
@@ -616,7 +637,7 @@ export class LinkTestFixture {
 
         const defaultAssetInfo: AssetInfo = {
             chain: "IC",
-            address: "x5qut-viaaa-aaaar-qajda-cai",
+            address: FEE_CANISTER_ID,
             label: "SEND_TIP_ASSET",
             amount_per_claim: BigInt(10_0000_0000),
         };
@@ -648,7 +669,7 @@ export class LinkTestFixture {
         await this.advanceTime(1 * 60 * 1000);
 
         // Create claim action
-        const createdClaimActionId = await this.createAction(createdLinkId, "Claim");
+        const createdClaimActionId = await this.createAction(createdLinkId, "Use");
 
         // Process claim action
         const bobAccount = {
@@ -660,13 +681,13 @@ export class LinkTestFixture {
         const balanceBefore = await this.tokenHelper!.balanceOf(bobAccount);
 
         // Confirm the claim
-        const claimResult = await this.confirmAction(createdLinkId, createdClaimActionId, "Claim");
+        const claimResult = await this.confirmAction(createdLinkId, createdClaimActionId, "Use");
         if (claimResult.state !== "Action_state_success") {
-            throw new Error(`Claim action failed. State: ${claimResult.state}`);
+            throw new Error(`Use action failed. State: ${claimResult.state}`);
         }
 
         // Complete the claim process
-        await this.updateUserState(createdLinkId, "Claim", "Continue");
+        await this.updateUserState(createdLinkId, "Use", "Continue");
 
         // back to Alice
         this.switchToUser("alice");
@@ -676,6 +697,14 @@ export class LinkTestFixture {
             claimActionId: createdClaimActionId,
             balanceBefore,
         };
+    }
+
+    async advanceTimeAndTick(milliseconds: number): Promise<void> {
+        if (!this.pic) {
+            throw new Error("PocketIc is not initialized");
+        }
+        await this.pic.advanceTime(milliseconds);
+        await this.pic.tick(1);
     }
 
     // Complete link creation flow in one function
@@ -692,13 +721,17 @@ export class LinkTestFixture {
         // Create link
         const linkId = await this.createLinkV2(linkType, config, assets, maxUseCount);
 
+        await this.advanceTimeAndTick(2000);
+
         // Create action
         const actionId = await this.createAction(linkId, "CreateLink");
 
-        console.log("actionId", actionId);
+        await this.advanceTimeAndTick(2000);
 
         // Confirm action
         const confirmResult = await this.confirmAction(linkId, actionId, "CreateLink");
+
+        await this.advanceTimeAndTick(2000);
 
         // Execute ICRC-112 requests
         if (confirmResult.icrc_112_requests && confirmResult.icrc_112_requests[0]) {
@@ -722,6 +755,8 @@ export class LinkTestFixture {
                 await this.executeIcrc112V2(requests, linkId, actionId, this.identities.alice);
             }
         }
+
+        await this.advanceTimeAndTick(2000);
 
         // Activate link
         await this.activateLink(linkId);

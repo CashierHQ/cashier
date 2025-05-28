@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { create } from "zustand";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AddTokenInput } from "../../../declarations/token_storage/token_storage.did";
@@ -8,9 +24,6 @@ import { Chain } from "@/services/types/link.service.types";
 interface TokenState {
     // Original data
     rawTokenList: FungibleToken[];
-
-    // Filtered data
-    userTokens: FungibleToken[];
 
     // Filter settings
     filters: TokenFilters;
@@ -26,15 +39,13 @@ interface TokenState {
 
     // Setters
     setRawTokenList: (tokens: FungibleToken[]) => void;
-    setUserTokens: (tokens: FungibleToken[]) => void;
-    setFilteredTokens: (tokens: FungibleToken[]) => void;
-    setFilters: (filters: TokenFilters) => void;
     setIsLoading: (isLoading: boolean) => void;
     setIsLoadingBalances: (isLoadingBalances: boolean) => void;
     setIsLoadingPrices: (isLoadingPrices: boolean) => void;
     setIsSyncPreferences: (isSyncPreferences: boolean) => void;
     setIsImporting: (isImporting: boolean) => void;
     setError: (error: Error | null) => void;
+    setFilters: (filters: Partial<TokenFilters>) => void;
 
     // Getters
     getToken(tokenAddress: string): FungibleToken | undefined;
@@ -83,25 +94,24 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     setRawTokenList: (tokens) => {
         set({ rawTokenList: tokens });
     },
-    setUserTokens: (tokens) => {
-        set({ userTokens: tokens });
-    },
-    setFilteredTokens: (filteredTokens) => set({ userTokens: filteredTokens }),
-    setFilters: (filters) => {
-        set({ filters });
-    },
     setIsLoading: (isLoading) => set({ isLoading }),
     setIsLoadingBalances: (isLoadingBalances) => set({ isLoadingBalances }),
     setIsLoadingPrices: (isLoadingPrices) => set({ isLoadingPrices }),
     setIsSyncPreferences: (isSyncPreferences) => set({ isSyncPreferences }),
     setIsImporting: (isImporting) => set({ isImporting }),
     setError: (error) => set({ error }),
+    setFilters: (filters) => {
+        set((state) => ({
+            filters: {
+                ...state.filters,
+                ...filters,
+            },
+        }));
+    },
 
     // Getters
     getToken: (tokenAddress) => {
-        const { userTokens, rawTokenList } = get();
-        const token = userTokens.find((token) => token.address === tokenAddress);
-        if (token) return token;
+        const { rawTokenList } = get();
         const tokenFromRawList = rawTokenList.find((token) => token.address === tokenAddress);
         return tokenFromRawList;
     },
@@ -125,9 +135,15 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     },
 
     getDisplayTokens: () => {
-        const { userTokens: tokens, filters } = get();
+        const { rawTokenList, filters } = get();
 
-        let filtered = tokens.slice();
+        // Return early if no tokens to filter
+        if (!rawTokenList || rawTokenList.length === 0) {
+            return [];
+        }
+
+        // Create a shallow copy of the array for filtering
+        let filtered = rawTokenList.slice();
 
         // Apply hide zero balance filter
         if (filters.hideZeroBalance) {
@@ -146,16 +162,14 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         }
 
         // Apply chain filter if any chains are selected
-        if (filters.selectedChain.length > 0) {
+        if (filters.selectedChain && filters.selectedChain.length > 0) {
             filtered = filtered.filter((token) =>
                 filters.selectedChain.includes(mapChainToString(token.chain)),
             );
         }
 
-        // Apply hidden tokens filter
-        if (filters.hidden_tokens && filters.hidden_tokens.length > 0) {
-            filtered = filtered.filter((token) => !filters.hidden_tokens.includes(token.id));
-        }
+        // Filter enabled tokens only
+        filtered = filtered.filter((token) => token.enabled);
 
         // Sort tokens by USD equivalent, then by balance
         filtered.sort((a, b) => {

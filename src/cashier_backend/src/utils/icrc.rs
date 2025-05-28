@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use candid::{Nat, Principal};
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
@@ -136,11 +152,15 @@ impl IcrcService {
         match res {
             Ok((call_res,)) => match call_res {
                 Ok(_block_id) => Ok(_block_id),
-                Err(error) => Err(CanisterError::CanisterCallError {
-                    method: "icrc2_transfer_from".to_string(),
-                    canister_id: token_service.get_canister_id().to_string(),
-                    message: error.to_string(),
-                }),
+                Err(error) => match error {
+                    // likely a duplicate transfer, return the original transfer id
+                    TransferFromError::Duplicate { duplicate_of } => return Ok(duplicate_of),
+                    _ => Err(CanisterError::CanisterCallError {
+                        method: "icrc2_transfer_from".to_string(),
+                        canister_id: token_service.get_canister_id().to_string(),
+                        message: error.to_string(),
+                    }),
+                },
             },
             Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
                 method: "icrc2_transfer_from".to_string(),

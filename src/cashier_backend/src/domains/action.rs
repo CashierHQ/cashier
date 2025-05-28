@@ -1,9 +1,25 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use cashier_types::{
     Action, ActionIntent, ActionState, ActionType, Intent, IntentState, IntentTask, Link,
     LinkState, Transaction, TransactionState,
 };
 
-use crate::{error, types::error::CanisterError};
+use crate::types::error::CanisterError;
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -27,7 +43,7 @@ impl ActionDomainLogic {
                     ));
                 }
             }
-            ActionType::Claim | ActionType::Use => {
+            ActionType::Use => {
                 // Anyone can claim, but only if link is active
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
@@ -70,7 +86,7 @@ impl ActionDomainLogic {
         match (&action.r#type, &intent.task) {
             (ActionType::CreateLink, IntentTask::TransferWalletToLink) => Ok(()),
             (ActionType::CreateLink, IntentTask::TransferWalletToTreasury) => Ok(()),
-            (ActionType::Claim, IntentTask::TransferLinkToWallet) => Ok(()),
+            (ActionType::Use, IntentTask::TransferLinkToWallet) => Ok(()),
             // Other valid combinations...
             _ => Err(CanisterError::ValidationErrors(format!(
                 "Intent task {:?} is not valid for action type {:?}",
@@ -80,7 +96,7 @@ impl ActionDomainLogic {
     }
 
     // Calculate intent state based on its transactions
-    pub fn calculate_intent_state(&self, transactions: &[Transaction]) -> IntentState {
+    pub fn roll_up_intent_state(&self, transactions: &[Transaction]) -> IntentState {
         if transactions
             .iter()
             .all(|tx| tx.state == TransactionState::Created)
@@ -102,7 +118,7 @@ impl ActionDomainLogic {
     }
 
     // Calculate action state based on intents
-    pub fn calculate_action_state(&self, intents: &[Intent]) -> ActionState {
+    pub fn roll_up_action_state(&self, intents: &[Intent]) -> ActionState {
         if intents
             .iter()
             .all(|intent| intent.state == IntentState::Created)

@@ -1,19 +1,34 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
-import { LINK_TYPE } from "@/services/types/enum";
+import { getAssetLabelForLinkType, LINK_TYPE } from "@/services/types/enum";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import useToast from "@/hooks/useToast";
 import TransactionToast from "@/components/transaction/transaction-toast";
-import { useLinkAction } from "@/hooks/link-action-hooks";
+import { useLinkAction } from "@/hooks/useLinkAction";
 import { stateToStepIndex } from ".";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     const supportedLinkTypes = [
@@ -62,12 +77,18 @@ export default function LinkTemplate({
                 return;
             }
 
+            // force the asset should change the label if transition from multiple to single asset
             if (
                 !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
                 currentLink.assets &&
                 currentLink.assets.length > 1
             ) {
-                currentLink.assets = [currentLink.assets[0]];
+                const forceNewAsset = currentLink.assets[0];
+                forceNewAsset.label = getAssetLabelForLinkType(
+                    currentLink.linkType as LINK_TYPE,
+                    forceNewAsset.address,
+                );
+                currentLink.assets = [forceNewAsset];
             }
 
             try {

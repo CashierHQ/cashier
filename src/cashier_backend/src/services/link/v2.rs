@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use std::str::FromStr;
 
 use candid::Principal;
@@ -87,6 +103,33 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok(link)
     }
 
+    // Helper methods to create common intent types
+    fn create_basic_intent(&self, task: IntentTask, label: String) -> Intent {
+        let ts = self.ic_env.time();
+        let mut intent = Intent::default();
+        let transfer_data = IntentType::default_transfer();
+        intent.r#type = transfer_data;
+        intent.task = task;
+        intent.id = Uuid::new_v4().to_string();
+        intent.state = IntentState::Created;
+        intent.created_at = ts;
+        intent.label = label;
+        intent
+    }
+
+    fn create_fee_intent(&self) -> Intent {
+        let ts = self.ic_env.time();
+        let mut intent = Intent::default();
+        let transfer_fee_data = IntentType::default_transfer_from();
+        intent.r#type = transfer_fee_data;
+        intent.task = IntentTask::TransferWalletToTreasury;
+        intent.id = Uuid::new_v4().to_string();
+        intent.state = IntentState::Created;
+        intent.created_at = ts;
+        intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
+        intent
+    }
+
     pub fn look_up_intent(
         &self,
         link: &Link,
@@ -98,127 +141,62 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .ok_or_else(|| CanisterError::HandleLogicError("link type not found".to_string()))?;
 
         match (link_type, action_type) {
+            // SendTip link type handlers
             (LinkType::SendTip, ActionType::CreateLink) => {
-                // create intent for transfer asset to link
-                let ts = self.ic_env.time();
-                let mut transfer_asset_intent = Intent::default();
-                let transfer_data = IntentType::default_transfer();
-                transfer_asset_intent.r#type = transfer_data;
-                transfer_asset_intent.task = IntentTask::TransferWalletToLink;
-                transfer_asset_intent.id = Uuid::new_v4().to_string();
-                transfer_asset_intent.state = IntentState::Created;
-                transfer_asset_intent.created_at = ts;
-                transfer_asset_intent.label = INTENT_LABEL_SEND_TIP_ASSET.to_string();
+                // Create intent for transfer asset to link
+                let transfer_asset_intent = self.create_basic_intent(
+                    IntentTask::TransferWalletToLink,
+                    INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                );
 
-                // create intent for transfer fee to treasury
-                let mut transfer_fee_intent = Intent::default();
-                let transfer_fee_data = IntentType::default_transfer_from();
-                transfer_fee_intent.r#type = transfer_fee_data;
-                transfer_fee_intent.task = IntentTask::TransferWalletToTreasury;
-                transfer_fee_intent.id = Uuid::new_v4().to_string();
-                transfer_fee_intent.state = IntentState::Created;
-                transfer_fee_intent.created_at = ts;
-                transfer_fee_intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
+                // Create intent for transfer fee to treasury
+                let transfer_fee_intent = self.create_fee_intent();
 
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
             }
-            (LinkType::SendTip, ActionType::Claim) => {
-                // create intent for link asset to user wallet
-                let ts = self.ic_env.time();
-                let mut intent = Intent::default();
-                let transfer_data = IntentType::default_transfer();
-                intent.r#type = transfer_data;
-                intent.task = IntentTask::TransferLinkToWallet;
-                intent.id = Uuid::new_v4().to_string();
-                intent.state = IntentState::Created;
-                intent.created_at = ts;
-                // same label with transfer asset to link
-                intent.label = INTENT_LABEL_SEND_TIP_ASSET.to_string();
+            (LinkType::SendTip, ActionType::Use) | (LinkType::SendTip, ActionType::Withdraw) => {
+                // Create intent for link asset to user wallet
+                let intent = self.create_basic_intent(
+                    IntentTask::TransferLinkToWallet,
+                    INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                );
 
                 intents.push(intent);
             }
-            (LinkType::SendTip, ActionType::Withdraw) => {
-                // create intent for link asset to user wallet
-                let ts = self.ic_env.time();
-                let mut intent = Intent::default();
-                let transfer_data = IntentType::default_transfer();
-                intent.r#type = transfer_data;
-                intent.task = IntentTask::TransferLinkToWallet;
-                intent.id = Uuid::new_v4().to_string();
-                intent.state = IntentState::Created;
-                intent.created_at = ts;
-                // same label with transfer asset to link
-                intent.label = INTENT_LABEL_SEND_TIP_ASSET.to_string();
 
-                intents.push(intent);
-            }
+            // SendAirdrop link type handlers
             (LinkType::SendAirdrop, ActionType::CreateLink) => {
-                // create intent for transfer asset to link
-                let ts = self.ic_env.time();
-                let mut transfer_asset_intent = Intent::default();
-                let transfer_data = IntentType::default_transfer();
-                transfer_asset_intent.r#type = transfer_data;
-                transfer_asset_intent.task = IntentTask::TransferWalletToLink;
-                transfer_asset_intent.id = Uuid::new_v4().to_string();
-                transfer_asset_intent.state = IntentState::Created;
-                transfer_asset_intent.created_at = ts;
-                transfer_asset_intent.label = INTENT_LABEL_SEND_AIRDROP_ASSET.to_string();
-                // adding dependency
+                // Create intent for transfer asset to link
+                let transfer_asset_intent = self.create_basic_intent(
+                    IntentTask::TransferWalletToLink,
+                    INTENT_LABEL_SEND_AIRDROP_ASSET.to_string(),
+                );
 
-                // create intent for transfer fee to treasury
-                let mut transfer_fee_intent = Intent::default();
-                let transfer_fee_data = IntentType::default_transfer_from();
-                transfer_fee_intent.r#type = transfer_fee_data;
-                transfer_fee_intent.task = IntentTask::TransferWalletToTreasury;
-                transfer_fee_intent.id = Uuid::new_v4().to_string();
-                transfer_fee_intent.state = IntentState::Created;
-                transfer_fee_intent.created_at = ts;
-                transfer_fee_intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
-                // adding dependency
+                // Create intent for transfer fee to treasury
+                let transfer_fee_intent = self.create_fee_intent();
 
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
             }
-            (LinkType::SendAirdrop, ActionType::Claim) => {
-                // create intent for link asset to user wallet
-                let ts = self.ic_env.time();
-                let mut intent = Intent::default();
-                let transfer_data = IntentType::default_transfer();
-                intent.r#type = transfer_data;
-                intent.task = IntentTask::TransferLinkToWallet;
-                intent.id = Uuid::new_v4().to_string();
-                intent.state = IntentState::Created;
-                intent.created_at = ts;
-                // same label with transfer asset to link
-                intent.label = INTENT_LABEL_SEND_AIRDROP_ASSET.to_string();
-
-                intents.push(intent);
-            }
-            (LinkType::SendAirdrop, ActionType::Withdraw) => {
-                // create intent for link asset to user wallet
-                let ts = self.ic_env.time();
-                let mut intent = Intent::default();
-                let transfer_data = IntentType::default_transfer();
-                intent.r#type = transfer_data;
-                intent.task = IntentTask::TransferLinkToWallet;
-                intent.id = Uuid::new_v4().to_string();
-                intent.state = IntentState::Created;
-                intent.created_at = ts;
-                // same label with transfer asset to link
-                intent.label = INTENT_LABEL_SEND_AIRDROP_ASSET.to_string();
+            (LinkType::SendAirdrop, ActionType::Use)
+            | (LinkType::SendAirdrop, ActionType::Withdraw) => {
+                // Create intent for link asset to user wallet
+                let intent = self.create_basic_intent(
+                    IntentTask::TransferLinkToWallet,
+                    INTENT_LABEL_SEND_AIRDROP_ASSET.to_string(),
+                );
 
                 intents.push(intent);
             }
 
+            // SendTokenBasket link type handlers
             (LinkType::SendTokenBasket, ActionType::CreateLink) => {
                 let asset_info = link.asset_info.clone().ok_or_else(|| {
                     CanisterError::HandleLogicError("Asset info not found".to_string())
                 })?;
-                let ts = self.ic_env.time();
 
-                // create intents for each asset in asset_info
-
+                // Create intents for each asset in asset_info
                 for asset in asset_info.iter() {
                     if !asset
                         .label
@@ -228,129 +206,68 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                             "Asset label not match".to_string(),
                         ));
                     }
+
                     // Create intent for transfer asset to link
-                    let mut transfer_asset_intent = Intent::default();
-                    let transfer_data = IntentType::default_transfer();
-                    transfer_asset_intent.r#type = transfer_data;
-                    transfer_asset_intent.task = IntentTask::TransferWalletToLink;
-                    transfer_asset_intent.id = Uuid::new_v4().to_string();
-                    transfer_asset_intent.state = IntentState::Created;
-                    transfer_asset_intent.created_at = ts;
-                    // eg: SEND_TOKEN_BASKET_ASSET_xxx-xxx-xxx
-                    transfer_asset_intent.label =
-                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string() + "_" + &asset.address;
+                    let label =
+                        format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, asset.address);
+                    let transfer_asset_intent =
+                        self.create_basic_intent(IntentTask::TransferWalletToLink, label);
 
                     intents.push(transfer_asset_intent);
                 }
 
                 // Create intent for transfer fee to treasury
-                let mut transfer_fee_intent = Intent::default();
-                let transfer_fee_data = IntentType::default_transfer_from();
-                transfer_fee_intent.r#type = transfer_fee_data;
-                transfer_fee_intent.task = IntentTask::TransferWalletToTreasury;
-                transfer_fee_intent.id = Uuid::new_v4().to_string();
-                transfer_fee_intent.state = IntentState::Created;
-                transfer_fee_intent.created_at = ts;
-                transfer_fee_intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
-
+                let transfer_fee_intent = self.create_fee_intent();
                 intents.push(transfer_fee_intent);
             }
-
-            (LinkType::SendTokenBasket, ActionType::Claim) => {
+            (LinkType::SendTokenBasket, ActionType::Use)
+            | (LinkType::SendTokenBasket, ActionType::Withdraw) => {
                 let asset_info = link.asset_info.clone().ok_or_else(|| {
                     CanisterError::HandleLogicError("Asset info not found".to_string())
                 })?;
-                let ts = self.ic_env.time();
 
-                // create intents for each asset in asset_info
+                // Create intents for each asset in asset_info
                 for asset in asset_info.iter() {
-                    // Create intent for transfer asset to link
-                    let mut transfer_asset_intent = Intent::default();
-                    let transfer_data = IntentType::default_transfer();
-                    transfer_asset_intent.r#type = transfer_data;
-                    transfer_asset_intent.task = IntentTask::TransferLinkToWallet;
-                    transfer_asset_intent.id = Uuid::new_v4().to_string();
-                    transfer_asset_intent.state = IntentState::Created;
-                    transfer_asset_intent.created_at = ts;
-                    transfer_asset_intent.label =
-                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string() + "_" + &asset.address;
+                    // Create intent for transfer asset from link to wallet
+                    let label =
+                        format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, asset.address);
+                    let transfer_asset_intent =
+                        self.create_basic_intent(IntentTask::TransferLinkToWallet, label);
 
                     intents.push(transfer_asset_intent);
                 }
             }
 
-            (LinkType::SendTokenBasket, ActionType::Withdraw) => {
-                let asset_info = link.asset_info.clone().ok_or_else(|| {
-                    CanisterError::HandleLogicError("Asset info not found".to_string())
-                })?;
-                let ts = self.ic_env.time();
-
-                // create intents for each asset in asset_info
-                for asset in asset_info.iter() {
-                    // Create intent for transfer asset to link
-                    let mut transfer_asset_intent = Intent::default();
-                    let transfer_data = IntentType::default_transfer();
-                    transfer_asset_intent.r#type = transfer_data;
-                    transfer_asset_intent.task = IntentTask::TransferLinkToWallet;
-                    transfer_asset_intent.id = Uuid::new_v4().to_string();
-                    transfer_asset_intent.state = IntentState::Created;
-                    transfer_asset_intent.created_at = ts;
-                    transfer_asset_intent.label =
-                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string() + "_" + &asset.address;
-
-                    intents.push(transfer_asset_intent);
-                }
-            }
-
+            // ReceivePayment link type handlers
             (LinkType::ReceivePayment, ActionType::CreateLink) => {
-                let ts = self.ic_env.time();
-
                 // Create intent for transfer fee to treasury
-                let mut transfer_fee_intent = Intent::default();
-                let transfer_fee_data = IntentType::default_transfer_from();
-                transfer_fee_intent.r#type = transfer_fee_data;
-                transfer_fee_intent.task = IntentTask::TransferWalletToTreasury;
-                transfer_fee_intent.id = Uuid::new_v4().to_string();
-                transfer_fee_intent.state = IntentState::Created;
-                transfer_fee_intent.created_at = ts;
-                transfer_fee_intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
-
+                let transfer_fee_intent = self.create_fee_intent();
                 intents.push(transfer_fee_intent);
             }
-            // ! should we rename to ActionType = Use
-            (LinkType::ReceivePayment, ActionType::Claim) => {
-                let ts = self.ic_env.time();
-                let mut intent = Intent::default();
-                let transfer_data = IntentType::default_transfer();
-                intent.r#type = transfer_data;
-                intent.task = IntentTask::TransferPayment;
-                intent.id = Uuid::new_v4().to_string();
-                intent.state = IntentState::Created;
-                intent.created_at = ts;
-                // same label with transfer asset to link
-                intent.label = INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string();
+            // Now supports both Claim and Use
+            (LinkType::ReceivePayment, ActionType::Use) => {
+                // Create intent for payment transfer
+                let intent = self.create_basic_intent(
+                    IntentTask::TransferPayment,
+                    INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string(),
+                );
 
                 intents.push(intent);
             }
-
             (LinkType::ReceivePayment, ActionType::Withdraw) => {
-                let ts = self.ic_env.time();
-                let mut intent = Intent::default();
-                let transfer_data = IntentType::default_transfer();
-                intent.r#type = transfer_data;
-                intent.task = IntentTask::TransferLinkToWallet;
-                intent.id = Uuid::new_v4().to_string();
-                intent.state = IntentState::Created;
-                intent.created_at = ts;
-                // same label with transfer asset to link
-                intent.label = INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string();
+                // Create intent for link asset to user wallet
+                let intent = self.create_basic_intent(
+                    IntentTask::TransferLinkToWallet,
+                    INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string(),
+                );
 
                 intents.push(intent);
             }
 
             _ => return Ok(None),
         }
-        return Ok(Some(intents));
+
+        Ok(Some(intents))
     }
 
     pub fn assemble_intents(
@@ -513,12 +430,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     };
 
                     intent.r#type = IntentType::Transfer(transfer_data.clone());
-                }
-                _ => {
-                    return Err(CanisterError::HandleLogicError(
-                        "Not found intents config for {link_type}_{action_type}".to_string(),
-                    ));
-                }
+                } // _ => {
+                  //     return Err(CanisterError::HandleLogicError(
+                  //         "Not found intents config for {link_type}_{action_type}".to_string(),
+                  //     ));
+                  // }
             }
         }
 
@@ -586,7 +502,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
-            ActionType::Claim => {
+            ActionType::Use => {
                 // validate link state
                 info!("link state: {:#?}", link.state);
                 if link.state != LinkState::Active {
@@ -659,7 +575,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
-            ActionType::Claim | ActionType::Use => {
+            ActionType::Use | ActionType::Use => {
                 if action.creator != user_id {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -705,7 +621,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
             }
             //TODO: replace claim as use
-            ActionType::Claim | ActionType::Use => {
+            ActionType::Use | ActionType::Use => {
                 // Validate link state
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
@@ -714,7 +630,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
 
                 // For send-type links, check usage counter against max allowed
-                if let Some(link_type) = &link.link_type {
+                if let Some(_link_type) = &link.link_type {
                     if link.link_use_action_counter >= link.link_use_action_max_count {
                         return Err(CanisterError::ValidationErrors(format!(
                             "Link maximum usage count reached: {}",
@@ -755,7 +671,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
 
             //TODO: replace claim as use
-            ActionType::Claim | ActionType::Use => {
+            ActionType::Use | ActionType::Use => {
                 if action.creator != user_id {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -770,7 +686,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
         }
 
-        Ok(())
+        return Ok(());
     }
 
     // This method mostly use for "Send" link type
@@ -840,6 +756,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             action_type.clone(),
             user_id.clone(),
         );
+
+        info!("link_action: {:#?}", link_action);
 
         if link_action.is_empty() {
             return Ok(None);
@@ -954,7 +872,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         ];
 
         if list_send_link_type.contains(&link.link_type.unwrap()) {
-            if action.r#type == ActionType::Claim {
+            if action.r#type == ActionType::Use {
                 // Update asset info to track the claim
                 if updated_link.link_use_action_counter + 1 > updated_link.link_use_action_max_count
                 {
@@ -1790,5 +1708,47 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     /// Check if link exists
     pub fn is_link_exist(&self, link_id: String) -> bool {
         self.link_repository.get(&link_id).is_some()
+    }
+
+    pub fn link_handle_tx_update(
+        &self,
+        previous_state: ActionState,
+        current_state: ActionState,
+        link_id: String,
+        action_type: ActionType,
+        action_id: String,
+    ) -> Result<(), CanisterError> {
+        // Return early if state hasn't changed
+        if previous_state == current_state {
+            return Ok(());
+        }
+
+        // Return early if this isn't a claim/use action or if it's not a successful state
+        if (action_type != ActionType::Use && action_type != ActionType::Use)
+            || current_state != ActionState::Success
+        {
+            return Ok(());
+        }
+
+        // At this point we know:
+        // 1. The state has changed
+        // 2. The action type is either Claim or Use
+        // 3. The current state is Success
+
+        // Update link properties
+        let result = self.update_link_properties(link_id.clone(), action_id.clone());
+        if let Err(err) = result {
+            error!(
+                "[link_handle_tx_update] Failed to update link properties for link_id: {:?}, action_id: {:?}, error: {:?}",
+                link_id, action_id, err
+            );
+
+            return Err(CanisterError::HandleLogicError(format!(
+                "Failed to update link properties: {}",
+                err
+            )));
+        }
+
+        Ok(())
     }
 }

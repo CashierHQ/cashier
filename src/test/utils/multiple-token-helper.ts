@@ -1,6 +1,22 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { Actor, createIdentity, PocketIc } from "@hadronous/pic";
+import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { resolve } from "path";
 
 import {
@@ -48,7 +64,7 @@ export class MultipleTokenHelper {
     };
 
     public init = async () => {
-        const LEDGER_ID = Principal.fromText("x5qut-viaaa-aaaar-qajda-cai");
+        const LEDGER_ID = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
         const init_args: InitArgs = {
             send_whitelist: [],
@@ -77,11 +93,14 @@ export class MultipleTokenHelper {
             [ledgerCanisterPayload],
         );
 
+        const subnet = await this.pic.getNnsSubnet();
+
         const canister_id = await this.pic.createCanister({
             cycles: BigInt(1e13),
             sender: this.deployer.getPrincipal(),
             // targetSubnetId: subnetId,
             targetCanisterId: LEDGER_ID,
+            targetSubnetId: subnet?.id,
         });
 
         await this.pic.installCode({

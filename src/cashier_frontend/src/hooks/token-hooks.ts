@@ -1,3 +1,19 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Identity } from "@dfinity/agent";
 import {
@@ -6,21 +22,29 @@ import {
     TokenMetadataMap,
 } from "@/types/fungible-token.speculative";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import {
-    mapFiltersToUserFiltersInput,
-    mapUserPreferenceToFilters,
-    TokenFilters,
-    mapTokenDtoToTokenModel,
-} from "@/types/token-store.type";
+
 import TokenStorageService from "@/services/backend/tokenStorage.service";
 import {
     AddTokenInput,
     AddTokensInput,
-    RegistryTokenDto,
+    Chain,
+    TokenDto,
+    UpdateTokenStatusInput,
 } from "../../../declarations/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import TokenCacheService from "@/services/backend/tokenCache.service";
+import { mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
+import { fromNullable } from "@dfinity/utils";
+
+/**
+ * Response from tokenListQuery with combined token list data
+ */
+export interface TokenListResponse {
+    tokens: FungibleToken[];
+    needUpdateVersion: boolean;
+    perference: TokenFilters;
+}
 
 // Centralized time constants (in milliseconds)
 const TIME_CONSTANTS = {
@@ -41,71 +65,88 @@ const TIME_CONSTANTS = {
 // Centralized query keys for consistent caching
 export const TOKEN_QUERY_KEYS = {
     all: ["tokens"] as const,
-    raw: () => [...TOKEN_QUERY_KEYS.all, "raw"] as const,
-    list: (principalId?: string) => [...TOKEN_QUERY_KEYS.all, "list", principalId] as const,
     metadata: () => [...TOKEN_QUERY_KEYS.all, "metadata"] as const,
     balances: (principalId?: string) => [...TOKEN_QUERY_KEYS.all, "balances", principalId] as const,
-    preferences: (principalId?: string) =>
-        [...TOKEN_QUERY_KEYS.all, "preferences", principalId] as const,
     prices: () => [...TOKEN_QUERY_KEYS.all, "prices"] as const,
 };
 
-// This using for getting all tokens from the backend
-export function useTokenRawListQuery() {
-    return useQuery({
-        queryKey: TOKEN_QUERY_KEYS.raw(),
-        queryFn: async () => {
-            const tokenService = new TokenStorageService();
-            const tokens: RegistryTokenDto[] = await tokenService.listRegistryTokens();
+/**
+ * Converts a Chain object to its string representation
+ *
+ * @param chain - The Chain object (e.g. { 'IC': null })
+ * @returns The string representation of the chain (e.g. "IC")
+ */
+export function chainToString(chain: Chain): string {
+    // Get the first key of the object, which represents the chain name
+    const chainKey = Object.keys(chain)[0];
+    return chainKey || "";
+}
 
-            return tokens;
+export function useTokenListQuery() {
+    const identity = useIdentity();
+    return useQuery({
+        queryKey: TOKEN_QUERY_KEYS.all,
+        queryFn: async () => {
+            console.log("Fetching token list...", identity?.getPrincipal().toString());
+            const tokenService = new TokenStorageService(identity);
+            let tokens: TokenDto[] = [];
+
+            const res = await tokenService.listTokens();
+
+            if (res && res.tokens) {
+                tokens = res.tokens;
+            }
+
+            return {
+                tokens,
+                needUpdateVersion: res?.need_update_version || false,
+                perference: fromNullable(res?.perference),
+            };
         },
-        select: (data) => {
+        select: (data): TokenListResponse => {
             // Transform to frontend model
-            const res = data.map((token) => mapTokenDtoToTokenModel(token));
-            return res;
+            const tokens = data.tokens.map((token) => {
+                return {
+                    ...mapTokenDtoToTokenModel(token),
+                    amount: fromNullable(token.balance),
+                };
+            });
+
+            const perference: TokenFilters = {
+                hideZeroBalance: data.perference?.hide_zero_balance || false,
+                hideUnknownToken: data.perference?.hide_unknown_token || false,
+                selectedChain:
+                    data.perference?.selected_chain?.map((chain) => chainToString(chain)) || [],
+            };
+
+            return {
+                tokens,
+                needUpdateVersion: data.needUpdateVersion,
+                perference: perference,
+            };
         },
         staleTime: TIME_CONSTANTS.FIVE_MINUTES,
+        // Improved refetching behavior
+        refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) =>
             Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
 }
 
-// This is used for getting user's token list
-export function useTokenListQuery(identity: Identity | undefined) {
-    return useQuery({
-        queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
-        queryFn: async () => {
+export function useSyncTokenList(identity: Identity | undefined) {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async () => {
             const tokenService = new TokenStorageService(identity);
-            let tokens: RegistryTokenDto[] = [];
-
-            if (!identity) {
-                // If no identity, return empty list for user tokens
-                return [];
-            } else {
-                tokens = await tokenService.listTokens();
-            }
-
-            // Initialize user tokens if none exist
-            if (tokens.length === 0 && identity) {
-                await tokenService.initializeUserTokens();
-                const res = await tokenService.listTokens();
-                return res;
-            }
-
-            return tokens;
+            await tokenService.syncTokenList();
         },
-        select: (data) => {
-            // Transform to frontend model
-            const res = data.map((token) => mapTokenDtoToTokenModel(token));
-            return res;
+        onSuccess: () => {
+            // Properly invalidate token queries
+            queryClient.invalidateQueries({
+                queryKey: TOKEN_QUERY_KEYS.all, // Invalidate all token-related queries
+            });
         },
-        staleTime: TIME_CONSTANTS.FIVE_MINUTES,
-        enabled: !!identity,
-        retry: 3, // Retry failed requests up to 3 times
-        retryDelay: (attemptIndex) =>
-            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
 }
 
@@ -115,10 +156,8 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
         queryFn: async () => {
             if (!tokens || tokens.length === 0) return {};
 
-            // Create a map of token address to metadata
             const metadataMap: TokenMetadataMap = {};
 
-            // Process tokens in batches to avoid overwhelming the network
             const batchSize = 300;
             const start = Date.now();
             for (let i = 0; i < tokens.length; i += batchSize) {
@@ -149,16 +188,39 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
                 metadataMap,
             );
 
-            console.log("Fetched token metadata:", metadataMap);
-
             return metadataMap;
         },
         enabled: !!tokens,
         retry: 3, // Retry failed requests up to 3 times
         retryDelay: (attemptIndex) =>
             Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
+        staleTime: TIME_CONSTANTS.THIRTY_MINUTES,
+        refetchInterval: TIME_CONSTANTS.THIRTY_MINUTES,
     });
 }
+
+export function useTokenPricesQuery() {
+    return useQuery({
+        queryKey: TOKEN_QUERY_KEYS.prices(),
+        queryFn: async () => {
+            try {
+                const prices = await tokenPriceService.getAllPrices();
+                // Return null instead of empty object if no prices are fetched
+                console.log(`[${new Date().toISOString()}] Fetched token prices:`, prices);
+                return Object.keys(prices).length > 0 ? prices : {};
+            } catch (error) {
+                console.error("Failed to fetch token prices:", error);
+                throw error;
+            }
+        },
+        staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
+        refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
+        retry: 10, // Retry failed requests up to 10 times
+        retryDelay: (attemptIndex) =>
+            Math.min(1000 * 0.1 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
+    });
+}
+
 // Hook 2: Fetch token balances
 export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
     const identity = useIdentity();
@@ -179,16 +241,21 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
             // Create a balance map to track results
             const balanceMap: TokenBalanceMap = {};
 
+            const enableTokens = tokens.filter((token) => token.enabled);
+
             // Fetch balances in parallel
-            const tokenPromises = tokens.map(async (token) => {
+            const tokenPromises = enableTokens.map(async (token) => {
                 try {
                     const balance = await tokenUtilService.balanceOf(token.address);
 
                     // Update the balance map
-                    balanceMap[token.address] = { amount: balance };
+
+                    const id = `${token.chain}:${token.address}`;
+
+                    balanceMap[id] = { amount: balance };
 
                     return {
-                        id: token.id,
+                        id: id,
                         address: token.address,
                         amount: balance,
                     };
@@ -237,17 +304,12 @@ export function useAddTokenMutation(identity: Identity | undefined) {
             queryClient.invalidateQueries({
                 queryKey: TOKEN_QUERY_KEYS.all, // Invalidate all token-related queries
             });
-
-            // Or more specifically:
-            queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
-            });
         },
     });
 }
 
 // add mutliple tokens mutation
-export function useAddTokensMutation(identity: Identity | undefined) {
+export function useMultipleTokenMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -255,7 +317,6 @@ export function useAddTokensMutation(identity: Identity | undefined) {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            console.log("input", input);
             try {
                 await tokenService.addTokens(input);
                 return true;
@@ -269,91 +330,30 @@ export function useAddTokensMutation(identity: Identity | undefined) {
             queryClient.invalidateQueries({
                 queryKey: TOKEN_QUERY_KEYS.all, // Invalidate all token-related queries
             });
-
-            // Or more specifically:
-            queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.list(identity?.getPrincipal().toString()),
-            });
         },
     });
 }
 
 // Improved hook for toggling token visibility
-export function useToggleTokenVisibilityMutation(identity: Identity | undefined) {
+export function useUpdateTokenStateMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ tokenId, hidden }: { tokenId: string; hidden: boolean }) => {
+        mutationFn: async ({ tokenId, enable }: { tokenId: string; enable: boolean }) => {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            await tokenService.toggleTokenVisibility(tokenId, hidden);
-            return { tokenId, hidden };
+            const input: UpdateTokenStatusInput = {
+                token_id: tokenId,
+                is_enabled: enable,
+            };
+            await tokenService.updateToken(input);
+            return { tokenId, hidden: enable };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
+                queryKey: TOKEN_QUERY_KEYS.all,
             });
         },
-    });
-}
-
-// Updated user preferences query hook
-export function useUserPreferencesQuery(identity: Identity | undefined) {
-    return useQuery({
-        queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
-        queryFn: async () => {
-            if (!identity) throw new Error("Not authenticated");
-
-            const tokenService = new TokenStorageService(identity);
-            const preferences = await tokenService.getUserPreference();
-
-            return mapUserPreferenceToFilters(preferences);
-        },
-        enabled: !!identity,
-        staleTime: TIME_CONSTANTS.ONE_HOUR,
-    });
-}
-
-// Updated mutation hook for updating user filters
-export function useUpdateUserFiltersMutation(identity: Identity | undefined) {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (filters: TokenFilters) => {
-            if (!identity) throw new Error("Not authenticated");
-
-            const tokenService = new TokenStorageService(identity);
-            const input = mapFiltersToUserFiltersInput(filters);
-            await tokenService.updateUserFilters(input);
-            return filters;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.preferences(identity?.getPrincipal().toString()),
-            });
-        },
-    });
-}
-
-export function useTokenPricesQuery() {
-    return useQuery({
-        queryKey: TOKEN_QUERY_KEYS.prices(),
-        queryFn: async () => {
-            try {
-                const prices = await tokenPriceService.getAllPrices();
-                // Return null instead of empty object if no prices are fetched
-                console.log(`[${new Date().toISOString()}] Fetched token prices:`, prices);
-                return Object.keys(prices).length > 0 ? prices : null;
-            } catch (error) {
-                console.error("Failed to fetch token prices:", error);
-                throw error;
-            }
-        },
-        staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
-        refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
-        retry: 10, // Retry failed requests up to 10 times
-        retryDelay: (attemptIndex) =>
-            Math.min(1000 * 0.1 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
     });
 }

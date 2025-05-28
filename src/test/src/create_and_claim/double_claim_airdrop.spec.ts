@@ -1,9 +1,26 @@
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
 import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
+import { FEE_CANISTER_ID } from "../../constant";
 
-describe("Test create and claim tip link", () => {
+describe("Test double claim for tip link", () => {
     const fixture = new LinkTestFixture();
     let linkId: string;
     // Common test configuration
@@ -18,7 +35,7 @@ describe("Test create and claim tip link", () => {
 
     const assetInfo: AssetInfo = {
         chain: "IC",
-        address: "x5qut-viaaa-aaaar-qajda-cai",
+        address: FEE_CANISTER_ID,
         label: "SEND_TIP_ASSET",
         amount_per_claim: BigInt(10_0000_0000),
     };
@@ -73,8 +90,8 @@ describe("Test create and claim tip link", () => {
             await fixture.advanceTime(1 * 60 * 1000); // 1 minute
         });
 
-        it("should retrieve empty user state initially", async () => {
-            const result = fixture.createAction(linkId, "Claim");
+        it("shouold get error if try to claim tip link again", async () => {
+            const result = fixture.createAction(linkId, "Use");
 
             await expect(result).rejects.toThrow(
                 '{"ValidationErrors":"Action is already success"}',

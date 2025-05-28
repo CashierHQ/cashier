@@ -1,8 +1,23 @@
-import { FC } from "react";
+// Cashier — No-code blockchain transaction builder
+// Copyright (C) 2025 TheCashierApp LLC
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import { memo } from "react";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
 import { Status } from "@/components/ui/status";
 import { mapIntentsStateToStatus } from "@/utils/map/status.map";
-import { useTranslation } from "react-i18next";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { convert } from "@/utils/helpers/convert";
 import { Avatar } from "@radix-ui/react-avatar";
@@ -14,19 +29,16 @@ import { useEffect, useState } from "react";
 interface TransactionItemProps {
     title: string;
     intent: IntentModel;
-    isLoading?: boolean;
     isUsd?: boolean;
     fees?: FeeModel[];
     networkFee?: FeeModel;
 }
 
-export const TransactionItem: FC<TransactionItemProps> = ({
+// apply memo to prevent unnecessary re-renders
+export const TransactionItem = memo(function TransactionItem({
     intent,
-    isLoading,
-    isUsd,
     fees = [],
-}) => {
-    const { t } = useTranslation();
+}: TransactionItemProps) {
     const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
 
@@ -58,7 +70,7 @@ export const TransactionItem: FC<TransactionItemProps> = ({
         <div className="flex items-center">
             {mapIntentsStateToStatus(intent.state) !== undefined && (
                 <div className="mr-1.5">
-                    <Status status={mapIntentsStateToStatus(intent.state)} />
+                    <Status key={intent.id} status={mapIntentsStateToStatus(intent.state)} />
                 </div>
             )}
 
@@ -118,4 +130,4 @@ export const TransactionItem: FC<TransactionItemProps> = ({
             {/* </div> */}
         </div>
     );
-};
+});
