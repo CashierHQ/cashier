@@ -25,9 +25,8 @@ use crate::types::{icrc_112_transaction::Icrc112Requests, transaction_manager::A
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
-    pub action_type: String,
-    pub params: Option<HashMap<String, String>>,
     pub link_id: String,
+    pub action_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -41,7 +40,6 @@ pub struct TriggerTransactionInput {
 pub struct ProcessActionInput {
     pub link_id: String,
     pub action_type: String,
-    // TODO: remove action_id
     pub action_id: String,
 }
 
@@ -50,6 +48,13 @@ pub struct ProcessActionAnonymousInput {
     pub link_id: String,
     pub action_type: String,
     pub action_id: String,
+    pub wallet_address: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct CreateActionAnonymousInput {
+    pub link_id: String,
+    pub action_type: String,
     pub wallet_address: String,
 }
 
