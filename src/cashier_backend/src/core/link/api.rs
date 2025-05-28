@@ -309,7 +309,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         &self,
         input: ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
-        let start = ic_cdk::api::time();
         let caller = self.ic_env.caller();
 
         if caller != Principal::anonymous() {
@@ -421,14 +420,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             Ok(update_action_res)
         };
 
-        let end = ic_cdk::api::time();
-        let elapsed = end - start;
-        let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
-        info!(
-            "[process_action_anonymous] elapsed time: {} seconds",
-            elapsed_seconds
-        );
-
         res
     }
 
@@ -436,7 +427,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         &self,
         input: ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
-        let start = ic_cdk::api::time();
         let caller = self.ic_env.caller();
 
         if caller != Principal::anonymous() {
@@ -446,7 +436,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
 
         // check wallet address
-        let wallet_address = match Principal::from_text(input.wallet_address.clone()) {
+        let _ = match Principal::from_text(input.wallet_address.clone()) {
             Ok(wa) => wa,
             Err(_) => {
                 return Err(CanisterError::ValidationErrors(
@@ -484,11 +474,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let action_id = action.unwrap().id.clone();
 
-        info!(
-            "[process_action_anonymous_v2] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-            &user_id, input.link_id, action_id
-        );
-
         // execute action with our standalone callback
         let update_action_res = self
             .tx_manager_service
@@ -499,14 +484,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             })
             .await?;
 
-        let end = ic_cdk::api::time();
-        let elapsed = end - start;
-        let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
-        info!(
-            "[process_action_anonymous_v2] elapsed time: {} seconds",
-            elapsed_seconds
-        );
-
         Ok(update_action_res)
     }
 
@@ -514,7 +491,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         &self,
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        let start = ic_cdk::api::time();
         let caller = self.ic_env.caller();
 
         // input validate
@@ -534,11 +510,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             &input.link_id,
             &input.action_type,
             &user_id.as_ref().unwrap(),
-        );
-
-        info!(
-            "[process_action 402] user_id: {:?}, link_id: {:?}, action_type: {:?}",
-            user_id, input.link_id, action_type
         );
 
         let res = if action.is_none() {
@@ -582,11 +553,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             // create real action
             let res = self.tx_manager_service.create_action(&temp_action)?;
 
-            info!(
-                "[process_action] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-                user_id, input.link_id, res.id
-            );
-
             Ok(res)
         } else {
             self.link_service.link_validate_user_update_action(
@@ -608,11 +574,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             Ok(update_action_res)
         };
 
-        let end = ic_cdk::api::time();
-        let elapsed = end - start;
-        let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
-        info!("[process_action] elapsed time: {} seconds", elapsed_seconds);
-
         res
     }
 
@@ -620,7 +581,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         &self,
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        let start = ic_cdk::api::time();
         let caller = self.ic_env.caller();
 
         // input validate
@@ -665,11 +625,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
             Ok(update_action_res)
         };
-
-        let end = ic_cdk::api::time();
-        let elapsed = end - start;
-        let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
-        info!("[process_action] elapsed time: {} seconds", elapsed_seconds);
 
         res
     }
