@@ -12,13 +12,16 @@ if [[ "$1" == "--skip" ]]; then
     env_file=".env.local"
 else
     # Prompt for network
-    read -p "Enter network (ic, staging, local): " network_input
+    read -p "Enter network (ic, staging, dev, local): " network_input
     if [ "$network_input" == "ic" ]; then
         network="ic"
         env_file=".env.production"
     elif [ "$network_input" == "staging" ]; then
         network="staging"
         env_file=".env.staging"
+    elif [ "$network_input" == "dev" ]; then
+        network="staging"
+        env_file=".env.dev"
     elif [ "$network_input" == "local" ]; then
         network="local"
         env_file=".env.local"

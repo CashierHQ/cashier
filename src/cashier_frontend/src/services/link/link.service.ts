@@ -17,7 +17,8 @@
 import { convertTokenAmountToNumber, parseResultResponse } from "@/utils";
 import {
     _SERVICE,
-    CreateLinkInput,
+    CreateActionAnonymousInput,
+    CreateActionInput,
     CreateLinkInputV2,
     idlFactory,
     LinkDto,
@@ -52,17 +53,28 @@ export interface ResponseLinksModel {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: any;
 }
-export interface CreateActionInputModel {
+export interface ProcessActionInputModel {
     linkId: string;
     actionType: string;
-    actionId?: string;
+    actionId: string;
+}
+
+export interface CreateLinkInputModel {
+    linkId: string;
+    actionType: string;
 }
 
 export interface CreateActionAnonymousInputModel {
     linkId: string;
     actionType: string;
     walletAddress: string;
-    actionId?: string;
+}
+
+export interface UpdateActionAnonymousInputModel {
+    linkId: string;
+    actionType: string;
+    actionId: string;
+    walletAddress: string;
 }
 
 export interface UpdateActionInputModel {
@@ -138,10 +150,6 @@ class LinkService {
         return result;
     }
 
-    async createLink(input: CreateLinkInput) {
-        return parseResultResponse(await this.actor.create_link(input));
-    }
-
     async createLinkV2(input: CreateLinkInputV2) {
         return parseResultResponse(await this.actor.create_link_v2(input));
     }
@@ -153,12 +161,7 @@ class LinkService {
         return response;
     }
 
-    async validateLink(): Promise<boolean> {
-        // Mock function for validation
-        return false;
-    }
-
-    async processAction(input: CreateActionInputModel): Promise<ActionModel> {
+    async processAction(input: ProcessActionInputModel): Promise<ActionModel> {
         const inputModel: ProcessActionInput = {
             action_id: input.actionId ?? "",
             link_id: input.linkId,
@@ -169,14 +172,60 @@ class LinkService {
         return action;
     }
 
-    async processActionAnonymous(input: CreateActionAnonymousInputModel): Promise<ActionModel> {
+    async processActionV2(input: ProcessActionInputModel): Promise<ActionModel> {
+        const inputModel: ProcessActionInput = {
+            action_id: input.actionId,
+            link_id: input.linkId,
+            action_type: input.actionType,
+        };
+        const response = parseResultResponse(await this.actor.process_action_v2(inputModel));
+        const action = mapActionModel(response);
+        return action;
+    }
+
+    async createAction(input: CreateLinkInputModel): Promise<ActionModel> {
+        const inputModel: CreateActionInput = {
+            link_id: input.linkId,
+            action_type: input.actionType,
+        };
+        const response = parseResultResponse(await this.actor.create_action(inputModel));
+        const action = mapActionModel(response);
+        return action;
+    }
+
+    async processActionAnonymous(input: UpdateActionAnonymousInputModel): Promise<ActionModel> {
         const inputModel: ProcessActionAnonymousInput = {
-            action_id: input.actionId ?? "",
+            action_id: input.actionId,
             link_id: input.linkId,
             action_type: input.actionType,
             wallet_address: input.walletAddress,
         };
         const response = parseResultResponse(await this.actor.process_action_anonymous(inputModel));
+        const action = mapActionModel(response);
+        return action;
+    }
+
+    async createActionAnonymous(input: CreateActionAnonymousInputModel): Promise<ActionModel> {
+        const inputModel: CreateActionAnonymousInput = {
+            link_id: input.linkId,
+            action_type: input.actionType,
+            wallet_address: input.walletAddress,
+        };
+        const response = parseResultResponse(await this.actor.create_action_anonymous(inputModel));
+        const action = mapActionModel(response);
+        return action;
+    }
+
+    async processActionAnonymousV2(input: UpdateActionAnonymousInputModel): Promise<ActionModel> {
+        const inputModel: ProcessActionAnonymousInput = {
+            action_id: input.actionId,
+            link_id: input.linkId,
+            action_type: input.actionType,
+            wallet_address: input.walletAddress,
+        };
+        const response = parseResultResponse(
+            await this.actor.process_action_anonymous_v2(inputModel),
+        );
         const action = mapActionModel(response);
         return action;
     }
