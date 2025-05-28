@@ -23,7 +23,9 @@ use uuid::Uuid;
 
 use crate::{
     core::{
-        action::types::{ActionDto, ProcessActionAnonymousInput, ProcessActionInput},
+        action::types::{
+            ActionDto, CreateActionInput, ProcessActionAnonymousInput, ProcessActionInput,
+        },
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
@@ -82,12 +84,40 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
     api.process_action(input).await
 }
 
+#[update(guard = "is_not_anonymous")]
+pub async fn process_action_v2(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.process_action_v2(input).await
+}
+
+#[update(guard = "is_not_anonymous")]
+pub fn create_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.create_action(input)
+}
+
 #[update]
 pub async fn process_action_anonymous(
     input: ProcessActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.process_action_anonymous(input).await
+}
+
+#[update]
+pub fn create_action_anonymous(
+    input: ProcessActionAnonymousInput,
+) -> Result<ActionDto, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.create_action_anonymous(input)
+}
+
+#[update]
+pub async fn process_action_anonymous_v2(
+    input: ProcessActionAnonymousInput,
+) -> Result<ActionDto, CanisterError> {
+    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
+    api.process_action_anonymous_v2(input).await
 }
 
 #[update]
@@ -278,6 +308,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         &self,
         input: ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
+        let start = ic_cdk::api::time();
         let caller = self.ic_env.caller();
 
         if caller != Principal::anonymous() {
@@ -315,7 +346,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         // if action is not found, create a new action
         // only allow == action type
-        if action.is_none() {
+        let res = if action.is_none() {
             // validate create action
             self.link_service.link_validate_user_create_action(
                 &input.link_id,
@@ -335,7 +366,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 id: Uuid::new_v4().to_string(),
                 r#type: action_type,
                 state: ActionState::Created,
-                creator: user_id,
+                creator: user_id.clone(),
                 link_id: input.link_id.clone(),
                 intents: vec![],
                 default_link_user_state,
@@ -347,7 +378,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .assemble_intents(&temp_action.link_id, &temp_action.r#type, &wallet_address)
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!(
-                        "[process_action] Failed to assemble intents: {}",
+                        "[process_action_anonymous] Failed to assemble intents: {}",
                         e
                     ))
                 })?;
@@ -357,6 +388,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
             // create real action
             let res = self.tx_manager_service.create_action(&temp_action)?;
+
+            info!(
+                "[process_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
+                &user_id, input.link_id, res.id
+            );
 
             Ok(res)
         } else {
@@ -368,7 +404,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
             info!(
                 "[process_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-                user_id, input.link_id, action_id
+                &user_id, input.link_id, action_id
             );
 
             // execute action with our standalone callback
@@ -379,10 +415,98 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                     link_id: input.link_id.clone(),
                     execute_wallet_tx: false,
                 })
-                .await;
+                .await?;
 
-            update_action_res
+            Ok(update_action_res)
+        };
+
+        let end = ic_cdk::api::time();
+        let elapsed = end - start;
+        let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
+        info!(
+            "[process_action_anonymous] elapsed time: {} seconds",
+            elapsed_seconds
+        );
+
+        res
+    }
+
+    pub async fn process_action_anonymous_v2(
+        &self,
+        input: ProcessActionAnonymousInput,
+    ) -> Result<ActionDto, CanisterError> {
+        let start = ic_cdk::api::time();
+        let caller = self.ic_env.caller();
+
+        if caller != Principal::anonymous() {
+            return Err(CanisterError::ValidationErrors(
+                "Only anonymous caller can call this function".to_string(),
+            ));
         }
+
+        // check wallet address
+        let wallet_address = match Principal::from_text(input.wallet_address.clone()) {
+            Ok(wa) => wa,
+            Err(_) => {
+                return Err(CanisterError::ValidationErrors(
+                    "Invalid wallet address".to_string(),
+                ));
+            }
+        };
+
+        let action_type = ActionType::from_str(&input.action_type)
+            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
+
+        // check action type is claim
+        if action_type != ActionType::Use {
+            return Err(CanisterError::ValidationErrors(
+                "Invalid action type, only Claim or Use action type is allowed".to_string(),
+            ));
+        }
+
+        // add prefix for easy query
+        let user_id = format!("ANON#{}", input.wallet_address);
+
+        let action =
+            self.link_service
+                .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+
+        if action.is_none() {
+            return Err(CanisterError::ValidationErrors(format!(
+                "Action is not existed"
+            )));
+        }
+
+        // validate action
+        self.link_service
+            .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id)?;
+
+        let action_id = action.unwrap().id.clone();
+
+        info!(
+            "[process_action_anonymous_v2] user_id: {:?}, link_id: {:?}, action_id: {:?}",
+            &user_id, input.link_id, action_id
+        );
+
+        // execute action with our standalone callback
+        let update_action_res = self
+            .tx_manager_service
+            .update_action(UpdateActionArgs {
+                action_id: action_id.clone(),
+                link_id: input.link_id.clone(),
+                execute_wallet_tx: false,
+            })
+            .await?;
+
+        let end = ic_cdk::api::time();
+        let elapsed = end - start;
+        let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
+        info!(
+            "[process_action_anonymous_v2] elapsed time: {} seconds",
+            elapsed_seconds
+        );
+
+        Ok(update_action_res)
     }
 
     pub async fn process_action(
@@ -489,6 +613,230 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         info!("[process_action] elapsed time: {} seconds", elapsed_seconds);
 
         res
+    }
+
+    pub async fn process_action_v2(
+        &self,
+        input: ProcessActionInput,
+    ) -> Result<ActionDto, CanisterError> {
+        let start = ic_cdk::api::time();
+        let caller = self.ic_env.caller();
+
+        // input validate
+        let user_id = self.user_service.get_user_id_by_wallet(&caller);
+
+        let _ = ActionType::from_str(&input.action_type)
+            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
+
+        // basic validations
+        if user_id.is_none() {
+            return Err(CanisterError::ValidationErrors(
+                "User not found".to_string(),
+            ));
+        }
+
+        let action = self.link_service.get_action_of_link(
+            &input.link_id,
+            &input.action_type,
+            &user_id.as_ref().unwrap(),
+        );
+
+        let res = if action.is_none() {
+            Err(CanisterError::ValidationErrors(format!(
+                "Action is not existed"
+            )))
+        } else {
+            self.link_service.link_validate_user_update_action(
+                &action.clone().unwrap(),
+                user_id.as_ref().unwrap(),
+            )?;
+            let action_id = action.clone().unwrap().id.clone();
+
+            // execute action
+            let update_action_res = self
+                .tx_manager_service
+                .update_action(UpdateActionArgs {
+                    action_id: action_id.clone(),
+                    link_id: input.link_id.clone(),
+                    execute_wallet_tx: false,
+                })
+                .await?;
+
+            Ok(update_action_res)
+        };
+
+        let end = ic_cdk::api::time();
+        let elapsed = end - start;
+        let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
+        info!("[process_action] elapsed time: {} seconds", elapsed_seconds);
+
+        res
+    }
+
+    pub fn create_action(&self, input: CreateActionInput) -> Result<ActionDto, CanisterError> {
+        let caller = self.ic_env.caller();
+
+        // input validate
+        let user_id = self.user_service.get_user_id_by_wallet(&caller);
+
+        let action_type = ActionType::from_str(&input.action_type)
+            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
+
+        // basic validations
+        if user_id.is_none() {
+            return Err(CanisterError::ValidationErrors(
+                "User not found".to_string(),
+            ));
+        }
+
+        let action = self.link_service.get_action_of_link(
+            &input.link_id,
+            &input.action_type,
+            &user_id.as_ref().unwrap(),
+        );
+
+        if action.is_some() {
+            return Err(CanisterError::ValidationErrors(format!(
+                "Action already exist!"
+            )));
+        }
+
+        self.link_service.link_validate_user_create_action(
+            &input.link_id,
+            &action_type,
+            user_id.as_ref().unwrap(),
+        )?;
+
+        //create temp action
+        // fill in link_id info
+        // fill in action_type info
+        // fill in default_link_user_state info
+        let default_link_user_state = match action_type {
+            ActionType::Use => Some(LinkUserState::ChooseWallet),
+            _ => None,
+        };
+        let mut temp_action = TemporaryAction {
+            id: Uuid::new_v4().to_string(),
+            r#type: action_type,
+            state: ActionState::Created,
+            creator: user_id.as_ref().unwrap().to_string(),
+            link_id: input.link_id.clone(),
+            intents: vec![],
+            default_link_user_state,
+        };
+
+        let caller = self.ic_env.caller();
+
+        // fill the intent info
+        let intents = self
+            .link_service
+            .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller)
+            .map_err(|e| {
+                CanisterError::HandleLogicError(format!(
+                    "[create_action] Failed to assemble intents: {}",
+                    e
+                ))
+            })?;
+        temp_action.intents = intents;
+
+        // create real action
+        let res = self.tx_manager_service.create_action(&temp_action)?;
+
+        Ok(res)
+    }
+
+    pub fn create_action_anonymous(
+        &self,
+        input: ProcessActionAnonymousInput,
+    ) -> Result<ActionDto, CanisterError> {
+        let caller = self.ic_env.caller();
+
+        if caller != Principal::anonymous() {
+            return Err(CanisterError::ValidationErrors(
+                "Only anonymous caller can call this function".to_string(),
+            ));
+        }
+
+        // check wallet address
+        let wallet_address = match Principal::from_text(input.wallet_address.clone()) {
+            Ok(wa) => wa,
+            Err(_) => {
+                return Err(CanisterError::ValidationErrors(
+                    "Invalid wallet address".to_string(),
+                ));
+            }
+        };
+
+        let action_type = ActionType::from_str(&input.action_type)
+            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type")))?;
+
+        // check action type is claim
+        if action_type != ActionType::Use {
+            return Err(CanisterError::ValidationErrors(
+                "Invalid action type, only Claim or Use action type is allowed".to_string(),
+            ));
+        }
+
+        // add prefix for easy query
+        let user_id = format!("ANON#{}", input.wallet_address);
+
+        let action =
+            self.link_service
+                .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+
+        if action.is_some() {
+            return Err(CanisterError::ValidationErrors(format!(
+                "Action already exist!"
+            )));
+        }
+
+        self.link_service.link_validate_user_create_action(
+            &input.link_id,
+            &action_type,
+            &user_id,
+        )?;
+
+        //create temp action
+        // fill in link_id info
+        // fill in action_type info
+        // fill in default_link_user_state info
+        let default_link_user_state = match action_type {
+            ActionType::Use => Some(LinkUserState::ChooseWallet),
+            _ => None,
+        };
+        let mut temp_action = TemporaryAction {
+            id: Uuid::new_v4().to_string(),
+            r#type: action_type,
+            state: ActionState::Created,
+            creator: user_id.clone(),
+            link_id: input.link_id.clone(),
+            intents: vec![],
+            default_link_user_state,
+        };
+
+        // fill the intent info
+        let intents = self
+            .link_service
+            .assemble_intents(&temp_action.link_id, &temp_action.r#type, &wallet_address)
+            .map_err(|e| {
+                CanisterError::HandleLogicError(format!(
+                    "[create_action_anonymous] Failed to assemble intents: {}",
+                    e
+                ))
+            })?;
+        temp_action.intents = intents;
+
+        info!("temp_action: {:#?}", temp_action);
+
+        // create real action
+        let res = self.tx_manager_service.create_action(&temp_action)?;
+
+        info!(
+            "[create_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
+            &user_id, input.link_id, res.id
+        );
+
+        Ok(res)
     }
 
     pub fn link_get_user_state(
