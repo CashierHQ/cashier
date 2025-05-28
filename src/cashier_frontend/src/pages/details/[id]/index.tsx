@@ -23,14 +23,12 @@ import useToast from "@/hooks/useToast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
-import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon } from "@radix-ui/react-icons";
-import QRCode from "react-qr-code";
+import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { ACTION_TYPE, ACTION_STATE, getLinkTypeString } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { Label } from "@/components/ui/label";
-import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
 import { ShareLinkDrawer } from "@/components/link-details/share-link-drawer";
@@ -45,7 +43,7 @@ import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { formatNumber } from "@/utils/helpers/currency";
-import { ChevronDown, ChevronUp, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -53,7 +51,6 @@ export default function DetailPage() {
     const navigate = useNavigate();
     const { toastData, showToast, hideToast } = useToast();
     const { renderSkeleton } = useSkeletonLoading();
-    const responsive = useResponsive();
 
     const {
         link,
@@ -355,11 +352,14 @@ export default function DetailPage() {
                                                     b.address ?? "",
                                                 );
                                             })
-                                            .map((asset) => {
+                                            .map((asset, index) => {
                                                 const token = getToken(asset.address);
                                                 if (!token) return null;
                                                 return (
-                                                    <div className="flex items-center gap-2">
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center gap-2"
+                                                    >
                                                         <p className="text-sm text-primary/80">
                                                             {formatNumber(
                                                                 (
@@ -404,7 +404,7 @@ export default function DetailPage() {
                                                     b.address ?? "",
                                                 );
                                             })
-                                            .map((asset) => {
+                                            .map((asset, index) => {
                                                 const token = getToken(asset.address);
                                                 if (!token) return null;
 
@@ -417,7 +417,10 @@ export default function DetailPage() {
                                                     totalNumberOfAssets -
                                                     amountPerUse * Number(link.useActionCounter);
                                                 return (
-                                                    <div className="flex items-center gap-2">
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center gap-2"
+                                                    >
                                                         <p className="text-sm text-primary/80">
                                                             {formatNumber(
                                                                 numberOfAssetsLeft.toString(),
