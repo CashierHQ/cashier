@@ -41,6 +41,11 @@ type CanisterError = variant {
     message : text;
   };
 };
+type CreateActionAnonymousInput = record {
+  link_id : text;
+  action_type : text;
+  wallet_address : text;
+};
 type CreateActionInput = record { link_id : text; action_type : text };
 type CreateLinkInput = record { link_type : text };
 type CreateLinkInputV2 = record {
@@ -229,7 +234,7 @@ type UpdateLinkInput = record {
 type UserDto = record { id : text; email : opt text; wallet : text };
 service : () -> {
   create_action : (CreateActionInput) -> (Result);
-  create_action_anonymous : (ProcessActionAnonymousInput) -> (Result);
+  create_action_anonymous : (CreateActionAnonymousInput) -> (Result);
   create_link : (CreateLinkInput) -> (Result_1);
   create_link_v2 : (CreateLinkInputV2) -> (Result_2);
   create_user : () -> (Result_3);

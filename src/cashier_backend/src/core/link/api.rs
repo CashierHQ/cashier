@@ -24,7 +24,8 @@ use uuid::Uuid;
 use crate::{
     core::{
         action::types::{
-            ActionDto, CreateActionInput, ProcessActionAnonymousInput, ProcessActionInput,
+            ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
+            ProcessActionInput,
         },
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
@@ -106,7 +107,7 @@ pub async fn process_action_anonymous(
 
 #[update]
 pub fn create_action_anonymous(
-    input: ProcessActionAnonymousInput,
+    input: CreateActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.create_action_anonymous(input)
@@ -747,7 +748,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
     pub fn create_action_anonymous(
         &self,
-        input: ProcessActionAnonymousInput,
+        input: CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         let caller = self.ic_env.caller();
 
