@@ -16,7 +16,7 @@
 
             "X-XSS-Protection": "1; mode=block",
 
-            "Cache-control": "public, max-age=43200"
+            "Cache-control": "public, max-age=600"
         }
     }
 ]
