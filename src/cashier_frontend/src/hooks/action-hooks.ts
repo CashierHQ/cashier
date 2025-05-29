@@ -41,7 +41,7 @@ export function useCreateAction() {
     const mutation = useMutation({
         mutationFn: (params: BaseActionParams) => {
             const linkService = new LinkService(identity);
-            return linkService.processAction(params);
+            return linkService.createAction(params);
         },
     });
 
@@ -56,8 +56,15 @@ export function useProcessAction() {
 
     const mutation = useMutation({
         mutationFn: (params: BaseActionParams) => {
+            if (!params.actionId) {
+                throw new Error("Action ID is required for processing");
+            }
             const linkService = new LinkService(identity);
-            return linkService.processAction(params);
+            return linkService.processActionV2({
+                linkId: params.linkId,
+                actionType: params.actionType,
+                actionId: params.actionId,
+            });
         },
     });
 
@@ -78,10 +85,9 @@ export function useCreateActionAnonymous() {
 
             const linkService = new LinkService(identity);
 
-            return linkService.processActionAnonymous({
+            return linkService.createActionAnonymous({
                 linkId: params.linkId,
                 actionType: params.actionType,
-                actionId: undefined,
                 walletAddress: params.walletAddress,
             });
         },
@@ -101,10 +107,13 @@ export function useProcessActionAnonymous() {
             if (identity && Principal.anonymous() !== identity.getPrincipal()) {
                 throw new Error("Anonymous user cannot create action");
             }
+            if (!params.actionId) {
+                throw new Error("Action ID is required for processing");
+            }
 
             const linkService = new LinkService(identity);
 
-            return linkService.processActionAnonymous({
+            return linkService.processActionAnonymousV2({
                 linkId: params.linkId,
                 actionType: params.actionType,
                 actionId: params.actionId,

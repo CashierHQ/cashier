@@ -23,16 +23,15 @@ import useToast from "@/hooks/useToast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
-import { ChevronLeftIcon, ChevronUpIcon, ChevronDownIcon } from "@radix-ui/react-icons";
-import QRCode from "react-qr-code";
+import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { ACTION_TYPE, ACTION_STATE, getLinkTypeString } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { Label } from "@/components/ui/label";
-import SocialButtons from "@/components/link-details/social-buttons";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
+import { ShareLinkDrawer } from "@/components/link-details/share-link-drawer";
 import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
@@ -44,7 +43,7 @@ import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { formatNumber } from "@/utils/helpers/currency";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Share2 } from "lucide-react";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -52,7 +51,6 @@ export default function DetailPage() {
     const navigate = useNavigate();
     const { toastData, showToast, hideToast } = useToast();
     const { renderSkeleton } = useSkeletonLoading();
-    const responsive = useResponsive();
 
     const {
         link,
@@ -68,6 +66,7 @@ export default function DetailPage() {
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
 
+    const [showShareLinkDrawer, setShowShareLinkDrawer] = React.useState(false);
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
 
@@ -316,54 +315,15 @@ export default function DetailPage() {
                         </div>
 
                         {/* Scrollable Content Area */}
-                        <div className="flex-grow overflow-y-auto pb-24">
-                            <div
-                                className="flex justify-between items-center mb-4 cursor-pointer"
-                                onClick={() => setShareExpanded(!shareExpanded)}
-                            >
-                                <Label>Share your link</Label>
-                                {shareExpanded ? (
-                                    <ChevronUp
-                                        color={"green"}
-                                        width={20}
-                                        height={20}
-                                        strokeWidth={2}
-                                    />
-                                ) : (
-                                    <ChevronDown
-                                        color={"green"}
-                                        width={20}
-                                        height={20}
-                                        strokeWidth={2}
-                                    />
-                                )}
-                            </div>
-
-                            <div
-                                className={`overflow-hidden transition-all duration-300 ease-in-out ${shareExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}
-                            >
-                                <div
-                                    className={`flex ${responsive.isSmallDevice ? "flex-col gap-2" : "flex-row justify-start items-between gap-8 mb-4"}`}
-                                >
-                                    <div
-                                        className={`flex items-center justify-center ${responsive.isSmallDevice ? " my-3" : "order-1"}`}
-                                    >
-                                        <QRCode
-                                            size={responsive.isSmallDevice ? 100 : 130}
-                                            value={window.location.href.replace("details/", "")}
-                                        />
-                                    </div>
-
-                                    <div
-                                        className={`${responsive.isSmallDevice ? "" : "order-2 flex flex-col items-start justify-between w-full"}`}
-                                    >
-                                        <SocialButtons handleCopyLink={handleCopyLink} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 items-center mb-2">
+                        <div className="flex-grow overflow-y-auto pb-24 scrollbar-hide">
+                            <div className="flex gap-2 items-center mb-2 justify-between">
                                 <Label>{t("details.linkInfo")}</Label>
+                                <button
+                                    className="flex items-center justify-center"
+                                    onClick={() => setShowShareLinkDrawer(true)}
+                                >
+                                    <Share2 color="#35A18B" width={18} height={18} />
+                                </button>
                             </div>
                             <div
                                 id="link-detail-section"
@@ -392,11 +352,14 @@ export default function DetailPage() {
                                                     b.address ?? "",
                                                 );
                                             })
-                                            .map((asset) => {
+                                            .map((asset, index) => {
                                                 const token = getToken(asset.address);
                                                 if (!token) return null;
                                                 return (
-                                                    <div className="flex items-center gap-2">
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center gap-2"
+                                                    >
                                                         <p className="text-sm text-primary/80">
                                                             {formatNumber(
                                                                 (
@@ -441,7 +404,7 @@ export default function DetailPage() {
                                                     b.address ?? "",
                                                 );
                                             })
-                                            .map((asset) => {
+                                            .map((asset, index) => {
                                                 const token = getToken(asset.address);
                                                 if (!token) return null;
 
@@ -454,7 +417,10 @@ export default function DetailPage() {
                                                     totalNumberOfAssets -
                                                     amountPerUse * Number(link.useActionCounter);
                                                 return (
-                                                    <div className="flex items-center gap-2">
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center gap-2"
+                                                    >
                                                         <p className="text-sm text-primary/80">
                                                             {formatNumber(
                                                                 numberOfAssetsLeft.toString(),
@@ -535,6 +501,13 @@ export default function DetailPage() {
                     setInactiveLink();
                 }}
                 isEnding={isUpdating}
+            />
+
+            <ShareLinkDrawer
+                open={showShareLinkDrawer}
+                onClose={() => setShowShareLinkDrawer(false)}
+                onCopyLink={handleCopyLink}
+                linkUrl={window.location.href.replace("details/", "")}
             />
 
             <ConfirmationDrawerV2

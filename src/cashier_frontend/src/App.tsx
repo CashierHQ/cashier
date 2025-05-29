@@ -32,7 +32,15 @@ console.log(import.meta.env.MODE);
 console.log(import.meta.env.VITE_BACKEND_CANISTER_ID);
 console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
 
-const TIMEOUT = 60n * 60n * 1_000_000_000n; // 15 minutes
+// nano second
+const TIMEOUT_NANO_SEC = 24n * 60n * 60n * 1_000_000_000n; // 1 day
+
+// milli
+const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
+
+console.log("TIMEOUT_NANO_SEC", TIMEOUT_NANO_SEC);
+console.log("IDLE_TIMEOUT_MILLI_SEC", IDLE_TIMEOUT_MILLI_SEC);
+
 
 function App() {
     const queryClient = new QueryClient();
@@ -52,7 +60,10 @@ function App() {
             signers={signers}
             signerClientOptions={{
                 targets,
-                maxTimeToLive: TIMEOUT,
+                maxTimeToLive: TIMEOUT_NANO_SEC,
+                idleOptions: {
+                    idleTimeout: IDLE_TIMEOUT_MILLI_SEC,
+                },
             }}
             discoverExtensionSigners={true}
         >

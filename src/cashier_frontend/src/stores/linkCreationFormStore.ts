@@ -80,7 +80,6 @@ export const useLinkCreationFormStore = create<LinkCreationFormState>()((set, ge
 
     updateUserInput: (linkId, input) =>
         set((state) => {
-            console.log("Updating user input for linkId:", linkId, "with input:", input);
             const newUserInputs = new Map(state.userInputs);
             if (newUserInputs.has(linkId)) {
                 const updatedInput = { ...newUserInputs.get(linkId), ...input };
