@@ -91,19 +91,24 @@ export function useTokenListQuery() {
             const tokenService = new TokenStorageService(identity);
             let tokens: TokenDto[] = [];
 
-            const res = await tokenService.listTokens();
+            try {
+                const res = await tokenService.listTokens();
 
-            if (res && res.tokens) {
-                tokens = res.tokens;
+                if (res && res.tokens) {
+                    tokens = res.tokens;
+                }
+
+                console.log("Fetched tokens:", res);
+
+                return {
+                    tokens,
+                    needUpdateVersion: res?.need_update_version || false,
+                    perference: fromNullable(res?.perference),
+                };
+            } catch (error) {
+                console.error("Error fetching token list:", error);
+                throw error; // Rethrow to trigger query failure
             }
-
-            console.log("Fetched tokens:", res);
-
-            return {
-                tokens,
-                needUpdateVersion: res?.need_update_version || false,
-                perference: fromNullable(res?.perference),
-            };
         },
         select: (data): TokenListResponse => {
             // Transform to frontend model
