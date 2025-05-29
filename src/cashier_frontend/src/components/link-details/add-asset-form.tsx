@@ -32,8 +32,6 @@ import {
     LINK_INTENT_ASSET_LABEL,
     LINK_TYPE,
 } from "@/services/types/enum";
-import useToast from "@/hooks/useToast";
-import TransactionToast from "../transaction/transaction-toast";
 import { Plus, Minus } from "lucide-react";
 import { AssetFormInput } from "./asset-form-input";
 import { FungibleToken } from "@/types/fungible-token.speculative";
@@ -45,6 +43,7 @@ import { Input } from "../ui/input";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Separator } from "../ui/separator";
+import { toast } from "sonner";
 import { MessageBanner } from "../ui/message-banner";
 
 type TipLinkAssetFormProps = {
@@ -57,7 +56,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const { link, isUpdating, callLinkStateMachine } = useLinkAction();
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
-    const { showToast, toastData, hideToast } = useToast();
     const { setStep } = useMultiStepFormContext();
     const responsive = useResponsive();
 
@@ -335,7 +333,9 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
             setSelectedAssetAddresses((prev) => [...prev, nextToken.address]);
         } else {
-            showToast("Error", "No more tokens available to add", "error");
+            toast.error(t("add_asset_form.error.default.title"), {
+                description: t("add_asset_form.error.no_more_token.description"),
+            });
         }
     };
 
@@ -624,16 +624,15 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         if (errorMessages.length > 0) {
             if (errorMessages.length === 1) {
                 // Only one error, show it directly
-                showToast(t("create.validation_error"), errorMessages[0], "error");
+                toast.error(t("add_asset_form.error.validation.title"), {
+                    description: errorMessages[0],
+                });
             } else {
-                // Multiple errors, show a summary
-                showToast(
-                    t("create.validation_error"),
-                    `Found ${errorMessages.length} issues:\n${errorMessages.slice(0, 3).join("\n")}${
-                        errorMessages.length > 3 ? "\n...and more" : ""
-                    }`,
-                    "error",
-                );
+                toast.error(t("add_asset_form.error.validation.title"), {
+                    description: `Found ${errorMessages.length} issues:\n${errorMessages
+                        .slice(0, 3)
+                        .join("\n")}${errorMessages.length > 3 ? "\n...and more" : ""}`,
+                });
 
                 // Log all errors to console for debugging
                 console.error("Form validation errors:", errorMessages);
@@ -809,16 +808,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 handleChange={handleSetTokenAddress}
                 assetList={availableTokensForDrawer}
                 showSearch
-            />
-
-            {/* Toast Messages */}
-            <TransactionToast
-                open={toastData?.open ?? false}
-                onOpenChange={hideToast}
-                title={toastData?.title ?? ""}
-                description={toastData?.description ?? ""}
-                variant={toastData?.variant ?? "default"}
-                duration={3000}
             />
         </div>
     );

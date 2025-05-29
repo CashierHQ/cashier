@@ -21,10 +21,10 @@ import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
 import { useAuth } from "@nfid/identitykit/react";
 import { transformShortAddress } from "@/utils";
 import copy from "copy-to-clipboard";
-import { useToast } from "@/hooks/use-toast";
 import { Copy } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { MouseEventHandler } from "react";
+import { toast } from "sonner";
 
 export interface SidebarMenuItem {
     title: string;
@@ -36,18 +36,15 @@ interface AppSidebarProps {
     onClose?: () => void;
 }
 
-const AppSidebar: React.FC<AppSidebarProps> = ({ onClose }) => {
+const AppSidebar: React.FC<AppSidebarProps> = () => {
     const { user } = useAuth();
     const { disconnect } = useAuth();
-    const { toast } = useToast();
 
     const handleCopy = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
             copy(user?.principal.toString() ?? "");
-            toast({
-                description: "Copied",
-            });
+            toast.success("Address copied to clipboard");
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }

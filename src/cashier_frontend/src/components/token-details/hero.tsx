@@ -22,9 +22,8 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useState } from "react";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { useNavigate } from "react-router-dom";
-import useToast from "@/hooks/useToast";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { toast } from "sonner";
 
 interface TokenDetailsHeroProps {
     token: FungibleToken;
@@ -33,7 +32,6 @@ interface TokenDetailsHeroProps {
 export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { toastData, showToast, hideToast } = useToast();
     const { navigateToPanel } = useWalletContext();
 
     // Check if we're in a panel context (using a heuristic)
@@ -60,7 +58,7 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
     const copyAddress = () => {
         navigator.clipboard.writeText(token.address);
         setHasCopiedAddress(true);
-        showToast("Copied", "", "default");
+        toast.success(t("common.sucess.copied_address"));
     };
 
     const CopyIcon = hasCopiedAddress ? CopyCheck : Copy;
@@ -103,14 +101,6 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
                     <p className="text-sm text-grey">{token.address}</p>
                 </div>
             </div>
-            <TransactionToast
-                open={toastData?.open ?? false}
-                onOpenChange={hideToast}
-                title={toastData?.title ?? ""}
-                description={toastData?.description ?? ""}
-                variant={toastData?.variant ?? "default"}
-                duration={2000}
-            />
         </div>
     );
 }
