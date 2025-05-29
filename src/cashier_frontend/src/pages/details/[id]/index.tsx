@@ -43,6 +43,7 @@ import { formatNumber } from "@/utils/helpers/currency";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 
+
 export default function DetailPage() {
     const { linkId } = useParams();
     const identity = useIdentity();
