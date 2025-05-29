@@ -97,6 +97,8 @@ export function useTokenListQuery() {
                 tokens = res.tokens;
             }
 
+            console.log("Fetched tokens:", res);
+
             return {
                 tokens,
                 needUpdateVersion: res?.need_update_version || false,
