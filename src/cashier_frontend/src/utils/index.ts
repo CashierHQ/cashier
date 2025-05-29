@@ -54,8 +54,10 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
         }
         return response.Ok;
     } else if ("err" in response) {
+        console.error("Error response:", response.err);
         throw new Error(safeParseJSON(response.err as Record<string, unknown>));
     } else if ("Err" in response) {
+        console.error("Error response:", response.Err);
         throw new Error(safeParseJSON(response.Err as Record<string, unknown>));
     }
 
