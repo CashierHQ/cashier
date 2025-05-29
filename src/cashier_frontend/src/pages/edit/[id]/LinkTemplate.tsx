@@ -26,10 +26,9 @@ import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
-import useToast from "@/hooks/useToast";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { stateToStepIndex } from ".";
+import { toast } from "sonner";
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     const supportedLinkTypes = [
         LINK_TYPE.SEND_TIP,
@@ -53,8 +52,6 @@ export default function LinkTemplate({
     const { updateUserInput, getUserInput, userInputs, setButtonState } =
         useLinkCreationFormStore();
 
-    const { toastData, showToast, hideToast } = useToast();
-
     const responsive = useResponsive();
 
     const { link, callLinkStateMachine, isUpdating } = useLinkAction();
@@ -67,13 +64,17 @@ export default function LinkTemplate({
         const currentLink = link ? getUserInput(link.id) : undefined;
 
         if (!currentLink?.title) {
-            showToast("Error", "Please enter a title", "error");
+            toast.error(t("common.error"), {
+                description: t("link_template.error.title_required"),
+            });
             return;
         }
 
         if (isLinkTypeSupported(currentLink?.linkType as LINK_TYPE)) {
             if (!currentLink || !currentLink.linkId) {
-                showToast("Error", "Link not found", "error");
+                toast.error(t("common.error"), {
+                    description: t("link_template.error.link_not_found"),
+                });
                 return;
             }
 
@@ -104,7 +105,9 @@ export default function LinkTemplate({
                 setStep(stepIndex);
             } catch (error) {
                 console.error("Error calling state machine", error);
-                showToast("Error", "Failed to call state machine", "error");
+                toast.error(t("common.error"), {
+                    description: t("link_template.error.failed_to_call"),
+                });
             }
         } else {
             onSelectUnsupportedLinkType();
@@ -236,14 +239,6 @@ export default function LinkTemplate({
                     </div>
                 </div>
             </div>
-
-            <TransactionToast
-                open={toastData?.open ?? false}
-                onOpenChange={hideToast}
-                title={toastData?.title ?? ""}
-                description={toastData?.description ?? ""}
-                variant={toastData?.variant ?? "default"}
-            />
         </div>
     );
 }

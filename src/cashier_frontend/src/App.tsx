@@ -20,7 +20,7 @@ import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";
 import { IdentityKitAuthType } from "@nfid/identitykit";
-import { Toaster } from "./components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
@@ -40,7 +40,6 @@ const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
 
 console.log("TIMEOUT_NANO_SEC", TIMEOUT_NANO_SEC);
 console.log("IDLE_TIMEOUT_MILLI_SEC", IDLE_TIMEOUT_MILLI_SEC);
-
 
 function App() {
     const queryClient = new QueryClient();
@@ -71,7 +70,21 @@ function App() {
                 <ImageCacheProvider>
                     <AppRouter />
                 </ImageCacheProvider>
-                <Toaster />
+                <Toaster
+                    position="top-center"
+                    expand={true}
+                    richColors={true}
+                    toastOptions={{
+                        classNames: {
+                            toast: "toast",
+                            title: "title",
+                            description: "description",
+                            actionButton: "action-button",
+                            cancelButton: "cancel-button",
+                            closeButton: "close-button",
+                        },
+                    }}
+                />
             </QueryClientProvider>
         </IdentityKitProvider>
     );
