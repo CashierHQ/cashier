@@ -36,6 +36,7 @@
         "amount": "Amount",
         "address": "Address",
         "asset": "Receive asset",
+        "sendAsset": "Send asset",
         "addressPlaceholder": "Type in address",
         "addressPlaceholderComingSoon": "Coming soon",
         "receive_options": "Receive options",

@@ -41,7 +41,6 @@ const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
 console.log("TIMEOUT_NANO_SEC", TIMEOUT_NANO_SEC);
 console.log("IDLE_TIMEOUT_MILLI_SEC", IDLE_TIMEOUT_MILLI_SEC);
 
-
 function App() {
     const queryClient = new QueryClient();
     const { signers } = useSignerStore();
@@ -71,8 +70,8 @@ function App() {
                 <ImageCacheProvider>
                     <AppRouter />
                 </ImageCacheProvider>
-                <Toaster />
             </QueryClientProvider>
+            <Toaster />
         </IdentityKitProvider>
     );
 }
