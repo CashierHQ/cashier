@@ -58,7 +58,6 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
                     }}
                 >
                     <ClaimFormOptions form={form} formData={formData} setDisabled={setDisabled} />
-
                     <ClaimActionButton
                         isDisabled={isDisabled}
                         buttonText={buttonText}

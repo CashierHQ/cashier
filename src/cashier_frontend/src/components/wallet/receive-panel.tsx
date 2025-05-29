@@ -17,7 +17,6 @@
 import { IconInput } from "@/components/icon-input";
 import ConfirmDialog from "@/components/confirm-dialog";
 import useTokenMetadata from "@/hooks/tokenUtilsHooks";
-import useToast from "@/hooks/useToast";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { transformShortAddress } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
@@ -33,17 +32,17 @@ import AssetButton from "@/components/asset-button";
 import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
 import AssetDrawer from "@/components/asset-drawer";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { toast } from "sonner";
+import { ICP_ADDRESS } from "@/const";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
-    const { showToast, hideToast } = useToast();
-
+    const { t } = useTranslation();
     const handleCopyAccountId = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
             copy(accountId ?? "");
-            showToast("Copied", "", "default");
+            toast.success(t("common.success.copied_account_id"));
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -86,7 +85,6 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
     const { metadata } = useTokenMetadata(tokenId);
     const { user } = useAuth();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
-    const { toastData, showToast, hideToast } = useToast();
     const [accountId, setAccountId] = useState<string>("");
     const [currentSelectedToken, setCurrentSelectedToken] = useState<FungibleToken | undefined>(
         undefined,
@@ -107,7 +105,7 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
         }
 
         // If no tokenId provided, default to ICP
-        return tokenList.find((token) => token.address === "ryjl3-tyaaa-aaaaa-aaaba-cai");
+        return tokenList.find((token) => token.address === ICP_ADDRESS);
     }, [tokenList, tokenId, metadata]);
 
     const handleTokenSelect = (token: FungibleToken) => {
@@ -127,7 +125,7 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
         try {
             e.stopPropagation();
             copy(user?.principal.toString() ?? "");
-            showToast("Copied", "", "default");
+            toast.success(t("common.success.copied_address"));
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -223,14 +221,6 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
                     showSearch={true}
                 />
             </div>
-            <TransactionToast
-                open={toastData?.open ?? false}
-                onOpenChange={hideToast}
-                title={toastData?.title ?? ""}
-                description={toastData?.description ?? ""}
-                variant={toastData?.variant ?? "default"}
-                duration={2000}
-            />
         </div>
     );
 };

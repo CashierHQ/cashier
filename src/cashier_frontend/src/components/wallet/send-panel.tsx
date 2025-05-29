@@ -21,7 +21,6 @@ import { Clipboard, ChevronLeft } from "lucide-react";
 // UI Components
 import { FixedBottomButton } from "@/components/fix-bottom-button";
 import { IconInput } from "@/components/icon-input";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import {
     Form,
     FormControl,
@@ -37,7 +36,6 @@ import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asse
 
 // Hooks
 import { useTokens } from "@/hooks/useTokens";
-import useToast from "@/hooks/useToast";
 import {
     useWalletSendAssetForm,
     useWalletSendAssetFormActions,
@@ -52,6 +50,7 @@ import { CHAIN } from "@/services/types/enum";
 import { TransactionStatus } from "@/services/types/wallet.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { toast } from "sonner";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 interface SendPanelProps {
@@ -69,7 +68,6 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     const { t } = useTranslation();
 
     // UI state
-    const { toastData, showToast, hideToast } = useToast();
     const [isDisabled, setIsDisabled] = useState(true);
     const [addressType, setAddressType] = useState<"principal" | "account">("principal");
     const [showAssetDrawer, setShowAssetDrawer] = useState(false);
@@ -168,19 +166,15 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     useEffect(() => {
         switch (transactionStatus) {
             case TransactionStatus.FAILED:
-                showToast(
-                    t("transaction.confirm_popup.transaction_failed"),
-                    t("transaction.confirm_popup.transaction_failed_message"),
-                    "error",
-                );
+                toast.error(t("send_panel.confirm_popup.transaction.failed.title"), {
+                    description: t("send_panel.confirm_popup.transaction.failed.message"),
+                });
                 break;
 
             case TransactionStatus.SUCCESS:
-                showToast(
-                    t("transaction.confirm_popup.transaction_success"),
-                    t("transaction.confirm_popup.transaction_success_message"),
-                    "default",
-                );
+                toast.success(t("send_panel.confirm_popup.transaction.success.title"), {
+                    description: t("send_panel.confirm_popup.transaction.success.message"),
+                });
 
                 // Reset form after successful transaction
                 form.reset({
@@ -191,7 +185,7 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                 });
                 break;
         }
-    }, [transactionStatus, t, showToast, form, selectedToken]);
+    }, [transactionStatus, t, form, selectedToken]);
 
     /**
      * Clear amount errors when selected token changes
@@ -512,15 +506,6 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                     </form>
                 </Form>
             </div>
-
-            {/* Toast notifications */}
-            <TransactionToast
-                open={toastData?.open ?? false}
-                onOpenChange={hideToast}
-                title={toastData?.title ?? ""}
-                description={toastData?.description ?? ""}
-                variant={toastData?.variant ?? "default"}
-            />
 
             {/* Confirmation drawer */}
             <SendAssetConfirmationDrawer />

@@ -211,14 +211,23 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                         </button>
                     )}
                     <button
-                        onClick={() =>
-                            setLocalTokenAmount(
-                                convertDecimalBigIntToNumber(
-                                    token?.amount || 0n,
-                                    token?.decimals || 8,
-                                ).toString(),
-                            )
-                        }
+                        onClick={() => {
+                            const maxTokenAmount = convertDecimalBigIntToNumber(
+                                token?.amount || 0n,
+                                token?.decimals || 8,
+                            ).toString();
+
+                            setLocalTokenAmount(maxTokenAmount);
+
+                            // Also update the USD value if conversion is possible
+                            if (canConvert && tokenUsdPrice && !isNaN(parseFloat(maxTokenAmount))) {
+                                const usdValue = parseFloat(maxTokenAmount) * tokenUsdPrice;
+                                setLocalUsdAmount(usdValue.toFixed(7));
+                            }
+
+                            // Update the form value
+                            setTokenAmount(maxTokenAmount);
+                        }}
                         className="ml-auto text-[#36A18B] text-[12px] font-medium"
                     >
                         Max
@@ -258,12 +267,21 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                         }))}
                         showMaxButton={true}
                         onMaxClick={() => {
-                            setLocalTokenAmount(
-                                convertDecimalBigIntToNumber(
-                                    token?.amount || 0n,
-                                    token?.decimals || 8,
-                                ).toString(),
-                            );
+                            const maxTokenAmount = convertDecimalBigIntToNumber(
+                                token?.amount || 0n,
+                                token?.decimals || 8,
+                            ).toString();
+
+                            setLocalTokenAmount(maxTokenAmount);
+
+                            // Also update the USD value if conversion is possible
+                            if (canConvert && tokenUsdPrice && !isNaN(parseFloat(maxTokenAmount))) {
+                                const usdValue = parseFloat(maxTokenAmount) * tokenUsdPrice;
+                                setLocalUsdAmount(usdValue.toFixed(7));
+                            }
+
+                            // Update the form value
+                            setTokenAmount(maxTokenAmount);
                         }}
                         isTip={isTip}
                     />

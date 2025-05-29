@@ -19,12 +19,10 @@ import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus } from "lucide-react";
 import LinkItem from "@/components/link-item";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { LINK_STATE } from "@/services/types/enum";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { formatDateString } from "@/utils";
-import useToast from "@/hooks/useToast";
 
 interface AuthenticatedContentProps {
     showGuide: boolean;
@@ -45,7 +43,6 @@ export const AuthenticatedContent = ({
     linkData,
     resetLinkAndAction,
 }: AuthenticatedContentProps) => {
-    const { toastData, hideToast } = useToast();
     const { t } = useTranslation();
     const responsive = useResponsive();
 
@@ -140,14 +137,6 @@ export const AuthenticatedContent = ({
             >
                 <Plus strokeWidth={3} />
             </button>
-            <TransactionToast
-                open={toastData?.open ?? false}
-                onOpenChange={hideToast}
-                title={toastData?.title ?? ""}
-                description={toastData?.description ?? ""}
-                variant={toastData?.variant ?? "default"}
-                duration={2000}
-            />
         </>
     );
 };

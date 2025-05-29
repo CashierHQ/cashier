@@ -122,13 +122,21 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             setButtonText(t("confirmation_drawer.processing"));
         }
 
-        // Call appropriate handler based on transaction state
-        if (isTxSuccess) {
-            // For successful transactions, continue to next step
-            await onSuccessContinue();
-        } else {
-            // For new or failed transactions, start/retry the transaction
-            await startTransaction();
+        try {
+            // Call appropriate handler based on transaction state
+            if (isTxSuccess) {
+                // For successful transactions, continue to next step
+                await onSuccessContinue();
+            } else {
+                // For new or failed transactions, start/retry the transaction
+                await startTransaction();
+            }
+        } catch (e) {
+            const errorMessage = e instanceof Error ? e : new Error("unknown error");
+            onCashierError(errorMessage);
+        } finally {
+            setButtonDisabled?.(false);
+            setButtonText?.(t("confirmation_drawer.confirm_button"));
         }
     };
 
@@ -189,6 +197,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                         <div className="text-center w-[100%] text-[18px] font-semibold">
                             {title}
                         </div>
+
                         <X
                             onClick={onClose}
                             strokeWidth={1.5}

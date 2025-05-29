@@ -21,7 +21,6 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { MultiStepForm } from "@/components/multi-step-form";
 import { useTranslation } from "react-i18next";
 import LinkPreview from "./LinkPreview";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import {
     ACTION_STATE,
     ACTION_TYPE,
@@ -30,7 +29,6 @@ import {
     mapStringToLinkState,
     mapStringToLinkType,
 } from "@/services/types/enum";
-import useToast from "@/hooks/useToast";
 import { Spinner } from "@/components/ui/spinner";
 import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -38,6 +36,7 @@ import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
+import { toast } from "sonner";
 
 export function stateToStepIndex(state: string | undefined): number {
     if (state === LINK_STATE.CHOOSE_TEMPLATE) {
@@ -60,7 +59,6 @@ export default function LinkPage() {
     const location = useLocation();
     const { t } = useTranslation();
     const { linkId } = useParams();
-    const { toastData, showToast, hideToast } = useToast();
 
     // Parse URL search parameters to get oldId if present
     const searchParams = new URLSearchParams(location.search);
@@ -145,11 +143,9 @@ export default function LinkPage() {
                 }
             } catch (e) {
                 console.error(e);
-                showToast(
-                    t("transaction.validation.action_failed"),
-                    t("transaction.validation.action_failed_message"),
-                    "error",
-                );
+                toast.error(t("transaction.validation.action_failed"), {
+                    description: t("transaction.validation.action_failed_message"),
+                });
             } finally {
                 setBackButtonDisabled(false);
             }
@@ -158,40 +154,35 @@ export default function LinkPage() {
 
     // TODO: update toaster to context, so toasts/banners can be triggered inside components
     const showUnsupportedLinkTypeToast = () => {
-        showToast(
-            "Unsupported link type",
-            "The current link type is currently not supported now. Please choose another link type.",
-            "error",
-        );
+        toast.error("Unsupported link type", {
+            description:
+                "The current link type is currently not supported now. Please choose another link type.",
+        });
     };
 
     const showInvalidActionToast = () => {
-        showToast(
-            t("transaction.validation.action_failed"),
-            t("transaction.validation.action_failed_message"),
-            "error",
-        );
+        toast.error(t("transaction.validation.action_failed"), {
+            description: t("transaction.validation.action_failed_message"),
+        });
     };
 
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
 
-        showToast(t("transaction.create_intent.action_failed"), cahierError.message, "error");
+        toast.error(t("transaction.create_intent.action_failed"), {
+            description: cahierError.message,
+        });
     };
 
     const showActionResultToast = (action: ActionModel) => {
         if (action.state === ACTION_STATE.FAIL) {
-            showToast(
-                t("transaction.confirm_popup.transaction_failed"),
-                t("transaction.confirm_popup.transaction_failed_message"),
-                "error",
-            );
+            toast.error(t("transaction.confirm_popup.transaction_failed"), {
+                description: t("transaction.confirm_popup.transaction_failed_message"),
+            });
         } else if (action.state === ACTION_STATE.SUCCESS) {
-            showToast(
-                t("transaction.confirm_popup.transaction_success"),
-                t("transaction.confirm_popup.transaction_success_message"),
-                "default",
-            );
+            toast.success(t("transaction.confirm_popup.transaction_success"), {
+                description: t("transaction.confirm_popup.transaction_success_message"),
+            });
         }
     };
 
@@ -259,14 +250,6 @@ export default function LinkPage() {
 
                             <MultiStepForm.Footer />
                         </MultiStepForm>
-
-                        <TransactionToast
-                            open={toastData?.open ?? false}
-                            onOpenChange={hideToast}
-                            title={toastData?.title ?? ""}
-                            description={toastData?.description ?? ""}
-                            variant={toastData?.variant ?? "default"}
-                        />
                     </>
                 )}
             </div>

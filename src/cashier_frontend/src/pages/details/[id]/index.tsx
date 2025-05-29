@@ -19,17 +19,14 @@ import { StateBadge } from "@/components/link-item";
 import { Driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { Button } from "@/components/ui/button";
-import useToast from "@/hooks/useToast";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { ACTION_TYPE, ACTION_STATE, getLinkTypeString } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { Label } from "@/components/ui/label";
-import { useResponsive } from "@/hooks/responsive-hook";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
 import { ShareLinkDrawer } from "@/components/link-details/share-link-drawer";
 import { LINK_STATE } from "@/services/types/enum";
@@ -44,12 +41,13 @@ import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { formatNumber } from "@/utils/helpers/currency";
 import { Share2 } from "lucide-react";
+import { toast } from "sonner";
+
 
 export default function DetailPage() {
     const { linkId } = useParams();
     const identity = useIdentity();
     const navigate = useNavigate();
-    const { toastData, showToast, hideToast } = useToast();
     const { renderSkeleton } = useSkeletonLoading();
 
     const {
@@ -77,8 +75,6 @@ export default function DetailPage() {
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
-
-    const [shareExpanded, setShareExpanded] = React.useState(true);
 
     React.useEffect(() => {
         const driver = initializeDriver();
@@ -146,7 +142,7 @@ export default function DetailPage() {
             setShowOverlay(false);
             driverObj?.destroy();
             copy(window.location.href.replace("details/", ""));
-            showToast("Copied successfully", "", "default", undefined, false);
+            toast.success(t("common.copied"));
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }
@@ -270,23 +266,15 @@ export default function DetailPage() {
     };
 
     const handleCashierError = (error: Error) => {
-        showToast("Error", error.message, "error");
+        toast.error(t("common.error"), {
+            description: error.message,
+        });
+        console.error("Cashier error:", error);
         setShowConfirmationDrawer(false);
     };
 
     const handleActionResult = (actionResult: ActionModel) => {
         setAction(actionResult);
-    };
-
-    // Calculate remaining actions and assets
-    const calculateRemainingInfo = (maxActions: bigint, usedActions: bigint) => {
-        if (maxActions <= BigInt(0)) return { remainingActions: BigInt(0), hasAssetsLeft: false };
-
-        const remaining = maxActions > usedActions ? maxActions - usedActions : BigInt(0);
-        return {
-            remainingActions: remaining,
-            hasAssetsLeft: remaining > BigInt(0),
-        };
     };
 
     return (
@@ -482,14 +470,6 @@ export default function DetailPage() {
                                 </Button>
                             )}
                         </div>
-
-                        <TransactionToast
-                            open={toastData?.open ?? false}
-                            onOpenChange={hideToast}
-                            title={toastData?.title ?? ""}
-                            description={toastData?.description ?? ""}
-                            variant={toastData?.variant ?? "default"}
-                        />
                     </>
                 )}
             </div>

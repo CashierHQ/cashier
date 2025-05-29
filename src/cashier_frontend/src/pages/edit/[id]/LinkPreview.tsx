@@ -67,7 +67,7 @@ interface EnhancedAsset {
 }
 
 export default function LinkPreview({
-    // onInvalidActon = () => {},
+    onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
 }: LinkPreviewProps) {
@@ -167,13 +167,6 @@ export default function LinkPreview({
                             `Insufficient balance for ${token.symbol}. Required: ${formattedRequired}, Available: ${formattedBalance}`,
                         );
                     }
-
-                    console.log("User has sufficient balance for", token.symbol);
-                    console.log(
-                        `Required: ${Number(totalAmount) / 10 ** tokenDecimals}, Available: ${
-                            Number(userBalance) / 10 ** tokenDecimals
-                        }`,
-                    );
                 }
             }
 
@@ -255,13 +248,9 @@ export default function LinkPreview({
 
     // Update the button state
     useEffect(() => {
-        // button disabled if:
-        // 1. isDisabled is true
-        // 2. isLoading is true
-        // 3. showConfirmation is true
         setButtonState({
-            label: isDisabled ? t("processing") : t("create.create"),
-            isDisabled: isDisabled || isLoading || showConfirmation,
+            label: isDisabled || isLoading ? t("processing") : t("create.create"),
+            isDisabled: isDisabled || isLoading,
             action: handleSubmit,
         });
     }, [isDisabled, isLoading, shouldRedirect, showConfirmation]);
@@ -374,9 +363,8 @@ export default function LinkPreview({
      * @returns {Promise<void>}
      */
     const handleSubmit = async () => {
-        setIsDisabled(true);
-
         try {
+            setIsDisabled(true);
             if (link && link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
                 // First create the link in the backend
                 const res = await createNewLink(link.id);
