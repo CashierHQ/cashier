@@ -20,7 +20,7 @@ import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";
 import { IdentityKitAuthType } from "@nfid/identitykit";
-import { Toaster } from "./components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
@@ -70,8 +70,22 @@ function App() {
                 <ImageCacheProvider>
                     <AppRouter />
                 </ImageCacheProvider>
+                <Toaster
+                    position="top-center"
+                    expand={true}
+                    richColors={true}
+                    toastOptions={{
+                        classNames: {
+                            toast: "toast",
+                            title: "title",
+                            description: "description",
+                            actionButton: "action-button",
+                            cancelButton: "cancel-button",
+                            closeButton: "close-button",
+                        },
+                    }}
+                />
             </QueryClientProvider>
-            <Toaster />
         </IdentityKitProvider>
     );
 }

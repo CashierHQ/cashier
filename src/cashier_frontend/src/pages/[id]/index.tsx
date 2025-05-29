@@ -20,9 +20,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
-import TransactionToast from "@/components/transaction/transaction-toast";
 import { ACTION_STATE, ACTION_TYPE, LINK_STATE, LINK_USER_STATE } from "@/services/types/enum";
-import useToast from "@/hooks/useToast";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { useIdentity } from "@nfid/identitykit/react";
@@ -33,7 +31,6 @@ import { UseFormPage } from "./UseFormPage";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
-import { IoInformationCircle } from "react-icons/io5";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
 import { useLinkAction } from "@/hooks/useLinkAction";
@@ -41,12 +38,11 @@ import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import {
     getDisplayComponentForLink,
-    getHeaderColorsForLink,
     getHeaderInfoForLink,
-    getHeaderTextColorForLink,
     getMessageForLink,
     getTitleForLink,
 } from "@/components/page/linkCardPage";
+import { toast } from "sonner";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -90,8 +86,6 @@ export default function ClaimPage() {
         enableFetchLinkUserState,
     );
 
-    const { toastData, showToast, hideToast } = useToast();
-
     const form = useForm<z.infer<typeof ClaimSchema>>({
         resolver: zodResolver(ClaimSchema),
     });
@@ -131,39 +125,33 @@ export default function ClaimPage() {
 
     const handleClaim = async () => {
         if (!identity && (!form.getValues("address") || form.getValues("address")?.length == 0)) {
-            showToast(
-                "",
-                "To receive, you need to login or connect your wallet",
-                "default",
-                <IoInformationCircle size={40} color="#36A18B" />,
-                true,
-            );
+            toast.error(t("link_detail.error.claim_without_login_or_wallet"));
             return;
         }
     };
 
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
-        showToast(t("transaction.create_intent.action_failed"), cahierError.message, "error");
+        toast.error(t("common.error"), {
+            description: cahierError.message,
+        });
     };
 
     const showActionResultToast = (action: ActionModel) => {
         if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
-            const toastData = {
-                title:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? t("transaction.confirm_popup.transaction_success")
-                        : t("transaction.confirm_popup.transaction_failed"),
-                description:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? t("transaction.confirm_popup.transaction_success_message")
-                        : t("transaction.confirm_popup.transaction_failed_message"),
-                variant:
-                    action.state === ACTION_STATE.SUCCESS
-                        ? ("default" as const)
-                        : ("error" as const),
-            };
-            showToast(toastData.title, toastData.description, toastData.variant);
+            if (action.state === ACTION_STATE.SUCCESS) {
+                toast.success(t("transaction.confirm_popup.transaction_success"), {
+                    description: t("transaction.confirm_popup.transaction_success_message"),
+                });
+            } else {
+                toast.error(t("transaction.confirm_popup.transaction_failed"), {
+                    description: t("transaction.confirm_popup.transaction_failed_message"),
+                });
+            }
+        } else {
+            toast.error(t("common.error"), {
+                description: t("link_detail.error.unknown_action_state"),
+            });
         }
     };
 
@@ -229,16 +217,6 @@ export default function ClaimPage() {
                         )}
                     </div>
                 )}
-
-                <TransactionToast
-                    open={toastData?.open ?? false}
-                    onOpenChange={hideToast}
-                    title={toastData?.title ?? ""}
-                    description={toastData?.description ?? ""}
-                    variant={toastData?.variant ?? "default"}
-                    icon={toastData?.icon}
-                    boldText={toastData?.boldText}
-                />
             </SheetWrapper>
         </MainAppLayout>
     );

@@ -67,7 +67,7 @@ interface EnhancedAsset {
 }
 
 export default function LinkPreview({
-    // onInvalidActon = () => {},
+    onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
 }: LinkPreviewProps) {
@@ -167,13 +167,6 @@ export default function LinkPreview({
                             `Insufficient balance for ${token.symbol}. Required: ${formattedRequired}, Available: ${formattedBalance}`,
                         );
                     }
-
-                    console.log("User has sufficient balance for", token.symbol);
-                    console.log(
-                        `Required: ${Number(totalAmount) / 10 ** tokenDecimals}, Available: ${
-                            Number(userBalance) / 10 ** tokenDecimals
-                        }`,
-                    );
                 }
             }
 

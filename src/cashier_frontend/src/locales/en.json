@@ -111,7 +111,13 @@
         "creating": "Creating",
         "creatingLink": "The link is being created. Please wait for seconds.",
         "clear": "Clear",
-        "loading": "Loading"
+        "loading": "Loading",
+        "copied": "Copied successfully",
+        "success": {
+            "copied_address": "Address copied to clipboard",
+            "copied_account_id": "Account ID copied to clipboard"
+        },
+        "unknown_error": "An unknown error occurred"
     },
     "link": {
         "preview": {
@@ -276,6 +282,47 @@
             "description_2": "create & airdrop NFTs, and more features coming!",
             "get_started": "Get started",
             "connect_wallet_title": "Connect your wallet"
+        }
+    },
+    "add_asset_form": {
+        "error": {
+            "default": {
+                "title": "Error",
+                "description": "There was an error while adding the asset. Please try again later."
+            },
+            "no_more_token": {
+                "description": "No more tokens available to add"
+            },
+            "validation": {
+                "title": "Validation Error"
+            }
+        }
+    },
+    "send_panel": {
+        "confirm_popup": {
+            "transaction": {
+                "success": {
+                    "title": "Transaction successful",
+                    "message": "Your transaction was successful"
+                },
+                "failed": {
+                    "title": "Transaction failed",
+                    "message": "Your transaction failed"
+                }
+            }
+        }
+    },
+    "link_template": {
+        "error": {
+            "title_missing": "Please enter a title",
+            "link_not_found": "Link not found",
+            "failed_to_call": "Failed to call the link state machine"
+        }
+    },
+    "link_detail": {
+        "error": {
+            "claim_without_login_or_wallet": "To receive, you need to login or input your wallet",
+            "unknown_action_state": "Unknown action state"
         }
     }
 }
