@@ -173,7 +173,6 @@ export const validateFormAssets = (
         }
 
         // Check balance
-        console.log("skipCheckingBalance", skipCheckingBalance);
         if (
             !skipCheckingBalance &&
             token &&
