@@ -284,7 +284,7 @@ export const formatAssetsForSubmission = (
         } else if (link.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
             label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET}`;
         } else if (link.linkType === LINK_TYPE.SEND_TIP) {
-            label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET}_${asset.tokenAddress}`;
+            label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET}`;
         }
 
         return {
