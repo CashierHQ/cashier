@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { FC, useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useFieldArray } from "react-hook-form";
 import AssetDrawer from "@/components/asset-drawer";
 import { useTranslation } from "react-i18next";
-import { AssetFormSkeleton } from "./asset-form-skeleton";
-import { useAddAssetForm } from "./add-asset-hooks";
+import { AssetFormSkeleton } from "../asset-form-skeleton";
+import { useAddAssetForm } from "../add-asset-hooks";
 import { useTokens } from "@/hooks/useTokens";
 import {
     useLinkCreationFormStore,
@@ -33,25 +33,37 @@ import {
     LINK_TYPE,
 } from "@/services/types/enum";
 import { Plus, Minus } from "lucide-react";
-import { AssetFormInput } from "./asset-form-input";
-import { FungibleToken } from "@/types/fungible-token.speculative";
+import { AssetFormInput } from "../asset-form-input";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
+import { Label } from "../../ui/label";
+import { Input } from "../../ui/input";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { Separator } from "../ui/separator";
-import { toast } from "sonner";
-import { MessageBanner } from "../ui/message-banner";
+import { Separator } from "../../ui/separator";
+import { MessageBanner } from "../../ui/message-banner";
+import {
+    createAssetSelectHandler,
+    createTokenAddressHandler,
+    createRemoveAssetHandler,
+    validateFormAssets,
+    checkInsufficientBalance,
+    formatAssetsForSubmission,
+} from "../form-handlers";
 
-type TipLinkAssetFormProps = {
-    isMultiAsset: boolean;
-    isAirdrop: boolean;
-};
+interface SendAirdropFormProps {
+    initialValues?: {
+        assets: {
+            tokenAddress: string;
+            amount: bigint;
+            label: string | LINK_INTENT_ASSET_LABEL | undefined;
+            chain: CHAIN | undefined;
+        }[];
+    };
+}
 
-export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdrop }) => {
+export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdropFormProps) => {
     const { t } = useTranslation();
     const { link, isUpdating, callLinkStateMachine } = useLinkAction();
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
@@ -79,13 +91,9 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             return Number(link.maxActionNumber);
         }
 
-        if (!isAirdrop) {
+        if (link?.maxActionNumber) return Number(link?.maxActionNumber);
+        else {
             return 1;
-        } else {
-            if (link?.maxActionNumber) return Number(link?.maxActionNumber);
-            else {
-                return 1;
-            }
         }
     });
 
@@ -111,44 +119,13 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         }
     }, [userInputs]);
 
-    // Initialize form with existing or default values
-    const initialValues = useMemo(() => {
-        const values = getInitialFormValues(currentInput);
-        if (
-            !values &&
-            allAvailableTokens &&
-            allAvailableTokens.length > 0 &&
-            link &&
-            link.linkType
-        ) {
-            // Create default values with the first available token if no values exist
-            let label: string = getAssetLabelForLinkType(
-                link.linkType,
-                allAvailableTokens[0].address,
-            );
-            const tokenAddress = allAvailableTokens[0].address;
+    // Use prop initialValues if provided, otherwise generate from current input
+    let initialValues = propInitialValues;
 
-            if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
-                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${tokenAddress}`;
-            } else if (link?.linkType === LINK_TYPE.SEND_AIRDROP) {
-                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
-            } else if (link?.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
-                label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET}`;
-            }
-
-            return {
-                assets: [
-                    {
-                        tokenAddress: tokenAddress,
-                        amount: BigInt(0),
-                        label: label,
-                        chain: CHAIN.IC,
-                    },
-                ],
-            };
-        }
-        return values;
-    }, [currentInput, allAvailableTokens, isMultiAsset]);
+    // If no prop initialValues are provided, fall back to the old initialization method
+    if (!initialValues) {
+        initialValues = getInitialFormValues(currentInput);
+    }
 
     const form = useAddAssetForm(allAvailableTokens || [], initialValues);
 
@@ -176,7 +153,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     useEffect(() => {
         if (link?.id) {
             updateUserInput(link?.id, {
-                maxActionNumber: isAirdrop ? BigInt(maxActionNumber) : 1n,
+                maxActionNumber: BigInt(maxActionNumber),
             });
         }
     }, [maxActionNumber, link?.id]);
@@ -290,54 +267,23 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         return getAvailableTokensForDrawer();
     }, [allAvailableTokens, selectedAssetAddresses, editingAssetIndex, getValues]);
 
-    // Event handlers
-    const handleAssetSelect = (index: number) => {
-        setEditingAssetIndex(index);
-        setShowAssetDrawer(true);
-    };
+    // Event handlers using centralized handlers
+    const handleAssetSelect = createAssetSelectHandler(setEditingAssetIndex, setShowAssetDrawer);
 
-    const handleSetTokenAddress = (address: string) => {
-        console.log(editingAssetIndex < 0 || !link?.id);
+    const handleSetTokenAddress = createTokenAddressHandler(
+        editingAssetIndex,
+        link || null,
+        setValue,
+        selectedAssetAddresses,
+        setSelectedAssetAddresses,
+        setShowAssetDrawer,
+    );
 
-        if (editingAssetIndex < 0 || !link?.id) return;
-
-        // Reset the amount values when selecting a new token
-        setValue(`assets.${editingAssetIndex}.tokenAddress`, address);
-        setValue(`assets.${editingAssetIndex}.amount`, BigInt(0));
-
-        const updatedAssets = [...selectedAssetAddresses];
-        updatedAssets[editingAssetIndex] = address;
-        setSelectedAssetAddresses(updatedAssets);
-        setShowAssetDrawer(false);
-    };
-
-    const handleRemoveAsset = (index: number) => {
-        const removedAsset = getValues(`assets.${index}`);
-        setSelectedAssetAddresses((prev) =>
-            prev.filter((address) => address !== removedAsset.tokenAddress),
-        );
-        assetFields.remove(index);
-    };
-
-    const handleAddAsset = () => {
-        const nextToken = getNextAvailableToken();
-        if (nextToken && link && link.linkType) {
-            const label = getAssetLabelForLinkType(link?.linkType, nextToken.address);
-
-            assetFields.append({
-                tokenAddress: nextToken.address,
-                amount: BigInt(0),
-                label: label as LINK_INTENT_ASSET_LABEL,
-                chain: CHAIN.IC,
-            });
-
-            setSelectedAssetAddresses((prev) => [...prev, nextToken.address]);
-        } else {
-            toast.error(t("add_asset_form.error.default.title"), {
-                description: t("add_asset_form.error.no_more_token.description"),
-            });
-        }
-    };
+    const handleRemoveAsset = createRemoveAssetHandler(
+        getValues,
+        setSelectedAssetAddresses,
+        assetFields,
+    );
 
     const handleSubmit = async () => {
         setNotEnoughBalanceErrorToken(null);
@@ -347,19 +293,10 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         const formAssets = getValues("assets");
         if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
 
-        const notEnoughBalanceAssets = formAssets.filter((asset) => {
-            const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
-            if (!token) return false;
-            return Number(asset.amount) > Number(token.amount);
-        });
-
-        if (notEnoughBalanceAssets.length > 0) {
-            const token = allAvailableTokens?.find(
-                (t) => t.address === notEnoughBalanceAssets[0].tokenAddress,
-            );
-            if (token) {
-                setNotEnoughBalanceErrorToken(token.symbol || "");
-            }
+        // Use the centralized handler to check for insufficient balance
+        const insufficientToken = checkInsufficientBalance(formAssets, allAvailableTokens);
+        if (insufficientToken) {
+            setNotEnoughBalanceErrorToken(insufficientToken);
             return;
         }
 
@@ -368,25 +305,24 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
             return;
         }
 
-        if (validateAssets(formAssets)) {
-            // Update the store with the current form values
-            const storeAssets = formAssets.map((asset) => {
-                let label = asset.label || "";
+        if (
+            validateFormAssets(formAssets, allAvailableTokens, t, {
+                isAirdrop: true,
+                maxActionNumber,
+            })
+        ) {
+            // Format assets with correct labels using the centralized handler
+            const formattedAssets = formatAssetsForSubmission(formAssets, link);
 
-                if (link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
-                    label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${asset.tokenAddress}`;
-                } else if (link?.linkType === LINK_TYPE.SEND_AIRDROP) {
-                    label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
-                } else if (link?.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
-                    label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET}`;
-                }
-
+            // Update the store with the formatted assets
+            const storeAssets = formattedAssets.map((asset) => {
                 return {
                     address: asset.tokenAddress,
-                    // linkUseAmount is now just the per-claim amount (not multiplied)
                     linkUseAmount: asset.amount,
                     chain: asset.chain!,
-                    label: label,
+                    label: asset.label!,
+                    usdEquivalent: 0,
+                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
                 };
             });
 
@@ -415,8 +351,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
     // Update button state whenever form validity changes
     useEffect(() => {
-        const formAssets = getValues("assets");
-
         setButtonState({
             label: t("continue"),
             isDisabled: isUpdating,
@@ -540,108 +474,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         );
     }
 
-    function getNextAvailableToken(): FungibleToken | undefined {
-        if (!allAvailableTokens || allAvailableTokens.length === 0) return undefined;
-
-        return (
-            allAvailableTokens.find((token) => !selectedAssetAddresses.includes(token.address)) ||
-            allAvailableTokens[0]
-        ); // Fallback to first token if all are selected
-    }
-
-    function validateAssets(
-        assets: {
-            tokenAddress: string;
-            amount: bigint;
-            label?: string | LINK_INTENT_ASSET_LABEL | undefined;
-            chain?: CHAIN | undefined;
-        }[],
-    ): boolean {
-        let isValid = true;
-        const errorMessages: string[] = [];
-
-        assets.forEach((asset, index) => {
-            const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
-            const tokenSymbol = token?.symbol || "Unknown";
-
-            // Check amount
-            if (!asset.amount || asset.amount === BigInt(0)) {
-                const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.amount_error_message")}`;
-                errorMessages.push(errorMsg);
-                isValid = false;
-            }
-
-            // Check chain
-            if (!asset.chain) {
-                const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.chain_error_message")}`;
-                errorMessages.push(errorMsg);
-                isValid = false;
-            }
-
-            // Check label
-            if (!asset.label) {
-                const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.label_error_message")}`;
-                errorMessages.push(errorMsg);
-                isValid = false;
-            }
-
-            // Check balance
-            if (token && token.amount !== null && typeof token.amount !== "undefined") {
-                // Calculate total amount needed: per-claim amount * maxActionNumber
-                let totalAmountNeeded: bigint;
-
-                if (isAirdrop) {
-                    // For airdrops: total amount = per-claim amount * maxActionNumber
-                    totalAmountNeeded = asset.amount * BigInt(maxActionNumber);
-                } else {
-                    // For regular links: just use the amount directly
-                    totalAmountNeeded = asset.amount;
-                }
-
-                const hasEnoughBalance = Number(totalAmountNeeded) <= Number(token.amount);
-
-                if (!hasEnoughBalance) {
-                    const availableAmountInDecimal = token?.amount ? Number(token.amount) : 0;
-                    const requestedAmountInDecimal = Number(totalAmountNeeded);
-                    const availableAmount =
-                        availableAmountInDecimal / (Math.pow(10, token.decimals) || 1);
-                    const requestedAmount =
-                        requestedAmountInDecimal / (Math.pow(10, token.decimals) || 1);
-                    const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${formatNumber(
-                        availableAmount.toString(),
-                    )} , Requested: ${formatNumber(requestedAmount.toString())}`;
-                    errorMessages.push(errorMsg);
-                    isValid = false;
-                }
-            } else {
-                const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Unable to verify balance.`;
-                errorMessages.push(errorMsg);
-                isValid = false;
-            }
-        });
-
-        // Display all errors as a summary if there are multiple issues
-        if (errorMessages.length > 0) {
-            if (errorMessages.length === 1) {
-                // Only one error, show it directly
-                toast.error(t("add_asset_form.error.validation.title"), {
-                    description: errorMessages[0],
-                });
-            } else {
-                toast.error(t("add_asset_form.error.validation.title"), {
-                    description: `Found ${errorMessages.length} issues:\n${errorMessages
-                        .slice(0, 3)
-                        .join("\n")}${errorMessages.length > 3 ? "\n...and more" : ""}`,
-                });
-
-                // Log all errors to console for debugging
-                console.error("Form validation errors:", errorMessages);
-            }
-        }
-
-        return isValid;
-    }
-
     if (
         isLoadingTokens ||
         !allAvailableTokens ||
@@ -659,7 +491,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     style={{
                         WebkitOverflowScrolling: "touch",
                         overscrollBehavior: "contain",
-                        paddingBottom: `${isMultiAsset ? "16px" : "0px"}`,
+                        paddingBottom: "0px",
                     }}
                 >
                     {notEnoughBalanceErrorToken && (
@@ -682,8 +514,8 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                                 availableAssets={allAvailableTokens}
                                 onAssetSelect={handleAssetSelect}
                                 onRemoveAsset={handleRemoveAsset}
-                                showRemoveButton={isMultiAsset && assetFields.fields.length > 1}
-                                isAirdrop={isAirdrop}
+                                showRemoveButton={false}
+                                isAirdrop={true}
                                 linkId={link?.id}
                                 isTip={link?.linkType === LINK_TYPE.SEND_TIP}
                             />
@@ -692,111 +524,81 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                             )}
                         </div>
                     ))}
-
-                    {/* Add Another Asset Button (for multi-asset mode) */}
-                    {isMultiAsset && (
-                        <button
-                            className="light-borders flex items-center justify-center gap-2 flex-col py-8 mb-4 w-full"
-                            onClick={handleAddAsset}
-                            disabled={selectedAssetAddresses.length >= allAvailableTokens.length}
-                        >
-                            <div className="bg-[#35A18B] rounded-full h-[44px] w-[44px] aspect-square flex items-center justify-center">
-                                <Plus size={24} color={"white"} />
-                            </div>
-                            <span className="text-[#35A18B] text-[14px] font-medium">
-                                {t("create.add_another_asset")}
-                            </span>
-                        </button>
-                    )}
                 </div>
 
                 <div>
-                    {/* Airdrop Fields */}
-                    {isAirdrop && (
-                        <>
-                            {showNotEnoughClaimsError && (
-                                <MessageBanner
-                                    variant="info"
-                                    text={t("create.errors.not_enough_claims")}
-                                    className="mb-2"
-                                />
-                            )}
-                            <div className="flex gap-4 mb-4">
-                                <div className="input-label-field-container">
-                                    <Label>Claims</Label>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={handleDecreaseMaxUse}
-                                            className="disabled:bg-grey/10 disabled:text-grey/75 bg-lightgreen text-green rounded-full p-1"
-                                            disabled={maxActionNumber <= 1}
-                                        >
-                                            <Minus size={16} />
-                                        </button>
-                                        <Input
-                                            value={maxActionNumber === 0 ? "" : maxActionNumber}
-                                            onChange={handleMaxUseInputChange}
-                                            className={`max-w-20 h-11 text-center text-[16px] font-normal [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                                                maxActionNumber <= 0 ? "text-grey/75" : ""
-                                            }`}
-                                            type="number"
-                                            min="1"
-                                        />
-                                        <button
-                                            onClick={handleIncreaseMaxUse}
-                                            className="bg-lightgreen rounded-full p-1"
-                                        >
-                                            <Plus size={16} className="text-green" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="input-label-field-container flex-1">
-                                    <Label>Total amount</Label>
-                                    <div className="flex items-center gap-1 bg-lightgreen rounded-[8px] flex-1 px-4 justify-between">
-                                        <p className="text-[16px] font-normal">
-                                            {formatNumber(
-                                                (() => {
-                                                    const asset = getValues("assets")[0];
-                                                    const token = getToken(
-                                                        asset?.tokenAddress || "",
-                                                    );
-                                                    if (!asset || !token) return "0";
-
-                                                    // Calculate total from amount per claim * maxActionNumber
-                                                    const amountPerUse =
-                                                        Number(asset.amount) /
-                                                        Math.pow(10, token.decimals || 8);
-
-                                                    // Total amount = amount per claim * maxActionNumber
-                                                    const totalAmount =
-                                                        amountPerUse * maxActionNumber;
-
-                                                    // Format small numbers to avoid scientific notation
-                                                    if (totalAmount > 0 && totalAmount < 0.0001) {
-                                                        return totalAmount.toLocaleString(
-                                                            "fullwide",
-                                                            {
-                                                                useGrouping: false,
-                                                                maximumFractionDigits: 20,
-                                                            },
-                                                        );
-                                                    }
-
-                                                    return totalAmount.toString();
-                                                })(),
-                                            )}
-                                        </p>
-                                        <p className="text-[16px] font-normal">
-                                            {
-                                                getToken(getValues("assets")[0]?.tokenAddress || "")
-                                                    ?.symbol
-                                            }
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
+                    {showNotEnoughClaimsError && (
+                        <MessageBanner
+                            variant="info"
+                            text={t("create.errors.not_enough_claims")}
+                            className="mb-2"
+                        />
                     )}
+                    <div className="flex gap-4 mb-4">
+                        <div className="input-label-field-container">
+                            <Label>Claims</Label>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleDecreaseMaxUse}
+                                    className="disabled:bg-grey/10 disabled:text-grey/75 bg-lightgreen text-green rounded-full p-1"
+                                    disabled={maxActionNumber <= 1}
+                                >
+                                    <Minus size={16} />
+                                </button>
+                                <Input
+                                    value={maxActionNumber === 0 ? "" : maxActionNumber}
+                                    onChange={handleMaxUseInputChange}
+                                    className={`max-w-20 h-11 text-center text-[16px] font-normal [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                                        maxActionNumber <= 0 ? "text-grey/75" : ""
+                                    }`}
+                                    type="number"
+                                    min="1"
+                                />
+                                <button
+                                    onClick={handleIncreaseMaxUse}
+                                    className="bg-lightgreen rounded-full p-1"
+                                >
+                                    <Plus size={16} className="text-green" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="input-label-field-container flex-1">
+                            <Label>Total amount</Label>
+                            <div className="flex items-center gap-1 bg-lightgreen rounded-[8px] flex-1 px-4 justify-between">
+                                <p className="text-[16px] font-normal">
+                                    {formatNumber(
+                                        (() => {
+                                            const asset = getValues("assets")[0];
+                                            const token = getToken(asset?.tokenAddress || "");
+                                            if (!asset || !token) return "0";
+
+                                            // Calculate total from amount per claim * maxActionNumber
+                                            const amountPerUse =
+                                                Number(asset.amount) /
+                                                Math.pow(10, token.decimals || 8);
+
+                                            // Total amount = amount per claim * maxActionNumber
+                                            const totalAmount = amountPerUse * maxActionNumber;
+
+                                            // Format small numbers to avoid scientific notation
+                                            if (totalAmount > 0 && totalAmount < 0.0001) {
+                                                return totalAmount.toLocaleString("fullwide", {
+                                                    useGrouping: false,
+                                                    maximumFractionDigits: 20,
+                                                });
+                                            }
+
+                                            return totalAmount.toString();
+                                        })(),
+                                    )}
+                                </p>
+                                <p className="text-[16px] font-normal">
+                                    {getToken(getValues("assets")[0]?.tokenAddress || "")?.symbol}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

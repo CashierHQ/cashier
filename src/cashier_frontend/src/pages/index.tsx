@@ -19,7 +19,6 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import useToast from "@/hooks/useToast";
 import { headerWalletOptions } from "@/constants/wallet-options";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
@@ -28,6 +27,7 @@ import LinkLocalStorageService from "@/services/link/link-local-storage.service"
 import { useLinksListQuery } from "@/hooks/link-hooks";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { AuthenticatedContent, UnauthenticatedContent } from "@/components/main-page";
+import { toast } from "sonner";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -41,14 +41,15 @@ export default function HomePage() {
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [disableCreateButton, setDisableCreateButton] = useState(false);
-    const { showToast } = useToast();
     const navigate = useNavigate();
 
     const { resetLinkAndAction } = useLinkAction();
 
     const handleCreateLink = async () => {
         if (!identity) {
-            showToast(t("common.error"), t("common.commonErrorMessage"), "error");
+            toast.error(t("common.error"), {
+                description: t("common.commonErrorMessage"),
+            });
             return;
         }
         try {
@@ -78,7 +79,9 @@ export default function HomePage() {
 
             navigate(`/edit/${linkId}`);
         } catch {
-            showToast(t("common.error"), t("common.commonErrorMessage"), "error");
+            toast.error(t("common.error"), {
+                description: t("common.commonErrorMessage"),
+            });
         } finally {
             setDisableCreateButton(false);
         }
