@@ -20,7 +20,7 @@ else
         network="staging"
         env_file=".env.staging"
     elif [ "$network_input" == "dev" ]; then
-        network="staging"
+        network="dev"
         env_file=".env.dev"
     elif [ "$network_input" == "local" ]; then
         network="local"

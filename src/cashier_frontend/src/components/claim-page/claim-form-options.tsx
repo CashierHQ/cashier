@@ -233,13 +233,20 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
         );
     };
 
+    const isSendLink =
+        link?.linkType === LINK_TYPE.SEND_AIRDROP ||
+        link?.linkType === LINK_TYPE.SEND_TIP ||
+        link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET;
+    // const isReceiveLink = link?.linkType === LINK_TYPE.RECEIVE_PAYMENT;
+
+    const firstTilte = isSendLink ? t("claim.asset") : t("claim.sendAsset");
+    const secondTitle = isSendLink ? t("claim.receive_options") : t("claim.send_options");
+
     return (
         <>
             <div id="asset-section" className="">
                 <h2 className="text-[16px] font-medium mb-2">
-                    {link?.linkType === LINK_TYPE.RECEIVE_PAYMENT
-                        ? t("claim.sendAsset")
-                        : t("claim.asset")}
+                    {firstTilte}
                     {link?.asset_info && link?.asset_info?.length > 1 ? "s" : ""}
                 </h2>
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
@@ -252,7 +259,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
             </div>
 
             <div className="mt-4">
-                <h2 className="text-[16px] font-medium mb-2">{t("claim.receive_options")}</h2>
+                <h2 className="text-[16px] font-medium mb-2">{secondTitle}</h2>
 
                 <div className="flex flex-col gap-2">
                     {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)}

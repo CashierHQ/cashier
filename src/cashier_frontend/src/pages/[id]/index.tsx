@@ -148,10 +148,6 @@ export default function ClaimPage() {
                     description: t("transaction.confirm_popup.transaction_failed_message"),
                 });
             }
-        } else {
-            toast.error(t("common.error"), {
-                description: t("link_detail.error.unknown_action_state"),
-            });
         }
     };
 

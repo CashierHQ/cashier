@@ -45,6 +45,7 @@
         "addressPlaceholder": "Type in address",
         "addressPlaceholderComingSoon": "Coming soon",
         "receive_options": "Receive options",
+        "send_options": "Send options",
         "receive": "Receive",
         "payment": "Payment"
     },
