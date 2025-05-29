@@ -45,6 +45,7 @@ import { Input } from "../ui/input";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Separator } from "../ui/separator";
+import { MessageBanner } from "../ui/message-banner";
 
 type TipLinkAssetFormProps = {
     isMultiAsset: boolean;
@@ -66,6 +67,10 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [editingAssetIndex, setEditingAssetIndex] = useState<number>(-1);
     const [selectedAssetAddresses, setSelectedAssetAddresses] = useState<string[]>([]);
+    const [notEnoughBalanceErrorToken, setNotEnoughBalanceErrorToken] = useState<string | null>(
+        null,
+    );
+    const [showNotEnoughClaimsError, setShowNotEnoughClaimsError] = useState<boolean>(false);
 
     // Get current input and link type from store
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
@@ -335,10 +340,33 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     };
 
     const handleSubmit = async () => {
+        setNotEnoughBalanceErrorToken(null);
+        setShowNotEnoughClaimsError(false);
         if (!link?.id) throw new Error("Link ID not found");
 
         const formAssets = getValues("assets");
         if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
+
+        const notEnoughBalanceAssets = formAssets.filter((asset) => {
+            const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
+            if (!token) return false;
+            return Number(asset.amount) > Number(token.amount);
+        });
+
+        if (notEnoughBalanceAssets.length > 0) {
+            const token = allAvailableTokens?.find(
+                (t) => t.address === notEnoughBalanceAssets[0].tokenAddress,
+            );
+            if (token) {
+                setNotEnoughBalanceErrorToken(token.symbol || "");
+            }
+            return;
+        }
+
+        if (maxActionNumber <= 0) {
+            setShowNotEnoughClaimsError(true);
+            return;
+        }
 
         if (validateAssets(formAssets)) {
             // Update the store with the current form values
@@ -389,20 +417,9 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     useEffect(() => {
         const formAssets = getValues("assets");
 
-        const isFormValid =
-            formAssets &&
-            formAssets.length > 0 &&
-            !Object.keys(errors).length &&
-            !formAssets.some((asset) => !asset.amount || asset.amount <= BigInt(0));
-
-        // button disbled when
-        // 1. validation fails
-        // 2. calling backend - isUpdating = true
-        // 3. maxActionNumber <= 0
-
         setButtonState({
             label: t("continue"),
-            isDisabled: !isFormValid || isUpdating || maxActionNumber <= 0,
+            isDisabled: isUpdating,
             action: handleSubmit,
         });
     }, [
@@ -646,6 +663,13 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                         paddingBottom: `${isMultiAsset ? "16px" : "0px"}`,
                     }}
                 >
+                    {notEnoughBalanceErrorToken && (
+                        <MessageBanner
+                            variant="info"
+                            text={`${t("create.errors.not_enough_balance")} ${notEnoughBalanceErrorToken}`}
+                            className="mb-2"
+                        />
+                    )}
                     {assetFields.fields.map((field, index) => (
                         <div
                             key={field.id}
@@ -690,74 +714,89 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 <div>
                     {/* Airdrop Fields */}
                     {isAirdrop && (
-                        <div className="flex gap-4 mb-4">
-                            <div className="input-label-field-container">
-                                <Label>Claims</Label>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={handleDecreaseMaxUse}
-                                        className="disabled:bg-grey/10 disabled:text-grey/75 bg-lightgreen text-green rounded-full p-1"
-                                        disabled={maxActionNumber <= 1}
-                                    >
-                                        <Minus size={16} />
-                                    </button>
-                                    <Input
-                                        value={maxActionNumber === 0 ? "" : maxActionNumber}
-                                        onChange={handleMaxUseInputChange}
-                                        className={`max-w-20 h-11 text-center text-[16px] font-normal [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                                            maxActionNumber <= 0 ? "text-grey/75" : ""
-                                        }`}
-                                        type="number"
-                                        min="1"
-                                    />
-                                    <button
-                                        onClick={handleIncreaseMaxUse}
-                                        className="bg-lightgreen rounded-full p-1"
-                                    >
-                                        <Plus size={16} className="text-green" />
-                                    </button>
+                        <>
+                            {showNotEnoughClaimsError && (
+                                <MessageBanner
+                                    variant="info"
+                                    text={t("create.errors.not_enough_claims")}
+                                    className="mb-2"
+                                />
+                            )}
+                            <div className="flex gap-4 mb-4">
+                                <div className="input-label-field-container">
+                                    <Label>Claims</Label>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={handleDecreaseMaxUse}
+                                            className="disabled:bg-grey/10 disabled:text-grey/75 bg-lightgreen text-green rounded-full p-1"
+                                            disabled={maxActionNumber <= 1}
+                                        >
+                                            <Minus size={16} />
+                                        </button>
+                                        <Input
+                                            value={maxActionNumber === 0 ? "" : maxActionNumber}
+                                            onChange={handleMaxUseInputChange}
+                                            className={`max-w-20 h-11 text-center text-[16px] font-normal [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                                                maxActionNumber <= 0 ? "text-grey/75" : ""
+                                            }`}
+                                            type="number"
+                                            min="1"
+                                        />
+                                        <button
+                                            onClick={handleIncreaseMaxUse}
+                                            className="bg-lightgreen rounded-full p-1"
+                                        >
+                                            <Plus size={16} className="text-green" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="input-label-field-container flex-1">
+                                    <Label>Total amount</Label>
+                                    <div className="flex items-center gap-1 bg-lightgreen rounded-[8px] flex-1 px-4 justify-between">
+                                        <p className="text-[16px] font-normal">
+                                            {formatNumber(
+                                                (() => {
+                                                    const asset = getValues("assets")[0];
+                                                    const token = getToken(
+                                                        asset?.tokenAddress || "",
+                                                    );
+                                                    if (!asset || !token) return "0";
+
+                                                    // Calculate total from amount per claim * maxActionNumber
+                                                    const amountPerUse =
+                                                        Number(asset.amount) /
+                                                        Math.pow(10, token.decimals || 8);
+
+                                                    // Total amount = amount per claim * maxActionNumber
+                                                    const totalAmount =
+                                                        amountPerUse * maxActionNumber;
+
+                                                    // Format small numbers to avoid scientific notation
+                                                    if (totalAmount > 0 && totalAmount < 0.0001) {
+                                                        return totalAmount.toLocaleString(
+                                                            "fullwide",
+                                                            {
+                                                                useGrouping: false,
+                                                                maximumFractionDigits: 20,
+                                                            },
+                                                        );
+                                                    }
+
+                                                    return totalAmount.toString();
+                                                })(),
+                                            )}
+                                        </p>
+                                        <p className="text-[16px] font-normal">
+                                            {
+                                                getToken(getValues("assets")[0]?.tokenAddress || "")
+                                                    ?.symbol
+                                            }
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="input-label-field-container flex-1">
-                                <Label>Total amount</Label>
-                                <div className="flex items-center gap-1 bg-lightgreen rounded-[8px] flex-1 px-4 justify-between">
-                                    <p className="text-[16px] font-normal">
-                                        {formatNumber(
-                                            (() => {
-                                                const asset = getValues("assets")[0];
-                                                const token = getToken(asset?.tokenAddress || "");
-                                                if (!asset || !token) return "0";
-
-                                                // Calculate total from amount per claim * maxActionNumber
-                                                const amountPerUse =
-                                                    Number(asset.amount) /
-                                                    Math.pow(10, token.decimals || 8);
-
-                                                // Total amount = amount per claim * maxActionNumber
-                                                const totalAmount = amountPerUse * maxActionNumber;
-
-                                                // Format small numbers to avoid scientific notation
-                                                if (totalAmount > 0 && totalAmount < 0.0001) {
-                                                    return totalAmount.toLocaleString("fullwide", {
-                                                        useGrouping: false,
-                                                        maximumFractionDigits: 20,
-                                                    });
-                                                }
-
-                                                return totalAmount.toString();
-                                            })(),
-                                        )}
-                                    </p>
-                                    <p className="text-[16px] font-normal">
-                                        {
-                                            getToken(getValues("assets")[0]?.tokenAddress || "")
-                                                ?.symbol
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        </>
                     )}
                 </div>
             </div>

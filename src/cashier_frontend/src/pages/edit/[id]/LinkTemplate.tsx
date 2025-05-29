@@ -20,8 +20,8 @@ import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
 import { getAssetLabelForLinkType, LINK_TYPE } from "@/services/types/enum";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useResponsive } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,8 @@ import useToast from "@/hooks/useToast";
 import TransactionToast from "@/components/transaction/transaction-toast";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { stateToStepIndex } from ".";
+import { MessageBanner } from "@/components/ui/message-banner";
+
 function isLinkTypeSupported(linkType: LINK_TYPE) {
     const supportedLinkTypes = [
         LINK_TYPE.SEND_TIP,
@@ -61,13 +63,21 @@ export default function LinkTemplate({
 
     const carousel = useCarousel();
 
+    const [showComingSoonError, setShowComingSoonError] = useState(false);
+    const [showNoNameError, setShowNoNameError] = useState(false);
+
     const handleSubmit = async () => {
         const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
 
         const currentLink = link ? getUserInput(link.id) : undefined;
 
-        if (!currentLink?.title) {
-            showToast("Error", "Please enter a title", "error");
+        if (!currentLink?.title || currentLink.title.trim() === "") {
+            setShowNoNameError(true);
+            return;
+        }
+
+        if (LINK_TEMPLATES[carousel.current].isComingSoon) {
+            setShowComingSoonError(true);
             return;
         }
 
@@ -134,7 +144,7 @@ export default function LinkTemplate({
 
         setButtonState({
             label: isComingSoon ? "Coming Soon" : t("continue"),
-            isDisabled: isUpdating || isComingSoon || !title || title.trim() === "",
+            isDisabled: isUpdating,
             action: handleSubmit,
         });
     }, [carousel.current, userInputs, isUpdating, link]);
@@ -157,6 +167,9 @@ export default function LinkTemplate({
                         }}
                         placeholder={t("create.linkNamePlaceholder")}
                     />
+                    {showNoNameError && (
+                        <MessageBanner variant="info" text={t("create.errors.no_name")} />
+                    )}
                 </div>
             </div>
 

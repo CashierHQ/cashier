@@ -33,7 +33,7 @@ import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
-import { ACTION_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import TokenItem from "./token-item";
@@ -236,7 +236,12 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
     return (
         <>
             <div id="asset-section" className="">
-                <h2 className="text-[16px] font-medium mb-2">{t("claim.asset")}</h2>
+                <h2 className="text-[16px] font-medium mb-2">
+                    {link?.linkType === LINK_TYPE.RECEIVE_PAYMENT
+                        ? t("claim.sendAsset")
+                        : t("claim.asset")}
+                    {link?.asset_info && link?.asset_info?.length > 1 ? "s" : ""}
+                </h2>
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
                     {link?.asset_info
                         .sort((a, b) => {
