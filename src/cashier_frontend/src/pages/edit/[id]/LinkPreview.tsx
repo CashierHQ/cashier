@@ -255,13 +255,9 @@ export default function LinkPreview({
 
     // Update the button state
     useEffect(() => {
-        // button disabled if:
-        // 1. isDisabled is true
-        // 2. isLoading is true
-        // 3. showConfirmation is true
         setButtonState({
-            label: isDisabled ? t("processing") : t("create.create"),
-            isDisabled: isDisabled || isLoading || showConfirmation,
+            label: isDisabled || isLoading ? t("processing") : t("create.create"),
+            isDisabled: isDisabled || isLoading,
             action: handleSubmit,
         });
     }, [isDisabled, isLoading, shouldRedirect, showConfirmation]);
@@ -374,9 +370,8 @@ export default function LinkPreview({
      * @returns {Promise<void>}
      */
     const handleSubmit = async () => {
-        setIsDisabled(true);
-
         try {
+            setIsDisabled(true);
             if (link && link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
                 // First create the link in the backend
                 const res = await createNewLink(link.id);

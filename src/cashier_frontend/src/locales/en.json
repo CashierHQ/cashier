@@ -21,7 +21,12 @@
         "preview": "Preview",
         "add_another_asset": "Add another asset",
         "amount_error": "Amount Error",
-        "amount_error_message": "Amount must be greater than 0"
+        "amount_error_message": "Amount must be greater than 0",
+        "errors": {
+            "no_name": "Please enter a name for your link.",
+            "not_enough_balance": "You don't have enough balance for the asset: ",
+            "not_enough_claims": "The number of claims must be at least 1."
+        }
     },
     "details": {
         "linkInfo": "Link info",
@@ -36,6 +41,7 @@
         "amount": "Amount",
         "address": "Address",
         "asset": "Receive asset",
+        "sendAsset": "Send asset",
         "addressPlaceholder": "Type in address",
         "addressPlaceholderComingSoon": "Coming soon",
         "receive_options": "Receive options",
