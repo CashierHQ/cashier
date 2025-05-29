@@ -86,7 +86,6 @@ function App() {
                     }}
                 />
             </QueryClientProvider>
-            <Toaster />
         </IdentityKitProvider>
     );
 }

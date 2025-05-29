@@ -44,7 +44,6 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
         try {
             e.stopPropagation();
             copy(user?.principal.toString() ?? "");
-
             toast.success("Address copied to clipboard");
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
