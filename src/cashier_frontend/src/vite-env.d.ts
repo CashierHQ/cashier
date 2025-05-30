@@ -15,3 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /// <reference types="vite/client" />
+
+declare module "*.worker.ts" {
+    const workerConstructor: {
+        new (options?: WorkerOptions): Worker;
+    };
+    export default workerConstructor;
+}
