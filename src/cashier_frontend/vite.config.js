@@ -60,6 +60,12 @@ export default defineConfig(({ command, mode }) => {
             environment("all", { prefix: "CANISTER_" }),
             environment("all", { prefix: "DFX_" }),
         ],
+        worker: {
+            format: "es",
+            plugins: [
+                // Add any plugins needed for workers
+            ],
+        },
         resolve: {
             alias: [
                 {
