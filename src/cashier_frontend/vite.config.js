@@ -62,7 +62,7 @@ export default defineConfig(({ command, mode }) => {
         ],
         worker: {
             format: "es",
-            plugins: () => [
+            plugins: [
                 // Add any plugins needed for workers
             ],
         },
