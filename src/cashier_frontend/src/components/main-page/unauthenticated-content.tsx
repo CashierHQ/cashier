@@ -16,7 +16,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useResponsive } from "@/hooks/responsive-hook";
 import WalletConnectDialog from "@/components/wallet-connect-dialog";
 import { InternetIdentity } from "@nfid/identitykit";
 import { useTranslation } from "react-i18next";
@@ -36,7 +35,6 @@ export const UnauthenticatedContent = ({
     headerWalletOptions,
     connectToWallet,
 }: UnauthenticatedContentProps) => {
-    const responsive = useResponsive();
     const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
     const { t } = useTranslation();
 
@@ -130,10 +128,19 @@ export const UnauthenticatedContent = ({
 
                         <div
                             id="powered-by-icp"
-                            className="flex gap-2 items-center text-[12px] font-light text-[#8D8D8D]/75 mt-8 lg:hidden"
+                            className="flex flex-col items-center gap-1 text-[12px] font-light text-[#8D8D8D]/75 mt-8 lg:hidden"
                         >
-                            <p>Powered by Internet Computer</p>
-                            <img src="/icpToken.png" alt="Internet Computer" className="w-4 h-4" />
+                            <div className="flex gap-2 items-center">
+                                <p>Powered by Internet Computer</p>
+                                <img
+                                    src="/icpToken.png"
+                                    alt="Internet Computer"
+                                    className="w-4 h-4"
+                                />
+                            </div>
+                            <p className="text-[10px] opacity-50">
+                                v{__APP_VERSION__} ({__BUILD_HASH__})
+                            </p>
                         </div>
                     </div>
                     <div
@@ -154,10 +161,15 @@ export const UnauthenticatedContent = ({
 
                 <div
                     id="powered-by-icp"
-                    className="hidden gap-2 items-center text-[12px] font-light text-[#8D8D8D]/75 mt-8 lg:flex lg:fixed bottom-4  w-full  justify-center"
+                    className="hidden flex-col items-center gap-1 text-[12px] font-light text-[#8D8D8D]/75 mt-8 lg:flex lg:fixed bottom-4 w-full justify-center"
                 >
-                    <p>Powered by Internet Computer</p>
-                    <img src="/icpToken.png" alt="Internet Computer" className="w-4 h-4" />
+                    <div className="flex gap-2 items-center">
+                        <p>Powered by Internet Computer</p>
+                        <img src="/icpToken.png" alt="Internet Computer" className="w-4 h-4" />
+                    </div>
+                    <p className="text-[10px] opacity-50">
+                        v{__APP_VERSION__} ({__BUILD_HASH__})
+                    </p>
                 </div>
             </div>
             <WalletConnectDialog
