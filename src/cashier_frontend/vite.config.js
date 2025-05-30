@@ -21,6 +21,7 @@ import environment from "vite-plugin-environment";
 import dotenv from "dotenv";
 import tailwindcss from "tailwindcss";
 import path, { resolve } from "path";
+import crypto from "crypto";
 
 export default defineConfig(({ command, mode }) => {
     // Determine which .env file to use based on mode
@@ -31,11 +32,30 @@ export default defineConfig(({ command, mode }) => {
     // Load the environment variables from the determined .env file
     dotenv.config({ path: envPath });
 
+    // Generate build information
+    const timestamp = new Date().toISOString();
+    const packageJson = require("./package.json");
+    const version = packageJson.version;
+
+    // Generate a build hash based on timestamp
+    const buildHash = crypto
+        .createHash("sha256")
+        .update(`${version}-${timestamp}`)
+        .digest("hex")
+        .substring(0, 8);
+
     console.log(`Building for ${mode} environment using ${envFile}`);
+    console.log(`Build version: ${version}, Build hash: ${buildHash}`);
 
     return {
         build: {
             emptyOutDir: true,
+        },
+        define: {
+            __APP_VERSION__: JSON.stringify(version),
+            __BUILD_HASH__: JSON.stringify(buildHash),
+            __BUILD_TIMESTAMP__: JSON.stringify(timestamp),
+            __BUILD_MODE__: JSON.stringify(mode),
         },
         optimizeDeps: {
             esbuildOptions: {
