@@ -33,7 +33,7 @@ console.log(import.meta.env.VITE_BACKEND_CANISTER_ID);
 console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
 
 // nano second
-const TIMEOUT_NANO_SEC = 24n * 60n * 60n * 1_000_000_000n; // 1 day
+const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
 
 // milli
 const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
