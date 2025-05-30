@@ -50,13 +50,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     return (
         <div className="w-full flex flex-col flex-grow relative">
             <Form {...form}>
-                <form
-                    className="w-full flex flex-col gap-3 h-full"
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSubmit();
-                    }}
-                >
+                <form className="w-full flex flex-col gap-3 h-full">
                     <ClaimFormOptions form={form} formData={formData} setDisabled={setDisabled} />
                     <ClaimActionButton
                         isDisabled={isDisabled}

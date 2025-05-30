@@ -123,13 +123,6 @@ export default function ClaimPage() {
         setShowDefaultPage(!showClaimForm);
     }, [linkData, linkUserState, searchParams]);
 
-    const handleClaim = async () => {
-        if (!identity && (!form.getValues("address") || form.getValues("address")?.length == 0)) {
-            toast.error(t("link_detail.error.claim_without_login_or_wallet"));
-            return;
-        }
-    };
-
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
         toast.error(t("common.error"), {
@@ -178,7 +171,6 @@ export default function ClaimPage() {
                                     <MultiStepForm.Item name="Choose wallet">
                                         <UseFormPage
                                             form={form}
-                                            onSubmit={handleClaim}
                                             linkData={linkData}
                                             onActionResult={showActionResultToast}
                                             onCashierError={showCashierErrorToast}

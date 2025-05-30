@@ -44,10 +44,10 @@ import {
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { getClaimButtonLabel } from "@/components/page/linkCardPage";
+import { toast } from "sonner";
 
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
-    onSubmit: () => void;
     linkData?: LinkDetailModel;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
@@ -59,7 +59,6 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
     linkData,
     onCashierError = () => {},
     onActionResult,
-    onSubmit,
     onBack,
 }) => {
     const { linkId } = useParams();
@@ -212,7 +211,6 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
         }
 
         // Validation
-        onSubmit();
 
         try {
             setIsDisabledButton(true);
@@ -263,13 +261,12 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
                     setShowConfirmation(true);
                 }
             } else {
-                throw new Error("No identity or anonymous wallet address provided");
+                toast.error(t("link_detail.error.claim_without_login_or_wallet"));
             }
         } catch (error) {
             if (isCashierError(error)) {
                 onCashierError(error);
             }
-            console.error("Error in handleSubmit:", error);
         } finally {
             setIsDisabledButton(false);
             setButtonText(t("claim.claim"));
