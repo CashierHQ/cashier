@@ -45,6 +45,7 @@
         "addressPlaceholder": "Type in address",
         "addressPlaceholderComingSoon": "Coming soon",
         "receive_options": "Receive options",
+        "send_options": "Send options",
         "receive": "Receive",
         "payment": "Payment"
     },
@@ -321,7 +322,7 @@
     },
     "link_detail": {
         "error": {
-            "claim_without_login_or_wallet": "To receive, you need to login or input your wallet",
+            "claim_without_login_or_wallet": "You need to login or input your wallet",
             "unknown_action_state": "Unknown action state"
         }
     }
