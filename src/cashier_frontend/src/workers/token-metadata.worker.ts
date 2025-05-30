@@ -25,15 +25,6 @@ interface FetchMetadataMessage {
     };
 }
 
-// Define token metadata type to match what's returned by TokenUtilService
-interface TokenMetadata {
-    fee?: number;
-    icon?: string;
-    decimals?: number;
-    name?: string;
-    symbol?: string;
-}
-
 // Define response type
 interface MetadataResult {
     [address: string]: {
@@ -54,15 +45,8 @@ ctx.addEventListener("message", async (event: MessageEvent<FetchMetadataMessage>
     if (type === "fetchMetadata") {
         const { tokens, batchSize } = payload;
         const start = Date.now();
-        let failedTokens = 0;
-        let processedTokens = 0;
-
         try {
             const metadataMap: MetadataResult = {};
-
-            console.log(
-                `[Worker] Starting metadata fetch for ${tokens.length} tokens with batch size ${batchSize}`,
-            );
 
             // Process in batches
             for (let i = 0; i < tokens.length; i += batchSize) {
@@ -88,35 +72,14 @@ ctx.addEventListener("message", async (event: MessageEvent<FetchMetadataMessage>
                     if (result.status === "fulfilled" && result.value) {
                         const tokenAddress = batch[index].address;
                         metadataMap[tokenAddress] = result.value;
-                        processedTokens++;
                     } else {
-                        console.warn(
-                            `[Worker] Failed to fetch metadata for token at index ${i + index}:`,
-                            result.status,
-                        );
-                        failedTokens++;
                     }
                 });
-
-                console.log(
-                    `[Worker] Processed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(tokens.length / batchSize)}: ${batch.length} tokens`,
-                );
             }
 
             const end = Date.now();
             const duration = end - start;
-
-            console.log(
-                `[Worker] Metadata fetch completed in ${duration}ms for ${tokens.length} tokens`,
-            );
-            console.log(
-                `[Worker] Successfully processed: ${processedTokens}, Failed: ${failedTokens}`,
-            );
-            console.log(`[Worker] Metadata map size: ${Object.keys(metadataMap).length}`);
-
             try {
-                console.log("[Worker] Attempting to send complete message");
-                // Send the complete result back to the main thread
                 ctx.postMessage({
                     type: "complete",
                     payload: {
@@ -125,7 +88,6 @@ ctx.addEventListener("message", async (event: MessageEvent<FetchMetadataMessage>
                         tokenCount: tokens.length,
                     },
                 });
-                console.log("[Worker] Complete message sent successfully");
             } catch (error) {
                 console.error("[Worker] Error sending complete message:", error);
 

@@ -137,7 +137,6 @@ export function useTokenMetadataWorker(options: UseTokenMetadataWorkerOptions = 
         }
 
         if (!tokens || tokens.length === 0) {
-            console.log("[Main] No tokens to process");
             setState({ isLoading: false, error: null, metadataMap: {} });
             return {};
         }
@@ -148,11 +147,6 @@ export function useTokenMetadataWorker(options: UseTokenMetadataWorkerOptions = 
         setState({ isLoading: true, error: null, metadataMap: {} });
 
         try {
-            // Log sample token data for debugging
-            console.log("[Main] Sample token data:", tokens.slice(0, 2));
-
-            // Send tokens to worker
-            console.log("[Main] Sending tokens to worker");
             workerRef.current.postMessage({
                 type: "fetchMetadata",
                 payload: {
@@ -160,7 +154,6 @@ export function useTokenMetadataWorker(options: UseTokenMetadataWorkerOptions = 
                     batchSize,
                 },
             });
-            console.log("[Main] Message sent to worker");
         } catch (error) {
             console.error("[Main] Error sending message to worker:", error);
             setState({ isLoading: false, error: error as Error, metadataMap: {} });
