@@ -22,6 +22,7 @@ import {
     TokenMetadataMap,
 } from "@/types/fungible-token.speculative";
 import { TokenUtilService } from "@/services/tokenUtils.service";
+import { useTokenMetadataWorker } from "@/hooks/useTokenMetadataWorker";
 
 import TokenStorageService from "@/services/backend/tokenStorage.service";
 import {
@@ -151,44 +152,64 @@ export function useSyncTokenList(identity: Identity | undefined) {
 }
 
 export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
+    const { metadataMap: workerMetadataMap, fetchMetadata } = useTokenMetadataWorker({
+        onProgress: (processed, total) => {
+            console.log(`Metadata fetching progress: ${processed}/${total}`);
+        },
+    });
+
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.metadata(),
         queryFn: async () => {
             if (!tokens || tokens.length === 0) return {};
 
-            const metadataMap: TokenMetadataMap = {};
+            try {
+                // Use the worker to fetch metadata
+                await fetchMetadata(tokens);
 
-            const batchSize = 300;
-            const start = Date.now();
-            for (let i = 0; i < tokens.length; i += batchSize) {
-                const batch = tokens.slice(i, i + batchSize);
-                const batchPromises = batch.map(async (token) => {
-                    try {
-                        const metadata = await TokenUtilService.getTokenMetadata(token.address);
-                        if (metadata) {
-                            metadataMap[token.address] = {
-                                fee: metadata.fee,
-                                logo: metadata.icon,
-                                decimals: metadata.decimals,
-                            };
+                // The result will be available in workerMetadataMap after the worker completes
+                return workerMetadataMap;
+            } catch (error) {
+                console.error("Error using token metadata worker:", error);
+
+                // Fallback to direct fetching in case worker fails
+                console.warn("Falling back to direct metadata fetching");
+
+                const metadataMap: TokenMetadataMap = {};
+                const batchSize = 300;
+                const start = Date.now();
+
+                for (let i = 0; i < tokens.length; i += batchSize) {
+                    const batch = tokens.slice(i, i + batchSize);
+                    const batchPromises = batch.map(async (token) => {
+                        try {
+                            const metadata = await TokenUtilService.getTokenMetadata(token.address);
+                            if (metadata) {
+                                metadataMap[token.address] = {
+                                    fee: metadata.fee,
+                                    logo: metadata.icon,
+                                    decimals: metadata.decimals,
+                                };
+                            }
+                            return { tokenId: token.address, metadata };
+                        } catch (error) {
+                            console.error(`Error fetching metadata for ${token.address}:`, error);
+                            return { tokenId: token.address, metadata: null };
                         }
-                        return { tokenId: token.address, metadata };
-                    } catch (error) {
-                        console.error(`Error fetching metadata for ${token.address}:`, error);
-                        return { tokenId: token.address, metadata: null };
-                    }
-                });
+                    });
 
-                await Promise.all(batchPromises);
+                    await Promise.all(batchPromises);
+                }
+
+                const end = Date.now();
+                const duration = end - start;
+                console.log(
+                    `Fetched metadata directly for ${tokens.length} tokens in ${duration}ms`,
+                    metadataMap,
+                );
+
+                return metadataMap;
             }
-            const end = Date.now();
-            const duration = end - start;
-            console.log(
-                `Fetched metadata for ${tokens.length} tokens in ${duration}ms`,
-                metadataMap,
-            );
-
-            return metadataMap;
         },
         enabled: !!tokens,
         retry: 3, // Retry failed requests up to 3 times

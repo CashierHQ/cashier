@@ -386,12 +386,9 @@ export default function LinkPreview({
                 setShowConfirmation(true);
             }
         } catch (error) {
-            console.error("Error creating link", error);
             if (isCashierError(error)) {
                 onCashierError(error);
             }
-
-            console.log("🚀 ~ handleSubmit ~ error:", error);
         } finally {
             setIsDisabled(false);
         }

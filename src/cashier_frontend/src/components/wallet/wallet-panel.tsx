@@ -40,7 +40,7 @@ const MainWalletPanel: React.FC<{
     navigateSendPage: () => void;
     navigateReceivePage: () => void;
     totalUsdEquivalent: number;
-}> = React.memo(({ navigateSendPage, navigateReceivePage, totalUsdEquivalent }) => {
+}> = ({ navigateSendPage, navigateReceivePage, totalUsdEquivalent }) => {
     // Balance visibility state
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
     const [isVisible, setIsVisible] = useState(() => {
@@ -87,17 +87,12 @@ const MainWalletPanel: React.FC<{
             </div>
         </div>
     );
-});
+};
 
 // Memoize panel components
-const MemoizedSendPanel = React.memo(SendPanel);
-const MemoizedReceivePanel = React.memo(ReceivePanel);
-const MemoizedDetailsPanel = React.memo(DetailsPanel);
-const MemoizedManagePanel = React.memo(ManagePanel);
-const MemoizedImportPanel = React.memo(ImportPanel);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
+const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
     const { isLoading, getDisplayTokens, rawTokenList } = useTokens();
     const { activePanel, panelParams, navigateToPanel } = useWalletContext();
 
@@ -188,30 +183,15 @@ const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
 
         switch (activePanel) {
             case "send":
-                return (
-                    <MemoizedSendPanel
-                        tokenId={panelParams.tokenId}
-                        onBack={navigateToMainWallet}
-                    />
-                );
+                return <SendPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "receive":
-                return (
-                    <MemoizedReceivePanel
-                        tokenId={panelParams.tokenId}
-                        onBack={navigateToMainWallet}
-                    />
-                );
+                return <ReceivePanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "details":
-                return (
-                    <MemoizedDetailsPanel
-                        tokenId={panelParams.tokenId}
-                        onBack={navigateToMainWallet}
-                    />
-                );
+                return <DetailsPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "manage":
-                return <MemoizedManagePanel onBack={navigateToMainWallet} />;
+                return <ManagePanel onBack={navigateToMainWallet} />;
             case "import":
-                return <MemoizedImportPanel onBack={navigateToManage} />;
+                return <ImportPanel onBack={navigateToManage} />;
             case "wallet":
             default:
                 return (
@@ -267,7 +247,7 @@ const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
             {content}
         </SheetContent>
     );
-});
+};
 
 WalletPanel.displayName = "WalletPanel";
 MainWalletPanel.displayName = "MainWalletPanel";

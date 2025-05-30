@@ -54,9 +54,14 @@ interface ClaimFormOptionsProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     formData?: LinkDetailModel;
     setDisabled: (disabled: boolean) => void;
+    disabledInput?: boolean;
 }
 
-const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }) => {
+const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
+    form,
+    setDisabled,
+    disabledInput,
+}) => {
     const { t } = useTranslation();
     const { user, disconnect } = useAuth();
     const identity = useIdentity();
@@ -233,13 +238,88 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
         );
     };
 
+    const renderInputWallet = () => {
+        if (identity) {
+            return (
+                <CustomConnectedWalletButton
+                    connectedAccount={user?.principal.toString()}
+                    postfixText="Connected"
+                    postfixIcon={<LuWallet2 color="#359F89" className="mr-2 h-6 w-6" />}
+                    handleConnect={() => {
+                        showDialog({
+                            title: "Are you sure?",
+                            description:
+                                "You need to disconnect your current wallet to enter an address manually. Would you like to disconnect and continue?",
+                        });
+                    }}
+                />
+            );
+        }
+
+        if (disabledInput) return <></>;
+
+        return (
+            <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                    <FormItem className="mx-0">
+                        <FormControl>
+                            <IconInput
+                                isCurrencyInput={false}
+                                icon={<IoWalletOutline color="#359F89" className="mr-2 h-6 w-6" />}
+                                rightIcon={
+                                    field.value && form.formState.errors.address ? (
+                                        <IoMdClose color="red" className="mr-1 h-5 w-5" />
+                                    ) : field.value && !form.formState.errors.address ? (
+                                        <FaCheck color="#36A18B" className="mr-1 h-5 w-5" />
+                                    ) : (
+                                        <ClipboardIcon color="#359F89" className="mr-2 h-5 w-5" />
+                                    )
+                                }
+                                onRightIconClick={() => {
+                                    if (field.value) {
+                                        field.onChange("");
+                                    } else {
+                                        handlePasteClick(field);
+                                    }
+                                }}
+                                placeholder={t("claim.addressPlaceholder")}
+                                className="py-5 h-14 text-md rounded-xl placeholder:text-primary"
+                                onFocusShowIcon={true}
+                                onFocusText={true}
+                                {...field}
+                                onChange={(e) => {
+                                    field.onChange(e);
+                                    validateAddress(e.target.value);
+                                }}
+                            />
+                        </FormControl>
+                        {form.formState.errors.address?.message === "wallet-format-error" ? (
+                            <ErrorMessageWithIcon message="The wallet format is incorrect. Please make sure you are entering the correct wallet." />
+                        ) : (
+                            <FormMessage />
+                        )}
+                    </FormItem>
+                )}
+            />
+        );
+    };
+
+    const isSendLink =
+        link?.linkType === LINK_TYPE.SEND_AIRDROP ||
+        link?.linkType === LINK_TYPE.SEND_TIP ||
+        link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET;
+    // const isReceiveLink = link?.linkType === LINK_TYPE.RECEIVE_PAYMENT;
+
+    const firstTilte = isSendLink ? t("claim.asset") : t("claim.sendAsset");
+    const secondTitle = isSendLink ? t("claim.receive_options") : t("claim.send_options");
+
     return (
         <>
             <div id="asset-section" className="">
                 <h2 className="text-[16px] font-medium mb-2">
-                    {link?.linkType === LINK_TYPE.RECEIVE_PAYMENT
-                        ? t("claim.sendAsset")
-                        : t("claim.asset")}
+                    {firstTilte}
                     {link?.asset_info && link?.asset_info?.length > 1 ? "s" : ""}
                 </h2>
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
@@ -252,86 +332,13 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }
             </div>
 
             <div className="mt-4">
-                <h2 className="text-[16px] font-medium mb-2">{t("claim.receive_options")}</h2>
+                <h2 className="text-[16px] font-medium mb-2">{secondTitle}</h2>
 
                 <div className="flex flex-col gap-2">
                     {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)}
                     {renderWalletButton(WALLET_OPTIONS.INTERNET_IDENTITY, "Internet Identity")}
                     {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets", undefined, true)}
-                    {identity ? (
-                        <WalletButton
-                            title={t("claim.addressPlaceholder")}
-                            handleConnect={() => {
-                                showDialog({
-                                    title: "Are you sure?",
-                                    description:
-                                        "You need to disconnect your current wallet to enter an address manually. Would you like to disconnect and continue?",
-                                });
-                            }}
-                            icon={<LuWallet2 color="#359F89" className="mr-2 h-6 w-6" />}
-                        />
-                    ) : (
-                        <FormField
-                            control={form.control}
-                            name="address"
-                            render={({ field }) => (
-                                <FormItem className="mx-0">
-                                    <FormControl>
-                                        <IconInput
-                                            isCurrencyInput={false}
-                                            icon={
-                                                <IoWalletOutline
-                                                    color="#359F89"
-                                                    className="mr-2 h-6 w-6"
-                                                />
-                                            }
-                                            rightIcon={
-                                                field.value && form.formState.errors.address ? (
-                                                    <IoMdClose
-                                                        color="red"
-                                                        className="mr-1 h-5 w-5"
-                                                    />
-                                                ) : field.value &&
-                                                  !form.formState.errors.address ? (
-                                                    <FaCheck
-                                                        color="#36A18B"
-                                                        className="mr-1 h-5 w-5"
-                                                    />
-                                                ) : (
-                                                    <ClipboardIcon
-                                                        color="#359F89"
-                                                        className="mr-2 h-5 w-5"
-                                                    />
-                                                )
-                                            }
-                                            onRightIconClick={() => {
-                                                if (field.value) {
-                                                    field.onChange("");
-                                                } else {
-                                                    handlePasteClick(field);
-                                                }
-                                            }}
-                                            placeholder={t("claim.addressPlaceholder")}
-                                            className="py-5 h-14 text-md rounded-xl placeholder:text-primary"
-                                            onFocusShowIcon={true}
-                                            onFocusText={true}
-                                            {...field}
-                                            onChange={(e) => {
-                                                field.onChange(e);
-                                                validateAddress(e.target.value);
-                                            }}
-                                        />
-                                    </FormControl>
-                                    {form.formState.errors.address?.message ===
-                                    "wallet-format-error" ? (
-                                        <ErrorMessageWithIcon message="The wallet format is incorrect. Please make sure you are entering the correct wallet." />
-                                    ) : (
-                                        <FormMessage />
-                                    )}
-                                </FormItem>
-                            )}
-                        />
-                    )}
+                    {renderInputWallet()}
                 </div>
             </div>
 
