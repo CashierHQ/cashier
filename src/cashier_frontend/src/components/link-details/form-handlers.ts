@@ -246,7 +246,7 @@ export const checkInsufficientBalance = (
         const assetAmount = asset.amount;
         const tokenAmount = token.amount;
         const assetAmountWithoutFee =
-            assetAmount * BigInt(claims) + FeeHelpers.calculateNetworkFeesInBigInt(token);
+            BigInt(claims) * (assetAmount + FeeHelpers.calculateNetworkFeesInBigInt(token));
 
         console.log("CHECKING BALANCES 3.0");
         console.log(`assetAmount: ${assetAmount}, tokenAmount: ${tokenAmount}`);
