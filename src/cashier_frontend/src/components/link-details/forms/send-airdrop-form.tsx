@@ -294,7 +294,11 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
         if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
 
         // Use the centralized handler to check for insufficient balance
-        const insufficientToken = checkInsufficientBalance(formAssets, allAvailableTokens);
+        const insufficientToken = checkInsufficientBalance(
+            formAssets,
+            allAvailableTokens,
+            maxActionNumber,
+        );
         if (insufficientToken) {
             setNotEnoughBalanceErrorToken(insufficientToken);
             return;

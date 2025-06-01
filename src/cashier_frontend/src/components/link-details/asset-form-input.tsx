@@ -28,6 +28,8 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { convertDecimalBigIntToNumber } from "@/utils";
+import { FeeHelpers } from "@/utils/helpers/fees";
+import { Chain } from "@/services/types/link.service.types";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 
@@ -215,18 +217,27 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                             const maxTokenAmount = convertDecimalBigIntToNumber(
                                 token?.amount || 0n,
                                 token?.decimals || 8,
-                            ).toString();
+                            );
+                            if (!token) return;
+                            const feeAmount = FeeHelpers.calculateNetworkFees(token);
 
-                            setLocalTokenAmount(maxTokenAmount);
+                            const maxTokenAmountWithoutFee = maxTokenAmount - feeAmount;
+
+                            setLocalTokenAmount(maxTokenAmountWithoutFee.toString());
 
                             // Also update the USD value if conversion is possible
-                            if (canConvert && tokenUsdPrice && !isNaN(parseFloat(maxTokenAmount))) {
-                                const usdValue = parseFloat(maxTokenAmount) * tokenUsdPrice;
+                            if (
+                                canConvert &&
+                                tokenUsdPrice &&
+                                !isNaN(parseFloat(maxTokenAmountWithoutFee.toString()))
+                            ) {
+                                const usdValue =
+                                    parseFloat(maxTokenAmountWithoutFee.toString()) * tokenUsdPrice;
                                 setLocalUsdAmount(usdValue.toFixed(7));
                             }
 
                             // Update the form value
-                            setTokenAmount(maxTokenAmount);
+                            setTokenAmount(maxTokenAmountWithoutFee.toString());
                         }}
                         className="ml-auto text-[#36A18B] text-[12px] font-medium"
                     >
