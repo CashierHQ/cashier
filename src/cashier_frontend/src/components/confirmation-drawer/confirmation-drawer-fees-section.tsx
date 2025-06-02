@@ -29,6 +29,7 @@ import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTranslation } from "react-i18next";
 import { formatNumber } from "@/utils/helpers/currency";
+import { FeeHelpers } from "@/utils/helpers/fees";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -74,11 +75,8 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
             for (const intent of intents) {
                 const token = getToken(intent.asset.address);
                 if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
-                    const fee = feeService.getFee(
-                        intent.asset.chain,
-                        link.linkType!,
-                        FEE_TYPE.LINK_CREATION,
-                    );
+                    const fee = FeeHelpers.getLinkCreationFee();
+                    console.log("fee", fee);
                     if (fee) {
                         totalFeesMapArray.push({
                             intent,
@@ -153,7 +151,10 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 }
 
                 const feeType = intent.fee?.type;
-                const tokenAddress = intent.fee?.address;
+                const tokenAddress =
+                    feeType === "link_creation_fee"
+                        ? FeeHelpers.getLinkCreationFee().address
+                        : intent.fee?.address;
                 const token = tokenInfoMap.get(tokenAddress!);
                 const tokenInfo = getToken(tokenAddress!);
 
@@ -165,9 +166,19 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
                 // Safe conversion from bigint to number for calculation
                 // Use Number() for explicit conversion and provide defaults for undefined values
-                const tokenFee = tokenInfo.fee;
-                const tokenDecimals = tokenInfo.decimals;
-                const tokenAmount = Number(tokenFee) / Math.pow(10, tokenDecimals);
+                const tokenFee =
+                    feeType === "link_creation_fee"
+                        ? FeeHelpers.getLinkCreationFee().amount
+                        : tokenInfo.fee;
+                const tokenDecimals =
+                    feeType === "link_creation_fee"
+                        ? FeeHelpers.getLinkCreationFee().decimals
+                        : tokenInfo.decimals;
+                const tokenAmount =
+                    feeType === "link_creation_fee"
+                        ? Number(FeeHelpers.getLinkCreationFee().amount) /
+                          Math.pow(10, tokenDecimals)
+                        : Number(tokenFee) / Math.pow(10, tokenDecimals);
 
                 let tokenPrice = getTokenPrice(tokenAddress!);
                 if (tokenPrice === undefined) {

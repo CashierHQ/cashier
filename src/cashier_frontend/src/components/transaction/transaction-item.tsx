@@ -25,6 +25,7 @@ import { formatNumber } from "@/utils/helpers/currency";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
+import { FeeHelpers } from "@/utils/helpers/fees";
 
 interface TransactionItemProps {
     title: string;
@@ -58,11 +59,15 @@ export const TransactionItem = memo(function TransactionItem({
         // Calculate adjusted amount by subtracting only the network fee
         if (networkFee && token.decimals !== undefined) {
             const networkFeeAmount = Number(networkFee.amount) / 10 ** token.decimals;
-            const newAdjustedAmount = assetAmount - networkFeeAmount;
+            const newAdjustedAmount = assetAmount + networkFeeAmount;
 
             setAdjustedAmount(newAdjustedAmount);
         } else {
-            setAdjustedAmount(assetAmount);
+            const feeAmount = fees.find(
+                (fee) => fee.address === intent.asset.address && fee.type === "link_creation_fee",
+            );
+
+            setAdjustedAmount(Number(feeAmount?.amount) / 10 ** token.decimals);
         }
     }, [assetAmount, fees, intent.asset.address, token]);
 
@@ -96,7 +101,10 @@ export const TransactionItem = memo(function TransactionItem({
                 >
                     <div className="flex items-center gap-1">
                         <p className="text-[14px] font-normal">
-                            {formatNumber(adjustedAmount?.toString() || "0")}
+                            {intentTitle.toLowerCase().includes("link creation fee")
+                                ? Number(FeeHelpers.getLinkCreationFee().displayAmount) /
+                                  10 ** FeeHelpers.getLinkCreationFee().decimals
+                                : formatNumber(adjustedAmount?.toString() || "0")}
                         </p>
                     </div>
                     <p className="text-[10px] font-normal text-grey/50">

@@ -22,6 +22,7 @@ import { TASK, FEE_TYPE } from "@/services/types/enum";
 import { feeService } from "@/services/fee.service";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/useLinkAction";
+import { FeeHelpers } from "@/utils/helpers/fees";
 
 type ConfirmationPopupAssetsSectionProps = {
     intents: IntentModel[];
@@ -78,6 +79,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
         const calculateFees = async () => {
             const newFeesMap = new Map<string, FeeModel[]>();
 
+            console.log("intents", intents);
             // Process each intent to get associated fees
             for (const intent of intents) {
                 const tokenAddress = intent.asset.address;
@@ -89,7 +91,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 const tokenFees = newFeesMap.get(tokenAddress) || [];
 
                 // Network fee for this token
-                if (token.fee) {
+                if (token.fee && intent.task !== TASK.TRANSFER_WALLET_TO_TREASURY) {
                     tokenFees.push({
                         chain: intent.asset.chain,
                         type: "network_fee",
@@ -100,11 +102,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
 
                 // Link creation fee if applicable
                 if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
-                    const linkCreationFee = feeService.getFee(
-                        intent.asset.chain,
-                        link.linkType!,
-                        FEE_TYPE.LINK_CREATION,
-                    );
+                    const linkCreationFee = FeeHelpers.getLinkCreationFee();
 
                     if (linkCreationFee) {
                         tokenFees.push({
