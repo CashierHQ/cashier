@@ -24,7 +24,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
@@ -73,7 +73,7 @@ export default function LinkPreview({
     const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
     const searchParams = new URLSearchParams(location.search);
     const redirectParam = searchParams.get("redirect");
     const oldIdParam = searchParams.get("oldId");

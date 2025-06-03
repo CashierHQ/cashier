@@ -159,7 +159,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     useEffect(() => {
         if (linkDetailQuery.data) {
             const linkData = linkDetailQuery.data;
-            console.log("🚀 ~ useLinkAction ~ linkData:", linkData);
             setLink(linkData.link);
             setAction(linkData.action);
         }
@@ -168,8 +167,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     // Update state when linkId changes
     useEffect(() => {
         if (linkId) {
-            console.log("[useEffect] linkId changed:", linkId);
-
             const userInput = linkId ? getUserInput(linkId) : undefined;
 
             // First update with user input if available
