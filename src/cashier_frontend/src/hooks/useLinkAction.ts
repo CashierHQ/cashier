@@ -29,11 +29,10 @@ import {
     mapPartialDtoToLinkDetailModel,
 } from "@/services/types/mapper/link.service.mapper";
 import { useIdentity } from "@nfid/identitykit/react";
-import LinkLocalStorageService, {
-    LOCAL_lINK_ID_PREFIX,
-} from "@/services/link/link-local-storage.service";
+import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { LinkModel } from "@/services/types/link.service.types";
 import LinkService from "@/services/link/link.service";
+import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -117,7 +116,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         try {
             // Clone the same logic from useLinkDetailQuery to ensure consistency
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
-                const linkLocalStorageService = new LinkLocalStorageService(
+                const linkLocalStorageService = new LinkLocalStorageServiceV2(
                     identity.getPrincipal().toString(),
                 );
                 const localLink = linkLocalStorageService.getLink(linkId);

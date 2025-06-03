@@ -19,15 +19,14 @@ import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { UpdateLinkParams } from "./useLinkAction";
-import LinkLocalStorageService, {
-    LOCAL_lINK_ID_PREFIX,
-} from "@/services/link/link-local-storage.service";
+import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { groupLinkListByDate } from "@/utils";
 import { LinkModel } from "@/services/types/link.service.types";
 import {
     mapParitalLinkDtoToCreateLinkInputV2,
     mapPartialDtoToLinkDetailModel,
 } from "@/services/types/mapper/link.service.mapper";
+import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 
 // Centralized query keys for consistent caching
 export const LINK_QUERY_KEYS = {
@@ -46,7 +45,7 @@ export function useLinksListQuery() {
             if (!identity) throw new Error("Identity is required");
             try {
                 const linkService = new LinkService(identity);
-                const linkLocalStorageService = new LinkLocalStorageService(
+                const linkLocalStorageService = new LinkLocalStorageServiceV2(
                     identity.getPrincipal().toString(),
                 );
 
@@ -79,7 +78,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
             if (!linkId) throw new Error("linkId are required");
 
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
-                const linkLocalStorageService = new LinkLocalStorageService(
+                const linkLocalStorageService = new LinkLocalStorageServiceV2(
                     identity.getPrincipal().toString(),
                 );
                 const localLink = linkLocalStorageService.getLink(linkId);
@@ -116,7 +115,7 @@ export function useUpdateLinkMutation() {
         mutationFn: (data: UpdateLinkParams) => {
             if (!identity) throw new Error("Identity is required");
             const linkService = new LinkService(identity);
-            const linkLocalStorageService = new LinkLocalStorageService(
+            const linkLocalStorageService = new LinkLocalStorageServiceV2(
                 identity.getPrincipal().toString(),
             );
             const linkId = data.linkId;
@@ -181,7 +180,7 @@ export function useCreateNewLinkMutation() {
             if (!identity) throw new Error("Identity is required");
 
             const linkService = new LinkService(identity);
-            const linkLocalStorageService = new LinkLocalStorageService(
+            const linkLocalStorageService = new LinkLocalStorageServiceV2(
                 identity.getPrincipal().toString(),
             );
 
