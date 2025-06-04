@@ -19,6 +19,7 @@ import { UserInputAsset, UserInputItem } from "@/stores/linkCreationFormStore";
 import { LINK_STATE, LINK_TYPE } from "../types/enum";
 import { LinkDto } from "../../../../declarations/cashier_backend/cashier_backend.did";
 import { mapPartialDtoToLinkDetailModel } from "../types/mapper/link.service.mapper";
+import { AssetInfoModel } from "../types/link.service.types";
 
 /**
  * Singleton class that handles the state machine logic for link creation flow
@@ -333,11 +334,10 @@ export class LinkStateMachine {
                     }
                     break;
                 case "assets":
-                    // Check if assets have changed
+                    // Check if assets have changed using custom comparison for BigInt values
                     if (
                         userInput.assets !== undefined &&
-                        JSON.stringify(userInput.assets) !==
-                            JSON.stringify(linkDetailModel.asset_info)
+                        !this.compareAssets(userInput.assets, linkDetailModel.asset_info)
                     ) {
                         return true;
                     }
@@ -373,35 +373,51 @@ export class LinkStateMachine {
     }
 
     /**
-     * Validates assets based on link type
-     * @param linkType The type of link being created
-     * @param assets The assets attached to the link
-     * @returns Boolean indicating if assets are valid for this link type
+     * Compares two arrays of assets taking into account BigInt values
+     * @param userInputAssets Array of UserInputAsset objects
+     * @param assetInfoModels Array of AssetInfoModel objects
+     * @returns True if the arrays are equivalent, false otherwise
      */
-    public validateLinkTypeAssets(
-        linkType: string | undefined,
-        assets: UserInputAsset[] | undefined,
+    private compareAssets(
+        userInputAssets: UserInputAsset[] | undefined,
+        assetInfoModels: AssetInfoModel[] | undefined,
     ): boolean {
-        if (!linkType || !assets || assets.length === 0) {
-            return false;
+        // Handle undefined cases
+        if (!userInputAssets && !assetInfoModels) return true;
+        if (!userInputAssets || !assetInfoModels) return false;
+
+        // Check if array lengths match
+        if (userInputAssets.length !== assetInfoModels.length) return false;
+
+        // Sort both arrays to ensure consistent comparison
+        // We'll sort by address (string) which should be safe to compare
+        const sortedUserInputAssets = [...userInputAssets].sort((a, b) =>
+            a.address.localeCompare(b.address),
+        );
+        const sortedAssetInfoModels = [...assetInfoModels].sort((a, b) =>
+            a.address.localeCompare(b.address),
+        );
+
+        // Compare each asset
+        for (let i = 0; i < sortedUserInputAssets.length; i++) {
+            const userAsset = sortedUserInputAssets[i];
+            const modelAsset = sortedAssetInfoModels[i];
+
+            // Compare address
+            if (userAsset.address !== modelAsset.address) return false;
+
+            // Compare chain
+            if (userAsset.chain !== modelAsset.chain) return false;
+
+            // Compare label (undefined handling)
+            if (userAsset.label !== modelAsset.label) return false;
+
+            // Compare BigInt values (linkUseAmount in UserInputAsset maps to amountPerUse in AssetInfoModel)
+            if (userAsset.linkUseAmount.toString() !== modelAsset.amountPerUse.toString())
+                return false;
         }
 
-        // Implement link-type specific validation here
-        // For example, different link types might require different asset configurations
-
-        switch (linkType) {
-            case LINK_TYPE.SEND_TIP:
-                // For SendTip, need exactly 1 asset
-                return assets.length === 1 && assets[0].linkUseAmount > BigInt(0);
-
-            case LINK_TYPE.SEND_AIRDROP:
-                // For SendAirdrop, need exactly 1 asset
-                return assets.length === 1 && assets[0].linkUseAmount > BigInt(0);
-
-            default:
-                // Default validation for other link types
-                return assets.some((asset) => asset.linkUseAmount > BigInt(0));
-        }
+        return true;
     }
 }
 

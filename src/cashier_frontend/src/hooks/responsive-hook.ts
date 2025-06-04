@@ -73,7 +73,9 @@ export function useHeader(): HeaderQuery {
     ];
     const compactHeaderPaths = ["/wallet"];
 
-    const headerWithBackButtonAndWalletButtonPaths = [/^\/[^/]+$/]; // Matches paths like "/uuid"
+    const headerWithBackButtonAndWalletButtonPaths = [
+        /^\/[^/]+\/choose-wallet$/, // Matches paths like "/uuid/choose-wallet"
+    ];
 
     const showCompactHeader = useCallback(
         (pathname: string) => compactHeaderPaths.some((path) => pathname.startsWith(path)),
@@ -88,14 +90,8 @@ export function useHeader(): HeaderQuery {
             const matchesPath = headerWithBackButtonAndWalletButtonPaths.some((pattern) =>
                 pattern.test(pathname),
             );
-            const matchesQuery = search
-                ? new URLSearchParams(search).get("step") === "claim"
-                : false;
-            return (
-                (matchesPath && matchesQuery) ||
-                (matchesPath && matchesQuery && isSignedOut) ||
-                false
-            );
+
+            return matchesPath || (matchesPath && isSignedOut) || false;
         },
         [headerWithBackButtonAndWalletButtonPaths],
     );

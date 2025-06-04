@@ -16,8 +16,8 @@
 
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { LinkDetailModel } from "@/services/types/link.service.types";
-import { FC, useEffect, useState } from "react";
+import { LinkDetailModel, LinkGetUserStateOutputModel } from "@/services/types/link.service.types";
+import { FC, useCallback, useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { ClaimSchema } from ".";
 import { z } from "zod";
@@ -27,7 +27,7 @@ import {
     useUpdateLinkUserState,
 } from "@/hooks/linkUserHooks";
 import { ACTION_TYPE, LINK_USER_STATE, ACTION_STATE } from "@/services/types/enum";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
@@ -46,15 +46,38 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { getClaimButtonLabel } from "@/components/page/linkCardPage";
 import { toast } from "sonner";
 
+const setConfirmButotnTextBasedOnActionState = (
+    action: ActionModel | undefined,
+    t: (key: string) => string,
+): { text: string; disabled: boolean } => {
+    if (!action) {
+        return { text: t("confirmation_drawer.confirm_button"), disabled: false };
+    }
+
+    switch (action.state) {
+        case ACTION_STATE.CREATED:
+            return { text: t("confirmation_drawer.confirm_button"), disabled: false };
+        case ACTION_STATE.SUCCESS:
+            return { text: t("continue"), disabled: false };
+        case ACTION_STATE.PROCESSING:
+            return { text: t("confirmation_drawer.inprogress_button"), disabled: true };
+        case ACTION_STATE.FAIL:
+            return { text: t("retry"), disabled: false };
+        default:
+            return { text: t("confirmation_drawer.confirm_button"), disabled: false };
+    }
+};
+
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     linkData?: LinkDetailModel;
+    refetchLinkUserState?: () => Promise<{ data?: LinkGetUserStateOutputModel }>;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
     onBack?: () => void;
 };
 
-export const UseFormPage: FC<ClaimFormPageProps> = ({
+export const ChooseWallet: FC<ClaimFormPageProps> = ({
     form,
     linkData,
     onCashierError = () => {},
@@ -62,6 +85,7 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
     onBack,
 }) => {
     const { linkId } = useParams();
+    const navigate = useNavigate();
     const identity = useIdentity();
     const { t } = useTranslation();
     const { nextStep } = useMultiStepFormContext();
@@ -69,14 +93,10 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
     // UI state
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
-    const [isDisabledButton, setIsDisabledButton] = useState(false);
-    const [buttonText, setButtonText] = useState(t("claim.claim"));
     const [isProcessing, setIsProcessing] = useState(false);
-    const [isInitialDataLoading, setIsInitialDataLoading] = useState(true);
+    const [manuallyClosedDrawer, setManuallyClosedDrawer] = useState(false);
 
     // Button state for confirmation drawer
-    const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
-    const [confirmButtonText, setConfirmButtonText] = useState("");
 
     // Hooks
     const { mutateAsync: createAction } = useCreateAction();
@@ -87,71 +107,97 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
     const updateLinkUserState = useUpdateLinkUserState();
 
-    // Enable fetch when we have a link ID
-    const enableFetchLinkUserState = !!linkId && !!identity;
-
-    const { data: linkUserState, refetch: refetchLinkUserState } = useLinkUserState(
-        {
-            action_type: ACTION_TYPE.USE_LINK,
-            link_id: linkId ?? "",
-            anonymous_wallet_address: "",
-        },
-        enableFetchLinkUserState,
-    );
-
+    // Access link data from props instead of fetching directly
     const { link, setAction, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
         linkId,
         ACTION_TYPE.USE_LINK,
     );
 
+    const enableLocalFetch = !!linkId && !!identity;
+
+    const {
+        data: linkUserState,
+        refetch: refetchLinkUserState,
+        isFetching,
+    } = useLinkUserState(
+        {
+            action_type: ACTION_TYPE.USE_LINK,
+            link_id: linkId ?? "",
+            anonymous_wallet_address: anonymousWalletAddress ?? "",
+        },
+        enableLocalFetch,
+    );
+
+    const [useLinkButton, setUseLinkButton] = useState<{
+        text: string;
+        disabled: boolean;
+    }>({
+        text: t("confirmation_drawer.confirm_button"),
+        disabled: false,
+    });
+    const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
+        text: string;
+        disabled: boolean;
+    }>({
+        text: isFetching ? "Loading..." : getClaimButtonLabel(linkData ?? ({} as LinkDetailModel)),
+        disabled: false,
+    });
+
+    useEffect(() => {
+        if (linkUserState) {
+        }
+    }, [isFetching]);
+
+    useEffect(() => {
+        console.log("[use Effect] 127 test", drawerConfirmButton);
+    }, [drawerConfirmButton]);
+
     // Update button text based on action state
     useEffect(() => {
         if (!linkUserState?.action) return;
 
-        const actionState = linkUserState.action.state;
-        if (actionState === ACTION_STATE.SUCCESS) {
-            setConfirmButtonText(t("continue"));
-            setConfirmButtonDisabled(false);
-        } else if (actionState === ACTION_STATE.PROCESSING) {
-            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
-            setConfirmButtonDisabled(true);
-        } else if (actionState === ACTION_STATE.FAIL) {
-            setConfirmButtonText(t("retry"));
-            setConfirmButtonDisabled(false);
-        } else {
-            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
-            setConfirmButtonDisabled(false);
-        }
+        const confirmButotn = setConfirmButotnTextBasedOnActionState(linkUserState.action, t);
+        setDrawerConfirmButton(confirmButotn);
     }, [linkUserState, t]);
 
     // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
-        if (!isInitialDataLoading && linkUserState?.action) {
+        if (linkUserState?.action && !manuallyClosedDrawer) {
             setShowConfirmation(true);
         }
-    }, [linkUserState?.action, link, isInitialDataLoading]);
+    }, [linkUserState?.action, link, manuallyClosedDrawer]);
 
-    // Fetch action data when identity changes
+    // Fetch action data when identity changes or link ID changes
     useEffect(() => {
         const fetchInitialData = async () => {
-            setIsInitialDataLoading(true);
-            setIsDisabledButton(true); // Disable button while loading
-            if (linkId && identity) {
+            setUseLinkButton({
+                text: useLinkButton.text,
+                disabled: true, // Disable button while loading
+            });
+            if (linkId) {
                 try {
-                    await refetchLinkUserState();
+                    if (refetchLinkUserState) {
+                        await refetchLinkUserState();
+                    }
                 } catch (error) {
                     console.error("Error fetching action:", error);
                 } finally {
-                    setIsInitialDataLoading(false);
-                    setIsDisabledButton(false); // Explicitly re-enable button after loading
+                    setUseLinkButton({
+                        text: useLinkButton.text,
+                        disabled: false, // Enable button after loading
+                    });
                 }
             } else {
-                setIsInitialDataLoading(false);
-                setIsDisabledButton(false); // Explicitly re-enable button after loading
+                setUseLinkButton({
+                    text: useLinkButton.text,
+                    disabled: false, // Enable button if no linkId
+                });
             }
         };
 
         fetchInitialData();
+        // Only depend on identity changes, linkId changes, or parent state changes
+        // Explicitly NOT depending on refetchLinkUserState to avoid infinite loops
     }, [identity, linkId, refetchLinkUserState]);
 
     // Polling effect to update action state during processing
@@ -160,8 +206,9 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
 
         if (isProcessing) {
             intervalId = setInterval(async () => {
+                console.log("Polling for link user state update...");
                 const res = await refetchLinkUserState();
-                if (res.data?.action) {
+                if (res?.data?.action) {
                     setAction(res.data.action);
                 }
             }, 2000);
@@ -172,7 +219,7 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
                 clearInterval(intervalId);
             }
         };
-    }, [isProcessing, linkId, refetchLinkUserState]);
+    }, [isProcessing, linkId, refetchLinkUserState, refetchLinkUserState]);
 
     /**
      * Creates an action for authenticated users
@@ -206,15 +253,17 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
      */
     const handleCreateAction = async (anonymousWalletAddress?: string) => {
         // Don't proceed if initial data is still loading
-        if (isInitialDataLoading) {
+        if (isFetching) {
             return;
         }
 
         // Validation
 
         try {
-            setIsDisabledButton(true);
-            setButtonText(t("processing"));
+            setUseLinkButton({
+                text: useLinkButton.text,
+                disabled: true,
+            });
 
             if (linkUserState?.action) {
                 // Display the confirmation drawer if action exists
@@ -254,6 +303,7 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
                 } else if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
                     // If claim is already complete, proceed to next step
                     nextStep();
+                    navigate(`/${linkId}/complete`);
                 } else {
                     // Show confirmation for existing action
                     setAnonymousWalletAddress(anonymousWalletAddress);
@@ -268,8 +318,10 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
                 onCashierError(error);
             }
         } finally {
-            setIsDisabledButton(false);
-            setButtonText(t("claim.claim"));
+            setUseLinkButton({
+                text: useLinkButton.text,
+                disabled: false, // Disable button while loading
+            });
         }
     };
 
@@ -371,6 +423,8 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
 
         if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
             nextStep();
+            // Update route to reflect completion state
+            navigate(`/${linkId}/complete`);
         }
     };
 
@@ -382,13 +436,15 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
                     formData={linkData ?? ({} as LinkDetailModel)}
                     onSubmit={handleCreateAction}
                     onBack={onBack}
-                    isDisabled={isDisabledButton || isInitialDataLoading}
-                    setDisabled={setIsDisabledButton}
-                    buttonText={
-                        isInitialDataLoading
-                            ? "Loading..."
-                            : getClaimButtonLabel(linkData ?? ({} as LinkDetailModel))
-                    }
+                    isDisabled={useLinkButton.disabled}
+                    setDisabled={useCallback((disabled: boolean) => {
+                        console.log("Setting useLinkButton disabled state:", disabled);
+                        setUseLinkButton((prev) => ({
+                            ...prev,
+                            disabled: disabled,
+                        }));
+                    }, [])}
+                    buttonText={useLinkButton.text || t("confirmation_drawer.confirm_button")}
                 />
             </div>
 
@@ -397,16 +453,29 @@ export const UseFormPage: FC<ClaimFormPageProps> = ({
             <ConfirmationDrawerV2
                 open={showConfirmation && !showInfo}
                 action={linkUserState?.action}
-                onClose={() => setShowConfirmation(false)}
+                onClose={() => {
+                    setShowConfirmation(false);
+                    setManuallyClosedDrawer(true);
+                }}
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
                 onCashierError={onCashierError}
                 onSuccessContinue={handleUpdateLinkUserState}
                 startTransaction={startTransaction}
-                isButtonDisabled={confirmButtonDisabled}
-                setButtonDisabled={setConfirmButtonDisabled}
-                buttonText={confirmButtonText}
-                setButtonText={setConfirmButtonText}
+                isButtonDisabled={drawerConfirmButton.disabled}
+                setButtonDisabled={useCallback((disabled: boolean) => {
+                    setDrawerConfirmButton((prev) => ({
+                        ...prev,
+                        disabled: disabled,
+                    }));
+                }, [])}
+                buttonText={drawerConfirmButton.text}
+                setButtonText={useCallback((text: string) => {
+                    setDrawerConfirmButton((prev) => ({
+                        ...prev,
+                        text: text,
+                    }));
+                }, [])}
             />
         </>
     );

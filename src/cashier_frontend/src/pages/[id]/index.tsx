@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,11 +23,8 @@ import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-fram
 import { ACTION_STATE, ACTION_TYPE, LINK_STATE, LINK_USER_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useLinkUserState } from "@/hooks/linkUserHooks";
-import { useIdentity } from "@nfid/identitykit/react";
 import { MultiStepForm } from "@/components/multi-step-form";
-import { LinkCardPage } from "./LinkCardPage";
-
-import { UseFormPage } from "./UseFormPage";
+import { DefaultPage } from "./Default";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
@@ -43,6 +40,8 @@ import {
     getTitleForLink,
 } from "@/components/page/linkCardPage";
 import { toast } from "sonner";
+import { ChooseWallet } from "./ChooseWallet";
+import { useIdentity } from "@nfid/identitykit/react";
 
 export const ClaimSchema = z.object({
     token: z.string().min(5),
@@ -52,22 +51,29 @@ export const ClaimSchema = z.object({
 
 const STEP_LINK_USER_STATE_ORDER = [LINK_USER_STATE.CHOOSE_WALLET, LINK_USER_STATE.COMPLETE];
 
-function getInitialStep(state: string | undefined) {
+// Get initial step based on route or state
+function getInitialStep(state: string | undefined, route?: string) {
+    // If route is provided, use it to determine initial step
+    if (route) {
+        if (route.endsWith("/complete")) return 1; // Complete step
+        if (route.endsWith("/choose-wallet")) return 0; // Choose wallet step
+    }
+
+    // Fall back to state-based determination
     if (!state) return 0;
     return STEP_LINK_USER_STATE_ORDER.findIndex((x) => x === state);
 }
 
 export default function ClaimPage() {
-    const [enableFetchLinkUserState, setEnableFetchLinkUserState] = useState(false);
     const { linkId } = useParams();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
+    const location = useLocation();
     const { renderSkeleton } = useSkeletonLoading();
-    const identity = useIdentity();
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
 
     const { updateTokenInit, getToken } = useTokens();
+    const identity = useIdentity();
 
     // Fetch link data
     const {
@@ -76,14 +82,20 @@ export default function ClaimPage() {
         getLinkDetail,
     } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
 
-    // Fetch link user state when user is logged in and there's link data
-    const { data: linkUserState } = useLinkUserState(
+    // Fetch link user state for parent component
+    // only if user logged in and linkId is available
+    // if not, the ChooseWallet component will handle the state
+    const {
+        data: linkUserState,
+        refetch: refetchLinkUserState,
+        isFetching: isUserStateLoading,
+    } = useLinkUserState(
         {
             action_type: ACTION_TYPE.USE_LINK,
             link_id: linkId ?? "",
             anonymous_wallet_address: "",
         },
-        enableFetchLinkUserState,
+        !!linkId && !!identity, // Enable fetching if we have a link ID
     );
 
     const form = useForm<z.infer<typeof ClaimSchema>>({
@@ -91,6 +103,7 @@ export default function ClaimPage() {
     });
 
     // Fetch link data when linkId changes
+    // link data use for check current link state
     useEffect(() => {
         if (linkId && !linkData) {
             getLinkDetail();
@@ -100,28 +113,57 @@ export default function ClaimPage() {
     // Enable linkUserState fetching when link data is available
     useEffect(() => {
         if (linkData) {
-            setEnableFetchLinkUserState(true);
             updateTokenInit();
         }
     }, [linkData]);
 
-    // Update UI state based on linkUserState and URL params
+    // Update UI state based on linkUserState and current route
     useEffect(() => {
         if (!linkData) return;
 
-        // If we have a linkUserState and it's COMPLETE, always show the default page
-        if (
-            linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE &&
-            linkData.maxActionNumber === linkData.useActionCounter
-        ) {
+        // Determine the current page based on the pathname
+        const currentPath = location.pathname;
+        console.log("Current path:", currentPath);
+
+        // Set UI based on current route
+        if (currentPath.endsWith("/choose-wallet") || currentPath.endsWith("/complete")) {
+            setShowDefaultPage(false);
+        } else {
             setShowDefaultPage(true);
+        }
+
+        // Don't navigate if already on the correct path
+        if (
+            currentPath.endsWith("/complete") &&
+            linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE
+        ) {
+            console.log("Already on /complete with COMPLETE state, no navigation needed");
             return;
         }
 
-        // If we have a step parameter in the URL, check if we should show claim form
-        const showClaimForm = searchParams.get("step") === "claim";
-        setShowDefaultPage(!showClaimForm);
-    }, [linkData, linkUserState, searchParams]);
+        if (
+            currentPath.endsWith("/choose-wallet") &&
+            linkUserState?.link_user_state === LINK_USER_STATE.CHOOSE_WALLET
+        ) {
+            console.log("Already on /choose-wallet with CHOOSE_WALLET state, no navigation needed");
+            return;
+        }
+
+        // Sync routes based on state
+        if (
+            linkUserState?.link_user_state === LINK_USER_STATE.CHOOSE_WALLET &&
+            !currentPath.endsWith("/choose-wallet")
+        ) {
+            console.log("linkUserState is CHOOSE_WALLET, navigating to choose-wallet");
+            navigate(`/${linkId}/choose-wallet`);
+        } else if (
+            linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE &&
+            !currentPath.endsWith("/complete")
+        ) {
+            console.log("linkUserState is COMPLETE, navigating to complete");
+            navigate(`/${linkId}/complete`);
+        }
+    }, [linkData, linkUserState, location.pathname, navigate, linkId]);
 
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
@@ -146,7 +188,7 @@ export default function ClaimPage() {
 
     const handleClickClaim = () => {
         setShowDefaultPage(false);
-        navigate(`/${linkId}?step=claim`);
+        navigate(`/${linkId}/choose-wallet`);
     };
 
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
@@ -161,21 +203,33 @@ export default function ClaimPage() {
                 ) : (
                     <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
                         {showDefaultPage ? (
-                            <LinkCardPage linkData={linkData} onClickClaim={handleClickClaim} />
+                            <DefaultPage
+                                linkData={linkData}
+                                onClickClaim={handleClickClaim}
+                                isUserStateLoading={isUserStateLoading}
+                                isLoggedIn={!!identity}
+                            />
                         ) : (
                             <MultiStepForm
-                                initialStep={getInitialStep(linkUserState?.link_user_state)}
+                                initialStep={getInitialStep(
+                                    linkUserState?.link_user_state,
+                                    location.pathname,
+                                )}
+                                key={`form-${location.pathname}`}
                             >
+                                {/* This is not the header stick on the page, it be long to the multiple step form*/}
                                 <MultiStepForm.Header showIndicator={false} showHeader={false} />
                                 <MultiStepForm.Items>
                                     <MultiStepForm.Item name="Choose wallet">
-                                        <UseFormPage
+                                        <ChooseWallet
                                             form={form}
                                             linkData={linkData}
+                                            refetchLinkUserState={refetchLinkUserState}
                                             onActionResult={showActionResultToast}
                                             onCashierError={showCashierErrorToast}
                                             onBack={() => {
                                                 setShowDefaultPage(true);
+                                                console.log("onBack called from ChooseWallet");
                                                 navigate(`/${linkId}`);
                                             }}
                                         />
