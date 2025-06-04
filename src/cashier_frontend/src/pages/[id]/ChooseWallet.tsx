@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import ClaimPageForm from "@/components/claim-page/claim-page-form";
-import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
+// Removed MultiStepForm context
 import { LinkDetailModel, LinkGetUserStateOutputModel } from "@/services/types/link.service.types";
 import { FC, useCallback, useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
@@ -46,7 +46,14 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { getClaimButtonLabel } from "@/components/page/linkCardPage";
 import { toast } from "sonner";
 
-const setConfirmButotnTextBasedOnActionState = (
+/**
+ * Determines button text and state based on action state.
+ *
+ * @param action The current action model (if available)
+ * @param t Translation function
+ * @returns Object with text and disabled state for the button
+ */
+const getDrawerButtonMessage = (
     action: ActionModel | undefined,
     t: (key: string) => string,
 ): { text: string; disabled: boolean } => {
@@ -71,9 +78,10 @@ const setConfirmButotnTextBasedOnActionState = (
 type ClaimFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     linkData?: LinkDetailModel;
-    refetchLinkUserState?: () => Promise<{ data?: LinkGetUserStateOutputModel }>;
-    onCashierError?: (error: Error) => void;
-    onActionResult?: (action: ActionModel) => void;
+    refetchLinkUserState: () => Promise<{ data?: LinkGetUserStateOutputModel }>;
+    refetchLinkDetail: () => Promise<void>;
+    onCashierError: (error: Error) => void;
+    onActionResult: (action: ActionModel) => void;
     onBack?: () => void;
 };
 
@@ -81,6 +89,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     form,
     linkData,
     onCashierError = () => {},
+    refetchLinkDetail,
     onActionResult,
     onBack,
 }) => {
@@ -88,7 +97,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     const navigate = useNavigate();
     const identity = useIdentity();
     const { t } = useTranslation();
-    const { nextStep } = useMultiStepFormContext();
 
     // UI state
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -128,6 +136,26 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         enableLocalFetch,
     );
 
+    // Add a wrapped version of refetchLinkUserState with better logging
+    // Wrap the refetch functions with enhanced logging and direct API calls for more reliability
+    const enhancedRefresh = async () => {
+        try {
+            const userStateResult = await refetchLinkUserState();
+            if (refetchLinkDetail) {
+                try {
+                    // Explicitly pass the current linkId to make sure it's using the right value
+                    await refetchLinkDetail();
+                } catch (detailError) {
+                    console.error(`Error in refetchLinkDetail for linkId ${linkId}:`, detailError);
+                }
+            }
+            return userStateResult;
+        } catch (error) {
+            console.error("Error in enhanced refresh:", error);
+            throw error;
+        }
+    };
+
     const [useLinkButton, setUseLinkButton] = useState<{
         text: string;
         disabled: boolean;
@@ -143,22 +171,30 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         disabled: false,
     });
 
+    // Update button text based on action state and processing state
     useEffect(() => {
-        if (linkUserState) {
+        // If we're actively processing, show "Processing..." regardless of action state
+        if (isProcessing) {
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
+            return;
         }
-    }, [isFetching]);
 
-    useEffect(() => {
-        console.log("[use Effect] 127 test", drawerConfirmButton);
-    }, [drawerConfirmButton]);
+        // If we have an action, use its state to determine button text
+        if (linkUserState?.action) {
+            const confirmButton = getDrawerButtonMessage(linkUserState.action, t);
+            setDrawerConfirmButton(confirmButton);
+            return;
+        }
 
-    // Update button text based on action state
-    useEffect(() => {
-        if (!linkUserState?.action) return;
-
-        const confirmButotn = setConfirmButotnTextBasedOnActionState(linkUserState.action, t);
-        setDrawerConfirmButton(confirmButotn);
-    }, [linkUserState, t]);
+        // Default state when not processing and no action
+        setDrawerConfirmButton({
+            text: getClaimButtonLabel(linkData ?? ({} as LinkDetailModel)),
+            disabled: false,
+        });
+    }, [linkUserState, isProcessing, linkData, isFetching, t]);
 
     // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
@@ -176,9 +212,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
             });
             if (linkId) {
                 try {
-                    if (refetchLinkUserState) {
-                        await refetchLinkUserState();
-                    }
+                    await refetchLinkUserState();
                 } catch (error) {
                     console.error("Error fetching action:", error);
                 } finally {
@@ -206,7 +240,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
 
         if (isProcessing) {
             intervalId = setInterval(async () => {
-                console.log("Polling for link user state update...");
                 const res = await refetchLinkUserState();
                 if (res?.data?.action) {
                     setAction(res.data.action);
@@ -219,7 +252,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                 clearInterval(intervalId);
             }
         };
-    }, [isProcessing, linkId, refetchLinkUserState, refetchLinkUserState]);
+    }, [isProcessing, linkId, refetchLinkUserState, t]);
 
     /**
      * Creates an action for authenticated users
@@ -301,8 +334,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     );
                     setShowConfirmation(true);
                 } else if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
-                    // If claim is already complete, proceed to next step
-                    nextStep();
+                    // If claim is already complete, navigate to complete page
                     navigate(`/${linkId}/complete`);
                 } else {
                     // Show confirmation for existing action
@@ -328,68 +360,67 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     /**
      * Processes the claim action with the backend
      */
-    const handleProcessClaimAction = async () => {
+    const handleProcessUseAction = async () => {
         if (!link) throw new Error("Link is not defined");
         if (!linkUserState?.action) throw new Error("Action is not defined");
 
         const action = linkUserState.action;
 
-        try {
-            setIsProcessing(true);
+        if (identity) {
+            // Process action for authenticated user
+            const linkId = link.id;
+            if (!linkId) throw new Error("Link ID is not defined");
 
-            if (identity) {
-                // Process action for authenticated user
-                const linkId = link.id;
-                if (!linkId) throw new Error("Link ID is not defined");
+            // Step 1: Process the action
+            const processActionResult = await processAction({
+                linkId: linkId,
+                actionType: action?.type ?? ACTION_TYPE.USE_LINK,
+                actionId: action.id,
+            });
 
-                // Step 1: Process the action
-                const processActionResult = await processAction({
-                    linkId: linkId,
-                    actionType: action?.type ?? ACTION_TYPE.USE_LINK,
-                    actionId: action.id,
+            // Step 2: Execute ICRC-1 transactions if needed
+            if (processActionResult.icrc112Requests) {
+                const response = await icrc112Execute({
+                    transactions: processActionResult.icrc112Requests,
                 });
 
-                // Step 2: Execute ICRC-1 transactions if needed
-                if (processActionResult.icrc112Requests) {
-                    const response = await icrc112Execute({
-                        transactions: processActionResult.icrc112Requests,
+                // Step 3: Update action after external transaction
+                if (response) {
+                    const secondUpdatedAction = await updateAction({
+                        actionId: action.id,
+                        linkId: linkId,
+                        external: true,
                     });
 
-                    // Step 3: Update action after external transaction
-                    if (response) {
-                        const secondUpdatedAction = await updateAction({
-                            actionId: action.id,
-                            linkId: linkId,
-                            external: true,
-                        });
+                    if (secondUpdatedAction) {
+                        if (onActionResult) onActionResult(secondUpdatedAction);
+                    }
 
-                        if (secondUpdatedAction) {
-                            await refetchLinkUserState();
-                            if (onActionResult) onActionResult(secondUpdatedAction);
-                        }
+                    if (secondUpdatedAction.state === ACTION_STATE.SUCCESS) {
+                        setIsProcessing(false);
                     }
                 }
-
-                if (processActionResult) {
-                    await refetchLinkUserState();
-                    if (onActionResult) onActionResult(processActionResult);
-                }
-            } else {
-                // Process action for anonymous user
-                const processActionResult = await processActionAnonymous({
-                    linkId: link!.id,
-                    actionId: action!.id,
-                    walletAddress: anonymousWalletAddress ?? "",
-                    actionType: ACTION_TYPE.USE_LINK,
-                });
-
-                if (processActionResult) {
-                    await refetchLinkUserState();
-                    if (onActionResult) onActionResult(processActionResult);
-                }
             }
-        } finally {
-            setIsProcessing(false);
+
+            if (processActionResult) {
+                await refetchLinkUserState();
+
+                if (onActionResult) onActionResult(processActionResult);
+            }
+        } else {
+            // Process action for anonymous user
+            const processActionResult = await processActionAnonymous({
+                linkId: link!.id,
+                actionId: action!.id,
+                walletAddress: anonymousWalletAddress ?? "",
+                actionType: ACTION_TYPE.USE_LINK,
+            });
+
+            if (processActionResult) {
+                await refetchLinkUserState();
+
+                if (onActionResult) onActionResult(processActionResult);
+            }
         }
     };
 
@@ -398,33 +429,92 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
      */
     const startTransaction = async () => {
         try {
-            await handleProcessClaimAction();
+            console.log("Starting transaction for link ID:", linkId);
+            setIsProcessing(true);
+
+            // Button state will be automatically updated by the useEffect that depends on isProcessing
+
+            await handleProcessUseAction();
         } catch (error) {
             console.error("Transaction error:", error);
             if (isCashierError(error)) {
                 onCashierError(error);
             }
-            throw error;
+        } finally {
+            setIsProcessing(false);
+
+            // Perform a comprehensive data refresh with enhanced logging
+            try {
+                await enhancedRefresh();
+
+                // Force parent component to re-render with fresh data by calling refetchLinkDetail
+                if (refetchLinkDetail) {
+                    await refetchLinkDetail();
+
+                    // Wait a moment and trigger another refresh to ensure UI updates
+                    setTimeout(async () => {
+                        try {
+                            await refetchLinkDetail();
+                        } catch (delayedError) {
+                            console.error("Error in delayed verification refresh:", delayedError);
+                        }
+                    }, 1000);
+                } else {
+                }
+            } catch (finallyError) {
+                console.error("Error during data refresh operations:", finallyError);
+            }
         }
     };
 
     /**
      * Updates link user state after successful transaction
-     */
-    const handleUpdateLinkUserState = async () => {
-        const result = await updateLinkUserState.mutateAsync({
-            input: {
-                action_type: ACTION_TYPE.USE_LINK,
-                link_id: linkId ?? "",
-                isContinue: true,
-                anonymous_wallet_address: anonymousWalletAddress,
-            },
-        });
+     */ const handleUpdateLinkUserState = async () => {
+        try {
+            const result = await updateLinkUserState.mutateAsync({
+                input: {
+                    action_type: ACTION_TYPE.USE_LINK,
+                    link_id: linkId ?? "",
+                    isContinue: true,
+                    anonymous_wallet_address: anonymousWalletAddress,
+                },
+            });
 
-        if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
-            nextStep();
-            // Update route to reflect completion state
-            navigate(`/${linkId}/complete`);
+            // Perform a comprehensive data refresh with enhanced logging
+            try {
+                await enhancedRefresh();
+
+                // Make multiple explicit calls to refetchLinkDetail to ensure parent component updates
+                if (refetchLinkDetail) {
+                    await refetchLinkDetail();
+
+                    // Attempt another refresh after a small delay to ensure data propagation
+                    setTimeout(async () => {
+                        try {
+                            await refetchLinkDetail();
+                        } catch (delayedError) {
+                            console.error(
+                                "Error in delayed verification refetchLinkDetail:",
+                                delayedError,
+                            );
+                        }
+                    }, 800);
+                } else {
+                }
+            } catch (refreshError) {
+                console.error("Error during comprehensive data refresh:", refreshError);
+            }
+
+            if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
+                // Allow time for data to refresh before navigation
+                setTimeout(() => {
+                    navigate(`/${linkId}/complete`, { replace: true });
+                }, 500);
+            }
+        } catch (error) {
+            if (isCashierError(error)) {
+                onCashierError(error);
+            }
         }
     };
 
@@ -438,7 +528,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     onBack={onBack}
                     isDisabled={useLinkButton.disabled}
                     setDisabled={useCallback((disabled: boolean) => {
-                        console.log("Setting useLinkButton disabled state:", disabled);
                         setUseLinkButton((prev) => ({
                             ...prev,
                             disabled: disabled,

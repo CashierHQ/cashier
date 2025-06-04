@@ -33,6 +33,7 @@ import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service
 import { LinkModel } from "@/services/types/link.service.types";
 import LinkService from "@/services/link/link.service";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -101,8 +102,23 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         }
     };
 
-    const refetchLinkDetail = async () => {
-        await linkDetailQuery.refetch();
+    const refetchLinkDetail = async (explicitLinkId?: string) => {
+        // Use the explicit link ID if provided, otherwise fall back to the hook's linkId
+        const currentLinkId = explicitLinkId || linkId;
+        console.log("refetchLinkDetail called with linkId:", currentLinkId);
+
+        if (!currentLinkId) {
+            console.warn("refetchLinkDetail called with undefined linkId");
+            return;
+        }
+
+        try {
+            await linkDetailQuery.refetch();
+            console.log("refetchLinkDetail completed successfully for linkId:", currentLinkId);
+        } catch (error) {
+            console.error(`Error in refetchLinkDetail for linkId ${currentLinkId}:`, error);
+            throw error;
+        }
     };
 
     const refetchAction = async (linkId: string, actionType?: ACTION_TYPE) => {

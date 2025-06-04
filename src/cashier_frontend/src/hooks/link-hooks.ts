@@ -89,6 +89,8 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
                     link: linkDetailModel,
                 };
 
+                console.log("[useLinkDetailQuery] linkModel", linkModel);
+
                 if (localLink) {
                     return Promise.resolve(linkModel);
                 } else {

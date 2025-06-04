@@ -23,7 +23,6 @@ import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-fram
 import { ACTION_STATE, ACTION_TYPE, LINK_STATE, LINK_USER_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useLinkUserState } from "@/hooks/linkUserHooks";
-import { MultiStepForm } from "@/components/multi-step-form";
 import { DefaultPage } from "./Default";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -49,20 +48,7 @@ export const ClaimSchema = z.object({
     address: z.string().optional(),
 });
 
-const STEP_LINK_USER_STATE_ORDER = [LINK_USER_STATE.CHOOSE_WALLET, LINK_USER_STATE.COMPLETE];
-
-// Get initial step based on route or state
-function getInitialStep(state: string | undefined, route?: string) {
-    // If route is provided, use it to determine initial step
-    if (route) {
-        if (route.endsWith("/complete")) return 1; // Complete step
-        if (route.endsWith("/choose-wallet")) return 0; // Choose wallet step
-    }
-
-    // Fall back to state-based determination
-    if (!state) return 0;
-    return STEP_LINK_USER_STATE_ORDER.findIndex((x) => x === state);
-}
+// No longer using step-based order
 
 export default function ClaimPage() {
     const { linkId } = useParams();
@@ -80,6 +66,7 @@ export default function ClaimPage() {
         link: linkData,
         isLoading: isLoadingLinkData,
         getLinkDetail,
+        refetchLinkDetail,
     } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
 
     // Fetch link user state for parent component
@@ -112,18 +99,18 @@ export default function ClaimPage() {
 
     // Enable linkUserState fetching when link data is available
     useEffect(() => {
+        console.log("Link data changed:", linkData);
         if (linkData) {
             updateTokenInit();
         }
     }, [linkData]);
 
-    // Update UI state based on linkUserState and current route
+    // Update UI state based on current route
     useEffect(() => {
         if (!linkData) return;
 
         // Determine the current page based on the pathname
         const currentPath = location.pathname;
-        console.log("Current path:", currentPath);
 
         // Set UI based on current route
         if (currentPath.endsWith("/choose-wallet") || currentPath.endsWith("/complete")) {
@@ -132,38 +119,15 @@ export default function ClaimPage() {
             setShowDefaultPage(true);
         }
 
-        // Don't navigate if already on the correct path
+        // For logged-in users with complete state, redirect to complete page
         if (
-            currentPath.endsWith("/complete") &&
-            linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE
-        ) {
-            console.log("Already on /complete with COMPLETE state, no navigation needed");
-            return;
-        }
-
-        if (
-            currentPath.endsWith("/choose-wallet") &&
-            linkUserState?.link_user_state === LINK_USER_STATE.CHOOSE_WALLET
-        ) {
-            console.log("Already on /choose-wallet with CHOOSE_WALLET state, no navigation needed");
-            return;
-        }
-
-        // Sync routes based on state
-        if (
-            linkUserState?.link_user_state === LINK_USER_STATE.CHOOSE_WALLET &&
-            !currentPath.endsWith("/choose-wallet")
-        ) {
-            console.log("linkUserState is CHOOSE_WALLET, navigating to choose-wallet");
-            navigate(`/${linkId}/choose-wallet`);
-        } else if (
+            identity &&
             linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE &&
             !currentPath.endsWith("/complete")
         ) {
-            console.log("linkUserState is COMPLETE, navigating to complete");
-            navigate(`/${linkId}/complete`);
+            navigate(`/${linkId}/complete`, { replace: true });
         }
-    }, [linkData, linkUserState, location.pathname, navigate, linkId]);
+    }, [linkData, linkUserState, identity, location.pathname, navigate, linkId]);
 
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
@@ -172,16 +136,13 @@ export default function ClaimPage() {
         });
     };
 
-    const showActionResultToast = (action: ActionModel) => {
+    const onActionResult = (action: ActionModel) => {
         if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
+            const linkType = linkData?.linkType;
             if (action.state === ACTION_STATE.SUCCESS) {
-                toast.success(t("transaction.confirm_popup.transaction_success"), {
-                    description: t("transaction.confirm_popup.transaction_success_message"),
-                });
+                toast.success(t(`claim_page.${linkType}.transaction_success`));
             } else {
-                toast.error(t("transaction.confirm_popup.transaction_failed"), {
-                    description: t("transaction.confirm_popup.transaction_failed_message"),
-                });
+                toast.error(t(`claim_page.${linkType}.transaction_fail`));
             }
         }
     };
@@ -209,53 +170,32 @@ export default function ClaimPage() {
                                 isUserStateLoading={isUserStateLoading}
                                 isLoggedIn={!!identity}
                             />
+                        ) : location.pathname.endsWith("/complete") ? (
+                            <LinkCardWithoutPhoneFrame
+                                label="Claimed"
+                                message={getMessageForLink(linkData, getToken, true)}
+                                title={getTitleForLink(linkData, getToken)}
+                                displayComponent={getDisplayComponentForLink(linkData, getToken)}
+                                showHeader={true}
+                                headerColor={getHeaderInfoForLink(linkData).headerColor}
+                                headerTextColor={getHeaderInfoForLink(linkData).headerTextColor}
+                                headerText={getHeaderInfoForLink(linkData).headerText}
+                                headerIcon={getHeaderInfoForLink(linkData).headerIcon}
+                                disabled={true}
+                            />
                         ) : (
-                            <MultiStepForm
-                                initialStep={getInitialStep(
-                                    linkUserState?.link_user_state,
-                                    location.pathname,
-                                )}
-                                key={`form-${location.pathname}`}
-                            >
-                                {/* This is not the header stick on the page, it be long to the multiple step form*/}
-                                <MultiStepForm.Header showIndicator={false} showHeader={false} />
-                                <MultiStepForm.Items>
-                                    <MultiStepForm.Item name="Choose wallet">
-                                        <ChooseWallet
-                                            form={form}
-                                            linkData={linkData}
-                                            refetchLinkUserState={refetchLinkUserState}
-                                            onActionResult={showActionResultToast}
-                                            onCashierError={showCashierErrorToast}
-                                            onBack={() => {
-                                                setShowDefaultPage(true);
-                                                console.log("onBack called from ChooseWallet");
-                                                navigate(`/${linkId}`);
-                                            }}
-                                        />
-                                    </MultiStepForm.Item>
-
-                                    <MultiStepForm.Item name="Complete">
-                                        <LinkCardWithoutPhoneFrame
-                                            label="Claimed"
-                                            message={getMessageForLink(linkData, getToken, true)}
-                                            title={getTitleForLink(linkData, getToken)}
-                                            displayComponent={getDisplayComponentForLink(
-                                                linkData,
-                                                getToken,
-                                            )}
-                                            showHeader={true}
-                                            headerColor={getHeaderInfoForLink(linkData).headerColor}
-                                            headerTextColor={
-                                                getHeaderInfoForLink(linkData).headerTextColor
-                                            }
-                                            headerText={getHeaderInfoForLink(linkData).headerText}
-                                            headerIcon={getHeaderInfoForLink(linkData).headerIcon}
-                                            disabled={true}
-                                        />
-                                    </MultiStepForm.Item>
-                                </MultiStepForm.Items>
-                            </MultiStepForm>
+                            <ChooseWallet
+                                refetchLinkDetail={refetchLinkDetail}
+                                form={form}
+                                linkData={linkData}
+                                refetchLinkUserState={refetchLinkUserState}
+                                onActionResult={onActionResult}
+                                onCashierError={showCashierErrorToast}
+                                onBack={() => {
+                                    setShowDefaultPage(true);
+                                    navigate(`/${linkId}`);
+                                }}
+                            />
                         )}
                     </div>
                 )}
