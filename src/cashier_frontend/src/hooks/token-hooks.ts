@@ -227,7 +227,6 @@ export function useTokenPricesQuery() {
             try {
                 const prices = await tokenPriceService.getAllPrices();
                 // Return null instead of empty object if no prices are fetched
-                console.log(`[${new Date().toISOString()}] Fetched token prices:`, prices);
                 return Object.keys(prices).length > 0 ? prices : {};
             } catch (error) {
                 console.error("Failed to fetch token prices:", error);

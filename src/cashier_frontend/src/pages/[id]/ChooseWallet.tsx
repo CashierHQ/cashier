@@ -136,8 +136,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         enableLocalFetch,
     );
 
-    // Add a wrapped version of refetchLinkUserState with better logging
-    // Wrap the refetch functions with enhanced logging and direct API calls for more reliability
     const enhancedRefresh = async () => {
         try {
             const userStateResult = await refetchLinkUserState();
@@ -429,11 +427,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
      */
     const startTransaction = async () => {
         try {
-            console.log("Starting transaction for link ID:", linkId);
             setIsProcessing(true);
-
-            // Button state will be automatically updated by the useEffect that depends on isProcessing
-
             await handleProcessUseAction();
         } catch (error) {
             console.error("Transaction error:", error);

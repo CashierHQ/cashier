@@ -33,7 +33,6 @@ import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service
 import { LinkModel } from "@/services/types/link.service.types";
 import LinkService from "@/services/link/link.service";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
-import { useQueryClient } from "@tanstack/react-query";
 
 export interface UpdateLinkParams {
     linkId: string;
