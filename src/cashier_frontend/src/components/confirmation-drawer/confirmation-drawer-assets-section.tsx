@@ -29,6 +29,7 @@ type ConfirmationPopupAssetsSectionProps = {
     onInfoClick?: () => void;
     isUsd?: boolean;
     onUsdClick?: () => void;
+    maxActionNumber?: number;
 };
 
 const getLabel = (intent: IntentModel) => {
@@ -64,6 +65,7 @@ const sortIntentsByAddress = (intents: IntentModel[]): IntentModel[] => {
 export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
     intents,
     isUsd,
+    maxActionNumber,
 }) => {
     const { t } = useTranslation();
     const { getToken } = useTokens();
@@ -144,6 +146,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                                 intent={intent}
                                 isUsd={isUsd}
                                 fees={feesMap.get(intent.asset.address) || []}
+                                maxActionNumber={maxActionNumber}
                             />
                         </li>
                     ))}

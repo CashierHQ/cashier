@@ -466,10 +466,11 @@ export default function LinkPreview({
                                 // Calculate token amount with proper decimals
                                 const token = getToken(asset.address);
 
-                                const tokenDecimals = token?.decimals ?? 8;
-                                const totalTokenAmount =
-                                    (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
-                                    10 ** tokenDecimals;
+                                const totalTokenAmount = FeeHelpers.getDisplayAmount(
+                                    token!,
+                                    BigInt(asset.amountPerUse) * link.maxActionNumber,
+                                    Number(link?.maxActionNumber ?? 1),
+                                );
                                 const tokenSymbol = token?.symbol;
 
                                 // Calculate approximate USD value
@@ -585,6 +586,8 @@ export default function LinkPreview({
                 buttonText={confirmButtonText}
                 // Function to update the action button's text
                 setButtonText={setConfirmButtonText}
+                // The max action number for the link, required for fee calculation
+                maxActionNumber={Number(link?.maxActionNumber ?? 1)}
             />
         </div>
     );

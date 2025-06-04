@@ -1,6 +1,8 @@
 import { Chain } from "@/services/types/link.service.types";
 import { convertDecimalBigIntToNumber } from "..";
 import { FungibleToken } from "@/types/fungible-token.speculative";
+import { IntentModel } from "@/services/types/intent.service.types";
+import { TASK } from "@/services/types/enum";
 
 export class FeeHelpers {
     static getLinkCreationFee() {
@@ -33,5 +35,24 @@ export class FeeHelpers {
             default:
                 return 0n;
         }
+    }
+
+    static getDisplayAmount(tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) {
+        const tokenDecimals = tokenInfo.decimals;
+        const totalTokenAmount =
+            (Number(FeeHelpers.calculateNetworkFeesInBigInt(tokenInfo) + BigInt(amount)) *
+                Number(maxActionNumber)) /
+            10 ** tokenDecimals;
+        return totalTokenAmount;
+    }
+
+    static shouldDisplayFeeBasedOnIntent(intent: IntentModel) {
+        if (
+            intent.task === TASK.TRANSFER_WALLET_TO_LINK ||
+            intent.task === TASK.TRANSFER_WALLET_TO_TREASURY
+        ) {
+            return true;
+        }
+        return false;
     }
 }

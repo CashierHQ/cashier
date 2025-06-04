@@ -34,6 +34,7 @@ import { FeeHelpers } from "@/utils/helpers/fees";
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
     isUsd?: boolean;
+    maxActionNumber?: number;
 };
 
 // Define a type for fee token info
@@ -54,6 +55,7 @@ type FeeBreakdownItem = {
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
+    maxActionNumber,
 }) => {
     const { t } = useTranslation();
     const { feeAmount } = useIntentMetadata(intents?.[0]);
@@ -178,13 +180,13 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     feeType === "link_creation_fee"
                         ? Number(FeeHelpers.getLinkCreationFee().amount) /
                           Math.pow(10, tokenDecimals)
-                        : Number(tokenFee) / Math.pow(10, tokenDecimals);
+                        : FeeHelpers.calculateNetworkFees(tokenInfo!);
 
                 let tokenPrice = getTokenPrice(tokenAddress!);
                 if (tokenPrice === undefined) {
                     tokenPrice = 0;
                 }
-                const usdValue = tokenPrice * tokenAmount;
+                const usdValue = tokenPrice * tokenAmount * Number(maxActionNumber ?? 1);
                 totalUsdValue += usdValue;
 
                 const breakdownItem: FeeBreakdownItem = {
@@ -192,7 +194,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                         feeType === "link_creation_fee"
                             ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
                             : t("confirmation_drawer.fee-breakdown.network_fee"),
-                    amount: formatNumber(tokenAmount.toString()),
+                    amount: formatNumber((tokenAmount * Number(maxActionNumber ?? 1)).toString()),
                     tokenSymbol: token?.symbol || "Unknown",
                     tokenAddress: tokenAddress!,
                     usdAmount: formatNumber(usdValue.toString()),
