@@ -194,7 +194,9 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                         feeType === "link_creation_fee"
                             ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
                             : t("confirmation_drawer.fee-breakdown.network_fee"),
-                    amount: formatNumber((tokenAmount * Number(maxActionNumber ?? 1)).toString()),
+                    amount: formatNumber(
+                        (tokenAmount * (Number(maxActionNumber ?? 1) + 1)).toString(),
+                    ),
                     tokenSymbol: token?.symbol || "Unknown",
                     tokenAddress: tokenAddress!,
                     usdAmount: formatNumber(usdValue.toString()),

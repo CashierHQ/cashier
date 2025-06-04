@@ -39,11 +39,14 @@ export class FeeHelpers {
 
     static getDisplayAmount(tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) {
         const tokenDecimals = tokenInfo.decimals;
-        const totalTokenAmount =
-            (Number(FeeHelpers.calculateNetworkFeesInBigInt(tokenInfo) + BigInt(amount)) *
-                Number(maxActionNumber)) /
-            10 ** tokenDecimals;
-        return totalTokenAmount;
+        // const totalTokenAmount =
+        //     (Number(FeeHelpers.calculateNetworkFeesInBigInt(tokenInfo) + BigInt(amount)) *
+        //         (Number(maxActionNumber) + 1)) /
+        //     10 ** tokenDecimals;
+
+        const totalFeeAmount = FeeHelpers.calculateNetworkFees(tokenInfo) * (maxActionNumber + 1);
+        const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
+        return totalTokenAmount + totalFeeAmount;
     }
 
     static shouldDisplayFeeBasedOnIntent(intent: IntentModel) {
