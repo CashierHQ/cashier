@@ -115,7 +115,7 @@ export function useTokens() {
                     // Retry with incremented counter
                     return getTokenListWithRetry(retries + 1);
                 } else {
-                    console.error(`Failed to get token list after ${MAX_RETRIES} attempts:`, error);
+                    console.error("Failed to get token list after ${MAX_RETRIES} attempts:", error);
                     // Return empty array if all retries fail
                     return [];
                 }

@@ -144,7 +144,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     // Explicitly pass the current linkId to make sure it's using the right value
                     await refetchLinkDetail();
                 } catch (detailError) {
-                    console.error(`Error in refetchLinkDetail for linkId ${linkId}:`, detailError);
+                    console.error("Error in refetchLinkDetail for linkId ${linkId}:", detailError);
                 }
             }
             return userStateResult;

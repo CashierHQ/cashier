@@ -115,7 +115,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
             await linkDetailQuery.refetch();
             console.log("refetchLinkDetail completed successfully for linkId:", currentLinkId);
         } catch (error) {
-            console.error(`Error in refetchLinkDetail for linkId ${currentLinkId}:`, error);
+            console.error("Error in refetchLinkDetail for linkId ${currentLinkId}:", error);
             throw error;
         }
     };

@@ -97,7 +97,7 @@ export class TokenUtilService {
                 });
                 return { tokenAddress, balance };
             } catch (error) {
-                console.error(`Error fetching balance for ${tokenAddress.toString()}:`, error);
+                console.error("Error fetching balance for ${tokenAddress.toString()}:", error);
                 // Return the original token address with zero balance when there's an error
                 return { tokenAddress, balance: BigInt(0) };
             }
