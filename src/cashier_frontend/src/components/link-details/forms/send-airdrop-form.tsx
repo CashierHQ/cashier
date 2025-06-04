@@ -40,7 +40,7 @@ import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
 import { formatNumber } from "@/utils/helpers/currency";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../../ui/separator";
 import { MessageBanner } from "../../ui/message-banner";
 import {
@@ -69,7 +69,7 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
     const { setStep } = useMultiStepFormContext();
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
 
     const { getToken } = useTokens();
 

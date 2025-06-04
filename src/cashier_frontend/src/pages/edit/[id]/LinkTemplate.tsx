@@ -21,9 +21,9 @@ import { LINK_TEMPLATES } from "@/constants/linkTemplates";
 import { getAssetLabelForLinkType, LINK_TYPE } from "@/services/types/enum";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import PhonePreview from "@/components/ui/phone-preview";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useLinkAction } from "@/hooks/useLinkAction";
@@ -54,7 +54,7 @@ export default function LinkTemplate({
     const { updateUserInput, getUserInput, userInputs, setButtonState } =
         useLinkCreationFormStore();
 
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
 
     const { link, callLinkStateMachine, isUpdating } = useLinkAction();
 
@@ -140,7 +140,6 @@ export default function LinkTemplate({
     // Update button state
     useEffect(() => {
         const currentTemplate = LINK_TEMPLATES[carousel.current];
-        const title = userInputs.get(link?.id || "")?.title;
         const isComingSoon = currentTemplate.isComingSoon;
 
         setButtonState({

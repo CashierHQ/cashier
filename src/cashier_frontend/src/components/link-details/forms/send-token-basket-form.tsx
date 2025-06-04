@@ -38,7 +38,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../../ui/separator";
 import { toast } from "sonner";
 import { MessageBanner } from "../../ui/message-banner";
@@ -70,7 +70,7 @@ export const SendTokenBasketForm = ({
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
     const { setStep } = useMultiStepFormContext();
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
 
     // State for asset drawer
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);

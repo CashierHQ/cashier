@@ -23,11 +23,11 @@ import { headerWalletOptions } from "@/constants/wallet-options";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import LinkLocalStorageService from "@/services/link/link-local-storage.service";
 import { useLinksListQuery } from "@/hooks/link-hooks";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { AuthenticatedContent, UnauthenticatedContent } from "@/components/main-page";
 import { toast } from "sonner";
+import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 
 export default function HomePage() {
     const { t } = useTranslation();
@@ -59,7 +59,7 @@ export default function HomePage() {
             console.log("create link with identity: ", creator);
 
             //! mirror create local storage
-            const linkId = new LinkLocalStorageService(creator).createLink();
+            const linkId = new LinkLocalStorageServiceV2(creator).createLink();
 
             addUserInput(linkId, {
                 linkId: linkId,
