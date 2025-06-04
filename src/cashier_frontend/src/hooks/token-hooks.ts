@@ -98,6 +98,8 @@ export function useTokenListQuery() {
                 tokens = res.tokens;
             }
 
+            console.log("Token list fetched:", res);
+
             return {
                 tokens,
                 needUpdateVersion: res?.need_update_version || false,
