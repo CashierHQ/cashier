@@ -16,14 +16,14 @@
 
 import { X } from "lucide-react";
 import { Logo } from "../ui/logo";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 
 interface WalletHeaderProps {
     onClose?: () => void;
 }
 
 export function WalletHeader({ onClose = () => {} }: WalletHeaderProps) {
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
 
     return (
         <div className="flex justify-between items-center h-20 py-2.5 px-4">

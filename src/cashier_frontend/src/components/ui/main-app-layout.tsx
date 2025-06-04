@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { useAuth } from "@nfid/identitykit/react";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
 import WalletSheetWrapper from "@/components/wallet/wallet-sheet-wrapper";
@@ -28,7 +28,7 @@ type MainAppLayoutProps = {
 };
 
 export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
     const { pathname } = useLocation();
     const { user: walletUser } = useAuth();
     const { isWalletOpen, closeWallet } = useWalletContext();

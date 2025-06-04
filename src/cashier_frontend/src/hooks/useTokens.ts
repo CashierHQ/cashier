@@ -115,7 +115,7 @@ export function useTokens() {
                     // Retry with incremented counter
                     return getTokenListWithRetry(retries + 1);
                 } else {
-                    console.error(`Failed to get token list after ${MAX_RETRIES} attempts:`, error);
+                    console.error("Failed to get token list after ${MAX_RETRIES} attempts:", error);
                     // Return empty array if all retries fail
                     return [];
                 }
@@ -273,13 +273,11 @@ export function useTokens() {
 
         // Check if we need to sync with backend version
         if (tokenListQuery.data?.needUpdateVersion) {
-            console.log("Token list needs version update, syncing with backend...");
             syncTokenListMutation.mutateAsync();
         }
 
         // Update filter preferences if they exist
         if (tokenListQuery.data?.perference) {
-            console.log("Applying token preferences from backend:", tokenListQuery.data.perference);
             setFilters(tokenListQuery.data.perference);
         }
 

@@ -23,20 +23,32 @@ import {
     getTitleForLink,
 } from "@/components/page/linkCardPage";
 import { useTokens } from "@/hooks/useTokens";
-import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { FC } from "react";
-import { PiWallet } from "react-icons/pi";
 
 type LinkCardPageProps = {
     linkData?: LinkDetailModel;
     onClickClaim?: () => void;
+    isUserStateLoading?: boolean;
+    isLoggedIn?: boolean;
 };
 
-export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) => {
+// page for no state or user is not logged in
+export const DefaultPage: FC<LinkCardPageProps> = ({
+    linkData,
+    onClickClaim,
+    isUserStateLoading,
+    isLoggedIn = false,
+}) => {
     const { getToken } = useTokens();
 
     const linkHeaderInfo = getHeaderInfoForLink(linkData);
+
+    // Disable the button if:
+    // No linkData is available
+    const isButtonDisabled = linkData === undefined;
+
+    const isDataLoading = isLoggedIn && isUserStateLoading;
 
     return (
         <LinkCardWithoutPhoneFrame
@@ -45,7 +57,8 @@ export const LinkCardPage: FC<LinkCardPageProps> = ({ linkData, onClickClaim }) 
             message={getMessageForLink(linkData, getToken)}
             title={getTitleForLink(linkData, getToken)}
             onClaim={onClickClaim}
-            disabled={linkData === undefined}
+            isDataLoading={isDataLoading}
+            disabled={isButtonDisabled}
             showHeader={true}
             headerText={linkHeaderInfo.headerText}
             headerIcon={linkHeaderInfo.headerIcon}

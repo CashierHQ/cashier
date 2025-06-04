@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { createHashRouter, RouterProvider } from "react-router-dom";
-import { useResponsive } from "./hooks/responsive-hook";
+import { useDeviceSize } from "./hooks/responsive-hook";
 import LinkPage from "./pages/edit/[id]";
 import HomePage from "@/pages";
 import ClaimPage from "./pages/[id]";
@@ -41,6 +41,14 @@ const router = createHashRouter([
         element: <ClaimPage />,
     },
     {
+        path: "/:linkId/choose-wallet",
+        element: <ClaimPage />,
+    },
+    {
+        path: "/:linkId/complete",
+        element: <ClaimPage />,
+    },
+    {
         path: "/details/:linkId",
         element: (
             <RequireAuth>
@@ -52,7 +60,7 @@ const router = createHashRouter([
 
 // Create a wrapper component that provides wallet context
 const RouterWithWalletProvider = () => {
-    const { isSmallDevice } = useResponsive();
+    const { isSmallDevice } = useDeviceSize();
 
     return (
         <div

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { getLinkLabel, LINK_STATE, LINK_TYPE, mapStringToLinkState } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { getLinkDefaultAvatar } from "@/utils";
@@ -78,7 +78,7 @@ export function getClaimStatus(
 }
 
 export default function LinkItem({ link }: { link: LinkDetailModel }) {
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
 
     return (
         <div

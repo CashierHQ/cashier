@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Link } from "lucide-react";
 import { FaFacebook, FaXTwitter, FaTelegram, FaLinkedin } from "react-icons/fa6";
 
@@ -23,7 +23,7 @@ export default function SocialButtons({
 }: {
     handleCopyLink: (e: React.SyntheticEvent) => void;
 }) {
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
     const url = window.location.href.replace("details/", "");
 
     const shareToFacebook = () => {
@@ -86,7 +86,7 @@ function SocialButton({
 }: {
     icon: React.ReactNode;
     title: string;
-    action?: any;
+    action?: (e: React.SyntheticEvent) => void;
 }) {
     const handleClick = (e: React.SyntheticEvent) => {
         e.preventDefault();

@@ -15,13 +15,18 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { useMediaQuery } from "@uidotdev/usehooks";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
-export interface MediaQuery {
+// Interface for device size detection
+export interface DeviceSizeQuery {
     isLargeDevice: boolean;
     isMediumDevice: boolean;
     isExtraLargeDevice: boolean;
     isSmallDevice: boolean;
+}
+
+// Interface for header functionality
+export interface HeaderQuery {
     showCompactHeader: (pathname: string) => boolean;
     hideHeader: (pathname: string) => boolean;
     showHeaderWithBackButtonAndWalletButton: (
@@ -31,7 +36,34 @@ export interface MediaQuery {
     ) => boolean;
 }
 
-export function useResponsive(): MediaQuery {
+// Combined interface for backward compatibility
+export interface MediaQuery extends DeviceSizeQuery, HeaderQuery {}
+
+/**
+ * Hook for detecting device size based on media queries
+ */
+export function useDeviceSize(): DeviceSizeQuery {
+    const isSmallDevice = useMediaQuery("only screen and (max-width : 768px)");
+    const isMediumDevice = useMediaQuery(
+        "only screen and (min-width : 769px) and (max-width : 992px)",
+    );
+    const isLargeDevice = useMediaQuery(
+        "only screen and (min-width : 993px) and (max-width : 1200px)",
+    );
+    const isExtraLargeDevice = useMediaQuery("only screen and (min-width : 1201px)");
+
+    return {
+        isLargeDevice,
+        isMediumDevice,
+        isExtraLargeDevice,
+        isSmallDevice,
+    };
+}
+
+/**
+ * Hook for header-related functionality
+ */
+export function useHeader(): HeaderQuery {
     const hideHeaderPaths = [
         "/wallet/send",
         "/wallet/receive",
@@ -41,16 +73,10 @@ export function useResponsive(): MediaQuery {
     ];
     const compactHeaderPaths = ["/wallet"];
 
-    const headerWithBackButtonAndWalletButtonPaths = [/^\/[^/]+$/]; // Matches paths like "/uuid"
+    const headerWithBackButtonAndWalletButtonPaths = [
+        /^\/[^/]+\/choose-wallet$/, // Matches paths like "/uuid/choose-wallet"
+    ];
 
-    const isSmallDevice = useMediaQuery("only screen and (max-width : 768px)");
-    const isMediumDevice = useMediaQuery(
-        "only screen and (min-width : 769px) and (max-width : 992px)",
-    );
-    const isLargeDevice = useMediaQuery(
-        "only screen and (min-width : 993px) and (max-width : 1200px)",
-    );
-    const isExtraLargeDevice = useMediaQuery("only screen and (min-width : 1201px)");
     const showCompactHeader = useCallback(
         (pathname: string) => compactHeaderPaths.some((path) => pathname.startsWith(path)),
         [compactHeaderPaths],
@@ -64,24 +90,28 @@ export function useResponsive(): MediaQuery {
             const matchesPath = headerWithBackButtonAndWalletButtonPaths.some((pattern) =>
                 pattern.test(pathname),
             );
-            const matchesQuery = search
-                ? new URLSearchParams(search).get("step") === "claim"
-                : false;
-            return (
-                (matchesPath && matchesQuery) ||
-                (matchesPath && matchesQuery && isSignedOut) ||
-                false
-            );
+
+            return matchesPath || (matchesPath && isSignedOut) || false;
         },
         [headerWithBackButtonAndWalletButtonPaths],
     );
+
     return {
-        isLargeDevice,
-        isMediumDevice,
-        isExtraLargeDevice,
-        isSmallDevice,
         showCompactHeader,
         hideHeader,
         showHeaderWithBackButtonAndWalletButton,
+    };
+}
+
+/**
+ * Combined hook for backward compatibility
+ */
+export function useResponsive(): MediaQuery {
+    const deviceSize = useDeviceSize();
+    const header = useHeader();
+
+    return {
+        ...deviceSize,
+        ...header,
     };
 }
