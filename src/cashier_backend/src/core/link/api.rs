@@ -30,7 +30,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error, info,
+    error,
     services::{
         self,
         action::ActionService,
@@ -146,8 +146,6 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
     let end = ic_cdk::api::time();
 
     let elapsed = end - start;
-    let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
-    info!("[update_action] elapsed time: {} seconds", elapsed_seconds);
 
     res
 }
@@ -384,15 +382,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 })?;
             temp_action.intents = intents;
 
-            info!("temp_action: {:#?}", temp_action);
-
             // create real action
             let res = self.tx_manager_service.create_action(&temp_action)?;
-
-            info!(
-                "[process_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-                &user_id, input.link_id, res.id
-            );
 
             Ok(res)
         } else {
@@ -401,11 +392,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id)?;
 
             let action_id = action.unwrap().id.clone();
-
-            info!(
-                "[process_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-                &user_id, input.link_id, action_id
-            );
 
             // execute action with our standalone callback
             let update_action_res = self
@@ -782,15 +768,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             })?;
         temp_action.intents = intents;
 
-        info!("temp_action: {:#?}", temp_action);
-
         // create real action
         let res = self.tx_manager_service.create_action(&temp_action)?;
-
-        info!(
-            "[create_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-            &user_id, input.link_id, res.id
-        );
 
         Ok(res)
     }
@@ -868,11 +847,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         if link_action.is_none() {
             return Ok(None);
         }
-
-        info!(
-            "[link_get_user_state] user_id: {:?}, link_id: {:?}, action_type: {:?}",
-            temp_user_id, input.link_id, input.action_type
-        );
 
         // If found "LinkAction" values
         // return action = get action from (action _id)
