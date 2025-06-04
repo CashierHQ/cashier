@@ -335,8 +335,6 @@ mod tests {
         );
         let result = api.process_action(input).await;
 
-        info!("{:?}", result);
-
         assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
     }
 }
