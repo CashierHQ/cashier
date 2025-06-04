@@ -34,7 +34,7 @@ use crate::{
         CreateLinkInputV2, LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto,
     },
     domains::fee::Fee,
-    error, info,
+    error,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
         user_wallet::UserWalletRepository,
@@ -504,7 +504,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
             ActionType::Use => {
                 // validate link state
-                info!("link state: {:#?}", link.state);
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
                         "Link is not active".to_string(),
@@ -575,7 +574,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
-            ActionType::Use | ActionType::Use => {
+            ActionType::Use => {
                 if action.creator != user_id {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -621,7 +620,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
             }
             //TODO: replace claim as use
-            ActionType::Use | ActionType::Use => {
+            ActionType::Use => {
                 // Validate link state
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
@@ -756,9 +755,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             action_type.clone(),
             user_id.clone(),
         );
-
-        info!("link_action: {:#?}", link_action);
-
         if link_action.is_empty() {
             return Ok(None);
         }
@@ -915,10 +911,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // Send airdrop use multiple time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count >= 1
-            info!(
-                "[link_type_add_asset_validate] link_use_action_max_count: {:#?}",
-                link_use_action_max_count
-            );
 
             if asset_infos.len() == 1
                 && asset_infos[0].amount_per_link_use_action > 0
@@ -1177,12 +1169,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
                 }
                 "asset_info" => {
-                    info!("[is_props_changed] link asset_info: {:#?}", link.asset_info);
-                    info!(
-                        "[is_props_changed] params asset_info: {:#?}",
-                        params.asset_info
-                    );
-
                     match (&link.asset_info, &params.asset_info) {
                         (_, None) => {
                             return false;
