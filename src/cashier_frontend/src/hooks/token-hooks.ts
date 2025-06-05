@@ -177,7 +177,6 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
 
                 const metadataMap: TokenMetadataMap = {};
                 const batchSize = 300;
-                const start = Date.now();
 
                 for (let i = 0; i < tokens.length; i += batchSize) {
                     const batch = tokens.slice(i, i + batchSize);
@@ -193,20 +192,13 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
                             }
                             return { tokenId: token.address, metadata };
                         } catch (error) {
-                            console.error(`Error fetching metadata for ${token.address}:`, error);
+                            console.error("Error fetching metadata for ${token.address}:", error);
                             return { tokenId: token.address, metadata: null };
                         }
                     });
 
                     await Promise.all(batchPromises);
                 }
-
-                const end = Date.now();
-                const duration = end - start;
-                console.log(
-                    `Fetched metadata directly for ${tokens.length} tokens in ${duration}ms`,
-                    metadataMap,
-                );
 
                 return metadataMap;
             }
@@ -227,7 +219,6 @@ export function useTokenPricesQuery() {
             try {
                 const prices = await tokenPriceService.getAllPrices();
                 // Return null instead of empty object if no prices are fetched
-                console.log(`[${new Date().toISOString()}] Fetched token prices:`, prices);
                 return Object.keys(prices).length > 0 ? prices : {};
             } catch (error) {
                 console.error("Failed to fetch token prices:", error);
@@ -281,7 +272,7 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
                         amount: balance,
                     };
                 } catch (error) {
-                    console.error(`Error fetching balance for ${token.address}:`, error);
+                    console.error("Error fetching balance for ${token.address}:", error);
                     return {
                         id: token.id,
                         address: token.address,

@@ -33,6 +33,10 @@ export const QUERY_KEYS = {
     TOKENS: "tokens",
 };
 
+export const USER_LINK_QUERY = {
+    userState: (linkId: string, action: string, pid: string) => ["userState", pid, action, linkId],
+};
+
 export const queryKeys = createQueryKeyStore({
     users: {
         detail: (identity: Identity | PartialIdentity | undefined) => ({

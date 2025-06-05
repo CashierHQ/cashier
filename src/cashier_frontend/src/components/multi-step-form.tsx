@@ -27,7 +27,7 @@ import { Button } from "./ui/button";
 import { RiMenu2Line } from "react-icons/ri";
 import { SheetTrigger } from "./ui/sheet";
 import { useWalletContext } from "@/contexts/wallet-context";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 
 interface MultiStepFormProps {
     initialStep: number;
@@ -57,7 +57,7 @@ export function MultiStepFormHeader({
 }: MultiStepFormHeaderProps) {
     const context = useMultiStepFormContext();
     const { openWallet } = useWalletContext();
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
 
     return (
         <div className="w-full flex-none">

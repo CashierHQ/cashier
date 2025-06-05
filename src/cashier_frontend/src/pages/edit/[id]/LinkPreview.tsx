@@ -24,7 +24,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
@@ -37,9 +37,7 @@ import {
     ACTION_STATE,
 } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
-import LinkLocalStorageService, {
-    LOCAL_lINK_ID_PREFIX,
-} from "@/services/link/link-local-storage.service";
+import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { Info } from "lucide-react";
 import { InformationOnAssetDrawer } from "@/components/information-on-asset-drawer/information-on-asset-drawer";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
@@ -49,6 +47,7 @@ import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useFeeService } from "@/hooks/useFeeService";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
+import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -74,7 +73,7 @@ export default function LinkPreview({
     const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
     const searchParams = new URLSearchParams(location.search);
     const redirectParam = searchParams.get("redirect");
     const oldIdParam = searchParams.get("oldId");
@@ -328,7 +327,7 @@ export default function LinkPreview({
                 }
 
                 if (oldIdParam && identity) {
-                    const localStorageService = new LinkLocalStorageService(
+                    const localStorageService = new LinkLocalStorageServiceV2(
                         identity.getPrincipal().toString(),
                     );
                     localStorageService.deleteLink(oldIdParam);

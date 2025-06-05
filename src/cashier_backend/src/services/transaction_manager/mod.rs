@@ -33,7 +33,7 @@ use super::{
 use crate::{
     constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
     core::action::types::ActionDto,
-    error, info,
+    error,
     types::{
         error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
         transaction_manager::ActionData,
@@ -218,8 +218,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             let is_all_dependencies_success = self.is_all_depdendency_success(&tx, true)?;
 
             if is_all_dependencies_success {
-                let start = ic_cdk::api::time();
-
                 let action_belong = self.action_service.get_action_by_tx_id(tx.id.clone())?;
                 let (intent_belong, txs) =
                     action_belong.get_intent_and_txs_by_its_tx_id(tx.id.clone())?;
@@ -241,12 +239,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                 let other_tx = txs.iter().find(|t| t.id != tx.id);
                                 if let Some(other_tx) = other_tx {
                                     let mut other_tx_clone = other_tx.clone();
-                                    info!(
-                                            "[execute_canister_tx] other tx: {:?}, type {:?}, state {:?}",
-                                            other_tx_clone.id,
-                                            other_tx_clone.get_tx_type(),
-                                            other_tx_clone.state
-                                        );
+
                                     self.update_tx_state(
                                         &mut other_tx_clone,
                                         &TransactionState::Success,
@@ -294,11 +287,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                         )));
                     }
                 };
-                let end = ic_cdk::api::time();
-                let elapsed_time = end - start;
-                let elapsed_seconds = (elapsed_time as f64) / 1_000_000_000.0;
-                info!("[execute_canister_tx] in {:.3} seconds", elapsed_seconds);
-
                 res
             }
         } else {
@@ -685,7 +673,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                     match res {
                         Ok(_) => {}
                         Err(e) => {
-                            info!("Transaction timeout task executed with error: {}", e);
+                            error!("Transaction timeout task executed with error: {}", e);
                         }
                     }
                 });
@@ -763,12 +751,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // manually check the status of the tx of the action
         // update status to whaterver is returned by the manual check
         for mut tx in txs.clone() {
-            info!(
-                "manual check tx: {:?}, type {:?}, state {:?}",
-                tx.id,
-                tx.get_tx_type(),
-                tx.state
-            );
             let new_state = self.manual_check_status(&tx, txs.clone()).await?;
             if tx.state == new_state.clone() {
                 continue;

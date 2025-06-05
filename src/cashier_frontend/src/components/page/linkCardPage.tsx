@@ -83,7 +83,25 @@ export const getDisplayComponentForLink = (
     const tokenAddress = linkData?.asset_info?.[0]?.address;
     const token = tokenAddress ? getToken(tokenAddress) : undefined;
     // Extract logoFallback from token or use a default fallback image
-    const logoFallback = token?.logoFallback || "/defaultLinkImage.png";
+    let logoFallback = token?.logoFallback;
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.SEND_TIP:
+            logoFallback = "/tip-link-default.svg";
+            break;
+        case LINK_TYPE.SEND_AIRDROP:
+            logoFallback = "/airdrop-default.svg";
+            break;
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            logoFallback = "/token-basket-default.svg";
+            break;
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            logoFallback = "/receive-payment-default.svg";
+            break;
+        default:
+            logoFallback = "/tip-link-default.svg"; // Fallback for other link types
+            break;
+    }
 
     switch (linkData?.linkType) {
         case LINK_TYPE.SEND_TIP:
@@ -95,7 +113,7 @@ export const getDisplayComponentForLink = (
                 return { ...getToken(asset.address)!, amount: asset.amountPerUse };
             });
             return (
-                <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col gap-4">
+                <div className="w-[100px] min-h-[100px] bg-white rounded-2xl p-4 flex flex-col gap-4">
                     {tokens
                         ?.sort((a, b) => {
                             return (a.address ?? "").localeCompare(b.address ?? "");
@@ -145,14 +163,14 @@ const TokenImage = ({ token, logoFallback }: { token?: FungibleToken; logoFallba
     return (
         <>
             {isLoading && (
-                <div className="w-[200px] h-[200px] rounded-3xl bg-gray-200 animate-pulse flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-gray-300" />
+                <div className="w-[100px] h-[100px] rounded-3xl bg-gray-200 animate-pulse flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-gray-300" />
                 </div>
             )}
             <img
                 src={imageSrc}
                 alt="Token Image"
-                className={`w-[200px] rounded-3xl ${isLoading ? "hidden" : "block"}`}
+                className={`w-[100px] rounded-3xl ${isLoading ? "hidden" : "block"}`}
                 onLoad={handleImageLoad}
                 onError={handleImageError}
             />

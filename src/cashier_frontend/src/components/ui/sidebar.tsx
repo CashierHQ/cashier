@@ -27,7 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -77,7 +77,7 @@ const SidebarProvider = React.forwardRef<
         },
         ref,
     ) => {
-        const { isSmallDevice: isMobile } = useResponsive();
+        const { isSmallDevice: isMobile } = useDeviceSize();
         const [openMobile, setOpenMobile] = React.useState(false);
 
         // This is the internal state of the sidebar.

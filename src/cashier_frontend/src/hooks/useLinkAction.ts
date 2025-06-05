@@ -29,11 +29,10 @@ import {
     mapPartialDtoToLinkDetailModel,
 } from "@/services/types/mapper/link.service.mapper";
 import { useIdentity } from "@nfid/identitykit/react";
-import LinkLocalStorageService, {
-    LOCAL_lINK_ID_PREFIX,
-} from "@/services/link/link-local-storage.service";
+import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { LinkModel } from "@/services/types/link.service.types";
 import LinkService from "@/services/link/link.service";
+import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 
 export interface UpdateLinkParams {
     linkId: string;
@@ -102,8 +101,23 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         }
     };
 
-    const refetchLinkDetail = async () => {
-        await linkDetailQuery.refetch();
+    const refetchLinkDetail = async (explicitLinkId?: string) => {
+        // Use the explicit link ID if provided, otherwise fall back to the hook's linkId
+        const currentLinkId = explicitLinkId || linkId;
+        console.log("refetchLinkDetail called with linkId:", currentLinkId);
+
+        if (!currentLinkId) {
+            console.warn("refetchLinkDetail called with undefined linkId");
+            return;
+        }
+
+        try {
+            await linkDetailQuery.refetch();
+            console.log("refetchLinkDetail completed successfully for linkId:", currentLinkId);
+        } catch (error) {
+            console.error("Error in refetchLinkDetail for linkId ${currentLinkId}:", error);
+            throw error;
+        }
     };
 
     const refetchAction = async (linkId: string, actionType?: ACTION_TYPE) => {
@@ -117,7 +131,7 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         try {
             // Clone the same logic from useLinkDetailQuery to ensure consistency
             if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
-                const linkLocalStorageService = new LinkLocalStorageService(
+                const linkLocalStorageService = new LinkLocalStorageServiceV2(
                     identity.getPrincipal().toString(),
                 );
                 const localLink = linkLocalStorageService.getLink(linkId);
@@ -160,7 +174,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     useEffect(() => {
         if (linkDetailQuery.data) {
             const linkData = linkDetailQuery.data;
-            console.log("🚀 ~ useLinkAction ~ linkData:", linkData);
             setLink(linkData.link);
             setAction(linkData.action);
         }
@@ -169,8 +182,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     // Update state when linkId changes
     useEffect(() => {
         if (linkId) {
-            console.log("[useEffect] linkId changed:", linkId);
-
             const userInput = linkId ? getUserInput(linkId) : undefined;
 
             // First update with user input if available

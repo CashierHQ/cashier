@@ -41,7 +41,7 @@ import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { formatNumber } from "@/utils/helpers/currency";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../ui/separator";
 import { toast } from "sonner";
 import { MessageBanner } from "../ui/message-banner";
@@ -57,7 +57,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
     const { setStep } = useMultiStepFormContext();
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
 
     const { getToken } = useTokens();
 

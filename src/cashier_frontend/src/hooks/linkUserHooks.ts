@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { queryKeys } from "@/lib/queryKeys";
+import { USER_LINK_QUERY } from "@/lib/queryKeys";
 import LinkService from "@/services/link/link.service";
 import {
     LinkUpdateUserStateInputModel,
@@ -45,7 +45,11 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
     const identity = useIdentity();
 
     return useQuery({
-        queryKey: queryKeys.links.userState(input, identity).queryKey,
+        queryKey: USER_LINK_QUERY.userState(
+            input.link_id,
+            input.action_type,
+            identity?.getPrincipal().toText() ?? "",
+        ),
         queryFn: async () => {
             const linkService = new LinkService(identity);
             const userState = await linkService.getLinkUserState(input);

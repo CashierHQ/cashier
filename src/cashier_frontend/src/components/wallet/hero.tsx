@@ -15,11 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
-import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import { useResponsive } from "@/hooks/responsive-hook";
 import { useWalletContext } from "@/contexts/wallet-context";
 import { formatNumber } from "@/utils/helpers/currency";
 
@@ -28,9 +25,6 @@ interface WalletHeroProps {
 }
 
 export function WalletHero({ totalUsdEquivalent }: WalletHeroProps) {
-    const { t } = useTranslation();
-    const navigate = useNavigate();
-    const responsive = useResponsive();
     const { navigateToPanel } = useWalletContext();
 
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
