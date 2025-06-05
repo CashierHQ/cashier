@@ -78,7 +78,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     action,
     onClose = () => {},
     onInfoClick = () => {},
-    onActionResult = () => {},
+    // onActionResult = () => {},
     onCashierError = () => {},
     onSuccessContinue = async () => {},
     startTransaction,
@@ -98,7 +98,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     const displayButtonText =
         buttonText ||
         (action?.state === ACTION_STATE.SUCCESS
-            ? t("continue")
+            ? t("confirmation_drawer.processing")
             : action?.state === ACTION_STATE.PROCESSING
               ? t("confirmation_drawer.inprogress_button")
               : action?.state === ACTION_STATE.FAIL

@@ -61,6 +61,8 @@ const getDrawerButtonMessage = (
         return { text: t("confirmation_drawer.confirm_button"), disabled: false };
     }
 
+    console.log("getDrawerButtonMessage called with action:", action);
+
     switch (action.state) {
         case ACTION_STATE.CREATED:
             return { text: t("confirmation_drawer.confirm_button"), disabled: false };
@@ -172,6 +174,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     // Update button text based on action state and processing state
     useEffect(() => {
         // If we're actively processing, show "Processing..." regardless of action state
+
         if (isProcessing) {
             setDrawerConfirmButton({
                 text: t("confirmation_drawer.inprogress_button"),
@@ -189,7 +192,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
 
         // Default state when not processing and no action
         setDrawerConfirmButton({
-            text: getClaimButtonLabel(linkData ?? ({} as LinkDetailModel)),
+            text: t("confirmation_drawer.confirm_button"),
             disabled: false,
         });
     }, [linkUserState, isProcessing, linkData, isFetching, t]);

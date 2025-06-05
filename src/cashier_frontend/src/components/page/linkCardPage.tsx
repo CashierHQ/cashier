@@ -20,7 +20,7 @@ import { LINK_TYPE } from "../../services/types/enum";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatNumber } from "@/utils/helpers/currency";
-import { ArrowDownFromLine, ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
 
 export const getTitleForLink = (
     linkData?: LinkDetailModel,
