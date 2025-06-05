@@ -38,9 +38,11 @@ class TokenStorageService {
     constructor(identity?: Identity | PartialIdentity | undefined) {
         const agent = HttpAgent.createSync({ identity, host: IC_HOST });
         this.identity = identity;
+        const canisterId = TOKEN_STORAGE_CANISTER_ID;
+        console.log("Creating TokenStorageService with canister ID:", canisterId);
         this.actor = Actor.createActor(idlFactory, {
             agent,
-            canisterId: TOKEN_STORAGE_CANISTER_ID,
+            canisterId: canisterId,
         });
     }
 
