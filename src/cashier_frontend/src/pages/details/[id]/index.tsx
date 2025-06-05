@@ -61,10 +61,18 @@ export default function DetailPage() {
     const [showShareLinkDrawer, setShowShareLinkDrawer] = React.useState(false);
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
+    const [isProcessing, setIsProcessing] = React.useState(false);
+
+    const { t } = useTranslation();
 
     // Button state for confirmation drawer
-    const [confirmButtonDisabled, setConfirmButtonDisabled] = React.useState(false);
-    const [confirmButtonText, setConfirmButtonText] = React.useState("");
+    const [drawerConfirmButton, setDrawerConfirmButton] = React.useState<{
+        text: string;
+        disabled: boolean;
+    }>({
+        text: t("confirmation_drawer.confirm_button"),
+        disabled: false,
+    });
 
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
@@ -116,27 +124,79 @@ export default function DetailPage() {
         }
     }, [showOverlay, driverObj, link]);
 
-    const { t } = useTranslation();
-
-    // Update button text based on action state
+    // Update button text based on action state and processing state
     React.useEffect(() => {
-        if (!action) return;
+        // If we're actively processing, show "Processing..." regardless of action state
+        if (isProcessing) {
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
+            return;
+        }
+
+        if (!action) {
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.confirm_button"),
+                disabled: false,
+            });
+            return;
+        }
 
         const actionState = action.state;
         if (actionState === ACTION_STATE.SUCCESS) {
-            setConfirmButtonText(t("continue"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("continue"),
+                disabled: false,
+            });
         } else if (actionState === ACTION_STATE.PROCESSING) {
-            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
-            setConfirmButtonDisabled(true);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
         } else if (actionState === ACTION_STATE.FAIL) {
-            setConfirmButtonText(t("retry"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("retry"),
+                disabled: false,
+            });
         } else {
-            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.confirm_button"),
+                disabled: false,
+            });
         }
-    }, [action, t]);
+    }, [action, isProcessing, t]);
+
+    // Polling effect to update action state during processing
+    React.useEffect(() => {
+        let intervalId: number | null = null;
+
+        if (isProcessing) {
+            intervalId = setInterval(async () => {
+                try {
+                    // Refresh action data
+                    await refetchLinkDetail();
+
+                    // If action is completed, stop polling
+                    if (
+                        action &&
+                        (action.state === ACTION_STATE.SUCCESS ||
+                            action.state === ACTION_STATE.FAIL)
+                    ) {
+                        setIsProcessing(false);
+                    }
+                } catch (error) {
+                    console.error("Error in polling interval:", error);
+                }
+            }, 2000); // Poll every 2 seconds
+        }
+
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [isProcessing, refetchLinkDetail, action]);
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -206,65 +266,53 @@ export default function DetailPage() {
     };
 
     const handleWithdrawProcess = async () => {
-        if (!link) throw new Error("Link is not defined");
-        if (!action) throw new Error("Action is not defined");
-        const start = Date.now();
+        try {
+            if (!link) throw new Error("Link is not defined");
+            if (!action) throw new Error("Action is not defined");
 
-        console.log("[handleWithdrawProcess] Starting processAction...");
-        const processActionStartTime = Date.now();
-        const firstUpdatedAction = await processAction({
-            linkId: link.id,
-            actionType: ACTION_TYPE.WITHDRAW_LINK,
-            actionId: action.id,
-        });
-        const processActionEndTime = Date.now();
-        const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
-        console.log(
-            `[handleWithdrawProcess] processAction completed in ${processActionDuration.toFixed(2)}s`,
-        );
+            // Set processing state to true to activate polling
+            setIsProcessing(true);
 
-        setAction(firstUpdatedAction);
-
-        if (firstUpdatedAction) {
-            console.log("[handleWithdrawProcess] Starting icrc112Execute...");
-            const icrc112StartTime = Date.now();
-            const response = await icrc112Execute({
-                transactions: firstUpdatedAction.icrc112Requests,
+            const firstUpdatedAction = await processAction({
+                linkId: link.id,
+                actionType: ACTION_TYPE.WITHDRAW_LINK,
+                actionId: action.id,
             });
-            const icrc112EndTime = Date.now();
-            const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
-            console.log(
-                `[handleWithdrawProcess] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
-            );
 
-            if (response) {
-                console.log("[handleWithdrawProcess] Starting updateAction...");
-                const updateActionStartTime = Date.now();
-                const secondUpdatedAction = await updateAction({
-                    actionId: action.id,
-                    linkId: link.id,
-                    external: true,
+            setAction(firstUpdatedAction);
+
+            if (firstUpdatedAction) {
+                const response = await icrc112Execute({
+                    transactions: firstUpdatedAction.icrc112Requests,
                 });
-                const updateActionEndTime = Date.now();
-                const updateActionDuration = (updateActionEndTime - updateActionStartTime) / 1000;
-                console.log(
-                    `[handleWithdrawProcess] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
-                );
 
-                if (secondUpdatedAction) {
-                    setAction(secondUpdatedAction);
-                    handleActionResult(secondUpdatedAction);
+                if (response) {
+                    const secondUpdatedAction = await updateAction({
+                        actionId: action.id,
+                        linkId: link.id,
+                        external: true,
+                    });
+
+                    if (secondUpdatedAction) {
+                        setAction(secondUpdatedAction);
+                        handleActionResult(secondUpdatedAction);
+
+                        // If action completed successfully, stop polling
+                        if (
+                            secondUpdatedAction.state === ACTION_STATE.SUCCESS ||
+                            secondUpdatedAction.state === ACTION_STATE.FAIL
+                        ) {
+                            setIsProcessing(false);
+                        }
+                    }
                 }
             }
+        } catch (error) {
+            console.error("Error in withdrawal process:", error);
+            // Make sure to stop polling if there's an error
+            setIsProcessing(false);
+            throw error;
         }
-
-        const end = Date.now();
-        const duration = end - start;
-        const durationInSeconds = (duration / 1000).toFixed(2);
-        console.log(
-            "[handleWithdrawProcess] Total withdraw process completed in",
-            `${durationInSeconds}s`,
-        );
     };
 
     const handleCashierError = (error: Error) => {
@@ -380,12 +428,26 @@ export default function DetailPage() {
                     await setInactiveEndedLink();
                 }}
                 startTransaction={async () => {
-                    await handleWithdrawProcess();
+                    try {
+                        await handleWithdrawProcess();
+                    } catch (error) {
+                        console.error("Transaction error:", error);
+                        // Error is already handled in handleWithdrawProcess
+                    } finally {
+                        // Ensure we get latest data after transaction attempt
+                        try {
+                            await refetchLinkDetail();
+                        } catch (refreshError) {
+                            console.error("Error refreshing data after transaction:", refreshError);
+                        }
+                    }
                 }}
-                isButtonDisabled={confirmButtonDisabled}
-                setButtonDisabled={setConfirmButtonDisabled}
-                buttonText={confirmButtonText}
-                setButtonText={setConfirmButtonText}
+                isButtonDisabled={drawerConfirmButton.disabled}
+                setButtonDisabled={(disabled) =>
+                    setDrawerConfirmButton((prev) => ({ ...prev, disabled }))
+                }
+                buttonText={drawerConfirmButton.text}
+                setButtonText={(text) => setDrawerConfirmButton((prev) => ({ ...prev, text }))}
             />
         </MainAppLayout>
     );
