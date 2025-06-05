@@ -66,7 +66,7 @@ interface EnhancedAsset {
 }
 
 export default function LinkPreview({
-    onInvalidActon = () => {},
+    // onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
 }: LinkPreviewProps) {
@@ -106,26 +106,38 @@ export default function LinkPreview({
     const [redirectCounter, setRedirectCounter] = useState(0);
 
     // Button state for confirmation drawer
-    const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
-    const [confirmButtonText, setConfirmButtonText] = useState("");
+    const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
+        text: string;
+        disabled: boolean;
+    }>({
+        text: t("confirmation_drawer.confirm_button"),
+        disabled: false,
+    });
 
-    // Update button text and disabled state based on action state
     useEffect(() => {
         if (!action) return;
 
         const actionState = action.state;
         if (actionState === ACTION_STATE.SUCCESS) {
-            setConfirmButtonText(t("continue"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("continue"),
+                disabled: false,
+            });
         } else if (actionState === ACTION_STATE.PROCESSING) {
-            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
-            setConfirmButtonDisabled(true);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
         } else if (actionState === ACTION_STATE.FAIL) {
-            setConfirmButtonText(t("retry"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("retry"),
+                disabled: false,
+            });
         } else {
-            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.confirm_button"),
+                disabled: false,
+            });
         }
     }, [action, t]);
 
@@ -580,13 +592,23 @@ export default function LinkPreview({
                 // The main function that handles the transaction process
                 startTransaction={handleStartTransaction}
                 // Controls whether the action button is disabled
-                isButtonDisabled={confirmButtonDisabled}
+                isButtonDisabled={drawerConfirmButton.disabled}
                 // Function to update the button's disabled state
-                setButtonDisabled={setConfirmButtonDisabled}
+                setButtonDisabled={(disabled: boolean) => {
+                    setDrawerConfirmButton((prev) => ({
+                        ...prev,
+                        disabled,
+                    }));
+                }}
                 // The text to display on the action button
-                buttonText={confirmButtonText}
+                buttonText={drawerConfirmButton.text}
                 // Function to update the action button's text
-                setButtonText={setConfirmButtonText}
+                setButtonText={(text: string) => {
+                    setDrawerConfirmButton((prev) => ({
+                        ...prev,
+                        text,
+                    }));
+                }}
             />
         </div>
     );
