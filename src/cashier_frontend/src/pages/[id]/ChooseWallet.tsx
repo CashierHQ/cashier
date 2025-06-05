@@ -27,7 +27,7 @@ import {
     useUpdateLinkUserState,
 } from "@/hooks/linkUserHooks";
 import { ACTION_TYPE, LINK_USER_STATE, ACTION_STATE } from "@/services/types/enum";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
@@ -46,6 +46,8 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { getClaimButtonLabel } from "@/components/page/linkCardPage";
 import { toast } from "sonner";
 
+import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
+
 /**
  * Determines button text and state based on action state.
  *
@@ -60,6 +62,8 @@ const getDrawerButtonMessage = (
     if (!action) {
         return { text: t("confirmation_drawer.confirm_button"), disabled: false };
     }
+
+    console.log("getDrawerButtonMessage called with action:", action);
 
     switch (action.state) {
         case ACTION_STATE.CREATED:
@@ -94,9 +98,9 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     onBack,
 }) => {
     const { linkId } = useParams();
-    const navigate = useNavigate();
     const identity = useIdentity();
     const { t } = useTranslation();
+    const { goToComplete } = useLinkUseNavigation(linkId);
 
     // UI state
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -172,6 +176,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     // Update button text based on action state and processing state
     useEffect(() => {
         // If we're actively processing, show "Processing..." regardless of action state
+
         if (isProcessing) {
             setDrawerConfirmButton({
                 text: t("confirmation_drawer.inprogress_button"),
@@ -189,7 +194,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
 
         // Default state when not processing and no action
         setDrawerConfirmButton({
-            text: getClaimButtonLabel(linkData ?? ({} as LinkDetailModel)),
+            text: t("confirmation_drawer.confirm_button"),
             disabled: false,
         });
     }, [linkUserState, isProcessing, linkData, isFetching, t]);
@@ -333,7 +338,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     setShowConfirmation(true);
                 } else if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
                     // If claim is already complete, navigate to complete page
-                    navigate(`/${linkId}/complete`);
+                    goToComplete();
                 } else {
                     // Show confirmation for existing action
                     setAnonymousWalletAddress(anonymousWalletAddress);
@@ -502,7 +507,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
             if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
                 // Allow time for data to refresh before navigation
                 setTimeout(() => {
-                    navigate(`/${linkId}/complete`, { replace: true });
+                    goToComplete({ replace: true });
                 }, 500);
             }
         } catch (error) {
