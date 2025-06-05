@@ -670,7 +670,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
 
             //TODO: replace claim as use
-            ActionType::Use | ActionType::Use => {
+            ActionType::Use => {
                 if action.creator != user_id {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -840,7 +840,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
     /// Updates link properties after an action completes
     /// Returns true if link properties were updated, false otherwise
-    pub fn update_link_properties(
+    pub fn update_link_use_counter(
         &self,
         link_id: String,
         action_id: String,
@@ -860,27 +860,24 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // At this point we know we have a successful claim on a TipLink
         // Update link's properties here
         let mut updated_link = link.clone();
+        let mut is_update: bool = false;
 
-        let list_send_link_type = [
-            LinkType::SendTip,
-            LinkType::SendAirdrop,
-            LinkType::SendTokenBasket,
-        ];
-
-        if list_send_link_type.contains(&link.link_type.unwrap()) {
-            if action.r#type == ActionType::Use {
-                // Update asset info to track the claim
-                if updated_link.link_use_action_counter + 1 > updated_link.link_use_action_max_count
-                {
-                    return Err(CanisterError::HandleLogicError(
-                        "Link use action counter exceeded max count".to_string(),
-                    ));
-                }
-                updated_link.link_use_action_counter += 1;
+        if action.r#type == ActionType::Use {
+            // Update asset info to track the claim
+            if updated_link.link_use_action_counter + 1 > updated_link.link_use_action_max_count {
+                return Err(CanisterError::HandleLogicError(
+                    "Link use action counter exceeded max count".to_string(),
+                ));
             }
+            updated_link.link_use_action_counter += 1;
+            is_update = true;
         }
 
         // Save the updated link
+        if !is_update {
+            return Ok(false);
+        }
+
         self.link_repository.update(updated_link);
 
         // Return true to indicate that we updated the link
@@ -1710,9 +1707,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
 
         // Return early if this isn't a claim/use action or if it's not a successful state
-        if (action_type != ActionType::Use && action_type != ActionType::Use)
-            || current_state != ActionState::Success
-        {
+        if (action_type != ActionType::Use) || current_state != ActionState::Success {
             return Ok(());
         }
 
@@ -1722,7 +1717,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // 3. The current state is Success
 
         // Update link properties
-        let result = self.update_link_properties(link_id.clone(), action_id.clone());
+        let result = self.update_link_use_counter(link_id.clone(), action_id.clone());
         if let Err(err) = result {
             error!(
                 "[link_handle_tx_update] Failed to update link properties for link_id: {:?}, action_id: {:?}, error: {:?}",
