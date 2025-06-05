@@ -88,25 +88,48 @@ export function useTokenListQuery() {
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.all,
         queryFn: async () => {
-            console.log("Fetching token list...", identity?.getPrincipal().toString());
+            console.log(
+                "Fetching token list...",
+                identity?.getPrincipal()?.toString() || "anonymous",
+            );
             const tokenService = new TokenStorageService(identity);
             let tokens: TokenDto[] = [];
+            let needUpdateVersion = false;
+            let perference = null;
 
-            const res = await tokenService.listTokens();
+            try {
+                const res = await tokenService.listTokens();
 
-            if (res && res.tokens) {
-                tokens = res.tokens;
+                // Log the full response for debugging
+                console.log(
+                    "Token list response:",
+                    JSON.stringify(res, (key, value) =>
+                        typeof value === "bigint" ? value.toString() : value,
+                    ),
+                );
+
+                if (res && res.tokens) {
+                    tokens = res.tokens;
+                    needUpdateVersion = res.need_update_version || false;
+                    perference = fromNullable(res.perference);
+                } else {
+                    console.warn("Token list response is missing expected data structure");
+                }
+            } catch (error) {
+                console.error("Error fetching token list:", error);
+                // Don't rethrow - return empty data instead
+                // This prevents the query from going to error state
             }
 
             return {
                 tokens,
-                needUpdateVersion: res?.need_update_version || false,
-                perference: fromNullable(res?.perference),
+                needUpdateVersion,
+                perference,
             };
         },
         select: (data): TokenListResponse => {
             // Transform to frontend model
-            const tokens = data.tokens.map((token) => {
+            const tokens = (data.tokens || []).map((token) => {
                 return {
                     ...mapTokenDtoToTokenModel(token),
                     amount: fromNullable(token.balance),

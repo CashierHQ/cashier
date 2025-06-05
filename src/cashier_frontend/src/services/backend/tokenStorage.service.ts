@@ -45,9 +45,28 @@ class TokenStorageService {
     }
 
     async listTokens(): Promise<TokenListResponse> {
-        const response = parseResultResponse(await this.actor.list_tokens());
-        console.log("listTokens response:", response);
-        return response;
+        try {
+            const result = await this.actor.list_tokens();
+
+            // Check if result is undefined or null
+            if (!result) {
+                console.error("list_tokens returned undefined or null");
+                return { tokens: [], need_update_version: false, perference: [] };
+            }
+
+            const response = parseResultResponse(result);
+
+            // Log with more context for debugging
+            console.log(
+                `listTokens success - got ${response?.tokens?.length || 0} tokens, need update: ${response?.need_update_version}`,
+            );
+
+            return response;
+        } catch (error) {
+            console.error("Error in listTokens:", error);
+            // Return a valid default response to prevent application crashes
+            return { tokens: [], need_update_version: true, perference: [] };
+        }
     }
     async addToken(input: AddTokenInput): Promise<TokenListResponse> {
         const res = parseResultResponse(await this.actor.add_token(input));
