@@ -187,8 +187,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     usdAmount: formatNumber(usdValue.toString()),
                 };
 
-                console.log("breakdownItem", breakdownItem);
-
                 breakdown.push(breakdownItem);
                 setFeesBreakdown(breakdown);
             }
