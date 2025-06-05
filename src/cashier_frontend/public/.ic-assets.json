@@ -20,5 +20,17 @@
             "Pragma": "no-cache",
             "Expires": "0"
         }
+    },
+    {
+        "match": ".well-known",
+        "ignore": false
+    },
+    {
+        "match": ".well-known/ii-alternative-origins",
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "application/json"
+        },
+        "ignore": false
     }
 ]
