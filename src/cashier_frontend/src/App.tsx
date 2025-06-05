@@ -25,7 +25,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
 
-const targets = ["jjio5-5aaaa-aaaam-adhaq-cai"];
+const targets = [
+    import.meta.env.VITE_BACKEND_CANISTER_ID,
+    import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID,
+];
 
 console.log("ENV", import.meta.env.VITE_IC_EXPLORER_BASE_URL);
 console.log(import.meta.env.MODE);
