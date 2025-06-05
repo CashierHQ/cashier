@@ -39,7 +39,6 @@ class TokenStorageService {
         const agent = HttpAgent.createSync({ identity, host: IC_HOST });
         this.identity = identity;
         const canisterId = TOKEN_STORAGE_CANISTER_ID;
-        console.log("Creating TokenStorageService with canister ID:", canisterId);
         this.actor = Actor.createActor(idlFactory, {
             agent,
             canisterId: canisterId,
@@ -49,6 +48,8 @@ class TokenStorageService {
     async listTokens(): Promise<TokenListResponse> {
         try {
             const result = await this.actor.list_tokens();
+
+            console.log("listTokens result:", result);
 
             // Check if result is undefined or null
             if (!result) {
