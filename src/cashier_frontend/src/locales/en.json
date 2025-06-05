@@ -285,6 +285,24 @@
             "connect_wallet_title": "Connect your wallet"
         }
     },
+    "claim_page": {
+        "SendTip": {
+            "transaction_success": "Congratulations! Your claim was successful.",
+            "transaction_failed": "Your claim failed. Please try again later."
+        },
+        "SendAirdrop": {
+            "transaction_success": "Congratulations! Your claim was successful.",
+            "transaction_failed": "Your claim failed. Please try again later."
+        },
+        "SendTokenBasket": {
+            "transaction_success": "Congratulations! Your claim was successful.",
+            "transaction_failed": "Your claim failed. Please try again later."
+        },
+        "ReceivePayment": {
+            "transaction_success": "Congratulations! Your payment was successful.",
+            "transaction_failed": "Your payment failed. Please try again later."
+        }
+    },
     "add_asset_form": {
         "error": {
             "default": {

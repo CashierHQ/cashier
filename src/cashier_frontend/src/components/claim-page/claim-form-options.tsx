@@ -240,20 +240,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
 
     const renderInputWallet = () => {
         if (identity) {
-            return (
-                <CustomConnectedWalletButton
-                    connectedAccount={user?.principal.toString()}
-                    postfixText="Connected"
-                    postfixIcon={<LuWallet2 color="#359F89" className="mr-2 h-6 w-6" />}
-                    handleConnect={() => {
-                        showDialog({
-                            title: "Are you sure?",
-                            description:
-                                "You need to disconnect your current wallet to enter an address manually. Would you like to disconnect and continue?",
-                        });
-                    }}
-                />
-            );
+            return <></>;
         }
 
         if (disabledInput) return <></>;

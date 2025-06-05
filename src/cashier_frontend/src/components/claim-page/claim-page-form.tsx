@@ -21,7 +21,7 @@ import { ClaimSchema } from "@/pages/[id]";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimFormOptions from "./claim-form-options";
-import ClaimActionButton from "./claim-action-button";
+import UseActionButton from "./claim-action-button";
 
 interface ClaimPageFormProps {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -52,7 +52,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
             <Form {...form}>
                 <form className="w-full flex flex-col gap-3 h-full">
                     <ClaimFormOptions form={form} formData={formData} setDisabled={setDisabled} />
-                    <ClaimActionButton
+                    <UseActionButton
                         isDisabled={isDisabled}
                         buttonText={buttonText}
                         onSubmit={handleSubmit}
