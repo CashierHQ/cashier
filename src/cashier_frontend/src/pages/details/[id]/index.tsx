@@ -15,18 +15,17 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import * as React from "react";
-import { StateBadge } from "@/components/link-item";
 import { Driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { Button } from "@/components/ui/button";
+import { LinkDetail } from "@/components/detail-page/link-detail";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { ACTION_TYPE, ACTION_STATE, getLinkTypeString } from "@/services/types/enum";
+import { ACTION_TYPE, ACTION_STATE, LINK_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
-import { Label } from "@/components/ui/label";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
 import { ShareLinkDrawer } from "@/components/link-details/share-link-drawer";
 import { LINK_STATE } from "@/services/types/enum";
@@ -34,13 +33,9 @@ import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkAction } from "@/hooks/useLinkAction";
-import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
-import { formatNumber } from "@/utils/helpers/currency";
-import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DetailPage() {
@@ -95,8 +90,17 @@ export default function DetailPage() {
     // Check if link has assets that can be withdrawn
     const hasWithdrawableAssets = React.useMemo(() => {
         if (!link) return false;
-        // If useActionCounter is less than maxActionNumber, there are still actions/assets available
-        return link.useActionCounter < link.maxActionNumber;
+
+        // based on the link type, check if it has assets
+        if (
+            link.linkType === LINK_TYPE.SEND_AIRDROP ||
+            link.linkType === LINK_TYPE.SEND_TIP ||
+            link.linkType === LINK_TYPE.SEND_TOKEN_BASKET
+        ) {
+            return link.useActionCounter < link.maxActionNumber;
+        } else if (link.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+            return link.useActionCounter > 0;
+        }
     }, [link]);
 
     React.useEffect(() => {
@@ -113,7 +117,6 @@ export default function DetailPage() {
     }, [showOverlay, driverObj, link]);
 
     const { t } = useTranslation();
-    const { getToken } = useTokens();
 
     // Update button text based on action state
     React.useEffect(() => {
@@ -303,133 +306,10 @@ export default function DetailPage() {
 
                         {/* Scrollable Content Area */}
                         <div className="flex-grow overflow-y-auto pb-24 scrollbar-hide">
-                            <div className="flex gap-2 items-center mb-2 justify-between">
-                                <Label>{t("details.linkInfo")}</Label>
-                                <button
-                                    className="flex items-center justify-center"
-                                    onClick={() => setShowShareLinkDrawer(true)}
-                                >
-                                    <Share2 color="#35A18B" width={18} height={18} />
-                                </button>
-                            </div>
-                            <div
-                                id="link-detail-section"
-                                className="flex flex-col border-[1px] rounded-lg border-lightgreen"
-                            >
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">Status</p>
-                                    <StateBadge state={link?.state} />
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">Type</p>
-                                    <p className="text-sm text-primary/80">
-                                        {getLinkTypeString(link.linkType!)}
-                                    </p>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">User pays</p>
-                                    <p className="text-sm text-primary/80">-</p>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">User claims</p>
-                                    <div className="flex flex-col items-end gap-2">
-                                        {link.asset_info
-                                            .sort((a, b) => {
-                                                return (a.address ?? "").localeCompare(
-                                                    b.address ?? "",
-                                                );
-                                            })
-                                            .map((asset, index) => {
-                                                const token = getToken(asset.address);
-                                                if (!token) return null;
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center gap-2"
-                                                    >
-                                                        <p className="text-sm text-primary/80">
-                                                            {formatNumber(
-                                                                (
-                                                                    Number(asset.amountPerUse) /
-                                                                    10 ** token.decimals
-                                                                ).toString(),
-                                                            )}{" "}
-                                                            {token.symbol}
-                                                        </p>
-                                                        <AssetAvatarV2
-                                                            token={token}
-                                                            className="w-4 h-4"
-                                                        />
-                                                    </div>
-                                                );
-                                            })}
-                                    </div>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
-                                    <p className="font-medium text-sm">Max use</p>
-                                    <p className="text-sm text-primary/80">
-                                        {link.maxActionNumber.toString()}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 items-center mb-2 mt-4">
-                                <Label>{t("details.usageInfo")}</Label>
-                            </div>
-                            <div
-                                id="link-detail-section"
-                                className="flex flex-col border-[1px] rounded-lg border-lightgreen"
-                            >
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">
-                                        {t("details.assetsInLink")}
-                                    </p>
-                                    <div className="flex flex-col items-end gap-2">
-                                        {link.asset_info
-                                            .sort((a, b) => {
-                                                return (a.address ?? "").localeCompare(
-                                                    b.address ?? "",
-                                                );
-                                            })
-                                            .map((asset, index) => {
-                                                const token = getToken(asset.address);
-                                                if (!token) return null;
-
-                                                const amountPerUse =
-                                                    Number(asset.amountPerUse) /
-                                                    10 ** token.decimals;
-                                                const totalNumberOfAssets =
-                                                    amountPerUse * Number(link.maxActionNumber);
-                                                const numberOfAssetsLeft =
-                                                    totalNumberOfAssets -
-                                                    amountPerUse * Number(link.useActionCounter);
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center gap-2"
-                                                    >
-                                                        <p className="text-sm text-primary/80">
-                                                            {formatNumber(
-                                                                numberOfAssetsLeft.toString(),
-                                                            )}{" "}
-                                                            {token.symbol}
-                                                        </p>
-                                                        <AssetAvatarV2
-                                                            token={token}
-                                                            className="w-4 h-4"
-                                                        />
-                                                    </div>
-                                                );
-                                            })}
-                                    </div>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
-                                    <p className="font-medium text-sm">Used</p>
-                                    <p className="text-sm text-primary/80">
-                                        {link.useActionCounter.toString()}
-                                    </p>
-                                </div>
-                            </div>
+                            <LinkDetail
+                                link={link}
+                                onShareClick={() => setShowShareLinkDrawer(true)}
+                            />
                         </div>
 
                         {/* Fixed Footer */}
