@@ -154,7 +154,7 @@ impl IcrcService {
                 Ok(_block_id) => Ok(_block_id),
                 Err(error) => match error {
                     // likely a duplicate transfer, return the original transfer id
-                    // TransferFromError::Duplicate { duplicate_of } => return Ok(duplicate_of),
+                    TransferFromError::Duplicate { duplicate_of } => return Ok(duplicate_of),
                     _ => Err(CanisterError::CanisterCallError {
                         method: "icrc2_transfer_from".to_string(),
                         canister_id: token_service.get_canister_id().to_string(),

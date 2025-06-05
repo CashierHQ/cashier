@@ -57,8 +57,8 @@ export const TransactionItem = memo(function TransactionItem({
 
         // Calculate adjusted amount by subtracting only the network fee
         if (networkFee && token.decimals !== undefined) {
-            const networkFeeAmount = Number(networkFee.amount) / 10 ** token.decimals;
-            const newAdjustedAmount = assetAmount - networkFeeAmount;
+            // const networkFeeAmount = Number(networkFee.amount) / 10 ** token.decimals;
+            const newAdjustedAmount = assetAmount;
 
             setAdjustedAmount(newAdjustedAmount);
         } else {
