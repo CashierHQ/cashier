@@ -15,18 +15,19 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
-import { ACTION_STATE, ACTION_TYPE, LINK_STATE, LINK_USER_STATE } from "@/services/types/enum";
+import { ACTION_STATE, ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { DefaultPage } from "./Default";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useTranslation } from "react-i18next";
+import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
 import { useLinkAction } from "@/hooks/useLinkAction";
@@ -52,11 +53,12 @@ export const ClaimSchema = z.object({
 
 export default function ClaimPage() {
     const { linkId } = useParams();
-    const navigate = useNavigate();
     const location = useLocation();
     const { renderSkeleton } = useSkeletonLoading();
     const { t } = useTranslation();
     const [showDefaultPage, setShowDefaultPage] = useState(true);
+    const { goToChooseWallet, handleStateBasedNavigation, goToLinkDefault } =
+        useLinkUseNavigation(linkId);
 
     const { updateTokenInit, getToken } = useTokens();
     const identity = useIdentity();
@@ -120,14 +122,8 @@ export default function ClaimPage() {
         }
 
         // For logged-in users with complete state, redirect to complete page
-        if (
-            identity &&
-            linkUserState?.link_user_state === LINK_USER_STATE.COMPLETE &&
-            !currentPath.endsWith("/complete")
-        ) {
-            navigate(`/${linkId}/complete`, { replace: true });
-        }
-    }, [linkData, linkUserState, identity, location.pathname, navigate, linkId]);
+        handleStateBasedNavigation(linkUserState, !!identity);
+    }, [linkData, linkUserState, identity, location.pathname, handleStateBasedNavigation]);
 
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
@@ -149,7 +145,7 @@ export default function ClaimPage() {
 
     const handleClickClaim = () => {
         setShowDefaultPage(false);
-        navigate(`/${linkId}/choose-wallet`);
+        goToChooseWallet();
     };
 
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
@@ -193,7 +189,7 @@ export default function ClaimPage() {
                                 onCashierError={showCashierErrorToast}
                                 onBack={() => {
                                     setShowDefaultPage(true);
-                                    navigate(`/${linkId}`);
+                                    goToLinkDefault();
                                 }}
                             />
                         )}

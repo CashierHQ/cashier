@@ -113,7 +113,7 @@ export const getDisplayComponentForLink = (
                 return { ...getToken(asset.address)!, amount: asset.amountPerUse };
             });
             return (
-                <div className="w-[100px] min-h-[100px] bg-white rounded-2xl p-4 flex flex-col gap-4">
+                <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col gap-4">
                     {tokens
                         ?.sort((a, b) => {
                             return (a.address ?? "").localeCompare(b.address ?? "");
