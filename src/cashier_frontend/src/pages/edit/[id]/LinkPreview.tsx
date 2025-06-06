@@ -24,7 +24,7 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
@@ -37,9 +37,7 @@ import {
     ACTION_STATE,
 } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
-import LinkLocalStorageService, {
-    LOCAL_lINK_ID_PREFIX,
-} from "@/services/link/link-local-storage.service";
+import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { Info } from "lucide-react";
 import { InformationOnAssetDrawer } from "@/components/information-on-asset-drawer/information-on-asset-drawer";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
@@ -50,6 +48,7 @@ import { useFeeService } from "@/hooks/useFeeService";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { FeeHelpers } from "@/utils/helpers/fees";
+import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -68,14 +67,14 @@ interface EnhancedAsset {
 }
 
 export default function LinkPreview({
-    onInvalidActon = () => {},
+    // onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
 }: LinkPreviewProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
     const searchParams = new URLSearchParams(location.search);
     const redirectParam = searchParams.get("redirect");
     const oldIdParam = searchParams.get("oldId");
@@ -108,26 +107,38 @@ export default function LinkPreview({
     const [redirectCounter, setRedirectCounter] = useState(0);
 
     // Button state for confirmation drawer
-    const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
-    const [confirmButtonText, setConfirmButtonText] = useState("");
+    const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
+        text: string;
+        disabled: boolean;
+    }>({
+        text: t("confirmation_drawer.confirm_button"),
+        disabled: false,
+    });
 
-    // Update button text and disabled state based on action state
     useEffect(() => {
         if (!action) return;
 
         const actionState = action.state;
         if (actionState === ACTION_STATE.SUCCESS) {
-            setConfirmButtonText(t("continue"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("continue"),
+                disabled: false,
+            });
         } else if (actionState === ACTION_STATE.PROCESSING) {
-            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
-            setConfirmButtonDisabled(true);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
         } else if (actionState === ACTION_STATE.FAIL) {
-            setConfirmButtonText(t("retry"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("retry"),
+                disabled: false,
+            });
         } else {
-            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.confirm_button"),
+                disabled: false,
+            });
         }
     }, [action, t]);
 
@@ -329,7 +340,7 @@ export default function LinkPreview({
                 }
 
                 if (oldIdParam && identity) {
-                    const localStorageService = new LinkLocalStorageService(
+                    const localStorageService = new LinkLocalStorageServiceV2(
                         identity.getPrincipal().toString(),
                     );
                     localStorageService.deleteLink(oldIdParam);
@@ -579,15 +590,25 @@ export default function LinkPreview({
                 // The main function that handles the transaction process
                 startTransaction={handleStartTransaction}
                 // Controls whether the action button is disabled
-                isButtonDisabled={confirmButtonDisabled}
+                isButtonDisabled={drawerConfirmButton.disabled}
                 // Function to update the button's disabled state
-                setButtonDisabled={setConfirmButtonDisabled}
+                setButtonDisabled={(disabled: boolean) => {
+                    setDrawerConfirmButton((prev) => ({
+                        ...prev,
+                        disabled,
+                    }));
+                }}
                 // The text to display on the action button
-                buttonText={confirmButtonText}
+                buttonText={drawerConfirmButton.text}
                 // Function to update the action button's text
-                setButtonText={setConfirmButtonText}
                 // The max action number for the link, required for fee calculation
                 maxActionNumber={Number(link?.maxActionNumber ?? 1)}
+                setButtonText={(text: string) => {
+                    setDrawerConfirmButton((prev) => ({
+                        ...prev,
+                        text,
+                    }));
+                }}
             />
         </div>
     );

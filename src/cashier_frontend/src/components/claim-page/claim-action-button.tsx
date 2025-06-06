@@ -18,14 +18,14 @@ import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FixedBottomButton } from "../fix-bottom-button";
 
-interface ClaimActionButtonProps {
+interface UseActionButtonProps {
     isDisabled?: boolean;
     buttonText?: string;
     onSubmit: () => void;
     setDisabled?: (disabled: boolean) => void;
 }
 
-const ClaimActionButton: React.FC<ClaimActionButtonProps> = ({
+const UseActionButton: React.FC<UseActionButtonProps> = ({
     isDisabled,
     buttonText,
     onSubmit,
@@ -54,4 +54,4 @@ const ClaimActionButton: React.FC<ClaimActionButtonProps> = ({
     );
 };
 
-export default ClaimActionButton;
+export default UseActionButton;

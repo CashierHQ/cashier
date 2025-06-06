@@ -15,18 +15,17 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import * as React from "react";
-import { StateBadge } from "@/components/link-item";
 import { Driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { Button } from "@/components/ui/button";
+import { LinkDetail } from "@/components/detail-page/link-detail";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { ACTION_TYPE, ACTION_STATE, getLinkTypeString } from "@/services/types/enum";
+import { ACTION_TYPE, ACTION_STATE, LINK_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
-import { Label } from "@/components/ui/label";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
 import { ShareLinkDrawer } from "@/components/link-details/share-link-drawer";
 import { LINK_STATE } from "@/services/types/enum";
@@ -34,13 +33,9 @@ import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useLinkAction } from "@/hooks/useLinkAction";
-import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
-import { formatNumber } from "@/utils/helpers/currency";
-import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DetailPage() {
@@ -66,10 +61,18 @@ export default function DetailPage() {
     const [showShareLinkDrawer, setShowShareLinkDrawer] = React.useState(false);
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
+    const [isProcessing, setIsProcessing] = React.useState(false);
+
+    const { t } = useTranslation();
 
     // Button state for confirmation drawer
-    const [confirmButtonDisabled, setConfirmButtonDisabled] = React.useState(false);
-    const [confirmButtonText, setConfirmButtonText] = React.useState("");
+    const [drawerConfirmButton, setDrawerConfirmButton] = React.useState<{
+        text: string;
+        disabled: boolean;
+    }>({
+        text: t("confirmation_drawer.confirm_button"),
+        disabled: false,
+    });
 
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
@@ -95,8 +98,17 @@ export default function DetailPage() {
     // Check if link has assets that can be withdrawn
     const hasWithdrawableAssets = React.useMemo(() => {
         if (!link) return false;
-        // If useActionCounter is less than maxActionNumber, there are still actions/assets available
-        return link.useActionCounter < link.maxActionNumber;
+
+        // based on the link type, check if it has assets
+        if (
+            link.linkType === LINK_TYPE.SEND_AIRDROP ||
+            link.linkType === LINK_TYPE.SEND_TIP ||
+            link.linkType === LINK_TYPE.SEND_TOKEN_BASKET
+        ) {
+            return link.useActionCounter < link.maxActionNumber;
+        } else if (link.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+            return link.useActionCounter > 0;
+        }
     }, [link]);
 
     React.useEffect(() => {
@@ -112,28 +124,79 @@ export default function DetailPage() {
         }
     }, [showOverlay, driverObj, link]);
 
-    const { t } = useTranslation();
-    const { getToken } = useTokens();
-
-    // Update button text based on action state
+    // Update button text based on action state and processing state
     React.useEffect(() => {
-        if (!action) return;
+        // If we're actively processing, show "Processing..." regardless of action state
+        if (isProcessing) {
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
+            return;
+        }
+
+        if (!action) {
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.confirm_button"),
+                disabled: false,
+            });
+            return;
+        }
 
         const actionState = action.state;
         if (actionState === ACTION_STATE.SUCCESS) {
-            setConfirmButtonText(t("continue"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("continue"),
+                disabled: false,
+            });
         } else if (actionState === ACTION_STATE.PROCESSING) {
-            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
-            setConfirmButtonDisabled(true);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
         } else if (actionState === ACTION_STATE.FAIL) {
-            setConfirmButtonText(t("retry"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("retry"),
+                disabled: false,
+            });
         } else {
-            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
-            setConfirmButtonDisabled(false);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.confirm_button"),
+                disabled: false,
+            });
         }
-    }, [action, t]);
+    }, [action, isProcessing, t]);
+
+    // Polling effect to update action state during processing
+    React.useEffect(() => {
+        let intervalId: number | null = null;
+
+        if (isProcessing) {
+            intervalId = setInterval(async () => {
+                try {
+                    // Refresh action data
+                    await refetchLinkDetail();
+
+                    // If action is completed, stop polling
+                    if (
+                        action &&
+                        (action.state === ACTION_STATE.SUCCESS ||
+                            action.state === ACTION_STATE.FAIL)
+                    ) {
+                        setIsProcessing(false);
+                    }
+                } catch (error) {
+                    console.error("Error in polling interval:", error);
+                }
+            }, 2000); // Poll every 2 seconds
+        }
+
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [isProcessing, refetchLinkDetail, action]);
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -203,65 +266,53 @@ export default function DetailPage() {
     };
 
     const handleWithdrawProcess = async () => {
-        if (!link) throw new Error("Link is not defined");
-        if (!action) throw new Error("Action is not defined");
-        const start = Date.now();
+        try {
+            if (!link) throw new Error("Link is not defined");
+            if (!action) throw new Error("Action is not defined");
 
-        console.log("[handleWithdrawProcess] Starting processAction...");
-        const processActionStartTime = Date.now();
-        const firstUpdatedAction = await processAction({
-            linkId: link.id,
-            actionType: ACTION_TYPE.WITHDRAW_LINK,
-            actionId: action.id,
-        });
-        const processActionEndTime = Date.now();
-        const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
-        console.log(
-            `[handleWithdrawProcess] processAction completed in ${processActionDuration.toFixed(2)}s`,
-        );
+            // Set processing state to true to activate polling
+            setIsProcessing(true);
 
-        setAction(firstUpdatedAction);
-
-        if (firstUpdatedAction) {
-            console.log("[handleWithdrawProcess] Starting icrc112Execute...");
-            const icrc112StartTime = Date.now();
-            const response = await icrc112Execute({
-                transactions: firstUpdatedAction.icrc112Requests,
+            const firstUpdatedAction = await processAction({
+                linkId: link.id,
+                actionType: ACTION_TYPE.WITHDRAW_LINK,
+                actionId: action.id,
             });
-            const icrc112EndTime = Date.now();
-            const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
-            console.log(
-                `[handleWithdrawProcess] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
-            );
 
-            if (response) {
-                console.log("[handleWithdrawProcess] Starting updateAction...");
-                const updateActionStartTime = Date.now();
-                const secondUpdatedAction = await updateAction({
-                    actionId: action.id,
-                    linkId: link.id,
-                    external: true,
+            setAction(firstUpdatedAction);
+
+            if (firstUpdatedAction) {
+                const response = await icrc112Execute({
+                    transactions: firstUpdatedAction.icrc112Requests,
                 });
-                const updateActionEndTime = Date.now();
-                const updateActionDuration = (updateActionEndTime - updateActionStartTime) / 1000;
-                console.log(
-                    `[handleWithdrawProcess] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
-                );
 
-                if (secondUpdatedAction) {
-                    setAction(secondUpdatedAction);
-                    handleActionResult(secondUpdatedAction);
+                if (response) {
+                    const secondUpdatedAction = await updateAction({
+                        actionId: action.id,
+                        linkId: link.id,
+                        external: true,
+                    });
+
+                    if (secondUpdatedAction) {
+                        setAction(secondUpdatedAction);
+                        handleActionResult(secondUpdatedAction);
+
+                        // If action completed successfully, stop polling
+                        if (
+                            secondUpdatedAction.state === ACTION_STATE.SUCCESS ||
+                            secondUpdatedAction.state === ACTION_STATE.FAIL
+                        ) {
+                            setIsProcessing(false);
+                        }
+                    }
                 }
             }
+        } catch (error) {
+            console.error("Error in withdrawal process:", error);
+            // Make sure to stop polling if there's an error
+            setIsProcessing(false);
+            throw error;
         }
-
-        const end = Date.now();
-        const duration = end - start;
-        const durationInSeconds = (duration / 1000).toFixed(2);
-        console.log(
-            "[handleWithdrawProcess] Total withdraw process completed in",
-            `${durationInSeconds}s`,
-        );
     };
 
     const handleCashierError = (error: Error) => {
@@ -303,133 +354,10 @@ export default function DetailPage() {
 
                         {/* Scrollable Content Area */}
                         <div className="flex-grow overflow-y-auto pb-24 scrollbar-hide">
-                            <div className="flex gap-2 items-center mb-2 justify-between">
-                                <Label>{t("details.linkInfo")}</Label>
-                                <button
-                                    className="flex items-center justify-center"
-                                    onClick={() => setShowShareLinkDrawer(true)}
-                                >
-                                    <Share2 color="#35A18B" width={18} height={18} />
-                                </button>
-                            </div>
-                            <div
-                                id="link-detail-section"
-                                className="flex flex-col border-[1px] rounded-lg border-lightgreen"
-                            >
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">Status</p>
-                                    <StateBadge state={link?.state} />
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">Type</p>
-                                    <p className="text-sm text-primary/80">
-                                        {getLinkTypeString(link.linkType!)}
-                                    </p>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">User pays</p>
-                                    <p className="text-sm text-primary/80">-</p>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">User claims</p>
-                                    <div className="flex flex-col items-end gap-2">
-                                        {link.asset_info
-                                            .sort((a, b) => {
-                                                return (a.address ?? "").localeCompare(
-                                                    b.address ?? "",
-                                                );
-                                            })
-                                            .map((asset, index) => {
-                                                const token = getToken(asset.address);
-                                                if (!token) return null;
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center gap-2"
-                                                    >
-                                                        <p className="text-sm text-primary/80">
-                                                            {formatNumber(
-                                                                (
-                                                                    Number(asset.amountPerUse) /
-                                                                    10 ** token.decimals
-                                                                ).toString(),
-                                                            )}{" "}
-                                                            {token.symbol}
-                                                        </p>
-                                                        <AssetAvatarV2
-                                                            token={token}
-                                                            className="w-4 h-4"
-                                                        />
-                                                    </div>
-                                                );
-                                            })}
-                                    </div>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
-                                    <p className="font-medium text-sm">Max use</p>
-                                    <p className="text-sm text-primary/80">
-                                        {link.maxActionNumber.toString()}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 items-center mb-2 mt-4">
-                                <Label>{t("details.usageInfo")}</Label>
-                            </div>
-                            <div
-                                id="link-detail-section"
-                                className="flex flex-col border-[1px] rounded-lg border-lightgreen"
-                            >
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">
-                                        {t("details.assetsInLink")}
-                                    </p>
-                                    <div className="flex flex-col items-end gap-2">
-                                        {link.asset_info
-                                            .sort((a, b) => {
-                                                return (a.address ?? "").localeCompare(
-                                                    b.address ?? "",
-                                                );
-                                            })
-                                            .map((asset, index) => {
-                                                const token = getToken(asset.address);
-                                                if (!token) return null;
-
-                                                const amountPerUse =
-                                                    Number(asset.amountPerUse) /
-                                                    10 ** token.decimals;
-                                                const totalNumberOfAssets =
-                                                    amountPerUse * Number(link.maxActionNumber);
-                                                const numberOfAssetsLeft =
-                                                    totalNumberOfAssets -
-                                                    amountPerUse * Number(link.useActionCounter);
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center gap-2"
-                                                    >
-                                                        <p className="text-sm text-primary/80">
-                                                            {formatNumber(
-                                                                numberOfAssetsLeft.toString(),
-                                                            )}{" "}
-                                                            {token.symbol}
-                                                        </p>
-                                                        <AssetAvatarV2
-                                                            token={token}
-                                                            className="w-4 h-4"
-                                                        />
-                                                    </div>
-                                                );
-                                            })}
-                                    </div>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
-                                    <p className="font-medium text-sm">Used</p>
-                                    <p className="text-sm text-primary/80">
-                                        {link.useActionCounter.toString()}
-                                    </p>
-                                </div>
-                            </div>
+                            <LinkDetail
+                                link={link}
+                                onShareClick={() => setShowShareLinkDrawer(true)}
+                            />
                         </div>
 
                         {/* Fixed Footer */}
@@ -500,12 +428,26 @@ export default function DetailPage() {
                     await setInactiveEndedLink();
                 }}
                 startTransaction={async () => {
-                    await handleWithdrawProcess();
+                    try {
+                        await handleWithdrawProcess();
+                    } catch (error) {
+                        console.error("Transaction error:", error);
+                        // Error is already handled in handleWithdrawProcess
+                    } finally {
+                        // Ensure we get latest data after transaction attempt
+                        try {
+                            await refetchLinkDetail();
+                        } catch (refreshError) {
+                            console.error("Error refreshing data after transaction:", refreshError);
+                        }
+                    }
                 }}
-                isButtonDisabled={confirmButtonDisabled}
-                setButtonDisabled={setConfirmButtonDisabled}
-                buttonText={confirmButtonText}
-                setButtonText={setConfirmButtonText}
+                isButtonDisabled={drawerConfirmButton.disabled}
+                setButtonDisabled={(disabled) =>
+                    setDrawerConfirmButton((prev) => ({ ...prev, disabled }))
+                }
+                buttonText={drawerConfirmButton.text}
+                setButtonText={(text) => setDrawerConfirmButton((prev) => ({ ...prev, text }))}
             />
         </MainAppLayout>
     );

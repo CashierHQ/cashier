@@ -23,6 +23,7 @@ export default function LinkCardWithoutPhoneFrame({
     label,
     onClaim,
     disabled,
+    isDataLoading = false,
     showHeader = false,
     headerText = "",
     headerIcon = null,
@@ -34,6 +35,7 @@ export default function LinkCardWithoutPhoneFrame({
     message: string;
     label: string;
     onClaim?: () => void;
+    isDataLoading?: boolean;
     disabled?: boolean;
     showHeader?: boolean;
     headerText?: string;
@@ -41,6 +43,46 @@ export default function LinkCardWithoutPhoneFrame({
     headerColor?: string;
     headerTextColor?: string;
 }) {
+    const getButton = () => {
+        if (isDataLoading) {
+            return (
+                <div
+                    className={cn(
+                        "text-white bg-green rounded-full py-2 px-8 mt-3 w-[100%] text-center",
+                        onClaim ? "cursor-not-allowed" : "",
+                    )}
+                >
+                    {label}
+                </div>
+            );
+        }
+
+        if (disabled) {
+            return (
+                <div
+                    className={cn(
+                        "text-green bg-white rounded-full py-3 px-8 mt-3 text-base w-[100%] text-center font-bold",
+                        onClaim ? "cursor-not-allowed" : "",
+                    )}
+                >
+                    {label}
+                </div>
+            );
+        }
+
+        return (
+            <div
+                className={cn(
+                    "text-white bg-green rounded-full py-2 px-8 mt-3 w-[100%] text-center",
+                    onClaim ? "cursor-pointer" : "",
+                )}
+                onClick={onClaim}
+            >
+                {label}
+            </div>
+        );
+    };
+
     return (
         <div className="w-full flex relative flex-col items-center bg-lightgreen rounded-xl py-5 px-8">
             {showHeader && (
@@ -66,26 +108,7 @@ export default function LinkCardWithoutPhoneFrame({
                     <h3 className="text-[14px] font-light text-[#475467]/80 mt-1">{message}</h3>
                 </div>
 
-                {disabled ? (
-                    <div
-                        className={cn(
-                            "text-green bg-white rounded-full py-3 px-8 mt-3 text-base w-[100%] text-center font-bold",
-                            onClaim ? "cursor-pointer" : "",
-                        )}
-                    >
-                        {label}
-                    </div>
-                ) : (
-                    <div
-                        className={cn(
-                            "text-white bg-green rounded-full py-2 px-8 mt-3 w-[100%] text-center",
-                            onClaim ? "cursor-pointer" : "",
-                        )}
-                        onClick={onClaim}
-                    >
-                        {label}
-                    </div>
-                )}
+                {getButton()}
             </div>
         </div>
     );

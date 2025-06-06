@@ -44,15 +44,15 @@ const getLabel = (intent: IntentModel) => {
     }
 };
 
-// Sort intents by fee first, then by address
+// Sort intents by fee last, then by address
 const sortIntentsByAddress = (intents: IntentModel[]): IntentModel[] => {
     return [...intents].sort((a, b) => {
-        // First prioritize fees (TRANSFER_WALLET_TO_TREASURY) to show at the top
+        // First prioritize fees (TRANSFER_WALLET_TO_TREASURY) to show at the bottom
         const aIsFee = a.task === TASK.TRANSFER_WALLET_TO_TREASURY;
         const bIsFee = b.task === TASK.TRANSFER_WALLET_TO_TREASURY;
 
-        if (aIsFee && !bIsFee) return 1; // Fee comes first (at the top)
-        if (!aIsFee && bIsFee) return -1; // Non-fee comes after
+        if (aIsFee && !bIsFee) return 1; // Fee comes last (at the bottom)
+        if (!aIsFee && bIsFee) return -1; // Non-fee comes first
 
         // If both are fees or both are not fees, then sort by address
         if (a.asset.address < b.asset.address) return -1;

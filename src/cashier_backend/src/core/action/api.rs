@@ -17,7 +17,6 @@
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
-use crate::info;
 use crate::services::transaction_manager::TransactionManagerService;
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
@@ -45,8 +44,6 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
         ));
     }
 
-    info!("Triggering transaction for action: {}", input.action_id);
-
     let transaction_manager: TransactionManagerService<RealIcEnvironment> =
         TransactionManagerService::get_instance();
 
@@ -57,7 +54,6 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     let end_time = ic_cdk::api::time();
     let elapsed_time = end_time - start_time;
     let elapsed_seconds = (elapsed_time as f64) / 1_000_000_000.0;
-    info!("[trigger_transaction] in {} seconds", elapsed_seconds);
 
     return Ok("Executed success".to_string());
 }
