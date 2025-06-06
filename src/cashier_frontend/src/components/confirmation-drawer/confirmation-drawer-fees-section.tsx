@@ -16,9 +16,9 @@
 
 import { FC, useEffect, useState } from "react";
 import { IntentModel } from "@/services/types/intent.service.types";
-import { feeService, Transfer } from "@/services/fee.service";
+import { Transfer } from "@/services/fee.service";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
-import { FEE_TYPE, TASK } from "@/services/types/enum";
+import { TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
 import { ICP_ADDRESS } from "@/const";
 import { ChevronRight } from "lucide-react";
@@ -168,10 +168,10 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
                 // Safe conversion from bigint to number for calculation
                 // Use Number() for explicit conversion and provide defaults for undefined values
-                const tokenFee =
-                    feeType === "link_creation_fee"
-                        ? FeeHelpers.getLinkCreationFee().amount
-                        : tokenInfo.fee;
+                // const tokenFee =
+                //     feeType === "link_creation_fee"
+                //         ? FeeHelpers.getLinkCreationFee().amount
+                //         : tokenInfo.fee;
                 const tokenDecimals =
                     feeType === "link_creation_fee"
                         ? FeeHelpers.getLinkCreationFee().decimals
