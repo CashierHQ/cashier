@@ -47,6 +47,7 @@ import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useFeeService } from "@/hooks/useFeeService";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
+import { FeeHelpers } from "@/utils/helpers/fees";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 
 export interface LinkPreviewProps {
@@ -476,10 +477,11 @@ export default function LinkPreview({
                                 // Calculate token amount with proper decimals
                                 const token = getToken(asset.address);
 
-                                const tokenDecimals = token?.decimals ?? 8;
-                                const totalTokenAmount =
-                                    (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
-                                    10 ** tokenDecimals;
+                                const totalTokenAmount = FeeHelpers.getDisplayAmount(
+                                    token!,
+                                    BigInt(asset.amountPerUse) * link.maxActionNumber,
+                                    Number(link?.maxActionNumber ?? 1),
+                                );
                                 const tokenSymbol = token?.symbol;
 
                                 // Calculate approximate USD value
@@ -524,19 +526,10 @@ export default function LinkPreview({
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
                     {/* Use getFee instead of getAllFees to get fee information */}
                     {(() => {
-                        const fee = getFee(
-                            CHAIN.IC,
-                            link.linkType as LINK_TYPE,
-                            FEE_TYPE.LINK_CREATION,
-                        );
-                        if (!fee) return null;
-
+                        const fee = FeeHelpers.getLinkCreationFee();
                         const token = getToken(fee.address);
-
-                        const tokenSymbol = token?.symbol || fee.symbol || "ICP";
-
-                        const tokenDecimals = fee.decimals || token?.decimals || 8;
-                        const displayAmount = Number(fee.amount) / 10 ** tokenDecimals;
+                        const tokenSymbol = fee.symbol;
+                        const displayAmount = Number(fee.amount) / 10 ** fee.decimals;
                         const tokenPrice = getTokenPrice(fee.address) || 0;
                         const usdValue = displayAmount * tokenPrice;
 
@@ -554,7 +547,12 @@ export default function LinkPreview({
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center gap-1">
                                         <p className="text-[14px] font-normal">
-                                            {formatNumber(displayAmount.toString())}
+                                            {formatNumber(
+                                                (
+                                                    Number(fee.displayAmount) /
+                                                    10 ** fee.decimals
+                                                ).toString(),
+                                            )}
                                         </p>
                                     </div>
                                     <p className="text-[10px] font-normal text-grey-400/50">
@@ -603,6 +601,8 @@ export default function LinkPreview({
                 // The text to display on the action button
                 buttonText={drawerConfirmButton.text}
                 // Function to update the action button's text
+                // The max action number for the link, required for fee calculation
+                maxActionNumber={Number(link?.maxActionNumber ?? 1)}
                 setButtonText={(text: string) => {
                     setDrawerConfirmButton((prev) => ({
                         ...prev,

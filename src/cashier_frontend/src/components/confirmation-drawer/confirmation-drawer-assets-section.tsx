@@ -22,12 +22,14 @@ import { TASK, FEE_TYPE } from "@/services/types/enum";
 import { feeService } from "@/services/fee.service";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/useLinkAction";
+import { FeeHelpers } from "@/utils/helpers/fees";
 
 type ConfirmationPopupAssetsSectionProps = {
     intents: IntentModel[];
     onInfoClick?: () => void;
     isUsd?: boolean;
     onUsdClick?: () => void;
+    maxActionNumber?: number;
 };
 
 const getLabel = (intent: IntentModel) => {
@@ -63,6 +65,7 @@ const sortIntentsByAddress = (intents: IntentModel[]): IntentModel[] => {
 export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
     intents,
     isUsd,
+    maxActionNumber,
 }) => {
     const { t } = useTranslation();
     const { getToken } = useTokens();
@@ -78,6 +81,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
         const calculateFees = async () => {
             const newFeesMap = new Map<string, FeeModel[]>();
 
+            console.log("intents", intents);
             // Process each intent to get associated fees
             for (const intent of intents) {
                 const tokenAddress = intent.asset.address;
@@ -89,7 +93,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 const tokenFees = newFeesMap.get(tokenAddress) || [];
 
                 // Network fee for this token
-                if (token.fee) {
+                if (token.fee && intent.task !== TASK.TRANSFER_WALLET_TO_TREASURY) {
                     tokenFees.push({
                         chain: intent.asset.chain,
                         type: "network_fee",
@@ -100,11 +104,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
 
                 // Link creation fee if applicable
                 if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
-                    const linkCreationFee = feeService.getFee(
-                        intent.asset.chain,
-                        link.linkType!,
-                        FEE_TYPE.LINK_CREATION,
-                    );
+                    const linkCreationFee = FeeHelpers.getLinkCreationFee();
 
                     if (linkCreationFee) {
                         tokenFees.push({
@@ -134,17 +134,22 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
             </div>
 
             <ol className="flex flex-col gap-3 light-borders-green px-4 py-3 overflow-y-auto max-h-[200px]">
-                {sortedIntents.map((intent) => (
-                    <li key={intent.id}>
-                        <TransactionItem
-                            key={intent.id}
-                            title={t("confirmation_drawer.asset_label")}
-                            intent={intent}
-                            isUsd={isUsd}
-                            fees={feesMap.get(intent.asset.address) || []}
-                        />
-                    </li>
-                ))}
+                {sortedIntents
+                    .sort((a, b) => {
+                        return (a.asset.address ?? "").localeCompare(b.asset.address ?? "");
+                    })
+                    .map((intent) => (
+                        <li key={intent.id}>
+                            <TransactionItem
+                                key={intent.id}
+                                title={t("confirmation_drawer.asset_label")}
+                                intent={intent}
+                                isUsd={isUsd}
+                                fees={feesMap.get(intent.asset.address) || []}
+                                maxActionNumber={maxActionNumber}
+                            />
+                        </li>
+                    ))}
             </ol>
         </section>
     );

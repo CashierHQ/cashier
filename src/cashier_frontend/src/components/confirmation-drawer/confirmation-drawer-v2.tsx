@@ -25,6 +25,7 @@ import { ACTION_STATE } from "@/services/types/enum";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
+import { FeeHelpers } from "@/utils/helpers/fees";
 
 /**
  * Props interface for the ConfirmationDrawerV2 component
@@ -65,6 +66,9 @@ interface ConfirmationDrawerV2Props {
 
     /** Function to update the action button's text */
     setButtonText?: (text: string) => void;
+
+    /** The max action number for the link, required for fee calculation */
+    maxActionNumber?: number;
 }
 
 /**
@@ -86,6 +90,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     setButtonDisabled,
     buttonText,
     setButtonText,
+    maxActionNumber,
 }) => {
     const { t } = useTranslation();
     /** Toggle state for showing USD values instead of token values */
@@ -161,8 +166,14 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                         onInfoClick={onInfoClick}
                         isUsd={isUsd}
                         onUsdClick={() => setIsUsd((old) => !old)}
+                        maxActionNumber={maxActionNumber}
                     />
-                    <ConfirmationPopupFeesSection intents={action.intents} />
+                    {FeeHelpers.shouldDisplayFeeBasedOnIntent(action.intents[0]) && (
+                        <ConfirmationPopupFeesSection
+                            intents={action.intents}
+                            maxActionNumber={maxActionNumber}
+                        />
+                    )}
                     <ConfirmationPopupLegalSection />
                     <Button
                         className="my-2 mx-auto w-[95%] disabled:bg-disabledgreen"

@@ -25,6 +25,8 @@ import { formatNumber } from "@/utils/helpers/currency";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
+import { FeeHelpers } from "@/utils/helpers/fees";
+import { INTENT_TYPE, TASK } from "@/services/types/enum";
 
 interface TransactionItemProps {
     title: string;
@@ -32,12 +34,14 @@ interface TransactionItemProps {
     isUsd?: boolean;
     fees?: FeeModel[];
     networkFee?: FeeModel;
+    maxActionNumber?: number;
 }
 
 // apply memo to prevent unnecessary re-renders
 export const TransactionItem = memo(function TransactionItem({
     intent,
     fees = [],
+    maxActionNumber,
 }: TransactionItemProps) {
     const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
@@ -55,14 +59,25 @@ export const TransactionItem = memo(function TransactionItem({
             (fee) => fee.address === intent.asset.address && fee.type === "network_fee",
         );
 
-        // Calculate adjusted amount by subtracting only the network fee
-        if (networkFee && token.decimals !== undefined) {
-            // const networkFeeAmount = Number(networkFee.amount) / 10 ** token.decimals;
-            const newAdjustedAmount = assetAmount;
+        if (FeeHelpers.shouldDisplayFeeBasedOnIntent(intent)) {
+            // Calculate adjusted amount by subtracting only the network fee
+            if (networkFee && token.decimals !== undefined) {
+                const totalTokenAmount = FeeHelpers.getDisplayAmount(
+                    token,
+                    BigInt(intent.amount),
+                    Number(maxActionNumber ?? 1),
+                );
+                setAdjustedAmount(totalTokenAmount);
+            } else {
+                const feeAmount = fees.find(
+                    (fee) =>
+                        fee.address === intent.asset.address && fee.type === "link_creation_fee",
+                );
 
-            setAdjustedAmount(newAdjustedAmount);
+                setAdjustedAmount(Number(feeAmount?.amount) / 10 ** token.decimals);
+            }
         } else {
-            setAdjustedAmount(assetAmount);
+            setAdjustedAmount(Number(intent.amount) / 10 ** token.decimals);
         }
     }, [assetAmount, fees, intent.asset.address, token]);
 
@@ -96,7 +111,10 @@ export const TransactionItem = memo(function TransactionItem({
                 >
                     <div className="flex items-center gap-1">
                         <p className="text-[14px] font-normal">
-                            {formatNumber(adjustedAmount?.toString() || "0")}
+                            {intentTitle.toLowerCase().includes("link creation fee")
+                                ? Number(FeeHelpers.getLinkCreationFee().displayAmount) /
+                                  10 ** FeeHelpers.getLinkCreationFee().decimals
+                                : formatNumber(adjustedAmount?.toString() || "0")}{" "}
                         </p>
                     </div>
                     <p className="text-[10px] font-normal text-grey/50">
