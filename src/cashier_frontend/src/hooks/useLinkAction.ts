@@ -101,30 +101,14 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
         }
     };
 
-    const refetchLinkDetail = async (explicitLinkId?: string) => {
-        // Use the explicit link ID if provided, otherwise fall back to the hook's linkId
-        const currentLinkId = explicitLinkId || linkId;
-        console.log("refetchLinkDetail called with linkId:", currentLinkId);
-
-        if (!currentLinkId) {
-            console.warn("refetchLinkDetail called with undefined linkId");
-            return;
-        }
-
-        try {
-            await linkDetailQuery.refetch();
-            console.log("refetchLinkDetail completed successfully for linkId:", currentLinkId);
-        } catch (error) {
-            console.error("Error in refetchLinkDetail for linkId ${currentLinkId}:", error);
-            throw error;
-        }
+    const refetchLinkDetail = async () => {
+        await linkDetailQuery.refetch();
     };
 
     const refetchAction = async (linkId: string, actionType?: ACTION_TYPE) => {
         console.log("refetchAction", linkId, actionType);
 
         if (!linkId) {
-            console.warn("refetchAction called with undefined linkId");
             return;
         }
 
