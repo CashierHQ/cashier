@@ -288,19 +288,40 @@
     "claim_page": {
         "SendTip": {
             "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later."
+            "transaction_failed": "Your claim failed. Please try again later.",
+            "use_link_button": "Claim",
+            "use_link_message": "Congratulations, you received a tip!",
+            "complete_message": "Congratulations, you claimed a tip!",
+            "complete_button": "Claimed"
         },
         "SendAirdrop": {
             "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later."
+            "transaction_failed": "Your claim failed. Please try again later.",
+            "use_link_button": "Claim",
+            "use_link_message": "Congratulations, you received an airdrop!",
+            "complete_message": "Congratulations, you claimed an airdrop!",
+            "complete_button": "Claimed"
         },
         "SendTokenBasket": {
             "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later."
+            "transaction_failed": "Your claim failed. Please try again later.",
+            "use_link_button": "Claim",
+            "use_link_message": "Congratulations, you received a token basket!",
+            "complete_message": "Congratulations, you claimed a token basket!",
+            "complete_button": "Claimed"
         },
         "ReceivePayment": {
             "transaction_success": "Congratulations! Your payment was successful.",
-            "transaction_failed": "Your payment failed. Please try again later."
+            "transaction_failed": "Your payment failed. Please try again later.",
+            "use_link_button": "Pay",
+            "use_link_message": "Pay for the link",
+            "complete_message": "Congratulations, you paid successfully!",
+            "complete_button": "Paid"
+        },
+        "unknown": {
+            "use_link_button": "Unknown! Need to check link type",
+            "complete_message": "Unknown! Need to check link type",
+            "complete_button": "Unknown! Need to check link type"
         }
     },
     "add_asset_form": {
