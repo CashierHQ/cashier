@@ -25,7 +25,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useResponsive } from "@/hooks/responsive-hook";
-import { formatNumber } from "@/utils/helpers/currency";
+import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import {
@@ -493,7 +493,7 @@ export default function LinkPreview({
                                                 </p>
                                             </div>
                                             <p className="text-[10px] font-normal text-grey-400/50">
-                                                ~${formatNumber(approximateUsdValue.toString())}
+                                                {formatDollarAmount(approximateUsdValue)}
                                             </p>
                                         </div>
                                     </div>
@@ -547,7 +547,7 @@ export default function LinkPreview({
                                         </p>
                                     </div>
                                     <p className="text-[10px] font-normal text-grey-400/50">
-                                        ~${formatNumber(usdValue.toString())}
+                                        {formatDollarAmount(usdValue)}
                                     </p>
                                 </div>
                             </div>

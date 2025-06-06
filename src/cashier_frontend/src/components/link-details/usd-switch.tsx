@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { formatNumber } from "@/utils/helpers/currency";
+import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { Repeat2 } from "lucide-react";
 import { FC, useMemo, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -89,19 +89,7 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             return <span className="flex items-center">~$0</span>;
         }
 
-        // Check if the formatted value already contains a dollar sign
-        const hasPrefix =
-            typeof conversionResult.usdFormatted === "string" &&
-            conversionResult.usdFormatted.includes("$");
-
-        return (
-            <span className="flex items-center">
-                {!hasPrefix && <span>~$</span>}
-                {hasPrefix && typeof conversionResult.usdFormatted === "string"
-                    ? conversionResult.usdFormatted.replace(/\$/g, "~$")
-                    : conversionResult.usdFormatted}
-            </span>
-        );
+        return formatDollarAmount(conversionResult.usdAmount);
     }, [isUsd, amount, symbol, conversionResult]);
 
     // Provide a utility function to convert between USD and token amounts

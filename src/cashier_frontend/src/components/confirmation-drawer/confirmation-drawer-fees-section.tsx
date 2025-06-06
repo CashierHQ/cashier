@@ -28,7 +28,7 @@ import { Avatar } from "../ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTranslation } from "react-i18next";
-import { formatNumber } from "@/utils/helpers/currency";
+import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -184,7 +184,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     amount: formatNumber(tokenAmount.toString()),
                     tokenSymbol: token?.symbol || "Unknown",
                     tokenAddress: tokenAddress!,
-                    usdAmount: formatNumber(usdValue.toString()),
+                    usdAmount: usdValue.toString(),
                 };
 
                 console.log("breakdownItem", breakdownItem);
@@ -265,7 +265,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                                         <span className="text-[14px] font-normal"></span>
                                     ) : (
                                         <p className="text-[14px] font-normal">
-                                            ~${totalCashierFee.toFixed(4)}
+                                            {formatDollarAmount(totalCashierFee)}
                                         </p>
                                     )}
                                     <ChevronRight size={24} className="ml-1" />

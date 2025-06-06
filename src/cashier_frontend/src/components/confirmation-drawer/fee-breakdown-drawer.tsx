@@ -20,6 +20,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { X } from "lucide-react";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
+import { formatDollarAmount } from "@/utils/helpers/currency";
 
 export type FeeBreakdownDrawerProps = {
     open?: boolean;
@@ -90,7 +91,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                                     </div>
                                     <div className="flex justify-end">
                                         <p className="text-[10px] font-normal text-grey/50">
-                                            ~${fee.usdAmount}
+                                            {formatDollarAmount(Number(fee.usdAmount))}
                                         </p>
                                     </div>
                                 </div>
@@ -121,7 +122,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                     </div>
                     <div className="flex justify-end">
                         <p className="text-[10px] font-normal text-grey/50">
-                            {totalFees === 0 ? "-" : `~$${totalFees.toFixed(4)}`}
+                            {totalFees === 0 ? "-" : formatDollarAmount(totalFees)}
                         </p>
                     </div>
                 </div>

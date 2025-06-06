@@ -19,7 +19,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "./ui/drawer";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "./ui/asset-avatar";
 import { convertDecimalBigIntToNumber } from "@/utils";
-import { formatNumber } from "@/utils/helpers/currency";
+import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { IconInput } from "./icon-input";
 import { Search, X } from "lucide-react";
 interface AssetDrawerProps {
@@ -79,7 +79,7 @@ const SelectableToken: React.FC<{
 
                 {token.usdEquivalent ? (
                     <span className="flex flex-row items-center justify-end text-grey text-xs font-light leading-none">
-                        ${formatNumber(token.usdEquivalent.toString())}
+                        {formatDollarAmount(token.usdEquivalent)}
                     </span>
                 ) : (
                     <span className="text-right text-grey text-xs font-light leading-none">-</span>
