@@ -30,7 +30,6 @@ const targets = [
     import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID,
 ];
 
-console.log("ENV", import.meta.env.VITE_IC_EXPLORER_BASE_URL);
 console.log(import.meta.env.MODE);
 console.log(import.meta.env.VITE_BACKEND_CANISTER_ID);
 console.log(import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID);
@@ -43,6 +42,17 @@ const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
 
 console.log("TIMEOUT_NANO_SEC", TIMEOUT_NANO_SEC);
 console.log("IDLE_TIMEOUT_MILLI_SEC", IDLE_TIMEOUT_MILLI_SEC);
+
+// only apply for production
+const getDerivationOrigin = () => {
+    if (import.meta.env.MODE === "production") {
+        return {
+            derivationOrigin: "https://cashierapp.io",
+        };
+    }
+
+    return {};
+};
 
 function App() {
     const queryClient = new QueryClient();
@@ -66,6 +76,8 @@ function App() {
                 idleOptions: {
                     idleTimeout: IDLE_TIMEOUT_MILLI_SEC,
                 },
+                // if derivationOrigin is not null, it will be used to derive the signer
+                ...getDerivationOrigin(),
             }}
             discoverExtensionSigners={true}
         >
