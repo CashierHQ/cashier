@@ -6,7 +6,7 @@
     "type": "module",
     "scripts": {
         "setup": "npm i && dfx canister create cashier_backend && dfx generate cashier_backend",
-        "start": "vite --port 3000 --host --mode staging",
+        "start": "vite --port 3000 --host --mode dev",
         "build": "tsc && vite build",
         "build:local": "tsc && vite build --mode local",
         "build:dev": "tsc && vite build --mode dev",
