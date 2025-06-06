@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { QueryFunctionContext, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
@@ -130,30 +130,11 @@ export function useUpdateLinkMutation() {
                 );
                 return Promise.resolve(localStorageLink);
             } else {
-                const localLinkId = LOCAL_lINK_ID_PREFIX + linkId;
                 const updated_link = linkService.updateLink(
                     data.linkId,
                     data.linkModel,
                     data.isContinue,
                 );
-                try {
-                    // link can be deleted, need to handle
-                    const localStorage = linkLocalStorageService.callUpdateLink(
-                        localLinkId,
-                        data.linkModel,
-                        data.isContinue,
-                    );
-                    console.log("localStorage", localStorage);
-                } catch (error) {
-                    console.error(
-                        `
-                        ======= IGNORE THIS ERROR =======
-                        Error updating link in local storage
-                        ======= IGNORE THIS ERROR =======
-                        `,
-                        error,
-                    );
-                }
 
                 return updated_link;
             }

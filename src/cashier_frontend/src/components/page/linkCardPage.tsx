@@ -47,33 +47,6 @@ export const getTitleForLink = (
     }
 };
 
-export const getMessageForLink = (
-    linkData?: LinkDetailModel,
-    getToken?: (tokenAddress: string) => FungibleToken | undefined,
-    isClaimed?: boolean,
-) => {
-    if (!linkData) return "";
-
-    if (linkData?.linkType === LINK_TYPE.RECEIVE_PAYMENT && getToken) {
-        const tokenAddress = linkData?.asset_info?.[0]?.address;
-        const token = tokenAddress ? getToken(tokenAddress) : undefined;
-        const amount =
-            Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
-        return `You have been requested to pay the amount of ${amount} ${token?.symbol}`;
-    }
-
-    switch (linkData?.linkType) {
-        case LINK_TYPE.SEND_TIP:
-            return `Congratulations, you ${isClaimed ? "claimed" : "received"} a tip!`;
-        case LINK_TYPE.SEND_AIRDROP:
-            return `Congratulations, you ${isClaimed ? "claimed" : "received"} an airdrop!`;
-        case LINK_TYPE.SEND_TOKEN_BASKET:
-            return `Congratulations, you ${isClaimed ? "claimed" : "received"} a token basket!`;
-        default:
-            return "";
-    }
-};
-
 export const getDisplayComponentForLink = (
     linkData?: LinkDetailModel,
     getToken?: (tokenAddress: string) => FungibleToken | undefined,
@@ -281,16 +254,5 @@ export const getHeaderTextColorForLink = (linkData?: LinkDetailModel): string =>
             return headerColors.receive.text;
         default:
             return headerColors.miscellaneous.text;
-    }
-};
-
-export const getClaimButtonLabel = (linkData?: LinkDetailModel): string => {
-    if (!linkData) return "";
-
-    switch (linkData?.linkType) {
-        case LINK_TYPE.RECEIVE_PAYMENT:
-            return "Pay";
-        default:
-            return "Claim";
     }
 };

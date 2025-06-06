@@ -36,7 +36,6 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import {
     getDisplayComponentForLink,
     getHeaderInfoForLink,
-    getMessageForLink,
     getTitleForLink,
 } from "@/components/page/linkCardPage";
 import { toast } from "sonner";
@@ -48,8 +47,6 @@ export const ClaimSchema = z.object({
     amount: z.coerce.number().min(1),
     address: z.string().optional(),
 });
-
-// No longer using step-based order
 
 export default function ClaimPage() {
     const { linkId } = useParams();
@@ -168,8 +165,12 @@ export default function ClaimPage() {
                             />
                         ) : location.pathname.endsWith("/complete") ? (
                             <LinkCardWithoutPhoneFrame
-                                label="Claimed"
-                                message={getMessageForLink(linkData, getToken, true)}
+                                label={t(`claim_page.${linkData?.linkType}.complete_button`, {
+                                    defaultValue: "Unknown! Need to check link type",
+                                })}
+                                message={t(`claim_page.${linkData?.linkType}.complete_message`, {
+                                    defaultValue: "Unknown! Need to check link type",
+                                })}
                                 title={getTitleForLink(linkData, getToken)}
                                 displayComponent={getDisplayComponentForLink(linkData, getToken)}
                                 showHeader={true}

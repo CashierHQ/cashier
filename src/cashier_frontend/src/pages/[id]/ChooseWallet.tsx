@@ -43,7 +43,6 @@ import {
 } from "@/hooks/action-hooks";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
-import { getClaimButtonLabel } from "@/components/page/linkCardPage";
 import { toast } from "sonner";
 
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
@@ -169,7 +168,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         text: string;
         disabled: boolean;
     }>({
-        text: isFetching ? "Loading..." : getClaimButtonLabel(linkData ?? ({} as LinkDetailModel)),
+        text: isFetching ? "Loading..." : t("confirmation_drawer.confirm_button"),
         disabled: false,
     });
 
