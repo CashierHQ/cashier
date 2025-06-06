@@ -51,7 +51,9 @@ export default function DetailPage() {
         createAction,
         callLinkStateMachine,
         isUpdating,
+        isProcessingAction,
         refetchLinkDetail,
+        refetchAction,
         action,
     } = useLinkAction(linkId, ACTION_TYPE.WITHDRAW_LINK);
 
@@ -62,6 +64,7 @@ export default function DetailPage() {
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
     const [isProcessing, setIsProcessing] = React.useState(false);
+    const [isCallStateMachine, setIsCallStateMachine] = React.useState(false);
 
     const { t } = useTranslation();
 
@@ -127,7 +130,7 @@ export default function DetailPage() {
     // Update button text based on action state and processing state
     React.useEffect(() => {
         // If we're actively processing, show "Processing..." regardless of action state
-        if (isProcessing) {
+        if (isProcessing || isCallStateMachine) {
             setDrawerConfirmButton({
                 text: t("confirmation_drawer.inprogress_button"),
                 disabled: true,
@@ -175,7 +178,7 @@ export default function DetailPage() {
             intervalId = setInterval(async () => {
                 try {
                     // Refresh action data
-                    await refetchLinkDetail();
+                    await refetchAction(linkId!, ACTION_TYPE.WITHDRAW_LINK);
 
                     // If action is completed, stop polling
                     if (
@@ -243,6 +246,13 @@ export default function DetailPage() {
     const setInactiveEndedLink = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
+
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
+            setIsCallStateMachine(true);
+
             await callLinkStateMachine({
                 linkId: link.id,
                 linkModel: {},
@@ -252,14 +262,22 @@ export default function DetailPage() {
             setShowConfirmationDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
+        } finally {
+            setIsCallStateMachine(false);
         }
     };
 
     const handleWithdrawAssets = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
-            const actionResult = await createAction(link.id, ACTION_TYPE.WITHDRAW_LINK);
-            setAction(actionResult);
+            if (action) {
+                setAction(action);
+            } else {
+                const actionResult = await createAction(link.id, ACTION_TYPE.WITHDRAW_LINK);
+                setAction(actionResult);
+            }
+
+            setShowConfirmationDrawer(true);
         } catch (error) {
             console.error("Error creating withdraw action:", error);
         }
@@ -330,7 +348,7 @@ export default function DetailPage() {
     return (
         <MainAppLayout>
             <div className="w-full flex flex-col h-full relative pb-24">
-                {isLoading || !link ? (
+                {isLoading && !link ? (
                     renderSkeleton()
                 ) : (
                     <>
@@ -353,12 +371,14 @@ export default function DetailPage() {
                         </div>
 
                         {/* Scrollable Content Area */}
-                        <div className="flex-grow overflow-y-auto pb-24 scrollbar-hide">
-                            <LinkDetail
-                                link={link}
-                                onShareClick={() => setShowShareLinkDrawer(true)}
-                            />
-                        </div>
+                        {link && (
+                            <div className="flex-grow overflow-y-auto pb-24 scrollbar-hide">
+                                <LinkDetail
+                                    link={link}
+                                    onShareClick={() => setShowShareLinkDrawer(true)}
+                                />
+                            </div>
+                        )}
 
                         {/* Fixed Footer */}
                         <div className="absolute bottom-0 left-0 right-0 pt-4 pb-6 px-5 flex flex-col items-center gap-4">
@@ -383,10 +403,10 @@ export default function DetailPage() {
                             )}{" "}
                             {link?.state == LINK_STATE.INACTIVE && (
                                 <Button
-                                    disabled={!hasWithdrawableAssets}
+                                    id="copy-link-button"
+                                    disabled={isProcessingAction || !hasWithdrawableAssets}
                                     onClick={() => {
                                         handleWithdrawAssets();
-                                        setShowConfirmationDrawer(true);
                                     }}
                                     className="w-full disabled:bg-gray-300"
                                 >

@@ -74,8 +74,6 @@ const getDrawerButtonMessage = (
             return { text: t("confirmation_drawer.inprogress_button"), disabled: true };
         case ACTION_STATE.FAIL:
             return { text: t("retry"), disabled: false };
-        default:
-            return { text: t("confirmation_drawer.confirm_button"), disabled: false };
     }
 };
 
@@ -106,6 +104,8 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    // State to track if when the tx is success -> user is continuing to next page
+    const [isCallStateMachine, setIsCallStateMachine] = useState(false);
     const [manuallyClosedDrawer, setManuallyClosedDrawer] = useState(false);
 
     // Button state for confirmation drawer
@@ -177,7 +177,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     useEffect(() => {
         // If we're actively processing, show "Processing..." regardless of action state
 
-        if (isProcessing) {
+        if (isProcessing || isCallStateMachine) {
             setDrawerConfirmButton({
                 text: t("confirmation_drawer.inprogress_button"),
                 disabled: true,
@@ -470,6 +470,12 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
      * Updates link user state after successful transaction
      */ const handleUpdateLinkUserState = async () => {
         try {
+            setIsCallStateMachine(true);
+            setDrawerConfirmButton({
+                text: t("confirmation_drawer.inprogress_button"),
+                disabled: true,
+            });
+
             const result = await updateLinkUserState.mutateAsync({
                 input: {
                     action_type: ACTION_TYPE.USE_LINK,
@@ -479,6 +485,8 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                 },
             });
 
+            console.log("Link user state updated successfully:", result);
+
             // Perform a comprehensive data refresh with enhanced logging
             try {
                 await enhancedRefresh();
@@ -486,18 +494,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                 // Make multiple explicit calls to refetchLinkDetail to ensure parent component updates
                 if (refetchLinkDetail) {
                     await refetchLinkDetail();
-
-                    // Attempt another refresh after a small delay to ensure data propagation
-                    setTimeout(async () => {
-                        try {
-                            await refetchLinkDetail();
-                        } catch (delayedError) {
-                            console.error(
-                                "Error in delayed verification refetchLinkDetail:",
-                                delayedError,
-                            );
-                        }
-                    }, 800);
                 } else {
                 }
             } catch (refreshError) {
@@ -514,6 +510,8 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
             if (isCashierError(error)) {
                 onCashierError(error);
             }
+        } finally {
+            setIsCallStateMachine(false);
         }
     };
 
