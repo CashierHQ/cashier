@@ -21,7 +21,7 @@ import { Plus } from "lucide-react";
 import LinkItem from "@/components/link-item";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { LINK_STATE } from "@/services/types/enum";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatDateString } from "@/utils";
 
 interface AuthenticatedContentProps {
@@ -44,7 +44,7 @@ export const AuthenticatedContent = ({
     resetLinkAndAction,
 }: AuthenticatedContentProps) => {
     const { t } = useTranslation();
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
 
     const renderLinkList = (links: Record<string, LinkDetailModel[]> | undefined) => {
         if (links && Object.keys(links).length > 0) {

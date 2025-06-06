@@ -34,7 +34,7 @@ use crate::{
         CreateLinkInputV2, LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto,
     },
     domains::fee::Fee,
-    error, info,
+    error,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
         user_wallet::UserWalletRepository,
@@ -504,7 +504,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
             ActionType::Use => {
                 // validate link state
-                info!("link state: {:#?}", link.state);
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
                         "Link is not active".to_string(),
@@ -575,7 +574,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
-            ActionType::Use | ActionType::Use => {
+            ActionType::Use => {
                 if action.creator != user_id {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -621,7 +620,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
             }
             //TODO: replace claim as use
-            ActionType::Use | ActionType::Use => {
+            ActionType::Use => {
                 // Validate link state
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
@@ -671,7 +670,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
 
             //TODO: replace claim as use
-            ActionType::Use | ActionType::Use => {
+            ActionType::Use => {
                 if action.creator != user_id {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -756,9 +755,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             action_type.clone(),
             user_id.clone(),
         );
-
-        info!("link_action: {:#?}", link_action);
-
         if link_action.is_empty() {
             return Ok(None);
         }
@@ -844,7 +840,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
     /// Updates link properties after an action completes
     /// Returns true if link properties were updated, false otherwise
-    pub fn update_link_properties(
+    pub fn update_link_use_counter(
         &self,
         link_id: String,
         action_id: String,
@@ -864,27 +860,24 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // At this point we know we have a successful claim on a TipLink
         // Update link's properties here
         let mut updated_link = link.clone();
+        let mut is_update: bool = false;
 
-        let list_send_link_type = [
-            LinkType::SendTip,
-            LinkType::SendAirdrop,
-            LinkType::SendTokenBasket,
-        ];
-
-        if list_send_link_type.contains(&link.link_type.unwrap()) {
-            if action.r#type == ActionType::Use {
-                // Update asset info to track the claim
-                if updated_link.link_use_action_counter + 1 > updated_link.link_use_action_max_count
-                {
-                    return Err(CanisterError::HandleLogicError(
-                        "Link use action counter exceeded max count".to_string(),
-                    ));
-                }
-                updated_link.link_use_action_counter += 1;
+        if action.r#type == ActionType::Use {
+            // Update asset info to track the claim
+            if updated_link.link_use_action_counter + 1 > updated_link.link_use_action_max_count {
+                return Err(CanisterError::HandleLogicError(
+                    "Link use action counter exceeded max count".to_string(),
+                ));
             }
+            updated_link.link_use_action_counter += 1;
+            is_update = true;
         }
 
         // Save the updated link
+        if !is_update {
+            return Ok(false);
+        }
+
         self.link_repository.update(updated_link);
 
         // Return true to indicate that we updated the link
@@ -915,10 +908,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // Send airdrop use multiple time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count >= 1
-            info!(
-                "[link_type_add_asset_validate] link_use_action_max_count: {:#?}",
-                link_use_action_max_count
-            );
 
             if asset_infos.len() == 1
                 && asset_infos[0].amount_per_link_use_action > 0
@@ -1177,12 +1166,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
                 }
                 "asset_info" => {
-                    info!("[is_props_changed] link asset_info: {:#?}", link.asset_info);
-                    info!(
-                        "[is_props_changed] params asset_info: {:#?}",
-                        params.asset_info
-                    );
-
                     match (&link.asset_info, &params.asset_info) {
                         (_, None) => {
                             return false;
@@ -1724,9 +1707,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
 
         // Return early if this isn't a claim/use action or if it's not a successful state
-        if (action_type != ActionType::Use && action_type != ActionType::Use)
-            || current_state != ActionState::Success
-        {
+        if (action_type != ActionType::Use) || current_state != ActionState::Success {
             return Ok(());
         }
 
@@ -1736,7 +1717,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // 3. The current state is Success
 
         // Update link properties
-        let result = self.update_link_properties(link_id.clone(), action_id.clone());
+        let result = self.update_link_use_counter(link_id.clone(), action_id.clone());
         if let Err(err) = result {
             error!(
                 "[link_handle_tx_update] Failed to update link properties for link_id: {:?}, action_id: {:?}, error: {:?}",
