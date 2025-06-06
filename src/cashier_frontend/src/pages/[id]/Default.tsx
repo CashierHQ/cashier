@@ -18,13 +18,12 @@ import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-fram
 import {
     getDisplayComponentForLink,
     getHeaderInfoForLink,
-    getClaimButtonLabel,
-    getMessageForLink,
     getTitleForLink,
 } from "@/components/page/linkCardPage";
 import { useTokens } from "@/hooks/useTokens";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 type LinkCardPageProps = {
     linkData?: LinkDetailModel;
@@ -41,6 +40,7 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
     isLoggedIn = false,
 }) => {
     const { getToken } = useTokens();
+    const { t } = useTranslation();
 
     const linkHeaderInfo = getHeaderInfoForLink(linkData);
 
@@ -50,11 +50,17 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
 
     const isDataLoading = isLoggedIn && isUserStateLoading;
 
+    console.log("DefaultPage linkData", linkData);
+
     return (
         <LinkCardWithoutPhoneFrame
-            label={getClaimButtonLabel(linkData)}
+            label={t(`claim_page.${linkData?.linkType}.use_link_button`, {
+                defaultValue: "Unknown! Need to check link type",
+            })}
             displayComponent={getDisplayComponentForLink(linkData, getToken)}
-            message={getMessageForLink(linkData, getToken)}
+            message={t(`claim_page.${linkData?.linkType}.use_link_message`, {
+                defaultValue: "Unknown! Need to check link type",
+            })}
             title={getTitleForLink(linkData, getToken)}
             onClaim={onClickClaim}
             isDataLoading={isDataLoading}

@@ -94,10 +94,6 @@ export default function DetailPage() {
         };
     }, []);
 
-    React.useEffect(() => {
-        console.log("link", link);
-    }, [link]);
-
     // Check if link has assets that can be withdrawn
     const hasWithdrawableAssets = React.useMemo(() => {
         if (!link) return false;
@@ -191,7 +187,7 @@ export default function DetailPage() {
                 } catch (error) {
                     console.error("Error in polling interval:", error);
                 }
-            }, 2000); // Poll every 2 seconds
+            }, 1500); // Poll every 2 seconds
         }
 
         return () => {
@@ -248,7 +244,7 @@ export default function DetailPage() {
             if (!link) throw new Error("Link data is not available");
 
             setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
+                text: t("processing"),
                 disabled: true,
             });
             setIsCallStateMachine(true);
@@ -258,7 +254,9 @@ export default function DetailPage() {
                 linkModel: {},
                 isContinue: true,
             });
+
             await refetchLinkDetail();
+
             setShowConfirmationDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
