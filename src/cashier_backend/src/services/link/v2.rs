@@ -1402,16 +1402,27 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
             let withdraw_action = self.prefetch_withdraw_action(&link)?;
             if link_state_goto == LinkStateMachineGoto::Continue {
-                if !self.check_link_asset_left(&link).await?
-                    && withdraw_action.is_some()
-                    && withdraw_action.unwrap().state == ActionState::Success
-                {
-                    link.state = LinkState::InactiveEnded;
-                    self.link_repository.update(link.clone());
-                    return Ok(link.clone());
+                if !self.check_link_asset_left(&link).await? {
+                    if let Some(action) = withdraw_action {
+                        if action.state == ActionState::Success {
+                            link.state = LinkState::InactiveEnded;
+                            self.link_repository.update(link.clone());
+                            return Ok(link.clone());
+                        } else {
+                            error!("withdraw_action not success {:#?}", action);
+                            return Err(CanisterError::ValidationErrors(
+                                "Withdraw action not success".to_string(),
+                            ));
+                        }
+                    } else {
+                        error!("withdraw_action is None");
+                        return Err(CanisterError::ValidationErrors(
+                            "Withdraw action not found".to_string(),
+                        ));
+                    }
                 } else {
                     return Err(CanisterError::ValidationErrors(
-                        "Withdraw action not success".to_string(),
+                        "Link still has assets left".to_string(),
                     ));
                 }
             } else {

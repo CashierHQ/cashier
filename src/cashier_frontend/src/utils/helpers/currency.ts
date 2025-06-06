@@ -201,3 +201,10 @@ function convertToSubscript(digits: string): string {
         .map((digit) => subscriptMap[digit] || digit)
         .join("");
 }
+
+export function formatDollarAmount(amount: number): string {
+    return `~$${amount.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
+}

@@ -21,7 +21,7 @@ import { mapIntentsStateToStatus } from "@/utils/map/status.map";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { convert } from "@/utils/helpers/convert";
 import { Avatar } from "@radix-ui/react-avatar";
-import { formatNumber } from "@/utils/helpers/currency";
+import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
@@ -101,8 +101,7 @@ export const TransactionItem = memo(function TransactionItem({
                     </div>
                     <p className="text-[10px] font-normal text-grey/50">
                         {tokenUsdPrice && tokenUsdPrice > 0
-                            ? "~$" +
-                              formatNumber((convert(adjustedAmount, tokenUsdPrice) || 0).toString())
+                            ? formatDollarAmount(convert(adjustedAmount, tokenUsdPrice) || 0)
                             : "No price available"}
                     </p>
                 </div>

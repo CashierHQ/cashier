@@ -134,9 +134,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         } catch (e) {
             const errorMessage = e instanceof Error ? e : new Error("unknown error");
             onCashierError(errorMessage);
-        } finally {
-            setButtonDisabled?.(false);
-            setButtonText?.(t("confirmation_drawer.confirm_button"));
         }
     };
 

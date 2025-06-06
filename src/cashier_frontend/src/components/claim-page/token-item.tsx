@@ -19,7 +19,7 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useTokenStore } from "@/stores/tokenStore";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "@radix-ui/react-avatar";
-import { formatNumber } from "@/utils/helpers/currency";
+import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 
 interface TokenItemProps {
     asset: LinkDetailModel["asset_info"][0];
@@ -52,7 +52,7 @@ const TokenItem: React.FC<TokenItemProps> = ({ asset }) => {
                 </div>
                 <p className="text-[10px] font-normal text-grey-400/50">
                     {tokenPrice > 0
-                        ? "~$" + formatNumber(approximateUsdValue.toString())
+                        ? formatDollarAmount(approximateUsdValue)
                         : "No price available"}
                 </p>
             </div>

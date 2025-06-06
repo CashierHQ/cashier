@@ -322,10 +322,10 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
                 <h2 className="text-[16px] font-medium mb-2">{secondTitle}</h2>
 
                 <div className="flex flex-col gap-2">
-                    {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)}
+                    {/* {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)} */}
                     {renderWalletButton(WALLET_OPTIONS.INTERNET_IDENTITY, "Internet Identity")}
-                    {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets", undefined, true)}
-                    {renderInputWallet()}
+                    {/* {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets", undefined, true)} */}
+                    {/* {renderInputWallet()} */}
                 </div>
             </div>
 
