@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { FC, useState } from "react";
+import { FC, useState, useEffect, useRef } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -90,6 +90,43 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     const { t } = useTranslation();
     /** Toggle state for showing USD values instead of token values */
     const [isUsd, setIsUsd] = useState(false);
+    const [continueButtonTimer, setContinueButtonTimer] = useState(5);
+    const [isTimerRunning, setIsTimerRunning] = useState(false);
+    const timerIntervalRef = useRef<number | null>(null);
+
+    // Effect to handle the countdown timer
+    useEffect(() => {
+        // Clean up function to clear any existing interval
+        const cleanupTimer = () => {
+            if (timerIntervalRef.current !== null) {
+                clearInterval(timerIntervalRef.current);
+                timerIntervalRef.current = null;
+            }
+        };
+
+        // Start timer if it's running
+        if (isTimerRunning && continueButtonTimer > 0) {
+            timerIntervalRef.current = setInterval(() => {
+                setContinueButtonTimer((prev) => {
+                    const newValue = prev - 1;
+                    if (newValue <= 0) {
+                        cleanupTimer();
+                        // When timer reaches 0, continue to next step
+                        onSuccessContinue().catch((e) => {
+                            console.error("Error in onSuccessContinue:", e);
+                            onCashierError(e instanceof Error ? e : new Error("Continue failed"));
+                        });
+                        setIsTimerRunning(false);
+                        return 0;
+                    }
+                    return newValue;
+                });
+            }, 1000);
+        }
+
+        // Cleanup interval on component unmount or when timer is stopped
+        return cleanupTimer;
+    }, [isTimerRunning, continueButtonTimer, onSuccessContinue, onCashierError]);
 
     /**
      * Determine button text based on provided prop or action state
@@ -125,11 +162,14 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         try {
             // Call appropriate handler based on transaction state
             if (isTxSuccess) {
-                // For successful transactions, continue to next step
+                // For successful transactions, proceed immediately
                 await onSuccessContinue();
             } else {
                 // For new or failed transactions, start/retry the transaction
                 await startTransaction();
+                // Start the timer after transaction is initiated
+                setContinueButtonTimer(5);
+                setIsTimerRunning(true);
             }
         } catch (e) {
             const errorMessage = e instanceof Error ? e : new Error("unknown error");
@@ -169,6 +209,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                         onClick={onClickSubmit}
                     >
                         {displayButtonText}
+                        {action?.state === ACTION_STATE.SUCCESS && ` (${continueButtonTimer}s)`}
                     </Button>
                 </>
             );
