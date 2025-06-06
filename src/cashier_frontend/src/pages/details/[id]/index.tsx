@@ -131,6 +131,7 @@ export default function DetailPage() {
     React.useEffect(() => {
         // If we're actively processing, show "Processing..." regardless of action state
         if (isProcessing || isCallStateMachine) {
+            console.log("Setting button to processing state");
             setDrawerConfirmButton({
                 text: t("confirmation_drawer.inprogress_button"),
                 disabled: true,
@@ -139,6 +140,7 @@ export default function DetailPage() {
         }
 
         if (!action) {
+            console.log("No action found, setting button to default state");
             setDrawerConfirmButton({
                 text: t("confirmation_drawer.confirm_button"),
                 disabled: false,
@@ -148,21 +150,27 @@ export default function DetailPage() {
 
         const actionState = action.state;
         if (actionState === ACTION_STATE.SUCCESS) {
+            console.log("Action completed successfully, setting button to continue state");
             setDrawerConfirmButton({
                 text: t("continue"),
                 disabled: false,
             });
         } else if (actionState === ACTION_STATE.PROCESSING) {
+            console.log("Action is processing, setting button to in-progress state");
             setDrawerConfirmButton({
                 text: t("confirmation_drawer.inprogress_button"),
                 disabled: true,
             });
         } else if (actionState === ACTION_STATE.FAIL) {
+            console.log("Action failed, setting button to retry state");
+
             setDrawerConfirmButton({
                 text: t("retry"),
                 disabled: false,
             });
         } else {
+            console.log("Action is in default state, setting button to confirm state");
+
             setDrawerConfirmButton({
                 text: t("confirmation_drawer.confirm_button"),
                 disabled: false,
@@ -191,7 +199,7 @@ export default function DetailPage() {
                 } catch (error) {
                     console.error("Error in polling interval:", error);
                 }
-            }, 2000); // Poll every 2 seconds
+            }, 1500); // Poll every 2 seconds
         }
 
         return () => {
@@ -248,17 +256,23 @@ export default function DetailPage() {
             if (!link) throw new Error("Link data is not available");
 
             setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
+                text: t("processing"),
                 disabled: true,
             });
             setIsCallStateMachine(true);
+
+            console.log("Setting link inactive with callLinkStateMachine");
 
             await callLinkStateMachine({
                 linkId: link.id,
                 linkModel: {},
                 isContinue: true,
             });
+
+            console.log("Link set to inactive successfully");
             await refetchLinkDetail();
+
+            console.log("Refetched link detail after setting inactive");
             setShowConfirmationDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
