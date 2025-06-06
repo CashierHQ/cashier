@@ -10,6 +10,7 @@
         "build": "npm run build --workspaces --if-present",
         "pretest": "make setup-test",
         "start": "npm start --workspaces --if-present",
+        "start-tunnel": "lt -s cashier --port 3000",
         "build:backend": "make build-backend && dfx generate cashier_backend",
         "build:artifact": "bash scripts/compress_build_wasm.sh",
         "setup:test": "bash scripts/setup_test.sh",

@@ -136,7 +136,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             onCashierError(errorMessage);
         } finally {
             setButtonDisabled?.(false);
-            setButtonText?.(t("confirmation_drawer.confirm_button"));
         }
     };
 
