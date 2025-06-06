@@ -93,6 +93,19 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     const [continueButtonTimer, setContinueButtonTimer] = useState(5);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const timerIntervalRef = useRef<number | null>(null);
+    const [initialLoading, setInitialLoading] = useState(false);
+
+    // Add initial delay when component loads with non-success state
+    useEffect(() => {
+        if (open && action && action.state !== ACTION_STATE.SUCCESS) {
+            setInitialLoading(true);
+            const timer = setTimeout(() => {
+                setInitialLoading(false);
+            }, 500);
+
+            return () => clearTimeout(timer);
+        }
+    }, [open, action]);
 
     // Effect to handle the countdown timer
     useEffect(() => {
@@ -101,6 +114,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             if (timerIntervalRef.current !== null) {
                 clearInterval(timerIntervalRef.current);
                 timerIntervalRef.current = null;
+                setIsTimerRunning(false);
             }
         };
 
@@ -116,7 +130,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                             console.error("Error in onSuccessContinue:", e);
                             onCashierError(e instanceof Error ? e : new Error("Continue failed"));
                         });
-                        setIsTimerRunning(false);
                         return 0;
                     }
                     return newValue;
@@ -127,6 +140,15 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         // Cleanup interval on component unmount or when timer is stopped
         return cleanupTimer;
     }, [isTimerRunning, continueButtonTimer, onSuccessContinue, onCashierError]);
+
+    // Clean up timer when drawer closes
+    useEffect(() => {
+        if (!open && timerIntervalRef.current !== null) {
+            clearInterval(timerIntervalRef.current);
+            timerIntervalRef.current = null;
+            setIsTimerRunning(false);
+        }
+    }, [open]);
 
     /**
      * Determine button text based on provided prop or action state
@@ -205,10 +227,10 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                     <ConfirmationPopupLegalSection />
                     <Button
                         className="my-2 mx-auto w-[95%] disabled:bg-disabledgreen"
-                        disabled={isButtonDisabled}
+                        disabled={isButtonDisabled || initialLoading}
                         onClick={onClickSubmit}
                     >
-                        {displayButtonText}
+                        {initialLoading ? t("loading") : displayButtonText}
                         {action?.state === ACTION_STATE.SUCCESS && ` (${continueButtonTimer}s)`}
                     </Button>
                 </>
