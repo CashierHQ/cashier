@@ -455,7 +455,6 @@ export default function DetailPage() {
                             )}{" "}
                             {link?.state == LINK_STATE.INACTIVE && (
                                 <Button
-                                    id="copy-link-button"
                                     disabled={!hasWithdrawableAssets}
                                     onClick={() => {
                                         handleWithdrawAssets();
