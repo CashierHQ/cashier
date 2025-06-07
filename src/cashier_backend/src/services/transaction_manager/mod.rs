@@ -34,6 +34,7 @@ use crate::{
     constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
     core::action::types::ActionDto,
     error,
+    services::ext::get_batch_tokens_fee::get_batch_tokens_fee,
     types::{
         error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
         transaction_manager::ActionData,
@@ -101,16 +102,45 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         &self,
         chain: &Chain,
         intent: &Intent,
+        fee_map: &HashMap<String, Nat>,
     ) -> Result<Vec<Transaction>, CanisterError> {
         // using intent adapter to get the txs by chain
         self.intent_adapter
-            .intent_to_transactions(chain, intent)
-            .map_err(|e| CanisterError::HandleLogicError(e))
+            .intent_to_transactions(chain, intent, fee_map)
     }
 
-    pub fn create_action(&self, temp_action: &TemporaryAction) -> Result<ActionDto, CanisterError> {
+    pub async fn create_action(
+        &self,
+        temp_action: &TemporaryAction,
+    ) -> Result<ActionDto, CanisterError> {
+        // TODO: create a lock here
         let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
         let mut intent_tx_ids_hashmap: HashMap<String, Vec<String>> = HashMap::new();
+
+        // for each intent, get the asset
+        let assets = temp_action
+            .intents
+            .iter()
+            .map(|intent| {
+                intent.r#type.try_get_asset().ok_or_else(|| {
+                    CanisterError::HandleLogicError("Intent does not have asset".to_string())
+                })
+            })
+            .map(|r| match r {
+                Ok(asset) => {
+                    // if asset is not empty, return it
+                    if asset.address.is_empty() {
+                        return Err(CanisterError::HandleLogicError(
+                            "Intent asset is empty".to_string(),
+                        ));
+                    }
+                    Ok(asset)
+                }
+                _ => return r,
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let fee_map = get_batch_tokens_fee(&assets).await?;
 
         // check action id
         let action = self.action_service.get_action_by_id(temp_action.id.clone());
@@ -125,7 +155,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         for intent in temp_action.intents.iter() {
             let chain = intent.chain.clone();
             // assemble txs
-            let txs = self.assemble_txs(&chain, intent)?;
+            let txs = self.assemble_txs(&chain, intent, &fee_map)?;
             intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
 
             // store tx ids in hashmap
@@ -194,6 +224,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             intent_tx_hashmap.clone(),
             temp_action.creator.clone(),
         );
+
+        //TODO: drop the lock here
 
         Ok(ActionDto::from_with_tx(
             temp_action.as_action(),
