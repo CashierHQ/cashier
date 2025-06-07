@@ -619,7 +619,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
-            //TODO: replace claim as use
             ActionType::Use => {
                 // Validate link state
                 if link.state != LinkState::Active {
