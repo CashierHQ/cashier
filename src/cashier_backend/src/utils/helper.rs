@@ -14,16 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use candid::Nat;
 use icrc_ledger_types::icrc1::{account::Subaccount, transfer::Memo};
 use serde_bytes::ByteBuf;
 use uuid::Uuid;
 
+use crate::types::error::CanisterError;
+
 /// Converts a string UUID to a 32-byte Subaccount format
-/// 
+///
 /// This function takes a string UUID and converts it to a 32-byte array where:
 /// - The first 16 bytes contain the UUID bytes
 /// - The remaining 16 bytes are zeros (for padding)
-/// 
+///
 /// This is used specifically for generating subaccounts from link IDs
 /// to maintain consistent addressing across the system.
 // apply for link id only
@@ -39,11 +42,11 @@ pub fn to_subaccount(id: &str) -> Subaccount {
 }
 
 /// Converts a string UUID to a 32-byte Memo format for ICRC transactions
-/// 
+///
 /// This function takes a string UUID and converts it to a 32-byte memo where:
 /// - The first 16 bytes contain the UUID bytes
 /// - The remaining 16 bytes are zeros (for padding)
-/// 
+///
 /// Used for creating memos in ICRC1 transfers and ICRC2 transfer_from operations
 /// to maintain traceability of transactions.
 pub fn to_memo(id: &str) -> Memo {
@@ -54,4 +57,12 @@ pub fn to_memo(id: &str) -> Memo {
     memo[..16].copy_from_slice(&uuid_bytes[0..]);
 
     Memo(ByteBuf::from(memo.to_vec()))
+}
+
+pub fn convert_nat_to_u64(nat_value: &Nat) -> Result<u64, CanisterError> {
+    nat_value
+        .0
+        .clone()
+        .try_into()
+        .map_err(|_| CanisterError::ValidationErrors("Value too large to fit in u64".to_string()))
 }

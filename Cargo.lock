@@ -189,6 +189,7 @@ dependencies = [
  "candid",
  "cashier-types",
  "faux",
+ "futures",
  "getrandom",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",

@@ -72,6 +72,12 @@ pub enum IntentType {
 }
 
 impl IntentType {
+    pub fn try_get_asset(&self) -> Option<Asset> {
+        match self {
+            IntentType::Transfer(data) => Some(data.asset.clone()),
+            IntentType::TransferFrom(data) => Some(data.asset.clone()),
+        }
+    }
     pub fn as_transfer(&self) -> Option<TransferData> {
         match self {
             IntentType::Transfer(data) => Some(data.clone()),
