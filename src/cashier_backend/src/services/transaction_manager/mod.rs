@@ -372,29 +372,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .get_principal()
             .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
 
-        let transfer_amount = u128::try_from(args.amount.clone().0);
-        match transfer_amount {
-            Ok(amount) => {
-                let amount_subtract_fee = {
-                    let token_fee = self.icrc_service.fee(asset).await?;
-                    amount.checked_sub(token_fee as u128)
-                };
-                match amount_subtract_fee {
-                    Some(amount_subtract_fee) => args.amount = Nat::from(amount_subtract_fee),
-                    None => {
-                        return Err(CanisterError::HandleLogicError(
-                            "Failed to calculate fee".to_string(),
-                        ));
-                    }
-                }
-            }
-
-            Err(_) => {
-                return Err(CanisterError::HandleLogicError(
-                    "Failed to convert fee to u128".to_string(),
-                ));
-            }
-        }
+        args.amount = args.amount;
 
         self.icrc_service.transfer_from(asset, args).await?;
 
