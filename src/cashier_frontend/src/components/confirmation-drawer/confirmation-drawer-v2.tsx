@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, useRef } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -90,20 +90,38 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     const { t } = useTranslation();
     /** Toggle state for showing USD values instead of token values */
     const [isUsd, setIsUsd] = useState(false);
+    const [countdown, setCountdown] = useState(0);
 
     /**
      * Determine button text based on provided prop or action state
      * Uses the action state as a fallback if no buttonText prop is provided
      */
-    const displayButtonText =
-        buttonText ||
-        (action?.state === ACTION_STATE.SUCCESS
-            ? t("confirmation_drawer.processing")
-            : action?.state === ACTION_STATE.PROCESSING
-              ? t("confirmation_drawer.inprogress_button")
-              : action?.state === ACTION_STATE.FAIL
-                ? t("retry")
-                : t("confirmation_drawer.confirm_button"));
+    let displayButtonText = "";
+
+    // When in SUCCESS state and countdown is active, ALWAYS show countdown regardless of buttonText
+    if (action?.state === ACTION_STATE.SUCCESS && countdown > 0) {
+        // Make countdown super explicit
+        displayButtonText = `Continue in ${countdown}s`;
+    } else if (buttonText) {
+        displayButtonText = buttonText;
+    } else if (action?.state === ACTION_STATE.SUCCESS) {
+        displayButtonText = t("confirmation_drawer.processing");
+    } else if (action?.state === ACTION_STATE.PROCESSING) {
+        displayButtonText = t("confirmation_drawer.inprogress_button");
+    } else if (action?.state === ACTION_STATE.FAIL) {
+        displayButtonText = t("retry");
+    } else {
+        displayButtonText = t("confirmation_drawer.confirm_button");
+    }
+
+    // Log the button text for debugging
+    console.log("DRAWER STATE:", {
+        buttonText: displayButtonText,
+        countdown,
+        actionState: action?.state,
+        open,
+        isButtonDisabled,
+    });
 
     /**
      * Handles the submit button click
@@ -122,6 +140,9 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             setButtonText(t("confirmation_drawer.processing"));
         }
 
+        // Reset countdown when manually clicking
+        setCountdown(0);
+
         try {
             // Call appropriate handler based on transaction state
             if (isTxSuccess) {
@@ -136,6 +157,43 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             onCashierError(errorMessage);
         }
     };
+
+    /**
+     * Start countdown timer ONLY when action state changes to SUCCESS
+     */
+    useEffect(() => {
+        // Start timer ONLY when action state becomes SUCCESS
+        if (action?.state === ACTION_STATE.SUCCESS && open) {
+            setCountdown(5);
+        }
+    }, [action?.state, open]);
+
+    /**
+     * Handle countdown logic in a separate effect
+     */
+    useEffect(() => {
+        // Only run the countdown if the drawer is open
+        if (countdown <= 0 || !open) return;
+
+        const timer = setTimeout(() => {
+            setCountdown((prev) => prev - 1);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [countdown, open]);
+
+    /**
+     * Auto-trigger button when countdown reaches 0
+     */
+    useEffect(() => {
+        // Only auto-trigger if the drawer is open
+        if (countdown === 1 && open) {
+            const timer = setTimeout(async () => {
+                await onClickSubmit();
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [countdown, onClickSubmit, open]);
 
     /**
      * Give 0.5s delay before enabling the button.
@@ -156,6 +214,16 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             }, 500);
 
             return () => clearTimeout(disableButtonTimeout);
+        }
+    }, [open]);
+
+    /**
+     * Reset countdown when drawer closes
+     */
+    useEffect(() => {
+        if (!open) {
+            console.log("Drawer closed, resetting countdown");
+            setCountdown(0);
         }
     }, [open]);
 
