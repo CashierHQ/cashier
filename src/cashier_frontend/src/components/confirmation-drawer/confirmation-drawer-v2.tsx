@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -136,6 +136,28 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             onCashierError(errorMessage);
         }
     };
+
+    /**
+     * Give 0.5s delay before enabling the button.
+     * Clear the timeout when the component unmounts.
+     */
+    useEffect(() => {
+        if (open) {
+            if (setButtonDisabled) {
+                console.log("setting button disabled");
+                setButtonDisabled(true);
+            }
+
+            const disableButtonTimeout = setTimeout(() => {
+                if (setButtonDisabled) {
+                    console.log("setting button enabled");
+                    setButtonDisabled(false);
+                }
+            }, 500);
+
+            return () => clearTimeout(disableButtonTimeout);
+        }
+    }, [open]);
 
     /**
      * Determine the appropriate title based on action state
