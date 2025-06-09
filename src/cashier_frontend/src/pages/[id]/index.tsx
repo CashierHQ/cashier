@@ -159,7 +159,7 @@ export default function ClaimPage() {
                 {isLoadingLinkData && !linkData ? (
                     renderSkeleton()
                 ) : (
-                    <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
+                    <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
                         {showDefaultPage ? (
                             <DefaultPage
                                 linkData={linkData}

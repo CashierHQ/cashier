@@ -77,8 +77,8 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
                         <div
                             className={`flex items-center justify-center flex-col ${
                                 responsive.isSmallDevice
-                                    ? "px-4 pt-4 h-full overflow-y-auto overscroll-none"
-                                    : "h-[90%] w-[600px] px-4 items-center bg-[white] shadow-[#D6EDE433] shadow-sm rounded-[16px] mx-auto pt-4 pb-4 overflow-y-auto overscroll-none"
+                                    ? "px-3 pt-4 h-full overflow-y-auto overscroll-none"
+                                    : "h-[90%] w-[600px] px-3 items-center bg-[white] shadow-[#D6EDE433] shadow-sm rounded-[16px] mx-auto pt-4 pb-4 overflow-y-auto overscroll-none"
                             }`}
                         >
                             {children}
