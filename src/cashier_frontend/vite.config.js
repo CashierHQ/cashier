@@ -65,7 +65,10 @@ export default defineConfig(({ command, mode }) => {
             },
         },
         esbuild: {
-            pure: mode === "production" ? ["console.log"] : [],
+            // Remove console logs in production and staging environments
+            pure: ["production", "staging"].includes(mode)
+                ? ["console.log", "console.debug", "console.info", "console.warn"]
+                : [],
         },
         server: {
             proxy: {

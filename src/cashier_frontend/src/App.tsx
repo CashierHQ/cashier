@@ -24,7 +24,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
-import { useEffect } from "react";
+// useEffect removed - console logging now handled at build time
 
 const targets = [
     import.meta.env.VITE_BACKEND_CANISTER_ID,
@@ -52,16 +52,8 @@ function App() {
     const queryClient = new QueryClient();
     const { signers } = useSignerStore();
 
-    useEffect(() => {
-        var SHOW_LOGS = import.meta.env.VITE_SHOW_LOGS === "true";
-        if (!SHOW_LOGS) {
-            if (!window.console) window.console = {} as Console;
-            var methods = ["log", "debug", "info", "warn"];
-            for (var i = 0; i < methods.length; i++) {
-                window.console[methods[i] as keyof Console] = function () {};
-            }
-        }
-    }, []);
+    // Console logging is now handled at build time via vite.config.js esbuild.pure option
+    // No need for runtime console manipulation
 
     return (
         <IdentityKitProvider
