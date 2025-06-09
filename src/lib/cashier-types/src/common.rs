@@ -70,6 +70,18 @@ impl FromStr for Chain {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct Wallet {
+    /// The wallet address as a string representation of an ICRC-1 Account.
+    ///
+    /// Format: `{owner}.{subaccount}`
+    /// - `owner`: Principal ID (e.g., "rdmx6-jaaaa-aaaah-qcaiq-cai")
+    /// - `subaccount`: 64-character hex string (32 bytes)
+    ///
+    /// Examples:
+    /// - Main account: "rdmx6-jaaaa-aaaah-qcaiq-cai.0000000000000000000000000000000000000000000000000000000000000000"
+    /// - Subaccount: "rdmx6-jaaaa-aaaah-qcaiq-cai.0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+    ///
+    /// If no subaccount is specified, defaults to 32 zero bytes (64 zeros in hex).
+    /// This format is compatible with ICRC-1 Account::from_str() parsing.
     pub address: String,
     pub chain: Chain,
 }

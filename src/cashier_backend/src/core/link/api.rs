@@ -17,7 +17,7 @@
 use std::str::FromStr;
 
 use candid::Principal;
-use cashier_types::{ActionState, ActionType, LinkUserState};
+use cashier_types::{user, ActionState, ActionType, LinkUserState};
 use ic_cdk::{query, update};
 use uuid::Uuid;
 
@@ -495,6 +495,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     ///
     /// This method creates a blockchain transaction link with enhanced features and
     /// better error handling. Returns the complete link data structure instead of just ID.
+    /// The link will be in preview state if validation passes, else it will return an error.
     ///
     /// # Arguments
     /// * `input` - Link creation parameters in v2 format with additional capabilities
@@ -707,41 +708,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             user_id.as_ref().unwrap(),
         )?;
 
-        //create temp action
-        // fill in link_id info
-        // fill in action_type info
-        // fill in default_link_user_state info
-        let default_link_user_state = match action_type {
-            ActionType::Use => Some(LinkUserState::ChooseWallet),
-            _ => None,
-        };
-        let mut temp_action = TemporaryAction {
-            id: Uuid::new_v4().to_string(),
-            r#type: action_type,
-            state: ActionState::Created,
-            creator: user_id.as_ref().unwrap().to_string(),
-            link_id: input.link_id.clone(),
-            intents: vec![],
-            default_link_user_state,
-        };
-
-        let caller = self.ic_env.caller();
-
-        // fill the intent info
-        let intents = self
-            .link_service
-            .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller)
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!(
-                    "[create_action] Failed to assemble intents: {}",
-                    e
-                ))
-            })?;
-
-        temp_action.intents = intents;
-
         // create real action
-        let res = self.tx_manager_service.create_action(&temp_action).await?;
+        let res = self
+            .tx_manager_service
+            .create_action_v2(&input.link_id, &action_type, &user_id.unwrap(), &caller)
+            .await?;
 
         Ok(res)
     }
@@ -809,39 +780,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             &user_id,
         )?;
 
-        //create temp action
-        // fill in link_id info
-        // fill in action_type info
-        // fill in default_link_user_state info
-        let default_link_user_state = match action_type {
-            ActionType::Use => Some(LinkUserState::ChooseWallet),
-            _ => None,
-        };
-        let mut temp_action = TemporaryAction {
-            id: Uuid::new_v4().to_string(),
-            r#type: action_type,
-            state: ActionState::Created,
-            creator: user_id.clone(),
-            link_id: input.link_id.clone(),
-            intents: vec![],
-            default_link_user_state,
-        };
-
-        // fill the intent info
-        let intents = self
-            .link_service
-            .assemble_intents(&temp_action.link_id, &temp_action.r#type, &wallet_address)
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!(
-                    "[create_action_anonymous] Failed to assemble intents: {}",
-                    e
-                ))
-            })?;
-
-        temp_action.intents = intents;
-
-        // create real action
-        let res = self.tx_manager_service.create_action(&temp_action).await?;
+        let res = self
+            .tx_manager_service
+            .create_action_v2(&input.link_id, &action_type, &user_id, &caller)
+            .await?;
 
         Ok(res)
     }

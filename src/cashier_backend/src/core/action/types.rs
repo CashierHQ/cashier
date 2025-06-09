@@ -185,11 +185,24 @@ impl ActionDto {
 
     pub fn build(action_data: &ActionData, icrc_112_requests: Option<Icrc112Requests>) -> Self {
         let intents = action_data.clone().intents.clone();
+
         let intents_dto = intents
             .into_iter()
             .map(|intent| {
                 // let transactions = intent_hashmap.get(&intent.id).unwrap();
-                IntentDto::from(intent)
+                let intent_id = intent.id.clone();
+                let mut intent_dto = IntentDto::from(intent);
+                let txs = action_data
+                    .intent_txs
+                    .get(&intent_id)
+                    .cloned()
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(TransactionDto::from)
+                    .collect();
+
+                intent_dto.transactions = txs;
+                intent_dto
             })
             .collect();
 
@@ -277,7 +290,7 @@ impl From<cashier_types::Intent> for IntentDto {
             chain: intent.chain.to_string(),
             r#type,
             type_metadata,
-            transactions: vec![],
+            transactions: Vec::new(),
         }
     }
 }

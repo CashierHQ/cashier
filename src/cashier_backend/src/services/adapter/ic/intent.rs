@@ -14,9 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::HashMap;
-
-use candid::Nat;
 use cashier_types::{
     FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
     IntentTask, IntentType, Protocol, Transaction, TransactionState, TransferData,
@@ -27,10 +24,7 @@ use uuid::Uuid;
 use crate::{
     services::adapter::IntentAdapter,
     types::error::CanisterError,
-    utils::{
-        helper::{convert_nat_to_u64, to_memo},
-        runtime::IcEnvironment,
-    },
+    utils::{helper::to_memo, runtime::IcEnvironment},
 };
 
 #[cfg_attr(test, faux::create)]
@@ -48,29 +42,15 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     fn assemble_icrc1_wallet_transfer(
         &self,
         transfer_intent: TransferData,
-        fee_map: &HashMap<String, Nat>,
     ) -> Result<Vec<Transaction>, CanisterError> {
         let id: Uuid = Uuid::new_v4();
         let ts = self.ic_env.time();
-
-        let token_fee = fee_map
-            .get(&transfer_intent.asset.address)
-            .cloned()
-            .ok_or_else(|| {
-                CanisterError::ValidationErrors(format!(
-                    "Fee for asset {} not found in fee map",
-                    transfer_intent.asset.address
-                ))
-            })?;
-
-        let amount_in_nat: Nat = transfer_intent.amount.clone() + token_fee;
-        let amount = convert_nat_to_u64(&amount_in_nat)?;
 
         let icrc1_transfer = Icrc1Transfer {
             from: transfer_intent.from,
             to: transfer_intent.to,
             asset: transfer_intent.asset,
-            amount: amount,
+            amount: transfer_intent.amount,
             ts: Some(ts),
             memo: Some(to_memo(&id.to_string())),
         };
@@ -94,29 +74,15 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     fn assemble_icrc2_wallet_transfer(
         &self,
         transfer_intent: TransferFromData,
-        fee_map: &HashMap<String, Nat>,
     ) -> Result<Vec<Transaction>, CanisterError> {
         let ts = self.ic_env.time();
         let approve_id = Uuid::new_v4();
-
-        let token_fee = fee_map
-            .get(&transfer_intent.asset.address)
-            .cloned()
-            .ok_or_else(|| {
-                CanisterError::ValidationErrors(format!(
-                    "Fee for asset {} not found in fee map",
-                    transfer_intent.asset.address
-                ))
-            })?;
-
-        let amount_in_nat: Nat = transfer_intent.amount.clone() + token_fee;
-        let amount = convert_nat_to_u64(&amount_in_nat)?;
 
         let icrc2_approve = Icrc2Approve {
             from: transfer_intent.from.clone(),
             spender: transfer_intent.spender.clone(),
             asset: transfer_intent.asset.clone(),
-            amount: amount,
+            amount: transfer_intent.amount.clone(),
         };
 
         let ic_approve_tx = IcTransaction::Icrc2Approve(icrc2_approve);
@@ -137,7 +103,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
             to: transfer_intent.to,
             spender: transfer_intent.spender,
             asset: transfer_intent.asset,
-            amount: amount,
+            amount: transfer_intent.amount,
             ts: Some(ts),
             memo: Some(to_memo(&transfer_id.to_string())),
         };
@@ -159,29 +125,15 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     fn assemble_icrc1_canister_transfer(
         &self,
         transfer_intent: TransferData,
-        fee_map: &HashMap<String, Nat>,
     ) -> Result<Vec<Transaction>, CanisterError> {
         let id: Uuid = Uuid::new_v4();
         let ts = self.ic_env.time();
-
-        let token_fee = fee_map
-            .get(&transfer_intent.asset.address)
-            .cloned()
-            .ok_or_else(|| {
-                CanisterError::ValidationErrors(format!(
-                    "Fee for asset {} not found in fee map",
-                    transfer_intent.asset.address
-                ))
-            })?;
-
-        let amount_in_nat: Nat = transfer_intent.amount.clone() + token_fee;
-        let amount = convert_nat_to_u64(&amount_in_nat)?;
 
         let icrc1_transfer = Icrc1Transfer {
             from: transfer_intent.from,
             to: transfer_intent.to,
             asset: transfer_intent.asset,
-            amount: amount,
+            amount: transfer_intent.amount,
             ts: Some(ts),
             memo: Some(to_memo(&id.to_string())),
         };
@@ -204,23 +156,16 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
 
 #[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
-    fn intent_to_transactions(
-        &self,
-        intent: &Intent,
-        fee_map: &HashMap<String, Nat>,
-    ) -> Result<Vec<Transaction>, CanisterError> {
+    fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
         match (intent.task.clone(), intent.r#type.clone()) {
             (IntentTask::TransferWalletToLink, IntentType::Transfer(transfer_intent)) => {
-                self.assemble_icrc1_wallet_transfer(transfer_intent, fee_map)
+                self.assemble_icrc1_wallet_transfer(transfer_intent)
             }
             (IntentTask::TransferWalletToTreasury, IntentType::TransferFrom(transfer_intent)) => {
-                self.assemble_icrc2_wallet_transfer(transfer_intent, fee_map)
+                self.assemble_icrc2_wallet_transfer(transfer_intent)
             }
             (IntentTask::TransferLinkToWallet, IntentType::Transfer(transfer_intent)) => {
-                self.assemble_icrc1_canister_transfer(transfer_intent, fee_map)
-            }
-            (IntentTask::TransferPayment, IntentType::Transfer(transfer_intent)) => {
-                self.assemble_icrc1_canister_transfer(transfer_intent, fee_map)
+                self.assemble_icrc1_canister_transfer(transfer_intent)
             }
             _ => {
                 return Err(CanisterError::InvalidInput(

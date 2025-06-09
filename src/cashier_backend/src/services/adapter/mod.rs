@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::{collections::HashMap, marker::PhantomData};
+use std::marker::PhantomData;
 
-use candid::Nat;
 use cashier_types::{ActionType, Chain, Intent, Link, LinkType, Transaction};
 use ic::{action::IcActionAdapter, intent::IcIntentAdapter};
 
@@ -50,11 +49,7 @@ pub trait ActionAdapter {
 
 /// Specialization for converting intents to transactions
 pub trait IntentAdapter {
-    fn intent_to_transactions(
-        &self,
-        intent: &Intent,
-        fee_map: &HashMap<String, Nat>,
-    ) -> Result<Vec<Transaction>, CanisterError>;
+    fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError>;
 }
 
 #[cfg_attr(test, faux::create)]
@@ -103,12 +98,11 @@ impl<E: IcEnvironment + Clone> IntentAdapterImpl<E> {
         &self,
         chain: &Chain,
         intent: &Intent,
-        fee_map: &HashMap<String, Nat>,
     ) -> Result<Vec<Transaction>, CanisterError> {
         match chain {
             Chain::IC => {
                 let ic_intent_adapter: IcIntentAdapter<E> = IcIntentAdapter::new();
-                ic_intent_adapter.intent_to_transactions(intent, fee_map)
+                ic_intent_adapter.intent_to_transactions(intent)
             }
         }
     }
