@@ -19,7 +19,6 @@ import { useParams, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import LinkCardWithoutPhoneFrame from "@/components/link-card-without-phone-frame";
 import { ACTION_STATE, ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useLinkUserState } from "@/hooks/linkUserHooks";
@@ -33,11 +32,6 @@ import LinkNotFound from "@/components/link-not-found";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import {
-    getDisplayComponentForLink,
-    getHeaderInfoForLink,
-    getTitleForLink,
-} from "@/components/page/linkCardPage";
 import { toast } from "sonner";
 import { ChooseWallet } from "./ChooseWallet";
 import { useIdentity } from "@nfid/identitykit/react";
