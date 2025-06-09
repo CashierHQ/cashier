@@ -179,11 +179,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 // Create intent for transfer fee to treasury
                 let transfer_fee_intent = self.create_fee_intent();
-                info!(
-                    "[look_up_intent] create transfer fee intent: {:#?}",
-                    transfer_fee_intent
-                );
-
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
             }
@@ -552,8 +547,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 IntentTask::TransferWalletToLink => {
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         CanisterError::HandleLogicError(
-                            "[get_assets_for_action] task TransferWalletToLink Asset not found"
-                                .to_string(),
+                            format!(
+                                "[get_assets_for_action] task TransferWalletToLink Asset not found for label: {}",
+                                intent.label
+                            ),
                         )
                     })?;
 

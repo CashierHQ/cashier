@@ -47,6 +47,7 @@ use crate::{
         icrc::IcrcService,
         runtime::{IcEnvironment, RealIcEnvironment},
     },
+    warn,
 };
 
 pub mod validate;
@@ -613,10 +614,20 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                         if valid {
                             Ok(TransactionState::Success)
                         } else {
+                            warn!(
+                                "[manual_check_status] Icrc1Transfer failed: Insufficient balance for transfer {:?}",
+                                transaction
+                            );
                             Ok(TransactionState::Fail)
                         }
                     }
-                    Err(_) => Ok(TransactionState::Fail),
+                    Err(_) => {
+                        warn!(
+                            "[manual_check_status] Icrc1Transfer failed: Error validating balance for transfer {:?}",
+                            transaction
+                        );
+                        Ok(TransactionState::Fail)
+                    }
                 }
             }
             // Check allowance for Icrc2Approve
@@ -658,6 +669,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                         if valid {
                             Ok(TransactionState::Success)
                         } else {
+                            warn!(
+                                "[manual_check_status] Icrc2Approve failed: Insufficient allowance for transfer {:?}",
+                                transaction
+                            );
                             Ok(TransactionState::Fail)
                         }
                     }
@@ -666,6 +681,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => {
                 // if this being called it mean the tx is timeout -> fail
+                warn!("[manual_check_status] Icrc2TransferFrom failed: Transaction timed out");
                 return Ok(TransactionState::Fail);
             } // _ => return Err("Invalid protocol".to_string()),
         }
