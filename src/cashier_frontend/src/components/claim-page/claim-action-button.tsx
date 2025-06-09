@@ -17,6 +17,7 @@
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FixedBottomButton } from "../fix-bottom-button";
+import { Button } from "../ui/button";
 
 interface UseActionButtonProps {
     isDisabled?: boolean;
@@ -42,15 +43,15 @@ const UseActionButton: React.FC<UseActionButtonProps> = ({
     }, [isDisabled, setDisabled]);
 
     return (
-        <FixedBottomButton
+        <Button
             type="submit"
             variant="default"
-            className="w-full mt-auto disabled:bg-disabledgreen"
+            className="w-[95%] mx-auto mb-2 mt-auto disabled:bg-disabledgreen"
             disabled={isDisabled}
             onClick={onSubmit}
         >
             {buttonText ?? t("claim.claim")}
-        </FixedBottomButton>
+        </Button>
     );
 };
 

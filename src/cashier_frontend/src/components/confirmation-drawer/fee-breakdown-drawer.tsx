@@ -99,7 +99,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                         })}
                 </div>
 
-                <div className="mt-2 light-borders-green px-4 py-4 flex flex-col">
+                <div className="mt-2 light-borders-green px-4 py-4 mb-2 flex flex-col">
                     {" "}
                     <div className="flex justify-between items-center">
                         <span className="text-[14px] font-normal">Total fees</span>
@@ -127,7 +127,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                     </div>
                 </div>
 
-                <Button className="mt-6" onClick={onClose}>
+                <Button className="mt-6 mx-auto w-[95%] my-2" onClick={onClose}>
                     Close
                 </Button>
             </DrawerContent>

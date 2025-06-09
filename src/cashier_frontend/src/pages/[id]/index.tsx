@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -112,7 +112,7 @@ export default function ClaimPage() {
         const currentPath = location.pathname;
 
         // Set UI based on current route
-        if (currentPath.endsWith("/choose-wallet") || currentPath.endsWith("/complete")) {
+        if (currentPath.endsWith("/choose-wallet")) {
             setShowDefaultPage(false);
         } else {
             setShowDefaultPage(true);
@@ -149,38 +149,43 @@ export default function ClaimPage() {
         return <LinkNotFound />;
     }
 
+    const isCompletePage = useMemo(() => {
+        return location.pathname.endsWith("/complete");
+    }, [location.pathname]);
+
     return (
         <MainAppLayout>
             <SheetWrapper>
                 {isLoadingLinkData && !linkData ? (
                     renderSkeleton()
                 ) : (
-                    <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] my-3">
+                    <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
                         {showDefaultPage ? (
                             <DefaultPage
                                 linkData={linkData}
                                 onClickClaim={handleClickClaim}
                                 isUserStateLoading={isUserStateLoading}
                                 isLoggedIn={!!identity}
-                            />
-                        ) : location.pathname.endsWith("/complete") ? (
-                            <LinkCardWithoutPhoneFrame
-                                label={t(`claim_page.${linkData?.linkType}.complete_button`, {
-                                    defaultValue: "Unknown! Need to check link type",
-                                })}
-                                message={t(`claim_page.${linkData?.linkType}.complete_message`, {
-                                    defaultValue: "Unknown! Need to check link type",
-                                })}
-                                title={getTitleForLink(linkData, getToken)}
-                                displayComponent={getDisplayComponentForLink(linkData, getToken)}
-                                showHeader={true}
-                                headerColor={getHeaderInfoForLink(linkData).headerColor}
-                                headerTextColor={getHeaderInfoForLink(linkData).headerTextColor}
-                                headerText={getHeaderInfoForLink(linkData).headerText}
-                                headerIcon={getHeaderInfoForLink(linkData).headerIcon}
-                                disabled={true}
+                                isCompletePage={isCompletePage}
                             />
                         ) : (
+                            // ) : location.pathname.endsWith("/complete") ? (
+                            // <LinkCardWithoutPhoneFrame
+                            //     label={t(`claim_page.${linkData?.linkType}.complete_button`, {
+                            //         defaultValue: "Unknown! Need to check link type",
+                            //     })}
+                            //     message={t(`claim_page.${linkData?.linkType}.complete_message`, {
+                            //         defaultValue: "Unknown! Need to check link type",
+                            //     })}
+                            //     title={getTitleForLink(linkData, getToken)}
+                            //     displayComponent={getDisplayComponentForLink(linkData, getToken)}
+                            //     showHeader={true}
+                            //     headerColor={getHeaderInfoForLink(linkData).headerColor}
+                            //     headerTextColor={getHeaderInfoForLink(linkData).headerTextColor}
+                            //     headerText={getHeaderInfoForLink(linkData).headerText}
+                            //     headerIcon={getHeaderInfoForLink(linkData).headerIcon}
+                            //     disabled={true}
+                            // />
                             <ChooseWallet
                                 refetchLinkDetail={refetchLinkDetail}
                                 form={form}
