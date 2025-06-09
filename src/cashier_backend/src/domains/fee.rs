@@ -24,7 +24,7 @@ pub enum Fee {
     // CreateTipLinkFeeIcp = 100_000,
     // TODO: change back to 0.001, this is for testing only
     // CreateTipLinkFeeIcp = 20_000,
-    CreateTipLinkFeeIcp = 90_000,
+    CreateTipLinkFeeIcp = 80_000,
 }
 
 impl Fee {
