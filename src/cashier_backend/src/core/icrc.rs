@@ -45,21 +45,18 @@ fn icrc10_supported_standards() -> Vec<Icrc21SupportedStandard> {
 #[update]
 fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
     let trusted_origins = vec![
-        String::from("https://standards.identitykit.xyz"),
-        String::from("https://dev.standards.identitykit.xyz"),
-        String::from("https://demo.identitykit.xyz"),
-        String::from("https://dev.demo.identitykit.xyz"),
-        String::from("https://nfid.one"),
-        String::from("https://dev.nfid.one"),
-        // dev env
         String::from("http://localhost:3001"),
         String::from("http://localhost:3002"),
         String::from("http://localhost:3000"),
+        // dev env
+        String::from("https://dev.cashierapp.io"),
+        String::from("https://bepcz-nyaaa-aaaam-aekoa-cai.icp0.io"),
         // staging env
         String::from("https://staging.cashierapp.io"),
         String::from("https://iqwhg-ciaaa-aaaam-admvq-cai.icp0.io"),
         // prod env
         String::from("https://cashierapp.io"),
+        String::from("https://www.cashierapp.io"),
         String::from("https://jg57n-xyaaa-aaaam-admqq-cai.icp0.io"),
     ];
 
