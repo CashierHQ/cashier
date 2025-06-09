@@ -81,7 +81,7 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
     return (
         <LinkCardWithoutPhoneFrame
             label={linkLabel}
-            displayComponent={getDisplayComponentForLink(linkData, getToken)}
+            displayComponent={getDisplayComponentForLink(linkData, getToken, isDataLoading)}
             message={linkMessage}
             title={getTitleForLink(linkData, getToken)}
             onClaim={onClickClaim}
