@@ -28,7 +28,6 @@ use super::types::TriggerTransactionInput;
 
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
-    let start_time = ic_cdk::api::time();
     let caller = ic_cdk::api::caller();
     let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
 
@@ -50,10 +49,6 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     transaction_manager
         .execute_tx_by_id(input.transaction_id)
         .await?;
-
-    let end_time = ic_cdk::api::time();
-    let elapsed_time = end_time - start_time;
-    let elapsed_seconds = (elapsed_time as f64) / 1_000_000_000.0;
 
     return Ok("Executed success".to_string());
 }
