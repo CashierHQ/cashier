@@ -32,7 +32,6 @@ export function flattenAndFindByMethod(
 ): Icrc112Request | undefined {
     for (const row of icrc_112_requests) {
         for (const request of row) {
-            console.log("method", request.method);
             if (request.method === method) {
                 return request;
             }
