@@ -16,15 +16,17 @@
 
 use std::{collections::HashMap, str::FromStr, time::Duration};
 
-use candid::Nat;
+use candid::{Nat, Principal};
 use cashier_types::{
-    Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
-    IntentTask, LinkAction, Protocol, Transaction, TransactionState,
+    ActionState, ActionType, Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve,
+    Icrc2TransferFrom, Intent, IntentTask, LinkAction, LinkUserState, Protocol, Transaction,
+    TransactionState,
 };
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::transfer_from::TransferFromArgs,
 };
+use uuid::Uuid;
 
 use super::{
     action::ActionService, adapter::IntentAdapterImpl, link::v2::LinkService,
@@ -33,7 +35,7 @@ use super::{
 use crate::{
     constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
     core::action::types::ActionDto,
-    error,
+    error, info,
     services::ext::get_batch_tokens_fee::get_batch_tokens_fee,
     types::{
         error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
@@ -102,45 +104,72 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         &self,
         chain: &Chain,
         intent: &Intent,
-        fee_map: &HashMap<String, Nat>,
     ) -> Result<Vec<Transaction>, CanisterError> {
         // using intent adapter to get the txs by chain
-        self.intent_adapter
-            .intent_to_transactions(chain, intent, fee_map)
+        self.intent_adapter.intent_to_transactions(chain, intent)
+    }
+
+    pub async fn create_action_v2(
+        &self,
+        link_id: &String,
+        action_type: &ActionType,
+        user_id: &String,
+        caller_principal: &Principal,
+    ) -> Result<ActionDto, CanisterError> {
+        // Validate user can create action
+        self.link_service
+            .link_validate_user_create_action(&link_id, &action_type, &user_id)?;
+
+        // Create temp action with default state
+        let default_link_user_state = match action_type {
+            ActionType::Use => Some(LinkUserState::ChooseWallet),
+            _ => None,
+        };
+
+        //create temp action
+        // fill in link_id info
+        // fill in action_type info
+        // fill in default_link_user_state info
+        let mut temp_action = TemporaryAction {
+            id: Uuid::new_v4().to_string(),
+            r#type: action_type.clone(),
+            state: ActionState::Created,
+            creator: user_id.clone(),
+            link_id: link_id.clone(),
+            intents: vec![],
+            default_link_user_state,
+        };
+
+        let assets = self
+            .link_service
+            .get_assets_for_action(&temp_action.link_id, &temp_action.r#type)?;
+
+        let fee_map = get_batch_tokens_fee(&assets).await?;
+
+        // Assemble intents
+        let intents = self
+            .link_service
+            .assemble_intents(
+                &temp_action.link_id,
+                &temp_action.r#type,
+                &caller_principal,
+                &fee_map,
+            )
+            .await?;
+
+        temp_action.intents = intents;
+
+        // Create real action
+        self.create_action(&mut temp_action).await
     }
 
     pub async fn create_action(
         &self,
-        temp_action: &TemporaryAction,
+        temp_action: &mut TemporaryAction,
     ) -> Result<ActionDto, CanisterError> {
         // TODO: create a lock here
         let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
         let mut intent_tx_ids_hashmap: HashMap<String, Vec<String>> = HashMap::new();
-
-        // for each intent, get the asset
-        let assets = temp_action
-            .intents
-            .iter()
-            .map(|intent| {
-                intent.r#type.try_get_asset().ok_or_else(|| {
-                    CanisterError::HandleLogicError("Intent does not have asset".to_string())
-                })
-            })
-            .map(|r| match r {
-                Ok(asset) => {
-                    // if asset is not empty, return it
-                    if asset.address.is_empty() {
-                        return Err(CanisterError::HandleLogicError(
-                            "Intent asset is empty".to_string(),
-                        ));
-                    }
-                    Ok(asset)
-                }
-                _ => return r,
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        let fee_map = get_batch_tokens_fee(&assets).await?;
 
         // check action id
         let action = self.action_service.get_action_by_id(temp_action.id.clone());
@@ -155,7 +184,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         for intent in temp_action.intents.iter() {
             let chain = intent.chain.clone();
             // assemble txs
-            let txs = self.assemble_txs(&chain, intent, &fee_map)?;
+            let txs = self.assemble_txs(&chain, intent)?;
             intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
 
             // store tx ids in hashmap
@@ -382,29 +411,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .get_principal()
             .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
 
-        let transfer_amount = u128::try_from(args.amount.clone().0);
-        match transfer_amount {
-            Ok(amount) => {
-                let amount_subtract_fee = {
-                    let token_fee = self.icrc_service.fee(asset).await?;
-                    amount.checked_sub(token_fee as u128)
-                };
-                match amount_subtract_fee {
-                    Some(amount_subtract_fee) => args.amount = Nat::from(amount_subtract_fee),
-                    None => {
-                        return Err(CanisterError::HandleLogicError(
-                            "Failed to calculate fee".to_string(),
-                        ));
-                    }
-                }
-            }
-
-            Err(_) => {
-                return Err(CanisterError::HandleLogicError(
-                    "Failed to convert fee to u128".to_string(),
-                ));
-            }
-        }
+        args.amount = Nat::from(args.amount);
 
         self.icrc_service.transfer(asset, args).await?;
 
@@ -929,6 +936,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         state: &TransactionState,
     ) -> Result<(), CanisterError> {
         // update tx state
+        info!("Updating transaction state: {} to {:?}", tx.id, state);
         self.transaction_service.update_tx_state(tx, state)?;
         // roll up
         let roll_up_resp = self

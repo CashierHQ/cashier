@@ -40,6 +40,7 @@ type CanisterError = variant {
     canister_id : text;
     message : text;
   };
+  CallCanisterFailed : text;
 };
 type CreateActionAnonymousInput = record {
   link_id : text;
@@ -250,8 +251,6 @@ service : () -> {
   link_update_user_state : (LinkUpdateUserStateInput) -> (Result_7);
   process_action : (ProcessActionInput) -> (Result);
   process_action_anonymous : (ProcessActionAnonymousInput) -> (Result);
-  process_action_anonymous_v2 : (ProcessActionAnonymousInput) -> (Result);
-  process_action_v2 : (ProcessActionInput) -> (Result);
   trigger_transaction : (TriggerTransactionInput) -> (Result_1);
   update_action : (UpdateActionInput) -> (Result);
   update_link : (UpdateLinkInput) -> (Result_2);

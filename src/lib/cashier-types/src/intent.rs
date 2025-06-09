@@ -134,7 +134,6 @@ pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,
     TransferLinkToWallet,
-    TransferPayment,
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -150,7 +149,6 @@ impl IntentTask {
             IntentTask::TransferWalletToTreasury => "transfer_wallet_to_treasury",
             IntentTask::TransferWalletToLink => "transfer_wallet_to_link",
             IntentTask::TransferLinkToWallet => "transfer_link_to_wallet",
-            IntentTask::TransferPayment => "transfer_payment",
         }
     }
 
@@ -167,7 +165,6 @@ impl FromStr for IntentTask {
             "transfer_wallet_to_treasury" => Ok(IntentTask::TransferWalletToTreasury),
             "transfer_wallet_to_link" => Ok(IntentTask::TransferWalletToLink),
             "transfer_link_to_wallet" => Ok(IntentTask::TransferLinkToWallet),
-            "transfer_payment" => Ok(IntentTask::TransferPayment),
             _ => Err(()),
         }
     }
