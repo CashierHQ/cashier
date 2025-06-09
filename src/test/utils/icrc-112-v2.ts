@@ -36,7 +36,7 @@ export class Icrc112ExecutorV2 {
     private action_id: string;
     private spender_pid: Principal;
     private actor: Actor<_SERVICE>;
-    private trigger_tx_id: string;
+    private trigger_tx_id?: string;
 
     constructor(
         icrc_112_requests: Icrc112Request[][],
@@ -46,7 +46,7 @@ export class Icrc112ExecutorV2 {
         action_id: string,
         spender_pid: Principal,
         actor: Actor<_SERVICE>,
-        trigger_tx_id: string,
+        trigger_tx_id?: string,
     ) {
         this.icrc_112_requests = icrc_112_requests;
         this.token_helper = token_helper;
@@ -81,6 +81,12 @@ export class Icrc112ExecutorV2 {
     }
 
     public async executeIcrc1Transfer(token_name: string, amount: bigint) {
+        console.log(
+            "Executing icrc1_transfer for token:",
+            token_name,
+            "amount:",
+            amount.toString(),
+        );
         const link_vault: Account = {
             owner: this.spender_pid,
             subaccount: [linkIdToSubaccount(this.link_id)],
@@ -114,13 +120,16 @@ export class Icrc112ExecutorV2 {
         };
 
         this.token_helper.with_identity(this.identity);
-        const res = await this.token_helper.approve(token_name, approve_args);
-
-        console.log("approve result", res);
+        await this.token_helper.approve(token_name, approve_args);
     }
 
     public async triggerTransaction() {
         this.actor.setIdentity(this.identity);
+
+        if (!this.trigger_tx_id) {
+            throw new Error("Trigger transaction ID is not set");
+        }
+
         await this.actor.trigger_transaction({
             action_id: this.action_id,
             link_id: this.link_id,
