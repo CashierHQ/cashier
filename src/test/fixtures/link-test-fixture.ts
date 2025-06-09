@@ -73,6 +73,9 @@ export class LinkTestFixture {
         this.identities = new Map([
             ["alice", createIdentity("superSecretAlicePassword")],
             ["bob", createIdentity("superSecretBobPassword")],
+            ["charlie", createIdentity("superSecretCharliePassword")],
+            ["david", createIdentity("superSecretDavidPassword")],
+            ["eve", createIdentity("superSecretEvePassword")],
         ]);
     }
 
@@ -259,6 +262,20 @@ export class LinkTestFixture {
         return parseResultResponse(response);
     }
 
+    async processAction(linkId: string, actionId: string, actionType: string): Promise<ActionDto> {
+        if (!this.actor) {
+            throw new Error("Actor is not initialized");
+        }
+        const input: ProcessActionInput = {
+            link_id: linkId,
+            action_id: actionId,
+            action_type: actionType,
+        };
+
+        const response = await this.actor.process_action(input);
+        return parseResultResponse(response);
+    }
+
     async getLinkWithActions(linkId: string, actionType?: string): Promise<GetLinkResp> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
@@ -319,16 +336,10 @@ export class LinkTestFixture {
             triggerTxMethod?.nonce[0],
         );
 
-        //  await this.actor.update_action({
-        //                     action_id: actionId,
-        //                     link_id: linkId,
-        //                     external: true,
-        //                 });
-
         return executor;
     }
 
-    async switchToUser(userKey?: "alice" | "bob"): Promise<void> {
+    async switchToUser(userKey?: string): Promise<void> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
@@ -342,7 +353,11 @@ export class LinkTestFixture {
         }
 
         if (userKey) {
-            this.actor.setIdentity(this.identities.get(userKey)!);
+            const identity = this.identities.get(userKey);
+            if (!identity) {
+                throw new Error(`Identity for user ${userKey} not found`);
+            }
+            this.actor.setIdentity(identity);
         } else {
             this.switchToAnonymous();
         }
@@ -695,5 +710,13 @@ export class LinkTestFixture {
         };
 
         return this.multiTokenHelper.balanceOf(tokenName, account);
+    }
+
+    async getTokenFee(tokenName: string): Promise<bigint> {
+        if (!this.multiTokenHelper) {
+            throw new Error("MultiToken helper is not initialized");
+        }
+
+        return this.multiTokenHelper.feeOf(tokenName);
     }
 }

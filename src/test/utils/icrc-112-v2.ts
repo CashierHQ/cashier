@@ -92,6 +92,8 @@ export class Icrc112ExecutorV2 {
             subaccount: [linkIdToSubaccount(this.link_id)],
         };
 
+        console.log("Link vault:", this.link_id);
+
         const transfer_arg: TransferArg = {
             to: link_vault,
             fee: [],
