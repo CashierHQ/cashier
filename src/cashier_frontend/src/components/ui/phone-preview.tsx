@@ -54,7 +54,7 @@ export default function PhonePreview({
                             disabled
                             className={`bg-green text-white rounded-full w-full py-1 text-[10px] ${small ? "text-[8px] py-0.5" : ""}`}
                         >
-                            Claim
+                            {title.toLowerCase().includes("receive") ? "Pay" : "Claim"}
                         </button>
                     </div>
                 </div>

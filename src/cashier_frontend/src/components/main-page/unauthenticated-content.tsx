@@ -106,17 +106,38 @@ export const UnauthenticatedContent = ({
                         </div>
                         <h1
                             id="title"
-                            className="text-[32px] lg:text-[60px] font-bold mt-2 lg:my-[16px]"
+                            className="text-[32px] lg:text-[60px] font-bold mt-2 lg:my-[16px] leading-[1.2] px-4 lg:px-0 text-left"
                         >
-                            Web3 for <span className="text-[#35A18B]">everyone</span>
+                            Share crypto{" "}
+                            <span className="text-[#35A18B]">as easily as texting</span>
                         </h1>
                         <p
                             id="description"
-                            className="text-[14px] font-light text-center text-[#475467] px-4 lg:px-0 lg:text-[20px] lg:text-left"
+                            className="text-[14px] font-light text-[#475467] px-4 lg:px-0 lg:text-[20px] text-left"
                         >
-                            Build and share blockchain transactions with zero coding — all from your
-                            phone.
+                            Send or receive tokens & NFTs with just a link or QR code
                         </p>
+
+                        <ul className="flex flex-col gap-2 mt-4 lg:mt-6 self-start px-4 lg:px-0">
+                            <li className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-[#35A18B] rounded-full"></div>
+                                <p className="text-[10px] text-[#475467] lg:text-[16px] text-left font-light">
+                                    No wallet setup or address sharing
+                                </p>
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-[#35A18B] rounded-full"></div>
+                                <p className="text-[10px] text-[#475467] lg:text-[16px] text-left font-light">
+                                    Use for tips, invoice, airdrops & swaps
+                                </p>
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-[#35A18B] rounded-full"></div>
+                                <p className="text-[10px] text-[#475467] lg:text-[16px] text-lef font-light">
+                                    Lock with a password, NFT, or X
+                                </p>
+                            </li>
+                        </ul>
 
                         <Button
                             type="button"
@@ -125,23 +146,6 @@ export const UnauthenticatedContent = ({
                         >
                             {t("main_page.unauthenticated_content.get_started")}
                         </Button>
-
-                        <div
-                            id="powered-by-icp"
-                            className="flex flex-col items-center gap-1 text-[12px] font-light text-[#8D8D8D]/75 mt-8 lg:hidden"
-                        >
-                            <div className="flex gap-2 items-center">
-                                <p>Powered by Internet Computer</p>
-                                <img
-                                    src="/icpToken.png"
-                                    alt="Internet Computer"
-                                    className="w-4 h-4"
-                                />
-                            </div>
-                            <p className="text-[10px] opacity-50">
-                                v{__APP_VERSION__} ({__BUILD_HASH__})
-                            </p>
-                        </div>
                     </div>
                     <div
                         id="image-container"
@@ -161,15 +165,12 @@ export const UnauthenticatedContent = ({
 
                 <div
                     id="powered-by-icp"
-                    className="hidden flex-col items-center gap-1 text-[12px] font-light text-[#8D8D8D]/75 mt-8 lg:flex lg:fixed bottom-4 w-full justify-center"
+                    className="flex-col items-center gap-1 bg-white text-[8px] lg:text-[12px] font-light text-[#8D8D8D]/75 mt-8 lg:flex fixed bottom-1 lg:bottom-4 w-full justify-center"
                 >
-                    <div className="flex gap-2 items-center">
+                    <div className="flex gap-2 items-center justify-center">
                         <p>Powered by Internet Computer</p>
                         <img src="/icpToken.png" alt="Internet Computer" className="w-4 h-4" />
                     </div>
-                    <p className="text-[10px] opacity-50">
-                        v{__APP_VERSION__} ({__BUILD_HASH__})
-                    </p>
                 </div>
             </div>
             <WalletConnectDialog

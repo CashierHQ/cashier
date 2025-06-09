@@ -61,7 +61,7 @@ export default function LinkCardWithoutPhoneFrame({
             return (
                 <div
                     className={cn(
-                        "text-green bg-white rounded-full py-3 px-8 mt-3 text-base w-[100%] text-center font-bold",
+                        "text-green bg-white rounded-full h-[44px] flex items-center justify-center px-8 mt-3 text-base w-[100%] text-center font-bold",
                         onClaim ? "cursor-not-allowed" : "",
                     )}
                 >
@@ -73,7 +73,7 @@ export default function LinkCardWithoutPhoneFrame({
         return (
             <div
                 className={cn(
-                    "text-white bg-green rounded-full py-2 px-8 mt-3 w-[100%] text-center",
+                    "text-white bg-green rounded-full h-[44px] flex items-center justify-center px-8 mt-3 w-[100%] text-center",
                     onClaim ? "cursor-pointer" : "",
                 )}
                 onClick={onClaim}
@@ -100,7 +100,7 @@ export default function LinkCardWithoutPhoneFrame({
                 </div>
             )}
             <div
-                className={`w-full flex flex-col items-center bg-lightgreen rounded-xl p-3 ${showHeader ? "mt-5" : "mt-3"}`}
+                className={`w-full flex flex-col items-center bg-lightgreen rounded-xl p-4 ${showHeader ? "mt-5" : "mt-3"}`}
             >
                 {displayComponent}
                 <div className="mb-8 text-center">

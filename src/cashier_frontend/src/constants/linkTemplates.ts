@@ -48,7 +48,7 @@ export const LINK_TEMPLATES: TEMPLATE[] = [
     {
         label: "Receive",
         header: "Receive payment",
-        src: "/chatToken.png",
+        src: "/ckUSDCLogo.svg",
         message: LINK_TEMPLATE_DESCRIPTION_MESSAGE.RECEIVE_PAYMENT,
         title: "Receive payment",
         isComingSoon: false,

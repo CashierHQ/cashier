@@ -22,7 +22,7 @@ import {
 } from "@/components/page/linkCardPage";
 import { useTokens } from "@/hooks/useTokens";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 type LinkCardPageProps = {
@@ -30,6 +30,7 @@ type LinkCardPageProps = {
     onClickClaim?: () => void;
     isUserStateLoading?: boolean;
     isLoggedIn?: boolean;
+    isCompletePage?: boolean;
 };
 
 // page for no state or user is not logged in
@@ -38,6 +39,7 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
     onClickClaim,
     isUserStateLoading,
     isLoggedIn = false,
+    isCompletePage = false,
 }) => {
     const { getToken } = useTokens();
     const { t } = useTranslation();
@@ -46,21 +48,41 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
 
     // Disable the button if:
     // No linkData is available
-    const isButtonDisabled = linkData === undefined;
+    const isButtonDisabled = linkData === undefined || isCompletePage;
 
     const isDataLoading = isLoggedIn && isUserStateLoading;
+
+    const linkLabel = useMemo(() => {
+        if (isCompletePage) {
+            return t(`claim_page.${linkData?.linkType}.complete_button`, {
+                defaultValue: "Unknown! Need to check link type",
+            });
+        }
+
+        return t(`claim_page.${linkData?.linkType}.use_link_button`, {
+            defaultValue: "Unknown! Need to check link type",
+        });
+    }, [linkData, isCompletePage]);
+
+    const linkMessage = useMemo(() => {
+        if (isCompletePage) {
+            return t(`claim_page.${linkData?.linkType}.complete_message`, {
+                defaultValue: "Unknown! Need to check link type",
+            });
+        }
+
+        return t(`claim_page.${linkData?.linkType}.use_link_message`, {
+            defaultValue: "Unknown! Need to check link type",
+        });
+    }, [linkData, isCompletePage]);
 
     console.log("DefaultPage linkData", linkData);
 
     return (
         <LinkCardWithoutPhoneFrame
-            label={t(`claim_page.${linkData?.linkType}.use_link_button`, {
-                defaultValue: "Unknown! Need to check link type",
-            })}
-            displayComponent={getDisplayComponentForLink(linkData, getToken)}
-            message={t(`claim_page.${linkData?.linkType}.use_link_message`, {
-                defaultValue: "Unknown! Need to check link type",
-            })}
+            label={linkLabel}
+            displayComponent={getDisplayComponentForLink(linkData, getToken, isDataLoading)}
+            message={linkMessage}
             title={getTitleForLink(linkData, getToken)}
             onClaim={onClickClaim}
             isDataLoading={isDataLoading}

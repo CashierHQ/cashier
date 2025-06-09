@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = () => {
     if (!user) {
         return (
             <div
-                className={`w-full flex justify-between items-center ${isSmallDevice ? "px-4 pt-4" : `px-8 py-3 mb-4 ${location.pathname === "/" ? "" : "bg-white"}`}`}
+                className={`w-full flex justify-between items-center ${isSmallDevice ? "px-4 pt-4" : `px-8 pb-3 mb-4 ${location.pathname === "/" ? "" : "bg-white"}`}`}
             >
                 {showHeaderWithBackButtonAndWalletButton(
                     location.pathname,
