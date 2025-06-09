@@ -240,4 +240,13 @@ export class MultipleTokenHelper {
 
         return actor.icrc1_balance_of(account);
     }
+
+    public async feeOf(tokenName: string) {
+        const actor = this.actors.get(tokenName);
+        if (!actor) {
+            throw new Error(`Canister for token ${tokenName} not setup`);
+        }
+
+        return actor.icrc1_fee();
+    }
 }
