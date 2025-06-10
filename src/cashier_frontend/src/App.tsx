@@ -24,12 +24,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
+import { BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID } from "./const";
 // useEffect removed - console logging now handled at build time
 
-const targets = [
-    import.meta.env.VITE_BACKEND_CANISTER_ID,
-    import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID,
-];
+const targets = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
 
 // nano second
 const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
