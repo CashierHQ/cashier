@@ -34,42 +34,16 @@ import { IC_HOST, TOKEN_STORAGE_CANISTER_ID } from "@/const";
  */
 class TokenStorageService {
     private actor: _SERVICE;
-    private identity: Identity | PartialIdentity | undefined;
-    private canisterId: string = "";
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        try {
-            console.log("TokenStorageService constructor called", identity?.getPrincipal?.());
-            console.log("About to create HttpAgent with:", {
-                identity: !!identity,
-                host: IC_HOST,
-                canisterId: TOKEN_STORAGE_CANISTER_ID,
-            });
-
-            const agent = HttpAgent.createSync({ identity, host: IC_HOST });
-            console.log("HttpAgent created successfully");
-
-            this.identity = identity;
-            this.canisterId = TOKEN_STORAGE_CANISTER_ID;
-
-            console.log("About to create actor with canisterId:", TOKEN_STORAGE_CANISTER_ID);
-            this.actor = Actor.createActor(idlFactory, {
-                agent,
-                canisterId: TOKEN_STORAGE_CANISTER_ID,
-            });
-
-            console.log("TokenStorageService actor created", this.actor);
-            console.log("TokenStorageService canisterId", this.canisterId);
-            console.log("TokenStorageService identity", this.identity?.getPrincipal?.());
-        } catch (error) {
-            console.error("Error in TokenStorageService constructor:", error);
-            throw error;
-        }
+        const agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        this.actor = Actor.createActor(idlFactory, {
+            agent,
+            canisterId: TOKEN_STORAGE_CANISTER_ID,
+        });
     }
     async listTokens(): Promise<TokenListResponse> {
-        console.log("listTokens called", this.canisterId);
         const response = parseResultResponse(await this.actor.list_tokens());
-        console.log("listTokens response:", response);
         return response;
     }
     async addToken(input: AddTokenInput): Promise<TokenListResponse> {
