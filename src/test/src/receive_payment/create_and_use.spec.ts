@@ -20,7 +20,6 @@ import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { CREATE_LINK_FEE, FEE_CANISTER_ID, TREASURY_WALLET } from "../../constant";
 import { Icrc112ExecutorV2 } from "../../utils/icrc-112-v2";
-import { safeParseJSON } from "../../utils/parser";
 
 describe("Test create and use receive payment link", () => {
     const fixture = new LinkTestFixture();
@@ -199,8 +198,6 @@ describe("Test create and use receive payment link", () => {
             );
 
             expect(intent.transactions).toHaveLength(1);
-
-            console.log("Intent created:", safeParseJSON(intent as any));
 
             const transaction = intent.transactions[0];
             expect(transaction.protocol).toEqual("Icrc1Transfer");
