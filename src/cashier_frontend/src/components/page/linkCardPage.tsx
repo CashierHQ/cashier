@@ -21,6 +21,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatNumber } from "@/utils/helpers/currency";
 import { ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
+import { Skeleton } from "../ui/skeleton";
 
 export const getTitleForLink = (
     linkData?: LinkDetailModel,
@@ -50,8 +51,38 @@ export const getTitleForLink = (
 export const getDisplayComponentForLink = (
     linkData?: LinkDetailModel,
     getToken?: (tokenAddress: string) => FungibleToken | undefined,
+    isLoading?: boolean,
 ): ReactNode => {
     if (!linkData || !getToken) return null;
+
+    // If tokens are still loading, show skeleton loaders based on link type
+    if (isLoading) {
+        switch (linkData?.linkType) {
+            case LINK_TYPE.SEND_TIP:
+            case LINK_TYPE.SEND_AIRDROP:
+            case LINK_TYPE.RECEIVE_PAYMENT:
+                return (
+                    <div className="w-[100px] h-[100px] rounded-3xl bg-primary/10 animate-pulse flex items-center justify-center">
+                        <Skeleton className="w-16 h-16 rounded-full" />
+                    </div>
+                );
+            case LINK_TYPE.SEND_TOKEN_BASKET:
+                return (
+                    <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col gap-4">
+                        {Array.from({ length: 3 }).map((_, index) => (
+                            <div key={index} className="flex items-center">
+                                <Skeleton className="w-8 h-8 rounded-sm" />
+                                <div className="ml-2">
+                                    <Skeleton className="h-4 w-[100px]" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
+            default:
+                return null;
+        }
+    }
 
     const tokenAddress = linkData?.asset_info?.[0]?.address;
     const token = tokenAddress ? getToken(tokenAddress) : undefined;
@@ -136,8 +167,8 @@ const TokenImage = ({ token, logoFallback }: { token?: FungibleToken; logoFallba
     return (
         <>
             {isLoading && (
-                <div className="w-[100px] h-[100px] rounded-3xl bg-gray-200 animate-pulse flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-300" />
+                <div className="w-[100px] h-[100px] rounded-3xl bg-primary/10 animate-pulse flex items-center justify-center">
+                    <Skeleton className="w-16 h-16 rounded-full" />
                 </div>
             )}
             <img

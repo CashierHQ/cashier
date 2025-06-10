@@ -172,7 +172,7 @@ export function MultiStepFormFooter({ showFixedButton = true }: MultiStepFormFoo
     if (!showFixedButton) return null;
 
     return (
-        <div className="flex-none w-full py-4 px-4 sticky bottom-0 left-0 right-0 z-10">
+        <div className="flex-none w-full mb-5 w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10">
             <Button
                 type="button"
                 variant="default"
