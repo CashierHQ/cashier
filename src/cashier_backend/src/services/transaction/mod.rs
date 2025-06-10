@@ -141,7 +141,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                     expected_allowance: None,
                     expires_at: None,
                     fee: None,
-                    memo: None,
+                    memo: tx_approve.memo.clone(),
                     created_at_time: None,
                 };
 

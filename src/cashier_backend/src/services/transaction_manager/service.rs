@@ -703,6 +703,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
         // manually check the status of the tx of the action
         // update status to whaterver is returned by the manual check
+        // TODO: execute this in batch
         for mut tx in txs.clone() {
             let new_state = self.manual_check_status(&tx, txs.clone()).await?;
             if tx.state == new_state.clone() {
@@ -828,6 +829,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             }
 
             // Second loop: execute the transactions
+            // TODO: execute this in batch
             for tx in eligible_canister_txs.iter_mut() {
                 // this method update the tx state to success or fail inside of it
                 self.execute_canister_tx(tx).await?;

@@ -176,7 +176,7 @@ class LinkService {
             link_id: input.linkId,
             action_type: input.actionType,
         };
-        const response = parseResultResponse(await this.actor.process_action_v2(inputModel));
+        const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         return action;
     }
@@ -221,9 +221,7 @@ class LinkService {
             action_type: input.actionType,
             wallet_address: input.walletAddress,
         };
-        const response = parseResultResponse(
-            await this.actor.process_action_anonymous_v2(inputModel),
-        );
+        const response = parseResultResponse(await this.actor.process_action_anonymous(inputModel));
         const action = mapActionModel(response);
         return action;
     }
