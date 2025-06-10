@@ -17,7 +17,7 @@
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
-use crate::services::transaction_manager::TransactionManagerService;
+use crate::services::transaction_manager::service::TransactionManagerService;
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
     core::CanisterError,
@@ -29,7 +29,10 @@ use super::types::TriggerTransactionInput;
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
     let caller = ic_cdk::api::caller();
+
     let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
+    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
+        TransactionManagerService::get_instance();
 
     let is_creator = validate_service
         .is_action_creator(caller.to_text(), input.action_id.clone())
@@ -42,9 +45,6 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
             "User is not the creator of the action".to_string(),
         ));
     }
-
-    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
-        TransactionManagerService::get_instance();
 
     transaction_manager
         .execute_tx_by_id(input.transaction_id)
