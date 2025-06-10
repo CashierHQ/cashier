@@ -37,6 +37,7 @@ class TokenStorageService {
     private identity: Identity | PartialIdentity | undefined;
     private canisterId: string = "";
     constructor(identity?: Identity | PartialIdentity | undefined) {
+        console.log("TokenStorageService constructor called", identity?.getPrincipal?.());
         const agent = HttpAgent.createSync({ identity, host: IC_HOST });
         this.identity = identity;
         this.canisterId = TOKEN_STORAGE_CANISTER_ID;
