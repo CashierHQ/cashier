@@ -78,11 +78,32 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
         let ts = self.ic_env.time();
         let approve_id = Uuid::new_v4();
 
+        let approve_amount = transfer_intent
+            .approve_amount
+            .ok_or_else(|| CanisterError::InvalidInput("approve_amount not found".to_string()))?;
+
+        let transfer_from_amount = transfer_intent.actual_amount.ok_or_else(|| {
+            CanisterError::InvalidInput("transfer_from_amount not found".to_string())
+        })?;
+
+        if approve_amount < transfer_from_amount {
+            return Err(CanisterError::InvalidInput(
+                "approve_amount must be greater than or equal to transfer_from_amount".to_string(),
+            ));
+        }
+
+        if transfer_from_amount > transfer_intent.amount {
+            return Err(CanisterError::InvalidInput(
+                "transfer_from_amount must be less than or equal to amount".to_string(),
+            ));
+        }
+
         let icrc2_approve = Icrc2Approve {
             from: transfer_intent.from.clone(),
             spender: transfer_intent.spender.clone(),
             asset: transfer_intent.asset.clone(),
-            amount: transfer_intent.amount.clone(),
+            amount: approve_amount,
+            memo: Some(to_memo(&approve_id.to_string())),
         };
 
         let ic_approve_tx = IcTransaction::Icrc2Approve(icrc2_approve);
@@ -103,7 +124,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
             to: transfer_intent.to,
             spender: transfer_intent.spender,
             asset: transfer_intent.asset,
-            amount: transfer_intent.amount,
+            amount: transfer_from_amount,
             ts: Some(ts),
             memo: Some(to_memo(&transfer_id.to_string())),
         };

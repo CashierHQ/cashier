@@ -86,6 +86,8 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
                 spender: spender_wallet,
                 asset: fee_asset,
                 amount: fee_amount,
+                actual_amount: None,
+                approve_amount: None,
             }),
             state: IntentState::Created,
             created_at: ts,

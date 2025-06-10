@@ -16,6 +16,7 @@ setup-test:
 	bash scripts/setup_test.sh
 	
 test:
+	make setup-test
 	@npm run test:integration-backend
 
 # Interactive test command that asks for test file and runs it
