@@ -45,6 +45,20 @@ const getDerivationOrigin = () => {
 
     return {};
 };
+const logBuildInfo = () => {
+    const buildInfo = {
+        appVersion: __APP_VERSION__,
+        buildHash: __BUILD_HASH__,
+    };
+
+    if (import.meta.env.MODE === "dev") {
+        console.group("🏗️ Build Information");
+        console.log("App Version:", buildInfo.appVersion);
+        console.log("Build Hash:", buildInfo.buildHash);
+    }
+};
+
+logBuildInfo();
 
 function App() {
     const queryClient = new QueryClient();
