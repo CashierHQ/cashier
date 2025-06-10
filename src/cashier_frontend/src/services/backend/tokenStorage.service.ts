@@ -35,9 +35,11 @@ import { IC_HOST, TOKEN_STORAGE_CANISTER_ID } from "@/const";
 class TokenStorageService {
     private actor: _SERVICE;
     private identity: Identity | PartialIdentity | undefined;
+    private canisterId: string = "";
     constructor(identity?: Identity | PartialIdentity | undefined) {
         const agent = HttpAgent.createSync({ identity, host: IC_HOST });
         this.identity = identity;
+        this.canisterId = TOKEN_STORAGE_CANISTER_ID;
         this.actor = Actor.createActor(idlFactory, {
             agent,
             canisterId: TOKEN_STORAGE_CANISTER_ID,
@@ -45,6 +47,7 @@ class TokenStorageService {
     }
 
     async listTokens(): Promise<TokenListResponse> {
+        console.log("listTokens called", this.canisterId);
         const response = parseResultResponse(await this.actor.list_tokens());
         console.log("listTokens response:", response);
         return response;
