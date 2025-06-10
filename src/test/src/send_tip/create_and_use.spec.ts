@@ -75,7 +75,7 @@ describe("Test create and claim tip link", () => {
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
             const expected_treasury_balance =
                 treasury_balance_before + CREATE_LINK_FEE - ledger_fee * 2n; // 1 for link creation, 1 for approve
-            // Total amount used = tipAmount + ledger_fee (transfer tipAmount)  + ledger_fee (approve fee) + ledger_fee (transfer from)
+            // Total amount used = tipAmount + ledger_fee (transfer tipAmount)
             const expectedBalanceAfter = balanceBefore - tipAmount - CREATE_LINK_FEE - ledger_fee;
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
