@@ -104,6 +104,7 @@ class LinkService {
             agent,
             canisterId: BACKEND_CANISTER_ID,
         });
+        console.log("LinkService initialized with actor:", this.actor);
     }
 
     async getLinkList() {
