@@ -98,8 +98,7 @@ export class Icrc112ExecutorV2 {
         };
         this.token_helper.with_identity(this.identity);
 
-        const res = await this.token_helper.transfer(token_name, transfer_arg);
-        console.log(`Transfer result: ${safeParseJSON(res as any)}`);
+        await this.token_helper.transfer(token_name, transfer_arg);
     }
 
     public async executeIcrc2Approve(token_name: string, amount: bigint) {

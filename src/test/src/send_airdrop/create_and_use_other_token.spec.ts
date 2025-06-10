@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
 import { CREATE_LINK_FEE, TREASURY_WALLET } from "../../constant";
 import { fromNullable, toNullable } from "@dfinity/utils";
@@ -80,16 +78,12 @@ describe("Test create and claim token1 airdrop link", () => {
 
         it("should complete the full link creation process with token1", async () => {
             const airdropAmount = (assetInfo.amount_per_link_use! + ledger_fee) * max_use;
-            const approveAmount = CREATE_LINK_FEE + (await fixture.getTokenFee("ICP"));
+            const transfer_fee_amount = CREATE_LINK_FEE;
             const balanceBefore = await fixture.getUserBalance("alice", "token1");
             const icpBalanceBefore = await fixture.getUserBalance("alice", "ICP");
-            console.log("token1 balanceBefore", balanceBefore);
-            console.log("ICP balanceBefore", icpBalanceBefore);
 
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
             const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
-
-            console.log("airdropAmount", airdropAmount);
 
             // Total token1 amount used = airdropAmount + ledger_fee (transfer airdropAmount)
             const expectedToken1BalanceAfter = balanceBefore - airdropAmount - ledger_fee;
@@ -100,7 +94,7 @@ describe("Test create and claim token1 airdrop link", () => {
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("token1", airdropAmount);
-                await executor.executeIcrc2Approve("ICP", approveAmount);
+                await executor.executeIcrc2Approve("ICP", transfer_fee_amount + ledger_fee);
                 await executor.triggerTransaction();
             };
 
@@ -163,7 +157,6 @@ describe("Test create and claim token1 airdrop link", () => {
 
         it("should create use action for token1 airdrop", async () => {
             const action = await fixture.createAction(linkId, "Use");
-            console.log("linkId:", linkId);
             expect(action).toBeTruthy();
 
             claimActionId = action.id;
@@ -183,10 +176,8 @@ describe("Test create and claim token1 airdrop link", () => {
 
         it("should process token1 claim successfully", async () => {
             const balanceBefore = await fixture.getUserBalance("bob", "token1");
-            console.log("Bob token1 balance before claim:", balanceBefore);
 
             const linkBalanceBefore = await fixture.checkLinkBalance(token1Address, linkId);
-            console.log("Link token1 balance before claim:", linkBalanceBefore);
 
             const processResult = await fixture.processAction(linkId, claimActionId, "Use");
             expect(processResult.state).toEqual("Action_state_success");
@@ -199,14 +190,12 @@ describe("Test create and claim token1 airdrop link", () => {
             const balanceAfter = await fixture.getUserBalance("bob", "token1");
             const expectedBalance = balanceBefore + assetInfo.amount_per_link_use!;
             expect(balanceAfter).toEqual(expectedBalance);
-            console.log("Bob token1 balance after claim:", balanceAfter);
 
             // Verify link balance decreased
             const linkBalanceAfter = await fixture.checkLinkBalance(token1Address, linkId);
             const expectedLinkBalance =
                 linkBalanceBefore - assetInfo.amount_per_link_use! - ledger_fee;
             expect(linkBalanceAfter).toEqual(expectedLinkBalance);
-            console.log("Link token1 balance after claim:", linkBalanceAfter);
         });
     });
 });
