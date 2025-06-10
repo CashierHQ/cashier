@@ -37,6 +37,7 @@ import { useIdentity } from "@nfid/identitykit/react";
 import TokenCacheService from "@/services/backend/tokenCache.service";
 import { mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
 import { fromNullable } from "@dfinity/utils";
+import { TOKEN_STORAGE_CANISTER_ID } from "@/const";
 
 /**
  * Response from tokenListQuery with combined token list data
@@ -88,7 +89,10 @@ export function useTokenListQuery() {
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.all,
         queryFn: async () => {
-            console.log("Fetching token list...", identity?.getPrincipal().toString());
+            console.log(
+                "TokenStorageService initialized with canister:",
+                TOKEN_STORAGE_CANISTER_ID,
+            );
             const tokenService = new TokenStorageService(identity);
             let tokens: TokenDto[] = [];
 
