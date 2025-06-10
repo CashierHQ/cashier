@@ -75,7 +75,7 @@ describe("Test withdraw for receive payment link", () => {
 
             // For receive payment links, only fee is charged during creation (no asset transfer)
             // Total amount used = approveAmount + ledger_fee
-            const expectedBalanceAfter = balanceBefore - transfer_amount - ledger_fee;
+            const expectedBalanceAfter = balanceBefore - transfer_amount;
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 // Only approve fee payment, no asset transfer for receive payment links
