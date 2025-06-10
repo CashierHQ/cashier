@@ -28,7 +28,6 @@ import {
 } from "../../declarations/icp_ledger_canister/icp_ledger_canister.did";
 import { Identity } from "@dfinity/agent";
 import { MultipleTokenHelper } from "./multiple-token-helper";
-import { safeParseJSON } from "./parser";
 
 export class Icrc112ExecutorV2 {
     private icrc_112_requests: Icrc112Request[][];
