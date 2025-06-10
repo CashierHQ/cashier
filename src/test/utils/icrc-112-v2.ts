@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Cashier — No-code blockchain transaction builder
 // Copyright (C) 2025 TheCashierApp LLC
 //
@@ -27,6 +28,7 @@ import {
 } from "../../declarations/icp_ledger_canister/icp_ledger_canister.did";
 import { Identity } from "@dfinity/agent";
 import { MultipleTokenHelper } from "./multiple-token-helper";
+import { safeParseJSON } from "./parser";
 
 export class Icrc112ExecutorV2 {
     private icrc_112_requests: Icrc112Request[][];
@@ -81,18 +83,10 @@ export class Icrc112ExecutorV2 {
     }
 
     public async executeIcrc1Transfer(token_name: string, amount: bigint) {
-        console.log(
-            "Executing icrc1_transfer for token:",
-            token_name,
-            "amount:",
-            amount.toString(),
-        );
         const link_vault: Account = {
             owner: this.spender_pid,
             subaccount: [linkIdToSubaccount(this.link_id)],
         };
-
-        console.log("Link vault:", this.link_id);
 
         const transfer_arg: TransferArg = {
             to: link_vault,
@@ -103,7 +97,9 @@ export class Icrc112ExecutorV2 {
             amount: amount,
         };
         this.token_helper.with_identity(this.identity);
-        await this.token_helper.transfer(token_name, transfer_arg);
+
+        const res = await this.token_helper.transfer(token_name, transfer_arg);
+        console.log(`Transfer result: ${safeParseJSON(res as any)}`);
     }
 
     public async executeIcrc2Approve(token_name: string, amount: bigint) {
