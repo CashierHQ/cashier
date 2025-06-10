@@ -108,6 +108,8 @@ impl IntentType {
             spender: Wallet::default(),
             asset: Asset::default(),
             amount: 0,
+            actual_amount: None,
+            approve_amount: None,
         })
     }
 }
@@ -126,7 +128,12 @@ pub struct TransferFromData {
     pub to: Wallet,
     pub spender: Wallet,
     pub asset: Asset,
+    // number without deduct fee
     pub amount: u64,
+    // number with deduct fee
+    pub actual_amount: Option<u64>,
+    // approve amount for transfer from
+    pub approve_amount: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
