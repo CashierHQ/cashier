@@ -108,7 +108,7 @@ describe("Test create and claim token airdrop link with multiple user", () => {
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("ICP", airdropAmount);
-                await executor.executeIcrc2Approve("ICP", link_create_fee + ledger_fee);
+                await executor.executeIcrc2Approve("ICP", link_create_fee);
                 await executor.triggerTransaction();
             };
 

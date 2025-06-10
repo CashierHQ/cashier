@@ -71,14 +71,15 @@ describe("Test withdraw", () => {
             const link_create_fee = CREATE_LINK_FEE;
             const balanceBefore = await fixture.getUserBalance("alice", "ICP");
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
-            const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
+            const expected_treasury_balance =
+                treasury_balance_before + CREATE_LINK_FEE - 2n * ledger_fee;
             console.log("airdropAmount", airdropAmount);
             // Total amount used = airdropAmount + ledger_fee (transfer airdropAmount) + ledger_fee (approve fee) + ledger_fee (transfer from) + CREATE_LINK_FEE
             const expectedBalanceAfter =
-                balanceBefore - airdropAmount - ledger_fee * 3n - CREATE_LINK_FEE;
+                balanceBefore - airdropAmount - ledger_fee - CREATE_LINK_FEE;
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("ICP", airdropAmount);
-                await executor.executeIcrc2Approve("ICP", link_create_fee + ledger_fee);
+                await executor.executeIcrc2Approve("ICP", link_create_fee);
                 await executor.triggerTransaction();
             };
 

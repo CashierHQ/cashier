@@ -71,18 +71,19 @@ describe("Test create and use receive payment link", () => {
             const transfer_amount = CREATE_LINK_FEE;
             const balanceBefore = await fixture.getUserBalance("alice", "ICP");
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
-            const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
+            const expected_treasury_balance =
+                treasury_balance_before + CREATE_LINK_FEE - 2n * ledger_fee;
 
             // For receive payment links, only fee is charged during creation (no asset transfer)
             // after total amount used
             // 1. CREATE_LINK_FEE + ledger_fee
             // 2. approve_fee == ledger_fee
             // Total amount used = approveAmount + ledger_fee
-            const expectedBalanceAfter = balanceBefore - transfer_amount - ledger_fee * 2n;
+            const expectedBalanceAfter = balanceBefore - transfer_amount;
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 // Only approve fee payment, no asset transfer for receive payment links
-                await executor.executeIcrc2Approve("ICP", transfer_amount + ledger_fee);
+                await executor.executeIcrc2Approve("ICP", transfer_amount);
                 await executor.triggerTransaction();
             };
 
