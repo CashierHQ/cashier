@@ -219,7 +219,7 @@ export class LinkTestFixture {
         return link;
     }
 
-    async activateLink(linkId: string): Promise<any> {
+    async activateLink(linkId: string) {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
@@ -230,6 +230,20 @@ export class LinkTestFixture {
         };
 
         const response = await this.actor.update_link(updateInput);
+        return parseResultResponse(response);
+    }
+
+    async inactiveLink(linkId: string) {
+        if (!this.actor) {
+            throw new Error("Actor is not initialized");
+        }
+        const updateInput: UpdateLinkInput = {
+            id: linkId,
+            action: "Continue",
+            params: [],
+        };
+        const response = await this.actor.update_link(updateInput);
+
         return parseResultResponse(response);
     }
 

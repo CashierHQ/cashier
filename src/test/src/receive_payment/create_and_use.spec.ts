@@ -15,12 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LinkTestFixture, LinkConfig, AssetInfo } from "../fixtures/link-test-fixture";
-import { IntentDto } from "../../declarations/cashier_backend/cashier_backend.did";
+import { LinkTestFixture, LinkConfig, AssetInfo } from "../../fixtures/link-test-fixture";
+import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { fromNullable, toNullable } from "@dfinity/utils";
-import { CREATE_LINK_FEE, FEE_CANISTER_ID, TREASURY_WALLET } from "../constant";
-import { Icrc112ExecutorV2 } from "../utils/icrc-112-v2";
-import { safeParseJSON } from "../utils/parser";
+import { CREATE_LINK_FEE, FEE_CANISTER_ID, TREASURY_WALLET } from "../../constant";
+import { Icrc112ExecutorV2 } from "../../utils/icrc-112-v2";
+import { safeParseJSON } from "../../utils/parser";
 
 describe("Test create and use receive payment link", () => {
     const fixture = new LinkTestFixture();
