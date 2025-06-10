@@ -70,18 +70,16 @@ describe("Test create and claim token airdrop link", () => {
 
         it("should complete the full link creation process", async () => {
             const airdropAmount = (assetInfo.amount_per_link_use! + ledger_fee) * max_use;
-            const approveAmount = CREATE_LINK_FEE + ledger_fee;
+            const transfer_fee_amount = CREATE_LINK_FEE;
             const balanceBefore = await fixture.getUserBalance("alice", "ICP");
-            console.log("balanceBefore", balanceBefore);
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
             const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
-            console.log("airdropAmount", airdropAmount);
             // Total amount used = airdropAmount + ledger_fee (transfer airdropAmount) + ledger_fee (approve fee) + ledger_fee (transfer from) + CREATE_LINK_FEE
             const expectedBalanceAfter =
                 balanceBefore - airdropAmount - ledger_fee * 3n - CREATE_LINK_FEE;
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("ICP", airdropAmount);
-                await executor.executeIcrc2Approve("ICP", approveAmount);
+                await executor.executeIcrc2Approve("ICP", transfer_fee_amount + ledger_fee);
                 await executor.triggerTransaction();
             };
 
@@ -140,7 +138,6 @@ describe("Test create and claim token airdrop link", () => {
 
         it("should create use action", async () => {
             const action = await fixture.createAction(linkId, "Use");
-            console.log("linkId:", linkId);
             expect(action).toBeTruthy();
 
             claimActionId = action.id;

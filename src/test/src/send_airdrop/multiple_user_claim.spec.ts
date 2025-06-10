@@ -104,11 +104,11 @@ describe("Test create and claim token airdrop link with multiple user", () => {
 
             const airdropAmount =
                 (multiUserAssetInfo.amount_per_link_use! + ledger_fee) * BigInt(10);
-            const approveAmount = CREATE_LINK_FEE + ledger_fee;
+            const link_create_fee = CREATE_LINK_FEE;
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("ICP", airdropAmount);
-                await executor.executeIcrc2Approve("ICP", approveAmount);
+                await executor.executeIcrc2Approve("ICP", link_create_fee + ledger_fee);
                 await executor.triggerTransaction();
             };
 

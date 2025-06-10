@@ -129,12 +129,6 @@ export class LinkTestFixture {
             // targetSubnetId: Principal.fromText("4ecnw-byqwz-dtgss-ua2mh-pfvs7-c3lct-gtf4e-hnu75-j7eek-iifqm-sqe"),
         });
 
-        const canisterSubnetId = await this.pic.getCanisterSubnetId(
-            Principal.fromText("jjio5-5aaaa-aaaam-adhaq-cai"),
-        );
-
-        console.log("subnets jjio5-5aaaa-aaaam-adhaq-cai", canisterSubnetId?.toText());
-
         this.canisterId = fixture.canisterId.toString();
         this.actor = fixture.actor;
 

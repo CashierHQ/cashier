@@ -102,7 +102,7 @@ describe("Test create and claim token basket link", () => {
         });
 
         it("should complete the full link creation process", async () => {
-            const approveAmount = CREATE_LINK_FEE + ledger_fee;
+            const link_create_fee = CREATE_LINK_FEE;
             const balancesBefore = new Map<string, bigint>();
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
             const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
@@ -124,7 +124,7 @@ describe("Test create and claim token basket link", () => {
                     await executor.executeIcrc1Transfer(asset.tokenIndex, transferAmount);
                 }
                 // Approve fee payment
-                await executor.executeIcrc2Approve("ICP", approveAmount);
+                await executor.executeIcrc2Approve("ICP", link_create_fee + ledger_fee);
                 await executor.triggerTransaction();
             };
 
