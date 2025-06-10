@@ -70,7 +70,7 @@ describe("Test create and claim tip link", () => {
 
         it("should complete the full link creation process", async () => {
             const tipAmount = (assetInfo.amount_per_link_use! + ledger_fee) * max_use;
-            const approveAmount = CREATE_LINK_FEE + ledger_fee;
+            const link_create_fee = CREATE_LINK_FEE;
             const balanceBefore = await fixture.getUserBalance("alice", "ICP");
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
             const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
@@ -80,7 +80,7 @@ describe("Test create and claim tip link", () => {
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("ICP", tipAmount);
-                await executor.executeIcrc2Approve("ICP", approveAmount);
+                await executor.executeIcrc2Approve("ICP", link_create_fee + ledger_fee);
                 await executor.triggerTransaction();
             };
 
