@@ -52,7 +52,6 @@ const logBuildInfo = () => {
     };
 
     if (import.meta.env.MODE === "dev") {
-        console.group("🏗️ Build Information");
         console.log("App Version:", buildInfo.appVersion);
         console.log("Build Hash:", buildInfo.buildHash);
     }
