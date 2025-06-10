@@ -293,217 +293,252 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         // enrich data for intent
         for intent in intents.iter_mut() {
-            // action type and intent task decide the fee for intent
-            match (&action_type, &intent.task) {
-                // for top up the link
-                // need transfer amount = (amount_per_use + asset_network_fee) x amount_per_link_use_action
-                (ActionType::CreateLink, IntentTask::TransferWalletToLink) => {
-                    let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
-                        error!(
+            // action type and intent task decide the values for intent
+            let (amount, asset, from_wallet, to_wallet, spender_wallet) =
+                match (&action_type, &intent.task) {
+                    // for top up the link
+                    // need transfer amount = (amount_per_use + asset_network_fee) x amount_per_link_use_action
+                    (ActionType::CreateLink, IntentTask::TransferWalletToLink) => {
+                        let asset_info =
+                            link.get_asset_by_label(&intent.label).ok_or_else(|| {
+                                error!(
                     "[link_assemble_intents] find label for TransferWalletToLink not found {:#?}",
                     intent.label
                 );
-                        CanisterError::HandleLogicError(
+                                CanisterError::HandleLogicError(
                             "[link_assemble_intents] find label for TransferWalletToLink not found"
                                 .to_string(),
                         )
-                    })?;
-                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
-                        CanisterError::HandleLogicError(
-                            "Fee not found for link creation".to_string(),
-                        )
-                    })?;
-                    let fee_amount = convert_nat_to_u64(fee_in_nat)?;
+                            })?;
 
-                    transfer_data.amount = (asset_info.amount_per_link_use_action + fee_amount)
-                        * link.link_use_action_max_count;
-                    transfer_data.asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
-                    let from_account = Account {
-                        owner: user_wallet.clone(),
-                        subaccount: None,
-                    };
-                    transfer_data.from = Wallet {
-                        address: from_account.to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_account = Account {
-                        owner: self.ic_env.id(),
-                        subaccount: Some(to_subaccount(&link.id.clone())),
-                    };
-                    transfer_data.to = Wallet {
-                        address: to_account.to_string(),
-                        chain: Chain::IC,
-                    };
+                        let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
+                            CanisterError::HandleLogicError(
+                                "Fee not found for link creation".to_string(),
+                            )
+                        })?;
+                        let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
-                    intent.r#type = IntentType::Transfer(transfer_data.clone());
-                }
-                // TODO: change this always charge 5 cents
-                // for create link fee
-                // need transfer amount = fee_amount = (0.009 ICP)
-                (ActionType::CreateLink, IntentTask::TransferWalletToTreasury) => {
-                    let mut transfer_from_data = intent.r#type.as_transfer_from().unwrap();
-                    let caller_account = Account {
-                        owner: user_wallet.clone(),
-                        subaccount: None,
-                    };
-                    let spender_wallet = Wallet {
-                        address: Account {
-                            owner: self.ic_env.id(),
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let vault_wallet = Wallet {
-                        address: Account {
-                            owner: Principal::from_str(FEE_TREASURY_ADDRESS).unwrap(),
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let approve_wallet = Wallet {
-                        address: caller_account.to_string(),
-                        chain: Chain::IC,
-                    };
+                        let amount = (asset_info.amount_per_link_use_action + fee_amount)
+                            * link.link_use_action_max_count;
 
-                    transfer_from_data.spender = spender_wallet;
-                    transfer_from_data.to = vault_wallet;
-                    transfer_from_data.from = approve_wallet;
-                    transfer_from_data.asset = Asset {
-                        address: ICP_CANISTER_ID.to_string(),
-                        chain: Chain::IC,
-                    };
-                    transfer_from_data.amount = Fee::CreateTipLinkFeeIcp.as_u64();
+                        let asset = Asset {
+                            address: asset_info.address.clone(),
+                            chain: asset_info.chain.clone(),
+                        };
+                        let from_wallet = Wallet {
+                            address: Account {
+                                owner: user_wallet.clone(),
+                                subaccount: None,
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
+                        let to_wallet = Wallet {
+                            address: Account {
+                                owner: self.ic_env.id(),
+                                subaccount: Some(to_subaccount(&link.id.clone())),
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
 
-                    intent.r#type = IntentType::TransferFrom(transfer_from_data.clone());
-                }
-                // for use link, mostly for "send" link type
-                // need transfer amount = amount_per_user
-                (ActionType::Use, IntentTask::TransferLinkToWallet) => {
-                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
-                        CanisterError::HandleLogicError(
+                        (amount, asset, from_wallet, to_wallet, None)
+                    }
+
+                    // for create link fee - need transfer amount = fee_amount = (0.009 ICP)
+                    (ActionType::CreateLink, IntentTask::TransferWalletToTreasury) => {
+                        let amount = Fee::CreateTipLinkFeeIcp.as_u64();
+                        let asset = Asset {
+                            address: ICP_CANISTER_ID.to_string(),
+                            chain: Chain::IC,
+                        };
+                        let from_wallet = Wallet {
+                            address: Account {
+                                owner: user_wallet.clone(),
+                                subaccount: None,
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
+                        let to_wallet = Wallet {
+                            address: Account {
+                                owner: Principal::from_str(FEE_TREASURY_ADDRESS).unwrap(),
+                                subaccount: None,
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
+                        let spender_wallet = Wallet {
+                            address: Account {
+                                owner: self.ic_env.id(),
+                                subaccount: None,
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
+
+                        (amount, asset, from_wallet, to_wallet, Some(spender_wallet))
+                    }
+
+                    // for use link, mostly for "send" link type - need transfer amount = amount_per_user
+                    (ActionType::Use, IntentTask::TransferLinkToWallet) => {
+                        let asset_info =
+                            link.get_asset_by_label(&intent.label).ok_or_else(|| {
+                                CanisterError::HandleLogicError(
                             "[link_assemble_intents] task TransferLinkToWallet Asset not found"
                                 .to_string(),
                         )
-                    })?;
+                            })?;
 
-                    transfer_data.amount = asset_info.amount_per_link_use_action;
+                        let amount = asset_info.amount_per_link_use_action;
 
-                    transfer_data.asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
+                        let asset = Asset {
+                            address: asset_info.address.clone(),
+                            chain: asset_info.chain.clone(),
+                        };
+                        let from_wallet = Wallet {
+                            address: Account {
+                                owner: self.ic_env.id(),
+                                subaccount: Some(to_subaccount(&link.id.clone())),
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
+                        let to_wallet = Wallet {
+                            address: user_wallet.to_string(),
+                            chain: Chain::IC,
+                        };
 
-                    let from_account = Account {
-                        owner: self.ic_env.id(),
-                        subaccount: Some(to_subaccount(&link.id.clone())),
-                    };
-                    transfer_data.from = Wallet {
-                        address: from_account.to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_account = user_wallet.clone();
-                    transfer_data.to = Wallet {
-                        address: to_account.to_string(),
-                        chain: Chain::IC,
-                    };
+                        (amount, asset, from_wallet, to_wallet, None)
+                    }
 
-                    intent.r#type = IntentType::Transfer(transfer_data.clone());
-                }
-                // for use link, mostly for "receive" link type
-                // need transfer amount = amount_per_user
-                (ActionType::Use, IntentTask::TransferWalletToLink) => {
-                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
-                        CanisterError::HandleLogicError(
+                    // for use link, mostly for "receive" link type - need transfer amount = amount_per_user
+                    (ActionType::Use, IntentTask::TransferWalletToLink) => {
+                        let asset_info =
+                            link.get_asset_by_label(&intent.label).ok_or_else(|| {
+                                CanisterError::HandleLogicError(
                             "[link_assemble_intents] task TransferWalletToLink Asset not found"
                                 .to_string(),
                         )
-                    })?;
+                            })?;
 
-                    transfer_data.amount = asset_info.amount_per_link_use_action;
+                        let amount = asset_info.amount_per_link_use_action;
 
-                    transfer_data.asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
+                        let asset = Asset {
+                            address: asset_info.address.clone(),
+                            chain: asset_info.chain.clone(),
+                        };
+                        let from_wallet = Wallet {
+                            address: Account {
+                                owner: user_wallet.clone(),
+                                subaccount: None,
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
+                        let to_wallet = Wallet {
+                            address: Account {
+                                owner: self.ic_env.id(),
+                                subaccount: Some(to_subaccount(&link.id.clone())),
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
 
-                    let from_account = Account {
-                        owner: user_wallet.clone(),
-                        subaccount: None,
-                    };
-                    transfer_data.from = Wallet {
-                        address: from_account.to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_account = Account {
-                        owner: self.ic_env.id(),
-                        subaccount: Some(to_subaccount(&link.id.clone())),
-                    };
-                    transfer_data.to = Wallet {
-                        address: to_account.to_string(),
-                        chain: Chain::IC,
-                    };
+                        (amount, asset, from_wallet, to_wallet, None)
+                    }
 
-                    intent.r#type = IntentType::Transfer(transfer_data.clone());
-                }
-                // for withdraw link, use for both "send" and "receive" link type
-                // need transfer amount = asset left in link
-                (ActionType::Withdraw, IntentTask::TransferLinkToWallet) => {
-                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
-                        CanisterError::HandleLogicError(
+                    // for withdraw link - need transfer amount = asset left in link
+                    (ActionType::Withdraw, IntentTask::TransferLinkToWallet) => {
+                        let asset_info =
+                            link.get_asset_by_label(&intent.label).ok_or_else(|| {
+                                CanisterError::HandleLogicError(
                             "[link_assemble_intents] task TransferLinkToWallet Asset not found"
                                 .to_string(),
                         )
-                    })?;
+                            })?;
 
-                    let link_balance = self
-                        .icrc_service
-                        .balance_of(
-                            Principal::from_text(asset_info.address.clone()).unwrap(),
-                            Account {
+                        let link_balance = self
+                            .icrc_service
+                            .balance_of(
+                                Principal::from_text(asset_info.address.clone()).unwrap(),
+                                Account {
+                                    owner: self.ic_env.id(),
+                                    subaccount: Some(to_subaccount(&link.id.clone())),
+                                },
+                            )
+                            .await
+                            .map_err(|e| e)?;
+
+                        info!(
+                            "[link_assemble_intents] link balance for {} is {}",
+                            link.id, link_balance
+                        );
+
+                        let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
+                            CanisterError::HandleLogicError(
+                                "Fee not found for link creation".to_string(),
+                            )
+                        })?;
+                        let fee_amount = convert_nat_to_u64(fee_in_nat)?;
+
+                        if link_balance <= 0 {
+                            return Err(CanisterError::ValidationErrors(
+                                "Not enough asset in link".to_string(),
+                            ));
+                        }
+
+                        if link_balance < fee_amount {
+                            return Err(CanisterError::ValidationErrors(
+                                "Not enough asset in link to cover fee".to_string(),
+                            ));
+                        }
+
+                        let amount = link_balance - fee_amount;
+                        let asset = Asset {
+                            address: asset_info.address.clone(),
+                            chain: asset_info.chain.clone(),
+                        };
+                        let from_wallet = Wallet {
+                            address: Account {
                                 owner: self.ic_env.id(),
                                 subaccount: Some(to_subaccount(&link.id.clone())),
-                            },
-                        )
-                        .await
-                        .map_err(|e| e)?;
+                            }
+                            .to_string(),
+                            chain: Chain::IC,
+                        };
+                        let to_wallet = Wallet {
+                            address: user_wallet.to_string(),
+                            chain: Chain::IC,
+                        };
 
-                    if link_balance <= 0 {
-                        return Err(CanisterError::ValidationErrors(
-                            "Not enough asset in link".to_string(),
-                        ));
+                        (amount, asset, from_wallet, to_wallet, None)
                     }
 
-                    transfer_data.asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
+                    _ => continue,
+                };
 
-                    let from_account = Account {
-                        owner: self.ic_env.id(),
-                        subaccount: Some(to_subaccount(&link.id.clone())),
-                    };
-                    transfer_data.from = Wallet {
-                        address: from_account.to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_account = user_wallet.clone();
-                    transfer_data.to = Wallet {
-                        address: to_account.to_string(),
-                        chain: Chain::IC,
-                    };
-
-                    intent.r#type = IntentType::Transfer(transfer_data.clone());
+            // Apply the values to the intent
+            match &spender_wallet {
+                Some(spender) => {
+                    // TransferFrom case
+                    let mut transfer_from_data = intent.r#type.as_transfer_from().unwrap();
+                    transfer_from_data.amount = amount;
+                    transfer_from_data.asset = asset;
+                    transfer_from_data.from = from_wallet;
+                    transfer_from_data.to = to_wallet;
+                    transfer_from_data.spender = spender.clone();
+                    intent.r#type = IntentType::TransferFrom(transfer_from_data);
                 }
-                _ => {}
+                None => {
+                    // Transfer case
+                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
+                    transfer_data.amount = amount;
+                    transfer_data.asset = asset;
+                    transfer_data.from = from_wallet;
+                    transfer_data.to = to_wallet;
+                    intent.r#type = IntentType::Transfer(transfer_data);
+                }
             }
         }
 
