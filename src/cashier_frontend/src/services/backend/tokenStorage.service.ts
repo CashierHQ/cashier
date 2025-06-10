@@ -45,6 +45,9 @@ class TokenStorageService {
             agent,
             canisterId: TOKEN_STORAGE_CANISTER_ID,
         });
+        console.log("TokenStorageService actor created", this.actor);
+        console.log("TokenStorageService canisterId", this.canisterId);
+        console.log("TokenStorageService identity", this.identity?.getPrincipal?.());
     }
 
     async listTokens(): Promise<TokenListResponse> {
