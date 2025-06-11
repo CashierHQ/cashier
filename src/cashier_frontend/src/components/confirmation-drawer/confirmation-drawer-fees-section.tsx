@@ -29,6 +29,7 @@ import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTranslation } from "react-i18next";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
+import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -76,19 +77,21 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
             for (const intent of intents) {
                 const token = getToken(intent.asset.address);
                 if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
-                    const fee = FeeHelpers.getLinkCreationFee();
-                    console.log("fee", fee);
-                    if (fee) {
-                        totalFeesMapArray.push({
-                            intent,
-                            fee: {
-                                chain: intent.asset.chain,
-                                type: "link_creation_fee",
-                                address: intent.asset.address,
-                                amount: fee.amount,
-                            },
-                        });
-                    }
+                    const final_amount = FeeHelpers.forecastIcrc2FeeEs8(
+                        token!,
+                        DEFAULT_CREATION_FEE,
+                        1,
+                    );
+
+                    totalFeesMapArray.push({
+                        intent,
+                        fee: {
+                            chain: intent.asset.chain,
+                            type: "link_creation_fee",
+                            address: intent.asset.address,
+                            amount: final_amount,
+                        },
+                    });
                 } else {
                     const transfer: Transfer = {
                         intent,

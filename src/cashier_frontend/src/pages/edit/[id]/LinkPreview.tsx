@@ -627,7 +627,8 @@ export default function LinkPreview({
                         const displayAmount = FeeHelpers.forecastIcrc2Fee(
                             token!,
                             BigInt(fee.amount),
-                            Number(link?.maxActionNumber ?? 1),
+                            // only for link creation fee
+                            Number(1),
                         );
 
                         const tokenPrice = getTokenPrice(fee.address) || 0;
