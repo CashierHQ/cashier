@@ -82,6 +82,35 @@ export class TokenUtilService {
         }
     }
 
+    async batchBalanceOfAccount(
+        account: {
+            owner: Principal;
+            subaccount?: Uint8Array | undefined;
+        },
+        ledgers: Principal[],
+    ) {
+        const tasks = ledgers.map(async (ledgerCanisterId) => {
+            const ledgerCanister = IcrcLedgerCanister.create({
+                agent: this.agent,
+                canisterId: ledgerCanisterId,
+            });
+
+            try {
+                const balance = await ledgerCanister.balance(account);
+                console.log(
+                    `Fetched balance for ${ledgerCanisterId.toString()}: ${balance.toString()}`,
+                );
+                return { tokenAddress: ledgerCanisterId, balance };
+            } catch (error) {
+                console.error(error);
+                // Return the original token address with zero balance when there's an error
+                return { tokenAddress: ledgerCanisterId, balance: BigInt(0) };
+            }
+        });
+
+        return await Promise.all(tasks);
+    }
+
     async batchBalanceOf(tokenAddresses: Principal[]) {
         const tasks = tokenAddresses.map(async (tokenAddress) => {
             const ledgerCanister = IcrcLedgerCanister.create({
