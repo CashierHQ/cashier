@@ -134,7 +134,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         {
             action_type: ACTION_TYPE.USE_LINK,
             link_id: linkId ?? "",
-            anonymous_wallet_address: anonymousWalletAddress ?? "",
         },
         enableLocalFetch,
     );
@@ -218,6 +217,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                 } catch (error) {
                     console.error("Error fetching action:", error);
                 } finally {
+                    console.log("Initial data fetch complete for linkId:", linkId);
                     setUseLinkButton({
                         text: useLinkButton.text,
                         disabled: false, // Enable button after loading
@@ -234,7 +234,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         fetchInitialData();
         // Only depend on identity changes, linkId changes, or parent state changes
         // Explicitly NOT depending on refetchLinkUserState to avoid infinite loops
-    }, [identity, linkId, refetchLinkUserState]);
+    }, [identity, linkId]);
 
     // Polling effect to update action state during processing
     useEffect(() => {

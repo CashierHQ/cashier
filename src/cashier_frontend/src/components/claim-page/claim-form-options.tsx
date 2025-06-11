@@ -33,7 +33,7 @@ import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
-import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import TokenItem from "./token-item";
@@ -45,7 +45,6 @@ import {
     getWalletIcon,
     GoogleSigner,
 } from "@/constants/wallet-options";
-import { LuWallet2 } from "react-icons/lu";
 import { IoMdClose } from "react-icons/io";
 import { FaCheck } from "react-icons/fa";
 import { ClipboardIcon } from "lucide-react";
@@ -293,14 +292,8 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
         );
     };
 
-    const isSendLink =
-        link?.linkType === LINK_TYPE.SEND_AIRDROP ||
-        link?.linkType === LINK_TYPE.SEND_TIP ||
-        link?.linkType === LINK_TYPE.SEND_TOKEN_BASKET;
-    // const isReceiveLink = link?.linkType === LINK_TYPE.RECEIVE_PAYMENT;
-
-    const firstTilte = isSendLink ? t("claim.asset") : t("claim.sendAsset");
-    const secondTitle = isSendLink ? t("claim.receive_options") : t("claim.send_options");
+    const firstTilte = t(`claim_page.${link?.linkType}.choose_wallet.use_asset`);
+    const secondTitle = t(`claim_page.${link?.linkType}.choose_wallet.wallet_options`);
 
     return (
         <>
@@ -314,7 +307,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
                         .sort((a, b) => {
                             return (a.address ?? "").localeCompare(b.address ?? "");
                         })
-                        .map((asset, index) => <TokenItem key={index} asset={asset} />)}
+                        .map((asset, index) => <TokenItem key={index} asset={asset} link={link} />)}
                 </div>
             </div>
 

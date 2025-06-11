@@ -21,7 +21,7 @@ import { Button } from "../ui/button";
 
 interface UseActionButtonProps {
     isDisabled?: boolean;
-    buttonText?: string;
+    buttonText: string;
     onSubmit: () => void;
     setDisabled?: (disabled: boolean) => void;
 }
@@ -50,7 +50,7 @@ const UseActionButton: React.FC<UseActionButtonProps> = ({
             disabled={isDisabled}
             onClick={onSubmit}
         >
-            {buttonText ?? t("claim.claim")}
+            {buttonText}
         </Button>
     );
 };

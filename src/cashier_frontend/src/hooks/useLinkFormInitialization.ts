@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useMemo } from "react";
 import {
     CHAIN,
     LINK_TYPE,
@@ -76,58 +75,50 @@ function getCorrectLabel(linkType: string, tokenAddress: string): string {
 export function useLinkFormInitialization(
     currentInput: Partial<UserInputItem> | undefined,
     allAvailableTokens: FungibleToken[] | undefined,
-    link: LinkDetailModel | null,
+    link: LinkDetailModel | null | undefined,
 ) {
-    return useMemo(() => {
-        // Get initial values from current input or link data
-        let values = getInitialFormValues(currentInput, link);
+    // Get initial values from current input or link data
+    let values = getInitialFormValues(currentInput, link);
 
-        // If link type exists, ensure labels are consistent with the current link type
+    // If link type exists, ensure labels are consistent with the current link type
 
-        if (!link || !link.linkType) {
-            throw Error("Link type is required to initialize form values");
-        }
+    if (!link || !link.linkType) {
+        return undefined; // or some default value
+    }
 
-        if (values && link && link.linkType) {
-            // Update labels to match current link type
-            values = {
-                assets: values.assets.map((asset) => {
-                    // Generate appropriate label based on current link type
-                    const updatedLabel = getCorrectLabel(link.linkType!, asset.tokenAddress);
+    if (values && link && link.linkType) {
+        // Update labels to match current link type
+        values = {
+            assets: values.assets.map((asset) => {
+                // Generate appropriate label based on current link type
+                const updatedLabel = getCorrectLabel(link.linkType!, asset.tokenAddress);
 
-                    // Keep all properties except update the label
-                    return {
-                        ...asset,
-                        label: updatedLabel,
-                    };
-                }),
-            };
-        }
+                // Keep all properties except update the label
+                return {
+                    ...asset,
+                    label: updatedLabel,
+                };
+            }),
+        };
+    }
 
-        if (
-            !values &&
-            allAvailableTokens &&
-            allAvailableTokens.length > 0 &&
-            link &&
-            link.linkType
-        ) {
-            // Create default values with the first available token if no values exist
-            const tokenAddress = allAvailableTokens[0].address;
-            const label = getCorrectLabel(link.linkType, tokenAddress);
+    if (!values && allAvailableTokens && allAvailableTokens.length > 0 && link && link.linkType) {
+        // Create default values with the first available token if no values exist
+        const tokenAddress = allAvailableTokens[0].address;
+        const label = getCorrectLabel(link.linkType, tokenAddress);
 
-            return {
-                assets: [
-                    {
-                        tokenAddress: tokenAddress,
-                        amount: BigInt(0),
-                        label: label,
-                        chain: CHAIN.IC,
-                    },
-                ],
-            };
-        }
-        return values;
-    }, [currentInput, allAvailableTokens, link]);
+        return {
+            assets: [
+                {
+                    tokenAddress: tokenAddress,
+                    amount: BigInt(0),
+                    label: label,
+                    chain: CHAIN.IC,
+                },
+            ],
+        };
+    }
+    return values;
 }
 
 /**
@@ -135,7 +126,7 @@ export function useLinkFormInitialization(
  */
 function getInitialFormValues(
     input: Partial<UserInputItem> | undefined,
-    link: LinkDetailModel | null,
+    link: LinkDetailModel | null | undefined,
 ): InitialFormValues | undefined {
     if (!input?.assets || input.assets.length === 0) {
         // If link has assets but no user input, check if we have link data directly

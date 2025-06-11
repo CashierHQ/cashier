@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { useEffect } from "react";
-import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { LINK_TYPE } from "@/services/types/enum";
 import {
@@ -28,25 +27,13 @@ import { useTokens } from "@/hooks/useTokens";
 // Import our custom hook for form initialization
 import { useLinkFormInitialization } from "@/hooks/useLinkFormInitialization";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
+import { useLinkAction } from "@/hooks/useLinkAction";
 
 export default function LinkDetails() {
-    const { link } = useLinkActionStore();
+    const { link } = useLinkAction();
     const { setButtonState, getUserInput } = useLinkCreationFormStore();
     const { getDisplayTokens } = useTokens();
     const { renderSkeleton } = useSkeletonLoading();
-
-    // Get tokens data
-    const allAvailableTokens = getDisplayTokens();
-
-    // Get current input from store
-    const currentInput = link?.id ? getUserInput(link.id) : undefined;
-
-    if (!link) {
-        return renderSkeleton();
-    }
-
-    // Initialize form values using our custom hook
-    const initialFormValues = useLinkFormInitialization(currentInput, allAvailableTokens, link);
 
     // When this component mounts, we'll receive the button state from the form
     useEffect(() => {
@@ -56,6 +43,18 @@ export default function LinkDetails() {
             isDisabled: true,
         });
     }, []);
+    // Get tokens data
+    const allAvailableTokens = getDisplayTokens();
+
+    // Get current input from store
+    const currentInput = link?.id ? getUserInput(link.id) : undefined;
+
+    // Initialize form values using our custom hook
+    const initialFormValues = useLinkFormInitialization(currentInput, allAvailableTokens, link);
+
+    if (!link) {
+        return renderSkeleton();
+    }
 
     const getLinkForm = () => {
         switch (link?.linkType) {

@@ -16,8 +16,8 @@
 
 import { act, FC } from "react";
 import { Spinner } from "./spinner";
-import { useLinkActionStore } from "@/stores/linkActionStore";
 import { ACTION_TYPE } from "@/services/types/enum";
+import { useLinkAction } from "@/hooks/useLinkAction";
 
 export type FeeProps = {
     title?: string | undefined;
@@ -30,7 +30,7 @@ export type FeeProps = {
 
 export const Fee: FC<FeeProps> = ({ title, amount, usdAmount, symbol, isLoading, isUsd }) => {
     const showUsd = isUsd && usdAmount !== undefined;
-    const { action } = useLinkActionStore();
+    const { action } = useLinkAction();
 
     /*TODO: Remove after mid milestone*/
     const getSymbol = (title?: string) => {

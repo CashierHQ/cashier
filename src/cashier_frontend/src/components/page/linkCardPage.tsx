@@ -22,6 +22,7 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatNumber } from "@/utils/helpers/currency";
 import { ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
+import { FeeHelpers } from "@/services/fee.service";
 
 export const getTitleForLink = (
     linkData?: LinkDetailModel,
@@ -30,14 +31,24 @@ export const getTitleForLink = (
     if (!linkData || !getToken) return "";
 
     const tokenAddress = linkData?.asset_info?.[0]?.address;
-    const token = tokenAddress ? getToken(tokenAddress) : undefined;
+    const token = getToken(tokenAddress);
+
+    if (!token) return "Unknown Token";
+
+    let amount = Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
+    if (token) {
+        amount = FeeHelpers.forecastActualAmountBasedOnAssetInfo(
+            linkData?.linkType ?? "",
+            token,
+            linkData?.asset_info?.[0]?.amountPerUse ?? "0",
+            Number(linkData?.maxActionNumber ?? 1),
+        );
+    }
 
     switch (linkData?.linkType) {
         case LINK_TYPE.SEND_TIP:
         case LINK_TYPE.SEND_AIRDROP:
         case LINK_TYPE.RECEIVE_PAYMENT:
-            const amount =
-                Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
             return `${amount} ${token?.symbol}`;
         case LINK_TYPE.SEND_AIRDROP:
             return "Send Airdrop";
