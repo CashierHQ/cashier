@@ -171,7 +171,29 @@ export const convertTokenAmountToNumber = (amount: number, decimals: number): nu
     return Math.floor(amount * 10 ** decimals);
 };
 export const convertDecimalBigIntToNumber = (amount: bigint, decimals: number): number => {
-    return Number(amount) / 10 ** decimals;
+    // Use string conversion to avoid floating-point precision issues
+    const amountStr = amount.toString();
+    const divisor = 10 ** decimals;
+
+    // For very large numbers, we still need to use division
+    // but we can improve precision by using parseFloat with proper formatting
+    if (amountStr.length <= 15) {
+        // Safe range for JavaScript number precision
+        return Number(amount) / divisor;
+    }
+
+    // For larger numbers, use string manipulation to maintain precision
+    const wholePart = amountStr.slice(0, -decimals) || "0";
+    const fractionalPart = amountStr.slice(-decimals).padStart(decimals, "0");
+
+    // Remove trailing zeros from fractional part
+    const trimmedFractional = fractionalPart.replace(/0+$/, "");
+
+    if (trimmedFractional) {
+        return parseFloat(`${wholePart}.${trimmedFractional}`);
+    } else {
+        return parseFloat(wholePart);
+    }
 };
 
 export const transformShortAddress = (address: string): string => {

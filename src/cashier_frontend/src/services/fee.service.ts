@@ -224,19 +224,39 @@ export class FeeService {
     ): number {
         const tokenDecimals = tokenInfo.decimals;
 
-        // Calculate network fee per transaction
-        const networkFee = this.calculateNetworkFees(tokenInfo);
+        // Calculate network fee per transaction using BigInt
+        const networkFeeBigInt = this.calculateNetworkFeesInBigInt(tokenInfo);
 
-        // Total fees for all planned actions (maxActionNumber times)
-        const totalFeeAmount = networkFee * maxActionNumber;
+        // Calculate total token amount in smallest units (BigInt arithmetic)
+        const totalTokenAmountBigInt = amount * BigInt(maxActionNumber);
 
-        // Convert token amount from smallest units to human-readable format
-        // Then multiply by the number of actions
-        const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
+        // Total fees for all planned actions (maxActionNumber times) + one execution fee
+        const totalFeesBigInt = networkFeeBigInt * BigInt(maxActionNumber + 1);
 
-        // Return total: token amount + action fees + one execution fee
-        // The extra networkFee is needed for the final transaction execution
-        return totalTokenAmount + totalFeeAmount + networkFee;
+        // Add token amount and fees, then convert to human-readable format
+        const totalBigInt = totalTokenAmountBigInt + totalFeesBigInt;
+
+        // Convert to number with proper decimal handling
+        return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
+    }
+
+    forecastIcrc2Fee(tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number): number {
+        const tokenDecimals = tokenInfo.decimals;
+
+        // Calculate network fee per transaction using BigInt to avoid precision loss
+        const networkFeeBigInt = this.calculateNetworkFeesInBigInt(tokenInfo);
+
+        // Calculate total token amount in smallest units (BigInt arithmetic)
+        const totalTokenAmountBigInt = amount * BigInt(maxActionNumber);
+
+        // Calculate total fees (2 network fees: 1 for approve, 1 for transfer)
+        const totalFeesBigInt = networkFeeBigInt * BigInt(2);
+
+        // Add token amount and fees, then convert to human-readable format
+        const totalBigInt = totalTokenAmountBigInt + totalFeesBigInt;
+
+        // Convert to number with proper decimal handling
+        return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
     }
 
     /**
@@ -260,29 +280,25 @@ export class FeeService {
         amount: bigint,
         maxActionNumber: number,
     ): number {
-        let result: number = 0;
+        const tokenDecimals = tokenInfo.decimals;
+
         if (linkType === "ReceivePayment") {
-            const tokenDecimals = tokenInfo.decimals;
+            // Calculate network fee per transaction using BigInt
+            const networkFeeBigInt = this.calculateNetworkFeesInBigInt(tokenInfo);
 
-            // Calculate network fee per transaction
-            const networkFee = this.calculateNetworkFees(tokenInfo);
+            // Calculate total token amount in smallest units (BigInt arithmetic)
+            const totalTokenAmountBigInt = amount * BigInt(maxActionNumber);
 
-            // Convert token amount from smallest units to human-readable format
-            // Then multiply by the number of actions
-            const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
+            // Add one network fee for execution
+            const totalBigInt = totalTokenAmountBigInt + networkFeeBigInt;
 
-            // Return total: token amount + action fees + one execution fee
-            // The extra networkFee is needed for the final transaction execution
-            result = totalTokenAmount + networkFee;
+            // Convert to number with proper decimal handling
+            return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
         } else {
-            const tokenDecimals = tokenInfo.decimals;
-            // Convert token amount from smallest units to human-readable format
-            // Then multiply by the number of actions
-            const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
-            result = totalTokenAmount;
+            // For other link types, just convert token amount
+            const totalTokenAmountBigInt = amount * BigInt(maxActionNumber);
+            return convertDecimalBigIntToNumber(totalTokenAmountBigInt, tokenDecimals);
         }
-
-        return result;
     }
 
     /**
@@ -306,21 +322,23 @@ export class FeeService {
         intent: IntentModel,
         tokenInfo: FungibleToken,
     ) {
-        const amountNonEs8 = Number(intent.amount) / Number(10 ** tokenInfo.decimals);
-        const networkFee = this.calculateNetworkFees(tokenInfo);
+        // Use BigInt arithmetic to avoid floating-point precision issues
+        const amountBigInt = intent.amount;
+        const networkFeeBigInt = this.calculateNetworkFeesInBigInt(tokenInfo);
 
-        let displayAmount = amountNonEs8;
+        let displayAmountBigInt = amountBigInt;
 
         if (actionType === ACTION_TYPE.CREATE_LINK) {
-            displayAmount = amountNonEs8 + networkFee;
+            displayAmountBigInt = amountBigInt + networkFeeBigInt;
         } else if (actionType === ACTION_TYPE.USE_LINK) {
             if (linkType === "ReceivePayment" && intent.task === TASK.TRANSFER_WALLET_TO_LINK) {
-                displayAmount = amountNonEs8 + networkFee;
+                displayAmountBigInt = amountBigInt + networkFeeBigInt;
             }
         } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
+            // No additional fees for withdraw
         }
 
-        return displayAmount;
+        return convertDecimalBigIntToNumber(displayAmountBigInt, tokenInfo.decimals);
     }
 
     /**
@@ -393,6 +411,9 @@ export const FeeHelpers = {
         intent: IntentModel,
         tokenInfo: FungibleToken,
     ) => feeService.forecastActualAmountWithIntent(linkType, actionType, intent, tokenInfo),
+
+    forecastIcrc2Fee: (tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) =>
+        feeService.forecastIcrc2Fee(tokenInfo, amount, maxActionNumber),
 
     shouldDisplayFeeBasedOnIntent: (linkType: string, actionType: ACTION_TYPE, intentTask: TASK) =>
         feeService.shouldDisplayFeeBasedOnIntent(linkType, actionType, intentTask),

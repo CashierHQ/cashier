@@ -624,7 +624,12 @@ export default function LinkPreview({
                         console.log("Link creation fee:", fee);
                         const token = getToken(fee.address);
                         const tokenSymbol = fee.symbol;
-                        const displayAmount = Number(fee.amount) / 10 ** fee.decimals;
+                        const displayAmount = FeeHelpers.forecastIcrc2Fee(
+                            token!,
+                            BigInt(fee.amount),
+                            Number(link?.maxActionNumber ?? 1),
+                        );
+
                         const tokenPrice = getTokenPrice(fee.address) || 0;
                         const usdValue = displayAmount * tokenPrice;
 

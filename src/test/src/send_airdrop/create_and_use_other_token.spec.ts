@@ -83,18 +83,17 @@ describe("Test create and claim token1 airdrop link", () => {
             const icpBalanceBefore = await fixture.getUserBalance("alice", "ICP");
 
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
-            const expected_treasury_balance =
-                treasury_balance_before + CREATE_LINK_FEE - ledger_fee * 2n;
+            const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
 
             // Total token1 amount used = airdropAmount + ledger_fee (transfer airdropAmount)
             const expectedToken1BalanceAfter = balanceBefore - airdropAmount - ledger_fee;
 
             // ICP cost = CREATE_LINK_FEE
-            const expectedIcpBalanceAfter = icpBalanceBefore - CREATE_LINK_FEE;
+            const expectedIcpBalanceAfter = icpBalanceBefore - CREATE_LINK_FEE - ledger_fee * 2n;
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("token1", airdropAmount);
-                await executor.executeIcrc2Approve("ICP", transfer_fee_amount);
+                await executor.executeIcrc2Approve("ICP", transfer_fee_amount + ledger_fee);
                 await executor.triggerTransaction();
             };
 
