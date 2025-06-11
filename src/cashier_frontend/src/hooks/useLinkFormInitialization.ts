@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { useMemo } from "react";
 import {
     CHAIN,
     LINK_TYPE,
@@ -127,7 +126,7 @@ export function useLinkFormInitialization(
  */
 function getInitialFormValues(
     input: Partial<UserInputItem> | undefined,
-    link: LinkDetailModel | null,
+    link: LinkDetailModel | null | undefined,
 ): InitialFormValues | undefined {
     if (!input?.assets || input.assets.length === 0) {
         // If link has assets but no user input, check if we have link data directly
