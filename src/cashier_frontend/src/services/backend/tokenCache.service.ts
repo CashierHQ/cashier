@@ -102,10 +102,6 @@ class TokenCacheService {
                     if (balancesChanged) {
                         await this.TokenStorageService.updateTokenBalances(balancesToCache);
                         // Check what was actually stored in localStorage
-
-                        console.log(
-                            `Caching complete (${balancesChanged ? "balances changed" : "time threshold reached"})`,
-                        );
                     }
 
                     console.log("Cached balances:", balancesToCache);

@@ -51,7 +51,7 @@ export default function ClaimPage() {
     const { goToChooseWallet, handleStateBasedNavigation, goToLinkDefault } =
         useLinkUseNavigation(linkId);
 
-    const { updateTokenInit, getToken } = useTokens();
+    const { updateTokenInit } = useTokens();
     const identity = useIdentity();
 
     // Fetch link data

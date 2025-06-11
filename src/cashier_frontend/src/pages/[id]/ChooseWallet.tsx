@@ -162,14 +162,14 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         disabled: boolean;
     }>({
         text: t("confirmation_drawer.confirm_button"),
-        disabled: false,
+        disabled: false, // Start enabled - ClaimFormOptions will handle validation
     });
     const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
         text: string;
         disabled: boolean;
     }>({
-        text: isFetching ? "Loading..." : t("confirmation_drawer.confirm_button"),
-        disabled: false,
+        text: t("confirmation_drawer.confirm_button"),
+        disabled: false, // Start enabled - will be managed by action state
     });
 
     // Update button text based on action state and processing state
@@ -208,26 +208,13 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     // Fetch action data when identity changes or link ID changes
     useEffect(() => {
         const fetchInitialData = async () => {
-            setUseLinkButton({
-                text: useLinkButton.text,
-                disabled: true, // Disable button while loading
-            });
             if (linkId) {
                 try {
+                    // Fetch user state in background without blocking UI
                     await refetchLinkUserState();
                 } catch (error) {
                     console.error("Error fetching action:", error);
-                } finally {
-                    setUseLinkButton({
-                        text: useLinkButton.text,
-                        disabled: false, // Enable button after loading
-                    });
                 }
-            } else {
-                setUseLinkButton({
-                    text: useLinkButton.text,
-                    disabled: false, // Enable button if no linkId
-                });
             }
         };
 

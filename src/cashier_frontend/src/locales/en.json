@@ -47,7 +47,11 @@
         "receive_options": "Receive options",
         "send_options": "Send options",
         "receive": "Receive",
-        "payment": "Payment"
+        "SendAirdrop": {
+            "title": "Airdrop",
+            "description": "Airdrop tokens to a recipient",
+            "button": "Airdrop"
+        }
     },
     "continue": "Continue",
     "submit": "Submit",
@@ -292,7 +296,11 @@
             "use_link_button": "Claim",
             "use_link_message": "Congratulations, you received a tip!",
             "complete_message": "Congratulations, you claimed a tip!",
-            "complete_button": "Claimed"
+            "complete_button": "Claimed",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
         },
         "SendAirdrop": {
             "transaction_success": "Congratulations! Your claim was successful.",
@@ -300,7 +308,11 @@
             "use_link_button": "Claim",
             "use_link_message": "Congratulations, you received an airdrop!",
             "complete_message": "Congratulations, you claimed an airdrop!",
-            "complete_button": "Claimed"
+            "complete_button": "Claimed",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
         },
         "SendTokenBasket": {
             "transaction_success": "Congratulations! Your claim was successful.",
@@ -308,7 +320,11 @@
             "use_link_button": "Claim",
             "use_link_message": "Congratulations, you received a token basket!",
             "complete_message": "Congratulations, you claimed a token basket!",
-            "complete_button": "Claimed"
+            "complete_button": "Claimed",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
         },
         "ReceivePayment": {
             "transaction_success": "Congratulations! Your payment was successful.",
@@ -316,12 +332,11 @@
             "use_link_button": "Pay",
             "use_link_message": "Pay for the link",
             "complete_message": "Congratulations, you paid successfully!",
-            "complete_button": "Paid"
-        },
-        "unknown": {
-            "use_link_button": "Unknown! Need to check link type",
-            "complete_message": "Unknown! Need to check link type",
-            "complete_button": "Unknown! Need to check link type"
+            "complete_button": "Paid",
+            "choose_wallet": {
+                "use_asset": "Send asset",
+                "wallet_options": "Send options"
+            }
         }
     },
     "add_asset_form": {

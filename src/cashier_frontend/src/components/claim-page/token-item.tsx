@@ -20,23 +20,37 @@ import { useTokenStore } from "@/stores/tokenStore";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "@radix-ui/react-avatar";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
+import { FeeHelpers } from "@/services/fee.service";
 
 interface TokenItemProps {
+    link: LinkDetailModel;
     asset: LinkDetailModel["asset_info"][0];
 }
 
-const TokenItem: React.FC<TokenItemProps> = ({ asset }) => {
+const TokenItem: React.FC<TokenItemProps> = ({ link, asset }) => {
     const { getToken, getTokenPrice } = useTokenStore();
     const token = getToken(asset.address);
 
-    const tokenDecimals = token?.decimals ?? 8;
-    const tokenAmount = Number(asset.amountPerUse) / 10 ** tokenDecimals;
-    const formattedTokenAmount = formatNumber(tokenAmount.toString());
+    if (!token) {
+        return (
+            <div className="flex justify-between items-center">
+                <p className="text-[14px] font-normal text-red-500">Token not found</p>
+            </div>
+        );
+    }
+
+    const tokenAmountForecast = FeeHelpers.forecastActualAmountBasedOnAssetInfo(
+        token,
+        asset.amountPerUse,
+        Number(link.maxActionNumber),
+    );
+
+    const formattedTokenAmount = formatNumber(tokenAmountForecast.toString());
     const tokenSymbol = token?.symbol || asset.address;
 
     // Calculate approximate USD value
     const tokenPrice = getTokenPrice?.(asset.address) || 0;
-    const approximateUsdValue = tokenAmount * tokenPrice;
+    const approximateUsdValue = tokenAmountForecast * tokenPrice;
 
     return (
         <div className="flex justify-between items-center">

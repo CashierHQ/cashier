@@ -30,7 +30,7 @@ interface ClaimPageFormProps {
     onBack?: () => void;
     isDisabled: boolean;
     setDisabled: (disabled: boolean) => void;
-    buttonText?: string;
+    buttonText: string;
 }
 
 const ClaimPageForm: React.FC<ClaimPageFormProps> = ({

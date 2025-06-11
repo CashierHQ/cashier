@@ -217,7 +217,7 @@ export class FeeService {
      * @param maxActionNumber - Maximum number of actions/uses for this transaction
      * @returns Total amount needed in human-readable format (e.g., 1.5 ICP)
      */
-    forecastActualAmountWithoutIntent(
+    forecastActualAmountWithoutIntentBasedOnAssetInfo(
         tokenInfo: FungibleToken,
         amount: bigint,
         maxActionNumber: number,
@@ -237,6 +237,38 @@ export class FeeService {
         // Return total: token amount + action fees + one execution fee
         // The extra networkFee is needed for the final transaction execution
         return totalTokenAmount + totalFeeAmount + networkFee;
+    }
+
+    /**
+     * Calculates the total amount needed for a transaction based on link asset info.
+     * This is used for direct token transfers where we need to account for:
+     * - The base token amount multiplied by max actions
+     * - One additional network fee for the final execution
+     *
+     * Formula: (amount * maxActions) + networkFee
+     *
+     * @param tokenInfo - Token information including decimals and fee structure
+     * @param amount - link amount per use
+     * @param maxActionNumber - Maximum number of actions/uses for this transaction
+     * @returns Total amount needed in human-readable format (e.g., 1.5 ICP)
+     */
+    forecastActualAmountBasedOnAssetInfo(
+        tokenInfo: FungibleToken,
+        amount: bigint,
+        maxActionNumber: number,
+    ): number {
+        const tokenDecimals = tokenInfo.decimals;
+
+        // Calculate network fee per transaction
+        const networkFee = this.calculateNetworkFees(tokenInfo);
+
+        // Convert token amount from smallest units to human-readable format
+        // Then multiply by the number of actions
+        const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
+
+        // Return total: token amount + action fees + one execution fee
+        // The extra networkFee is needed for the final transaction execution
+        return totalTokenAmount + networkFee;
     }
 
     /**
@@ -269,11 +301,11 @@ export class FeeService {
 
         if (actionType === ACTION_TYPE.CREATE_LINK) {
             displayAmount = amountNonEs8 + networkFee;
-        } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
         } else if (actionType === ACTION_TYPE.USE_LINK) {
             if (linkType === "ReceivePayment" && intent.task === TASK.TRANSFER_WALLET_TO_LINK) {
                 displayAmount = amountNonEs8 + networkFee;
             }
+        } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
         }
 
         console.log("forecastActualAmountWithIntent displayAmount", displayAmount);
@@ -326,13 +358,24 @@ export const FeeHelpers = {
         tokenInfo: FungibleToken,
         amount: bigint,
         maxActionNumber: number,
-    ) => feeService.forecastActualAmountWithoutIntent(tokenInfo, amount, maxActionNumber),
+    ) =>
+        feeService.forecastActualAmountWithoutIntentBasedOnAssetInfo(
+            tokenInfo,
+            amount,
+            maxActionNumber,
+        ),
+    forecastActualAmountBasedOnAssetInfo: (
+        tokenInfo: FungibleToken,
+        amount: bigint,
+        maxActionNumber: number,
+    ) => feeService.forecastActualAmountBasedOnAssetInfo(tokenInfo, amount, maxActionNumber),
     forecastActualAmountWithIntent: (
         linkType: string,
         actionType: ACTION_TYPE,
         intent: IntentModel,
         tokenInfo: FungibleToken,
     ) => feeService.forecastActualAmountWithIntent(linkType, actionType, intent, tokenInfo),
+
     shouldDisplayFeeBasedOnIntent: (linkType: string, actionType: ACTION_TYPE, intentTask: TASK) =>
         feeService.shouldDisplayFeeBasedOnIntent(linkType, actionType, intentTask),
 };

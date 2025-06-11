@@ -65,27 +65,22 @@ export const TransactionItem = memo(function TransactionItem({
             return;
         }
 
-        if (FeeHelpers.shouldDisplayFeeBasedOnIntent(link.linkType, actionType, intent.task)) {
-            if (networkFee && token.decimals !== undefined) {
-                const totalTokenAmount = FeeHelpers.forecastActualAmountWithIntent(
-                    link.linkType,
-                    actionType,
-                    intent,
-                    token,
-                );
-                console.log("totalTokenAmount", totalTokenAmount);
+        if (networkFee && token.decimals !== undefined) {
+            const totalTokenAmount = FeeHelpers.forecastActualAmountWithIntent(
+                link.linkType,
+                actionType,
+                intent,
+                token,
+            );
+            console.log("totalTokenAmount", totalTokenAmount);
 
-                setAdjustedAmount(totalTokenAmount);
-            } else {
-                const feeAmount = fees.find(
-                    (fee) =>
-                        fee.address === intent.asset.address && fee.type === "link_creation_fee",
-                );
-
-                setAdjustedAmount(Number(feeAmount?.amount) / 10 ** token.decimals);
-            }
+            setAdjustedAmount(totalTokenAmount);
         } else {
-            setAdjustedAmount(Number(intent.amount) / 10 ** token.decimals);
+            const feeAmount = fees.find(
+                (fee) => fee.address === intent.asset.address && fee.type === "link_creation_fee",
+            );
+
+            setAdjustedAmount(Number(feeAmount?.amount) / 10 ** token.decimals);
         }
     }, [assetAmount, fees, intent.asset.address, token]);
 
