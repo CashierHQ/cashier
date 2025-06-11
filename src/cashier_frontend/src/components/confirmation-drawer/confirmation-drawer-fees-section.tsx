@@ -16,9 +16,9 @@
 
 import { FC, useEffect, useState } from "react";
 import { IntentModel } from "@/services/types/intent.service.types";
-import { feeService, Transfer } from "@/services/fee.service";
+import { FeeHelpers, Transfer } from "@/services/fee.service";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
-import { FEE_TYPE, TASK } from "@/services/types/enum";
+import { TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
 import { ICP_ADDRESS } from "@/const";
 import { ChevronRight } from "lucide-react";
@@ -33,6 +33,7 @@ import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
     isUsd?: boolean;
+    maxActionNumber?: number;
 };
 
 // Define a type for fee token info
@@ -53,6 +54,7 @@ type FeeBreakdownItem = {
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
+    maxActionNumber,
 }) => {
     const { t } = useTranslation();
     const { feeAmount } = useIntentMetadata(intents?.[0]);
@@ -74,11 +76,8 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
             for (const intent of intents) {
                 const token = getToken(intent.asset.address);
                 if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
-                    const fee = feeService.getFee(
-                        intent.asset.chain,
-                        link.linkType!,
-                        FEE_TYPE.LINK_CREATION,
-                    );
+                    const fee = FeeHelpers.getLinkCreationFee();
+                    console.log("fee", fee);
                     if (fee) {
                         totalFeesMapArray.push({
                             intent,
@@ -153,7 +152,10 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 }
 
                 const feeType = intent.fee?.type;
-                const tokenAddress = intent.fee?.address;
+                const tokenAddress =
+                    feeType === "link_creation_fee"
+                        ? FeeHelpers.getLinkCreationFee().address
+                        : intent.fee?.address;
                 const token = tokenInfoMap.get(tokenAddress!);
                 const tokenInfo = getToken(tokenAddress!);
 
@@ -165,15 +167,34 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
                 // Safe conversion from bigint to number for calculation
                 // Use Number() for explicit conversion and provide defaults for undefined values
-                const tokenFee = tokenInfo.fee;
-                const tokenDecimals = tokenInfo.decimals;
-                const tokenAmount = Number(tokenFee) / Math.pow(10, tokenDecimals);
+                // const tokenFee =
+                //     feeType === "link_creation_fee"
+                //         ? FeeHelpers.getLinkCreationFee().amount
+                //         : tokenInfo.fee;
+                const tokenDecimals =
+                    feeType === "link_creation_fee"
+                        ? FeeHelpers.getLinkCreationFee().decimals
+                        : tokenInfo.decimals;
+
+                const tokenAmount =
+                    feeType === "link_creation_fee"
+                        ? Number(FeeHelpers.getLinkCreationFee().amount) /
+                          Math.pow(10, tokenDecimals)
+                        : FeeHelpers.calculateNetworkFees(tokenInfo!);
 
                 let tokenPrice = getTokenPrice(tokenAddress!);
                 if (tokenPrice === undefined) {
                     tokenPrice = 0;
                 }
-                const usdValue = tokenPrice * tokenAmount;
+                let actionNum = 1;
+                if (maxActionNumber) {
+                    if (isNaN(Number(maxActionNumber))) {
+                        actionNum = 1; // Default to 1 if maxActionNumber is not a number
+                    } else {
+                        actionNum = Number(maxActionNumber);
+                    }
+                }
+                const usdValue = tokenPrice * tokenAmount * Number(actionNum ?? 1);
                 totalUsdValue += usdValue;
 
                 const breakdownItem: FeeBreakdownItem = {
@@ -181,7 +202,9 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                         feeType === "link_creation_fee"
                             ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
                             : t("confirmation_drawer.fee-breakdown.network_fee"),
-                    amount: formatNumber(tokenAmount.toString()),
+                    amount: formatNumber(
+                        (tokenAmount * (Number(maxActionNumber ?? 1) + 1)).toString(),
+                    ),
                     tokenSymbol: token?.symbol || "Unknown",
                     tokenAddress: tokenAddress!,
                     usdAmount: usdValue.toString(),

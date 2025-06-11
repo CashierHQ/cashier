@@ -24,14 +24,13 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
-import { useResponsive, useDeviceSize } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import {
     ACTION_TYPE,
     CHAIN,
-    FEE_TYPE,
     LINK_STATE,
     LINK_TYPE,
     ACTION_STATE,
@@ -45,11 +44,10 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
-import { useFeeService } from "@/hooks/useFeeService";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
-import { StateBadge } from "@/components/link-item";
+import { FeeHelpers } from "@/services/fee.service";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -142,8 +140,6 @@ export default function LinkPreview({
             });
         }
     }, [action, t]);
-
-    const { getFee } = useFeeService();
 
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
     const { mutateAsync: processAction } = useProcessAction();
@@ -575,15 +571,16 @@ export default function LinkPreview({
                                 // Calculate token amount with proper decimals
                                 const token = getToken(asset.address);
 
-                                const tokenDecimals = token?.decimals ?? 8;
-                                const totalTokenAmount =
-                                    (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
-                                    10 ** tokenDecimals;
+                                const forecastAmount = FeeHelpers.forecastActualAmountWithoutIntent(
+                                    token!,
+                                    BigInt(asset.amountPerUse),
+                                    Number(link?.maxActionNumber ?? 1),
+                                );
                                 const tokenSymbol = token?.symbol;
 
                                 // Calculate approximate USD value
                                 const tokenPrice = getTokenPrice(asset.address) || 0;
-                                const approximateUsdValue = totalTokenAmount * tokenPrice;
+                                const approximateUsdValue = forecastAmount * tokenPrice;
 
                                 return (
                                     <div key={index} className="flex justify-between items-center">
@@ -599,7 +596,7 @@ export default function LinkPreview({
                                         <div className="flex flex-col items-end">
                                             <div className="flex items-center gap-1">
                                                 <p className="text-[14px] font-normal">
-                                                    {formatNumber(totalTokenAmount.toString())}
+                                                    {formatNumber(forecastAmount.toString())}
                                                 </p>
                                             </div>
                                             <p className="text-[10px] font-normal text-[#b6b6b6]">
@@ -623,19 +620,11 @@ export default function LinkPreview({
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
                     {/* Use getFee instead of getAllFees to get fee information */}
                     {(() => {
-                        const fee = getFee(
-                            CHAIN.IC,
-                            link.linkType as LINK_TYPE,
-                            FEE_TYPE.LINK_CREATION,
-                        );
-                        if (!fee) return null;
-
+                        const fee = FeeHelpers.getLinkCreationFee();
+                        console.log("Link creation fee:", fee);
                         const token = getToken(fee.address);
-
-                        const tokenSymbol = token?.symbol || fee.symbol || "ICP";
-
-                        const tokenDecimals = fee.decimals || token?.decimals || 8;
-                        const displayAmount = Number(fee.amount) / 10 ** tokenDecimals;
+                        const tokenSymbol = fee.symbol;
+                        const displayAmount = Number(fee.amount) / 10 ** fee.decimals;
                         const tokenPrice = getTokenPrice(fee.address) || 0;
                         const usdValue = displayAmount * tokenPrice;
 
@@ -653,7 +642,7 @@ export default function LinkPreview({
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center gap-1">
                                         <p className="text-[14px] font-normal">
-                                            {formatNumber(displayAmount.toString())}
+                                            {formatNumber(Number(displayAmount).toString())}
                                         </p>
                                     </div>
                                     <p className="text-[10px] font-normal text-[#b6b6b6]">
@@ -702,6 +691,8 @@ export default function LinkPreview({
                 // The text to display on the action button
                 buttonText={drawerConfirmButton.text}
                 // Function to update the action button's text
+                // The max action number for the link, required for fee calculation
+                maxActionNumber={Number(link?.maxActionNumber ?? 1)}
                 setButtonText={(text: string) => {
                     setDrawerConfirmButton((prev) => ({
                         ...prev,

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { FC, useState } from "react";
+import { FC } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,6 @@ interface ConfirmationDrawerProps {
 export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     open,
     onClose = () => {},
-    onInfoClick = () => {},
     onActionResult = () => {},
     onCashierError = () => {},
     onSuccessContinue = async () => {},
@@ -53,9 +52,6 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
     const { t } = useTranslation();
     const { link, action, anonymousWalletAddress, setAction } = useLinkAction();
     const identity = useIdentity();
-
-    const [isUsd, setIsUsd] = useState(false);
-
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous();
 
@@ -314,10 +310,8 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
             return (
                 <>
                     <ConfirmationPopupAssetsSection
+                        actionType={action.type}
                         intents={action.intents}
-                        onInfoClick={onInfoClick}
-                        isUsd={isUsd}
-                        onUsdClick={() => setIsUsd((old) => !old)}
                     />
                     <ConfirmationPopupFeesSection intents={action.intents} />
 

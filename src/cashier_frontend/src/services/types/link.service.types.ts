@@ -17,7 +17,6 @@
 import { IntentCreateModel } from "./intent.service.types";
 import { ActionModel } from "./action.service.types";
 import { ACTION_TYPE, CHAIN, LINK_INTENT_ASSET_LABEL } from "./enum";
-import { LinkDto } from "../../../../declarations/cashier_backend/cashier_backend.did";
 
 export enum State {
     New = "New",

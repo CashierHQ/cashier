@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { FC, useEffect, useState, useRef } from "react";
+import { FC, useEffect, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ import { ACTION_STATE } from "@/services/types/enum";
 import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
+import { FeeHelpers } from "@/services/fee.service";
+import { useLinkAction } from "@/hooks/useLinkAction";
 
 /**
  * Props interface for the ConfirmationDrawerV2 component
@@ -65,6 +67,9 @@ interface ConfirmationDrawerV2Props {
 
     /** Function to update the action button's text */
     setButtonText?: (text: string) => void;
+
+    /** The max action number for the link, required for fee calculation */
+    maxActionNumber?: number;
 }
 
 /**
@@ -73,11 +78,11 @@ interface ConfirmationDrawerV2Props {
  * This component is designed to be completely configurable via props, without relying on hooks
  * for internal state. This makes it more flexible for use in different workflows.
  */
+// TODO: remove all the props that are not used in the component
 export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     open,
     action,
     onClose = () => {},
-    onInfoClick = () => {},
     // onActionResult = () => {},
     onCashierError = () => {},
     onSuccessContinue = async () => {},
@@ -86,11 +91,12 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     setButtonDisabled,
     buttonText,
     setButtonText,
+    maxActionNumber,
 }) => {
     const { t } = useTranslation();
     /** Toggle state for showing USD values instead of token values */
-    const [isUsd, setIsUsd] = useState(false);
     const [countdown, setCountdown] = useState(0);
+    const { link } = useLinkAction();
 
     /**
      * Determine button text based on provided prop or action state
@@ -113,15 +119,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     } else {
         displayButtonText = t("confirmation_drawer.confirm_button");
     }
-
-    // Log the button text for debugging
-    console.log("DRAWER STATE:", {
-        buttonText: displayButtonText,
-        countdown,
-        actionState: action?.state,
-        open,
-        isButtonDisabled,
-    });
 
     /**
      * Handles the submit button click
@@ -244,12 +241,19 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             return (
                 <>
                     <ConfirmationPopupAssetsSection
+                        actionType={action.type}
                         intents={action.intents}
-                        onInfoClick={onInfoClick}
-                        isUsd={isUsd}
-                        onUsdClick={() => setIsUsd((old) => !old)}
                     />
-                    <ConfirmationPopupFeesSection intents={action.intents} />
+                    {FeeHelpers.shouldDisplayFeeBasedOnIntent(
+                        link?.linkType || "",
+                        action.type,
+                        action.intents[0].task,
+                    ) && (
+                        <ConfirmationPopupFeesSection
+                            intents={action.intents}
+                            maxActionNumber={maxActionNumber}
+                        />
+                    )}
                     <ConfirmationPopupLegalSection />
                     <Button
                         className="my-2 mx-auto w-[95%] disabled:bg-disabledgreen"

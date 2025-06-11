@@ -153,9 +153,11 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
     // Update state when query data changes
     useEffect(() => {
         setLoading(linkDetailQuery.isLoading);
+        console.log("Link detail query loading:", linkDetailQuery.isLoading);
     }, [linkDetailQuery.isLoading, linkDetailQuery.data]);
 
     useEffect(() => {
+        console.log("Link detail query data:", linkDetailQuery.data);
         if (linkDetailQuery.data) {
             const linkData = linkDetailQuery.data;
             setLink(linkData.link);
