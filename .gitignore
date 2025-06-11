@@ -29,3 +29,6 @@ dist/
 artifacts
 
 logs/*
+
+# AI
+CLAUDE.md

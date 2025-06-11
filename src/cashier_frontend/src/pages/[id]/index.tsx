@@ -139,13 +139,13 @@ export default function ClaimPage() {
         goToChooseWallet();
     };
 
-    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
-        return <LinkNotFound />;
-    }
-
     const isCompletePage = useMemo(() => {
         return location.pathname.endsWith("/complete");
     }, [location.pathname]);
+
+    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
+        return <LinkNotFound />;
+    }
 
     return (
         <MainAppLayout>
