@@ -71,15 +71,14 @@ describe("Test withdraw for send tip link", () => {
             const link_create_fee = CREATE_LINK_FEE;
             const balanceBefore = await fixture.getUserBalance("alice", "ICP");
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
-            const expected_treasury_balance =
-                treasury_balance_before + CREATE_LINK_FEE - ledger_fee * 2n;
-            console.log("tipAmount", tipAmount);
+            const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
             // Total amount used = tipAmount + ledger_fee (transfer tipAmount) + CREATE_LINK_FEE
-            const expectedBalanceAfter = balanceBefore - tipAmount - ledger_fee - CREATE_LINK_FEE;
+            const expectedBalanceAfter =
+                balanceBefore - tipAmount - ledger_fee - CREATE_LINK_FEE - ledger_fee * 2n;
 
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("ICP", tipAmount);
-                await executor.executeIcrc2Approve("ICP", link_create_fee);
+                await executor.executeIcrc2Approve("ICP", link_create_fee + ledger_fee);
                 await executor.triggerTransaction();
             };
 

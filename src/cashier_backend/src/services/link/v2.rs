@@ -362,8 +362,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
                     let amount = Fee::CreateTipLinkFeeIcp.as_u64();
-                    let actual_amount = amount - 2 * fee_amount;
-                    let approve_amount = amount - fee_amount;
+                    let actual_amount = amount;
+                    let approve_amount = amount + fee_amount;
 
                     let asset = Asset {
                         address: ICP_CANISTER_ID.to_string(),
