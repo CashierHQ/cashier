@@ -73,6 +73,7 @@ export const TransactionItem = memo(function TransactionItem({
 
             setAdjustedAmount(totalTokenAmount);
         } else {
+            // only for create link fee
             const totalTokenAmount = FeeHelpers.forecastIcrc2Fee(token, intent.amount, 1);
             setAdjustedAmount(totalTokenAmount);
         }
