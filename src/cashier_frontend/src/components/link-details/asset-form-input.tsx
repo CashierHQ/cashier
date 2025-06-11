@@ -28,7 +28,7 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { convertDecimalBigIntToNumber } from "@/utils";
-import { FeeHelpers } from "@/utils/helpers/fees";
+import { FeeHelpers } from "@/services/fee.service";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 

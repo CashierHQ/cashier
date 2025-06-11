@@ -24,14 +24,13 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
-import { useResponsive, useDeviceSize } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import {
     ACTION_TYPE,
     CHAIN,
-    FEE_TYPE,
     LINK_STATE,
     LINK_TYPE,
     ACTION_STATE,
@@ -45,12 +44,10 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
-import { useFeeService } from "@/hooks/useFeeService";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
-import { FeeHelpers } from "@/utils/helpers/fees";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
-import { StateBadge } from "@/components/link-item";
+import { FeeHelpers } from "@/services/fee.service";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -143,8 +140,6 @@ export default function LinkPreview({
             });
         }
     }, [action, t]);
-
-    const { getFee } = useFeeService();
 
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
     const { mutateAsync: processAction } = useProcessAction();
@@ -626,6 +621,7 @@ export default function LinkPreview({
                     {/* Use getFee instead of getAllFees to get fee information */}
                     {(() => {
                         const fee = FeeHelpers.getLinkCreationFee();
+                        console.log("Link creation fee:", fee);
                         const token = getToken(fee.address);
                         const tokenSymbol = fee.symbol;
                         const displayAmount = Number(fee.amount) / 10 ** fee.decimals;
@@ -646,12 +642,7 @@ export default function LinkPreview({
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center gap-1">
                                         <p className="text-[14px] font-normal">
-                                            {formatNumber(
-                                                (
-                                                    Number(fee.displayAmount) /
-                                                    10 ** fee.decimals
-                                                ).toString(),
-                                            )}
+                                            {formatNumber(Number(displayAmount).toString())}
                                         </p>
                                     </div>
                                     <p className="text-[10px] font-normal text-[#b6b6b6]">

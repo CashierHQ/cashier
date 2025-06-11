@@ -18,11 +18,10 @@ import { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TransactionItem } from "@/components/transaction/transaction-item";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
-import { TASK, FEE_TYPE } from "@/services/types/enum";
-import { feeService } from "@/services/fee.service";
+import { TASK } from "@/services/types/enum";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/useLinkAction";
-import { FeeHelpers } from "@/utils/helpers/fees";
+import { FeeHelpers } from "@/services/fee.service";
 
 type ConfirmationPopupAssetsSectionProps = {
     intents: IntentModel[];
@@ -104,14 +103,14 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
 
                 // Link creation fee if applicable
                 if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
-                    const linkCreationFee = FeeHelpers.getLinkCreationFee();
+                    const linkCreationFee = FeeHelpers.getLinkCreationFee().amount;
 
                     if (linkCreationFee) {
                         tokenFees.push({
                             chain: intent.asset.chain,
                             type: "link_creation_fee",
                             address: tokenAddress,
-                            amount: linkCreationFee.amount,
+                            amount: linkCreationFee,
                         });
                     }
                 }

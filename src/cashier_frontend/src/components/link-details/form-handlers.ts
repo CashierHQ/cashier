@@ -21,7 +21,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { CHAIN, LINK_TYPE, LINK_INTENT_ASSET_LABEL } from "@/services/types/enum";
 import { toast } from "sonner";
 import { formatNumber } from "@/utils/helpers/currency";
-import { FeeHelpers } from "@/utils/helpers/fees";
+import { FeeHelpers } from "@/services/fee.service";
 
 /**
  * Creates an asset select handler function for opening the asset drawer
@@ -246,7 +246,7 @@ export const checkInsufficientBalance = (
         const assetAmount = asset.amount;
         const tokenAmount = token.amount;
         const assetAmountWithoutFee =
-            BigInt(claims) * (assetAmount + FeeHelpers.calculateNetworkFeesInBigInt(token));
+            BigInt(claims) * (assetAmount + FeeHelpers.calculateNetworkFeesInES8(token));
 
         console.log("CHECKING BALANCES 3.0");
         console.log(`assetAmount: ${assetAmount}, tokenAmount: ${tokenAmount}`);

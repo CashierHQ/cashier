@@ -19,81 +19,20 @@ import { TokenUtilService } from "@/services/tokenUtils.service";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { AssetInfo as FeeAssetInfo, FeeTable } from "@/services/types/fee.types";
-import { DEFAULT_FEE_TABLE, createFeeKey } from "./fee.constants";
-import { FEE_TYPE } from "./types/enum";
+import {
+    DEFAULT_FEE_TABLE,
+    createFeeKey,
+    ICP_TOKEN_ADDRESS,
+    DEFAULT_CREATION_FEE,
+} from "./fee.constants";
+import { ACTION_TYPE, FEE_TYPE, TASK } from "./types/enum";
+import { Chain } from "@/services/types/link.service.types";
+import { FungibleToken } from "@/types/fungible-token.speculative";
 
 export type Transfer = {
     intent: IntentModel;
     fee: FeeModel | undefined;
 };
-
-export abstract class IntentHelperService {
-    public static async getNetworkFee(intent: IntentModel): Promise<FeeModel | undefined> {
-        const meta = await TokenUtilService.getTokenMetadata(intent.asset.address);
-
-        if (!meta) {
-            return undefined;
-        }
-
-        return {
-            address: intent.asset.address,
-            chain: intent.asset.chain,
-            amount: meta.fee,
-            type: "network_fee",
-        };
-    }
-
-    public static async getNetworkFeeMap(intents: IntentModel[]): Promise<Transfer[]> {
-        return Promise.all(
-            intents.map(async (intent) => {
-                return {
-                    intent,
-                    fee: await IntentHelperService.getNetworkFee(intent),
-                };
-            }),
-        );
-    }
-
-    public static async calculateTotal(intents: IntentModel[]): Promise<number> {
-        const assetDisplayAmounts = await Promise.all(
-            intents.map(async (intent) => {
-                const metadata = await TokenUtilService.getTokenMetadata(intent.asset.address);
-
-                if (!metadata) {
-                    return;
-                }
-
-                return convertDecimalBigIntToNumber(intent.amount, metadata.decimals);
-            }),
-        );
-
-        const totalAssetsDisplayAmount = assetDisplayAmounts.reduce<number>((total, amount) => {
-            return total + (amount ?? 0);
-        }, 0);
-
-        return totalAssetsDisplayAmount;
-    }
-
-    public static async calculateFeeTotal(feeModels: FeeModel[]): Promise<number> {
-        const assetDisplayAmounts = await Promise.all(
-            feeModels.map(async (feeModel) => {
-                const metadata = await TokenUtilService.getTokenMetadata(feeModel.address);
-
-                if (!metadata) {
-                    return;
-                }
-
-                return convertDecimalBigIntToNumber(feeModel.amount, metadata.decimals);
-            }),
-        );
-
-        const totalAssetsDisplayAmount = assetDisplayAmounts.reduce<number>((total, amount) => {
-            return total + (amount ?? 0);
-        }, 0);
-
-        return totalAssetsDisplayAmount;
-    }
-}
 
 export class FeeService {
     private feeTable: FeeTable;
@@ -155,7 +94,184 @@ export class FeeService {
 
         return totalFee;
     }
+
+    /**
+     * Get network fee for a specific intent
+     */
+    async getNetworkFee(intent: IntentModel): Promise<FeeModel | undefined> {
+        const meta = await TokenUtilService.getTokenMetadata(intent.asset.address);
+        if (!meta) return undefined;
+
+        return {
+            address: intent.asset.address,
+            chain: intent.asset.chain,
+            amount: meta.fee,
+            type: "network_fee",
+        };
+    }
+
+    /**
+     * Get network fees for multiple intents
+     */
+    async getNetworkFeeMap(intents: IntentModel[]): Promise<Transfer[]> {
+        return Promise.all(
+            intents.map(async (intent) => ({
+                intent,
+                fee: await this.getNetworkFee(intent),
+            })),
+        );
+    }
+
+    /**
+     * Calculate total amount for intents
+     */
+    async calculateIntentsTotal(intents: IntentModel[]): Promise<number> {
+        return this.calculateAmountTotal(
+            intents.map((intent) => ({
+                address: intent.asset.address,
+                amount: intent.amount,
+            })),
+        );
+    }
+
+    /**
+     * Calculate total amount for fee models
+     */
+    async calculateFeeTotal(feeModels: FeeModel[]): Promise<number> {
+        return this.calculateAmountTotal(
+            feeModels.map((fee) => ({
+                address: fee.address,
+                amount: fee.amount,
+            })),
+        );
+    }
+
+    /**
+     * Unified calculation method for any asset amounts
+     */
+    private async calculateAmountTotal(
+        assets: { address: string; amount: bigint }[],
+    ): Promise<number> {
+        const displayAmounts = await Promise.all(
+            assets.map(async (asset) => {
+                const metadata = await TokenUtilService.getTokenMetadata(asset.address);
+                return metadata ? convertDecimalBigIntToNumber(asset.amount, metadata.decimals) : 0;
+            }),
+        );
+
+        return displayAmounts.reduce((total, amount) => total + amount, 0);
+    }
+
+    /**
+     * Get link creation fee (from FeeHelpers)
+     */
+    getLinkCreationFee() {
+        return {
+            amount: BigInt(DEFAULT_CREATION_FEE),
+            decimals: 8,
+            symbol: "ICP",
+            address: ICP_TOKEN_ADDRESS,
+        };
+    }
+
+    /**
+     * Calculate network fees in normal format (from FeeHelpers)
+     */
+    calculateNetworkFees(tokenInfo: FungibleToken): number {
+        const fee = this.calculateNetworkFeesInBigInt(tokenInfo);
+        const decimals = tokenInfo.decimals;
+
+        if (!fee || !decimals) {
+            throw new Error("Token fee or decimals not found");
+        }
+        return convertDecimalBigIntToNumber(fee, decimals);
+    }
+
+    /**
+     * Calculate network fees in BigInt format (from FeeHelpers)
+     */
+    calculateNetworkFeesInBigInt(tokenInfo: FungibleToken): bigint {
+        switch (tokenInfo.chain) {
+            case Chain.IC:
+                const fee = tokenInfo.fee;
+                if (!fee) {
+                    throw new Error("Token fee not found");
+                }
+                return fee;
+            default:
+                return 0n;
+        }
+    }
+
+    /**
+     * Get display amount including fees (from FeeHelpers)
+     */
+    getDisplayAmount(tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number): number {
+        const tokenDecimals = tokenInfo.decimals;
+        // only add network fee, intent already included for top up the link
+        const totalFeeAmount = this.calculateNetworkFees(tokenInfo) * maxActionNumber;
+        const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
+        return totalTokenAmount + totalFeeAmount;
+    }
+
+    /**
+     * Check if fee should be displayed for intent (from FeeHelpers)
+     */
+    shouldDisplayFeeBasedOnIntent(
+        linkType: string,
+        actionType: ACTION_TYPE,
+        intentTask: TASK,
+    ): boolean {
+        // if use action for link type "receive payment", tx must + 1 fee
+        if (
+            linkType === "ReceivePayment" &&
+            actionType === ACTION_TYPE.USE_LINK &&
+            intentTask === TASK.TRANSFER_WALLET_TO_LINK
+        ) {
+            return true;
+        }
+
+        // if createlink action for with intent TRANSFER_LINK_TO_WALLET, tx must + 1 fee
+        if (
+            linkType === "CreateLink" &&
+            actionType === ACTION_TYPE.CREATE_LINK &&
+            intentTask === TASK.TRANSFER_WALLET_TO_LINK
+        ) {
+            return true;
+        }
+
+        if (
+            linkType === "CreateLink" &&
+            actionType === ACTION_TYPE.CREATE_LINK &&
+            intentTask === TASK.TRANSFER_WALLET_TO_TREASURY
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    calculateAssetFee() {}
 }
 
 // Export a singleton instance for easy use across the app
 export const feeService = new FeeService();
+
+// Backward compatibility exports
+export const IntentHelperService = {
+    getNetworkFee: (intent: IntentModel) => feeService.getNetworkFee(intent),
+    getNetworkFeeMap: (intents: IntentModel[]) => feeService.getNetworkFeeMap(intents),
+    calculateTotal: (intents: IntentModel[]) => feeService.calculateIntentsTotal(intents),
+    calculateFeeTotal: (feeModels: FeeModel[]) => feeService.calculateFeeTotal(feeModels),
+};
+
+export const FeeHelpers = {
+    getLinkCreationFee: () => feeService.getLinkCreationFee(),
+    calculateNetworkFees: (tokenInfo: FungibleToken) => feeService.calculateNetworkFees(tokenInfo),
+    calculateNetworkFeesInES8: (tokenInfo: FungibleToken) =>
+        feeService.calculateNetworkFeesInBigInt(tokenInfo),
+    getDisplayAmount: (tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) =>
+        feeService.getDisplayAmount(tokenInfo, amount, maxActionNumber),
+    shouldDisplayFeeBasedOnIntent: (linkType: string, actionType: ACTION_TYPE, intentTask: TASK) =>
+        feeService.shouldDisplayFeeBasedOnIntent(linkType, actionType, intentTask),
+};

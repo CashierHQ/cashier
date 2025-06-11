@@ -16,7 +16,7 @@
 
 import { FC, useEffect, useState } from "react";
 import { IntentModel } from "@/services/types/intent.service.types";
-import { Transfer } from "@/services/fee.service";
+import { FeeHelpers, Transfer } from "@/services/fee.service";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
@@ -175,6 +175,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                     feeType === "link_creation_fee"
                         ? FeeHelpers.getLinkCreationFee().decimals
                         : tokenInfo.decimals;
+
                 const tokenAmount =
                     feeType === "link_creation_fee"
                         ? Number(FeeHelpers.getLinkCreationFee().amount) /
@@ -185,7 +186,15 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 if (tokenPrice === undefined) {
                     tokenPrice = 0;
                 }
-                const usdValue = tokenPrice * tokenAmount * Number(maxActionNumber ?? 1);
+                let actionNum = 1;
+                if (maxActionNumber) {
+                    if (isNaN(Number(maxActionNumber))) {
+                        actionNum = 1; // Default to 1 if maxActionNumber is not a number
+                    } else {
+                        actionNum = Number(maxActionNumber);
+                    }
+                }
+                const usdValue = tokenPrice * tokenAmount * Number(actionNum ?? 1);
                 totalUsdValue += usdValue;
 
                 const breakdownItem: FeeBreakdownItem = {

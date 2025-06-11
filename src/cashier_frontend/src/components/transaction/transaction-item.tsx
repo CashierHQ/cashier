@@ -25,8 +25,8 @@ import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
-import { FeeHelpers } from "@/utils/helpers/fees";
-import { INTENT_TYPE, TASK } from "@/services/types/enum";
+import { FeeHelpers } from "@/services/fee.service";
+import { useLinkAction } from "@/hooks/useLinkAction";
 
 interface TransactionItemProps {
     title: string;
@@ -49,6 +49,7 @@ export const TransactionItem = memo(function TransactionItem({
     const { getToken, getTokenPrice } = useTokens();
     const token = getToken(intent.asset.address);
     const tokenUsdPrice = getTokenPrice(intent.asset.address);
+    const { link, action } = useLinkAction();
 
     // Calculate adjusted amount by subtracting only the network fee
     useEffect(() => {
@@ -58,8 +59,10 @@ export const TransactionItem = memo(function TransactionItem({
         const networkFee = fees.find(
             (fee) => fee.address === intent.asset.address && fee.type === "network_fee",
         );
+        if (!link || !link.linkType) throw new Error("Link or linkType is undefined");
+        if (!action || !action.type) throw new Error("Action or action type is undefined");
 
-        if (FeeHelpers.shouldDisplayFeeBasedOnIntent(intent)) {
+        if (FeeHelpers.shouldDisplayFeeBasedOnIntent(link.linkType, action.type, intent.task)) {
             // Calculate adjusted amount by subtracting only the network fee
             if (networkFee && token.decimals !== undefined) {
                 const totalTokenAmount = FeeHelpers.getDisplayAmount(
@@ -67,6 +70,7 @@ export const TransactionItem = memo(function TransactionItem({
                     BigInt(intent.amount),
                     Number(maxActionNumber ?? 1),
                 );
+                console.log("Total token amount:", totalTokenAmount);
                 setAdjustedAmount(totalTokenAmount);
             } else {
                 const feeAmount = fees.find(
@@ -80,6 +84,23 @@ export const TransactionItem = memo(function TransactionItem({
             setAdjustedAmount(Number(intent.amount) / 10 ** token.decimals);
         }
     }, [assetAmount, fees, intent.asset.address, token]);
+
+    const getDisplayAmount = () => {
+        if (intentTitle.toLowerCase().includes("link creation fee")) {
+            return (
+                Number(FeeHelpers.getLinkCreationFee().amount) /
+                10 ** FeeHelpers.getLinkCreationFee().decimals
+            );
+        }
+        return formatNumber(adjustedAmount?.toString() || "0");
+    };
+
+    const getUsdAmount = () => {
+        if (tokenUsdPrice && tokenUsdPrice > 0) {
+            return formatDollarAmount(convert(adjustedAmount, tokenUsdPrice) || 0);
+        }
+        return "No price available";
+    };
 
     return (
         <div className="flex items-center">
@@ -103,48 +124,13 @@ export const TransactionItem = memo(function TransactionItem({
                         </span>
                     </p>
                 </div>
-                <div
-                    onClick={() => {
-                        console.log("adjusted amount: ", adjustedAmount);
-                    }}
-                    className="flex flex-col items-end"
-                >
+                <div className="flex flex-col items-end">
                     <div className="flex items-center gap-1">
-                        <p className="text-[14px] font-normal">
-                            {intentTitle.toLowerCase().includes("link creation fee")
-                                ? Number(FeeHelpers.getLinkCreationFee().displayAmount) /
-                                  10 ** FeeHelpers.getLinkCreationFee().decimals
-                                : formatNumber(adjustedAmount?.toString() || "0")}{" "}
-                        </p>
+                        <p className="text-[14px] font-normal">{getDisplayAmount()}</p>
                     </div>
-                    <p className="text-[10px] font-normal text-grey/50">
-                        {tokenUsdPrice && tokenUsdPrice > 0
-                            ? formatDollarAmount(convert(adjustedAmount, tokenUsdPrice) || 0)
-                            : "No price available"}
-                    </p>
+                    <p className="text-[10px] font-normal text-grey/50">{getUsdAmount()}</p>
                 </div>
             </div>
-
-            {/* <div className="flex flex-col w-full"> */}
-            {/* <Asset
-                    title={intentTitle}
-                    isLoading={isLoading}
-                    amount={assetAmount}
-                    usdAmount={convert(assetAmount, tokenUsdPrice)}
-                    src={assetSrc}
-                    symbol={assetSymbol}
-                    isUsd={isUsd}
-                /> */}
-
-            {/* <Fee
-                    title={t("transaction.confirm_popup.network_fee_label")}
-                    isLoading={isLoading}
-                    amount={feeAmount}
-                    usdAmount={convert(feeAmount, tokenUsdPrice)}
-                    symbol={feeSymbol}
-                    isUsd={isUsd}
-                /> */}
-            {/* </div> */}
         </div>
     );
 });

@@ -21,6 +21,7 @@ import { X } from "lucide-react";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { formatDollarAmount } from "@/utils/helpers/currency";
+import { FeeHelpers } from "@/services/fee.service";
 
 export type FeeBreakdownDrawerProps = {
     open?: boolean;
@@ -31,7 +32,7 @@ export type FeeBreakdownDrawerProps = {
         amount: string;
         tokenSymbol: string;
         tokenAddress: string;
-        usdAmount: string;
+        usdAmount?: string;
     }[];
 };
 
@@ -85,7 +86,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                                                         .includes("link creation fee")
                                                         ? Number(
                                                               FeeHelpers.getLinkCreationFee()
-                                                                  .displayAmount,
+                                                                  .amount,
                                                           ) /
                                                           10 **
                                                               FeeHelpers.getLinkCreationFee()
