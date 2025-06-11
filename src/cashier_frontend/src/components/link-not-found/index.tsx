@@ -18,7 +18,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/ui/logo";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import SheetWrapper from "@/components/sheet-wrapper";
 
@@ -40,11 +39,6 @@ const LinkNotFound: React.FC<LinkNotFoundProps> = ({
             <SheetWrapper>
                 <div className="flex flex-col flex-grow w-full h-full items-center justify-center px-6 py-8">
                     <div className="text-center max-w-md space-y-6">
-                        {/* Logo */}
-                        <div className="flex justify-center mb-8">
-                            <Logo />
-                        </div>
-
                         {/* Warning Icon */}
                         <div className="flex justify-center mb-6">
                             <div className="p-4 bg-yellow-100 rounded-full">
