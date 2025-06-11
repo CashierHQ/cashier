@@ -20,7 +20,6 @@ import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { CREATE_LINK_FEE, FEE_CANISTER_ID, TREASURY_WALLET } from "../../constant";
 import { Icrc112ExecutorV2 } from "../../utils/icrc-112-v2";
-import { safeParseJSON } from "../../utils/parser";
 
 describe("Test withdraw", () => {
     const fixture = new LinkTestFixture();
@@ -71,15 +70,13 @@ describe("Test withdraw", () => {
             const link_create_fee = CREATE_LINK_FEE;
             const balanceBefore = await fixture.getUserBalance("alice", "ICP");
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
-            const expected_treasury_balance =
-                treasury_balance_before + CREATE_LINK_FEE - 2n * ledger_fee;
-            console.log("airdropAmount", airdropAmount);
+            const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
             // Total amount used = airdropAmount + ledger_fee (transfer airdropAmount) + ledger_fee (approve fee) + ledger_fee (transfer from) + CREATE_LINK_FEE
             const expectedBalanceAfter =
-                balanceBefore - airdropAmount - ledger_fee - CREATE_LINK_FEE;
+                balanceBefore - airdropAmount - ledger_fee - CREATE_LINK_FEE - 2n * ledger_fee;
             const execute_tx = async (executor: Icrc112ExecutorV2) => {
                 await executor.executeIcrc1Transfer("ICP", airdropAmount);
-                await executor.executeIcrc2Approve("ICP", link_create_fee);
+                await executor.executeIcrc2Approve("ICP", link_create_fee + ledger_fee);
                 await executor.triggerTransaction();
             };
 
@@ -137,8 +134,6 @@ describe("Test withdraw", () => {
         expect(action.state).toEqual("Action_state_created");
 
         const processedAction = await fixture.processAction(linkId, action.id, "Withdraw");
-
-        console.log("processedAction", safeParseJSON(processedAction as any));
 
         const linkBalanceAfter = await fixture.checkLinkBalance(assetInfo.address, linkId);
         const creatorBalanceAfter = await fixture.getUserBalance("alice", "ICP");

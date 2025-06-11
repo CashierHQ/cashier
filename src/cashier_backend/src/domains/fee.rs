@@ -21,10 +21,10 @@ pub enum Fee {
     // 1_0000_0000 = 1 ICP
     // 100_000 = 0.001 ICP
     // 10_000 = 0.0001 ICP
-    // CreateTipLinkFeeIcp = 100_000,
     // TODO: change back to 0.001, this is for testing only
-    // CreateTipLinkFeeIcp = 20_000,
-    CreateTipLinkFeeIcp = 30_000,
+    // the actual cost should be + 2 ledger fees
+    // eg: 10_000 + 10_000 (1 approve fee) + 10_000 (1 transfer fee) = 30_000
+    CreateTipLinkFeeIcp = 10_000,
 }
 
 impl Fee {

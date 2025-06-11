@@ -103,8 +103,7 @@ describe("Test withdraw for send token basket link", () => {
             const link_create_fee = CREATE_LINK_FEE;
             const balancesBefore = new Map<string, bigint>();
             const treasury_balance_before = await fixture.getWalletBalance(TREASURY_WALLET, "ICP");
-            const expected_treasury_balance =
-                treasury_balance_before + CREATE_LINK_FEE - ledger_fee * BigInt(2);
+            const expected_treasury_balance = treasury_balance_before + CREATE_LINK_FEE;
 
             // Get initial balances for all tokens
             for (const asset of assets) {
@@ -123,7 +122,7 @@ describe("Test withdraw for send token basket link", () => {
                     await executor.executeIcrc1Transfer(asset.tokenIndex, transferAmount);
                 }
                 // Approve fee payment
-                await executor.executeIcrc2Approve("ICP", link_create_fee);
+                await executor.executeIcrc2Approve("ICP", link_create_fee + ledger_fee);
                 await executor.triggerTransaction();
             };
 
@@ -177,7 +176,8 @@ describe("Test withdraw for send token basket link", () => {
             // Verify Alice's ICP balance after paying fees
             const icpBalanceAfter = await fixture.getUserBalance("alice", "ICP");
             // Total ICP cost =  CREATE_LINK_FEE
-            const expectedIcpBalanceAfter = icpBalanceBefore - CREATE_LINK_FEE;
+            const expectedIcpBalanceAfter =
+                icpBalanceBefore - CREATE_LINK_FEE - ledger_fee * BigInt(2);
             console.log("Alice ICP balance after", icpBalanceAfter);
             console.log("Expected ICP balance after", expectedIcpBalanceAfter);
             expect(icpBalanceAfter).toEqual(expectedIcpBalanceAfter);

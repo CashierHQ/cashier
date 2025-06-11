@@ -58,8 +58,6 @@ export const TransactionItem = memo(function TransactionItem({
             (fee) => fee.address === intent.asset.address && fee.type === "network_fee",
         );
 
-        console.log("TransactionItem intent", intent);
-
         if (!link || !link.linkType) {
             console.error("Link or link type is undefined");
             return;
@@ -72,25 +70,15 @@ export const TransactionItem = memo(function TransactionItem({
                 intent,
                 token,
             );
-            console.log("totalTokenAmount", totalTokenAmount);
 
             setAdjustedAmount(totalTokenAmount);
         } else {
-            const feeAmount = fees.find(
-                (fee) => fee.address === intent.asset.address && fee.type === "link_creation_fee",
-            );
-
-            setAdjustedAmount(Number(feeAmount?.amount) / 10 ** token.decimals);
+            const totalTokenAmount = FeeHelpers.forecastIcrc2Fee(token, intent.amount, 1);
+            setAdjustedAmount(totalTokenAmount);
         }
     }, [assetAmount, fees, intent.asset.address, token]);
 
     const getDisplayAmount = () => {
-        if (intentTitle.toLowerCase().includes("link creation fee")) {
-            return (
-                Number(FeeHelpers.getLinkCreationFee().amount) /
-                10 ** FeeHelpers.getLinkCreationFee().decimals
-            );
-        }
         return formatNumber(adjustedAmount?.toString() || "0");
     };
 
