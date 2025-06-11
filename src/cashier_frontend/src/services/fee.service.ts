@@ -242,8 +242,12 @@ export class FeeService {
 
     forecastIcrc2Fee(tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number): number {
         const tokenDecimals = tokenInfo.decimals;
+        const totalBigInt = this.forecastIcrc2FeeES8(tokenInfo, amount, maxActionNumber);
+        // Convert to number with proper decimal handling
+        return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
+    }
 
-        // Calculate network fee per transaction using BigInt to avoid precision loss
+    forecastIcrc2FeeES8(tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number): bigint {
         const networkFeeBigInt = this.calculateNetworkFeesInBigInt(tokenInfo);
 
         // Calculate total token amount in smallest units (BigInt arithmetic)
@@ -256,7 +260,7 @@ export class FeeService {
         const totalBigInt = totalTokenAmountBigInt + totalFeesBigInt;
 
         // Convert to number with proper decimal handling
-        return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
+        return totalBigInt;
     }
 
     /**
@@ -414,6 +418,9 @@ export const FeeHelpers = {
 
     forecastIcrc2Fee: (tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) =>
         feeService.forecastIcrc2Fee(tokenInfo, amount, maxActionNumber),
+
+    forecastIcrc2FeeEs8: (tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) =>
+        feeService.forecastIcrc2FeeES8(tokenInfo, amount, maxActionNumber),
 
     shouldDisplayFeeBasedOnIntent: (linkType: string, actionType: ACTION_TYPE, intentTask: TASK) =>
         feeService.shouldDisplayFeeBasedOnIntent(linkType, actionType, intentTask),

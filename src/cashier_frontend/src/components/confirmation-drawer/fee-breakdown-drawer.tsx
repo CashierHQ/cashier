@@ -22,6 +22,21 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { formatDollarAmount } from "@/utils/helpers/currency";
 import { FeeHelpers } from "@/services/fee.service";
+import { FungibleToken } from "@/types/fungible-token.speculative";
+import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
+
+// Helper method to calculate the display amount for fees
+const calculateFeeDisplayAmount = (
+    token: FungibleToken,
+    feeName: string,
+    feeAmount: string,
+): number => {
+    if (feeName.toLowerCase().includes("link creation fee")) {
+        const linkCreationFee = FeeHelpers.forecastIcrc2Fee(token, DEFAULT_CREATION_FEE, 1);
+        return linkCreationFee;
+    }
+    return Number(feeAmount);
+};
 
 export type FeeBreakdownDrawerProps = {
     open?: boolean;
@@ -81,17 +96,11 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                                         <div className="flex items-center gap-2">
                                             <div className="flex items-center gap-1">
                                                 <span className="text-[14px] font-normal">
-                                                    {fee.name
-                                                        .toLowerCase()
-                                                        .includes("link creation fee")
-                                                        ? Number(
-                                                              FeeHelpers.getLinkCreationFee()
-                                                                  .amount,
-                                                          ) /
-                                                          10 **
-                                                              FeeHelpers.getLinkCreationFee()
-                                                                  .decimals
-                                                        : fee.amount}{" "}
+                                                    {calculateFeeDisplayAmount(
+                                                        token!,
+                                                        fee.name,
+                                                        fee.amount,
+                                                    )}{" "}
                                                     {fee.tokenSymbol}
                                                 </span>
                                                 <AssetAvatarV2
