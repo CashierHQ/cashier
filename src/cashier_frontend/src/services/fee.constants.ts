@@ -23,7 +23,7 @@ export const TEST_ICP_TOKEN_ADDRESS = "x5qut-viaaa-aaaar-qajda-cai";
 
 // Default fee amounts in smallest units (e8s for ICP)
 // export const DEFAULT_CREATION_FEE = BigInt(100000); // 0.001 ICP
-export const DEFAULT_CREATION_FEE = BigInt(30_000); // 0.0003 ICP
+export const DEFAULT_CREATION_FEE = BigInt(10_000); // 0.0001 ICP
 
 // Create a key from chain and link type for fee table lookups
 export const createFeeKey = (chain: string, linkType: string, feeType: string): string => {
