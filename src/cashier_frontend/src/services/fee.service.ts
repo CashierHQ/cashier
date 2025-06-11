@@ -245,6 +245,8 @@ export class FeeService {
      * - The base token amount multiplied by max actions
      * - One additional network fee for the final execution
      *
+     * ! This method only use for claim page
+     *
      * Formula: (amount * maxActions) + networkFee
      *
      * @param tokenInfo - Token information including decimals and fee structure
@@ -253,22 +255,34 @@ export class FeeService {
      * @returns Total amount needed in human-readable format (e.g., 1.5 ICP)
      */
     forecastActualAmountBasedOnAssetInfo(
+        linkType: string,
         tokenInfo: FungibleToken,
         amount: bigint,
         maxActionNumber: number,
     ): number {
-        const tokenDecimals = tokenInfo.decimals;
+        let result: number = 0;
+        if (linkType === "ReceivePayment") {
+            const tokenDecimals = tokenInfo.decimals;
 
-        // Calculate network fee per transaction
-        const networkFee = this.calculateNetworkFees(tokenInfo);
+            // Calculate network fee per transaction
+            const networkFee = this.calculateNetworkFees(tokenInfo);
 
-        // Convert token amount from smallest units to human-readable format
-        // Then multiply by the number of actions
-        const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
+            // Convert token amount from smallest units to human-readable format
+            // Then multiply by the number of actions
+            const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
 
-        // Return total: token amount + action fees + one execution fee
-        // The extra networkFee is needed for the final transaction execution
-        return totalTokenAmount + networkFee;
+            // Return total: token amount + action fees + one execution fee
+            // The extra networkFee is needed for the final transaction execution
+            result = totalTokenAmount + networkFee;
+        } else {
+            const tokenDecimals = tokenInfo.decimals;
+            // Convert token amount from smallest units to human-readable format
+            // Then multiply by the number of actions
+            const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
+            result = totalTokenAmount;
+        }
+
+        return result;
     }
 
     /**
@@ -295,8 +309,6 @@ export class FeeService {
         const amountNonEs8 = Number(intent.amount) / Number(10 ** tokenInfo.decimals);
         const networkFee = this.calculateNetworkFees(tokenInfo);
 
-        console.log("forecastActualAmountWithIntent intent", intent);
-
         let displayAmount = amountNonEs8;
 
         if (actionType === ACTION_TYPE.CREATE_LINK) {
@@ -308,7 +320,6 @@ export class FeeService {
         } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
         }
 
-        console.log("forecastActualAmountWithIntent displayAmount", displayAmount);
         return displayAmount;
     }
 
@@ -365,10 +376,17 @@ export const FeeHelpers = {
             maxActionNumber,
         ),
     forecastActualAmountBasedOnAssetInfo: (
+        linkType: string,
         tokenInfo: FungibleToken,
         amount: bigint,
         maxActionNumber: number,
-    ) => feeService.forecastActualAmountBasedOnAssetInfo(tokenInfo, amount, maxActionNumber),
+    ) =>
+        feeService.forecastActualAmountBasedOnAssetInfo(
+            linkType,
+            tokenInfo,
+            amount,
+            maxActionNumber,
+        ),
     forecastActualAmountWithIntent: (
         linkType: string,
         actionType: ACTION_TYPE,

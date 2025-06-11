@@ -26,8 +26,8 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
 import { FeeHelpers } from "@/services/fee.service";
-import { useLinkActionStore } from "@/stores/linkActionStore";
 import { ACTION_TYPE } from "@/services/types/enum";
+import { useLinkAction } from "@/hooks/useLinkAction";
 
 interface TransactionItemProps {
     actionType: ACTION_TYPE;
@@ -47,7 +47,7 @@ export const TransactionItem = memo(function TransactionItem({
     const { getToken, getTokenPrice } = useTokens();
     const token = getToken(intent.asset.address);
     const tokenUsdPrice = getTokenPrice(intent.asset.address);
-    const { link } = useLinkActionStore();
+    const { link } = useLinkAction();
 
     // Calculate adjusted amount by subtracting only the network fee
     useEffect(() => {

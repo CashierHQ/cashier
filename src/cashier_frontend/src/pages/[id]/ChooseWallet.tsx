@@ -134,7 +134,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         {
             action_type: ACTION_TYPE.USE_LINK,
             link_id: linkId ?? "",
-            anonymous_wallet_address: anonymousWalletAddress ?? "",
         },
         enableLocalFetch,
     );
@@ -162,14 +161,14 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         disabled: boolean;
     }>({
         text: t("confirmation_drawer.confirm_button"),
-        disabled: false, // Start enabled - ClaimFormOptions will handle validation
+        disabled: false,
     });
     const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
         text: string;
         disabled: boolean;
     }>({
-        text: t("confirmation_drawer.confirm_button"),
-        disabled: false, // Start enabled - will be managed by action state
+        text: isFetching ? "Loading..." : t("confirmation_drawer.confirm_button"),
+        disabled: false,
     });
 
     // Update button text based on action state and processing state
@@ -208,20 +207,34 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     // Fetch action data when identity changes or link ID changes
     useEffect(() => {
         const fetchInitialData = async () => {
+            setUseLinkButton({
+                text: useLinkButton.text,
+                disabled: true, // Disable button while loading
+            });
             if (linkId) {
                 try {
-                    // Fetch user state in background without blocking UI
                     await refetchLinkUserState();
                 } catch (error) {
                     console.error("Error fetching action:", error);
+                } finally {
+                    console.log("Initial data fetch complete for linkId:", linkId);
+                    setUseLinkButton({
+                        text: useLinkButton.text,
+                        disabled: false, // Enable button after loading
+                    });
                 }
+            } else {
+                setUseLinkButton({
+                    text: useLinkButton.text,
+                    disabled: false, // Enable button if no linkId
+                });
             }
         };
 
         fetchInitialData();
         // Only depend on identity changes, linkId changes, or parent state changes
         // Explicitly NOT depending on refetchLinkUserState to avoid infinite loops
-    }, [identity, linkId, refetchLinkUserState]);
+    }, [identity, linkId]);
 
     // Polling effect to update action state during processing
     useEffect(() => {

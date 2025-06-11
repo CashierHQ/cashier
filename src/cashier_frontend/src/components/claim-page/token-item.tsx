@@ -39,7 +39,16 @@ const TokenItem: React.FC<TokenItemProps> = ({ link, asset }) => {
         );
     }
 
+    if (!link.linkType) {
+        return (
+            <div className="flex justify-between items-center">
+                <p className="text-[14px] font-normal text-red-500">Link type not found</p>
+            </div>
+        );
+    }
+
     const tokenAmountForecast = FeeHelpers.forecastActualAmountBasedOnAssetInfo(
+        link.linkType,
         token,
         asset.amountPerUse,
         Number(link.maxActionNumber),
