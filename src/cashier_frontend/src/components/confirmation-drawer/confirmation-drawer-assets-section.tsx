@@ -18,17 +18,14 @@ import { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TransactionItem } from "@/components/transaction/transaction-item";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
-import { TASK } from "@/services/types/enum";
+import { ACTION_TYPE, TASK } from "@/services/types/enum";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { FeeHelpers } from "@/services/fee.service";
 
 type ConfirmationPopupAssetsSectionProps = {
+    actionType: ACTION_TYPE;
     intents: IntentModel[];
-    onInfoClick?: () => void;
-    isUsd?: boolean;
-    onUsdClick?: () => void;
-    maxActionNumber?: number;
 };
 
 const getLabel = (intent: IntentModel) => {
@@ -62,9 +59,8 @@ const sortIntentsByAddress = (intents: IntentModel[]): IntentModel[] => {
 };
 
 export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
+    actionType,
     intents,
-    isUsd,
-    maxActionNumber,
 }) => {
     const { t } = useTranslation();
     const { getToken } = useTokens();
@@ -140,12 +136,10 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                     .map((intent) => (
                         <li key={intent.id}>
                             <TransactionItem
+                                actionType={actionType}
                                 key={intent.id}
-                                title={t("confirmation_drawer.asset_label")}
                                 intent={intent}
-                                isUsd={isUsd}
                                 fees={feesMap.get(intent.asset.address) || []}
-                                maxActionNumber={maxActionNumber}
                             />
                         </li>
                     ))}

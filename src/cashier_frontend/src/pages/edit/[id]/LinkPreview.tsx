@@ -571,7 +571,7 @@ export default function LinkPreview({
                                 // Calculate token amount with proper decimals
                                 const token = getToken(asset.address);
 
-                                const totalTokenAmount = FeeHelpers.getDisplayAmount(
+                                const forecastAmount = FeeHelpers.forecastActualAmountWithoutIntent(
                                     token!,
                                     BigInt(asset.amountPerUse) * link.maxActionNumber,
                                     Number(link?.maxActionNumber ?? 1),
@@ -580,7 +580,7 @@ export default function LinkPreview({
 
                                 // Calculate approximate USD value
                                 const tokenPrice = getTokenPrice(asset.address) || 0;
-                                const approximateUsdValue = totalTokenAmount * tokenPrice;
+                                const approximateUsdValue = forecastAmount * tokenPrice;
 
                                 return (
                                     <div key={index} className="flex justify-between items-center">
@@ -596,7 +596,7 @@ export default function LinkPreview({
                                         <div className="flex flex-col items-end">
                                             <div className="flex items-center gap-1">
                                                 <p className="text-[14px] font-normal">
-                                                    {formatNumber(totalTokenAmount.toString())}
+                                                    {formatNumber(forecastAmount.toString())}
                                                 </p>
                                             </div>
                                             <p className="text-[10px] font-normal text-[#b6b6b6]">

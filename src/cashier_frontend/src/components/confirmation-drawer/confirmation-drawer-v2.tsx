@@ -78,11 +78,11 @@ interface ConfirmationDrawerV2Props {
  * This component is designed to be completely configurable via props, without relying on hooks
  * for internal state. This makes it more flexible for use in different workflows.
  */
+// TODO: remove all the props that are not used in the component
 export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     open,
     action,
     onClose = () => {},
-    onInfoClick = () => {},
     // onActionResult = () => {},
     onCashierError = () => {},
     onSuccessContinue = async () => {},
@@ -95,7 +95,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
 }) => {
     const { t } = useTranslation();
     /** Toggle state for showing USD values instead of token values */
-    const [isUsd, setIsUsd] = useState(false);
     const [countdown, setCountdown] = useState(0);
     const { link } = useLinkAction();
 
@@ -242,11 +241,8 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             return (
                 <>
                     <ConfirmationPopupAssetsSection
+                        actionType={action.type}
                         intents={action.intents}
-                        onInfoClick={onInfoClick}
-                        isUsd={isUsd}
-                        onUsdClick={() => setIsUsd((old) => !old)}
-                        maxActionNumber={maxActionNumber}
                     />
                     {FeeHelpers.shouldDisplayFeeBasedOnIntent(
                         link?.linkType || "",

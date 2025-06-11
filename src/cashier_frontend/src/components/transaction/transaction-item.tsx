@@ -26,22 +26,20 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
 import { FeeHelpers } from "@/services/fee.service";
-import { useLinkAction } from "@/hooks/useLinkAction";
+import { useLinkActionStore } from "@/stores/linkActionStore";
+import { ACTION_TYPE } from "@/services/types/enum";
 
 interface TransactionItemProps {
-    title: string;
+    actionType: ACTION_TYPE;
     intent: IntentModel;
-    isUsd?: boolean;
     fees?: FeeModel[];
-    networkFee?: FeeModel;
-    maxActionNumber?: number;
 }
 
 // apply memo to prevent unnecessary re-renders
 export const TransactionItem = memo(function TransactionItem({
+    actionType,
     intent,
     fees = [],
-    maxActionNumber,
 }: TransactionItemProps) {
     const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
@@ -49,7 +47,7 @@ export const TransactionItem = memo(function TransactionItem({
     const { getToken, getTokenPrice } = useTokens();
     const token = getToken(intent.asset.address);
     const tokenUsdPrice = getTokenPrice(intent.asset.address);
-    const { link, action } = useLinkAction();
+    const { link } = useLinkActionStore();
 
     // Calculate adjusted amount by subtracting only the network fee
     useEffect(() => {
@@ -59,18 +57,24 @@ export const TransactionItem = memo(function TransactionItem({
         const networkFee = fees.find(
             (fee) => fee.address === intent.asset.address && fee.type === "network_fee",
         );
-        if (!link || !link.linkType) throw new Error("Link or linkType is undefined");
-        if (!action || !action.type) throw new Error("Action or action type is undefined");
 
-        if (FeeHelpers.shouldDisplayFeeBasedOnIntent(link.linkType, action.type, intent.task)) {
-            // Calculate adjusted amount by subtracting only the network fee
+        console.log("TransactionItem intent", intent);
+
+        if (!link || !link.linkType) {
+            console.error("Link or link type is undefined");
+            return;
+        }
+
+        if (FeeHelpers.shouldDisplayFeeBasedOnIntent(link.linkType, actionType, intent.task)) {
             if (networkFee && token.decimals !== undefined) {
-                const totalTokenAmount = FeeHelpers.getDisplayAmount(
+                const totalTokenAmount = FeeHelpers.forecastActualAmountWithIntent(
+                    link.linkType,
+                    actionType,
+                    intent,
                     token,
-                    BigInt(intent.amount),
-                    Number(maxActionNumber ?? 1),
                 );
-                console.log("Total token amount:", totalTokenAmount);
+                console.log("totalTokenAmount", totalTokenAmount);
+
                 setAdjustedAmount(totalTokenAmount);
             } else {
                 const feeAmount = fees.find(

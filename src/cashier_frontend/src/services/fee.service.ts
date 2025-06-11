@@ -206,12 +206,38 @@ export class FeeService {
     /**
      * Get display amount including fees (from FeeHelpers)
      */
-    getDisplayAmount(tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number): number {
+    forecastActualAmountWithoutIntent(
+        tokenInfo: FungibleToken,
+        amount: bigint,
+        maxActionNumber: number,
+    ): number {
         const tokenDecimals = tokenInfo.decimals;
         // only add network fee, intent already included for top up the link
         const totalFeeAmount = this.calculateNetworkFees(tokenInfo) * maxActionNumber;
         const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
         return totalTokenAmount + totalFeeAmount;
+    }
+
+    forecastActualAmountWithIntent(
+        linkType: string,
+        actionType: ACTION_TYPE,
+        intent: IntentModel,
+        tokenInfo: FungibleToken,
+    ) {
+        const amountInNumber = Number(intent.amount / BigInt(10 ** tokenInfo.decimals));
+
+        if (actionType === ACTION_TYPE.CREATE_LINK) {
+            return amountInNumber + this.calculateNetworkFees(tokenInfo);
+        } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
+            // if withdraw link, we need to add network fee
+            return amountInNumber;
+        } else if (actionType === ACTION_TYPE.USE_LINK) {
+            if (linkType === "ReceivePayment" && intent.task === TASK.TRANSFER_WALLET_TO_LINK) {
+                return amountInNumber + this.calculateNetworkFees(tokenInfo);
+            }
+        } else {
+            return amountInNumber;
+        }
     }
 
     /**
@@ -270,8 +296,17 @@ export const FeeHelpers = {
     calculateNetworkFees: (tokenInfo: FungibleToken) => feeService.calculateNetworkFees(tokenInfo),
     calculateNetworkFeesInES8: (tokenInfo: FungibleToken) =>
         feeService.calculateNetworkFeesInBigInt(tokenInfo),
-    getDisplayAmount: (tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) =>
-        feeService.getDisplayAmount(tokenInfo, amount, maxActionNumber),
+    forecastActualAmountWithoutIntent: (
+        tokenInfo: FungibleToken,
+        amount: bigint,
+        maxActionNumber: number,
+    ) => feeService.forecastActualAmountWithoutIntent(tokenInfo, amount, maxActionNumber),
+    forecastActualAmountWithIntent: (
+        linkType: string,
+        actionType: ACTION_TYPE,
+        intent: IntentModel,
+        tokenInfo: FungibleToken,
+    ) => feeService.forecastActualAmountWithIntent(linkType, actionType, intent, tokenInfo),
     shouldDisplayFeeBasedOnIntent: (linkType: string, actionType: ACTION_TYPE, intentTask: TASK) =>
         feeService.shouldDisplayFeeBasedOnIntent(linkType, actionType, intentTask),
 };
