@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Cashier — No-code blockchain transaction builder
 // Copyright (C) 2025 TheCashierApp LLC
 //
@@ -36,7 +37,7 @@ export class Icrc112ExecutorV2 {
     private action_id: string;
     private spender_pid: Principal;
     private actor: Actor<_SERVICE>;
-    private trigger_tx_id: string;
+    private trigger_tx_id?: string;
 
     constructor(
         icrc_112_requests: Icrc112Request[][],
@@ -46,7 +47,7 @@ export class Icrc112ExecutorV2 {
         action_id: string,
         spender_pid: Principal,
         actor: Actor<_SERVICE>,
-        trigger_tx_id: string,
+        trigger_tx_id?: string,
     ) {
         this.icrc_112_requests = icrc_112_requests;
         this.token_helper = token_helper;
@@ -95,6 +96,7 @@ export class Icrc112ExecutorV2 {
             amount: amount,
         };
         this.token_helper.with_identity(this.identity);
+
         await this.token_helper.transfer(token_name, transfer_arg);
     }
 
@@ -114,13 +116,16 @@ export class Icrc112ExecutorV2 {
         };
 
         this.token_helper.with_identity(this.identity);
-        const res = await this.token_helper.approve(token_name, approve_args);
-
-        console.log("approve result", res);
+        await this.token_helper.approve(token_name, approve_args);
     }
 
     public async triggerTransaction() {
         this.actor.setIdentity(this.identity);
+
+        if (!this.trigger_tx_id) {
+            throw new Error("Trigger transaction ID is not set");
+        }
+
         await this.actor.trigger_transaction({
             action_id: this.action_id,
             link_id: this.link_id,

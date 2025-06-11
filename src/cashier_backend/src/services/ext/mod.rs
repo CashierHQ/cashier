@@ -15,5 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod cashier_nft;
+pub mod icrc_batch;
 pub mod icrc_token;
 pub mod types;

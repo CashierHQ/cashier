@@ -20,7 +20,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { X } from "lucide-react";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
-import { FeeHelpers } from "@/utils/helpers/fees";
+import { formatDollarAmount } from "@/utils/helpers/currency";
 
 export type FeeBreakdownDrawerProps = {
     open?: boolean;
@@ -102,7 +102,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                                     </div>
                                     <div className="flex justify-end">
                                         <p className="text-[10px] font-normal text-grey/50">
-                                            ~${fee.usdAmount}
+                                            {formatDollarAmount(Number(fee.usdAmount))}
                                         </p>
                                     </div>
                                 </div>
@@ -110,7 +110,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                         })}
                 </div>
 
-                <div className="mt-2 light-borders-green px-4 py-4 flex flex-col">
+                <div className="mt-2 light-borders-green px-4 py-4 mb-2 flex flex-col">
                     {" "}
                     <div className="flex justify-between items-center">
                         <span className="text-[14px] font-normal">Total fees</span>
@@ -133,12 +133,12 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                     </div>
                     <div className="flex justify-end">
                         <p className="text-[10px] font-normal text-grey/50">
-                            {totalFees === 0 ? "-" : `~$${totalFees.toFixed(4)}`}
+                            {totalFees === 0 ? "-" : formatDollarAmount(totalFees)}
                         </p>
                     </div>
                 </div>
 
-                <Button className="mt-6" onClick={onClose}>
+                <Button className="mt-6 mx-auto w-[95%] my-2" onClick={onClose}>
                     Close
                 </Button>
             </DrawerContent>

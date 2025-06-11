@@ -19,7 +19,10 @@ use std::marker::PhantomData;
 use cashier_types::{ActionType, Chain, Intent, Link, LinkType, Transaction};
 use ic::{action::IcActionAdapter, intent::IcIntentAdapter};
 
-use crate::{types::temp_action::TemporaryAction, utils::runtime::IcEnvironment};
+use crate::{
+    types::{error::CanisterError, temp_action::TemporaryAction},
+    utils::runtime::IcEnvironment,
+};
 
 pub mod ic;
 
@@ -46,7 +49,7 @@ pub trait ActionAdapter {
 
 /// Specialization for converting intents to transactions
 pub trait IntentAdapter {
-    fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, String>;
+    fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError>;
 }
 
 #[cfg_attr(test, faux::create)]
@@ -95,7 +98,7 @@ impl<E: IcEnvironment + Clone> IntentAdapterImpl<E> {
         &self,
         chain: &Chain,
         intent: &Intent,
-    ) -> Result<Vec<Transaction>, String> {
+    ) -> Result<Vec<Transaction>, CanisterError> {
         match chain {
             Chain::IC => {
                 let ic_intent_adapter: IcIntentAdapter<E> = IcIntentAdapter::new();

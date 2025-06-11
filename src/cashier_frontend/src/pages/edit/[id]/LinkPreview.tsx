@@ -24,8 +24,8 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
-import { useDeviceSize } from "@/hooks/responsive-hook";
-import { formatNumber } from "@/utils/helpers/currency";
+import { useResponsive, useDeviceSize } from "@/hooks/responsive-hook";
+import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import {
@@ -35,6 +35,7 @@ import {
     LINK_STATE,
     LINK_TYPE,
     ACTION_STATE,
+    getLinkTypeString,
 } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
@@ -49,6 +50,7 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { FeeHelpers } from "@/utils/helpers/fees";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
+import { StateBadge } from "@/components/link-item";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -429,28 +431,121 @@ export default function LinkPreview({
         LINK_TYPE.SEND_TOKEN_BASKET.toString(),
     ].includes(link.linkType);
 
+    const isPaymentLink = (): boolean => {
+        return (
+            link.linkType === LINK_TYPE.RECEIVE_PAYMENT ||
+            link.linkType === LINK_TYPE.RECEIVE_MULTI_PAYMENT
+        );
+    };
+
+    // Helper method to check if this is a send-type link
+    const isSendLink = (): boolean => {
+        return (
+            link.linkType === LINK_TYPE.SEND_TIP ||
+            link.linkType === LINK_TYPE.SEND_AIRDROP ||
+            link.linkType === LINK_TYPE.SEND_TOKEN_BASKET ||
+            link.linkType === LINK_TYPE.NFT_CREATE_AND_AIRDROP
+        );
+    };
+
+    // Helper method to render user pays section
+    const renderUserPays = (): JSX.Element => {
+        if (isPaymentLink()) {
+            // For payment links, show the user payment amount
+            return (
+                <div className="flex flex-col items-end gap-2">
+                    {link.asset_info
+                        .sort((a, b) => (a.address ?? "").localeCompare(b.address ?? ""))
+                        .map((asset, index) => {
+                            const token = getToken(asset.address);
+                            if (!token) return null;
+                            return (
+                                <div key={`pay-${index}`} className="flex items-center gap-2">
+                                    <p className="text-sm text-primary/80">
+                                        {formatNumber(
+                                            (
+                                                Number(asset.amountPerUse) /
+                                                10 ** token.decimals
+                                            ).toString(),
+                                        )}{" "}
+                                        {token.symbol}
+                                    </p>
+                                    <AssetAvatarV2 token={token} className="w-4 h-4" />
+                                </div>
+                            );
+                        })}
+                </div>
+            );
+        } else {
+            // For send links, user pays nothing
+            return <p className="text-sm text-primary/80">-</p>;
+        }
+    };
+
+    const renderUserClaims = (): JSX.Element => {
+        if (isSendLink()) {
+            // For send links, show what users can claim
+            return (
+                <div className="flex flex-col items-end gap-2">
+                    {link.asset_info
+                        .sort((a, b) => (a.address ?? "").localeCompare(b.address ?? ""))
+                        .map((asset, index) => {
+                            const token = getToken(asset.address);
+                            if (!token) return null;
+                            return (
+                                <div key={`claim-${index}`} className="flex items-center gap-2">
+                                    <p className="text-sm text-primary/80">
+                                        {formatNumber(
+                                            (
+                                                Number(asset.amountPerUse) /
+                                                10 ** token.decimals
+                                            ).toString(),
+                                        )}{" "}
+                                        {token.symbol}
+                                    </p>
+                                    <AssetAvatarV2 token={token} className="w-4 h-4" />
+                                </div>
+                            );
+                        })}
+                </div>
+            );
+        } else {
+            // For payment links, user claims nothing
+            return <p className="text-sm text-primary/80">-</p>;
+        }
+    };
+
     return (
         <div
-            className={`w-full flex flex-col h-full mt-2 ${responsive.isSmallDevice ? "justify-start" : "gap-4"}`}
+            className={`w-full flex flex-col flex-1 overflow-y-auto max-h-[calc(100vh-150px)] pb-24 mt-2 ${responsive.isSmallDevice ? "justify-start" : "gap-4"}`}
         >
-            <div className="input-label-field-container">
-                <Label>Link info</Label>
-                <div className="flex flex-col gap-2 justify-between items-center light-borders-green px-4 py-3">
-                    <div className="flex items-center w-full justify-between">
-                        <p className="text-[14px] font-normal">Type</p>
-                        <p className="text-[14px] font-normal">
-                            {link?.linkType?.replace(/([A-Z])/g, " $1").trim()}
+            <div>
+                <div className="flex gap-2 items-center mb-2 justify-between">
+                    <Label>{t("details.linkInfo")}</Label>
+                </div>
+                <div
+                    id="link-detail-section"
+                    className="flex flex-col border-[1px] rounded-lg border-lightgreen"
+                >
+                    <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
+                        <p className="font-medium text-sm">Type</p>
+                        <p className="text-sm text-primary/80">
+                            {getLinkTypeString(link.linkType!)}
                         </p>
                     </div>
-                    <div className="flex items-center w-full justify-between">
-                        <p className="text-[14px] font-normal">Max number of uses</p>
-                        <p className="text-[14px] font-normal">
+                    <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
+                        <p className="font-medium text-sm">User pays</p>
+                        {renderUserPays()}
+                    </div>
+                    <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
+                        <p className="font-medium text-sm">User claims</p>
+                        {renderUserClaims()}
+                    </div>
+                    <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
+                        <p className="font-medium text-sm">Max use</p>
+                        <p className="text-sm text-primary/80">
                             {link.maxActionNumber ? link.maxActionNumber.toString() : "1"}
                         </p>
-                    </div>
-                    <div className="flex items-center w-full justify-between">
-                        <p className="text-[14px] font-normal">Gate</p>
-                        <p className="text-[14px] font-normal">none</p>
                     </div>
                 </div>
             </div>
@@ -459,7 +554,11 @@ export default function LinkPreview({
                 <div className="input-label-field-container mt-4">
                     <div className="flex items-center w-full justify-between">
                         <Label>
-                            Asset{link.maxActionNumber > 1 ? "s" : ""} to transfer to link
+                            Transfer to link
+                            <span className="text-[#b6b6b6] text-[11px] ml-1">
+                                {" "}
+                                including network fees
+                            </span>
                         </Label>
                         <button
                             className="flex items-center gap-1"
@@ -505,8 +604,8 @@ export default function LinkPreview({
                                                     {formatNumber(totalTokenAmount.toString())}
                                                 </p>
                                             </div>
-                                            <p className="text-[10px] font-normal text-grey-400/50">
-                                                ~${formatNumber(approximateUsdValue.toString())}
+                                            <p className="text-[10px] font-normal text-[#b6b6b6]">
+                                                {formatDollarAmount(approximateUsdValue)}
                                             </p>
                                         </div>
                                     </div>
@@ -555,8 +654,8 @@ export default function LinkPreview({
                                             )}
                                         </p>
                                     </div>
-                                    <p className="text-[10px] font-normal text-grey-400/50">
-                                        ~${formatNumber(usdValue.toString())}
+                                    <p className="text-[10px] font-normal text-[#b6b6b6]">
+                                        {formatDollarAmount(usdValue)}
                                     </p>
                                 </div>
                             </div>

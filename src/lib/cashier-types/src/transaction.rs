@@ -214,6 +214,7 @@ pub struct Icrc2Approve {
     pub spender: Wallet,
     pub asset: Asset,
     pub amount: u64,
+    pub memo: Option<Memo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

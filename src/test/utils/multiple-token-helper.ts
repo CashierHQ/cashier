@@ -31,12 +31,15 @@ import {
 import { Account, principalToAccountIdentifier } from "@dfinity/ledger-icp";
 import { IDL } from "@dfinity/candid";
 
+export const ICP_LABEL = "ICP";
+
 export class MultipleTokenHelper {
     private pic: PocketIc;
     private deployer: Identity;
     private wasm_path: string;
     private actors: Map<string, Actor<_SERVICE>>;
     private canisterIds: Map<string, Principal>;
+    private canisterIdToName: Map<string, string>;
     private identity?: Identity;
 
     constructor(pic: PocketIc) {
@@ -45,6 +48,7 @@ export class MultipleTokenHelper {
         this.wasm_path = resolve("artifacts", "token_canister.wasm.gz");
         this.actors = new Map();
         this.canisterIds = new Map();
+        this.canisterIdToName = new Map();
     }
 
     public getTokenCanisterId = (tokenName: string) => {
@@ -55,12 +59,25 @@ export class MultipleTokenHelper {
         return canisterId;
     };
 
+    public getTokenNameByCanisterId = (canisterId: string | Principal) => {
+        const canisterIdStr = typeof canisterId === "string" ? canisterId : canisterId.toString();
+        const tokenName = this.canisterIdToName.get(canisterIdStr);
+        if (!tokenName) {
+            throw new Error(`Token name for canister ${canisterIdStr} not found`);
+        }
+        return tokenName;
+    };
+
     public getTokenCanisterIds = () => {
         return this.canisterIds;
     };
 
     public getTokenCanisterIdsArray = () => {
         return Array.from(this.canisterIds.values());
+    };
+
+    public getCanisterIdToNameMap = () => {
+        return this.canisterIdToName;
     };
 
     public init = async () => {
@@ -114,8 +131,9 @@ export class MultipleTokenHelper {
         const actor = await this.pic.createActor<_SERVICE>(idlFactory, LEDGER_ID);
         actor.setIdentity(this.deployer);
 
-        this.actors.set("feeICP", actor);
-        this.canisterIds.set("feeICP", canister_id);
+        this.actors.set(ICP_LABEL, actor);
+        this.canisterIds.set(ICP_LABEL, canister_id);
+        this.canisterIdToName.set(canister_id.toString(), ICP_LABEL);
     };
 
     public setupCanister = async (tokenName: string) => {
@@ -163,6 +181,7 @@ export class MultipleTokenHelper {
 
         this.actors.set(tokenName, actor);
         this.canisterIds.set(tokenName, canister_id);
+        this.canisterIdToName.set(canister_id.toString(), tokenName);
     };
 
     public airdrop = async (tokenName: string, amount: bigint, to: Principal) => {
@@ -210,8 +229,6 @@ export class MultipleTokenHelper {
             throw new Error(`Canister for token ${tokenName} not setup`);
         }
 
-        console.log("approve", arg);
-
         return actor.icrc2_approve(arg);
     }
 
@@ -222,5 +239,14 @@ export class MultipleTokenHelper {
         }
 
         return actor.icrc1_balance_of(account);
+    }
+
+    public async feeOf(tokenName: string) {
+        const actor = this.actors.get(tokenName);
+        if (!actor) {
+            throw new Error(`Canister for token ${tokenName} not setup`);
+        }
+
+        return actor.icrc1_fee();
     }
 }

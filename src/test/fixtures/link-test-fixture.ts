@@ -21,7 +21,6 @@ import { Principal } from "@dfinity/principal";
 import {
     idlFactory,
     type _SERVICE,
-    CreateLinkInput,
     UpdateLinkInput,
     ProcessActionInput,
     GetLinkOptions,
@@ -30,11 +29,13 @@ import {
     ActionDto,
     GetLinkResp,
     LinkGetUserStateOutput,
+    CreateActionInput,
+    LinkDto,
+    UserDto,
 } from "../../declarations/cashier_backend/cashier_backend.did";
-import { TokenHelper } from "../utils/token-helper";
-import { MultipleTokenHelper } from "../utils/multiple-token-helper";
-import { parseResultResponse, safeParseJSON } from "../utils/parser";
-import { flattenAndFindByMethod, Icrc112Executor } from "../utils/icrc-112";
+import { ICP_LABEL, MultipleTokenHelper } from "../utils/multiple-token-helper";
+import { parseResultResponse } from "../utils/parser";
+import { flattenAndFindByMethod } from "../utils/icrc-112";
 import LinkHelper from "../utils/link-helper";
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { Identity } from "@dfinity/agent";
@@ -56,41 +57,40 @@ export interface AssetInfo {
     chain: string;
     address: string;
     label: string;
-    amount_per_claim?: bigint;
-    amount_per_link_use_action?: bigint;
+    amount_per_link_use?: bigint;
 }
 
 export class LinkTestFixture {
     pic?: PocketIc;
     actor?: Actor<_SERVICE>;
-    identities: {
-        alice: Identity;
-        bob: Identity;
-    };
-    tokenHelper?: TokenHelper;
+    identities: Map<string, Identity>;
     multiTokenHelper?: MultipleTokenHelper;
     linkHelper?: LinkHelper;
     canisterId?: string;
-    users: Record<string, any> = {};
+    users: Record<string, UserDto> = {};
 
     constructor() {
-        this.identities = {
-            alice: createIdentity("superSecretAlicePassword"),
-            bob: createIdentity("superSecretBobPassword"),
-        };
+        this.identities = new Map([
+            ["alice", createIdentity("superSecretAlicePassword")],
+            ["bob", createIdentity("superSecretBobPassword")],
+            ["charlie", createIdentity("superSecretCharliePassword")],
+            ["david", createIdentity("superSecretDavidPassword")],
+            ["eve", createIdentity("superSecretEvePassword")],
+        ]);
+    }
+
+    addIdentity(name: string, seed: string): void {
+        this.identities.set(name, createIdentity(seed));
     }
 
     async setup(
         options: {
             currentTime?: number;
-            airdropAmount?: bigint;
-            useMultipleTokens?: boolean;
             advanceTimeAfterSetup?: number;
         } = {},
     ) {
         // Default time if not provided
         const currentTime = options.currentTime || new Date(1734434601000).getTime();
-        const airdropAmount = options.airdropAmount || BigInt(1_0000_0000_0000);
         const advanceTimeAfterSetup =
             options.advanceTimeAfterSetup !== undefined
                 ? options.advanceTimeAfterSetup
@@ -129,69 +129,27 @@ export class LinkTestFixture {
             // targetSubnetId: Principal.fromText("4ecnw-byqwz-dtgss-ua2mh-pfvs7-c3lct-gtf4e-hnu75-j7eek-iifqm-sqe"),
         });
 
-        const canisterSubnetId = await this.pic.getCanisterSubnetId(
-            Principal.fromText("jjio5-5aaaa-aaaam-adhaq-cai"),
-        );
-
-        console.log("subnets jjio5-5aaaa-aaaam-adhaq-cai", canisterSubnetId?.toText());
-
         this.canisterId = fixture.canisterId.toString();
         this.actor = fixture.actor;
 
         // Create users for Alice and Bob
-        this.actor.setIdentity(this.identities.alice);
+        this.actor.setIdentity(this.identities.get("alice")!);
         await this.pic.advanceTime(1 * 60 * 1000);
         await this.pic.tick(50);
 
         const aliceUserRes = await this.actor.create_user();
         this.users["alice"] = parseResultResponse(aliceUserRes);
 
-        this.actor.setIdentity(this.identities.bob);
+        this.actor.setIdentity(this.identities.get("bob")!);
         const bobUserRes = await this.actor.create_user();
         this.users["bob"] = parseResultResponse(bobUserRes);
 
-        // Setup token helpers
-        if (options.useMultipleTokens) {
-            this.multiTokenHelper = new MultipleTokenHelper(this.pic);
-            await this.multiTokenHelper.init();
-            await this.multiTokenHelper.setupCanister("token1");
-            await this.multiTokenHelper.setupCanister("token2");
-            await this.multiTokenHelper.setupCanister("token3");
-
-            await this.multiTokenHelper.airdrop(
-                "feeICP",
-                airdropAmount,
-                this.identities.alice.getPrincipal(),
-            );
-            await this.multiTokenHelper.airdrop(
-                "token1",
-                airdropAmount,
-                this.identities.alice.getPrincipal(),
-            );
-            await this.multiTokenHelper.airdrop(
-                "token2",
-                airdropAmount,
-                this.identities.alice.getPrincipal(),
-            );
-            await this.multiTokenHelper.airdrop(
-                "token3",
-                airdropAmount,
-                this.identities.alice.getPrincipal(),
-            );
-        } else {
-            this.tokenHelper = new TokenHelper(this.pic);
-            await this.tokenHelper.setupCanister();
-            await this.tokenHelper.airdrop(airdropAmount, this.identities.alice.getPrincipal());
-
-            // Also give tokens to Bob in some tests
-            await this.tokenHelper.airdrop(airdropAmount, this.identities.bob.getPrincipal());
-        }
-
-        const canisterSubnetId2 = await this.pic.getCanisterSubnetId(
-            Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
-        );
-
-        console.log("subnets ryjl3-tyaaa-aaaaa-aaaba-cai", canisterSubnetId2?.toText());
+        // Setup multiple token helpers
+        this.multiTokenHelper = new MultipleTokenHelper(this.pic);
+        await this.multiTokenHelper.init();
+        await this.multiTokenHelper.setupCanister("token1");
+        await this.multiTokenHelper.setupCanister("token2");
+        await this.multiTokenHelper.setupCanister("token3");
 
         // Setup link helper
         this.linkHelper = new LinkHelper(this.pic);
@@ -202,19 +160,23 @@ export class LinkTestFixture {
         await this.pic.tick(50);
 
         // Default back to Alice's identity
-        this.actor.setIdentity(this.identities.alice);
+        this.actor.setIdentity(this.identities.get("alice")!);
     }
 
-    async createLink(linkType: string): Promise<string> {
+    async getUserDetails(userKey: string): Promise<UserDto> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
 
-        const input: CreateLinkInput = { link_type: linkType };
-        const response = await this.actor.create_link(input);
-        const linkId = parseResultResponse(response);
+        const user = this.users[userKey];
+        if (!user) {
+            throw new Error(`User ${userKey} not found`);
+        }
 
-        return linkId;
+        // Fetch user details from the actor
+        await this.actor.setIdentity(this.identities.get(userKey)!);
+        const response = await this.actor.get_user();
+        return parseResultResponse(response);
     }
 
     async createLinkV2(
@@ -222,7 +184,7 @@ export class LinkTestFixture {
         config: LinkConfig,
         assets: AssetInfo[] = [],
         maxUseCount?: bigint,
-    ): Promise<string> {
+    ): Promise<LinkDto> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
@@ -232,7 +194,7 @@ export class LinkTestFixture {
             address: asset.address,
             label: asset.label,
             amount_per_link_use_action:
-                asset.amount_per_link_use_action || asset.amount_per_claim || BigInt(10_0000_0000),
+                asset.amount_per_link_use || asset.amount_per_link_use || BigInt(10_0000_0000),
         }));
 
         const input: CreateLinkInputV2 = {
@@ -246,70 +208,12 @@ export class LinkTestFixture {
             nft_image: [],
         };
         const response = await this.actor.create_link_v2(input);
-        const linkId = parseResultResponse(response);
+        const link = parseResultResponse(response);
 
-        return linkId.id;
+        return link;
     }
 
-    async setupTemplate(linkId: string, config: LinkConfig): Promise<any> {
-        if (!this.actor) {
-            throw new Error("Actor is not initialized");
-        }
-        const updateInput: UpdateLinkInput = {
-            id: linkId,
-            action: "Continue",
-            params: [
-                {
-                    title: [config.title],
-                    asset_info: [],
-                    description: [],
-                    template: [config.template],
-                    link_image_url: [],
-                    nft_image: [],
-                    link_type: [config.link_type],
-                    link_use_action_max_count: [],
-                },
-            ],
-        };
-
-        const response = await this.actor.update_link(updateInput);
-        return parseResultResponse(response);
-    }
-
-    async addAssets(linkId: string, assets: AssetInfo[], maxUseCount?: bigint): Promise<any> {
-        if (!this.actor) {
-            throw new Error("Actor is not initialized");
-        }
-        const formattedAssets = assets.map((asset) => ({
-            chain: asset.chain,
-            address: asset.address,
-            label: asset.label,
-            amount_per_link_use_action:
-                asset.amount_per_link_use_action || asset.amount_per_claim || BigInt(10_0000_0000),
-        }));
-
-        const updateInput: UpdateLinkInput = {
-            id: linkId,
-            action: "Continue",
-            params: [
-                {
-                    title: [],
-                    asset_info: [formattedAssets],
-                    description: [],
-                    template: [],
-                    link_image_url: [],
-                    nft_image: [],
-                    link_type: [],
-                    link_use_action_max_count: maxUseCount ? toNullable(maxUseCount) : [],
-                },
-            ],
-        };
-
-        const response = await this.actor.update_link(updateInput);
-        return parseResultResponse(response);
-    }
-
-    async activateLink(linkId: string): Promise<any> {
+    async activateLink(linkId: string) {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
@@ -323,23 +227,50 @@ export class LinkTestFixture {
         return parseResultResponse(response);
     }
 
-    async createAction(linkId: string, actionType: string): Promise<string> {
+    async inactiveLink(linkId: string) {
+        if (!this.actor) {
+            throw new Error("Actor is not initialized");
+        }
+        const updateInput: UpdateLinkInput = {
+            id: linkId,
+            action: "Continue",
+            params: [],
+        };
+        const response = await this.actor.update_link(updateInput);
+
+        return parseResultResponse(response);
+    }
+
+    async createAction(linkId: string, actionType: string): Promise<ActionDto> {
+        if (!this.actor) {
+            throw new Error("Actor is not initialized");
+        }
+        const input: CreateActionInput = {
+            link_id: linkId,
+            action_type: actionType,
+        };
+
+        const response = await this.actor.create_action(input);
+        const result = parseResultResponse(response);
+
+        return result;
+    }
+
+    async confirmAction(linkId: string, actionId: string, actionType: string): Promise<ActionDto> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
         const input: ProcessActionInput = {
             link_id: linkId,
-            action_id: "",
+            action_id: actionId,
             action_type: actionType,
         };
 
         const response = await this.actor.process_action(input);
-        const result = parseResultResponse(response);
-
-        return result.id;
+        return parseResultResponse(response);
     }
 
-    async confirmAction(linkId: string, actionId: string, actionType: string): Promise<ActionDto> {
+    async processAction(linkId: string, actionId: string, actionType: string): Promise<ActionDto> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
@@ -378,60 +309,7 @@ export class LinkTestFixture {
         return balance;
     }
 
-    async executeIcrc112(
-        requests: Icrc112Request[][],
-        linkId: string,
-        actionId: string,
-        identity: Identity,
-        options?: {
-            icrc1TransferAmount?: bigint;
-        },
-    ): Promise<void> {
-        if (!this.actor) {
-            throw new Error("Actor is not initialized");
-        }
-
-        if (!this.tokenHelper) {
-            throw new Error("Token helper is not initialized");
-        }
-
-        if (!this.pic) {
-            throw new Error("PocketIc is not initialized");
-        }
-
-        if (!this.canisterId) {
-            throw new Error("Canister ID is not initialized");
-        }
-
-        const triggerTxMethod = flattenAndFindByMethod(requests, "trigger_transaction");
-
-        if (!triggerTxMethod || !triggerTxMethod.nonce[0]) {
-            throw new Error("trigger_transaction method not found in icrc-112 requests");
-        }
-
-        const executor = new Icrc112Executor(
-            requests,
-            this.tokenHelper,
-            identity,
-            linkId,
-            actionId,
-            Principal.fromText(this.canisterId),
-            this.actor,
-            triggerTxMethod.nonce[0],
-        );
-
-        await executor.executeIcrc1Transfer(options?.icrc1TransferAmount);
-        await executor.executeIcrc2Approve();
-
-        await executor.triggerTransaction();
-        await this.actor.update_action({
-            action_id: actionId,
-            link_id: linkId,
-            external: true,
-        });
-    }
-
-    async executeIcrc112V2(
+    prepare_executor(
         requests: Icrc112Request[][],
         linkId: string,
         actionId: string,
@@ -453,14 +331,9 @@ export class LinkTestFixture {
             throw new Error("MultiToken helper is not initialized");
         }
 
-        console.log("requests", safeParseJSON(requests as any));
-
         const triggerTxMethod = flattenAndFindByMethod(requests, "trigger_transaction");
-        console.log("triggerTxMethod", triggerTxMethod);
-        if (!triggerTxMethod) {
-            throw new Error("trigger_transaction method not found in icrc-112 requests");
-        }
-        const executeHelper = new Icrc112ExecutorV2(
+
+        const executor = new Icrc112ExecutorV2(
             requests,
             this.multiTokenHelper,
             identity,
@@ -468,21 +341,13 @@ export class LinkTestFixture {
             actionId,
             Principal.fromText(this.canisterId),
             this.actor,
-            triggerTxMethod.nonce[0]!,
+            triggerTxMethod?.nonce[0],
         );
-        await executeHelper.executeIcrc1Transfer("token1", 10_0000_0000n);
-        await executeHelper.executeIcrc1Transfer("token2", 20_0000_0000n);
-        await executeHelper.executeIcrc1Transfer("token3", 30_0000_0000n);
-        await executeHelper.executeIcrc2Approve("feeICP", 30_0000_0000n);
-        await this.actor.update_action({
-            action_id: actionId,
-            link_id: linkId,
-            external: true,
-        });
-        await executeHelper.triggerTransaction();
+
+        return executor;
     }
 
-    async switchToUser(userKey?: "alice" | "bob"): Promise<void> {
+    async switchToUser(userKey?: string): Promise<void> {
         if (!this.actor) {
             throw new Error("Actor is not initialized");
         }
@@ -496,7 +361,11 @@ export class LinkTestFixture {
         }
 
         if (userKey) {
-            this.actor.setIdentity(this.identities[userKey]);
+            const identity = this.identities.get(userKey);
+            if (!identity) {
+                throw new Error(`Identity for user ${userKey} not found`);
+            }
+            this.actor.setIdentity(identity);
         } else {
             this.switchToAnonymous();
         }
@@ -600,8 +469,8 @@ export class LinkTestFixture {
         maxUseCount?: bigint,
     ): Promise<string> {
         // Create link
-        const linkId = await this.createLinkV2(linkType, config, assets, maxUseCount);
-        return linkId;
+        const link = await this.createLinkV2(linkType, config, assets, maxUseCount);
+        return link.id;
     }
 
     async createActionForLink(
@@ -609,9 +478,9 @@ export class LinkTestFixture {
         actionType: string,
     ): Promise<{ linkId: string; actionId: string }> {
         // Create action
-        const actionId = await this.createAction(linkId, actionType);
+        const action = await this.createAction(linkId, actionType);
 
-        return { linkId, actionId };
+        return { linkId, actionId: action.id };
     }
 
     // Method to setup a tip link and claim it once
@@ -639,7 +508,7 @@ export class LinkTestFixture {
             chain: "IC",
             address: FEE_CANISTER_ID,
             label: "SEND_TIP_ASSET",
-            amount_per_claim: BigInt(10_0000_0000),
+            amount_per_link_use: BigInt(10_0000_0000),
         };
 
         const linkConfig = config || defaultConfig;
@@ -656,7 +525,7 @@ export class LinkTestFixture {
             linkAssets,
             maxUseCount,
         );
-        const createdLinkId = result.linkId;
+        const createdLinkId = result.link.id;
 
         // Verify link is active
         const linkState = await this.getLinkWithActions(createdLinkId, "CreateLink");
@@ -669,16 +538,16 @@ export class LinkTestFixture {
         await this.advanceTime(1 * 60 * 1000);
 
         // Create claim action
-        const createdClaimActionId = await this.createAction(createdLinkId, "Use");
+        const createdClaimActionId = (await this.createAction(createdLinkId, "Use")).id;
 
         // Process claim action
         const bobAccount = {
-            owner: this.identities.bob.getPrincipal(),
+            owner: this.identities.get("bob")!.getPrincipal(),
             subaccount: [] as any,
         };
 
-        // Get initial balance
-        const balanceBefore = await this.tokenHelper!.balanceOf(bobAccount);
+        // Get initial balance using multiTokenHelper
+        const balanceBefore = await this.multiTokenHelper!.balanceOf("ICP", bobAccount);
 
         // Confirm the claim
         const claimResult = await this.confirmAction(createdLinkId, createdClaimActionId, "Use");
@@ -713,23 +582,23 @@ export class LinkTestFixture {
         config: LinkConfig,
         assets: AssetInfo[],
         maxUseCount?: bigint,
-        options?: {
-            // only use if maxUseCount > 1, to transfer more than default 10_0000_0000
-            icrc1TransferAmount?: bigint;
-        },
-    ): Promise<{ linkId: string; actionId: string }> {
+        identity: Identity = this.identities.get("alice")!,
+        execute_tx: (executor: Icrc112ExecutorV2) => Promise<void> = async () => {},
+    ): Promise<{ link: LinkDto; action: ActionDto }> {
         // Create link
-        const linkId = await this.createLinkV2(linkType, config, assets, maxUseCount);
+        const link = await this.createLinkV2(linkType, config, assets, maxUseCount);
+
+        const linkId = link.id;
 
         await this.advanceTimeAndTick(2000);
 
         // Create action
-        const actionId = await this.createAction(linkId, "CreateLink");
+        const action = await this.createAction(linkId, "CreateLink");
 
         await this.advanceTimeAndTick(2000);
 
         // Confirm action
-        const confirmResult = await this.confirmAction(linkId, actionId, "CreateLink");
+        const confirmResult = await this.confirmAction(linkId, action.id, "CreateLink");
 
         await this.advanceTimeAndTick(2000);
 
@@ -741,26 +610,121 @@ export class LinkTestFixture {
                 throw new Error("No ICRC-112 requests found");
             }
 
-            if (this.tokenHelper) {
-                await this.executeIcrc112(
-                    requests,
-                    linkId,
-                    actionId,
-                    this.identities.alice,
-                    options,
-                );
-            }
+            const executor = this.prepare_executor(requests, linkId, action.id, identity);
 
-            if (this.multiTokenHelper) {
-                await this.executeIcrc112V2(requests, linkId, actionId, this.identities.alice);
-            }
+            await execute_tx(executor);
         }
 
-        await this.advanceTimeAndTick(2000);
+        const last_updated_action = await this.actor!.update_action({
+            action_id: action.id,
+            link_id: linkId,
+            external: true,
+        });
+
+        await this.advanceTimeAndTick(50000);
 
         // Activate link
         await this.activateLink(linkId);
 
-        return { linkId, actionId };
+        return {
+            link,
+            action: parseResultResponse(last_updated_action),
+        };
+    }
+
+    async executeIcrc112Requests(
+        requests: Icrc112Request[][],
+        linkId: string,
+        actionId: string,
+        identity: Identity = this.identities.get("alice")!,
+        execute_tx: (executor: Icrc112ExecutorV2) => Promise<void> = async () => {},
+    ): Promise<void> {
+        if (!this.pic) {
+            throw new Error("PocketIc is not initialized");
+        }
+
+        if (!this.canisterId) {
+            throw new Error("Canister ID is not initialized");
+        }
+
+        if (!this.multiTokenHelper) {
+            throw new Error("MultiToken helper is not initialized");
+        }
+
+        const executor = this.prepare_executor(requests, linkId, actionId, identity);
+
+        await execute_tx(executor);
+    }
+
+    async postIcrc112Requests(linkId: string, actionId: string) {
+        const last_updated_action = await this.actor!.update_action({
+            action_id: actionId,
+            link_id: linkId,
+            external: true,
+        });
+
+        return parseResultResponse(last_updated_action);
+    }
+
+    async airdropTokensToUsers(airdropAmount: bigint, userKeys?: string[]): Promise<void> {
+        if (!this.multiTokenHelper) {
+            throw new Error("MultiToken helper is not initialized");
+        }
+
+        const tokens = [ICP_LABEL, "token1", "token2", "token3"];
+        const usersToAirdrop = userKeys || Array.from(this.identities.keys());
+
+        // Airdrop all tokens to specified users (or all users if not specified)
+        for (const token of tokens) {
+            for (const userKey of usersToAirdrop) {
+                const identity = this.identities.get(userKey);
+                if (identity) {
+                    await this.multiTokenHelper.airdrop(
+                        token,
+                        airdropAmount,
+                        identity.getPrincipal(),
+                    );
+                }
+            }
+        }
+    }
+
+    async getUserBalance(userKey: string, tokenName: string): Promise<bigint> {
+        if (!this.multiTokenHelper) {
+            throw new Error("MultiToken helper is not initialized");
+        }
+
+        const userIdentity = this.identities.get(userKey);
+        if (!userIdentity) {
+            throw new Error(`User identity for ${userKey} not found`);
+        }
+
+        const account = {
+            owner: userIdentity.getPrincipal(),
+            subaccount: [] as any,
+        };
+
+        return this.multiTokenHelper.balanceOf(tokenName, account);
+    }
+
+    async getWalletBalance(walletAddress: string, tokenName: string): Promise<bigint> {
+        if (!this.multiTokenHelper) {
+            throw new Error("MultiToken helper is not initialized");
+        }
+
+        const account = {
+            owner: Principal.fromText(walletAddress),
+            subaccount: [] as any,
+        };
+
+        return this.multiTokenHelper.balanceOf(tokenName, account);
+    }
+
+    async getTokenFee(tokenName: string): Promise<bigint> {
+        if (!this.multiTokenHelper) {
+            throw new Error("MultiToken helper is not initialized");
+        }
+
+        return this.multiTokenHelper.feeOf(tokenName);
     }
 }

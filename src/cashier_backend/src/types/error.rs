@@ -90,6 +90,9 @@ pub enum CanisterError {
     #[error("Validation error: {0}")]
     ValidationErrors(String),
 
+    #[error("Call other canister failed {0}")]
+    CallCanisterFailed(String),
+
     // Fallback
     #[error("Unknown error: {0}")]
     UnknownError(String),

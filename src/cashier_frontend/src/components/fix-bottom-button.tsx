@@ -25,7 +25,7 @@ interface FixedBottomButtonProps extends ButtonProps {
 export const FixedBottomButton = React.forwardRef<HTMLButtonElement, FixedBottomButtonProps>(
     ({ className, customStyle, ...props }, ref) => {
         return (
-            <div className="w-full flex-shrink-0 flex justify-center mt-auto">
+            <div className="w-full bg-blue-400 flex-shrink-0 flex justify-center mt-auto">
                 <Button
                     className={cn(
                         className,

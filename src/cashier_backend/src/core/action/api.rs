@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use ic_cdk::update;
+use ic_cdk::{query, update};
 
-use crate::core::guard::is_not_anonymous;
-use crate::services::transaction_manager::TransactionManagerService;
+use crate::core::action::types::TransactionDto;
+use crate::core::guard::{is_not_admin, is_not_anonymous};
+use crate::services::transaction::TransactionService;
+use crate::services::transaction_manager::service::TransactionManagerService;
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
     core::CanisterError,
@@ -28,9 +30,11 @@ use super::types::TriggerTransactionInput;
 
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
-    let start_time = ic_cdk::api::time();
     let caller = ic_cdk::api::caller();
+
     let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
+    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
+        TransactionManagerService::get_instance();
 
     let is_creator = validate_service
         .is_action_creator(caller.to_text(), input.action_id.clone())
@@ -44,16 +48,21 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
         ));
     }
 
-    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
-        TransactionManagerService::get_instance();
-
     transaction_manager
         .execute_tx_by_id(input.transaction_id)
         .await?;
 
-    let end_time = ic_cdk::api::time();
-    let elapsed_time = end_time - start_time;
-    let elapsed_seconds = (elapsed_time as f64) / 1_000_000_000.0;
-
     return Ok("Executed success".to_string());
+}
+
+#[query(guard = "is_not_admin")]
+pub async fn admin_get_transaction(
+    transaction_id: String,
+) -> Result<TransactionDto, CanisterError> {
+    let tx_service: TransactionService<RealIcEnvironment> = TransactionService::get_instance();
+
+    let tx = tx_service.get_tx_by_id(&transaction_id.to_string())?;
+
+    let dto = TransactionDto::from(tx);
+    Ok(dto)
 }

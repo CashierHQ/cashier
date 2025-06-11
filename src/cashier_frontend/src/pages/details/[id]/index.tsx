@@ -94,10 +94,6 @@ export default function DetailPage() {
         };
     }, []);
 
-    React.useEffect(() => {
-        console.log("link", link);
-    }, [link]);
-
     // Check if link has assets that can be withdrawn
     const hasWithdrawableAssets = React.useMemo(() => {
         if (!link) return false;
@@ -191,7 +187,7 @@ export default function DetailPage() {
                 } catch (error) {
                     console.error("Error in polling interval:", error);
                 }
-            }, 2000); // Poll every 2 seconds
+            }, 1500); // Poll every 2 seconds
         }
 
         return () => {
@@ -248,7 +244,7 @@ export default function DetailPage() {
             if (!link) throw new Error("Link data is not available");
 
             setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
+                text: t("processing"),
                 disabled: true,
             });
             setIsCallStateMachine(true);
@@ -258,7 +254,9 @@ export default function DetailPage() {
                 linkModel: {},
                 isContinue: true,
             });
+
             await refetchLinkDetail();
+
             setShowConfirmationDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
@@ -381,13 +379,13 @@ export default function DetailPage() {
                         )}
 
                         {/* Fixed Footer */}
-                        <div className="absolute bottom-0 left-0 right-0 pt-4 pb-6 px-5 flex flex-col items-center gap-4">
+                        <div className="absolute bottom-0 left-0 right-0 pt-4 pb-[21px] w-full flex flex-col items-center gap-4">
                             {link?.state == LINK_STATE.ACTIVE && (
                                 <button
                                     onClick={() => {
                                         setShowEndLinkDrawer(true);
                                     }}
-                                    className="w-full border bg-white border-[#D26060] mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] h-[44px] hover:bg-[#D26060] hover:text-white transition-colors"
+                                    className="w-[95%] h-[44px] border bg-white border-[#D26060] mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] hover:bg-[#D26060] hover:text-white transition-colors"
                                 >
                                     End Link
                                 </button>
@@ -396,7 +394,7 @@ export default function DetailPage() {
                                 <Button
                                     id="copy-link-button"
                                     onClick={handleCopyLink}
-                                    className="w-full"
+                                    className="w-[95%] h-[44px]"
                                 >
                                     {t("details.copyLink")}
                                 </Button>
@@ -408,7 +406,7 @@ export default function DetailPage() {
                                     onClick={() => {
                                         handleWithdrawAssets();
                                     }}
-                                    className="w-full disabled:bg-gray-300"
+                                    className="w-[95%] h-[44px] disabled:bg-gray-300"
                                 >
                                     {hasWithdrawableAssets
                                         ? t("details.withdrawAssets")
