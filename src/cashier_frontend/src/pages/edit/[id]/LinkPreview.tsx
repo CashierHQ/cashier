@@ -573,7 +573,7 @@ export default function LinkPreview({
 
                                 const forecastAmount = FeeHelpers.forecastActualAmountWithoutIntent(
                                     token!,
-                                    BigInt(asset.amountPerUse) * link.maxActionNumber,
+                                    BigInt(asset.amountPerUse),
                                     Number(link?.maxActionNumber ?? 1),
                                 );
                                 const tokenSymbol = token?.symbol;

@@ -204,7 +204,18 @@ export class FeeService {
     }
 
     /**
-     * Get display amount including fees (from FeeHelpers)
+     * Calculates the total amount needed for a transaction without considering intents.
+     * This is used for direct token transfers where we need to account for:
+     * - The base token amount multiplied by max actions
+     * - Network fees for each action
+     * - One additional network fee for the final execution
+     *
+     * Formula: (amount * maxActions) + (networkFee * maxActions) + networkFee
+     *
+     * @param tokenInfo - Token information including decimals and fee structure
+     * @param amount - link amount per use
+     * @param maxActionNumber - Maximum number of actions/uses for this transaction
+     * @returns Total amount needed in human-readable format (e.g., 1.5 ICP)
      */
     forecastActualAmountWithoutIntent(
         tokenInfo: FungibleToken,
@@ -212,32 +223,61 @@ export class FeeService {
         maxActionNumber: number,
     ): number {
         const tokenDecimals = tokenInfo.decimals;
-        // only add network fee, intent already included for top up the link
-        const totalFeeAmount = this.calculateNetworkFees(tokenInfo) * maxActionNumber;
+
+        // Calculate network fee per transaction
+        const networkFee = this.calculateNetworkFees(tokenInfo);
+
+        // Total fees for all planned actions (maxActionNumber times)
+        const totalFeeAmount = networkFee * maxActionNumber;
+
+        // Convert token amount from smallest units to human-readable format
+        // Then multiply by the number of actions
         const totalTokenAmount = (Number(amount) * maxActionNumber) / 10 ** tokenDecimals;
-        return totalTokenAmount + totalFeeAmount;
+
+        // Return total: token amount + action fees + one execution fee
+        // The extra networkFee is needed for the final transaction execution
+        return totalTokenAmount + totalFeeAmount + networkFee;
     }
 
+    /**
+     * Calculates the actual amount needed for a transaction including the intent.
+     *
+     * The backend normally calculates intent amounts as:
+     * intent_amount = (asset_info.amount + asset_network_fee) * max_use
+     *
+     * However, real execution requires an additional network fee,
+     * so we add one more network fee for accurate user display.
+     *
+     * @param linkType - The type of link being processed
+     * @param actionType - The action being performed (CREATE_LINK, WITHDRAW_LINK, USE_LINK)
+     * @param intent - The intent model containing transaction details
+     * @param tokenInfo - Token information including decimals and fees
+     * @returns The total amount needed including all fees
+     */
     forecastActualAmountWithIntent(
         linkType: string,
         actionType: ACTION_TYPE,
         intent: IntentModel,
         tokenInfo: FungibleToken,
     ) {
-        const amountInNumber = Number(intent.amount / BigInt(10 ** tokenInfo.decimals));
+        const amountNonEs8 = Number(intent.amount) / Number(10 ** tokenInfo.decimals);
+        const networkFee = this.calculateNetworkFees(tokenInfo);
+
+        console.log("forecastActualAmountWithIntent intent", intent);
+
+        let displayAmount = amountNonEs8;
 
         if (actionType === ACTION_TYPE.CREATE_LINK) {
-            return amountInNumber + this.calculateNetworkFees(tokenInfo);
+            displayAmount = amountNonEs8 + networkFee;
         } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
-            // if withdraw link, we need to add network fee
-            return amountInNumber;
         } else if (actionType === ACTION_TYPE.USE_LINK) {
             if (linkType === "ReceivePayment" && intent.task === TASK.TRANSFER_WALLET_TO_LINK) {
-                return amountInNumber + this.calculateNetworkFees(tokenInfo);
+                displayAmount = amountNonEs8 + networkFee;
             }
-        } else {
-            return amountInNumber;
         }
+
+        console.log("forecastActualAmountWithIntent displayAmount", displayAmount);
+        return displayAmount;
     }
 
     /**
@@ -248,30 +288,16 @@ export class FeeService {
         actionType: ACTION_TYPE,
         intentTask: TASK,
     ): boolean {
-        // if use action for link type "receive payment", tx must + 1 fee
-        if (
-            linkType === "ReceivePayment" &&
-            actionType === ACTION_TYPE.USE_LINK &&
-            intentTask === TASK.TRANSFER_WALLET_TO_LINK
-        ) {
+        if (actionType === ACTION_TYPE.CREATE_LINK) {
             return true;
-        }
-
-        // if createlink action for with intent TRANSFER_LINK_TO_WALLET, tx must + 1 fee
-        if (
-            linkType === "CreateLink" &&
-            actionType === ACTION_TYPE.CREATE_LINK &&
-            intentTask === TASK.TRANSFER_WALLET_TO_LINK
-        ) {
+        } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
             return true;
-        }
-
-        if (
-            linkType === "CreateLink" &&
-            actionType === ACTION_TYPE.CREATE_LINK &&
-            intentTask === TASK.TRANSFER_WALLET_TO_TREASURY
-        ) {
-            return true;
+        } else if (actionType === ACTION_TYPE.USE_LINK) {
+            if (linkType === "ReceivePayment" && intentTask === TASK.TRANSFER_LINK_TO_WALLET) {
+                return false;
+            }
+        } else {
+            return false;
         }
 
         return false;

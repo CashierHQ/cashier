@@ -129,20 +129,16 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
             </div>
 
             <ol className="flex flex-col gap-3 light-borders-green px-4 py-3 overflow-y-auto max-h-[200px]">
-                {sortedIntents
-                    .sort((a, b) => {
-                        return (a.asset.address ?? "").localeCompare(b.asset.address ?? "");
-                    })
-                    .map((intent) => (
-                        <li key={intent.id}>
-                            <TransactionItem
-                                actionType={actionType}
-                                key={intent.id}
-                                intent={intent}
-                                fees={feesMap.get(intent.asset.address) || []}
-                            />
-                        </li>
-                    ))}
+                {sortedIntents.map((intent) => (
+                    <li key={intent.id}>
+                        <TransactionItem
+                            actionType={actionType}
+                            key={intent.id}
+                            intent={intent}
+                            fees={feesMap.get(intent.asset.address) || []}
+                        />
+                    </li>
+                ))}
             </ol>
         </section>
     );
