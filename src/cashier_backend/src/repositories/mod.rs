@@ -50,6 +50,19 @@ const INTENT_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(10);
 
 const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(11);
 
+// Versioned Memory IDs starting from 12
+const VERSIONED_USER_MEMORY_ID: MemoryId = MemoryId::new(12);
+const VERSIONED_USER_WALLET_MEMORY_ID: MemoryId = MemoryId::new(13);
+const VERSIONED_USER_LINK_MEMORY_ID: MemoryId = MemoryId::new(14);
+const VERSIONED_USER_ACTION_MEMORY_ID: MemoryId = MemoryId::new(15);
+const VERSIONED_LINK_MEMORY_ID: MemoryId = MemoryId::new(16);
+const VERSIONED_LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(17);
+const VERSIONED_ACTION_MEMORY_ID: MemoryId = MemoryId::new(18);
+const VERSIONED_ACTION_INTENT_MEMORY_ID: MemoryId = MemoryId::new(19);
+const VERSIONED_INTENT_MEMORY_ID: MemoryId = MemoryId::new(20);
+const VERSIONED_INTENT_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(21);
+const VERSIONED_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(22);
+
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
@@ -164,6 +177,117 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)),
         )
     );
+
+    // Versioned Stores
+    pub static VERSIONED_USER_STORE: RefCell<StableBTreeMap<
+        cashier_types::UserKey,
+        cashier_types::versioned::VersionedUser,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_USER_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_USER_WALLET_STORE: RefCell<StableBTreeMap<
+        cashier_types::UserWalletKey,
+        cashier_types::versioned::VersionedUserWallet,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_USER_WALLET_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_USER_LINK_STORE: RefCell<StableBTreeMap<
+        String,
+        cashier_types::versioned::VersionedUserLink,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_USER_LINK_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_USER_ACTION_STORE: RefCell<StableBTreeMap<
+        String,
+        cashier_types::versioned::VersionedUserAction,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_USER_ACTION_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_LINK_STORE: RefCell<StableBTreeMap<
+        cashier_types::LinkKey,
+        cashier_types::versioned::VersionedLink,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_LINK_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_LINK_ACTION_STORE: RefCell<StableBTreeMap<
+        String,
+        cashier_types::versioned::VersionedLinkAction,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_LINK_ACTION_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_ACTION_STORE: RefCell<StableBTreeMap<
+        cashier_types::ActionKey,
+        cashier_types::versioned::VersionedAction,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_ACTION_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_ACTION_INTENT_STORE: RefCell<StableBTreeMap<
+        String,
+        cashier_types::versioned::VersionedActionIntent,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_ACTION_INTENT_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_INTENT_STORE: RefCell<StableBTreeMap<
+        String,
+        cashier_types::versioned::VersionedIntent,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_INTENT_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
+        String,
+        cashier_types::versioned::VersionedIntentTransaction,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_INTENT_TRANSACTION_MEMORY_ID)),
+        )
+    );
+
+    pub static VERSIONED_TRANSACTION_STORE: RefCell<StableBTreeMap<
+        cashier_types::TransactionKey,
+        cashier_types::versioned::VersionedTransaction,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_TRANSACTION_MEMORY_ID)),
+        )
+    );
 }
 
 pub fn get_upgrade_memory() -> Memory {
@@ -225,5 +349,68 @@ pub fn load() {
     TRANSACTION_STORE.with(|t| {
         *t.borrow_mut() =
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)));
+    });
+
+    // Initialize versioned stores
+    VERSIONED_USER_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_USER_MEMORY_ID)));
+    });
+
+    VERSIONED_USER_WALLET_STORE.with(|t| {
+        *t.borrow_mut() = StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_USER_WALLET_MEMORY_ID)),
+        );
+    });
+
+    VERSIONED_USER_LINK_STORE.with(|t| {
+        *t.borrow_mut() = StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_USER_LINK_MEMORY_ID)),
+        );
+    });
+
+    VERSIONED_USER_ACTION_STORE.with(|t| {
+        *t.borrow_mut() = StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_USER_ACTION_MEMORY_ID)),
+        );
+    });
+
+    VERSIONED_LINK_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_LINK_MEMORY_ID)));
+    });
+
+    VERSIONED_LINK_ACTION_STORE.with(|t| {
+        *t.borrow_mut() = StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_LINK_ACTION_MEMORY_ID)),
+        );
+    });
+
+    VERSIONED_ACTION_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_ACTION_MEMORY_ID)));
+    });
+
+    VERSIONED_ACTION_INTENT_STORE.with(|t| {
+        *t.borrow_mut() = StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_ACTION_INTENT_MEMORY_ID)),
+        );
+    });
+
+    VERSIONED_INTENT_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_INTENT_MEMORY_ID)));
+    });
+
+    VERSIONED_INTENT_TRANSACTION_STORE.with(|t| {
+        *t.borrow_mut() = StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_INTENT_TRANSACTION_MEMORY_ID)),
+        );
+    });
+
+    VERSIONED_TRANSACTION_STORE.with(|t| {
+        *t.borrow_mut() = StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_TRANSACTION_MEMORY_ID)),
+        );
     });
 }

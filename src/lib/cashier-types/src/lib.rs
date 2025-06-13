@@ -22,6 +22,7 @@ pub mod keys;
 pub mod link;
 pub mod transaction;
 pub mod user;
+pub mod versioned;
 
 pub use action::*;
 pub use asset_info::*;

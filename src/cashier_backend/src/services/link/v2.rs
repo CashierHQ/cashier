@@ -643,6 +643,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         chain: asset_info.chain.clone(),
                     });
                 }
+                _ => {
+                    return Err(CanisterError::HandleLogicError(format!(
+                        "No matching case found for action_type: {:?} and intent_task: {:?}",
+                        action_type, intent.task
+                    )));
+                }
             }
         }
 
