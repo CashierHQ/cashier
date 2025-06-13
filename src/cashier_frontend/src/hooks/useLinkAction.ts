@@ -58,7 +58,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
 
     const callLinkStateMachine = async (params: UpdateLinkParams) => {
         const { linkId, linkModel, isContinue } = params;
-        console.log("callLinkStateMachine userInput", getUserInput(linkId));
         setIsUpdating(true);
         // this already invalidates the query no need to refetch
         try {
@@ -67,7 +66,6 @@ export function useLinkAction(linkId?: string, actionType?: ACTION_TYPE) {
                 linkModel,
                 isContinue,
             });
-
             return res;
         } finally {
             setIsUpdating(false);

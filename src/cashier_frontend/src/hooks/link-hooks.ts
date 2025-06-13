@@ -70,7 +70,7 @@ export function useLinksListQuery() {
 // React Query for fetching link details
 export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     const identity = useIdentity();
-    const staleTime = 30 * 60 * 1000; // Default 30 minutes, or use provided value
+    const staleTime = 60 * 1000; // 1 minute
 
     return useQuery({
         queryKey: LINK_QUERY_KEYS.detail(linkId),
@@ -99,6 +99,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
             } else {
                 const linkService = new LinkService(identity);
                 const res = await linkService.getLink(linkId, actionType);
+
                 return res;
             }
         },

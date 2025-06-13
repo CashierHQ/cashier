@@ -16,8 +16,11 @@
 
 use std::collections::HashMap;
 
-use candid::CandidType;
-use cashier_types::{Intent, Protocol};
+use candid::{CandidType, Nat};
+use cashier_types::{
+    intent::v2::{Intent, IntentType},
+    transaction::v2::{IcTransaction, Protocol, Transaction},
+};
 use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
 
@@ -131,6 +134,8 @@ pub struct AssetDto {
 pub enum MetadataValue {
     String(String),
     U64(u64),
+    Nat(Nat),
+    MaybeNat(Option<Nat>),
     Wallet(WalletDto),
     Asset(AssetDto),
     MaybeMemo(Option<Memo>),
@@ -155,7 +160,7 @@ impl ActionDto {
     pub fn from_with_tx(
         action: cashier_types::Action,
         intents: Vec<Intent>,
-        tx_intent_hashmap: HashMap<String, Vec<cashier_types::Transaction>>,
+        tx_intent_hashmap: HashMap<String, Vec<Transaction>>,
     ) -> Self {
         let intents_dto = intents
             .into_iter()
@@ -237,10 +242,10 @@ impl From<cashier_types::Asset> for AssetDto {
     }
 }
 
-impl From<cashier_types::Intent> for IntentDto {
-    fn from(intent: cashier_types::Intent) -> Self {
+impl From<Intent> for IntentDto {
+    fn from(intent: Intent) -> Self {
         let (r#type, type_metadata) = match intent.r#type {
-            cashier_types::IntentType::Transfer(metadata) => {
+            IntentType::Transfer(metadata) => {
                 let mut type_metadata = HashMap::new();
                 type_metadata.insert(
                     "from".to_string(),
@@ -254,11 +259,11 @@ impl From<cashier_types::Intent> for IntentDto {
                     "asset".to_string(),
                     MetadataValue::Asset(AssetDto::from(metadata.asset)),
                 );
-                type_metadata.insert("amount".to_string(), MetadataValue::U64(metadata.amount));
+                type_metadata.insert("amount".to_string(), MetadataValue::Nat(metadata.amount));
 
                 ("Transfer".to_string(), type_metadata)
             }
-            cashier_types::IntentType::TransferFrom(metadata) => {
+            IntentType::TransferFrom(metadata) => {
                 let mut type_metadata = HashMap::new();
                 type_metadata.insert(
                     "from".to_string(),
@@ -276,7 +281,11 @@ impl From<cashier_types::Intent> for IntentDto {
                     "asset".to_string(),
                     MetadataValue::Asset(AssetDto::from(metadata.asset)),
                 );
-                type_metadata.insert("amount".to_string(), MetadataValue::U64(metadata.amount));
+                type_metadata.insert("amount".to_string(), MetadataValue::Nat(metadata.amount));
+                type_metadata.insert(
+                    "approve_amount".to_string(),
+                    MetadataValue::MaybeNat(metadata.approve_amount),
+                );
 
                 ("TransferFrom".to_string(), type_metadata)
             }
@@ -295,13 +304,13 @@ impl From<cashier_types::Intent> for IntentDto {
     }
 }
 
-impl From<cashier_types::Transaction> for TransactionDto {
-    fn from(transaction: cashier_types::Transaction) -> Self {
+impl From<Transaction> for TransactionDto {
+    fn from(transaction: Transaction) -> Self {
         let protocol = transaction.get_tx_type();
         let mut protocol_metadata = HashMap::new();
         match transaction.protocol {
             Protocol::IC(ic_transaction) => match ic_transaction {
-                cashier_types::IcTransaction::Icrc1Transfer(icrc1_transfer) => {
+                IcTransaction::Icrc1Transfer(icrc1_transfer) => {
                     protocol_metadata.insert(
                         "from".to_string(),
                         MetadataValue::Wallet(WalletDto::from(icrc1_transfer.from)),
@@ -316,14 +325,14 @@ impl From<cashier_types::Transaction> for TransactionDto {
                     );
                     protocol_metadata.insert(
                         "amount".to_string(),
-                        MetadataValue::U64(icrc1_transfer.amount),
+                        MetadataValue::Nat(icrc1_transfer.amount),
                     );
                     protocol_metadata.insert(
                         "memo".to_string(),
                         MetadataValue::MaybeMemo(icrc1_transfer.memo),
                     );
                 }
-                cashier_types::IcTransaction::Icrc2Approve(icrc2_approve) => {
+                IcTransaction::Icrc2Approve(icrc2_approve) => {
                     protocol_metadata.insert(
                         "from".to_string(),
                         MetadataValue::Wallet(WalletDto::from(icrc2_approve.from)),
@@ -338,10 +347,10 @@ impl From<cashier_types::Transaction> for TransactionDto {
                     );
                     protocol_metadata.insert(
                         "amount".to_string(),
-                        MetadataValue::U64(icrc2_approve.amount),
+                        MetadataValue::Nat(icrc2_approve.amount),
                     );
                 }
-                cashier_types::IcTransaction::Icrc2TransferFrom(icrc2_transfer_from) => {
+                IcTransaction::Icrc2TransferFrom(icrc2_transfer_from) => {
                     protocol_metadata.insert(
                         "from".to_string(),
                         MetadataValue::Wallet(WalletDto::from(icrc2_transfer_from.from)),
@@ -360,7 +369,7 @@ impl From<cashier_types::Transaction> for TransactionDto {
                     );
                     protocol_metadata.insert(
                         "amount".to_string(),
-                        MetadataValue::U64(icrc2_transfer_from.amount),
+                        MetadataValue::Nat(icrc2_transfer_from.amount),
                     );
                     protocol_metadata.insert(
                         "memo".to_string(),

@@ -15,9 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use cashier_types::{
-    FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
-    IntentTask, IntentType, Protocol, Transaction, TransactionState, TransferData,
-    TransferFromData,
+    intent::v2::{Intent, IntentTask, IntentType, TransferData, TransferFromData},
+    transaction::v2::{
+        FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
+        Transaction, TransactionState,
+    },
 };
 use uuid::Uuid;
 

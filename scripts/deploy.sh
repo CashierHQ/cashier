@@ -4,6 +4,7 @@
 network=""
 package="cashier_backend"
 identity=""
+config_file="$(dirname "$0")/../.deploy-config"
 
 # Check for --skip flag
 if [[ "$1" == "--skip" ]]; then
@@ -40,11 +41,44 @@ else
     fi
 
     # Prompt for identity
-    read -p "Enter identity (default is empty): " identity_input
-    if [ -n "$identity_input" ]; then
-        identity="--identity $identity_input"
+    identity_from_config=""
+    if [ -f "$config_file" ]; then
+        identity_from_config=$(grep "^$network=" "$config_file" | cut -d'=' -f2)
+    fi
+    
+    if [ -n "$identity_from_config" ]; then
+        echo "Found identity '$identity_from_config' for network '$network' in config file."
+        read -p "Use this identity? (y/n, default: y): " use_config_identity
+        if [ "$use_config_identity" != "n" ] && [ "$use_config_identity" != "N" ]; then
+            identity="--identity $identity_from_config"
+        else
+            read -p "Enter identity (default is empty): " identity_input
+            if [ -n "$identity_input" ]; then
+                identity="--identity $identity_input"
+            else
+                identity=""
+            fi
+        fi
     else
-        identity=""
+        read -p "Enter identity (default is empty): " identity_input
+        if [ -n "$identity_input" ]; then
+            identity="--identity $identity_input"
+            # Ask if user wants to save this identity to config
+            if [ ! -f "$config_file" ]; then
+                echo "Config file doesn't exist. Creating it..."
+                touch "$config_file"
+            fi
+            read -p "Save this identity for network '$network'? (y/n): " save_identity
+            if [ "$save_identity" == "y" ] || [ "$save_identity" == "Y" ]; then
+                # Remove existing entry for this network and add new one
+                grep -v "^$network=" "$config_file" > "$config_file.tmp" 2>/dev/null || true
+                echo "$network=$identity_input" >> "$config_file.tmp"
+                mv "$config_file.tmp" "$config_file"
+                echo "Identity saved to config file."
+            fi
+        else
+            identity=""
+        fi
     fi
 fi
 

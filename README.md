@@ -52,6 +52,86 @@ make build-backend
 make build-token-storage
 ```
 
+# Deployment Setup
+
+## Quick Start
+
+For lazy deployment with pre-configured identities, use the enhanced deployment script:
+
+```bash
+./scripts/deploy.sh
+```
+
+## Identity Configuration
+
+### Private Identity Management
+
+The deployment script supports storing identities in a private configuration file that won't be committed to git:
+
+1. **Create/Edit Configuration File**: The script will automatically create `.deploy-config` if it doesn't exist, or you can manually create it:
+
+```bash
+# .deploy-config (this file is gitignored)
+# Format: network=identity_name
+
+staging=<DEPLOYER IDENTITY>
+dev=<DEPLOYER IDENTIT>
+```
+
+2. **Automatic Identity Detection**: When running the script, it will:
+    - Look for stored identity for the selected network
+    - Prompt to use the stored identity (default: yes)
+    - If no identity is stored, prompt for manual input and offer to save it
+
+### Deployment Networks
+
+Available networks:
+
+-   `ic` - Internet Computer mainnet (uses `.env.production`)
+-   `staging` - Staging environment (uses `.env.staging`)
+-   `dev` - Development environment (uses `.env.dev`)
+-   `local` - Local development (uses `.env.local`)
+
+### Available Packages
+
+-   `cashier_backend` - Main backend canister
+-   `token_storage` - Token storage canister
+-   `cashier_frontend` - Frontend application
+
+## Deployment Examples
+
+**Interactive deployment:**
+
+```bash
+./scripts/deploy.sh
+# Follow prompts for network, package, and identity
+```
+
+**Skip configuration (uses local network):**
+
+```bash
+./scripts/deploy.sh --skip
+```
+
+**Manual dfx deployment:**
+
+```bash
+# Set environment variables first
+source .env.local
+dfx deploy cashier_backend --network local --identity your-identity
+```
+
+## Environment Files
+
+Make sure you have the appropriate environment file for your target network:
+
+-   `.env.production` - for IC mainnet
+-   `.env.staging` - for staging
+-   `.env.dev` - for development
+-   `.env.local` - for local development
+
+Each environment file should contain the necessary configuration variables for that specific deployment environment.
+
 # Usage
 
 Using Cashier is easy. Start by going to cashierapp.io and log in with Internet Identity. We will support more login options going forward.

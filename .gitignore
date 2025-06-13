@@ -28,4 +28,7 @@ dist/
 .env.*
 artifacts
 
+# private deployment configuration
+.deploy-config
+
 logs/*
