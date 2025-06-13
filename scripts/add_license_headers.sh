@@ -1,22 +1,10 @@
 #!/bin/bash
 
 # Cashier — No-code blockchain transaction builder
-# Copyright (C) 2025 TheCashierApp LLC
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Copyright (c) 2025 Cashier Protocol Labs
+# Licensed under the MIT License (see LICENSE file in the project root)
 
-# This script adds the GNU GPL v3.0 license header to source files in the project.
+# This script adds the MIT license header to source files in the project.
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -28,16 +16,16 @@ NC='\033[0m' # No Color
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # License header templates for different file types
-RUST_HEADER="// Cashier — No-code blockchain transaction builder\n// Copyright (C) 2025 TheCashierApp LLC\n//\n// This program is free software: you can redistribute it and/or modify\n// it under the terms of the GNU General Public License as published by\n// the Free Software Foundation, either version 3 of the License, or\n// (at your option) any later version.\n//\n// This program is distributed in the hope that it will be useful,\n// but WITHOUT ANY WARRANTY; without even the implied warranty of\n// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n// GNU General Public License for more details.\n//\n// You should have received a copy of the GNU General Public License\n// along with this program.  If not, see <https://www.gnu.org/licenses/>.\n"
+RUST_HEADER="// Copyright (c) 2025 Cashier Protocol Labs\n// Licensed under the MIT License (see LICENSE file in the project root)\n"
 
-JS_TS_HEADER="// Cashier — No-code blockchain transaction builder\n// Copyright (C) 2025 TheCashierApp LLC\n//\n// This program is free software: you can redistribute it and/or modify\n// it under the terms of the GNU General Public License as published by\n// the Free Software Foundation, either version 3 of the License, or\n// (at your option) any later version.\n//\n// This program is distributed in the hope that it will be useful,\n// but WITHOUT ANY WARRANTY; without even the implied warranty of\n// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n// GNU General Public License for more details.\n//\n// You should have received a copy of the GNU General Public License\n// along with this program.  If not, see <https://www.gnu.org/licenses/>.\n"
+JS_TS_HEADER="// Copyright (c) 2025 Cashier Protocol Labs\n// Licensed under the MIT License (see LICENSE file in the project root)\n"
 
-DID_HEADER="// Cashier — No-code blockchain transaction builder\n// Copyright (C) 2025 TheCashierApp LLC\n//\n// This program is free software: you can redistribute it and/or modify\n// it under the terms of the GNU General Public License as published by\n// the Free Software Foundation, either version 3 of the License, or\n// (at your option) any later version.\n//\n// This program is distributed in the hope that it will be useful,\n// but WITHOUT ANY WARRANTY; without even the implied warranty of\n// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n// GNU General Public License for more details.\n//\n// You should have received a copy of the GNU General Public License\n// along with this program.  If not, see <https://www.gnu.org/licenses/>.\n"
+DID_HEADER="// Copyright (c) 2025 Cashier Protocol Labs\n// Licensed under the MIT License (see LICENSE file in the project root)\n"
 
 # Function to check if file already has a license header
 has_license_header() {
     local file="$1"
-    grep -q "Copyright (C)" "$file" || grep -q "GNU General Public License" "$file"
+    grep -q "Copyright (c)" "$file" || grep -q "Licensed under the MIT License" "$file"
     return $?
 }
 
