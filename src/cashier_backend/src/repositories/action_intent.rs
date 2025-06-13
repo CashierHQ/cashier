@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use cashier_types::{action_intent::v1::ActionIntent, ActionIntentKey, VersionedActionIntent};
+
 use super::VERSIONED_ACTION_INTENT_STORE;
-use cashier_types::{versioned::VersionedActionIntent, ActionIntent, ActionIntentKey};
 
 const CURRENT_DATA_VERSION: u32 = 1;
 

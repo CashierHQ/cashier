@@ -22,7 +22,8 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 use cashier_types::{
-    Action, ActionIntent, Intent, IntentTransaction, LinkAction, Transaction, UserAction,
+    action_intent::v1::ActionIntent, intent_transaction::v1::IntentTransaction, Action, Intent,
+    LinkAction, Transaction, UserAction,
 };
 
 pub fn get_intents_by_action_id(action_id: String) -> Vec<Intent> {

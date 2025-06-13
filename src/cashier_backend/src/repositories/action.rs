@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use cashier_types::{action::v1::Action, ActionKey, VersionedAction};
+
 use crate::repositories::VERSIONED_ACTION_STORE;
-use cashier_types::{versioned::VersionedAction, Action, ActionKey};
 
 const CURRENT_DATA_VERSION: u32 = 1;
 #[cfg_attr(test, faux::create)]

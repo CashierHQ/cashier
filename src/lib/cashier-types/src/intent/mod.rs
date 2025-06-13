@@ -1,7 +1,9 @@
 // Generated versioned enum for Intent
 
-use crate::Intent;
 use cashier_macros::storable;
+
+use crate::intent::v1::Intent;
+pub mod v1;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

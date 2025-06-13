@@ -57,13 +57,6 @@ pub enum ActionState {
     Fail,
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-#[storable]
-pub struct ActionIntent {
-    pub action_id: String,
-    pub intent_id: String,
-}
-
 impl ActionType {
     pub fn to_str(&self) -> &str {
         match self {

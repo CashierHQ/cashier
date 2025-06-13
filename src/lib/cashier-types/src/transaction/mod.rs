@@ -1,7 +1,12 @@
 // Generated versioned enum for Transaction
 
-use crate::Transaction;
 use cashier_macros::storable;
+use v1::Transaction;
+
+pub mod v1;
+
+// Re-export the current version types for convenience
+pub use v1::*;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

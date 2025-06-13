@@ -1,7 +1,9 @@
-// Generated versioned enum for User
+// Generated versioned enum for User entities
 
-use crate::User;
 use cashier_macros::storable;
+use v1::User;
+
+pub mod v1;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

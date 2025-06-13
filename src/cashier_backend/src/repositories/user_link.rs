@@ -16,7 +16,7 @@
 
 use super::VERSIONED_USER_LINK_STORE;
 use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
-use cashier_types::{versioned::VersionedUserLink, UserLink, UserLinkKey};
+use cashier_types::{user_link::v1::UserLink, UserLinkKey, VersionedUserLink};
 
 const CURRENT_DATA_VERSION: u32 = 1;
 

@@ -1,7 +1,11 @@
-// Generated versioned enum for Link
+// Generated versioned enum for Link and LinkAction
 
-use crate::Link;
 use cashier_macros::storable;
+
+pub mod v1;
+
+// Re-export the current version types for convenience
+pub use v1::*;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

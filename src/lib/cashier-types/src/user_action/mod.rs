@@ -1,7 +1,8 @@
-// Generated versioned enum for UserAction
-
-use crate::UserAction;
 use cashier_macros::storable;
+
+use v1::UserAction;
+
+pub mod v1;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

@@ -1,7 +1,7 @@
-// Generated versioned enum for UserLink
-
-use crate::UserLink;
 use cashier_macros::storable;
+use v1::UserLink;
+
+pub mod v1;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

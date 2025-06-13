@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::VERSIONED_USER_ACTION_STORE;
-use cashier_types::{versioned::VersionedUserAction, UserAction, UserActionKey};
+use cashier_types::{user_action::v1::UserAction, UserActionKey, VersionedUserAction};
 
 const CURRENT_DATA_VERSION: u32 = 1;
 

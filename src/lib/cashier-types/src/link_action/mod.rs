@@ -1,7 +1,8 @@
-// Generated versioned enum for LinkAction
-
-use crate::LinkAction;
 use cashier_macros::storable;
+
+use crate::link_action::v1::LinkAction;
+
+pub mod v1;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::VERSIONED_USER_WALLET_STORE;
-use cashier_types::{versioned::VersionedUserWallet, UserWallet, UserWalletKey};
+use cashier_types::{UserWallet, UserWalletKey, VersionedUserWallet};
 
 const CURRENT_DATA_VERSION: u32 = 1;
 

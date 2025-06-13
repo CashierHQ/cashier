@@ -16,7 +16,7 @@
 
 use super::VERSIONED_LINK_ACTION_STORE;
 use cashier_types::{
-    keys::ActionTypeKey, versioned::VersionedLinkAction, LinkAction, LinkActionKey, LinkKey,
+    keys::ActionTypeKey, link_action::v1::LinkAction, LinkActionKey, LinkKey, VersionedLinkAction,
 };
 
 const CURRENT_DATA_VERSION: u32 = 1;

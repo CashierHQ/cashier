@@ -1,7 +1,6 @@
-// Generated versioned enum for UserWallet
-
-use crate::UserWallet;
 use cashier_macros::storable;
+use v1::UserWallet;
+pub mod v1;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

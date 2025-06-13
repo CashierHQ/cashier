@@ -145,13 +145,6 @@ pub enum IntentTask {
     TransferPayment,
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-#[storable]
-pub struct IntentTransaction {
-    pub intent_id: String,
-    pub transaction_id: String,
-}
-
 impl IntentTask {
     pub fn to_str(&self) -> &str {
         match self {

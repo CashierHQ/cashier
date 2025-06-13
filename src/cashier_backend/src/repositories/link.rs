@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::VERSIONED_LINK_STORE;
-use cashier_types::{versioned::VersionedLink, Link, LinkKey};
+use cashier_types::{Link, LinkKey, VersionedLink};
 
 const CURRENT_DATA_VERSION: u32 = 1;
 

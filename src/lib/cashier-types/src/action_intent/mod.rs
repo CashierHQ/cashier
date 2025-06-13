@@ -1,7 +1,10 @@
 // Generated versioned enum for ActionIntent
 
-use crate::ActionIntent;
 use cashier_macros::storable;
+
+use crate::action_intent::v1::ActionIntent;
+
+pub mod v1;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]

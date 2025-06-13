@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::VERSIONED_TRANSACTION_STORE;
-use cashier_types::{versioned::VersionedTransaction, Transaction, TransactionKey};
+use cashier_types::{transaction::v1::Transaction, TransactionKey, VersionedTransaction};
 
 const CURRENT_DATA_VERSION: u32 = 1;
 

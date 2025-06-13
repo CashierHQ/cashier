@@ -68,120 +68,120 @@ pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
 
-    pub static USER_STORE: RefCell<StableBTreeMap<
-        cashier_types::UserKey,
-        cashier_types::User,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(USER_MEMORY_ID)),
-        )
-    );
+    // pub static USER_STORE: RefCell<StableBTreeMap<
+    //     cashier_types::UserKey,
+    //     cashier_types::User,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(USER_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static USER_WALLET_STORE: RefCell<StableBTreeMap<
-        cashier_types::UserWalletKey,
-        cashier_types::UserWallet,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(USER_WALLET_MEMORY_ID)),
-        )
-    );
+    // pub static USER_WALLET_STORE: RefCell<StableBTreeMap<
+    //     cashier_types::UserWalletKey,
+    //     cashier_types::UserWallet,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(USER_WALLET_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static USER_LINK_STORE: RefCell<StableBTreeMap<
-        String,
-        cashier_types::UserLink,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(USER_LINK_MEMORY_ID)),
-        )
-    );
+    // pub static USER_LINK_STORE: RefCell<StableBTreeMap<
+    //     String,
+    //     cashier_types::UserLink,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(USER_LINK_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static USER_ACTION_STORE: RefCell<StableBTreeMap<
-        String,
-        cashier_types::UserAction,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)),
-        )
-    );
+    // pub static USER_ACTION_STORE: RefCell<StableBTreeMap<
+    //     String,
+    //     cashier_types::UserAction,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static LINK_STORE: RefCell<StableBTreeMap<
-        cashier_types::LinkKey,
-        cashier_types::Link,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(LINK_MEMORY_ID)),
-        )
-    );
+    // pub static LINK_STORE: RefCell<StableBTreeMap<
+    //     cashier_types::LinkKey,
+    //     cashier_types::Link,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(LINK_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static LINK_ACTION_STORE: RefCell<StableBTreeMap<
-        String,
-        cashier_types::LinkAction,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(LINK_ACTION_MEMORY_ID)),
-        )
-    );
+    // pub static LINK_ACTION_STORE: RefCell<StableBTreeMap<
+    //     String,
+    //     cashier_types::LinkAction,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(LINK_ACTION_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static ACTION_STORE: RefCell<StableBTreeMap<
-        cashier_types::ActionKey,
-        cashier_types::Action,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)),
-        )
-    );
+    // pub static ACTION_STORE: RefCell<StableBTreeMap<
+    //     cashier_types::ActionKey,
+    //     cashier_types::Action,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static ACTION_INTENT_STORE: RefCell<StableBTreeMap<
-        String,
-        cashier_types::ActionIntent,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_INTENT_MEMORY_ID)),
-        )
-    );
+    // pub static ACTION_INTENT_STORE: RefCell<StableBTreeMap<
+    //     String,
+    //     cashier_types::ActionIntent,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_INTENT_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static INTENT_STORE: RefCell<StableBTreeMap<
-        String,
-        cashier_types::Intent,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_MEMORY_ID)),
-        )
-    );
+    // pub static INTENT_STORE: RefCell<StableBTreeMap<
+    //     String,
+    //     cashier_types::Intent,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
-        String,
-        cashier_types::IntentTransaction,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_TRANSACTION_MEMORY_ID)),
-        )
-    );
+    // pub static INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
+    //     String,
+    //     cashier_types::IntentTransaction,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_TRANSACTION_MEMORY_ID)),
+    //     )
+    // );
 
-    pub static TRANSACTION_STORE: RefCell<StableBTreeMap<
-        cashier_types::TransactionKey,
-        cashier_types::Transaction,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)),
-        )
-    );
+    // pub static TRANSACTION_STORE: RefCell<StableBTreeMap<
+    //     cashier_types::TransactionKey,
+    //     cashier_types::Transaction,
+    //     Memory
+    // >> = RefCell::new(
+    //     StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)),
+    //     )
+    // );
 
     // Versioned Stores
     pub static VERSIONED_USER_STORE: RefCell<StableBTreeMap<
         cashier_types::UserKey,
-        cashier_types::versioned::VersionedUser,
+        cashier_types::VersionedUser,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -191,7 +191,7 @@ thread_local! {
 
     pub static VERSIONED_USER_WALLET_STORE: RefCell<StableBTreeMap<
         cashier_types::UserWalletKey,
-        cashier_types::versioned::VersionedUserWallet,
+        cashier_types::VersionedUserWallet,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -201,7 +201,7 @@ thread_local! {
 
     pub static VERSIONED_USER_LINK_STORE: RefCell<StableBTreeMap<
         String,
-        cashier_types::versioned::VersionedUserLink,
+        cashier_types::VersionedUserLink,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -211,7 +211,7 @@ thread_local! {
 
     pub static VERSIONED_USER_ACTION_STORE: RefCell<StableBTreeMap<
         String,
-        cashier_types::versioned::VersionedUserAction,
+        cashier_types::VersionedUserAction,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -221,7 +221,7 @@ thread_local! {
 
     pub static VERSIONED_LINK_STORE: RefCell<StableBTreeMap<
         cashier_types::LinkKey,
-        cashier_types::versioned::VersionedLink,
+        cashier_types::VersionedLink,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -231,7 +231,7 @@ thread_local! {
 
     pub static VERSIONED_LINK_ACTION_STORE: RefCell<StableBTreeMap<
         String,
-        cashier_types::versioned::VersionedLinkAction,
+        cashier_types::VersionedLinkAction,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -241,7 +241,7 @@ thread_local! {
 
     pub static VERSIONED_ACTION_STORE: RefCell<StableBTreeMap<
         cashier_types::ActionKey,
-        cashier_types::versioned::VersionedAction,
+        cashier_types::VersionedAction,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -251,7 +251,7 @@ thread_local! {
 
     pub static VERSIONED_ACTION_INTENT_STORE: RefCell<StableBTreeMap<
         String,
-        cashier_types::versioned::VersionedActionIntent,
+        cashier_types::VersionedActionIntent,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -261,7 +261,7 @@ thread_local! {
 
     pub static VERSIONED_INTENT_STORE: RefCell<StableBTreeMap<
         String,
-        cashier_types::versioned::VersionedIntent,
+        cashier_types::VersionedIntent,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -271,7 +271,7 @@ thread_local! {
 
     pub static VERSIONED_INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
         String,
-        cashier_types::versioned::VersionedIntentTransaction,
+        cashier_types::VersionedIntentTransaction,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -281,7 +281,7 @@ thread_local! {
 
     pub static VERSIONED_TRANSACTION_STORE: RefCell<StableBTreeMap<
         cashier_types::TransactionKey,
-        cashier_types::versioned::VersionedTransaction,
+        cashier_types::VersionedTransaction,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
@@ -295,61 +295,62 @@ pub fn get_upgrade_memory() -> Memory {
 }
 
 pub fn load() {
-    USER_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_MEMORY_ID)));
-    });
+    // TODO: free data
+    // USER_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_MEMORY_ID)));
+    // });
 
-    USER_WALLET_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_WALLET_MEMORY_ID)));
-    });
+    // USER_WALLET_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_WALLET_MEMORY_ID)));
+    // });
 
-    USER_LINK_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_LINK_MEMORY_ID)));
-    });
+    // USER_LINK_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_LINK_MEMORY_ID)));
+    // });
 
-    USER_ACTION_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)));
-    });
+    // USER_ACTION_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)));
+    // });
 
-    LINK_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_MEMORY_ID)));
-    });
+    // LINK_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_MEMORY_ID)));
+    // });
 
-    LINK_ACTION_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_ACTION_MEMORY_ID)));
-    });
+    // LINK_ACTION_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_ACTION_MEMORY_ID)));
+    // });
 
-    ACTION_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)));
-    });
+    // ACTION_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)));
+    // });
 
-    ACTION_INTENT_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_INTENT_MEMORY_ID)));
-    });
+    // ACTION_INTENT_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_INTENT_MEMORY_ID)));
+    // });
 
-    INTENT_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_MEMORY_ID)));
-    });
+    // INTENT_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_MEMORY_ID)));
+    // });
 
-    INTENT_TRANSACTION_STORE.with(|t| {
-        *t.borrow_mut() = StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_TRANSACTION_MEMORY_ID)),
-        );
-    });
+    // INTENT_TRANSACTION_STORE.with(|t| {
+    //     *t.borrow_mut() = StableBTreeMap::init(
+    //         MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_TRANSACTION_MEMORY_ID)),
+    //     );
+    // });
 
-    TRANSACTION_STORE.with(|t| {
-        *t.borrow_mut() =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)));
-    });
+    // TRANSACTION_STORE.with(|t| {
+    //     *t.borrow_mut() =
+    //         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)));
+    // });
 
     // Initialize versioned stores
     VERSIONED_USER_STORE.with(|t| {

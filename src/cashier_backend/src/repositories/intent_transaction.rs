@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::VERSIONED_INTENT_TRANSACTION_STORE;
 use cashier_types::{
-    versioned::VersionedIntentTransaction, IntentTransaction, IntentTransactionKey,
+    intent_transaction::v1::IntentTransaction, IntentTransactionKey, VersionedIntentTransaction,
 };
+
+use super::VERSIONED_INTENT_TRANSACTION_STORE;
 
 const CURRENT_DATA_VERSION: u32 = 1;
 

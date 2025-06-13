@@ -1,7 +1,10 @@
 // Generated versioned enum for IntentTransaction
 
-use crate::IntentTransaction;
 use cashier_macros::storable;
+
+use crate::intent_transaction::v1::IntentTransaction;
+
+pub mod v1;
 
 #[storable(serializer = "cbor")]
 #[derive(Debug, Clone)]
