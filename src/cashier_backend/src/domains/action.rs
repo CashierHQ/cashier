@@ -15,8 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use cashier_types::{
-    Action, ActionIntent, ActionState, ActionType, Intent, IntentState, IntentTask, Link,
-    LinkState, Transaction, TransactionState,
+    intent::v2::{Intent, IntentState, IntentTask},
+    transaction::v2::{Transaction, TransactionState},
+    Action, ActionIntent, ActionState, ActionType, Link, LinkState,
 };
 
 use crate::types::error::CanisterError;
@@ -50,6 +51,11 @@ impl ActionDomainLogic {
                         "Link is not active".to_string(),
                     ));
                 }
+            }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
             }
         }
 

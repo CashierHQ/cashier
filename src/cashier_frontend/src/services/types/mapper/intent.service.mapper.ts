@@ -51,7 +51,7 @@ export const mapIntentDtoToIntentModel = (dto: IntentDto): IntentModel => {
         from: mapMetadataToWalletModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.FROM),
         to: mapMetadataToWalletModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.TO),
         asset: mapMetadataToAssetModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.ASSET),
-        amount: mapMetadataToAmount(dto.type_metadata, dto.type, METADATA_PROP_NAMES.AMOUNT),
+        amount: mapMetadataFromNatToAmount(dto.type_metadata, dto.type, METADATA_PROP_NAMES.AMOUNT),
     };
 };
 
@@ -101,14 +101,50 @@ const mapMetadataToAssetModel = (
     }
 };
 
-const mapMetadataToAmount = (
+// const mapMetadataToAmount = (
+//     metadata: [string, MetadataValue][],
+//     intentType: string,
+//     propName: string,
+// ): bigint => {
+//     if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
+//         const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
+//         return (item?.[1] as { U64: bigint })?.U64?.valueOf() ?? BigInt(0);
+//     } else {
+//         return BigInt(0);
+//     }
+// };
+
+const mapMetadataFromNatToAmount = (
     metadata: [string, MetadataValue][],
     intentType: string,
     propName: string,
 ): bigint => {
     if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
         const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
-        return (item?.[1] as { U64: bigint })?.U64?.valueOf() ?? BigInt(0);
+
+        if (!item?.[1]) {
+            return BigInt(0);
+        }
+
+        const value = item[1];
+
+        // Handle Nat variant
+        if ("Nat" in value) {
+            return value.Nat;
+        }
+
+        // Handle MaybeNat variant
+        if ("MaybeNat" in value) {
+            // MaybeNat is [] | [bigint] - empty array means None, array with value means Some
+            return value.MaybeNat.length > 0 ? value.MaybeNat[0]! : BigInt(0);
+        }
+
+        // Handle existing U64 variant for backward compatibility
+        if ("U64" in value) {
+            return value.U64;
+        }
+
+        return BigInt(0);
     } else {
         return BigInt(0);
     }

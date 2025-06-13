@@ -26,8 +26,8 @@ use crate::{
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 use base64::Engine;
-use candid::{Encode, Nat, Principal};
-use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
+use candid::{Encode, Principal};
+use cashier_types::transaction::v2::{IcTransaction, Protocol, Transaction, TransactionState};
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
@@ -109,7 +109,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
 
                 let arg = TransferArg {
                     to: account,
-                    amount: Nat::from(tx_transfer.amount),
+                    amount: tx_transfer.amount.clone(),
                     memo: None,
                     fee: None,
                     created_at_time: None,
@@ -137,7 +137,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                 let arg = ApproveArgs {
                     from_subaccount: None,
                     spender,
-                    amount: Nat::from(tx_approve.amount),
+                    amount: tx_approve.amount.clone(),
                     expected_allowance: None,
                     expires_at: None,
                     fee: None,
