@@ -1,13 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use ic_cdk::update;
 
-use ic_cdk::{query, update};
-
-use crate::core::action::types::{ActionDto, TransactionDto};
-use crate::core::guard::{is_not_admin, is_not_anonymous};
-use crate::services::action::ActionService;
-use crate::services::transaction::TransactionService;
+use crate::core::guard::is_not_anonymous;
 use crate::services::transaction_manager::service::TransactionManagerService;
 use crate::utils::runtime::RealIcEnvironment;
 use crate::{
@@ -42,33 +38,4 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
         .await?;
 
     return Ok("Executed success".to_string());
-}
-
-#[query(guard = "is_not_admin")]
-pub async fn admin_get_transaction(
-    transaction_id: String,
-) -> Result<TransactionDto, CanisterError> {
-    let tx_service: TransactionService<RealIcEnvironment> = TransactionService::get_instance();
-
-    let tx = tx_service.get_tx_by_id(&transaction_id.to_string())?;
-
-    let dto = TransactionDto::from(tx);
-    Ok(dto)
-}
-
-#[query(guard = "is_not_admin")]
-pub async fn admin_get_intent(action_id: String) -> Result<ActionDto, CanisterError> {
-    let action_service: ActionService<RealIcEnvironment> = ActionService::get_instance();
-
-    let data = action_service
-        .get_action_data(action_id.to_string())
-        .map_err(|e| {
-            CanisterError::ValidationErrors(format!("Failed to get action data: {}", e))
-        })?;
-
-    Ok(ActionDto::from_with_tx(
-        data.action,
-        data.intents,
-        data.intent_txs,
-    ))
 }

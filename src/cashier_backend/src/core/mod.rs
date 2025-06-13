@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use crate::core::action::types::*;
 use crate::core::link::types::*;
 use crate::core::migration::MigrationStatus;
@@ -12,6 +11,7 @@ use crate::types::error::*;
 use crate::types::icrc::*;
 
 pub mod action;
+pub mod admin;
 pub mod guard;
 pub mod icrc;
 pub mod init_and_upgrade;
