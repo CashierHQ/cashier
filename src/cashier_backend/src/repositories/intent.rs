@@ -14,8 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::{base_repository::Store, INTENT_STORE};
-use cashier_types::Intent;
+use super::VERSIONED_INTENT_STORE;
+use cashier_types::{versioned::VersionedIntent, Intent};
+
+const CURRENT_DATA_VERSION: u32 = 1;
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -29,47 +31,64 @@ impl IntentRepository {
     }
 
     pub fn create(&self, intent: Intent) {
-        INTENT_STORE.with_borrow_mut(|store| {
+        VERSIONED_INTENT_STORE.with_borrow_mut(|store| {
             let id = intent.id.clone();
-            store.insert(id, intent);
+            let versioned_intent = VersionedIntent::build(CURRENT_DATA_VERSION, intent)
+                .expect("Failed to create versioned intent");
+            store.insert(id, versioned_intent);
         });
     }
 
     pub fn batch_create(&self, intents: Vec<Intent>) {
-        INTENT_STORE.with_borrow_mut(|store| {
+        VERSIONED_INTENT_STORE.with_borrow_mut(|store| {
             for intent in intents {
                 let id = intent.id.clone();
-                store.insert(id, intent);
+                let versioned_intent = VersionedIntent::build(CURRENT_DATA_VERSION, intent)
+                    .expect("Failed to create versioned intent");
+                store.insert(id, versioned_intent);
             }
         });
     }
 
     pub fn batch_update(&self, intents: Vec<Intent>) {
-        INTENT_STORE.with_borrow_mut(|store| {
+        VERSIONED_INTENT_STORE.with_borrow_mut(|store| {
             for intent in intents {
                 let id = intent.id.clone();
-                store.insert(id, intent);
+                let versioned_intent = VersionedIntent::build(CURRENT_DATA_VERSION, intent)
+                    .expect("Failed to create versioned intent");
+                store.insert(id, versioned_intent);
             }
         });
     }
 
     pub fn get(&self, id: String) -> Option<Intent> {
-        INTENT_STORE.with_borrow(|store| store.get(&id).clone())
+        VERSIONED_INTENT_STORE.with_borrow(|store| {
+            store
+                .get(&id)
+                .map(|versioned_intent| versioned_intent.into_intent())
+        })
     }
 
     pub fn batch_get(&self, ids: Vec<String>) -> Vec<Intent> {
-        INTENT_STORE.with_borrow(|store| store.batch_get(ids))
+        VERSIONED_INTENT_STORE.with_borrow(|store| {
+            ids.into_iter()
+                .filter_map(|id| store.get(&id))
+                .map(|versioned_intent| versioned_intent.into_intent())
+                .collect()
+        })
     }
 
     pub fn update(&self, intent: Intent) {
-        INTENT_STORE.with_borrow_mut(|store| {
+        VERSIONED_INTENT_STORE.with_borrow_mut(|store| {
             let id = intent.id.clone();
-            store.insert(id, intent);
+            let versioned_intent = VersionedIntent::build(CURRENT_DATA_VERSION, intent)
+                .expect("Failed to create versioned intent");
+            store.insert(id, versioned_intent);
         });
     }
 
     pub fn delete(&self, id: &String) {
-        INTENT_STORE.with_borrow_mut(|store| {
+        VERSIONED_INTENT_STORE.with_borrow_mut(|store| {
             store.remove(id);
         });
     }

@@ -14,8 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::USER_ACTION_STORE;
-use cashier_types::{UserAction, UserActionKey};
+use super::VERSIONED_USER_ACTION_STORE;
+use cashier_types::{versioned::VersionedUserAction, UserAction, UserActionKey};
+
+const CURRENT_DATA_VERSION: u32 = 1;
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -29,12 +31,15 @@ impl UserActionRepository {
     }
 
     pub fn create(&self, user_intent: UserAction) {
-        USER_ACTION_STORE.with_borrow_mut(|store| {
+        VERSIONED_USER_ACTION_STORE.with_borrow_mut(|store| {
             let id = UserActionKey {
                 user_id: user_intent.user_id.clone(),
                 action_id: user_intent.action_id.clone(),
             };
-            store.insert(id.to_str(), user_intent);
+            let versioned_user_action =
+                VersionedUserAction::build(CURRENT_DATA_VERSION, user_intent)
+                    .expect("Failed to create versioned user action");
+            store.insert(id.to_str(), versioned_user_action);
         });
     }
 }

@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use cashier_types::User;
+use cashier_types::{versioned::VersionedUser, User};
 
-use super::USER_STORE;
+use super::VERSIONED_USER_STORE;
+
+const CURRENT_DATA_VERSION: u32 = 1;
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -28,14 +30,21 @@ impl UserRepository {
     pub fn new() -> Self {
         Self {}
     }
+
     pub fn create(&self, user: User) {
-        USER_STORE.with_borrow_mut(|store| {
+        VERSIONED_USER_STORE.with_borrow_mut(|store| {
             let id = user.id.clone();
-            store.insert(id, user);
+            let versioned_user = VersionedUser::build(CURRENT_DATA_VERSION, user)
+                .expect("Failed to create versioned user");
+            store.insert(id, versioned_user);
         });
     }
 
     pub fn get(&self, id: &String) -> Option<User> {
-        USER_STORE.with_borrow(|store| store.get(id))
+        VERSIONED_USER_STORE.with_borrow(|store| {
+            store
+                .get(id)
+                .map(|versioned_user| versioned_user.into_user())
+        })
     }
 }

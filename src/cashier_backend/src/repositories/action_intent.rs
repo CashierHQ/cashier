@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::repositories::ACTION_INTENT_STORE;
-use cashier_types::{ActionIntent, ActionIntentKey};
+use super::VERSIONED_ACTION_INTENT_STORE;
+use cashier_types::{versioned::VersionedActionIntent, ActionIntent, ActionIntentKey};
+
+const CURRENT_DATA_VERSION: u32 = 1;
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
-
 pub struct ActionIntentRepository {}
 #[cfg_attr(test, faux::methods)]
 
@@ -29,37 +30,47 @@ impl ActionIntentRepository {
     }
 
     pub fn create(&self, action_intent: ActionIntent) {
-        ACTION_INTENT_STORE.with_borrow_mut(|store| {
+        VERSIONED_ACTION_INTENT_STORE.with_borrow_mut(|store| {
             let key: ActionIntentKey = ActionIntentKey {
                 action_id: action_intent.action_id.clone(),
                 intent_id: action_intent.intent_id.clone(),
             };
 
-            store.insert(key.to_str(), action_intent.clone());
-            store.insert(key.to_str_reverse(), action_intent.clone());
+            let versioned_action_intent =
+                VersionedActionIntent::build(CURRENT_DATA_VERSION, action_intent.clone())
+                    .expect("Failed to create versioned action intent");
+            store.insert(key.to_str(), versioned_action_intent.clone());
+            store.insert(key.to_str_reverse(), versioned_action_intent);
         });
     }
 
     pub fn batch_create(&self, action_intents: Vec<ActionIntent>) {
-        ACTION_INTENT_STORE.with_borrow_mut(|store| {
+        VERSIONED_ACTION_INTENT_STORE.with_borrow_mut(|store| {
             for action_intent in action_intents {
                 let key: ActionIntentKey = ActionIntentKey {
                     action_id: action_intent.action_id.clone(),
                     intent_id: action_intent.intent_id.clone(),
                 };
 
-                store.insert(key.to_str(), action_intent.clone());
-                store.insert(key.to_str_reverse(), action_intent.clone());
+                let versioned_action_intent =
+                    VersionedActionIntent::build(CURRENT_DATA_VERSION, action_intent.clone())
+                        .expect("Failed to create versioned action intent");
+                store.insert(key.to_str(), versioned_action_intent.clone());
+                store.insert(key.to_str_reverse(), versioned_action_intent);
             }
         });
     }
 
     pub fn get(&self, action_intent_key: ActionIntentKey) -> Option<ActionIntent> {
-        ACTION_INTENT_STORE.with_borrow(|store| store.get(&action_intent_key.to_str()).clone())
+        VERSIONED_ACTION_INTENT_STORE.with_borrow(|store| {
+            store
+                .get(&action_intent_key.to_str())
+                .map(|versioned_action_intent| versioned_action_intent.into_action_intent())
+        })
     }
 
     pub fn get_by_action_id(&self, action_id: String) -> Vec<ActionIntent> {
-        ACTION_INTENT_STORE.with_borrow(|store| {
+        VERSIONED_ACTION_INTENT_STORE.with_borrow(|store| {
             let key = ActionIntentKey {
                 action_id: action_id.clone(),
                 intent_id: "".to_string(),
@@ -70,7 +81,7 @@ impl ActionIntentRepository {
             let action_intents = store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value.clone())
+                .map(|(_, versioned_action_intent)| versioned_action_intent.into_action_intent())
                 .collect();
 
             return action_intents;
@@ -78,7 +89,7 @@ impl ActionIntentRepository {
     }
 
     pub fn get_by_intent_id(&self, intent_id: String) -> Vec<ActionIntent> {
-        ACTION_INTENT_STORE.with_borrow(|store| {
+        VERSIONED_ACTION_INTENT_STORE.with_borrow(|store| {
             let key = ActionIntentKey {
                 action_id: "".to_string(),
                 intent_id: intent_id.clone(),
@@ -89,18 +100,21 @@ impl ActionIntentRepository {
             store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value.clone())
+                .map(|(_, versioned_action_intent)| versioned_action_intent.into_action_intent())
                 .collect()
         })
     }
 
     pub fn update(&self, action_intent: ActionIntent) {
-        ACTION_INTENT_STORE.with_borrow_mut(|store| {
+        VERSIONED_ACTION_INTENT_STORE.with_borrow_mut(|store| {
             let key = ActionIntentKey {
                 action_id: action_intent.action_id.clone(),
                 intent_id: action_intent.intent_id.clone(),
             };
-            store.insert(key.to_str(), action_intent);
+            let versioned_action_intent =
+                VersionedActionIntent::build(CURRENT_DATA_VERSION, action_intent)
+                    .expect("Failed to create versioned action intent");
+            store.insert(key.to_str(), versioned_action_intent);
         });
     }
 }
