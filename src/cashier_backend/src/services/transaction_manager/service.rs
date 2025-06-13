@@ -2,8 +2,12 @@ use std::{collections::HashMap, str::FromStr, time::Duration};
 
 use candid::Nat;
 use cashier_types::{
-    Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent,
-    IntentTask, LinkAction, Protocol, Transaction, TransactionState,
+    intent::v2::{Intent, IntentTask},
+    transaction::v2::{
+        FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
+        Transaction, TransactionState,
+    },
+    Chain, LinkAction,
 };
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
@@ -195,7 +199,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     ///
     /// This handles the actual execution of a canister-initiated transaction
     pub async fn execute_canister_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
-        if tx.from_call_type == cashier_types::FromCallType::Canister {
+        if tx.from_call_type == FromCallType::Canister {
             // Check if dependencies are met
             let is_all_dependencies_success = self.is_all_depdendency_success(&tx, true)?;
 
@@ -215,7 +219,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                                 ))
                             })?;
 
-                        if intent_belong.task == IntentTask::TransferWalletToTreasury {
+                        if intent_belong.task == IntentTask::TransferWalletToLink {
                             if txs.len() == 2 && tx.state == TransactionState::Success {
                                 // Find the transaction that is not the current one
                                 let other_tx = txs.iter().find(|t| t.id != tx.id);
@@ -493,7 +497,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 CanisterError::ParseAccountError(format!("Error parsing spender: {}", e))
             })?;
 
-        let allowance_amount = icrc2_transfer_from_info.amount;
+        let allowance_amount = icrc2_transfer_from_info.amount.clone();
 
         let asset = icrc2_transfer_from_info
             .asset

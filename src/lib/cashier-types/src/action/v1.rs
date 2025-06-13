@@ -45,6 +45,8 @@ pub enum ActionType {
     CreateLink,
     Withdraw,
     Use,
+    // deprecated
+    Claim,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -55,19 +57,13 @@ pub enum ActionState {
     Fail,
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-#[storable]
-pub struct ActionIntent {
-    pub action_id: String,
-    pub intent_id: String,
-}
-
 impl ActionType {
     pub fn to_str(&self) -> &str {
         match self {
             ActionType::Use => "Use",
             ActionType::CreateLink => "CreateLink",
             ActionType::Withdraw => "Withdraw",
+            ActionType::Claim => "Use",
         }
     }
 
@@ -82,6 +78,7 @@ impl FromStr for ActionType {
     fn from_str(input: &str) -> Result<ActionType, Self::Err> {
         match input {
             "Use" => Ok(ActionType::Use),
+            "Claim" => Ok(ActionType::Use),
             "CreateLink" => Ok(ActionType::CreateLink),
             "Withdraw" => Ok(ActionType::Withdraw),
             _ => Err(()),

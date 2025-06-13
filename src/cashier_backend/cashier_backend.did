@@ -158,11 +158,26 @@ type LinkUpdateUserStateInput = record {
   anonymous_wallet_address : opt text;
 };
 type MetadataValue = variant {
+  Nat : nat;
   U64 : nat64;
+  MaybeNat : opt nat;
   String : text;
   MaybeMemo : opt blob;
   Asset : AssetDto;
   Wallet : AssetDto;
+};
+type MigrationResult = record {
+  transaction_v2_total : nat64;
+  intents_migrated : nat64;
+  intent_v1_total : nat64;
+  intent_v2_total : nat64;
+  transactions_migrated : nat64;
+  transaction_v1_total : nat64;
+};
+type MigrationStatus = record {
+  v1_total : nat64;
+  v2_total : nat64;
+  migration_complete : bool;
 };
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
@@ -196,8 +211,8 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Result = variant { Ok : TransactionDto; Err : CanisterError };
-type Result_1 = variant { Ok : ActionDto; Err : CanisterError };
+type Result = variant { Ok : ActionDto; Err : CanisterError };
+type Result_1 = variant { Ok : TransactionDto; Err : CanisterError };
 type Result_2 = variant { Ok : text; Err : CanisterError };
 type Result_3 = variant { Ok : LinkDto; Err : CanisterError };
 type Result_4 = variant { Ok : UserDto; Err : text };
@@ -235,14 +250,17 @@ type UpdateLinkInput = record {
 };
 type UserDto = record { id : text; email : opt text; wallet : text };
 service : () -> {
-  admin_get_transaction : (text) -> (Result) query;
-  create_action : (CreateActionInput) -> (Result_1);
-  create_action_anonymous : (CreateActionAnonymousInput) -> (Result_1);
+  admin_get_intent : (text) -> (Result) query;
+  admin_get_transaction : (text) -> (Result_1) query;
+  create_action : (CreateActionInput) -> (Result);
+  create_action_anonymous : (CreateActionAnonymousInput) -> (Result);
   create_link : (CreateLinkInput) -> (Result_2);
   create_link_v2 : (CreateLinkInputV2) -> (Result_3);
   create_user : () -> (Result_4);
   get_link : (text, opt GetLinkOptions) -> (Result_5) query;
   get_links : (opt PaginateInput) -> (Result_6) query;
+  get_migration_overview : () -> (MigrationStatus, MigrationStatus) query;
+  get_status : (text) -> (MigrationStatus) query;
   get_user : () -> (Result_4) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
   icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
@@ -251,9 +269,11 @@ service : () -> {
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   link_get_user_state : (LinkGetUserStateInput) -> (Result_8);
   link_update_user_state : (LinkUpdateUserStateInput) -> (Result_8);
-  process_action : (ProcessActionInput) -> (Result_1);
-  process_action_anonymous : (ProcessActionAnonymousInput) -> (Result_1);
+  migrate : (text) -> (MigrationResult);
+  migrate_all : () -> (MigrationResult, MigrationResult);
+  process_action : (ProcessActionInput) -> (Result);
+  process_action_anonymous : (ProcessActionAnonymousInput) -> (Result);
   trigger_transaction : (TriggerTransactionInput) -> (Result_2);
-  update_action : (UpdateActionInput) -> (Result_1);
+  update_action : (UpdateActionInput) -> (Result);
   update_link : (UpdateLinkInput) -> (Result_3);
 }

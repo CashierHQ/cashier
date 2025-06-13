@@ -16,8 +16,9 @@
 
 use ic_cdk::{query, update};
 
-use crate::core::action::types::TransactionDto;
+use crate::core::action::types::{ActionDto, TransactionDto};
 use crate::core::guard::{is_not_admin, is_not_anonymous};
+use crate::services::action::ActionService;
 use crate::services::transaction::TransactionService;
 use crate::services::transaction_manager::service::TransactionManagerService;
 use crate::utils::runtime::RealIcEnvironment;
@@ -65,4 +66,21 @@ pub async fn admin_get_transaction(
 
     let dto = TransactionDto::from(tx);
     Ok(dto)
+}
+
+#[query(guard = "is_not_admin")]
+pub async fn admin_get_intent(action_id: String) -> Result<ActionDto, CanisterError> {
+    let action_service: ActionService<RealIcEnvironment> = ActionService::get_instance();
+
+    let data = action_service
+        .get_action_data(action_id.to_string())
+        .map_err(|e| {
+            CanisterError::ValidationErrors(format!("Failed to get action data: {}", e))
+        })?;
+
+    Ok(ActionDto::from_with_tx(
+        data.action,
+        data.intents,
+        data.intent_txs,
+    ))
 }

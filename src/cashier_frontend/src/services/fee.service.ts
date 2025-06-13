@@ -298,6 +298,15 @@ export class FeeService {
 
             // Convert to number with proper decimal handling
             return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
+        } else if (linkType === "SendAirdrop") {
+            // Calculate total token amount in smallest units (BigInt arithmetic)
+            const totalTokenAmountBigInt = amount * BigInt(1);
+
+            // Add one network fee for execution
+            const totalBigInt = totalTokenAmountBigInt;
+
+            // Convert to number with proper decimal handling
+            return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
         } else {
             // For other link types, just convert token amount
             const totalTokenAmountBigInt = amount * BigInt(maxActionNumber);
@@ -328,6 +337,7 @@ export class FeeService {
     ) {
         // Use BigInt arithmetic to avoid floating-point precision issues
         const amountBigInt = intent.amount;
+        console.log("intent", intent);
         const networkFeeBigInt = this.calculateNetworkFeesInBigInt(tokenInfo);
 
         let displayAmountBigInt = amountBigInt;
@@ -337,6 +347,11 @@ export class FeeService {
         } else if (actionType === ACTION_TYPE.USE_LINK) {
             if (linkType === "ReceivePayment" && intent.task === TASK.TRANSFER_WALLET_TO_LINK) {
                 displayAmountBigInt = amountBigInt + networkFeeBigInt;
+                console.log(
+                    "Using ReceivePayment link type with transfer task, adding network fee",
+                    amountBigInt,
+                    displayAmountBigInt,
+                );
             }
         } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
             // No additional fees for withdraw

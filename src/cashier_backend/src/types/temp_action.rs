@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use cashier_types::{Action, ActionState, ActionType, Intent, LinkUserState};
+use cashier_types::{intent::v2::Intent, Action, ActionState, ActionType, LinkUserState};
 
 #[derive(Debug, Clone)]
 pub struct TemporaryAction {

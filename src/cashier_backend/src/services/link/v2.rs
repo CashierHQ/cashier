@@ -18,8 +18,9 @@ use std::{collections::HashMap, str::FromStr};
 
 use candid::{Nat, Principal};
 use cashier_types::{
-    Action, ActionState, ActionType, Asset, AssetInfo, Chain, Intent, IntentState, IntentTask,
-    IntentType, Link, LinkAction, LinkState, LinkType, LinkUserState, Template, UserLink, Wallet,
+    intent::v2::{Intent, IntentState, IntentTask, IntentType},
+    Action, ActionState, ActionType, Asset, AssetInfo, Chain, Link, LinkAction, LinkState,
+    LinkType, LinkUserState, Template, UserLink, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -550,9 +551,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 Some(spender) => {
                     // TransferFrom case
                     let mut transfer_from_data = intent.r#type.as_transfer_from().unwrap();
-                    transfer_from_data.amount = amount;
-                    transfer_from_data.approve_amount = maybe_approve_amount;
-                    transfer_from_data.actual_amount = maybe_transfer_amount;
+                    transfer_from_data.amount = Nat::from(amount);
+                    transfer_from_data.approve_amount = maybe_approve_amount.map(Nat::from);
+                    transfer_from_data.actual_amount = maybe_transfer_amount.map(Nat::from);
                     transfer_from_data.asset = asset;
                     transfer_from_data.from = from_wallet;
                     transfer_from_data.to = to_wallet;
@@ -562,7 +563,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 None => {
                     // Transfer case
                     let mut transfer_data = intent.r#type.as_transfer().unwrap();
-                    transfer_data.amount = amount;
+                    transfer_data.amount = Nat::from(amount);
                     transfer_data.asset = asset;
                     transfer_data.from = from_wallet;
                     transfer_data.to = to_wallet;
@@ -820,6 +821,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
+            }
         }
 
         return Ok(());
@@ -879,6 +885,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 // Synchronous validation passes
                 return Ok(());
             }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
+            }
         }
     }
 
@@ -920,6 +931,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         "Action is already success".to_string(),
                     ));
                 }
+            }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
             }
         }
 

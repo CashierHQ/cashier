@@ -16,7 +16,9 @@
 
 use crate::core::action::types::*;
 use crate::core::link::types::*;
+use crate::core::migration::MigrationStatus;
 use crate::core::user::types::UserDto;
+use crate::migration::MigrationResult;
 use crate::types::api::*;
 use crate::types::error::*;
 use crate::types::icrc::*;
@@ -26,6 +28,7 @@ pub mod guard;
 pub mod icrc;
 pub mod init_and_upgrade;
 pub mod link;
+pub mod migration;
 pub mod user;
 
 #[cfg(test)]

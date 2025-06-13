@@ -141,13 +141,8 @@ pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,
     TransferLinkToWallet,
-}
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-#[storable]
-pub struct IntentTransaction {
-    pub intent_id: String,
-    pub transaction_id: String,
+    // deprecated
+    TransferPayment,
 }
 
 impl IntentTask {
@@ -156,6 +151,7 @@ impl IntentTask {
             IntentTask::TransferWalletToTreasury => "transfer_wallet_to_treasury",
             IntentTask::TransferWalletToLink => "transfer_wallet_to_link",
             IntentTask::TransferLinkToWallet => "transfer_link_to_wallet",
+            IntentTask::TransferPayment => "transfer_wallet_to_link",
         }
     }
 
@@ -172,6 +168,7 @@ impl FromStr for IntentTask {
             "transfer_wallet_to_treasury" => Ok(IntentTask::TransferWalletToTreasury),
             "transfer_wallet_to_link" => Ok(IntentTask::TransferWalletToLink),
             "transfer_link_to_wallet" => Ok(IntentTask::TransferLinkToWallet),
+            "transfer_payment" => Ok(IntentTask::TransferWalletToLink),
             _ => Err(()),
         }
     }
