@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::{services::ext::icrc_token::Service, types::error::CanisterError};
 use candid::{Nat, Principal};
 use cashier_types::{Asset, Chain};

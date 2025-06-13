@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 import { BACKEND_CANISTER_ID } from "@/const";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { LinkDetailModel } from "@/services/types/link.service.types";
