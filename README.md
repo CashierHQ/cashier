@@ -200,10 +200,11 @@ To do
 -   Additional chain support (BTC, ETH, SOL).
 -   Backoffice (analytics, support solutions, etc).
 
-# License
+## License
 
-This project is licensed under the GNU General Public License v3.0.  
-See the [LICENSE file](./LICENSE) for full details.
+This project is licensed under the [MIT License](LICENSE).
+
+License changed from **GNU GPL v3.0** to **MIT** on 2025-06-09, prior to public release. No external contributions existed under the previous license.
 
 # Acknowledgements
 
