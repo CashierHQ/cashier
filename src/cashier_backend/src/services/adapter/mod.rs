@@ -16,7 +16,9 @@
 
 use std::marker::PhantomData;
 
-use cashier_types::{ActionType, Chain, Intent, Link, LinkType, Transaction};
+use cashier_types::{
+    intent::v2::Intent, transaction::v2::Transaction, ActionType, Chain, Link, LinkType,
+};
 use ic::{action::IcActionAdapter, intent::IcIntentAdapter};
 
 use crate::{

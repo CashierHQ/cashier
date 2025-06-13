@@ -16,24 +16,26 @@
 
 use std::collections::HashMap;
 
-use cashier_types::ActionState;
+use cashier_types::{
+    intent::v2::Intent, transaction::v2::Transaction, Action, ActionState, ActionType,
+};
 
 #[derive(Debug, Clone)]
 pub struct ActionData {
     pub action: cashier_types::Action,
-    pub intents: Vec<cashier_types::Intent>,
-    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
+    pub intents: Vec<Intent>,
+    pub intent_txs: HashMap<String, Vec<Transaction>>,
 }
 
 pub struct RollUpStateResp {
     pub previous_state: ActionState,
     pub current_state: ActionState,
-    pub action: cashier_types::Action,
+    pub action: Action,
     pub link_id: String,
-    pub action_type: cashier_types::ActionType,
+    pub action_type: ActionType,
     pub action_id: String,
-    pub intents: Vec<cashier_types::Intent>,
-    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
+    pub intents: Vec<Intent>,
+    pub intent_txs: HashMap<String, Vec<Transaction>>,
 }
 
 impl From<(ActionData, ActionState)> for RollUpStateResp {
@@ -55,7 +57,7 @@ impl ActionData {
     pub fn get_intent_and_txs_by_its_tx_id(
         &self,
         tx_id: String,
-    ) -> Result<(cashier_types::Intent, Vec<cashier_types::Transaction>), String> {
+    ) -> Result<(Intent, Vec<Transaction>), String> {
         for (intent_id, txs) in &self.intent_txs {
             for tx in txs {
                 if tx.id == tx_id {
@@ -74,7 +76,7 @@ impl ActionData {
             tx_id
         ))
     }
-    pub fn get_tx(&self, tx_id: &str) -> Result<&cashier_types::Transaction, String> {
+    pub fn get_tx(&self, tx_id: &str) -> Result<&Transaction, String> {
         for (_intent_id, txs) in &self.intent_txs {
             for tx in txs {
                 if tx.id == tx_id {

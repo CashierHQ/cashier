@@ -28,12 +28,4 @@ base64 = "0.22.1"
 rm = "0.3.2"
 serde_cbor = "0.11.2"
 
-[dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_cbor = "0.11"
-candid = "0.10"
-hex = "0.4"
 
-[[bin]]
-name = "test_cbor_enum"
-path = "test_cbor_enum.rs"
