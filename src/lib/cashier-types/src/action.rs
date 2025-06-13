@@ -45,6 +45,8 @@ pub enum ActionType {
     CreateLink,
     Withdraw,
     Use,
+    // deprecated
+    Claim,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -68,6 +70,7 @@ impl ActionType {
             ActionType::Use => "Use",
             ActionType::CreateLink => "CreateLink",
             ActionType::Withdraw => "Withdraw",
+            ActionType::Claim => "Use",
         }
     }
 
@@ -82,6 +85,7 @@ impl FromStr for ActionType {
     fn from_str(input: &str) -> Result<ActionType, Self::Err> {
         match input {
             "Use" => Ok(ActionType::Use),
+            "Claim" => Ok(ActionType::Use),
             "CreateLink" => Ok(ActionType::CreateLink),
             "Withdraw" => Ok(ActionType::Withdraw),
             _ => Err(()),

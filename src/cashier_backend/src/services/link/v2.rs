@@ -826,6 +826,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     ));
                 }
             }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
+            }
         }
 
         return Ok(());
@@ -885,6 +890,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 // Synchronous validation passes
                 return Ok(());
             }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
+            }
         }
     }
 
@@ -926,6 +936,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         "Action is already success".to_string(),
                     ));
                 }
+            }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
             }
         }
 

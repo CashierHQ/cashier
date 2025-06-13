@@ -141,6 +141,7 @@ pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,
     TransferLinkToWallet,
+    // deprecated
     TransferPayment,
 }
 

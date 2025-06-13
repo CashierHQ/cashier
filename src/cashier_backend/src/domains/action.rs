@@ -51,6 +51,11 @@ impl ActionDomainLogic {
                     ));
                 }
             }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
+            }
         }
 
         Ok(())
