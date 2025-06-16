@@ -6,8 +6,6 @@
         "linkTemplate": "Link template",
         "chooseLinkType": "Choose link type",
         "linkDetails": "Link details",
-        "addAssets": "Add assets",
-        "selectAssets": "Select assets",
         "linkPreview": "Create link",
         "create": "Create",
         "photo": "Photo",
@@ -26,6 +24,18 @@
             "no_name": "Please enter a name for your link.",
             "not_enough_balance": "You don't have enough balance for the asset: ",
             "not_enough_claims": "The number of claims must be at least 1."
+        },
+        "ReceivePayment": {
+            "link_detail_title": "Select assets"
+        },
+        "SendTip": {
+            "link_detail_title": "Add assets"
+        },
+        "SendAirdrop": {
+            "link_detail_title": "Add assets"
+        },
+        "SendTokenBasket": {
+            "link_detail_title": "Add assets"
         }
     },
     "details": {

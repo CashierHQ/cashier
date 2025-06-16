@@ -214,40 +214,62 @@ export const validateFormAssets = (
 };
 
 /**
- * Check if there's insufficient balance for any asset
- * @param formAssets Form asset objects
- * @param allAvailableTokens List of all available tokens
- * @returns Token symbol with insufficient balance, or null
+ * Calculate total fees for a token including network fees and link creation fee
+ * @param token The fungible token
+ * @param includeLinkCreationFee Whether to include link creation fee
+ * @returns Total fees in token's smallest unit
  */
-export const checkInsufficientBalance = (
-    formAssets: {
-        tokenAddress: string;
-        amount: bigint;
-    }[],
-    allAvailableTokens: FungibleToken[] | undefined,
+export const calculateTotalFees = (
+    token: FungibleToken,
+    includeLinkCreationFee: boolean = true,
+): bigint => {
+    const networkFees = FeeHelpers.calculateNetworkFeesInES8(token);
+    const linkCreationFee = includeLinkCreationFee
+        ? FeeHelpers.getLinkCreationFee().amount
+        : BigInt(0);
+    return networkFees + linkCreationFee;
+};
+
+/**
+ * Calculate total fees for multiple assets
+ * @param assets Array of asset objects with token addresses and amounts
+ * @param tokenMap HashMap of tokens for O(1) lookup
+ * @param claims Number of claims/uses for the link
+ * @param includeLinkCreationFee Whether to include link creation fee (only once per link)
+ * @returns Object with total fees broken down by token
+ */
+export const calculateTotalFeesForAssets = (
+    assets: { tokenAddress: string; amount: bigint }[],
+    tokenMap: Record<string, FungibleToken>,
     claims: number = 1,
+    includeLinkCreationFee: boolean = true,
 ): string | null => {
-    const notEnoughBalanceAssets = formAssets.filter((asset) => {
-        const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
-        if (!token) return false;
-        const assetAmount = asset.amount;
-        const tokenAmount = token.amount;
-        const assetAmountWithoutFee =
-            BigInt(claims) * (assetAmount + FeeHelpers.calculateNetworkFeesInES8(token));
+    const totalFeesPerToken: Record<string, bigint> = {};
+    const linkCreationFee = includeLinkCreationFee
+        ? FeeHelpers.getLinkCreationFee().amount
+        : BigInt(0);
+    let hasInsufficientBalance = false;
+    let insufficientTokenSymbol: string | undefined;
 
-        console.log("CHECKING BALANCES 3.0");
-        console.log(`assetAmount: ${assetAmount}, tokenAmount: ${tokenAmount}`);
-        console.log(`assetAmountWithoutFee: ${assetAmountWithoutFee}, tokenAmount: ${tokenAmount}`);
-        return assetAmountWithoutFee > Number(tokenAmount);
-    });
+    for (const asset of assets) {
+        const token = tokenMap[asset.tokenAddress];
+        if (!token) continue;
 
-    if (notEnoughBalanceAssets.length > 0) {
-        const token = allAvailableTokens?.find(
-            (t) => t.address === notEnoughBalanceAssets[0].tokenAddress,
-        );
-        if (token) {
-            return token.symbol || "";
+        const networkFees = FeeHelpers.calculateNetworkFeesInES8(token);
+        const totalAssetFees = BigInt(claims) * (asset.amount + networkFees);
+
+        totalFeesPerToken[asset.tokenAddress] = totalAssetFees;
+
+        // Check if token has sufficient balance for asset amount + fees
+        const totalNeeded = totalAssetFees + (includeLinkCreationFee ? linkCreationFee : BigInt(0));
+        if (totalNeeded > Number(token.amount)) {
+            hasInsufficientBalance = true;
+            insufficientTokenSymbol = token.symbol;
         }
+    }
+
+    if (hasInsufficientBalance && insufficientTokenSymbol) {
+        return insufficientTokenSymbol;
     }
 
     return null;

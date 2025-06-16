@@ -417,7 +417,6 @@ export const FeeHelpers = {
         intent: IntentModel,
         tokenInfo: FungibleToken,
     ) => feeService.forecastActualAmountWithIntent(linkType, actionType, intent, tokenInfo),
-
     forecastIcrc2Fee: (tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) =>
         feeService.forecastIcrc2Fee(tokenInfo, amount, maxActionNumber),
 

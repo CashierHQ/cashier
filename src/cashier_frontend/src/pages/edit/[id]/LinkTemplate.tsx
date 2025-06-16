@@ -7,7 +7,7 @@ import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
 import { getAssetLabelForLinkType, LINK_TYPE } from "@/services/types/enum";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useDeviceSize } from "@/hooks/responsive-hook";
@@ -17,17 +17,7 @@ import { useLinkAction } from "@/hooks/useLinkAction";
 import { stateToStepIndex } from ".";
 import { MessageBanner } from "@/components/ui/message-banner";
 import { toast } from "sonner";
-
-function isLinkTypeSupported(linkType: LINK_TYPE) {
-    const supportedLinkTypes = [
-        LINK_TYPE.SEND_TIP,
-        LINK_TYPE.SEND_TOKEN_BASKET,
-        LINK_TYPE.SEND_AIRDROP,
-        LINK_TYPE.RECEIVE_PAYMENT,
-    ];
-
-    return supportedLinkTypes.includes(linkType);
-}
+import { useLinkTemplateValidation } from "@/hooks/form/useLinkTemplateValidation";
 
 export interface LinkTemplateProps {
     onSelectUnsupportedLinkType?: () => void;
@@ -47,21 +37,29 @@ export default function LinkTemplate({
 
     const carousel = useCarousel();
 
-    const [showComingSoonError, setShowComingSoonError] = useState(false);
-    const [showNoNameError, setShowNoNameError] = useState(false);
+    // Use centralized validation hook
+    const {
+        validationState,
+        validateLinkTemplate,
+        clearValidationError,
+        isLinkTypeSupported,
+        getValidationMessage,
+    } = useLinkTemplateValidation();
 
     const handleSubmit = async () => {
         const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
-
         const currentLink = link ? getUserInput(link.id) : undefined;
 
-        if (!currentLink?.title || currentLink.title.trim() === "") {
-            setShowNoNameError(true);
-            return;
-        }
+        // Use centralized validation
+        const validationResult = validateLinkTemplate(currentLink, carousel.current);
 
-        if (LINK_TEMPLATES[carousel.current].isComingSoon) {
-            setShowComingSoonError(true);
+        if (!validationResult.isValid) {
+            // Validation errors are automatically displayed via validationState
+            // For coming soon error, we can show additional handling if needed
+            if (LINK_TEMPLATES[carousel.current]?.isComingSoon) {
+                // Additional handling for coming soon templates if needed
+                return;
+            }
             return;
         }
 
@@ -122,7 +120,12 @@ export default function LinkTemplate({
                 linkType: selectedTemplate.linkType,
             });
         }
-    }, [carousel.current]);
+
+        // Clear coming soon error when carousel changes
+        if (validationState.showComingSoonError) {
+            clearValidationError("showComingSoonError");
+        }
+    }, [carousel.current, link?.id, validationState.showComingSoonError, clearValidationError]);
 
     // Update button state
     useEffect(() => {
@@ -148,14 +151,22 @@ export default function LinkTemplate({
                     <Input
                         value={userInputs.get(link.id)?.title}
                         onChange={(e) => {
+                            // Clear name validation error when user starts typing
+                            if (validationState.showNoNameError) {
+                                clearValidationError("showNoNameError");
+                            }
+
                             updateUserInput(link.id, {
                                 title: e.target.value,
                             });
                         }}
                         placeholder={t("create.linkNamePlaceholder")}
                     />
-                    {showNoNameError && (
-                        <MessageBanner variant="info" text={t("create.errors.no_name")} />
+                    {validationState.showNoNameError && (
+                        <MessageBanner
+                            variant="info"
+                            text={getValidationMessage("showNoNameError")}
+                        />
                     )}
                 </div>
             </div>
@@ -235,6 +246,25 @@ export default function LinkTemplate({
                         </div>
                     </div>
                 </div>
+
+                {/* Centralized validation error display */}
+                {validationState.showComingSoonError && (
+                    <div className="mt-4">
+                        <MessageBanner
+                            variant="info"
+                            text={getValidationMessage("showComingSoonError")}
+                        />
+                    </div>
+                )}
+
+                {validationState.showUnsupportedTypeError && (
+                    <div className="mt-4">
+                        <MessageBanner
+                            variant="info"
+                            text={getValidationMessage("showUnsupportedTypeError")}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

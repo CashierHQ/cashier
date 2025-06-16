@@ -31,8 +31,8 @@ import {
     createTokenAddressHandler,
     createRemoveAssetHandler,
     validateFormAssets,
-    checkInsufficientBalance,
     formatAssetsForSubmission,
+    calculateTotalFeesForAssets,
 } from "../form-handlers";
 
 interface SendTipFormProps {
@@ -65,18 +65,16 @@ export const SendTipForm = ({ initialValues: propInitialValues }: SendTipFormPro
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
     // maxUse - initialize based on link data if available, otherwise use defaults
-    const [maxActionNumber, setMaxActionNumber] = useState<number>(1);
-
-    useEffect(() => {
-        if (!link) return;
-
-        if (link.maxActionNumber > 0) {
-            setMaxActionNumber(Number(link.maxActionNumber));
-        }
-    }, [link]);
+    // default to 1 for SEND_TIP
+    const [maxActionNumber] = useState<number>(1);
 
     // Get tokens data
-    const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
+    const {
+        isLoading: isLoadingTokens,
+        getTokenPrice,
+        getDisplayTokens,
+        createTokenMap,
+    } = useTokens();
     const allAvailableTokens = getDisplayTokens();
 
     useEffect(() => {
@@ -112,13 +110,6 @@ export const SendTipForm = ({ initialValues: propInitialValues }: SendTipFormPro
         control,
         name: "assets",
     });
-
-    useEffect(() => {
-        console.log("link", link);
-        if (link?.id && link?.maxActionNumber) {
-            setMaxActionNumber(Number(link.maxActionNumber));
-        }
-    }, [link]);
 
     useEffect(() => {
         if (link?.id) {
@@ -212,8 +203,10 @@ export const SendTipForm = ({ initialValues: propInitialValues }: SendTipFormPro
         const formAssets = getValues("assets");
         if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
 
+        const tokenMap = createTokenMap();
+
         // Use the centralized handler to check for insufficient balance
-        const insufficientToken = checkInsufficientBalance(formAssets, allAvailableTokens);
+        const insufficientToken = calculateTotalFeesForAssets(formAssets, tokenMap);
         if (insufficientToken) {
             setNotEnoughBalanceErrorToken(insufficientToken);
             return;

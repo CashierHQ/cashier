@@ -67,15 +67,8 @@ export const ReceivePaymentForm = ({
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
     // maxUse - initialize based on link data if available, otherwise use defaults
-    const [maxActionNumber, setMaxActionNumber] = useState<number>(1);
-
-    useEffect(() => {
-        if (!link) return;
-
-        if (link.maxActionNumber > 0) {
-            setMaxActionNumber(Number(link.maxActionNumber));
-        }
-    }, [link]);
+    // default always to 1 for RECEIVE_PAYMENT link
+    const [maxActionNumber] = useState<number>(1);
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -114,13 +107,6 @@ export const ReceivePaymentForm = ({
         control,
         name: "assets",
     });
-
-    useEffect(() => {
-        console.log("link", link);
-        if (link?.id && link?.maxActionNumber) {
-            setMaxActionNumber(Number(link.maxActionNumber));
-        }
-    }, [link]);
 
     useEffect(() => {
         if (link?.id) {

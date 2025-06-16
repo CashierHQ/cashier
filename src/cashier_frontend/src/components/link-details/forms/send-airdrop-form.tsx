@@ -35,7 +35,7 @@ import {
     createTokenAddressHandler,
     createRemoveAssetHandler,
     validateFormAssets,
-    checkInsufficientBalance,
+    calculateTotalFeesForAssets,
     formatAssetsForSubmission,
 } from "../form-handlers";
 
@@ -93,7 +93,12 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
     }, [link]);
 
     // Get tokens data
-    const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
+    const {
+        isLoading: isLoadingTokens,
+        getTokenPrice,
+        getDisplayTokens,
+        createTokenMap,
+    } = useTokens();
     const allAvailableTokens = getDisplayTokens();
 
     useEffect(() => {
@@ -280,10 +285,12 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
         const formAssets = getValues("assets");
         if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
 
+        const tokenMap = createTokenMap();
+
         // Use the centralized handler to check for insufficient balance
-        const insufficientToken = checkInsufficientBalance(
+        const insufficientToken = calculateTotalFeesForAssets(
             formAssets,
-            allAvailableTokens,
+            tokenMap,
             maxActionNumber,
         );
         if (insufficientToken) {

@@ -12,7 +12,6 @@ import {
     ACTION_STATE,
     ACTION_TYPE,
     LINK_STATE,
-    LINK_TYPE,
     mapStringToLinkState,
     mapStringToLinkType,
 } from "@/services/types/enum";
@@ -217,11 +216,7 @@ export default function LinkPage() {
                                 </MultiStepForm.Item>
 
                                 <MultiStepForm.Item
-                                    name={
-                                        link?.linkType === LINK_TYPE.RECEIVE_PAYMENT
-                                            ? t("create.selectAssets")
-                                            : t("create.addAssets")
-                                    }
+                                    name={t(`create.${link?.linkType}.link_detail_title`)}
                                 >
                                     <LinkDetails />
                                 </MultiStepForm.Item>
