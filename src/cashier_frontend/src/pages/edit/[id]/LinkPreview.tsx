@@ -3,7 +3,6 @@
 
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
-
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { isCashierError } from "@/services/errorProcess.service";
@@ -31,10 +30,10 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
-import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
-import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
+import { useProcessAction } from "@/hooks/action-hooks";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 import { FeeHelpers } from "@/services/fee.service";
+import { useLinkPreviewValidation } from "@/hooks/form/useLinkPreviewValidation";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -89,8 +88,6 @@ export default function LinkPreview({
 
     // flag to indicate if the action is in progress
     const [createActionInProgress, setCreateActionInProgress] = useState(false);
-    // Debug state for countering redirects
-    const [redirectCounter, setRedirectCounter] = useState(0);
 
     // Button state for confirmation drawer
     const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
@@ -101,6 +98,12 @@ export default function LinkPreview({
         disabled: false,
     });
 
+    // Use centralized validation hook with balance checking
+    const { validateLinkPreviewWithBalance } = useLinkPreviewValidation();
+
+    const { mutateAsync: processAction } = useProcessAction();
+
+    // Update button state based on action state
     useEffect(() => {
         if (!action) return;
 
@@ -128,108 +131,37 @@ export default function LinkPreview({
         }
     }, [action, t]);
 
-    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
-    const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: updateAction } = useUpdateAction();
-
     // Handle process create action - this function is passed as startTransaction to ConfirmationDrawerV2
-    const handleStartTransaction = async () => {
+    const handleStartTransaction = async (): Promise<void> => {
         try {
-            if (!link) throw new Error("Link is not defined");
-            if (!action) throw new Error("Action is not defined");
-
-            // Validate user has sufficient balance for all assets in the link
-            if (action.intents && action.intents.length > 0) {
-                for (const intent of action.intents) {
-                    const token = getToken(intent.asset.address);
-
-                    // this like the useTokens didn't load all tokens
-                    if (!token || token.amount === undefined || token.amount === null) {
-                        throw new Error(`Could not find token balance for ${intent.asset.address}`);
-                    }
-
-                    const totalAmount = BigInt(intent.amount);
-
-                    const userBalance = token.amount;
-
-                    const tokenDecimals = token.decimals || 8;
-
-                    // Check if user has sufficient balance
-                    if (userBalance < totalAmount) {
-                        const formattedRequired = Number(totalAmount) / 10 ** tokenDecimals;
-                        const formattedBalance = Number(userBalance) / 10 ** tokenDecimals;
-
-                        throw new Error(
-                            `Insufficient balance for ${token.symbol}. Required: ${formattedRequired}, Available: ${formattedBalance}`,
-                        );
-                    }
-                }
+            if (!action || !link) {
+                throw new Error("Action or Link is not defined");
             }
 
-            const start = Date.now();
-
-            console.log("[handleStartTransaction] Starting processAction...");
-            const processActionStartTime = Date.now();
-            const firstUpdatedAction = await processAction({
-                linkId: link.id,
-                actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
-                actionId: action.id,
+            const validationResult = validateLinkPreviewWithBalance(link, {
+                maxActionNumber: link.maxActionNumber,
+                includeLinkCreationFee: true, // No creation fee for processing existing actions
             });
-            const processActionEndTime = Date.now();
-            const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
-            console.log(
-                `[handleStartTransaction] processAction completed in ${processActionDuration.toFixed(2)}s`,
-            );
-
-            setAction(firstUpdatedAction);
-
-            if (firstUpdatedAction) {
-                console.log("[handleStartTransaction] Starting icrc112Execute...");
-                const icrc112StartTime = Date.now();
-                const response = await icrc112Execute({
-                    transactions: firstUpdatedAction.icrc112Requests,
-                });
-                const icrc112EndTime = Date.now();
-                const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
-                console.log(
-                    `[handleStartTransaction] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
-                );
-
-                if (response) {
-                    console.log("[handleStartTransaction] Starting updateAction...");
-                    const updateActionStartTime = Date.now();
-                    const secondUpdatedAction = await updateAction({
-                        actionId: action.id,
-                        linkId: link.id,
-                        external: true,
-                    });
-                    const updateActionEndTime = Date.now();
-                    const updateActionDuration =
-                        (updateActionEndTime - updateActionStartTime) / 1000;
-                    console.log(
-                        `[handleStartTransaction] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
-                    );
-
-                    if (secondUpdatedAction) {
-                        setAction(secondUpdatedAction);
-                        if (onActionResult) onActionResult(secondUpdatedAction);
-                    }
-                }
+            if (!validationResult.isValid) {
+                // Validation errors are automatically shown via toast
+                return;
             }
 
-            const end = Date.now();
-            const duration = end - start;
-            const durationInSeconds = (duration / 1000).toFixed(2);
-            console.log(
-                "[handleStartTransaction] Total create action process completed in",
-                `${durationInSeconds}s`,
-            );
+            const updatedAction = await processAction({
+                actionId: action.id,
+                linkId: link.id,
+                actionType: action.type,
+            });
+
+            if (updatedAction && updatedAction.state === ACTION_STATE.SUCCESS) {
+                if (onActionResult) {
+                    onActionResult(updatedAction);
+                }
+            }
         } catch (error) {
             console.error("Error in startTransaction:", error);
             if (isCashierError(error)) {
                 onCashierError(error);
-            } else {
-                console.error(error);
             }
             throw error;
         }
@@ -306,12 +238,7 @@ export default function LinkPreview({
         }
 
         // Track the number of times this effect is triggered (for debugging)
-        setRedirectCounter((prev) => {
-            const newCount = prev + 1;
-            console.log(`Redirect effect called ${newCount} times`);
-            console.log("timestamp:", new Date().toISOString());
-            return newCount;
-        });
+        console.log(`Redirect effect called at timestamp: ${new Date().toISOString()}`);
 
         const handleRedirect = async () => {
             try {
@@ -344,11 +271,31 @@ export default function LinkPreview({
     }, [shouldRedirect, link, action]); // Added action as dependency
 
     const handleCreateAction = async () => {
+        // Validate link exists before creating action
         if (!link) {
             throw new Error("Link is not defined");
         }
-        const updatedAction = await createAction(link.id, ACTION_TYPE.CREATE_LINK);
-        setAction(updatedAction);
+
+        console.log("Creating action for link:", link);
+
+        // Validate action creation prerequisites using centralized validation with balance check (no creation fee for existing links)
+        const validationResult = validateLinkPreviewWithBalance(link, {
+            maxActionNumber: link.maxActionNumber,
+            includeLinkCreationFee: true,
+        });
+        if (!validationResult.isValid) {
+            // Validation errors are automatically shown via toast
+            return;
+        }
+
+        try {
+            const updatedAction = await createAction(link.id, ACTION_TYPE.CREATE_LINK);
+            setAction(updatedAction);
+            return updatedAction;
+        } catch (error) {
+            console.error("Error creating action:", error);
+            throw error;
+        }
     };
 
     /**
@@ -361,7 +308,22 @@ export default function LinkPreview({
     const handleSubmit = async () => {
         try {
             setIsDisabled(true);
-            if (link && link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
+
+            // Check if link exists first
+            if (!link) {
+                throw new Error("Link is not defined");
+            }
+
+            // Validate the link using centralized validation with balance check (include creation fee for new links)
+            const validationResult = validateLinkPreviewWithBalance(link, {
+                includeLinkCreationFee: true, // Include creation fee for new link creation
+            });
+            if (!validationResult.isValid) {
+                // Validation errors are automatically shown via toast
+                return;
+            }
+
+            if (link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
                 // First create the link in the backend
                 const res = await createNewLink(link.id);
 

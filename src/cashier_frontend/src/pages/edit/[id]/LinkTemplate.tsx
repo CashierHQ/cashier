@@ -5,8 +5,6 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
-import { getAssetLabelForLinkType, LINK_TYPE } from "@/services/types/enum";
-import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import PhonePreview from "@/components/ui/phone-preview";
@@ -14,10 +12,9 @@ import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useLinkAction } from "@/hooks/useLinkAction";
-import { stateToStepIndex } from ".";
-import { MessageBanner } from "@/components/ui/message-banner";
 import { toast } from "sonner";
 import { useLinkTemplateValidation } from "@/hooks/form/useLinkTemplateValidation";
+import { useLinkTemplateHandler } from "@/hooks/form/usePageSubmissionHandlers";
 
 export interface LinkTemplateProps {
     onSelectUnsupportedLinkType?: () => void;
@@ -27,84 +24,30 @@ export default function LinkTemplate({
     onSelectUnsupportedLinkType = () => {},
 }: LinkTemplateProps) {
     const { t } = useTranslation();
-    const { setStep } = useMultiStepFormContext();
-    const { updateUserInput, getUserInput, userInputs, setButtonState } =
-        useLinkCreationFormStore();
+    const { updateUserInput, userInputs, setButtonState } = useLinkCreationFormStore();
 
     const responsive = useDeviceSize();
 
-    const { link, callLinkStateMachine, isUpdating } = useLinkAction();
+    const { link, isUpdating } = useLinkAction();
 
     const carousel = useCarousel();
 
-    // Use centralized validation hook
-    const {
-        validationState,
-        validateLinkTemplate,
-        clearValidationError,
-        isLinkTypeSupported,
-        getValidationMessage,
-    } = useLinkTemplateValidation();
+    // Use centralized validation hook - now with toast notifications
+    const { validationState, clearValidationError, clearValidationErrorsByField } =
+        useLinkTemplateValidation();
+
+    // Use centralized template submission handler
+    const { submitTemplate } = useLinkTemplateHandler();
 
     const handleSubmit = async () => {
-        const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
-        const currentLink = link ? getUserInput(link.id) : undefined;
+        const customErrorHandler = (error: Error) => {
+            console.error("Error calling state machine", error);
+            toast.error(t("common.error"), {
+                description: t("link_template.error.failed_to_call"),
+            });
+        };
 
-        // Use centralized validation
-        const validationResult = validateLinkTemplate(currentLink, carousel.current);
-
-        if (!validationResult.isValid) {
-            // Validation errors are automatically displayed via validationState
-            // For coming soon error, we can show additional handling if needed
-            if (LINK_TEMPLATES[carousel.current]?.isComingSoon) {
-                // Additional handling for coming soon templates if needed
-                return;
-            }
-            return;
-        }
-
-        if (isLinkTypeSupported(currentLink?.linkType as LINK_TYPE)) {
-            if (!currentLink || !currentLink.linkId) {
-                toast.error(t("common.error"), {
-                    description: t("link_template.error.link_not_found"),
-                });
-                return;
-            }
-
-            // force the asset should change the label if transition from multiple to single asset
-            if (
-                !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
-                currentLink.assets &&
-                currentLink.assets.length > 1
-            ) {
-                const forceNewAsset = currentLink.assets[0];
-                forceNewAsset.label = getAssetLabelForLinkType(
-                    currentLink.linkType as LINK_TYPE,
-                    forceNewAsset.address,
-                );
-                currentLink.assets = [forceNewAsset];
-            }
-
-            try {
-                const stateMachineRes = await callLinkStateMachine({
-                    linkId: currentLink.linkId,
-                    linkModel: currentLink,
-                    isContinue: true,
-                });
-
-                console.log("🚀 ~ stateMachineRes:", stateMachineRes);
-
-                const stepIndex = stateToStepIndex(stateMachineRes.state);
-                setStep(stepIndex);
-            } catch (error) {
-                console.error("Error calling state machine", error);
-                toast.error(t("common.error"), {
-                    description: t("link_template.error.failed_to_call"),
-                });
-            }
-        } else {
-            onSelectUnsupportedLinkType();
-        }
+        await submitTemplate(onSelectUnsupportedLinkType, customErrorHandler);
     };
 
     useEffect(() => {
@@ -155,6 +98,8 @@ export default function LinkTemplate({
                             if (validationState.showNoNameError) {
                                 clearValidationError("showNoNameError");
                             }
+                            // Clear any field-specific validation errors for title
+                            clearValidationErrorsByField("title");
 
                             updateUserInput(link.id, {
                                 title: e.target.value,
@@ -162,12 +107,7 @@ export default function LinkTemplate({
                         }}
                         placeholder={t("create.linkNamePlaceholder")}
                     />
-                    {validationState.showNoNameError && (
-                        <MessageBanner
-                            variant="info"
-                            text={getValidationMessage("showNoNameError")}
-                        />
-                    )}
+                    {/* Name validation error no longer shown here - using toast instead */}
                 </div>
             </div>
 
@@ -247,24 +187,7 @@ export default function LinkTemplate({
                     </div>
                 </div>
 
-                {/* Centralized validation error display */}
-                {validationState.showComingSoonError && (
-                    <div className="mt-4">
-                        <MessageBanner
-                            variant="info"
-                            text={getValidationMessage("showComingSoonError")}
-                        />
-                    </div>
-                )}
-
-                {validationState.showUnsupportedTypeError && (
-                    <div className="mt-4">
-                        <MessageBanner
-                            variant="info"
-                            text={getValidationMessage("showUnsupportedTypeError")}
-                        />
-                    </div>
-                )}
+                {/* All validation errors are now displayed via toast notifications */}
             </div>
         </div>
     );

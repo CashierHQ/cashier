@@ -21,18 +21,15 @@ import {
 } from "@/services/types/enum";
 import { AssetFormInput } from "../asset-form-input";
 import { useLinkAction } from "@/hooks/useLinkAction";
-import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { stateToStepIndex } from "@/pages/edit/[id]";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../../ui/separator";
-import { MessageBanner } from "../../ui/message-banner";
+import { toast } from "sonner";
 import {
     createAssetSelectHandler,
     createTokenAddressHandler,
     createRemoveAssetHandler,
-    validateFormAssets,
-    formatAssetsForSubmission,
 } from "../form-handlers";
+import { useReceivePaymentFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
 
 interface ReceivePaymentFormProps {
     initialValues?: {
@@ -49,19 +46,15 @@ export const ReceivePaymentForm = ({
     initialValues: propInitialValues,
 }: ReceivePaymentFormProps) => {
     const { t } = useTranslation();
-    const { link, isUpdating, callLinkStateMachine } = useLinkAction();
+    const { link, isUpdating } = useLinkAction();
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
-    const { setStep } = useMultiStepFormContext();
     const responsive = useDeviceSize();
 
     // State for asset drawer
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [editingAssetIndex, setEditingAssetIndex] = useState<number>(-1);
     const [selectedAssetAddresses, setSelectedAssetAddresses] = useState<string[]>([]);
-    const [notEnoughBalanceErrorToken, setNotEnoughBalanceErrorToken] = useState<string | null>(
-        null,
-    );
 
     // Get current input and link type from store
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
@@ -69,6 +62,9 @@ export const ReceivePaymentForm = ({
     // maxUse - initialize based on link data if available, otherwise use defaults
     // default always to 1 for RECEIVE_PAYMENT link
     const [maxActionNumber] = useState<number>(1);
+
+    // Use centralized submission handler
+    const { submitReceivePaymentForm } = useReceivePaymentFormHandler();
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -194,56 +190,30 @@ export const ReceivePaymentForm = ({
     );
 
     const handleSubmit = async () => {
-        setNotEnoughBalanceErrorToken(null);
-        if (!link?.id) throw new Error("Link ID not found");
+        try {
+            if (!link?.id) {
+                toast.error(t("common.error"), { description: t("error.link.link_id_missing") });
+                return;
+            }
 
-        const formAssets = getValues("assets");
-        if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
+            const formAssets = getValues("assets");
+            if (!formAssets || formAssets.length === 0) {
+                toast.error(t("common.error"), { description: t("error.asset.no_assets_found") });
+                return;
+            }
 
-        if (maxActionNumber <= 0) {
-            return;
-        }
+            if (maxActionNumber <= 0) {
+                return;
+            }
 
-        if (
-            validateFormAssets(formAssets, allAvailableTokens, t, {
-                skipCheckingBalance: true,
-            })
-        ) {
-            // Format assets with correct labels using the centralized handler
-            const formattedAssets = formatAssetsForSubmission(formAssets, link);
-
-            // Update the store with the formatted assets
-            const storeAssets = formattedAssets.map((asset) => {
-                return {
-                    address: asset.tokenAddress,
-                    linkUseAmount: asset.amount,
-                    chain: asset.chain!,
-                    label: asset.label!,
-                    usdEquivalent: 0,
-                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
-                };
+            // Use centralized submission handler (hooks now handle toast errors, receive payment skips balance check)
+            await submitReceivePaymentForm(link.id, formAssets, maxActionNumber);
+        } catch (error) {
+            console.error("ReceivePaymentForm error:", error);
+            // Fallback error toast for any unexpected errors
+            toast.error(t("error.form.form_validation_failed"), {
+                description: error instanceof Error ? error.message : t("common.unknown_error"),
             });
-
-            updateUserInput(link.id, {
-                assets: storeAssets,
-                maxActionNumber: BigInt(maxActionNumber),
-            });
-
-            const input = getUserInput(link.id);
-
-            if (!input) throw new Error("Input not found");
-
-            console.log("Submitting form with input:", input);
-
-            const stateMachineResponse = await callLinkStateMachine({
-                linkId: link.id,
-                linkModel: input,
-                isContinue: true,
-            });
-
-            const stepIndex = stateToStepIndex(stateMachineResponse.state);
-
-            setStep(stepIndex);
         }
     };
 
@@ -392,13 +362,6 @@ export const ReceivePaymentForm = ({
                         paddingBottom: "0px",
                     }}
                 >
-                    {notEnoughBalanceErrorToken && (
-                        <MessageBanner
-                            variant="info"
-                            text={`${t("create.errors.not_enough_balance")} ${notEnoughBalanceErrorToken}`}
-                            className="mb-2"
-                        />
-                    )}
                     {assetFields.fields.map((field, index) => (
                         <div
                             key={field.id}

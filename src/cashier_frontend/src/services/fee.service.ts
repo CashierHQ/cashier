@@ -256,7 +256,7 @@ export class FeeService {
      * - The base token amount multiplied by max actions
      * - One additional network fee for the final execution
      *
-     * ! This method only use for claim page
+     * ! This method only use for use page
      *
      * Formula: (amount * maxActions) + networkFee
      *

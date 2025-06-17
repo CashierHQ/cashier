@@ -3,25 +3,18 @@
 
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
 import { LINK_TYPE } from "@/services/types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
-
-export interface ValidationError {
-    field: string;
-    code: string;
-    message: string;
-}
-
-export interface ValidationResult {
-    isValid: boolean;
-    errors: ValidationError[];
-}
+import { ValidationResult, ValidationError } from "@/types/validation.types";
+import { ErrorCode } from "@/types/error.enum";
 
 export interface LinkTemplateValidationState {
     showNoNameError: boolean;
     showComingSoonError: boolean;
     showUnsupportedTypeError: boolean;
+    validationErrors: ValidationError[];
 }
 
 /**
@@ -38,6 +31,7 @@ export interface LinkTemplateValidationState {
  * - Automatic error clearing on user interaction
  * - Consistent error messaging
  * - Type-safe validation methods
+ * - Toast notifications for validation errors
  *
  * @example
  * ```tsx
@@ -50,7 +44,7 @@ export interface LinkTemplateValidationState {
  * // Validate form submission
  * const result = validateLinkTemplate(currentLink, carouselIndex);
  * if (!result.isValid) {
- *   // Errors are automatically displayed via validationState
+ *   // Errors are automatically displayed via toast
  *   return;
  * }
  *
@@ -66,6 +60,7 @@ export const useLinkTemplateValidation = () => {
         showNoNameError: false,
         showComingSoonError: false,
         showUnsupportedTypeError: false,
+        validationErrors: [],
     });
 
     // Clear all validation errors
@@ -74,6 +69,7 @@ export const useLinkTemplateValidation = () => {
             showNoNameError: false,
             showComingSoonError: false,
             showUnsupportedTypeError: false,
+            validationErrors: [],
         });
     }, []);
 
@@ -85,6 +81,14 @@ export const useLinkTemplateValidation = () => {
         }));
     }, []);
 
+    // Clear validation errors by field
+    const clearValidationErrorsByField = useCallback((field: string) => {
+        setValidationState((prev) => ({
+            ...prev,
+            validationErrors: prev.validationErrors.filter((error) => error.field !== field),
+        }));
+    }, []);
+
     // Show specific validation error
     const showValidationError = useCallback((errorType: keyof LinkTemplateValidationState) => {
         setValidationState((prev) => ({
@@ -92,6 +96,42 @@ export const useLinkTemplateValidation = () => {
             [errorType]: true,
         }));
     }, []);
+
+    // Show toast notification for validation errors
+    const showValidationErrorToast = useCallback(
+        (errors: ValidationError[]) => {
+            errors.forEach((error) => {
+                switch (error.code) {
+                    case ErrorCode.REQUIRED:
+                        toast.error(t("common.error"), {
+                            description: error.message,
+                        });
+                        break;
+                    case ErrorCode.TEMPLATE_COMING_SOON:
+                        toast.info(t("error.template.template_coming_soon"), {
+                            description: error.message,
+                        });
+                        break;
+                    case ErrorCode.LINK_TYPE_UNSUPPORTED:
+                        toast.error(t("error.link.link_type_unsupported"), {
+                            description: error.message,
+                        });
+                        break;
+                    case ErrorCode.NOT_FOUND:
+                        toast.error(t("error.resource.not_found"), {
+                            description: error.message,
+                        });
+                        break;
+                    default:
+                        toast.error(t("error.form.form_validation_failed"), {
+                            description: error.message,
+                        });
+                        break;
+                }
+            });
+        },
+        [t],
+    );
 
     // Check if link type is supported
     const isLinkTypeSupported = useCallback((linkType: LINK_TYPE) => {
@@ -104,7 +144,7 @@ export const useLinkTemplateValidation = () => {
         return supportedLinkTypes.includes(linkType);
     }, []);
 
-    // Validate link template submission
+    // Validate link template submission with toast notifications
     const validateLinkTemplate = useCallback(
         (
             currentLink: Partial<UserInputItem> | undefined,
@@ -120,7 +160,7 @@ export const useLinkTemplateValidation = () => {
                 showValidationError("showNoNameError");
                 errors.push({
                     field: "title",
-                    code: "REQUIRED",
+                    code: ErrorCode.REQUIRED,
                     message: t("create.errors.no_name"),
                 });
             }
@@ -131,8 +171,8 @@ export const useLinkTemplateValidation = () => {
                 showValidationError("showComingSoonError");
                 errors.push({
                     field: "template",
-                    code: "COMING_SOON",
-                    message: "This feature is coming soon",
+                    code: ErrorCode.TEMPLATE_COMING_SOON,
+                    message: t("error.template.template_coming_soon"),
                 });
             }
 
@@ -141,8 +181,8 @@ export const useLinkTemplateValidation = () => {
                 showValidationError("showUnsupportedTypeError");
                 errors.push({
                     field: "linkType",
-                    code: "UNSUPPORTED",
-                    message: "This link type is not supported",
+                    code: ErrorCode.LINK_TYPE_UNSUPPORTED,
+                    message: t("error.link.link_type_unsupported"),
                 });
             }
 
@@ -150,9 +190,20 @@ export const useLinkTemplateValidation = () => {
             if (currentLink && !currentLink.linkId) {
                 errors.push({
                     field: "linkId",
-                    code: "NOT_FOUND",
-                    message: "Link not found",
+                    code: ErrorCode.LINK_NOT_FOUND,
+                    message: t("error.resource.link_not_found"),
                 });
+            }
+
+            // Store validation errors in state
+            setValidationState((prev) => ({
+                ...prev,
+                validationErrors: errors,
+            }));
+
+            // Show toast notifications for errors
+            if (errors.length > 0) {
+                showValidationErrorToast(errors);
             }
 
             return {
@@ -160,30 +211,78 @@ export const useLinkTemplateValidation = () => {
                 errors,
             };
         },
-        [t, clearValidationErrors, showValidationError, isLinkTypeSupported],
+        [
+            t,
+            clearValidationErrors,
+            showValidationError,
+            isLinkTypeSupported,
+            showValidationErrorToast,
+        ],
     );
 
-    // Get validation message for display
+    // Get validation message for display (fallback for UI components)
     const getValidationMessage = useCallback(
         (errorType: keyof LinkTemplateValidationState): string => {
+            // First check for specific validation errors
+            const relevantError = validationState.validationErrors.find((error) => {
+                switch (errorType) {
+                    case "showNoNameError":
+                        return error.field === "title" && error.code === ErrorCode.REQUIRED;
+                    case "showComingSoonError":
+                        return (
+                            error.field === "template" &&
+                            error.code === ErrorCode.TEMPLATE_COMING_SOON
+                        );
+                    case "showUnsupportedTypeError":
+                        return (
+                            error.field === "linkType" &&
+                            error.code === ErrorCode.LINK_TYPE_UNSUPPORTED
+                        );
+                    default:
+                        return false;
+                }
+            });
+
+            // Return the specific error message if found
+            if (relevantError) {
+                return relevantError.message;
+            }
+
+            // Fallback to default messages
             switch (errorType) {
                 case "showNoNameError":
                     return t("create.errors.no_name");
                 case "showComingSoonError":
-                    return "This feature is coming soon";
+                    return t("error.template.template_coming_soon");
                 case "showUnsupportedTypeError":
-                    return "This link type is not supported";
+                    return t("error.link.link_type_unsupported");
                 default:
                     return "";
             }
         },
-        [t],
+        [t, validationState.validationErrors],
     );
 
     // Check if any validation errors are active
     const hasValidationErrors = useCallback(() => {
-        return Object.values(validationState).some((error) => error);
+        return (
+            Object.values(validationState).some((error) => error) ||
+            validationState.validationErrors.length > 0
+        );
     }, [validationState]);
+
+    // Get all validation errors for display
+    const getAllValidationErrors = useCallback(() => {
+        return validationState.validationErrors;
+    }, [validationState.validationErrors]);
+
+    // Get validation errors by field
+    const getValidationErrorsByField = useCallback(
+        (field: string) => {
+            return validationState.validationErrors.filter((error) => error.field === field);
+        },
+        [validationState.validationErrors],
+    );
 
     return {
         // Validation state
@@ -193,11 +292,17 @@ export const useLinkTemplateValidation = () => {
         validateLinkTemplate,
         clearValidationErrors,
         clearValidationError,
+        clearValidationErrorsByField,
         showValidationError,
         isLinkTypeSupported,
+
+        // Toast methods
+        showValidationErrorToast,
 
         // Utility methods
         getValidationMessage,
         hasValidationErrors,
+        getAllValidationErrors,
+        getValidationErrorsByField,
     };
 };

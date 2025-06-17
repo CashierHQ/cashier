@@ -1,12 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import ClaimPageForm from "@/components/claim-page/claim-page-form";
+import UsePageForm from "@/components/claim-page/claim-page-form";
 // Removed MultiStepForm context
 import { LinkDetailModel, LinkGetUserStateOutputModel } from "@/services/types/link.service.types";
 import { FC, useCallback, useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { ClaimSchema } from ".";
 import { z } from "zod";
 import {
     fetchLinkUserState,
@@ -33,6 +32,7 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
 
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
+import { ClaimSchema } from ".";
 
 /**
  * Determines button text and state based on action state.
@@ -63,7 +63,7 @@ const getDrawerButtonMessage = (
     }
 };
 
-type ClaimFormPageProps = {
+type UseFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     linkData?: LinkDetailModel;
     refetchLinkUserState: () => Promise<{ data?: LinkGetUserStateOutputModel }>;
@@ -73,7 +73,7 @@ type ClaimFormPageProps = {
     onBack?: () => void;
 };
 
-export const ChooseWallet: FC<ClaimFormPageProps> = ({
+export const ChooseWallet: FC<UseFormPageProps> = ({
     form,
     linkData,
     onCashierError = () => {},
@@ -269,7 +269,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     };
 
     /**
-     * Handles the form submission process for claiming a link.
+     * Handles the form submission process for using a link.
      *
      * @param {string} anonymousWalletAddress - The wallet address for anonymous users
      */
@@ -323,7 +323,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     );
                     setShowConfirmation(true);
                 } else if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
-                    // If claim is already complete, navigate to complete page
+                    // If use is already complete, navigate to complete page
                     goToComplete();
                 } else {
                     // Show confirmation for existing action
@@ -332,7 +332,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     setShowConfirmation(true);
                 }
             } else {
-                toast.error(t("link_detail.error.claim_without_login_or_wallet"));
+                toast.error(t("link_detail.error.use_without_login_or_wallet"));
             }
         } catch (error) {
             if (isCashierError(error)) {
@@ -347,7 +347,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     };
 
     /**
-     * Processes the claim action with the backend
+     * Processes the use action with the backend
      */
     const handleProcessUseAction = async () => {
         if (!link) throw new Error("Link is not defined");
@@ -504,7 +504,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     return (
         <>
             <div className="w-full h-full flex flex-grow flex-col">
-                <ClaimPageForm
+                <UsePageForm
                     form={form}
                     formData={linkData ?? ({} as LinkDetailModel)}
                     onSubmit={handleCreateAction}
