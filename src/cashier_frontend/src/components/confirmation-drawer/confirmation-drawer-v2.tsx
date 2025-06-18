@@ -42,19 +42,6 @@ interface ConfirmationDrawerV2Props {
 
     /** The main function that handles the transaction process */
     startTransaction: () => Promise<void>;
-
-    /** Controls whether the action button is disabled */
-    isButtonDisabled?: boolean;
-
-    /** Function to update the button's disabled state */
-    setButtonDisabled?: (disabled: boolean) => void;
-
-    /** The text to display on the action button */
-    buttonText?: string;
-
-    /** Function to update the action button's text */
-    setButtonText?: (text: string) => void;
-
     /** The max action number for the link, required for fee calculation */
     maxActionNumber?: number;
 }
@@ -74,10 +61,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     onCashierError = () => {},
     onSuccessContinue = async () => {},
     startTransaction,
-    isButtonDisabled = false,
-    setButtonDisabled,
-    buttonText,
-    setButtonText,
     maxActionNumber,
 }) => {
     const { t } = useTranslation();
@@ -89,24 +72,44 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
      * Determine button text based on provided prop or action state
      * Uses the action state as a fallback if no buttonText prop is provided
      */
-    let displayButtonText = "";
+    const [button, setButton] = useState({
+        text: "",
+        disabled: false,
+    });
 
-    // When in SUCCESS state and countdown is active, ALWAYS show countdown regardless of buttonText
-    if (action?.state === ACTION_STATE.SUCCESS && countdown > 0) {
-        // Make countdown super explicit
-        displayButtonText = `Continue in ${countdown}s`;
-    } else if (buttonText) {
-        displayButtonText = buttonText;
-    } else if (action?.state === ACTION_STATE.SUCCESS) {
-        displayButtonText = t("confirmation_drawer.processing");
-    } else if (action?.state === ACTION_STATE.PROCESSING) {
-        displayButtonText = t("confirmation_drawer.inprogress_button");
-    } else if (action?.state === ACTION_STATE.FAIL) {
-        displayButtonText = t("retry");
-    } else {
-        displayButtonText = t("confirmation_drawer.confirm_button");
-    }
+    useEffect(() => {
+        //  countdown is active, ALWAYS show countdown regardless of buttonText
+        if (action?.state === ACTION_STATE.SUCCESS && countdown > 0) {
+            // Make countdown super explicit
+            setButton({
+                text: `Continue in ${countdown}s`,
+                disabled: false, // Button should not be disabled during countdown
+            });
+        } else if (action?.state === ACTION_STATE.SUCCESS) {
+            setButton({
+                text: t("confirmation_drawer.continue_button"),
+                disabled: false, // Button should not be disabled on success
+            });
+        } else if (action?.state === ACTION_STATE.PROCESSING) {
+            setButton({
+                text: t("confirmation_drawer.processing"),
+                disabled: true, // Button should not be disabled on success
+            });
+        } else if (action?.state === ACTION_STATE.FAIL) {
+            setButton({
+                text: t("confirmation_drawer.retry_button"),
+                disabled: false, // Allow retrying
+            });
+        } else {
+            // Default case for new actions or when no action is provided
+            setButton({
+                text: t("confirmation_drawer.confirm_button"),
+                disabled: false, // Button should not be disabled on initial submission
+            });
+        }
+    }, [action?.state]);
 
+    // When in SUCCESS state and
     /**
      * Handles the submit button click
      * Updates button state and calls appropriate handler based on action state
@@ -115,15 +118,10 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         // Determine if this is a successful transaction completion
         const isTxSuccess = action?.state === ACTION_STATE.SUCCESS;
 
-        // Update button state
-        if (setButtonDisabled) {
-            setButtonDisabled(true);
-        }
-
-        if (setButtonText) {
-            setButtonText(t("confirmation_drawer.processing"));
-        }
-
+        setButton({
+            text: t("confirmation_drawer.processing"),
+            disabled: true, // Button should not be disabled on success
+        });
         // Reset countdown when manually clicking
         setCountdown(0);
 
@@ -140,6 +138,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             const errorMessage = e instanceof Error ? e : new Error("unknown error");
             onCashierError(errorMessage);
         }
+        // normally the tx cart will close and page changed after this call, there for no need to update the button state here
     };
 
     /**
@@ -184,17 +183,16 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
      * Clear the timeout when the component unmounts.
      */
     useEffect(() => {
+        console.log("Drawer open state changed:", open);
         if (open) {
-            if (setButtonDisabled) {
-                console.log("setting button disabled");
-                setButtonDisabled(true);
-            }
+            setButton((...pre) => {
+                return { ...pre[0], disabled: true };
+            });
 
             const disableButtonTimeout = setTimeout(() => {
-                if (setButtonDisabled) {
-                    console.log("setting button enabled");
-                    setButtonDisabled(false);
-                }
+                setButton((...pre) => {
+                    return { ...pre[0], disabled: false };
+                });
             }, 500);
 
             return () => clearTimeout(disableButtonTimeout);
@@ -205,6 +203,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
      * Reset countdown when drawer closes
      */
     useEffect(() => {
+        console.log("Drawer open state changed: 2", open);
         if (!open) {
             console.log("Drawer closed, resetting countdown");
             setCountdown(0);
@@ -244,10 +243,10 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                     <ConfirmationPopupLegalSection />
                     <Button
                         className="my-2 mx-auto w-[95%] disabled:bg-disabledgreen"
-                        disabled={isButtonDisabled}
+                        disabled={button.disabled}
                         onClick={onClickSubmit}
                     >
-                        {displayButtonText}
+                        {button.text}
                     </Button>
                 </>
             );

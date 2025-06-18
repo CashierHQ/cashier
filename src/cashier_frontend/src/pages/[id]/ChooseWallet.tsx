@@ -34,35 +34,6 @@ import { toast } from "sonner";
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { ClaimSchema } from ".";
 
-/**
- * Determines button text and state based on action state.
- *
- * @param action The current action model (if available)
- * @param t Translation function
- * @returns Object with text and disabled state for the button
- */
-const getDrawerButtonMessage = (
-    action: ActionModel | undefined,
-    t: (key: string) => string,
-): { text: string; disabled: boolean } => {
-    if (!action) {
-        return { text: t("confirmation_drawer.confirm_button"), disabled: false };
-    }
-
-    console.log("getDrawerButtonMessage called with action:", action);
-
-    switch (action.state) {
-        case ACTION_STATE.CREATED:
-            return { text: t("confirmation_drawer.confirm_button"), disabled: false };
-        case ACTION_STATE.SUCCESS:
-            return { text: t("continue"), disabled: false };
-        case ACTION_STATE.PROCESSING:
-            return { text: t("confirmation_drawer.inprogress_button"), disabled: true };
-        case ACTION_STATE.FAIL:
-            return { text: t("retry"), disabled: false };
-    }
-};
-
 type UseFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     linkData?: LinkDetailModel;
@@ -90,8 +61,6 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    // State to track if when the tx is success -> user is continuing to next page
-    const [isCallStateMachine, setIsCallStateMachine] = useState(false);
     const [manuallyClosedDrawer, setManuallyClosedDrawer] = useState(false);
 
     // Button state for confirmation drawer
@@ -150,39 +119,6 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
         text: t("confirmation_drawer.confirm_button"),
         disabled: false,
     });
-    const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
-        text: string;
-        disabled: boolean;
-    }>({
-        text: isFetching ? "Loading..." : t("confirmation_drawer.confirm_button"),
-        disabled: false,
-    });
-
-    // Update button text based on action state and processing state
-    useEffect(() => {
-        // If we're actively processing, show "Processing..." regardless of action state
-
-        if (isProcessing || isCallStateMachine) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-            return;
-        }
-
-        // If we have an action, use its state to determine button text
-        if (linkUserState?.action) {
-            const confirmButton = getDrawerButtonMessage(linkUserState.action, t);
-            setDrawerConfirmButton(confirmButton);
-            return;
-        }
-
-        // Default state when not processing and no action
-        setDrawerConfirmButton({
-            text: t("confirmation_drawer.confirm_button"),
-            disabled: false,
-        });
-    }, [linkUserState, isProcessing, linkData, isFetching, t]);
 
     // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
@@ -456,12 +392,6 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
      * Updates link user state after successful transaction
      */ const handleUpdateLinkUserState = async () => {
         try {
-            setIsCallStateMachine(true);
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-
             const result = await updateLinkUserState.mutateAsync({
                 input: {
                     action_type: ACTION_TYPE.USE_LINK,
@@ -496,8 +426,6 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
             if (isCashierError(error)) {
                 onCashierError(error);
             }
-        } finally {
-            setIsCallStateMachine(false);
         }
     };
 
@@ -534,20 +462,6 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
                 onCashierError={onCashierError}
                 onSuccessContinue={handleUpdateLinkUserState}
                 startTransaction={startTransaction}
-                isButtonDisabled={drawerConfirmButton.disabled}
-                setButtonDisabled={useCallback((disabled: boolean) => {
-                    setDrawerConfirmButton((prev) => ({
-                        ...prev,
-                        disabled: disabled,
-                    }));
-                }, [])}
-                buttonText={drawerConfirmButton.text}
-                setButtonText={useCallback((text: string) => {
-                    setDrawerConfirmButton((prev) => ({
-                        ...prev,
-                        text: text,
-                    }));
-                }, [])}
             />
         </>
     );

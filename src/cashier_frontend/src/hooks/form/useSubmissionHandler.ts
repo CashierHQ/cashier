@@ -150,7 +150,7 @@ export const useSubmissionHandler = () => {
                 // Additional basic validation using unified system (mainly for form structure)
                 const basicValidationResult = ValidationService.validateLinkDetailsAssets(
                     formAssets,
-                    undefined,
+                    tokenMap,
                     {
                         isAirdrop,
                         maxActionNumber: isAirdrop ? maxActionNumber : 1,

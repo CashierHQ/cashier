@@ -5,7 +5,6 @@ import { ErrorCode } from "@/types/error.enum";
 
 import { LINK_TYPE, CHAIN } from "@/services/types/enum";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { ActionModel } from "@/services/types/action.service.types";
 import { FeeHelpers } from "@/services/fee.service";
 import { ValidationResult, ValidationError, FormAsset } from "@/types/validation.types";
 
@@ -24,7 +23,7 @@ export class ValidationService {
      */
     static validateLinkDetailsAssets(
         assets: FormAsset[],
-        allAvailableTokens: FungibleToken[] | undefined,
+        tokenMap: Record<string, FungibleToken>,
         options: {
             isAirdrop?: boolean;
             maxActionNumber?: number;
@@ -44,8 +43,8 @@ export class ValidationService {
         }
 
         assets.forEach((asset, index) => {
-            const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
-            const tokenSymbol = token?.symbol || "Unknown";
+            const token = tokenMap[asset.tokenAddress];
+            const tokenSymbol = token.symbol;
 
             // Validate token address
             if (!asset.tokenAddress) {
@@ -113,212 +112,9 @@ export class ValidationService {
     }
 
     /**
-     * Frontend-only validation for link details form
-     */
-    static validateLinkDetails(
-        formAssets: FormAsset[],
-        maxActionNumber: number,
-        allAvailableTokens: FungibleToken[] | undefined,
-        linkType?: LINK_TYPE,
-    ): ValidationResult {
-        const errors: ValidationError[] = [];
-
-        // Validate max action number
-        if (!maxActionNumber || maxActionNumber <= 0) {
-            errors.push({
-                field: "maxActionNumber",
-                code: ErrorCode.INVALID_MAX_ACTIONS,
-                message: "Max actions must be greater than 0",
-            });
-        }
-
-        // Validate assets based on link type
-        const isAirdrop = linkType === LINK_TYPE.SEND_AIRDROP;
-        const assetValidation = this.validateLinkDetailsAssets(formAssets, allAvailableTokens, {
-            isAirdrop,
-            maxActionNumber,
-            skipCheckingBalance: linkType === LINK_TYPE.RECEIVE_PAYMENT,
-        });
-
-        errors.push(...assetValidation.errors);
-
-        return {
-            isValid: errors.length === 0,
-            errors,
-        };
-    }
-
-    /**
-     * Check for insufficient balance
-     */
-    static checkInsufficientBalance(
-        formAssets: FormAsset[],
-        allAvailableTokens: FungibleToken[] | undefined,
-        uses: number = 1,
-    ): string | null {
-        const notEnoughBalanceAssets = formAssets.filter((asset) => {
-            const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
-            if (!token) return false;
-
-            const assetAmount = asset.amount;
-            const tokenAmount = token.amount;
-            const assetAmountWithoutFee =
-                BigInt(uses) * (assetAmount + FeeHelpers.calculateNetworkFeesInES8(token));
-
-            return assetAmountWithoutFee > Number(tokenAmount);
-        });
-
-        if (notEnoughBalanceAssets.length > 0) {
-            const token = allAvailableTokens?.find(
-                (t) => t.address === notEnoughBalanceAssets[0].tokenAddress,
-            );
-            return token?.symbol || "Unknown";
-        }
-
-        return null;
-    }
-
-    /**
-     * Frontend-only validation for user balance
-     */
-    static validateUserBalance(
-        action: ActionModel,
-        getToken: (address: string) => FungibleToken | undefined,
-    ): ValidationResult {
-        const errors: ValidationError[] = [];
-
-        if (action.intents && action.intents.length > 0) {
-            for (const intent of action.intents) {
-                const token = getToken(intent.asset.address);
-
-                if (!token || token.amount === undefined || token.amount === null) {
-                    errors.push({
-                        field: `balance.${intent.asset.address}`,
-                        code: ErrorCode.TOKEN_NOT_FOUND,
-                        message: `Could not find token balance for ${intent.asset.address}`,
-                    });
-                    continue;
-                }
-
-                const totalAmount = BigInt(intent.amount);
-                const userBalance = token.amount;
-
-                if (userBalance < totalAmount) {
-                    const tokenDecimals = token.decimals || 8;
-                    const formattedRequired = Number(totalAmount) / 10 ** tokenDecimals;
-                    const formattedBalance = Number(userBalance) / 10 ** tokenDecimals;
-
-                    errors.push({
-                        field: `balance.${intent.asset.address}`,
-                        code: ErrorCode.INSUFFICIENT_BALANCE,
-                        message: "error.balance.insufficient_balance",
-                        metadata: {
-                            tokenSymbol: token.symbol,
-                            required: formattedRequired.toFixed(4),
-                            available: formattedBalance.toFixed(4),
-                            tokenAddress: intent.asset.address,
-                        },
-                    });
-                }
-            }
-        }
-
-        return {
-            isValid: errors.length === 0,
-            errors,
-        };
-    }
-
-    /**
-     * Validate balance based on link state and link type
-     */
-    static validateBalanceForLinkState(
-        formAssets: FormAsset[],
-        linkType: LINK_TYPE,
-        linkState: string,
-        maxActionNumber: number,
-        allAvailableTokens: FungibleToken[] | undefined,
-        options: {
-            skipBalanceCheck?: boolean;
-            customValidations?: (assets: FormAsset[], tokens: FungibleToken[]) => ValidationResult;
-        } = {},
-    ): ValidationResult {
-        const { skipBalanceCheck = false, customValidations } = options;
-        const errors: ValidationError[] = [];
-
-        // Skip balance validation for receive payment types as they don't require user balance
-        if (
-            linkType === LINK_TYPE.RECEIVE_PAYMENT ||
-            linkType === LINK_TYPE.RECEIVE_MULTI_PAYMENT
-        ) {
-            return { isValid: true, errors: [] };
-        }
-
-        // Skip if explicitly requested or if tokens are not available
-        if (skipBalanceCheck || !allAvailableTokens || !formAssets?.length) {
-            return { isValid: true, errors: [] };
-        }
-
-        // Validate each asset based on link type and state
-        formAssets.forEach((asset, index) => {
-            const token = allAvailableTokens.find((t) => t.address === asset.tokenAddress);
-
-            if (!token) {
-                errors.push({
-                    field: `assets.${index}.token`,
-                    code: ErrorCode.TOKEN_NOT_FOUND,
-                    message: `Asset #${index + 1}: Token not found for address ${asset.tokenAddress}`,
-                    metadata: {
-                        tokenAddress: asset.tokenAddress,
-                        assetIndex: index,
-                    },
-                });
-                return;
-            }
-
-            // Calculate required amount based on link type
-            const requiredAmount = this.calculateRequiredAmount(
-                asset.amount,
-                linkType,
-                maxActionNumber,
-                token,
-            );
-
-            const userBalance = token.amount || BigInt(0);
-
-            // Validate balance based on link state
-            const balanceValidation = this.validateBalanceForState(
-                userBalance,
-                requiredAmount,
-                linkState,
-                linkType,
-                token,
-                index,
-            );
-
-            if (!balanceValidation.isValid) {
-                errors.push(...balanceValidation.errors);
-            }
-        });
-
-        // Apply custom validations if provided
-        if (customValidations && allAvailableTokens) {
-            const customResult = customValidations(formAssets, allAvailableTokens);
-            if (!customResult.isValid) {
-                errors.push(...customResult.errors);
-            }
-        }
-
-        return {
-            isValid: errors.length === 0,
-            errors,
-        };
-    }
-
-    /**
      * Calculate required amount based on link type
      */
-    private static calculateRequiredAmount(
+    private static calculateRequiredAmountAddAsset(
         assetAmount: bigint,
         linkType: LINK_TYPE,
         maxActionNumber: number,
@@ -342,105 +138,6 @@ export class ValidationService {
             default:
                 return assetAmount + networkFee;
         }
-    }
-
-    /**
-     * Validate balance based on link state
-     */
-    private static validateBalanceForState(
-        userBalance: bigint,
-        requiredAmount: bigint,
-        linkState: string,
-        linkType: LINK_TYPE,
-        token: FungibleToken,
-        assetIndex: number,
-    ): ValidationResult {
-        const errors: ValidationError[] = [];
-        const tokenSymbol = token.symbol || "Unknown";
-        const tokenDecimals = token.decimals || 8;
-
-        // Convert amounts to decimal for display
-        const availableAmount = Number(userBalance) / Math.pow(10, tokenDecimals);
-        const requestedAmount = Number(requiredAmount) / Math.pow(10, tokenDecimals);
-
-        // State-specific validation logic
-        switch (linkState) {
-            case "AddAssets":
-            case "Preview":
-                // During creation, check if user has enough balance
-                if (userBalance < requiredAmount) {
-                    errors.push({
-                        field: `assets.${assetIndex}.balance`,
-                        code: ErrorCode.INSUFFICIENT_BALANCE,
-                        message: "error.balance.insufficient_balance",
-                        metadata: {
-                            tokenSymbol,
-                            available: availableAmount.toFixed(4),
-                            required: requestedAmount.toFixed(4),
-                            tokenAddress: token.address,
-                            linkType,
-                            linkState,
-                            assetIndex,
-                        },
-                    });
-                }
-                break;
-
-            case "CreateLink":
-                // Final validation before creating the link
-                if (userBalance < requiredAmount) {
-                    errors.push({
-                        field: `assets.${assetIndex}.balance`,
-                        code: ErrorCode.INSUFFICIENT_BALANCE_CREATE,
-                        message: "error.balance.insufficient_balance_create",
-                        metadata: {
-                            tokenSymbol,
-                            available: availableAmount.toFixed(4),
-                            required: requestedAmount.toFixed(4),
-                            linkType: this.getLinkTypeDisplayName(linkType),
-                            tokenAddress: token.address,
-                            linkState,
-                            assetIndex,
-                        },
-                    });
-                }
-                break;
-
-            case "Active":
-                // For active links, check if there's still balance for withdrawals
-                // This is mainly for the link creator to withdraw unused funds
-                break;
-
-            case "Inactive":
-                // For inactive links, balance validation might not be needed
-                // unless we're checking for withdrawal capabilities
-                break;
-
-            default:
-                // For unknown states, apply basic balance validation
-                if (userBalance < requiredAmount) {
-                    errors.push({
-                        field: `assets.${assetIndex}.balance`,
-                        code: ErrorCode.INSUFFICIENT_BALANCE,
-                        message: "error.balance.insufficient_balance",
-                        metadata: {
-                            tokenSymbol,
-                            available: availableAmount.toFixed(4),
-                            required: requestedAmount.toFixed(4),
-                            tokenAddress: token.address,
-                            linkType,
-                            linkState,
-                            assetIndex,
-                        },
-                    });
-                }
-                break;
-        }
-
-        return {
-            isValid: errors.length === 0,
-            errors,
-        };
     }
 
     /**
@@ -533,7 +230,7 @@ export class ValidationService {
             switch (useCase) {
                 case "create":
                     // For creation, calculate total amount needed including fees
-                    totalAssetAmount = this.calculateRequiredAmount(
+                    totalAssetAmount = this.calculateRequiredAmountAddAsset(
                         asset.amount,
                         linkType,
                         maxActionNumber,
@@ -661,7 +358,7 @@ export class ValidationService {
             const userBalance = token.amount || BigInt(0);
             const is_token_fee = asset.tokenAddress === token_fee.address;
             // this calculate based on asset info + ledger fee
-            let tokenNeedAmount = this.calculateRequiredAmount(
+            let tokenNeedAmount = this.calculateRequiredAmountAddAsset(
                 asset.amount,
                 linkType,
                 maxActionNumber,

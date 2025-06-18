@@ -164,7 +164,6 @@ export const validateFormAssets = (
     assets.forEach((asset, index) => {
         const token = tokenMap[asset.tokenAddress]; // O(1) lookup
         const tokenSymbol = token?.symbol || "Unknown";
-
         // Check amount
         if (!asset.amount || asset.amount === BigInt(0)) {
             const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.amount_error_message")}`;

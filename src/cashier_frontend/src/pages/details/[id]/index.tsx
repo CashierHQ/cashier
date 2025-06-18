@@ -51,18 +51,8 @@ export default function DetailPage() {
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
     const [isProcessing, setIsProcessing] = React.useState(false);
-    const [isCallStateMachine, setIsCallStateMachine] = React.useState(false);
 
     const { t } = useTranslation();
-
-    // Button state for confirmation drawer
-    const [drawerConfirmButton, setDrawerConfirmButton] = React.useState<{
-        text: string;
-        disabled: boolean;
-    }>({
-        text: t("confirmation_drawer.confirm_button"),
-        disabled: false,
-    });
 
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
@@ -109,49 +99,6 @@ export default function DetailPage() {
             });
         }
     }, [showOverlay, driverObj, link]);
-
-    // Update button text based on action state and processing state
-    React.useEffect(() => {
-        // If we're actively processing, show "Processing..." regardless of action state
-        if (isProcessing || isCallStateMachine) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-            return;
-        }
-
-        if (!action) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.confirm_button"),
-                disabled: false,
-            });
-            return;
-        }
-
-        const actionState = action.state;
-        if (actionState === ACTION_STATE.SUCCESS) {
-            setDrawerConfirmButton({
-                text: t("continue"),
-                disabled: false,
-            });
-        } else if (actionState === ACTION_STATE.PROCESSING) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-        } else if (actionState === ACTION_STATE.FAIL) {
-            setDrawerConfirmButton({
-                text: t("retry"),
-                disabled: false,
-            });
-        } else {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.confirm_button"),
-                disabled: false,
-            });
-        }
-    }, [action, isProcessing, t]);
 
     // Polling effect to update action state during processing
     React.useEffect(() => {
@@ -230,12 +177,6 @@ export default function DetailPage() {
         try {
             if (!link) throw new Error("Link data is not available");
 
-            setDrawerConfirmButton({
-                text: t("processing"),
-                disabled: true,
-            });
-            setIsCallStateMachine(true);
-
             await callLinkStateMachine({
                 linkId: link.id,
                 linkModel: {},
@@ -247,8 +188,6 @@ export default function DetailPage() {
             setShowConfirmationDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
-        } finally {
-            setIsCallStateMachine(false);
         }
     };
 
@@ -446,12 +385,6 @@ export default function DetailPage() {
                         }
                     }
                 }}
-                isButtonDisabled={drawerConfirmButton.disabled}
-                setButtonDisabled={(disabled) =>
-                    setDrawerConfirmButton((prev) => ({ ...prev, disabled }))
-                }
-                buttonText={drawerConfirmButton.text}
-                setButtonText={(text) => setDrawerConfirmButton((prev) => ({ ...prev, text }))}
             />
         </MainAppLayout>
     );

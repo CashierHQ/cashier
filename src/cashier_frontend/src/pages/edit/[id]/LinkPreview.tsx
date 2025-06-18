@@ -19,7 +19,6 @@ import {
     CHAIN,
     LINK_STATE,
     LINK_TYPE,
-    ACTION_STATE,
     getLinkTypeString,
 } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
@@ -30,10 +29,12 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
-import { useProcessAction } from "@/hooks/action-hooks";
+import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 import { FeeHelpers } from "@/services/fee.service";
 import { useLinkPreviewValidation } from "@/hooks/form/useLinkPreviewValidation";
+import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
+import { toast } from "sonner";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -89,47 +90,15 @@ export default function LinkPreview({
     // flag to indicate if the action is in progress
     const [createActionInProgress, setCreateActionInProgress] = useState(false);
 
-    // Button state for confirmation drawer
-    const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
-        text: string;
-        disabled: boolean;
-    }>({
-        text: t("confirmation_drawer.confirm_button"),
-        disabled: false,
-    });
+    // Button state management has been moved to ConfirmationDrawerV2
+    const { mutateAsync: processAction } = useProcessAction();
+    const { mutateAsync: updateAction } = useUpdateAction();
+    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
 
     // Use centralized validation hook with balance checking
     const { validateLinkPreviewWithBalance } = useLinkPreviewValidation();
 
-    const { mutateAsync: processAction } = useProcessAction();
-
-    // Update button state based on action state
-    useEffect(() => {
-        if (!action) return;
-
-        const actionState = action.state;
-        if (actionState === ACTION_STATE.SUCCESS) {
-            setDrawerConfirmButton({
-                text: t("continue"),
-                disabled: false,
-            });
-        } else if (actionState === ACTION_STATE.PROCESSING) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-        } else if (actionState === ACTION_STATE.FAIL) {
-            setDrawerConfirmButton({
-                text: t("retry"),
-                disabled: false,
-            });
-        } else {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.confirm_button"),
-                disabled: false,
-            });
-        }
-    }, [action, t]);
+    // Button state is now managed directly in ConfirmationDrawerV2
 
     // Handle process create action - this function is passed as startTransaction to ConfirmationDrawerV2
     const handleStartTransaction = async (): Promise<void> => {
@@ -143,19 +112,35 @@ export default function LinkPreview({
                 includeLinkCreationFee: true, // No creation fee for processing existing actions
             });
             if (!validationResult.isValid) {
-                // Validation errors are automatically shown via toast
+                const msg = validationResult.errors.map((error) => error.message).join(", ");
+                toast.error(msg);
+                console.error("Validation failed:", msg);
                 return;
             }
 
-            const updatedAction = await processAction({
+            const firstUpdatedAction = await processAction({
                 actionId: action.id,
                 linkId: link.id,
                 actionType: action.type,
             });
 
-            if (updatedAction && updatedAction.state === ACTION_STATE.SUCCESS) {
-                if (onActionResult) {
-                    onActionResult(updatedAction);
+            setAction(firstUpdatedAction);
+
+            if (firstUpdatedAction) {
+                const response = await icrc112Execute({
+                    transactions: firstUpdatedAction.icrc112Requests,
+                });
+
+                if (response) {
+                    const secondUpdatedAction = await updateAction({
+                        actionId: action.id,
+                        linkId: link.id,
+                        external: true,
+                    });
+
+                    if (secondUpdatedAction) {
+                        setAction(secondUpdatedAction);
+                    }
                 }
             }
         } catch (error) {
@@ -616,44 +601,17 @@ export default function LinkPreview({
                 onClose={() => setShowAssetInfo(false)}
             />
             <ConfirmationDrawerV2
-                // The ActionModel to be displayed and processed
                 action={action}
-                // Controls whether the drawer is visible
                 open={showConfirmation && !showInfo}
-                // Called when the drawer is closed
                 onClose={() => {
                     setShowConfirmation(false);
                 }}
-                // Called when the info button is clicked, typically to show fee information
                 onInfoClick={() => setShowInfo(true)}
-                // Called after the action result is received, to update UI or state
                 onActionResult={onActionResult}
-                // Called when an error occurs during the transaction process
                 onCashierError={onCashierError}
-                // Called after successful transaction to continue the workflow
                 onSuccessContinue={handleSetLinkToActive}
-                // The main function that handles the transaction process
                 startTransaction={handleStartTransaction}
-                // Controls whether the action button is disabled
-                isButtonDisabled={drawerConfirmButton.disabled}
-                // Function to update the button's disabled state
-                setButtonDisabled={(disabled: boolean) => {
-                    setDrawerConfirmButton((prev) => ({
-                        ...prev,
-                        disabled,
-                    }));
-                }}
-                // The text to display on the action button
-                buttonText={drawerConfirmButton.text}
-                // Function to update the action button's text
-                // The max action number for the link, required for fee calculation
                 maxActionNumber={Number(link?.maxActionNumber ?? 1)}
-                setButtonText={(text: string) => {
-                    setDrawerConfirmButton((prev) => ({
-                        ...prev,
-                        text,
-                    }));
-                }}
             />
         </div>
     );
