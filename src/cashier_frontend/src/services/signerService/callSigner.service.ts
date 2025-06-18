@@ -20,6 +20,9 @@ class CallSignerService {
     async execute(input: Icrc112Requests): Promise<Icrc112Response> {
         const transport = await ClientTransport.create({
             agent: this.agent,
+            authClientLoginOptions: {
+                maxTimeToLive: BigInt(8) * BigInt(3_600_000_000_000),
+            },
         });
         const signer = new Signer({ transport });
 
