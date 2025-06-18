@@ -208,6 +208,53 @@ export const useLinkPreviewValidation = () => {
         [createTokenMap, getTokenPrice, showValidationErrorToast],
     );
 
+    const validateCreationFeeOnly = useCallback(
+        (linkType: LINK_TYPE): ValidationResult => {
+            const errors: ValidationError[] = [];
+
+            try {
+                const tokenMap = createTokenMap();
+
+                // Only validate the creation fee, no assets
+                const validationResult = ValidationService.validateAssetsWithFees(
+                    [], // Empty array since we only validate creation fee
+                    tokenMap,
+                    {
+                        useCase: "create",
+                        linkType: linkType,
+                        maxActionNumber: 1,
+                        includeLinkCreationFee: true,
+                        skipBalanceCheck: false,
+                    },
+                );
+
+                // Convert validation errors to our format
+                validationResult.errors.forEach((error) => {
+                    errors.push({
+                        field: error.field,
+                        code: ErrorCode.INSUFFICIENT_BALANCE_CREATE,
+                        message: error.message,
+                        metadata: error.metadata,
+                    });
+                });
+            } catch (error) {
+                errors.push({
+                    field: "balance",
+                    code: ErrorCode.BALANCE_CHECK_FAILED,
+                    message: `Creation fee validation failed: ${error instanceof Error ? error.message : String(error)}`,
+                });
+            }
+
+            // Show toast notifications for errors
+            if (errors.length > 0) {
+                showValidationErrorToast(errors);
+            }
+
+            return { isValid: errors.length === 0, errors };
+        },
+        [createTokenMap, showValidationErrorToast],
+    );
+
     // Enhanced link preview validation with balance check
     const validateLinkPreviewWithBalance = useCallback(
         (
@@ -223,14 +270,22 @@ export const useLinkPreviewValidation = () => {
                 return basicValidation;
             }
 
-            // Then run balance validation with optional creation fee control
-            const balanceValidation = validateBalanceWithCreationFee(
-                link,
-                Number(options.maxActionNumber),
-                options.includeLinkCreationFee ?? true,
-            );
+            let balanceValidation: ValidationResult = {
+                isValid: true,
+                errors: [],
+            };
 
-            console.log("Balance Validation Result:", balanceValidation);
+            if (link?.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+                // For RECEIVE_PAYMENT links, validate creation fee only
+                balanceValidation = validateCreationFeeOnly(link.linkType);
+            } else {
+                // Then run balance validation with optional creation fee control
+                balanceValidation = validateBalanceWithCreationFee(
+                    link,
+                    Number(options.maxActionNumber),
+                    options.includeLinkCreationFee ?? true,
+                );
+            }
 
             // Combine results
             const allErrors = [...basicValidation.errors, ...balanceValidation.errors];
@@ -247,6 +302,7 @@ export const useLinkPreviewValidation = () => {
         validateActionCreation,
         validateBalanceWithCreationFee,
         validateLinkPreviewWithBalance,
+        validateCreationFeeOnly,
         showValidationErrorToast,
     };
 };

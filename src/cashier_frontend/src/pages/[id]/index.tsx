@@ -116,7 +116,7 @@ export default function ClaimPage() {
             if (action.state === ACTION_STATE.SUCCESS) {
                 toast.success(t(`claim_page.${linkType}.transaction_success`));
             } else {
-                toast.error(t(`claim_page.${linkType}.transaction_fail`));
+                toast.error(t(`claim_page.${linkType}.transaction_failed`));
             }
         }
     };
