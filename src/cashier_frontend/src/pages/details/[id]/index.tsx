@@ -191,7 +191,7 @@ export default function DetailPage() {
         }
     };
 
-    const handleWithdrawAssets = async () => {
+    const initiateWithdrawAction = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
             if (action) {
@@ -330,7 +330,7 @@ export default function DetailPage() {
                                     id="copy-link-button"
                                     disabled={isProcessingAction || !hasWithdrawableAssets}
                                     onClick={() => {
-                                        handleWithdrawAssets();
+                                        initiateWithdrawAction();
                                     }}
                                     className="w-[95%] h-[44px] disabled:bg-gray-300"
                                 >

@@ -353,3 +353,162 @@ If you're upgrading from the old validation system:
 5. Update error codes to use the new ErrorCode enum
 
 For more detailed examples and advanced usage, see the individual hook files and the `ValidationService` implementation.
+
+## Transaction Validation and Action Creation Flow
+
+### Asset Balance Validation
+
+The system performs asset balance validation at two critical points:
+
+1. **Pre-Action Creation Validation**
+
+    - Validates sufficient balance for the transaction before creating an action
+    - Includes network fees and creation fees where applicable
+    - Prevents unnecessary action creation if balance is insufficient
+
+2. **Pre-Transaction Validation**
+    - Validates balance again before executing the transaction
+    - Ensures balance hasn't changed between action creation and execution
+    - Protects against race conditions and balance changes
+
+### Balance Validation by Link Type
+
+| Link Type       | What's Validated                                | When Validated               |
+| --------------- | ----------------------------------------------- | ---------------------------- |
+| Send Tip        | Asset amount + Network fee                      | Pre-action & Pre-transaction |
+| Send Airdrop    | (Asset amount + Network fee) × Number of claims | Pre-action & Pre-transaction |
+| Token Basket    | Sum of all assets + Network fees                | Pre-action & Pre-transaction |
+| Receive Payment | No balance validation (receiver pays)           | N/A                          |
+
+### Action Creation Flow
+
+The current flow for action creation follows this pattern:
+
+```typescript
+// Current implementation
+const handleCreateAction = async () => {
+    // Validate balance first
+    const validationResult = validateLinkPreviewWithBalance(link, {
+        maxActionNumber: link.maxActionNumber,
+        includeLinkCreationFee: true,
+    });
+    if (!validationResult.isValid) {
+        return;
+    }
+
+    // Create action if validation passes
+    const action = await createAction(link.id, actionType);
+    setAction(action);
+};
+```
+
+### Suggested Unified Flow
+
+To make the flow more consistent, we recommend renaming methods to clearly indicate their purpose:
+
+```typescript
+// Recommended implementation
+const initiateActionWithValidation = async () => {
+    // Step 1: Validate balance
+    const validationResult = validateLinkPreviewWithBalance(link, {
+        maxActionNumber: link.maxActionNumber,
+        includeLinkCreationFee: true,
+    });
+    if (!validationResult.isValid) {
+        return;
+    }
+
+    // Step 2: Create or retrieve action
+    let currentAction = action;
+    if (!currentAction) {
+        currentAction = await createAction(link.id, actionType);
+        setAction(currentAction);
+    }
+
+    // Step 3: Show confirmation
+    setShowConfirmation(true);
+};
+```
+
+### Recommended Method Naming
+
+Current methods that should be unified:
+
+-   `handleSubmit` in LinkPreview
+-   `handleCreateAction` in ChooseWallet
+-   `handleWithdrawAssets` in DetailPage
+
+Should be renamed to reflect their true purpose:
+
+1. For Link Creation:
+
+    ```typescript
+    initiateCreateLinkAction();
+    ```
+
+2. For Link Usage:
+
+    ```typescript
+    initiateUseLinkAction();
+    ```
+
+3. For Withdrawals:
+    ```typescript
+    initiateWithdrawAction();
+    ```
+
+### Action State Flow
+
+```mermaid
+graph TD
+    A[Button Click] --> B{Action Exists?}
+    B -- No --> C[Validate Balance]
+    C -- Valid --> D[Create Action]
+    D --> E[Show Confirmation]
+    B -- Yes --> F[Validate Balance]
+    F -- Valid --> E
+    C -- Invalid --> G[Show Error]
+    F -- Invalid --> G
+```
+
+### Implementation Guidelines
+
+1. **Button State Management**:
+
+    ```typescript
+    useEffect(() => {
+        setButtonState({
+            label: getActionButtonLabel(),
+            isDisabled: isProcessing,
+            action: initiateActionWithValidation,
+        });
+    }, [isProcessing, action]);
+    ```
+
+2. **Validation Service Integration**:
+
+    ```typescript
+    const validateBeforeAction = async (link: LinkModel) => {
+        const validationResult = await validateAssetAndFees(link);
+        if (!validationResult.isValid) {
+            toast.error(validationResult.errors[0].message);
+            return false;
+        }
+        return true;
+    };
+    ```
+
+3. **Action Creation Service**:
+    ```typescript
+    const ensureActionExists = async (link: LinkModel) => {
+        if (action) return action;
+        return await createAction(link.id, determineActionType(link));
+    };
+    ```
+
+This unified approach ensures:
+
+-   Consistent validation before any action creation
+-   Clear separation of validation and action creation logic
+-   Predictable state management
+-   Reusable validation and action creation methods

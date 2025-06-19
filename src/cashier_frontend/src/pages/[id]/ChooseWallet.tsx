@@ -208,11 +208,11 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
     };
 
     /**
-     * Handles the form submission process for using a link.
+     * Initiates the process of using a link, including validation and action creation.
      *
      * @param {string} anonymousWalletAddress - The wallet address for anonymous users
      */
-    const handleCreateAction = async (anonymousWalletAddress?: string) => {
+    const initiateUseLinkAction = async (anonymousWalletAddress?: string) => {
         // Don't proceed if initial data is still loading
         if (isFetching || !link) {
             return;
@@ -449,7 +449,7 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
                 <UsePageForm
                     form={form}
                     formData={linkData ?? ({} as LinkDetailModel)}
-                    onSubmit={handleCreateAction}
+                    onSubmit={initiateUseLinkAction}
                     onBack={onBack}
                     isDisabled={useLinkButton.disabled}
                     setDisabled={useCallback((disabled: boolean) => {

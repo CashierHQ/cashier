@@ -158,7 +158,7 @@ export default function LinkPreview({
         setButtonState({
             label: isDisabled || isLoading ? t("processing") : t("create.create"),
             isDisabled: isDisabled || isLoading,
-            action: handleSubmit,
+            action: initiateCreateLinkAction,
         });
     }, [isDisabled, isLoading, shouldRedirect, showConfirmation]);
 
@@ -284,7 +284,7 @@ export default function LinkPreview({
      * If the link already exists in the backend, it creates an action (if one doesn't exist) and shows the confirmation drawer.
      * @returns {Promise<void>}
      */
-    const handleSubmit = async () => {
+    const initiateCreateLinkAction = async () => {
         try {
             setIsDisabled(true);
 
