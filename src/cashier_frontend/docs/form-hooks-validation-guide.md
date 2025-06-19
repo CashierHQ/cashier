@@ -22,9 +22,9 @@ The Cashier frontend uses a unified validation system built around centralized h
 
 ## Form Validation Hooks
 
-### useLinkPreviewValidation
+### useLinkCreateValidation
 
-**Location**: `/src/hooks/form/useLinkPreviewValidation.ts`
+**Location**: `/src/hooks/form/useLinkCreateValidation.ts`
 
 **Purpose**: Handles validation for LinkPreview component with balance checking capabilities.
 
@@ -44,7 +44,7 @@ The Cashier frontend uses a unified validation system built around centralized h
 -   Automatic toast notifications for errors
 
 ```typescript
-const { validateLinkPreviewWithBalance } = useLinkPreviewValidation();
+const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
 
 const validationResult = validateLinkPreviewWithBalance(link, {
     maxActionNumber: BigInt(1),
@@ -138,7 +138,7 @@ await submitTipForm(linkId, formAssets, maxActionNumber, errorHandler);
 | **SendAirdropForm**     | `useSendAirdropFormHandler`     | Form Submission    | ✅ Required   | Network + Asset × Claims | ❌ Not included   | `error.balance.insufficient_balance`        |
 | **SendTokenBasketForm** | `useSendTokenBasketFormHandler` | Form Submission    | ✅ Required   | Network + Asset × Uses   | ❌ Not included   | `error.balance.insufficient_balance`        |
 | **ReceivePaymentForm**  | `useReceivePaymentFormHandler`  | Form Submission    | ❌ Skipped    | Not applicable           | ❌ Not included   | N/A (no balance required)                   |
-| **LinkPreview**         | `useLinkPreviewValidation`      | Balance + Creation | ✅ Required   | Network + Asset          | ✅ Configurable   | `error.balance.insufficient_balance_create` |
+| **LinkPreview**         | `useLinkCreateValidation`       | Balance + Creation | ✅ Required   | Network + Asset          | ✅ Configurable   | `error.balance.insufficient_balance_create` |
 | **LinkDetails**         | Form-specific handlers          | Form Submission    | ✅ Required   | Based on link type       | ❌ Not included   | `error.balance.insufficient_balance`        |
 | **AddAssetForm**        | ValidationService direct        | Asset Addition     | ✅ Required   | Network + Asset          | ❌ Not included   | `error.balance.insufficient_balance`        |
 
@@ -201,7 +201,7 @@ const handleSubmit = async () => {
 
 ```typescript
 // In LinkPreview component
-const { validateLinkPreviewWithBalance } = useLinkPreviewValidation();
+const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
 
 const handleCreateAction = async () => {
     const validationResult = validateLinkPreviewWithBalance(link, {
@@ -275,7 +275,7 @@ const validateCustomAssets = (assets, tokenMap) => {
 ### 1. Hook Selection
 
 -   Use page-specific handlers (`useSendTipFormHandler`) for form submissions
--   Use `useLinkPreviewValidation` for preview/creation validation
+-   Use `useLinkCreateValidation` for preview/creation validation
 -   Use `useLinkTemplateValidation` for template validation
 -   Use `ValidationService` directly only for custom scenarios
 

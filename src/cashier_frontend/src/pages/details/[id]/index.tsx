@@ -367,10 +367,10 @@ export default function DetailPage() {
                 onInfoClick={() => {}}
                 onActionResult={handleActionResult}
                 onCashierError={handleCashierError}
-                onSuccessContinue={async () => {
+                handleSuccessContinue={async () => {
                     await setInactiveEndedLink();
                 }}
-                startTransaction={async () => {
+                handleConfirmTransaction={async () => {
                     try {
                         await handleWithdrawProcess();
                     } catch (error) {

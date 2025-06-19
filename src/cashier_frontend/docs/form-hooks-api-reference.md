@@ -160,7 +160,7 @@ await submitReceivePaymentForm(
 
 ## Validation Hooks API
 
-### useLinkPreviewValidation
+### useLinkCreateValidation
 
 ```typescript
 const {
@@ -169,7 +169,7 @@ const {
     validateBalanceWithCreationFee,
     validateLinkPreviewWithBalance,
     showValidationErrorToast,
-} = useLinkPreviewValidation();
+} = useLinkCreateValidation();
 ```
 
 #### Methods:

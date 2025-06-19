@@ -14,91 +14,79 @@ import { LINK_TYPE } from "@/services/types/enum";
 /**
  * Enhanced centralized validation hook for LinkPreview component with balance checking
  */
-export const useLinkPreviewValidation = () => {
+export const useLinkCreateValidation = () => {
     const { t } = useTranslation();
     const { createTokenMap, getTokenPrice } = useTokens();
 
-    // Show toast notification for validation errors
-    const showValidationErrorToast = useCallback(
-        (errors: ValidationError[]) => {
-            errors.forEach((error) => {
-                switch (error.code) {
-                    case ErrorCode.LINK_NOT_FOUND:
-                        toast.error(t("error.resource.link_not_found"), {
-                            description: error.message,
-                        });
-                        break;
-                    case ErrorCode.ACTION_NOT_FOUND:
-                        toast.error(t("error.resource.action_not_found"), {
-                            description: error.message,
-                        });
-                        break;
-                    case ErrorCode.INSUFFICIENT_BALANCE:
-                        toast.error(t("error.balance.insufficient_balance"), {
-                            description: error.message,
-                        });
-                        break;
-                    case ErrorCode.TRANSACTION_FAILED:
-                        toast.error(t("error.transaction.transaction_failed"), {
-                            description: error.message,
-                        });
-                        break;
-                    case ErrorCode.LINK_CREATION_FAILED:
-                        toast.error(t("error.link.link_creation_failed"), {
-                            description: error.message,
-                        });
-                        break;
-                    case ErrorCode.FORM_VALIDATION_FAILED:
-                        toast.error(t("error.form.form_validation_failed"), {
-                            description: error.message,
-                        });
-                        break;
-                    default:
-                        toast.error(t("common.error"), {
-                            description: error.message,
-                        });
-                        break;
-                }
-            });
-        },
-        [t],
-    );
+    const showValidationErrorToast = (errors: ValidationError[]) => {
+        errors.forEach((error) => {
+            switch (error.code) {
+                case ErrorCode.LINK_NOT_FOUND:
+                    toast.error(t("error.resource.link_not_found"), {
+                        description: error.message,
+                    });
+                    break;
+                case ErrorCode.ACTION_NOT_FOUND:
+                    toast.error(t("error.resource.action_not_found"), {
+                        description: error.message,
+                    });
+                    break;
+                case ErrorCode.INSUFFICIENT_BALANCE:
+                    toast.error(t("error.balance.insufficient_balance"), {
+                        description: error.message,
+                    });
+                    break;
+                case ErrorCode.TRANSACTION_FAILED:
+                    toast.error(t("error.transaction.transaction_failed"), {
+                        description: error.message,
+                    });
+                    break;
+                case ErrorCode.LINK_CREATION_FAILED:
+                    toast.error(t("error.link.link_creation_failed"), {
+                        description: error.message,
+                    });
+                    break;
+                case ErrorCode.FORM_VALIDATION_FAILED:
+                    toast.error(t("error.form.form_validation_failed"), {
+                        description: error.message,
+                    });
+                    break;
+                default:
+                    toast.error(t("common.error"), {
+                        description: error.message,
+                    });
+                    break;
+            }
+        });
+    };
 
     // Validate link preview before submission
-    const validateLinkPreview = useCallback(
-        (link: LinkDetailModel | null): ValidationResult => {
-            const errors: ValidationError[] = [];
+    const validateLinkPreview = useCallback((link: LinkDetailModel | null): ValidationResult => {
+        const errors: ValidationError[] = [];
 
-            // Validate link existence
-            if (!link) {
-                errors.push({
-                    field: "link",
-                    code: ErrorCode.LINK_NOT_FOUND,
-                    message: t("error.resource.link_not_found"),
-                });
-            }
+        // Validate link existence
+        if (!link) {
+            errors.push({
+                field: "link",
+                code: ErrorCode.LINK_NOT_FOUND,
+                message: t("error.resource.link_not_found"),
+            });
+        }
 
-            // Validate link type
-            if (link && !link.linkType) {
-                errors.push({
-                    field: "linkType",
-                    code: ErrorCode.FORM_VALIDATION_FAILED,
-                    message: t("error.form.form_validation_failed"),
-                });
-            }
+        // Validate link type
+        if (link && !link.linkType) {
+            errors.push({
+                field: "linkType",
+                code: ErrorCode.FORM_VALIDATION_FAILED,
+                message: t("error.form.form_validation_failed"),
+            });
+        }
 
-            // Show toast notifications for errors
-            if (errors.length > 0) {
-                showValidationErrorToast(errors);
-            }
-
-            return {
-                isValid: errors.length === 0,
-                errors,
-            };
-        },
-        [showValidationErrorToast],
-    );
+        return {
+            isValid: errors.length === 0,
+            errors,
+        };
+    }, []);
 
     // Simplified action creation validation
     const validateActionCreation = useCallback(
@@ -111,10 +99,6 @@ export const useLinkPreviewValidation = () => {
                     code: ErrorCode.LINK_NOT_FOUND,
                     message: t("error.resource.link_not_found"),
                 });
-            }
-
-            if (errors.length > 0) {
-                showValidationErrorToast(errors);
             }
 
             return { isValid: errors.length === 0, errors };
@@ -198,14 +182,9 @@ export const useLinkPreviewValidation = () => {
                 });
             }
 
-            // Show toast notifications for errors
-            if (errors.length > 0) {
-                showValidationErrorToast(errors);
-            }
-
             return { isValid: errors.length === 0, errors };
         },
-        [createTokenMap, getTokenPrice, showValidationErrorToast],
+        [createTokenMap, getTokenPrice],
     );
 
     const validateCreationFeeOnly = useCallback(
@@ -245,14 +224,9 @@ export const useLinkPreviewValidation = () => {
                 });
             }
 
-            // Show toast notifications for errors
-            if (errors.length > 0) {
-                showValidationErrorToast(errors);
-            }
-
             return { isValid: errors.length === 0, errors };
         },
-        [createTokenMap, showValidationErrorToast],
+        [createTokenMap],
     );
 
     // Enhanced link preview validation with balance check

@@ -256,6 +256,10 @@ export class ValidationService {
             if (!skipBalanceCheck && token.amount !== undefined && token.amount !== null) {
                 const userBalance = token.amount;
 
+                console.log(
+                    `Validating asset ${index + 1}: ${tokenSymbol} - User Balance: ${userBalance}, Required: ${totalAssetAmount}`,
+                );
+
                 if (userBalance < totalAssetAmount) {
                     const availableAmount = Number(userBalance) / Math.pow(10, tokenDecimals);
                     const requiredAmount = Number(totalAssetAmount) / Math.pow(10, tokenDecimals);

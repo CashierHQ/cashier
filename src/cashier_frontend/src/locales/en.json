@@ -437,7 +437,7 @@
             "template_coming_soon": "This feature is coming soon."
         },
         "transaction": {
-            "transaction_failed": "Transaction failed. Please try again."
+            "transaction_failed": "Transaction failed"
         },
         "form": {
             "form_validation_failed": "Form validation failed. Please check your inputs."

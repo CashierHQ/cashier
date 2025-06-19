@@ -37,11 +37,10 @@ interface ConfirmationDrawerV2Props {
     /** Called when an error occurs during the transaction process */
     onCashierError?: (error: Error) => void;
 
+    /** The main function that handles the transaction process. Use for both confirm and retry*/
+    handleConfirmTransaction: () => Promise<void>;
     /** Called after a successful transaction to continue the workflow */
-    onSuccessContinue?: () => Promise<void>;
-
-    /** The main function that handles the transaction process */
-    startTransaction: () => Promise<void>;
+    handleSuccessContinue?: () => Promise<void>;
     /** The max action number for the link, required for fee calculation */
     maxActionNumber?: number;
 }
@@ -59,8 +58,8 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     onClose = () => {},
     // onActionResult = () => {},
     onCashierError = () => {},
-    onSuccessContinue = async () => {},
-    startTransaction,
+    handleSuccessContinue: onSuccessContinue = async () => {},
+    handleConfirmTransaction,
     maxActionNumber,
 }) => {
     const { t } = useTranslation();
@@ -132,11 +131,17 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                 await onSuccessContinue();
             } else {
                 // For new or failed transactions, start/retry the transaction
-                await startTransaction();
+                await handleConfirmTransaction();
             }
         } catch (e) {
             const errorMessage = e instanceof Error ? e : new Error("unknown error");
             onCashierError(errorMessage);
+        } finally {
+            // Reset button state after action is complete
+            setButton({
+                text: t("confirmation_drawer.confirm_button"),
+                disabled: false, // Re-enable button for next action
+            });
         }
         // normally the tx cart will close and page changed after this call, there for no need to update the button state here
     };

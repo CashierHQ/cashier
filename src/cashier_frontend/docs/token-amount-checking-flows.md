@@ -107,7 +107,7 @@ graph TD
 ┌─────────────────────────────────────────────────────────────┐
 │ LinkPreview Token Amount Checking                          │
 ├─────────────────────────────────────────────────────────────┤
-│ Hook: useLinkPreviewValidation                              │
+│ Hook: useLinkCreateValidation                              │
 │ Validation: Balance + Creation                              │
 │ Formula: asset.amount + networkFee + linkCreationFee       │
 │ Link Creation Fee: ✅ Configurable (usually included)       │
@@ -160,7 +160,7 @@ User fills form → Form validation → useFormSubmissionHandler
 ### Link Creation Flow
 
 ```
-User clicks "Create" → Preview validation → useLinkPreviewValidation
+User clicks "Create" → Preview validation → useLinkCreateValidation
                          ↓
         validateBalanceWithCreationFee
                          ↓

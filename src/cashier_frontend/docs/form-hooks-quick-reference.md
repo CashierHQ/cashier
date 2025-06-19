@@ -8,7 +8,7 @@
 | **SendAirdropForm**     | `useSendAirdropFormHandler`     | -                        | Form Submission    | ✅            | Network × Claims   |
 | **SendTokenBasketForm** | `useSendTokenBasketFormHandler` | -                        | Form Submission    | ✅            | Network            |
 | **ReceivePaymentForm**  | `useReceivePaymentFormHandler`  | -                        | Form Submission    | ❌            | None               |
-| **LinkPreview**         | `useLinkPreviewValidation`      | `useLinkCreationHandler` | Creation + Balance | ✅            | Network + Creation |
+| **LinkPreview**         | `useLinkCreateValidation`       | `useLinkCreationHandler` | Creation + Balance | ✅            | Network + Creation |
 | **LinkTemplate**        | `useLinkTemplateValidation`     | `useLinkTemplateHandler` | Template + Support | ❌            | None               |
 | **AddAssetForm**        | Direct ValidationService        | -                        | Asset Addition     | ✅            | Network            |
 
@@ -71,7 +71,7 @@ import { useSendTokenBasketFormHandler } from "@/hooks/form/usePageSubmissionHan
 import { useReceivePaymentFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
 
 // Validation hooks
-import { useLinkPreviewValidation } from "@/hooks/form/useLinkPreviewValidation";
+import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
 import { useLinkTemplateValidation } from "@/hooks/form/useLinkTemplateValidation";
 
 // Core submission logic

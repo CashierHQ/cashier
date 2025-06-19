@@ -12,7 +12,7 @@ import {
     useLinkUserState,
     useUpdateLinkUserState,
 } from "@/hooks/linkUserHooks";
-import { ACTION_TYPE, LINK_USER_STATE, ACTION_STATE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_USER_STATE, ACTION_STATE, LINK_TYPE } from "@/services/types/enum";
 import { useParams } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
@@ -33,6 +33,8 @@ import { toast } from "sonner";
 
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { ClaimSchema } from ".";
+import { useLinkUsageValidation } from "@/hooks/form/useLinkUsageValidation";
+import { isReceiveLinkType } from "@/utils/link-type.utils";
 
 type UseFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
@@ -56,6 +58,7 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
     const identity = useIdentity();
     const { t } = useTranslation();
     const { goToComplete } = useLinkUseNavigation(linkId);
+    const { validateAssetAndFees } = useLinkUsageValidation();
 
     // UI state
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -211,11 +214,24 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
      */
     const handleCreateAction = async (anonymousWalletAddress?: string) => {
         // Don't proceed if initial data is still loading
-        if (isFetching) {
+        if (isFetching || !link) {
             return;
         }
 
-        // Validation
+        // Validation for send-type links to ensure sufficient balance
+        if (isReceiveLinkType(link.linkType as LINK_TYPE)) {
+            const validationResult = await validateAssetAndFees(link);
+            if (!validationResult.isValid) {
+                validationResult.errors.forEach((error) => {
+                    toast.error(error.message);
+                });
+                setUseLinkButton({
+                    text: useLinkButton.text,
+                    disabled: false,
+                });
+                return;
+            }
+        }
 
         try {
             setUseLinkButton({
@@ -460,8 +476,8 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
                 onCashierError={onCashierError}
-                onSuccessContinue={handleUpdateLinkUserState}
-                startTransaction={startTransaction}
+                handleSuccessContinue={handleUpdateLinkUserState}
+                handleConfirmTransaction={startTransaction}
             />
         </>
     );

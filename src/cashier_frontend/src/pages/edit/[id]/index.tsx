@@ -58,6 +58,19 @@ export default function LinkPage() {
         ACTION_TYPE.CREATE_LINK,
     );
 
+    // Navigate to details page if link is in a non-editable state
+    useEffect(() => {
+        if (
+            link?.state &&
+            [LINK_STATE.ACTIVE, LINK_STATE.INACTIVE, LINK_STATE.INACTIVE_ENDED].includes(
+                link.state as LINK_STATE,
+            )
+        ) {
+            navigate(`/details/${link.id}`);
+            return;
+        }
+    }, [link?.state, link?.id, navigate]);
+
     // Get user input data, prioritizing from the oldIdParam if present
     const userInputData = oldIdParam
         ? getUserInput(oldIdParam)

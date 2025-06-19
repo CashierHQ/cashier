@@ -32,9 +32,8 @@ import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 import { FeeHelpers } from "@/services/fee.service";
-import { useLinkPreviewValidation } from "@/hooks/form/useLinkPreviewValidation";
+import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
-import { toast } from "sonner";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -96,12 +95,12 @@ export default function LinkPreview({
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
 
     // Use centralized validation hook with balance checking
-    const { validateLinkPreviewWithBalance } = useLinkPreviewValidation();
+    const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
 
     // Button state is now managed directly in ConfirmationDrawerV2
 
     // Handle process create action - this function is passed as startTransaction to ConfirmationDrawerV2
-    const handleStartTransaction = async (): Promise<void> => {
+    const handleConfirmTransaction = async (): Promise<void> => {
         try {
             if (!action || !link) {
                 throw new Error("Action or Link is not defined");
@@ -113,9 +112,7 @@ export default function LinkPreview({
             });
             if (!validationResult.isValid) {
                 const msg = validationResult.errors.map((error) => error.message).join(", ");
-                toast.error(msg);
-                console.error("Validation failed:", msg);
-                return;
+                throw new Error(msg);
             }
 
             const firstUpdatedAction = await processAction({
@@ -145,9 +142,6 @@ export default function LinkPreview({
             }
         } catch (error) {
             console.error("Error in startTransaction:", error);
-            if (isCashierError(error)) {
-                onCashierError(error);
-            }
             throw error;
         }
     };
@@ -609,8 +603,8 @@ export default function LinkPreview({
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
                 onCashierError={onCashierError}
-                onSuccessContinue={handleSetLinkToActive}
-                startTransaction={handleStartTransaction}
+                handleSuccessContinue={handleSetLinkToActive}
+                handleConfirmTransaction={handleConfirmTransaction}
                 maxActionNumber={Number(link?.maxActionNumber ?? 1)}
             />
         </div>

@@ -126,13 +126,13 @@ export default function ClaimPage() {
         goToChooseWallet();
     };
 
-    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
-        return <LinkNotFound />;
-    }
-
     const isCompletePage = useMemo(() => {
         return location.pathname.endsWith("/complete");
     }, [location.pathname]);
+
+    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
+        return <LinkNotFound />;
+    }
 
     return (
         <MainAppLayout>
@@ -150,23 +150,6 @@ export default function ClaimPage() {
                                 isCompletePage={isCompletePage}
                             />
                         ) : (
-                            // ) : location.pathname.endsWith("/complete") ? (
-                            // <LinkCardWithoutPhoneFrame
-                            //     label={t(`claim_page.${linkData?.linkType}.complete_button`, {
-                            //         defaultValue: "Unknown! Need to check link type",
-                            //     })}
-                            //     message={t(`claim_page.${linkData?.linkType}.complete_message`, {
-                            //         defaultValue: "Unknown! Need to check link type",
-                            //     })}
-                            //     title={getTitleForLink(linkData, getToken)}
-                            //     displayComponent={getDisplayComponentForLink(linkData, getToken)}
-                            //     showHeader={true}
-                            //     headerColor={getHeaderInfoForLink(linkData).headerColor}
-                            //     headerTextColor={getHeaderInfoForLink(linkData).headerTextColor}
-                            //     headerText={getHeaderInfoForLink(linkData).headerText}
-                            //     headerIcon={getHeaderInfoForLink(linkData).headerIcon}
-                            //     disabled={true}
-                            // />
                             <ChooseWallet
                                 refetchLinkDetail={refetchLinkDetail}
                                 form={form}
