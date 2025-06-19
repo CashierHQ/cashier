@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import UsePageForm from "@/components/claim-page/claim-page-form";
 // Removed MultiStepForm context
 import { LinkDetailModel, LinkGetUserStateOutputModel } from "@/services/types/link.service.types";
 import { FC, useCallback, useEffect, useState } from "react";
@@ -32,12 +31,13 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
 
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
-import { ClaimSchema } from ".";
+import { UseSchema } from ".";
 import { useLinkUsageValidation } from "@/hooks/form/useLinkUsageValidation";
 import { isReceiveLinkType } from "@/utils/link-type.utils";
+import UseLinkForm from "@/components/claim-page/use-link-form";
 
 type UseFormPageProps = {
-    form: UseFormReturn<z.infer<typeof ClaimSchema>>;
+    form: UseFormReturn<z.infer<typeof UseSchema>>;
     linkData?: LinkDetailModel;
     refetchLinkUserState: () => Promise<{ data?: LinkGetUserStateOutputModel }>;
     refetchLinkDetail: () => Promise<void>;
@@ -446,7 +446,7 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
     return (
         <>
             <div className="w-full h-full flex flex-grow flex-col">
-                <UsePageForm
+                <UseLinkForm
                     form={form}
                     formData={linkData ?? ({} as LinkDetailModel)}
                     onSubmit={initiateUseLinkAction}

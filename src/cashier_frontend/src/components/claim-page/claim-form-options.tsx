@@ -6,7 +6,7 @@ import { IoWalletOutline } from "react-icons/io5";
 import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
-import { ClaimSchema } from "@/pages/[id]";
+import { UseSchema } from "@/pages/[id]";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { IconInput } from "../icon-input";
@@ -37,7 +37,7 @@ import { FaCheck } from "react-icons/fa";
 import { ClipboardIcon } from "lucide-react";
 
 interface ClaimFormOptionsProps {
-    form: UseFormReturn<z.infer<typeof ClaimSchema>>;
+    form: UseFormReturn<z.infer<typeof UseSchema>>;
     formData?: LinkDetailModel;
     setDisabled: (disabled: boolean) => void;
     disabledInput?: boolean;
@@ -58,7 +58,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     const { linkId } = useParams();
     const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
-    const { link } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
+    const { link, isLoading } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
     const { updateTokenInit } = useTokens();
 
     const isGoogleLogin = signer?.id === "GoogleSigner";
@@ -294,7 +294,14 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
                         .sort((a, b) => {
                             return (a.address ?? "").localeCompare(b.address ?? "");
                         })
-                        .map((asset, index) => <TokenItem key={index} asset={asset} link={link} />)}
+                        .map((asset, index) => (
+                            <TokenItem
+                                key={index}
+                                asset={asset}
+                                link={link}
+                                isLoading={isLoading}
+                            />
+                        ))}
                 </div>
             </div>
 

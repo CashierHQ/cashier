@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { ChooseWallet } from "./ChooseWallet";
 import { useIdentity } from "@nfid/identitykit/react";
 
-export const ClaimSchema = z.object({
+export const UseSchema = z.object({
     token: z.string().min(5),
     amount: z.coerce.number().min(1),
     address: z.string().optional(),
@@ -65,8 +65,8 @@ export default function ClaimPage() {
         !!linkId && !!identity, // Enable fetching if we have a link ID
     );
 
-    const form = useForm<z.infer<typeof ClaimSchema>>({
-        resolver: zodResolver(ClaimSchema),
+    const form = useForm<z.infer<typeof UseSchema>>({
+        resolver: zodResolver(UseSchema),
     });
 
     // Fetch link data when linkId changes
