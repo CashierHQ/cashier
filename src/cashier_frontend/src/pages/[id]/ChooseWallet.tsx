@@ -1,19 +1,18 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import ClaimPageForm from "@/components/claim-page/claim-page-form";
+import UsePageForm from "@/components/claim-page/claim-page-form";
 // Removed MultiStepForm context
 import { LinkDetailModel, LinkGetUserStateOutputModel } from "@/services/types/link.service.types";
 import { FC, useCallback, useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { ClaimSchema } from ".";
 import { z } from "zod";
 import {
     fetchLinkUserState,
     useLinkUserState,
     useUpdateLinkUserState,
 } from "@/hooks/linkUserHooks";
-import { ACTION_TYPE, LINK_USER_STATE, ACTION_STATE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_USER_STATE, ACTION_STATE, LINK_TYPE } from "@/services/types/enum";
 import { useParams } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
@@ -33,37 +32,11 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
 
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
+import { ClaimSchema } from ".";
+import { useLinkUsageValidation } from "@/hooks/form/useLinkUsageValidation";
+import { isReceiveLinkType } from "@/utils/link-type.utils";
 
-/**
- * Determines button text and state based on action state.
- *
- * @param action The current action model (if available)
- * @param t Translation function
- * @returns Object with text and disabled state for the button
- */
-const getDrawerButtonMessage = (
-    action: ActionModel | undefined,
-    t: (key: string) => string,
-): { text: string; disabled: boolean } => {
-    if (!action) {
-        return { text: t("confirmation_drawer.confirm_button"), disabled: false };
-    }
-
-    console.log("getDrawerButtonMessage called with action:", action);
-
-    switch (action.state) {
-        case ACTION_STATE.CREATED:
-            return { text: t("confirmation_drawer.confirm_button"), disabled: false };
-        case ACTION_STATE.SUCCESS:
-            return { text: t("continue"), disabled: false };
-        case ACTION_STATE.PROCESSING:
-            return { text: t("confirmation_drawer.inprogress_button"), disabled: true };
-        case ACTION_STATE.FAIL:
-            return { text: t("retry"), disabled: false };
-    }
-};
-
-type ClaimFormPageProps = {
+type UseFormPageProps = {
     form: UseFormReturn<z.infer<typeof ClaimSchema>>;
     linkData?: LinkDetailModel;
     refetchLinkUserState: () => Promise<{ data?: LinkGetUserStateOutputModel }>;
@@ -73,7 +46,7 @@ type ClaimFormPageProps = {
     onBack?: () => void;
 };
 
-export const ChooseWallet: FC<ClaimFormPageProps> = ({
+export const ChooseWallet: FC<UseFormPageProps> = ({
     form,
     linkData,
     onCashierError = () => {},
@@ -85,13 +58,12 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     const identity = useIdentity();
     const { t } = useTranslation();
     const { goToComplete } = useLinkUseNavigation(linkId);
+    const { validateAssetAndFees } = useLinkUsageValidation();
 
     // UI state
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    // State to track if when the tx is success -> user is continuing to next page
-    const [isCallStateMachine, setIsCallStateMachine] = useState(false);
     const [manuallyClosedDrawer, setManuallyClosedDrawer] = useState(false);
 
     // Button state for confirmation drawer
@@ -150,39 +122,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
         text: t("confirmation_drawer.confirm_button"),
         disabled: false,
     });
-    const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
-        text: string;
-        disabled: boolean;
-    }>({
-        text: isFetching ? "Loading..." : t("confirmation_drawer.confirm_button"),
-        disabled: false,
-    });
-
-    // Update button text based on action state and processing state
-    useEffect(() => {
-        // If we're actively processing, show "Processing..." regardless of action state
-
-        if (isProcessing || isCallStateMachine) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-            return;
-        }
-
-        // If we have an action, use its state to determine button text
-        if (linkUserState?.action) {
-            const confirmButton = getDrawerButtonMessage(linkUserState.action, t);
-            setDrawerConfirmButton(confirmButton);
-            return;
-        }
-
-        // Default state when not processing and no action
-        setDrawerConfirmButton({
-            text: t("confirmation_drawer.confirm_button"),
-            disabled: false,
-        });
-    }, [linkUserState, isProcessing, linkData, isFetching, t]);
 
     // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
@@ -269,19 +208,25 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     };
 
     /**
-     * Handles the form submission process for claiming a link.
+     * Initiates the process of using a link, including validation and action creation.
      *
      * @param {string} anonymousWalletAddress - The wallet address for anonymous users
      */
-    const handleCreateAction = async (anonymousWalletAddress?: string) => {
+    const initiateUseLinkAction = async (anonymousWalletAddress?: string) => {
         // Don't proceed if initial data is still loading
-        if (isFetching) {
+        if (isFetching || !link) {
             return;
         }
 
-        // Validation
-
         try {
+            // Validation for send-type links to ensure sufficient balance
+            if (isReceiveLinkType(link.linkType as LINK_TYPE)) {
+                const validationResult = await validateAssetAndFees(link);
+                if (!validationResult.isValid) {
+                    const msg = validationResult.errors.map((error) => error.message).join(", ");
+                    throw new Error(msg);
+                }
+            }
             setUseLinkButton({
                 text: useLinkButton.text,
                 disabled: true,
@@ -323,7 +268,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     );
                     setShowConfirmation(true);
                 } else if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
-                    // If claim is already complete, navigate to complete page
+                    // If use is already complete, navigate to complete page
                     goToComplete();
                 } else {
                     // Show confirmation for existing action
@@ -332,7 +277,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     setShowConfirmation(true);
                 }
             } else {
-                toast.error(t("link_detail.error.claim_without_login_or_wallet"));
+                toast.error(t("link_detail.error.use_without_login_or_wallet"));
             }
         } catch (error) {
             if (isCashierError(error)) {
@@ -347,7 +292,7 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     };
 
     /**
-     * Processes the claim action with the backend
+     * Processes the use action with the backend
      */
     const handleProcessUseAction = async () => {
         if (!link) throw new Error("Link is not defined");
@@ -414,10 +359,17 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
     };
 
     /**
-     * Main transaction handler - called by the confirmation drawer
      */
     const startTransaction = async () => {
         try {
+            // Validation for send-type links to ensure sufficient balance
+            if (isReceiveLinkType(link!.linkType as LINK_TYPE)) {
+                const validationResult = validateAssetAndFees(link!);
+                if (!validationResult.isValid) {
+                    const msg = validationResult.errors.map((error) => error.message).join(", ");
+                    throw new Error(msg);
+                }
+            }
             setIsProcessing(true);
             await handleProcessUseAction();
         } catch (error) {
@@ -456,12 +408,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
      * Updates link user state after successful transaction
      */ const handleUpdateLinkUserState = async () => {
         try {
-            setIsCallStateMachine(true);
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-
             const result = await updateLinkUserState.mutateAsync({
                 input: {
                     action_type: ACTION_TYPE.USE_LINK,
@@ -470,8 +416,6 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                     anonymous_wallet_address: anonymousWalletAddress,
                 },
             });
-
-            console.log("Link user state updated successfully:", result);
 
             // Perform a comprehensive data refresh with enhanced logging
             try {
@@ -496,18 +440,16 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
             if (isCashierError(error)) {
                 onCashierError(error);
             }
-        } finally {
-            setIsCallStateMachine(false);
         }
     };
 
     return (
         <>
             <div className="w-full h-full flex flex-grow flex-col">
-                <ClaimPageForm
+                <UsePageForm
                     form={form}
                     formData={linkData ?? ({} as LinkDetailModel)}
-                    onSubmit={handleCreateAction}
+                    onSubmit={initiateUseLinkAction}
                     onBack={onBack}
                     isDisabled={useLinkButton.disabled}
                     setDisabled={useCallback((disabled: boolean) => {
@@ -532,22 +474,8 @@ export const ChooseWallet: FC<ClaimFormPageProps> = ({
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
                 onCashierError={onCashierError}
-                onSuccessContinue={handleUpdateLinkUserState}
-                startTransaction={startTransaction}
-                isButtonDisabled={drawerConfirmButton.disabled}
-                setButtonDisabled={useCallback((disabled: boolean) => {
-                    setDrawerConfirmButton((prev) => ({
-                        ...prev,
-                        disabled: disabled,
-                    }));
-                }, [])}
-                buttonText={drawerConfirmButton.text}
-                setButtonText={useCallback((text: string) => {
-                    setDrawerConfirmButton((prev) => ({
-                        ...prev,
-                        text: text,
-                    }));
-                }, [])}
+                handleSuccessContinue={handleUpdateLinkUserState}
+                handleConfirmTransaction={startTransaction}
             />
         </>
     );

@@ -116,7 +116,7 @@ export default function ClaimPage() {
             if (action.state === ACTION_STATE.SUCCESS) {
                 toast.success(t(`claim_page.${linkType}.transaction_success`));
             } else {
-                toast.error(t(`claim_page.${linkType}.transaction_fail`));
+                toast.error(t(`claim_page.${linkType}.transaction_failed`));
             }
         }
     };
@@ -126,13 +126,13 @@ export default function ClaimPage() {
         goToChooseWallet();
     };
 
-    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
-        return <LinkNotFound />;
-    }
-
     const isCompletePage = useMemo(() => {
         return location.pathname.endsWith("/complete");
     }, [location.pathname]);
+
+    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
+        return <LinkNotFound />;
+    }
 
     return (
         <MainAppLayout>
@@ -150,23 +150,6 @@ export default function ClaimPage() {
                                 isCompletePage={isCompletePage}
                             />
                         ) : (
-                            // ) : location.pathname.endsWith("/complete") ? (
-                            // <LinkCardWithoutPhoneFrame
-                            //     label={t(`claim_page.${linkData?.linkType}.complete_button`, {
-                            //         defaultValue: "Unknown! Need to check link type",
-                            //     })}
-                            //     message={t(`claim_page.${linkData?.linkType}.complete_message`, {
-                            //         defaultValue: "Unknown! Need to check link type",
-                            //     })}
-                            //     title={getTitleForLink(linkData, getToken)}
-                            //     displayComponent={getDisplayComponentForLink(linkData, getToken)}
-                            //     showHeader={true}
-                            //     headerColor={getHeaderInfoForLink(linkData).headerColor}
-                            //     headerTextColor={getHeaderInfoForLink(linkData).headerTextColor}
-                            //     headerText={getHeaderInfoForLink(linkData).headerText}
-                            //     headerIcon={getHeaderInfoForLink(linkData).headerIcon}
-                            //     disabled={true}
-                            // />
                             <ChooseWallet
                                 refetchLinkDetail={refetchLinkDetail}
                                 form={form}

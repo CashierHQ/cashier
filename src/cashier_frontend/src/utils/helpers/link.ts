@@ -4,9 +4,9 @@
 import CanisterUtilsService from "@/services/canisterUtils.service";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
-export const getLinkIsClaimed = async (link: LinkDetailModel) => {
+export const getLinkIsUsed = async (link: LinkDetailModel) => {
     const canisterUtils = new CanisterUtilsService();
-    let linkIsClaimed = true;
+    let linkIsUsed = true;
 
     const linkId = link.id;
     const linkAssets = link.asset_info;
@@ -17,12 +17,12 @@ export const getLinkIsClaimed = async (link: LinkDetailModel) => {
             asset.address,
         );
         if (balance > 0n) {
-            linkIsClaimed = false;
+            linkIsUsed = false;
             break;
         }
     }
 
-    return linkIsClaimed;
+    return linkIsUsed;
 };
 
 export const getLinkAssetAmounts = async (link: LinkDetailModel) => {
@@ -34,8 +34,8 @@ export const getLinkAssetAmounts = async (link: LinkDetailModel) => {
         address: string;
         totalAmount: bigint;
         pendingAmount: bigint;
-        claimsAmount: bigint | undefined;
-        assetClaimed: boolean;
+        usesAmount: bigint | undefined;
+        assetUsed: boolean;
     }[] = [];
 
     for (const asset of linkAssets) {
@@ -47,8 +47,8 @@ export const getLinkAssetAmounts = async (link: LinkDetailModel) => {
             address: asset.address,
             totalAmount: asset.amountPerUse * link.maxActionNumber,
             pendingAmount: balance,
-            claimsAmount: link.useActionCounter,
-            assetClaimed: balance === 0n,
+            usesAmount: link.useActionCounter,
+            assetUsed: balance === 0n,
         });
     }
 

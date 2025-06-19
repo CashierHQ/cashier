@@ -12,7 +12,6 @@ import {
     ACTION_STATE,
     ACTION_TYPE,
     LINK_STATE,
-    LINK_TYPE,
     mapStringToLinkState,
     mapStringToLinkType,
 } from "@/services/types/enum";
@@ -58,6 +57,19 @@ export default function LinkPage() {
         linkId,
         ACTION_TYPE.CREATE_LINK,
     );
+
+    // Navigate to details page if link is in a non-editable state
+    useEffect(() => {
+        if (
+            link?.state &&
+            [LINK_STATE.ACTIVE, LINK_STATE.INACTIVE, LINK_STATE.INACTIVE_ENDED].includes(
+                link.state as LINK_STATE,
+            )
+        ) {
+            navigate(`/details/${link.id}`);
+            return;
+        }
+    }, [link?.state, link?.id, navigate]);
 
     // Get user input data, prioritizing from the oldIdParam if present
     const userInputData = oldIdParam
@@ -141,9 +153,8 @@ export default function LinkPage() {
 
     // TODO: update toaster to context, so toasts/banners can be triggered inside components
     const showUnsupportedLinkTypeToast = () => {
-        toast.error("Unsupported link type", {
-            description:
-                "The current link type is currently not supported now. Please choose another link type.",
+        toast.error(t("error.link.link_type_unsupported"), {
+            description: t("error.link.link_type_unsupported"),
         });
     };
 
@@ -156,7 +167,7 @@ export default function LinkPage() {
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
 
-        toast.error(t("transaction.create_intent.action_failed"), {
+        toast.error(t("error.transaction.transaction_failed"), {
             description: cahierError.message,
         });
     };
@@ -217,11 +228,7 @@ export default function LinkPage() {
                                 </MultiStepForm.Item>
 
                                 <MultiStepForm.Item
-                                    name={
-                                        link?.linkType === LINK_TYPE.RECEIVE_PAYMENT
-                                            ? t("create.selectAssets")
-                                            : t("create.addAssets")
-                                    }
+                                    name={t(`create.${link?.linkType}.link_detail_title`)}
                                 >
                                     <LinkDetails />
                                 </MultiStepForm.Item>
