@@ -11,10 +11,8 @@ import { Chain } from "@/services/types/link.service.types";
 interface TokenState {
     // Original data
     rawTokenList: FungibleToken[];
-
     // Filter settings
     filters: TokenFilters;
-
     // Status
     isLoading: boolean;
     isLoadingBalances: boolean;
@@ -109,7 +107,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
         return token?.usdConversionRate;
     },
 
-    // Create a map of tokens by address
+    // Create a map of tokens by address for faster lookups
     createTokenMap: () => {
         const { rawTokenList } = get();
         return rawTokenList.reduce(

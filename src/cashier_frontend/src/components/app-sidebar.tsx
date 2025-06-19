@@ -12,6 +12,7 @@ import { Copy } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { MouseEventHandler } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export interface SidebarMenuItem {
     title: string;
@@ -24,6 +25,7 @@ interface AppSidebarProps {
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { disconnect } = useAuth();
 
@@ -31,7 +33,7 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
         try {
             e.stopPropagation();
             copy(user?.principal.toString() ?? "");
-            toast.success("Address copied to clipboard");
+            toast.success(t("common.success.copied_address"));
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }

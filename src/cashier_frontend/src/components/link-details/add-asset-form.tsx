@@ -31,7 +31,6 @@ import { formatNumber } from "@/utils/helpers/currency";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../ui/separator";
 import { toast } from "sonner";
-import { MessageBanner } from "../ui/message-banner";
 
 type TipLinkAssetFormProps = {
     isMultiAsset: boolean;
@@ -52,10 +51,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [editingAssetIndex, setEditingAssetIndex] = useState<number>(-1);
     const [selectedAssetAddresses, setSelectedAssetAddresses] = useState<string[]>([]);
-    const [notEnoughBalanceErrorToken, setNotEnoughBalanceErrorToken] = useState<string | null>(
-        null,
-    );
-    const [showNotEnoughClaimsError, setShowNotEnoughClaimsError] = useState<boolean>(false);
 
     // Get current input and link type from store
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
@@ -85,8 +80,14 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     }, [link]);
 
     // Get tokens data
-    const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
+    const {
+        isLoading: isLoadingTokens,
+        getTokenPrice,
+        getDisplayTokens,
+        createTokenMap,
+    } = useTokens();
     const allAvailableTokens = getDisplayTokens();
+    const tokenMap = createTokenMap();
 
     useEffect(() => {
         if (!link) {
@@ -327,31 +328,29 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
     };
 
     const handleSubmit = async () => {
-        setNotEnoughBalanceErrorToken(null);
-        setShowNotEnoughClaimsError(false);
         if (!link?.id) throw new Error("Link ID not found");
 
         const formAssets = getValues("assets");
         if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
 
         const notEnoughBalanceAssets = formAssets.filter((asset) => {
-            const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
+            const token = tokenMap[asset.tokenAddress]; // O(1) lookup
             if (!token) return false;
             return Number(asset.amount) > Number(token.amount);
         });
 
         if (notEnoughBalanceAssets.length > 0) {
-            const token = allAvailableTokens?.find(
-                (t) => t.address === notEnoughBalanceAssets[0].tokenAddress,
-            );
+            const token = tokenMap[notEnoughBalanceAssets[0].tokenAddress]; // O(1) lookup
             if (token) {
-                setNotEnoughBalanceErrorToken(token.symbol || "");
+                toast.error(t("create.errors.not_enough_balance"), {
+                    description: `${token.symbol || ""}`,
+                });
             }
             return;
         }
 
         if (maxActionNumber <= 0) {
-            setShowNotEnoughClaimsError(true);
+            toast.error(t("create.errors.not_enough_claims"));
             return;
         }
 
@@ -398,12 +397,8 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
 
             setStep(stepIndex);
         }
-    };
-
-    // Update button state whenever form validity changes
+    }; // Update button state whenever form validity changes
     useEffect(() => {
-        const formAssets = getValues("assets");
-
         setButtonState({
             label: t("continue"),
             isDisabled: isUpdating,
@@ -548,7 +543,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
         const errorMessages: string[] = [];
 
         assets.forEach((asset, index) => {
-            const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
+            const token = tokenMap[asset.tokenAddress]; // O(1) lookup instead of O(n) find
             const tokenSymbol = token?.symbol || "Unknown";
 
             // Check amount
@@ -594,9 +589,11 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                         availableAmountInDecimal / (Math.pow(10, token.decimals) || 1);
                     const requestedAmount =
                         requestedAmountInDecimal / (Math.pow(10, token.decimals) || 1);
-                    const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${formatNumber(
-                        availableAmount.toString(),
-                    )} , Requested: ${formatNumber(requestedAmount.toString())}`;
+                    const errorMsg = t("error.balance.insufficient_balance", {
+                        tokenSymbol,
+                        available: formatNumber(availableAmount.toString()),
+                        required: formatNumber(requestedAmount.toString()),
+                    });
                     errorMessages.push(errorMsg);
                     isValid = false;
                 }
@@ -616,7 +613,7 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                 });
             } else {
                 toast.error(t("add_asset_form.error.validation.title"), {
-                    description: `Found ${errorMessages.length} issues:\n${errorMessages
+                    description: `${t("common.error")}: ${errorMessages.length} issues found:\n${errorMessages
                         .slice(0, 3)
                         .join("\n")}${errorMessages.length > 3 ? "\n...and more" : ""}`,
                 });
@@ -649,13 +646,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                         paddingBottom: `${isMultiAsset ? "16px" : "0px"}`,
                     }}
                 >
-                    {notEnoughBalanceErrorToken && (
-                        <MessageBanner
-                            variant="info"
-                            text={`${t("create.errors.not_enough_balance")} ${notEnoughBalanceErrorToken}`}
-                            className="mb-2"
-                        />
-                    )}
                     {assetFields.fields.map((field, index) => (
                         <div
                             key={field.id}
@@ -701,13 +691,6 @@ export const AddAssetForm: FC<TipLinkAssetFormProps> = ({ isMultiAsset, isAirdro
                     {/* Airdrop Fields */}
                     {isAirdrop && (
                         <>
-                            {showNotEnoughClaimsError && (
-                                <MessageBanner
-                                    variant="info"
-                                    text={t("create.errors.not_enough_claims")}
-                                    className="mb-2"
-                                />
-                            )}
                             <div className="flex gap-4 mb-4">
                                 <div className="input-label-field-container">
                                     <Label>Claims</Label>

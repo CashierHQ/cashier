@@ -2,8 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { IC_EXPLORER_IMAGES_PATH } from "@/const";
-import { MediaQuery } from "@/hooks/responsive-hook";
-import { UIResponsiveType } from "@/pages/edit/[id]/index_responsive";
 import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
@@ -136,23 +134,6 @@ export const formatDateString = (dateString: string): string => {
     }
 };
 
-export const getResponsiveClassname = (
-    responsive: MediaQuery,
-    responsiveObject: UIResponsiveType | undefined,
-): string | undefined => {
-    if (responsiveObject) {
-        if (responsive.isSmallDevice) {
-            return responsiveObject.responsive.mobile;
-        } else if (responsive.isMediumDevice) {
-            return responsiveObject.responsive.tablet ?? responsiveObject.responsive.mobile;
-        } else if (responsive.isLargeDevice) {
-            return responsiveObject.responsive.desktop ?? responsiveObject.responsive.mobile;
-        } else if (responsive.isExtraLargeDevice) {
-            return responsiveObject.responsive.widescreen ?? responsiveObject.responsive.mobile;
-        }
-    }
-};
-
 // Convert token amount to number with exponential token's decimals
 export const convertTokenAmountToNumber = (amount: number, decimals: number): number => {
     return Math.floor(amount * 10 ** decimals);
@@ -205,3 +186,6 @@ export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
             return `/smallLogo.svg`;
     }
 };
+
+// Export link default utilities
+export { getDefaultMaxActionNumber } from "./linkDefaults";

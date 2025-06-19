@@ -23,20 +23,15 @@ import { Plus } from "lucide-react";
 import { AssetFormInput } from "../asset-form-input";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useLinkAction } from "@/hooks/useLinkAction";
-import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { stateToStepIndex } from "@/pages/edit/[id]";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../../ui/separator";
 import { toast } from "sonner";
-import { MessageBanner } from "../../ui/message-banner";
 import {
     createAssetSelectHandler,
     createTokenAddressHandler,
     createRemoveAssetHandler,
-    validateFormAssets,
-    checkInsufficientBalance,
-    formatAssetsForSubmission,
 } from "../form-handlers";
+import { useSendTokenBasketFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
 
 interface SendTokenBasketFormProps {
     initialValues?: {
@@ -53,32 +48,24 @@ export const SendTokenBasketForm = ({
     initialValues: propInitialValues,
 }: SendTokenBasketFormProps) => {
     const { t } = useTranslation();
-    const { link, isUpdating, callLinkStateMachine } = useLinkAction();
+    const { link, isUpdating } = useLinkAction();
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
-    const { setStep } = useMultiStepFormContext();
     const responsive = useDeviceSize();
 
     // State for asset drawer
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [editingAssetIndex, setEditingAssetIndex] = useState<number>(-1);
     const [selectedAssetAddresses, setSelectedAssetAddresses] = useState<string[]>([]);
-    const [notEnoughBalanceErrorToken, setNotEnoughBalanceErrorToken] = useState<string | null>(
-        null,
-    );
     // Get current input and link type from store
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
     // maxUse - initialize based on link data if available, otherwise use defaults
-    const [maxActionNumber, setMaxActionNumber] = useState<number>(1);
+    // default to 1 for SEND_TOKEN_BASKET
+    const [maxActionNumber] = useState<number>(1);
 
-    useEffect(() => {
-        if (!link) return;
-
-        if (link.maxActionNumber > 0) {
-            setMaxActionNumber(Number(link.maxActionNumber));
-        }
-    }, [link]);
+    // Use centralized submission handler
+    const { submitTokenBasketForm } = useSendTokenBasketFormHandler();
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -117,13 +104,6 @@ export const SendTokenBasketForm = ({
         control,
         name: "assets",
     });
-
-    useEffect(() => {
-        console.log("link", link);
-        if (link?.id && link?.maxActionNumber) {
-            setMaxActionNumber(Number(link.maxActionNumber));
-        }
-    }, [link]);
 
     useEffect(() => {
         if (link?.id) {
@@ -231,60 +211,30 @@ export const SendTokenBasketForm = ({
     };
 
     const handleSubmit = async () => {
-        setNotEnoughBalanceErrorToken(null);
-        if (!link?.id) throw new Error("Link ID not found");
+        try {
+            if (!link?.id) {
+                toast.error(t("common.error"), { description: t("error.link.link_id_missing") });
+                return;
+            }
 
-        const formAssets = getValues("assets");
-        if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
+            const formAssets = getValues("assets");
+            if (!formAssets || formAssets.length === 0) {
+                toast.error(t("common.error"), { description: t("error.asset.no_assets_found") });
+                return;
+            }
 
-        // Use the centralized handler to check for insufficient balance
-        const insufficientToken = checkInsufficientBalance(formAssets, allAvailableTokens);
-        if (insufficientToken) {
-            setNotEnoughBalanceErrorToken(insufficientToken);
-            return;
-        }
+            if (maxActionNumber <= 0) {
+                return;
+            }
 
-        if (maxActionNumber <= 0) {
-            return;
-        }
-
-        if (validateFormAssets(formAssets, allAvailableTokens, t, { maxActionNumber })) {
-            // Format assets with correct labels using the centralized handler
-            const formattedAssets = formatAssetsForSubmission(formAssets, link);
-
-            // Update the store with the formatted assets
-            const storeAssets = formattedAssets.map((asset) => {
-                return {
-                    address: asset.tokenAddress,
-                    // linkUseAmount is now just the per-claim amount (not multiplied)
-                    linkUseAmount: asset.amount,
-                    chain: asset.chain!,
-                    label: asset.label!,
-                    usdEquivalent: 0,
-                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
-                };
+            // Use centralized submission handler (hooks now handle toast errors)
+            await submitTokenBasketForm(link.id, formAssets, maxActionNumber);
+        } catch (error) {
+            console.error("SendTokenBasketForm error:", error);
+            // Fallback error toast for any unexpected errors
+            toast.error(t("error.form.form_validation_failed"), {
+                description: error instanceof Error ? error.message : t("common.unknown_error"),
             });
-
-            updateUserInput(link.id, {
-                assets: storeAssets,
-                maxActionNumber: BigInt(maxActionNumber),
-            });
-
-            const input = getUserInput(link.id);
-
-            if (!input) throw new Error("Input not found");
-
-            console.log("Submitting form with input:", input);
-
-            const stateMachineResponse = await callLinkStateMachine({
-                linkId: link.id,
-                linkModel: input,
-                isContinue: true,
-            });
-
-            const stepIndex = stateToStepIndex(stateMachineResponse.state);
-
-            setStep(stepIndex);
         }
     };
 
@@ -442,13 +392,6 @@ export const SendTokenBasketForm = ({
                         paddingBottom: "16px",
                     }}
                 >
-                    {notEnoughBalanceErrorToken && (
-                        <MessageBanner
-                            variant="info"
-                            text={`${t("create.errors.not_enough_balance")} ${notEnoughBalanceErrorToken}`}
-                            className="mb-2"
-                        />
-                    )}
                     {assetFields.fields.map((field, index) => (
                         <div
                             key={field.id}
