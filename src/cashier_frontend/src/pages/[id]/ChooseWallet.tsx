@@ -218,22 +218,15 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
             return;
         }
 
-        // Validation for send-type links to ensure sufficient balance
-        if (isReceiveLinkType(link.linkType as LINK_TYPE)) {
-            const validationResult = await validateAssetAndFees(link);
-            if (!validationResult.isValid) {
-                validationResult.errors.forEach((error) => {
-                    toast.error(error.message);
-                });
-                setUseLinkButton({
-                    text: useLinkButton.text,
-                    disabled: false,
-                });
-                return;
-            }
-        }
-
         try {
+            // Validation for send-type links to ensure sufficient balance
+            if (isReceiveLinkType(link.linkType as LINK_TYPE)) {
+                const validationResult = await validateAssetAndFees(link);
+                if (!validationResult.isValid) {
+                    const msg = validationResult.errors.map((error) => error.message).join(", ");
+                    throw new Error(msg);
+                }
+            }
             setUseLinkButton({
                 text: useLinkButton.text,
                 disabled: true,
@@ -366,10 +359,17 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
     };
 
     /**
-     * Main transaction handler - called by the confirmation drawer
      */
     const startTransaction = async () => {
         try {
+            // Validation for send-type links to ensure sufficient balance
+            if (isReceiveLinkType(link!.linkType as LINK_TYPE)) {
+                const validationResult = validateAssetAndFees(link!);
+                if (!validationResult.isValid) {
+                    const msg = validationResult.errors.map((error) => error.message).join(", ");
+                    throw new Error(msg);
+                }
+            }
             setIsProcessing(true);
             await handleProcessUseAction();
         } catch (error) {
@@ -416,8 +416,6 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
                     anonymous_wallet_address: anonymousWalletAddress,
                 },
             });
-
-            console.log("Link user state updated successfully:", result);
 
             // Perform a comprehensive data refresh with enhanced logging
             try {
