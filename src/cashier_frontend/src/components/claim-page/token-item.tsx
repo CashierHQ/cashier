@@ -55,7 +55,7 @@ const TokenItem: React.FC<TokenItemProps> = ({ link, asset, isLoading = false })
         );
     }
 
-    const tokenAmountForecast = FeeHelpers.forecastActualAmountBasedOnAssetInfo(
+    const tokenAmountForecast = FeeHelpers.forecastActualAmountForLinkUsePage(
         link.linkType,
         token,
         asset.amountPerUse,

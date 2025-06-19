@@ -51,7 +51,7 @@ export const TransactionItem = memo(function TransactionItem({
         }
 
         if (networkFee && token.decimals !== undefined) {
-            const totalTokenAmount = FeeHelpers.forecastActualAmountWithIntent(
+            const totalTokenAmount = FeeHelpers.forecastIcrcFeeForIntent(
                 link.linkType,
                 actionType,
                 intent,

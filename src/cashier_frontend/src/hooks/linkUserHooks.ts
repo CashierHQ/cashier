@@ -38,6 +38,7 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
             identity?.getPrincipal().toText() ?? "",
         ),
         queryFn: async () => {
+            console.log("[useLinkUserState]", input);
             const linkService = new LinkService(identity);
             const userState = await linkService.getLinkUserState(input);
             return userState;

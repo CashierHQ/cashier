@@ -6,11 +6,7 @@ import { LinkDetailModel, LinkGetUserStateOutputModel } from "@/services/types/l
 import { FC, useCallback, useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import {
-    fetchLinkUserState,
-    useLinkUserState,
-    useUpdateLinkUserState,
-} from "@/hooks/linkUserHooks";
+import { fetchLinkUserState, useUpdateLinkUserState } from "@/hooks/linkUserHooks";
 import { ACTION_TYPE, LINK_USER_STATE, ACTION_STATE, LINK_TYPE } from "@/services/types/enum";
 import { useParams } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
@@ -39,20 +35,25 @@ import UseLinkForm from "@/components/claim-page/use-link-form";
 type UseFormPageProps = {
     form: UseFormReturn<z.infer<typeof UseSchema>>;
     linkData?: LinkDetailModel;
+    linkUserState?: LinkGetUserStateOutputModel;
     refetchLinkUserState: () => Promise<{ data?: LinkGetUserStateOutputModel }>;
     refetchLinkDetail: () => Promise<void>;
     onCashierError: (error: Error) => void;
     onActionResult: (action: ActionModel) => void;
     onBack?: () => void;
+    isFetching?: boolean;
 };
 
 export const ChooseWallet: FC<UseFormPageProps> = ({
     form,
     linkData,
     onCashierError = () => {},
+    refetchLinkUserState,
     refetchLinkDetail,
     onActionResult,
     onBack,
+    linkUserState,
+    isFetching,
 }) => {
     const { linkId } = useParams();
     const identity = useIdentity();
@@ -83,19 +84,7 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
         ACTION_TYPE.USE_LINK,
     );
 
-    const enableLocalFetch = !!linkId && !!identity;
-
-    const {
-        data: linkUserState,
-        refetch: refetchLinkUserState,
-        isFetching,
-    } = useLinkUserState(
-        {
-            action_type: ACTION_TYPE.USE_LINK,
-            link_id: linkId ?? "",
-        },
-        enableLocalFetch,
-    );
+    // Removed duplicate useLinkUserState hook as it's now passed from parent
 
     const enhancedRefresh = async () => {
         try {
@@ -123,6 +112,10 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
         disabled: false,
     });
 
+    useEffect(() => {
+        console.log("useLinkButton state updated:", useLinkButton);
+    }, [useLinkButton]);
+
     // Show confirmation drawer when action is available only after initial loading
     useEffect(() => {
         if (linkUserState?.action && !manuallyClosedDrawer) {
@@ -130,37 +123,13 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
         }
     }, [linkUserState?.action, link, manuallyClosedDrawer]);
 
-    // Fetch action data when identity changes or link ID changes
+    // Update button state based on parent's loading state
     useEffect(() => {
-        const fetchInitialData = async () => {
-            setUseLinkButton({
-                text: useLinkButton.text,
-                disabled: true, // Disable button while loading
-            });
-            if (linkId) {
-                try {
-                    await refetchLinkUserState();
-                } catch (error) {
-                    console.error("Error fetching action:", error);
-                } finally {
-                    console.log("Initial data fetch complete for linkId:", linkId);
-                    setUseLinkButton({
-                        text: useLinkButton.text,
-                        disabled: false, // Enable button after loading
-                    });
-                }
-            } else {
-                setUseLinkButton({
-                    text: useLinkButton.text,
-                    disabled: false, // Enable button if no linkId
-                });
-            }
-        };
-
-        fetchInitialData();
-        // Only depend on identity changes, linkId changes, or parent state changes
-        // Explicitly NOT depending on refetchLinkUserState to avoid infinite loops
-    }, [identity, linkId]);
+        setUseLinkButton((prev) => ({
+            ...prev,
+            disabled: !!isFetching,
+        }));
+    }, [isFetching]);
 
     // Polling effect to update action state during processing
     useEffect(() => {

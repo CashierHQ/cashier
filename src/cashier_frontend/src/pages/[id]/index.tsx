@@ -30,18 +30,29 @@ export const UseSchema = z.object({
 });
 
 export default function ClaimPage() {
+    // 1. React Router hooks
     const { linkId } = useParams();
     const location = useLocation();
-    const { renderSkeleton } = useSkeletonLoading();
-    const { t } = useTranslation();
+
+    // 2. State hooks
     const [showDefaultPage, setShowDefaultPage] = useState(true);
+
+    // 3. Translation and UI hooks
+    const { t } = useTranslation();
+    const { renderSkeleton } = useSkeletonLoading();
+
+    // 4. Authentication and core service hooks
+    const identity = useIdentity();
+    const { updateTokenInit } = useTokens();
     const { goToChooseWallet, handleStateBasedNavigation, goToLinkDefault } =
         useLinkUseNavigation(linkId);
 
-    const { updateTokenInit } = useTokens();
-    const identity = useIdentity();
+    // 5. Form hook
+    const form = useForm<z.infer<typeof UseSchema>>({
+        resolver: zodResolver(UseSchema),
+    });
 
-    // Fetch link data
+    // 6. Data fetching hooks - these depend on identity and linkId
     const {
         link: linkData,
         isLoading: isLoadingLinkData,
@@ -49,9 +60,6 @@ export default function ClaimPage() {
         refetchLinkDetail,
     } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
 
-    // Fetch link user state for parent component
-    // only if user logged in and linkId is available
-    // if not, the ChooseWallet component will handle the state
     const {
         data: linkUserState,
         refetch: refetchLinkUserState,
@@ -64,10 +72,6 @@ export default function ClaimPage() {
         },
         !!linkId && !!identity, // Enable fetching if we have a link ID
     );
-
-    const form = useForm<z.infer<typeof UseSchema>>({
-        resolver: zodResolver(UseSchema),
-    });
 
     // Fetch link data when linkId changes
     // link data use for check current link state
@@ -103,33 +107,53 @@ export default function ClaimPage() {
         handleStateBasedNavigation(linkUserState, !!identity);
     }, [linkData, linkUserState, identity, location.pathname, handleStateBasedNavigation]);
 
-    const showCashierErrorToast = (error: Error) => {
-        const cahierError = getCashierError(error);
-        toast.error(t("common.error"), {
-            description: cahierError.message,
-        });
-    };
+    // 7. Memoized callbacks
+    const showCashierErrorToast = useMemo(
+        () => (error: Error) => {
+            const cahierError = getCashierError(error);
+            toast.error(t("common.error"), {
+                description: cahierError.message,
+            });
+        },
+        [t],
+    );
 
-    const onActionResult = (action: ActionModel) => {
-        if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
-            const linkType = linkData?.linkType;
-            if (action.state === ACTION_STATE.SUCCESS) {
-                toast.success(t(`claim_page.${linkType}.transaction_success`));
-            } else {
-                toast.error(t(`claim_page.${linkType}.transaction_failed`));
+    const onActionResult = useMemo(
+        () => (action: ActionModel) => {
+            if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
+                const linkType = linkData?.linkType;
+                if (action.state === ACTION_STATE.SUCCESS) {
+                    toast.success(t(`claim_page.${linkType}.transaction_success`));
+                } else {
+                    toast.error(t(`claim_page.${linkType}.transaction_failed`));
+                }
             }
-        }
-    };
+        },
+        [t, linkData?.linkType],
+    );
 
-    const handleClickClaim = () => {
-        setShowDefaultPage(false);
-        goToChooseWallet();
-    };
+    const handleClickClaim = useMemo(
+        () => () => {
+            setShowDefaultPage(false);
+            goToChooseWallet();
+        },
+        [goToChooseWallet],
+    );
 
     const isCompletePage = useMemo(() => {
         return location.pathname.endsWith("/complete");
     }, [location.pathname]);
 
+    // Memoize callbacks
+    const memoizedOnBack = useMemo(
+        () => () => {
+            setShowDefaultPage(true);
+            goToLinkDefault();
+        },
+        [goToLinkDefault],
+    );
+
+    // Move the early return condition after all hooks are declared
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
         return <LinkNotFound />;
     }
@@ -154,13 +178,12 @@ export default function ClaimPage() {
                                 refetchLinkDetail={refetchLinkDetail}
                                 form={form}
                                 linkData={linkData}
+                                linkUserState={linkUserState}
                                 refetchLinkUserState={refetchLinkUserState}
                                 onActionResult={onActionResult}
                                 onCashierError={showCashierErrorToast}
-                                onBack={() => {
-                                    setShowDefaultPage(true);
-                                    goToLinkDefault();
-                                }}
+                                isFetching={isUserStateLoading}
+                                onBack={memoizedOnBack}
                             />
                         )}
                     </div>

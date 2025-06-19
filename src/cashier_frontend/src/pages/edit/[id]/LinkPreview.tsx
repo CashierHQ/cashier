@@ -499,7 +499,7 @@ export default function LinkPreview({
                                 // Calculate token amount with proper decimals
                                 const token = getToken(asset.address);
 
-                                const forecastAmount = FeeHelpers.forecastActualAmountWithoutIntent(
+                                const forecastAmount = FeeHelpers.forecastActualAmountForPreview(
                                     token!,
                                     BigInt(asset.amountPerUse),
                                     Number(link?.maxActionNumber ?? 1),
