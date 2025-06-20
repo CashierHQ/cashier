@@ -175,13 +175,15 @@ export default function DetailPage() {
 
     const setInactiveEndedLink = async () => {
         try {
+            console.log("Setting link to inactive state...");
             if (!link) throw new Error("Link data is not available");
 
-            await callLinkStateMachine({
+            const res = await callLinkStateMachine({
                 linkId: link.id,
                 linkModel: {},
                 isContinue: true,
             });
+            console.log("Link state machine response:", res);
 
             await refetchLinkDetail();
 
@@ -368,6 +370,7 @@ export default function DetailPage() {
                 onActionResult={handleActionResult}
                 onCashierError={handleCashierError}
                 handleSuccessContinue={async () => {
+                    console.log("Action completed successfully, continuing...");
                     await setInactiveEndedLink();
                 }}
                 handleConfirmTransaction={async () => {

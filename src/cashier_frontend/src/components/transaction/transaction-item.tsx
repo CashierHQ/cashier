@@ -28,7 +28,7 @@ export const TransactionItem = memo(function TransactionItem({
     intent,
     fees = [],
 }: TransactionItemProps) {
-    const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent);
+    const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent, actionType);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
 
     const { getToken, getTokenPrice } = useTokens();

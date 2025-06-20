@@ -36,7 +36,7 @@ type UseFormPageProps = {
     form: UseFormReturn<z.infer<typeof UseSchema>>;
     linkData?: LinkDetailModel;
     linkUserState?: LinkGetUserStateOutputModel;
-    refetchLinkUserState: () => Promise<{ data?: LinkGetUserStateOutputModel }>;
+    refetchLinkUserState: () => Promise<void>;
     refetchLinkDetail: () => Promise<void>;
     onCashierError: (error: Error) => void;
     onActionResult: (action: ActionModel) => void;
@@ -79,7 +79,7 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
     const updateLinkUserState = useUpdateLinkUserState();
 
     // Access link data from props instead of fetching directly
-    const { link, setAction, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
+    const { action, link, anonymousWalletAddress, setAnonymousWalletAddress } = useLinkAction(
         linkId,
         ACTION_TYPE.USE_LINK,
     );
@@ -137,11 +137,8 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
 
         if (isProcessing) {
             intervalId = setInterval(async () => {
-                const res = await refetchLinkUserState();
-                if (res?.data?.action) {
-                    setAction(res.data.action);
-                }
-            }, 2000);
+                await refetchLinkUserState();
+            }, 500);
         }
 
         return () => {
@@ -149,7 +146,7 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
                 clearInterval(intervalId);
             }
         };
-    }, [isProcessing, linkId, refetchLinkUserState, t]);
+    }, [isProcessing]);
 
     /**
      * Creates an action for authenticated users
@@ -435,7 +432,7 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
 
             <ConfirmationDrawerV2
                 open={showConfirmation && !showInfo}
-                action={linkUserState?.action}
+                action={action}
                 onClose={() => {
                     setShowConfirmation(false);
                     setManuallyClosedDrawer(true);

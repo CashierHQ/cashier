@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ACTION_STATE, ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
-import { useLinkUserState } from "@/hooks/linkUserHooks";
+import { getLinkUserStateQueryKey, useLinkUserState } from "@/hooks/linkUserHooks";
 import { DefaultPage } from "./Default";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -22,6 +22,7 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { toast } from "sonner";
 import { ChooseWallet } from "./ChooseWallet";
 import { useIdentity } from "@nfid/identitykit/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const UseSchema = z.object({
     token: z.string().min(5),
@@ -33,6 +34,7 @@ export default function ClaimPage() {
     // 1. React Router hooks
     const { linkId } = useParams();
     const location = useLocation();
+    const queryClient = useQueryClient();
 
     // 2. State hooks
     const [showDefaultPage, setShowDefaultPage] = useState(true);
@@ -54,6 +56,7 @@ export default function ClaimPage() {
 
     // 6. Data fetching hooks - these depend on identity and linkId
     const {
+        action,
         link: linkData,
         isLoading: isLoadingLinkData,
         getLinkDetail,
@@ -62,7 +65,7 @@ export default function ClaimPage() {
 
     const {
         data: linkUserState,
-        refetch: refetchLinkUserState,
+        refetch: refetchLinkUserStateFn,
         isFetching: isUserStateLoading,
     } = useLinkUserState(
         {
@@ -106,6 +109,18 @@ export default function ClaimPage() {
         // For logged-in users with complete state, redirect to complete page
         handleStateBasedNavigation(linkUserState, !!identity);
     }, [linkData, linkUserState, identity, location.pathname, handleStateBasedNavigation]);
+
+    const refetchLinkUserState = async () => {
+        await refetchLinkUserStateFn();
+    };
+
+    useEffect(() => {
+        console.log("Link user state changed:", linkUserState);
+    }, [linkUserState]);
+
+    useEffect(() => {
+        console.log("Action changed:", action);
+    }, [action]);
 
     // 7. Memoized callbacks
     const showCashierErrorToast = useMemo(
