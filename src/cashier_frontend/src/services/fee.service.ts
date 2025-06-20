@@ -204,7 +204,7 @@ export class FeeService {
      * @param maxActionNumber - Maximum number of actions/uses for this transaction
      * @returns Total amount needed in human-readable format (e.g., 1.5 ICP)
      */
-    forecastActualAmountWithoutIntentBasedOnAssetInfo(
+    forecastIcrc1FeeBasedOnAssetInfo(
         tokenInfo: FungibleToken,
         amount: bigint,
         maxActionNumber: number,
@@ -265,14 +265,29 @@ export class FeeService {
      * @param maxActionNumber - Maximum number of actions/uses for this transaction
      * @returns Total amount needed in human-readable format (e.g., 1.5 ICP)
      */
-    forecastActualAmountBasedOnAssetInfo(
+    forecastIcrc1InUseLink(
         linkType: string,
         tokenInfo: FungibleToken,
         amount: bigint,
         maxActionNumber: number,
     ): number {
         const tokenDecimals = tokenInfo.decimals;
+        const totalBigInt = this.forecastIcrc1InUseLinkUlps(
+            linkType,
+            tokenInfo,
+            amount,
+            maxActionNumber,
+        );
 
+        return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
+    }
+
+    forecastIcrc1InUseLinkUlps(
+        linkType: string,
+        tokenInfo: FungibleToken,
+        amount: bigint,
+        maxActionNumber: number,
+    ): bigint {
         if (linkType === "ReceivePayment") {
             // Calculate network fee per transaction using BigInt
             const networkFeeBigInt = this.calculateNetworkFeesInBigInt(tokenInfo);
@@ -284,7 +299,7 @@ export class FeeService {
             const totalBigInt = totalTokenAmountBigInt + networkFeeBigInt;
 
             // Convert to number with proper decimal handling
-            return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
+            return totalBigInt;
         } else if (linkType === "SendAirdrop") {
             // Calculate total token amount in smallest units (BigInt arithmetic)
             const totalTokenAmountBigInt = amount * BigInt(1);
@@ -293,11 +308,11 @@ export class FeeService {
             const totalBigInt = totalTokenAmountBigInt;
 
             // Convert to number with proper decimal handling
-            return convertDecimalBigIntToNumber(totalBigInt, tokenDecimals);
+            return totalBigInt;
         } else {
             // For other link types, just convert token amount
             const totalTokenAmountBigInt = amount * BigInt(maxActionNumber);
-            return convertDecimalBigIntToNumber(totalTokenAmountBigInt, tokenDecimals);
+            return totalTokenAmountBigInt;
         }
     }
 
@@ -316,7 +331,7 @@ export class FeeService {
      * @param tokenInfo - Token information including decimals and fees
      * @returns The total amount needed including all fees
      */
-    forecastActualAmountWithIntent(
+    forecastIcrcFeeForIntent(
         linkType: string,
         actionType: ACTION_TYPE,
         intent: IntentModel,
@@ -389,34 +404,23 @@ export const FeeHelpers = {
     calculateNetworkFees: (tokenInfo: FungibleToken) => feeService.calculateNetworkFees(tokenInfo),
     calculateNetworkFeesInES8: (tokenInfo: FungibleToken) =>
         feeService.calculateNetworkFeesInBigInt(tokenInfo),
-    forecastActualAmountWithoutIntent: (
+    forecastActualAmountForPreview: (
         tokenInfo: FungibleToken,
         amount: bigint,
         maxActionNumber: number,
-    ) =>
-        feeService.forecastActualAmountWithoutIntentBasedOnAssetInfo(
-            tokenInfo,
-            amount,
-            maxActionNumber,
-        ),
-    forecastActualAmountBasedOnAssetInfo: (
+    ) => feeService.forecastIcrc1FeeBasedOnAssetInfo(tokenInfo, amount, maxActionNumber),
+    forecastActualAmountForLinkUsePage: (
         linkType: string,
         tokenInfo: FungibleToken,
         amount: bigint,
         maxActionNumber: number,
-    ) =>
-        feeService.forecastActualAmountBasedOnAssetInfo(
-            linkType,
-            tokenInfo,
-            amount,
-            maxActionNumber,
-        ),
-    forecastActualAmountWithIntent: (
+    ) => feeService.forecastIcrc1InUseLink(linkType, tokenInfo, amount, maxActionNumber),
+    forecastIcrcFeeForIntent: (
         linkType: string,
         actionType: ACTION_TYPE,
         intent: IntentModel,
         tokenInfo: FungibleToken,
-    ) => feeService.forecastActualAmountWithIntent(linkType, actionType, intent, tokenInfo),
+    ) => feeService.forecastIcrcFeeForIntent(linkType, actionType, intent, tokenInfo),
     forecastIcrc2Fee: (tokenInfo: FungibleToken, amount: bigint, maxActionNumber: number) =>
         feeService.forecastIcrc2Fee(tokenInfo, amount, maxActionNumber),
 

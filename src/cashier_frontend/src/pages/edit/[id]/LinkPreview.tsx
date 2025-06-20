@@ -263,8 +263,9 @@ export default function LinkPreview({
             includeLinkCreationFee: true,
         });
         if (!validationResult.isValid) {
-            // Validation errors are automatically shown via toast
-            return;
+            const msg = validationResult.errors.map((error) => error.message).join(", ");
+            console.error("Validation failed:", msg);
+            throw new Error(msg);
         }
 
         try {
@@ -298,8 +299,8 @@ export default function LinkPreview({
                 includeLinkCreationFee: true, // Include creation fee for new link creation
             });
             if (!validationResult.isValid) {
-                // Validation errors are automatically shown via toast
-                return;
+                const msg = validationResult.errors.map((error) => error.message).join(", ");
+                throw new Error(msg);
             }
 
             if (link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
@@ -323,6 +324,7 @@ export default function LinkPreview({
                 setShowConfirmation(true);
             }
         } catch (error) {
+            console.error("Error initiating create link action:", error);
             if (isCashierError(error)) {
                 onCashierError(error);
             }
@@ -499,7 +501,7 @@ export default function LinkPreview({
                                 // Calculate token amount with proper decimals
                                 const token = getToken(asset.address);
 
-                                const forecastAmount = FeeHelpers.forecastActualAmountWithoutIntent(
+                                const forecastAmount = FeeHelpers.forecastActualAmountForPreview(
                                     token!,
                                     BigInt(asset.amountPerUse),
                                     Number(link?.maxActionNumber ?? 1),
@@ -549,7 +551,6 @@ export default function LinkPreview({
                     {/* Use getFee instead of getAllFees to get fee information */}
                     {(() => {
                         const fee = FeeHelpers.getLinkCreationFee();
-                        console.log("Link creation fee:", fee);
                         const token = getToken(fee.address);
                         const tokenSymbol = fee.symbol;
                         const displayAmount = FeeHelpers.forecastIcrc2Fee(

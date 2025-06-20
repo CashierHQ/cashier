@@ -24,7 +24,7 @@ export const getTitleForLink = (
 
     let amount = Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
     if (token) {
-        amount = FeeHelpers.forecastActualAmountBasedOnAssetInfo(
+        amount = FeeHelpers.forecastActualAmountForLinkUsePage(
             linkData?.linkType ?? "",
             token,
             linkData?.asset_info?.[0]?.amountPerUse ?? "0",

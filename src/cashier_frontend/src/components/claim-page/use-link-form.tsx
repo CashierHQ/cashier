@@ -4,23 +4,23 @@
 import React from "react";
 import { Form } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
-import { ClaimSchema } from "@/pages/[id]";
+import { UseSchema } from "@/pages/[id]";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimFormOptions from "./claim-form-options";
-import UseActionButton from "./claim-action-button";
+import UseActionButton from "./use-action-button";
 
-interface ClaimPageFormProps {
-    form: UseFormReturn<z.infer<typeof ClaimSchema>>;
+interface UsePageFormProps {
+    form: UseFormReturn<z.infer<typeof UseSchema>>;
     formData: LinkDetailModel;
-    onSubmit: (address: string) => void;
+    onSubmit: (address: string | undefined) => void;
     onBack?: () => void;
     isDisabled: boolean;
     setDisabled: (disabled: boolean) => void;
     buttonText: string;
 }
 
-const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
+const UseLinkForm: React.FC<UsePageFormProps> = ({
     form,
     formData,
     onSubmit,
@@ -31,7 +31,7 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     const handleSubmit = () => {
         // Disable the button immediately on submission
         setDisabled(true);
-        onSubmit(form.getValues("address") ?? "");
+        onSubmit(form.getValues("address"));
     };
 
     return (
@@ -51,4 +51,4 @@ const ClaimPageForm: React.FC<ClaimPageFormProps> = ({
     );
 };
 
-export default ClaimPageForm;
+export default UseLinkForm;

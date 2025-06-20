@@ -5,7 +5,7 @@ import { ErrorCode } from "@/types/error.enum";
 
 import { LINK_TYPE, CHAIN } from "@/services/types/enum";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { FeeHelpers } from "@/services/fee.service";
+import { FeeHelpers, FeeService } from "@/services/fee.service";
 import { ValidationResult, ValidationError, FormAsset } from "@/types/validation.types";
 
 export class ValidationService {
@@ -112,7 +112,7 @@ export class ValidationService {
     }
 
     /**
-     * Calculate required amount based on link type
+     * Calculate required amount based on link type using FeeService
      */
     private static calculateRequiredAmountAddAsset(
         assetAmount: bigint,
@@ -120,24 +120,13 @@ export class ValidationService {
         maxActionNumber: number,
         token: FungibleToken,
     ): bigint {
-        const networkFee = FeeHelpers.calculateNetworkFeesInES8(token);
-
-        switch (linkType) {
-            case LINK_TYPE.SEND_AIRDROP:
-                // For airdrops, multiply by max action number (uses)
-                return (assetAmount + networkFee) * BigInt(maxActionNumber);
-
-            case LINK_TYPE.SEND_TIP:
-                // For tips, single use only
-                return assetAmount + networkFee;
-
-            case LINK_TYPE.SEND_TOKEN_BASKET:
-                // For token baskets, usually single use but can be configured
-                return (assetAmount + networkFee) * BigInt(maxActionNumber);
-
-            default:
-                return assetAmount + networkFee;
-        }
+        // Convert the human readable amount back to bigint with proper decimals
+        const amountInDecimal = FeeHelpers.forecastActualAmountForPreview(
+            token,
+            assetAmount,
+            maxActionNumber,
+        );
+        return BigInt(Math.round(amountInDecimal * Math.pow(10, token.decimals)));
     }
 
     /**
@@ -168,7 +157,7 @@ export class ValidationService {
         assets: FormAsset[],
         tokenMap: Record<string, FungibleToken>,
         options: {
-            useCase?: "create" | "use" | "withdraw";
+            useCase?: "create" | "use";
             linkType?: LINK_TYPE;
             maxActionNumber?: number;
             includeLinkCreationFee?: boolean;
@@ -223,8 +212,6 @@ export class ValidationService {
             const tokenSymbol = token.symbol || "Unknown";
             const tokenDecimals = token.decimals || 8;
 
-            // Calculate fees based on use case and link type
-            const networkFees = FeeHelpers.calculateNetworkFeesInES8(token);
             let totalAssetAmount: bigint;
 
             switch (useCase) {
@@ -239,14 +226,15 @@ export class ValidationService {
                     break;
                 case "use":
                     // For uses, just the asset amount (fees handled separately)
-                    totalAssetAmount = asset.amount;
-                    break;
-                case "withdraw":
-                    // For withdrawals, minimal fees
-                    totalAssetAmount = asset.amount + networkFees;
+                    totalAssetAmount = new FeeService().forecastIcrc1InUseLinkUlps(
+                        linkType,
+                        token,
+                        asset.amount,
+                        maxActionNumber,
+                    );
                     break;
                 default:
-                    totalAssetAmount = asset.amount + networkFees;
+                    throw new Error(`Unsupported use case: ${useCase}`);
             }
 
             // Store total fees per token
@@ -329,124 +317,6 @@ export class ValidationService {
         });
 
         return result.insufficientTokenSymbol;
-    }
-
-    /**
-     * Enhanced validateBalanceForUseCase that uses the unified validation system
-     */
-    static validateBalanceForUseCase(
-        formAssets: FormAsset[],
-        useCase: "add_asset" | "create" | "use" | "withdraw",
-        linkType: LINK_TYPE,
-        token_map: Record<string, FungibleToken>,
-        options: {
-            maxActionNumber?: number;
-            currentUses?: number;
-            linkBalance?: bigint;
-        } = {},
-    ): ValidationResult {
-        const { maxActionNumber = 1 } = options;
-        const errors: ValidationError[] = [];
-
-        if (!token_map || !formAssets?.length) {
-            return { isValid: true, errors: [] };
-        }
-        const token_fee = FeeHelpers.getLinkCreationFee();
-
-        formAssets.forEach((asset, index) => {
-            const token = token_map[asset.tokenAddress];
-            if (!token) return;
-
-            const tokenSymbol = token.symbol || "Unknown";
-            const tokenDecimals = token.decimals || 8;
-            const userBalance = token.amount || BigInt(0);
-            const is_token_fee = asset.tokenAddress === token_fee.address;
-            // this calculate based on asset info + ledger fee
-            let tokenNeedAmount = this.calculateRequiredAmountAddAsset(
-                asset.amount,
-                linkType,
-                maxActionNumber,
-                token,
-            );
-
-            switch (useCase) {
-                case "add_asset":
-                    // Check if user has enough balance to create the link
-                    if (userBalance < tokenNeedAmount) {
-                        const availableAmount = Number(userBalance) / Math.pow(10, tokenDecimals);
-                        const requiredAmount =
-                            Number(tokenNeedAmount) / Math.pow(10, tokenDecimals);
-
-                        errors.push({
-                            field: `assets.${index}.balance`,
-                            code: ErrorCode.INSUFFICIENT_BALANCE_CREATE,
-                            message: "error.balance.insufficient_balance_create",
-                            metadata: {
-                                tokenSymbol,
-                                available: availableAmount.toFixed(4),
-                                required: requiredAmount.toFixed(4),
-                                linkType: this.getLinkTypeDisplayName(linkType),
-                                tokenAddress: asset.tokenAddress,
-                                useCase,
-                            },
-                        });
-                    }
-                    break;
-                case "create":
-                    if (is_token_fee) {
-                        tokenNeedAmount += token_fee.amount;
-                    }
-                    // Similar to above but add up for create link fee
-                    if (userBalance < tokenNeedAmount) {
-                        const availableAmount = Number(userBalance) / Math.pow(10, tokenDecimals);
-                        const requiredAmount =
-                            Number(tokenNeedAmount) / Math.pow(10, tokenDecimals);
-
-                        errors.push({
-                            field: `assets.${index}.balance`,
-                            code: ErrorCode.INSUFFICIENT_BALANCE_CREATE,
-                            message: "error.balance.insufficient_balance_create",
-                            metadata: {
-                                tokenSymbol,
-                                available: availableAmount.toFixed(4),
-                                required: requiredAmount.toFixed(4),
-                                linkType: this.getLinkTypeDisplayName(linkType),
-                                tokenAddress: asset.tokenAddress,
-                                useCase,
-                            },
-                        });
-                    }
-                    break;
-
-                case "use":
-                    // For using, check if link has enough balance (for send-type links)
-                    if (
-                        [
-                            LINK_TYPE.SEND_TIP,
-                            LINK_TYPE.SEND_AIRDROP,
-                            LINK_TYPE.SEND_TOKEN_BASKET,
-                        ].includes(linkType)
-                    ) {
-                        // Note: linkBalance should be provided for this validation
-                        // This is more of a link-side validation rather than user balance
-                        // Implementation would check if the link has sufficient funds for uses
-                    }
-                    break;
-
-                case "withdraw":
-                    // For withdrawing, check if link has balance to withdraw
-                    // This is typically for link creators withdrawing unused funds
-                    break;
-
-                default:
-                    break;
-            }
-        });
-
-        return {
-            isValid: errors.length === 0,
-            errors,
-        };
     }
 
     static isLinkTypeSupported(linkType: LINK_TYPE): boolean {

@@ -8,15 +8,36 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "@radix-ui/react-avatar";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { FeeHelpers } from "@/services/fee.service";
+import { cn } from "@/lib/utils";
 
 interface TokenItemProps {
     link: LinkDetailModel;
     asset: LinkDetailModel["asset_info"][0];
+    isLoading?: boolean;
 }
 
-const TokenItem: React.FC<TokenItemProps> = ({ link, asset }) => {
+const TokenItemSkeleton = () => {
+    return (
+        <div className="flex justify-between items-center animate-pulse">
+            <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded-full bg-gray-200" />
+                <div className="h-4 w-16 bg-gray-200 rounded" />
+            </div>
+            <div className="flex flex-col items-end">
+                <div className="h-4 w-20 bg-gray-200 rounded mb-1" />
+                <div className="h-3 w-16 bg-gray-200 rounded" />
+            </div>
+        </div>
+    );
+};
+
+const TokenItem: React.FC<TokenItemProps> = ({ link, asset, isLoading = false }) => {
     const { getToken, getTokenPrice } = useTokenStore();
     const token = getToken(asset.address);
+
+    if (isLoading) {
+        return <TokenItemSkeleton />;
+    }
 
     if (!token) {
         return (
@@ -34,7 +55,7 @@ const TokenItem: React.FC<TokenItemProps> = ({ link, asset }) => {
         );
     }
 
-    const tokenAmountForecast = FeeHelpers.forecastActualAmountBasedOnAssetInfo(
+    const tokenAmountForecast = FeeHelpers.forecastActualAmountForLinkUsePage(
         link.linkType,
         token,
         asset.amountPerUse,
@@ -49,7 +70,12 @@ const TokenItem: React.FC<TokenItemProps> = ({ link, asset }) => {
     const approximateUsdValue = tokenAmountForecast * tokenPrice;
 
     return (
-        <div className="flex justify-between items-center">
+        <div
+            className={cn(
+                "flex justify-between items-center",
+                isLoading && "opacity-50 pointer-events-none",
+            )}
+        >
             <div className="flex items-center gap-1.5">
                 <Avatar className="w-5 h-5 rounded-full overflow-hidden">
                     <AssetAvatarV2 token={token} className="w-full h-full object-cover" />
