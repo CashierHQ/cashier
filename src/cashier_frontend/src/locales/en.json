@@ -424,7 +424,7 @@
         },
         "balance": {
             "insufficient_balance": "Insufficient balance for {{tokenSymbol}}. Available: {{available}}, Required: {{required}}.",
-            "insufficient_balance_create": "Cannot create {{linkType}}: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
+            "insufficient_balance_create": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
             "no_uses_available": "No more uses available.",
             "balance_check_failed": "Failed to check token balance."
         },

@@ -85,7 +85,12 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             setButton((prev) => ({
                 ...prev,
                 text: `Continue in ${countdown}s`,
+                disabled: countdown === 1 ? true : prev.disabled,
             }));
+
+            if (countdown === 1) {
+                // Button is disabled when countdown is 1
+            }
         } else if (hasTriggeredByTimer) {
             // If countdown has triggered continue, reset button text
             setButton({
@@ -183,12 +188,9 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             return;
         }
 
-        console.log("Setting up countdown timer for:", countdown);
         const timer = setTimeout(() => {
-            console.log("Timer fired, current countdown:", countdown);
             setCountdown((prev) => {
                 const next = prev - 1;
-                console.log("Updating countdown from", prev, "to", next);
                 return next;
             });
         }, 1000);

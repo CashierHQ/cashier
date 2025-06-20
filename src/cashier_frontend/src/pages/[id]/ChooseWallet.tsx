@@ -184,6 +184,12 @@ export const ChooseWallet: FC<UseFormPageProps> = ({
             return;
         }
 
+        if (!identity) {
+            // If no identity is available, we cannot proceed
+            toast.error(t("link_detail.error.use_without_login_or_wallet"));
+            return;
+        }
+
         try {
             // Validation for send-type links to ensure sufficient balance
             if (isReceiveLinkType(link.linkType as LINK_TYPE)) {
