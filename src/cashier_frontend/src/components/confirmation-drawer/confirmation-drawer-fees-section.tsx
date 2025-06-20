@@ -5,7 +5,7 @@ import { FC, useEffect, useState } from "react";
 import { IntentModel } from "@/services/types/intent.service.types";
 import { FeeHelpers, Transfer } from "@/services/fee.service";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
-import { TASK } from "@/services/types/enum";
+import { ACTION_TYPE, TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
 import { ICP_ADDRESS } from "@/const";
 import { ChevronRight } from "lucide-react";
@@ -22,6 +22,7 @@ type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
     isUsd?: boolean;
     maxActionNumber?: number;
+    actionType: ACTION_TYPE;
 };
 
 // Define a type for fee token info
@@ -43,9 +44,10 @@ type FeeBreakdownItem = {
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
     maxActionNumber,
+    actionType,
 }) => {
     const { t } = useTranslation();
-    const { feeAmount } = useIntentMetadata(intents?.[0]);
+    const { feeAmount } = useIntentMetadata(intents?.[0], actionType);
     const { getTokenPrice, isLoading, getToken } = useTokens();
 
     const [totalCashierFee, setTotalCashierFee] = useState<number>();

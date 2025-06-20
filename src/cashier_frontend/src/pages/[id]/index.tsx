@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ACTION_STATE, ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
-import { useLinkUserState } from "@/hooks/linkUserHooks";
+import { getLinkUserStateQueryKey, useLinkUserState } from "@/hooks/linkUserHooks";
 import { DefaultPage } from "./Default";
 import { getCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -22,39 +22,50 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { toast } from "sonner";
 import { ChooseWallet } from "./ChooseWallet";
 import { useIdentity } from "@nfid/identitykit/react";
+import { useQueryClient } from "@tanstack/react-query";
 
-export const ClaimSchema = z.object({
+export const UseSchema = z.object({
     token: z.string().min(5),
     amount: z.coerce.number().min(1),
     address: z.string().optional(),
 });
 
 export default function ClaimPage() {
+    // 1. React Router hooks
     const { linkId } = useParams();
     const location = useLocation();
-    const { renderSkeleton } = useSkeletonLoading();
-    const { t } = useTranslation();
+    const queryClient = useQueryClient();
+
+    // 2. State hooks
     const [showDefaultPage, setShowDefaultPage] = useState(true);
+
+    // 3. Translation and UI hooks
+    const { t } = useTranslation();
+    const { renderSkeleton } = useSkeletonLoading();
+
+    // 4. Authentication and core service hooks
+    const identity = useIdentity();
+    const { updateTokenInit } = useTokens();
     const { goToChooseWallet, handleStateBasedNavigation, goToLinkDefault } =
         useLinkUseNavigation(linkId);
 
-    const { updateTokenInit } = useTokens();
-    const identity = useIdentity();
+    // 5. Form hook
+    const form = useForm<z.infer<typeof UseSchema>>({
+        resolver: zodResolver(UseSchema),
+    });
 
-    // Fetch link data
+    // 6. Data fetching hooks - these depend on identity and linkId
     const {
+        action,
         link: linkData,
         isLoading: isLoadingLinkData,
         getLinkDetail,
         refetchLinkDetail,
     } = useLinkAction(linkId, ACTION_TYPE.USE_LINK);
 
-    // Fetch link user state for parent component
-    // only if user logged in and linkId is available
-    // if not, the ChooseWallet component will handle the state
     const {
         data: linkUserState,
-        refetch: refetchLinkUserState,
+        refetch: refetchLinkUserStateFn,
         isFetching: isUserStateLoading,
     } = useLinkUserState(
         {
@@ -64,10 +75,6 @@ export default function ClaimPage() {
         },
         !!linkId && !!identity, // Enable fetching if we have a link ID
     );
-
-    const form = useForm<z.infer<typeof ClaimSchema>>({
-        resolver: zodResolver(ClaimSchema),
-    });
 
     // Fetch link data when linkId changes
     // link data use for check current link state
@@ -103,33 +110,65 @@ export default function ClaimPage() {
         handleStateBasedNavigation(linkUserState, !!identity);
     }, [linkData, linkUserState, identity, location.pathname, handleStateBasedNavigation]);
 
-    const showCashierErrorToast = (error: Error) => {
-        const cahierError = getCashierError(error);
-        toast.error(t("common.error"), {
-            description: cahierError.message,
-        });
+    const refetchLinkUserState = async () => {
+        await refetchLinkUserStateFn();
     };
 
-    const onActionResult = (action: ActionModel) => {
-        if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
-            const linkType = linkData?.linkType;
-            if (action.state === ACTION_STATE.SUCCESS) {
-                toast.success(t(`claim_page.${linkType}.transaction_success`));
-            } else {
-                toast.error(t(`claim_page.${linkType}.transaction_failed`));
+    useEffect(() => {
+        console.log("Link user state changed:", linkUserState);
+    }, [linkUserState]);
+
+    useEffect(() => {
+        console.log("Action changed:", action);
+    }, [action]);
+
+    // 7. Memoized callbacks
+    const showCashierErrorToast = useMemo(
+        () => (error: Error) => {
+            const cahierError = getCashierError(error);
+            toast.error(t("common.error"), {
+                description: cahierError.message,
+            });
+        },
+        [t],
+    );
+
+    const onActionResult = useMemo(
+        () => (action: ActionModel) => {
+            if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
+                const linkType = linkData?.linkType;
+                if (action.state === ACTION_STATE.SUCCESS) {
+                    toast.success(t(`claim_page.${linkType}.transaction_success`));
+                } else {
+                    toast.error(t(`claim_page.${linkType}.transaction_failed`));
+                }
             }
-        }
-    };
+        },
+        [t, linkData?.linkType],
+    );
 
-    const handleClickClaim = () => {
-        setShowDefaultPage(false);
-        goToChooseWallet();
-    };
+    const handleClickClaim = useMemo(
+        () => () => {
+            setShowDefaultPage(false);
+            goToChooseWallet();
+        },
+        [goToChooseWallet],
+    );
 
     const isCompletePage = useMemo(() => {
         return location.pathname.endsWith("/complete");
     }, [location.pathname]);
 
+    // Memoize callbacks
+    const memoizedOnBack = useMemo(
+        () => () => {
+            setShowDefaultPage(true);
+            goToLinkDefault();
+        },
+        [goToLinkDefault],
+    );
+
+    // Move the early return condition after all hooks are declared
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
         return <LinkNotFound />;
     }
@@ -154,13 +193,12 @@ export default function ClaimPage() {
                                 refetchLinkDetail={refetchLinkDetail}
                                 form={form}
                                 linkData={linkData}
+                                linkUserState={linkUserState}
                                 refetchLinkUserState={refetchLinkUserState}
                                 onActionResult={onActionResult}
                                 onCashierError={showCashierErrorToast}
-                                onBack={() => {
-                                    setShowDefaultPage(true);
-                                    goToLinkDefault();
-                                }}
+                                isFetching={isUserStateLoading}
+                                onBack={memoizedOnBack}
                             />
                         )}
                     </div>

@@ -13,6 +13,7 @@ import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
 import { BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID } from "./const";
 // useEffect removed - console logging now handled at build time
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const targets = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
 
@@ -95,6 +96,7 @@ function App() {
                         },
                     }}
                 />
+                <ReactQueryDevtools initialIsOpen={true} />
             </QueryClientProvider>
         </IdentityKitProvider>
     );

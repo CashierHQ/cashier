@@ -4,23 +4,39 @@
 import { IntentModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
 
-import { TASK } from "@/services/types/enum";
+import { ACTION_TYPE, TASK } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { useTokens } from "@/hooks/useTokens";
 
-const getIntentTitle = (intent: IntentModel, t: (key: string) => string) => {
-    switch (intent.task) {
-        case TASK.TRANSFER_WALLET_TO_LINK:
-            return t("transaction.confirm_popup.asset_label");
-        case TASK.TRANSFER_WALLET_TO_TREASURY:
-            return t("transaction.confirm_popup.link_creation_fee_label");
-        case TASK.TRANSFER_LINK_TO_WALLET:
-            return t("transaction.confirm_popup.asset_claim_label");
+const getIntentTitle = (
+    intent: IntentModel,
+    actionType: ACTION_TYPE,
+    t: (key: string) => string,
+) => {
+    if (actionType === ACTION_TYPE.CREATE_LINK && intent.task === TASK.TRANSFER_WALLET_TO_LINK) {
+        return t("transaction.confirm_popup.asset_label");
+    } else if (
+        actionType === ACTION_TYPE.WITHDRAW_LINK &&
+        intent.task === TASK.TRANSFER_LINK_TO_WALLET
+    ) {
+        return t("transaction.confirm_popup.asset_withdraw_label");
+    } else if (
+        actionType === ACTION_TYPE.USE_LINK &&
+        intent.task === TASK.TRANSFER_LINK_TO_WALLET
+    ) {
+        return t("transaction.confirm_popup.asset_claim_label");
+    } else if (
+        actionType === ACTION_TYPE.USE_LINK &&
+        intent.task === TASK.TRANSFER_WALLET_TO_LINK
+    ) {
+        return t("transaction.confirm_popup.asset_payment_label");
     }
+
+    return "unknown intent title";
 };
 
 // TODO: handle for anonymous user
-export const useIntentMetadata = (intent: IntentModel) => {
+export const useIntentMetadata = (intent: IntentModel, actionType: ACTION_TYPE) => {
     const { getToken } = useTokens();
     const { t } = useTranslation();
 
@@ -52,7 +68,7 @@ export const useIntentMetadata = (intent: IntentModel) => {
         feeAmount,
         feeSymbol: token?.symbol,
         feeIconSrc: feeToken?.logo,
-        title: getIntentTitle(intent, t),
+        title: getIntentTitle(intent, actionType, t),
         isLoadingMetadata: !!token,
     };
 };
