@@ -247,6 +247,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                         <ConfirmationPopupFeesSection
                             intents={action.intents}
                             maxActionNumber={maxActionNumber}
+                            actionType={action.type}
                         />
                     )}
                     <ConfirmationPopupLegalSection />

@@ -73,7 +73,7 @@ export class ClientTransport implements Transport {
 
     async establishChannel(): Promise<Channel> {
         if (!this.#connection.connected) {
-            await this.#connection.connect();
+            throw new AuthClientTransportError("ClientTransport is not connected");
         }
         return new ClientChannel({
             authClient: this.#authClient,

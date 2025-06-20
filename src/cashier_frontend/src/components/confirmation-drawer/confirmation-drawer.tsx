@@ -300,7 +300,10 @@ export const ConfirmationDrawer: FC<ConfirmationDrawerProps> = ({
                         actionType={action.type}
                         intents={action.intents}
                     />
-                    <ConfirmationPopupFeesSection intents={action.intents} />
+                    <ConfirmationPopupFeesSection
+                        intents={action.intents}
+                        actionType={action.type}
+                    />
 
                     <ConfirmationPopupLegalSection />
                     <Button
