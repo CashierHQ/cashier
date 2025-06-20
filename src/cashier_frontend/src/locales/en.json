@@ -98,6 +98,9 @@
             "cashier_link_label": "Cashier link",
             "send_label": "You send",
             "asset_label": "Asset to add to link",
+            "asset_withdraw_label": "Asset to withdraw",
+            "asset_claim_label": "Asset received",
+            "asset_payment_label": "Asset to pay",
             "asset_use_label": "Asset",
             "cashier_fee_label": "Cashier fee",
             "network_fee_label": "Network fee",
@@ -421,7 +424,7 @@
         },
         "balance": {
             "insufficient_balance": "Insufficient balance for {{tokenSymbol}}. Available: {{available}}, Required: {{required}}.",
-            "insufficient_balance_create": "Cannot create {{linkType}}: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
+            "insufficient_balance_create": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
             "no_uses_available": "No more uses available.",
             "balance_check_failed": "Failed to check token balance."
         },

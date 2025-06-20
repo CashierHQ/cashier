@@ -261,14 +261,30 @@ export const useLinkCreateValidation = () => {
                 );
             }
 
-            // Combine results
-            const allErrors = [...basicValidation.errors, ...balanceValidation.errors];
+            // Enrich insufficient_balance_create errors with details
+            const allErrors = [...basicValidation.errors, ...balanceValidation.errors].map(
+                (error) => {
+                    if (error.code === ErrorCode.INSUFFICIENT_BALANCE_CREATE && error.metadata) {
+                        // Use the translation string with variables
+                        return {
+                            ...error,
+                            message: t("error.balance.insufficient_balance_create", {
+                                required: error.metadata.required,
+                                tokenSymbol: error.metadata.tokenSymbol,
+                                available: error.metadata.available,
+                            }),
+                        };
+                    }
+                    return error;
+                },
+            );
+
             return {
                 isValid: allErrors.length === 0,
                 errors: allErrors,
             };
         },
-        [validateLinkPreview, validateBalanceWithCreationFee],
+        [validateLinkPreview, validateBalanceWithCreationFee, validateCreationFeeOnly, t],
     );
 
     return {
