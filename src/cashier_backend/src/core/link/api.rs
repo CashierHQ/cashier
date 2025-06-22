@@ -17,7 +17,7 @@ use crate::{
         guard::is_not_anonymous,
         GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
     },
-    error,
+    error, info,
     services::{
         self,
         action::ActionService,
@@ -139,8 +139,18 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
 /// * `Err(CanisterError)` - Error if processing fails or action not found
 #[update(guard = "is_not_anonymous")]
 pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
+    info!("=======================================================");
+    let start = ic_cdk::api::time();
+    info!("[process_action] Processing action start time: {:?}", start);
+    let cycles_start = ic_cdk::api::canister_cycle_balance();
+    info!(
+        "[process_action] Processing action cycles_start: {:?}",
+        cycles_start
+    );
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.process_action(input).await
+
+    let res = api.process_action(input).await;
+    res
 }
 
 /// Creates a new action for authenticated users on a specific link.
@@ -752,7 +762,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             .tx_manager_service
             .create_action(&mut temp_action)
             .await;
-
         // TODO: drop lock here
 
         res
@@ -783,7 +792,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
 
         // check wallet address
-        let wallet_address = match Principal::from_text(input.wallet_address.clone()) {
+        let _ = match Principal::from_text(input.wallet_address.clone()) {
             Ok(wa) => wa,
             Err(_) => {
                 return Err(CanisterError::ValidationErrors(

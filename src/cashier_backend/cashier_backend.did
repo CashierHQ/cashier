@@ -17,6 +17,7 @@ type CanisterError = variant {
   InvalidDataError : text;
   InvalidStateTransition : record { to : text; from : text };
   TransactionTimeout : text;
+  BatchError : vec CanisterError;
   InvalidInput : text;
   HandleLogicError : text;
   CanisterCallRejectError : record {
