@@ -64,6 +64,15 @@ function App() {
             onConnectSuccess={() => {}}
             onDisconnect={() => {
                 queryClient.clear();
+                // Clear idle timeout keys for all users
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith("cashier_lastActive_")) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach((key) => localStorage.removeItem(key));
             }}
             authType={IdentityKitAuthType.DELEGATION}
             signers={signers}

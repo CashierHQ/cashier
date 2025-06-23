@@ -22,18 +22,24 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
     const { disconnect, user } = useAuth();
     const intervalRef = useRef<number | null>(null);
 
+    // Helper function to get user-specific key
+    const getUserKey = () => {
+        if (!user) return null;
+        return LAST_ACTIVE_KEY + "_" + user.principal.toString();
+    };
+
     const checkAndUpdate = async () => {
         if (!user) return;
 
-        const lastActiveStr = localStorage.getItem(
-            LAST_ACTIVE_KEY + "_" + user.principal.toString(),
-        );
+        const userKey = getUserKey();
+        if (!userKey) return;
+
+        const lastActiveStr = localStorage.getItem(userKey);
         const now = Date.now();
 
         if (!lastActiveStr) {
             // First time, just set the timestamp
-            console.log("set LAST_ACTIVE_KEY 34");
-            localStorage.setItem(LAST_ACTIVE_KEY, now.toString());
+            localStorage.setItem(userKey, now.toString());
             return;
         }
 
@@ -46,21 +52,20 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
         });
 
         if (timeSinceLastActive >= IDLE_TIMEOUT_MILLI_SEC) {
-            console.log("Idle timeout exceeded, disconnecting");
-            localStorage.removeItem(LAST_ACTIVE_KEY);
+            localStorage.removeItem(userKey);
             await disconnect();
         } else {
             // Update timestamp
-            console.log("set LAST_ACTIVE_KEY 53");
-
-            localStorage.setItem(LAST_ACTIVE_KEY, now.toString());
+            localStorage.setItem(userKey, now.toString());
         }
     };
 
-    // Check on app reload/mount
+    // Check on app reload/mount - but only when user is available
     useEffect(() => {
-        checkAndUpdate();
-    }, []); // Empty dependency - runs only on mount
+        if (user) {
+            checkAndUpdate();
+        }
+    }, [user]); // Depend on user so it runs when user loads
 
     useEffect(() => {
         if (user) {
@@ -80,8 +85,9 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
 
     const contextValue: IdleTimeoutContextValue = {
         updateActivity: () => {
-            if (user) {
-                localStorage.setItem(LAST_ACTIVE_KEY, Date.now().toString());
+            const userKey = getUserKey();
+            if (userKey) {
+                localStorage.setItem(userKey, Date.now().toString());
             }
         },
     };
