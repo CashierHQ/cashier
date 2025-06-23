@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
+import { IdleTimeoutProvider } from "@/contexts/IdleTimeoutProvider";
 import { BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID } from "./const";
 // useEffect removed - console logging now handled at build time
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -18,10 +19,10 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 const targets = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
 
 // nano second
-const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
+export const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
 
 // milli
-const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
+export const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
 
 // only apply for production
 const getDerivationOrigin = () => {
@@ -70,7 +71,7 @@ function App() {
                 targets,
                 maxTimeToLive: TIMEOUT_NANO_SEC,
                 idleOptions: {
-                    idleTimeout: IDLE_TIMEOUT_MILLI_SEC,
+                    idleTimeout: IDLE_TIMEOUT_MILLI_SEC * 2,
                 },
                 // if derivationOrigin is not null, it will be used to derive the signer
                 ...getDerivationOrigin(),
@@ -79,7 +80,9 @@ function App() {
         >
             <QueryClientProvider client={queryClient}>
                 <ImageCacheProvider>
-                    <AppRouter />
+                    <IdleTimeoutProvider>
+                        <AppRouter />
+                    </IdleTimeoutProvider>
                 </ImageCacheProvider>
                 <Toaster
                     position="top-center"
