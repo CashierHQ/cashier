@@ -52,7 +52,6 @@ interface ConfirmationDrawerV2Props {
  * This component is designed to be completely configurable via props, without relying on hooks
  * for internal state. This makes it more flexible for use in different workflows.
  */
-// TODO: remove all the props that are not used in the component
 export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     link,
     open,

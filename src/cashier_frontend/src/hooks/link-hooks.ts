@@ -112,7 +112,7 @@ export function useUpdateLinkMutation() {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (data: UpdateLinkParams) => {
+        mutationFn: async (data: UpdateLinkParams) => {
             if (!identity) throw new Error("Identity is required");
             const linkService = new LinkService(identity);
             const linkLocalStorageService = new LinkLocalStorageServiceV2(
@@ -128,7 +128,7 @@ export function useUpdateLinkMutation() {
                 );
                 return Promise.resolve(localStorageLink);
             } else {
-                const updated_link = linkService.updateLink(
+                const updated_link = await linkService.updateLink(
                     data.linkId,
                     data.linkModel,
                     data.isContinue,

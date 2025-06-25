@@ -18,7 +18,6 @@ import {
     useLinkUserState,
     fetchLinkUserState,
     useUpdateLinkUserState,
-    getLinkUserState,
 } from "@/hooks/linkUserHooks";
 import { getCashierError, isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -40,6 +39,7 @@ import { isReceiveLinkType } from "@/utils/link-type.utils";
 import UseLinkForm from "@/components/use-page/use-link-form";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
+import { usePollingLinkUserState } from "@/hooks/polling/usePollingLinkUserState";
 
 export const UseSchema = z.object({
     token: z.string().min(5),
@@ -140,6 +140,16 @@ export default function ChooseWalletPage() {
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
     const updateLinkUserState = useUpdateLinkUserState();
+
+    // Polling hook
+    const { startPolling, stopPolling } = usePollingLinkUserState({
+        onUpdate: (action) => {
+            setInternalAction(action);
+        },
+        onError: (error) => {
+            console.error("Polling error:", error);
+        },
+    });
 
     // Button state
     const [useLinkButton, setUseLinkButton] = useState<{
@@ -310,25 +320,18 @@ export default function ChooseWalletPage() {
         if (!link) throw new Error("Link is not defined");
         if (!internalAction) throw new Error("Action is not defined");
 
-        let intervalId: number | null = null;
-
         try {
             // Start polling action state to track changes from CREATED to SUCCESS
             if (identity) {
-                intervalId = setInterval(async () => {
-                    const res = await getLinkUserState(
-                        {
-                            action_type: ACTION_TYPE.USE_LINK,
-                            link_id: linkId ?? "",
-                            anonymous_wallet_address: "",
-                        },
-                        identity,
-                    );
-                    if (res.action) {
-                        console.log("polling res state", res.action.state);
-                        setInternalAction(res.action);
-                    }
-                }, 500);
+                startPolling(
+                    {
+                        action_type: ACTION_TYPE.USE_LINK,
+                        link_id: linkId ?? "",
+                        anonymous_wallet_address: "",
+                    },
+                    identity,
+                );
+
                 // Process action for authenticated user
                 const processActionResult = await processAction({
                     linkId: link.id,
@@ -377,10 +380,8 @@ export default function ChooseWalletPage() {
                 }
             }
         } finally {
-            // Keep polling until action reaches final state
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
+            // Stop polling when done
+            stopPolling();
         }
     };
 

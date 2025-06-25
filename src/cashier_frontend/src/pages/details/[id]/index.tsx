@@ -23,8 +23,9 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
-import { useLinkDetailQuery, getLinkDetailQuery } from "@/hooks/link-hooks";
+import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
+import { usePollingLinkAndAction } from "@/hooks/polling/usePollingLinkAndAction";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -54,6 +55,16 @@ export default function DetailPage() {
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
+
+    // Polling hook for tracking action state during withdrawal
+    const { startPollingLinkDetail, stopPolling } = usePollingLinkAndAction({
+        onUpdate: (action) => {
+            setCurrentAction(action);
+        },
+        onError: (error) => {
+            console.error("Polling error:", error);
+        },
+    });
 
     // Update local action state when query action changes
     React.useEffect(() => {
@@ -156,7 +167,6 @@ export default function DetailPage() {
 
     const setInactiveEndedLink = async () => {
         try {
-            console.log("Setting link to inactive state...");
             if (!link) throw new Error("Link data is not available");
 
             const res = await callLinkStateMachine({
@@ -197,23 +207,12 @@ export default function DetailPage() {
     };
 
     const handleWithdrawProcess = async () => {
-        let intervalId: number | null = null;
-
         try {
             if (!link) throw new Error("Link is not defined");
             if (!currentAction) throw new Error("Action is not defined");
 
-            intervalId = setInterval(async () => {
-                const res = await getLinkDetailQuery(
-                    linkId ?? "",
-                    ACTION_TYPE.WITHDRAW_LINK,
-                    identity,
-                );
-                if (res.action) {
-                    console.log("polling res state", res.action.state);
-                    setCurrentAction(res.action);
-                }
-            }, 500);
+            // Start polling to track action state changes
+            startPollingLinkDetail(linkId ?? "", ACTION_TYPE.WITHDRAW_LINK, identity);
 
             const firstUpdatedAction = await processAction({
                 linkId: link.id,
@@ -246,9 +245,8 @@ export default function DetailPage() {
             console.error("Error in withdrawal process:", error);
             throw error;
         } finally {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
+            // Stop polling when process is complete
+            stopPolling();
         }
     };
 
