@@ -14,10 +14,14 @@ import { useTokens } from "@/hooks/useTokens";
 // Import our custom hook for form initialization
 import { useLinkFormInitialization } from "@/hooks/useLinkFormInitialization";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
-import { useLinkAction } from "@/hooks/useLinkAction";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
-export default function LinkDetails() {
-    const { link } = useLinkAction();
+export interface LinkDetailsProps {
+    link?: LinkDetailModel;
+    isUpdating: boolean;
+}
+
+export default function LinkDetails({ link, isUpdating }: LinkDetailsProps) {
     const { setButtonState, getUserInput } = useLinkCreationFormStore();
     const { getDisplayTokens } = useTokens();
     const { renderSkeleton } = useSkeletonLoading();
@@ -46,13 +50,37 @@ export default function LinkDetails() {
     const getLinkForm = () => {
         switch (link?.linkType) {
             case LINK_TYPE.SEND_TOKEN_BASKET:
-                return <SendTokenBasketForm initialValues={initialFormValues} />;
+                return (
+                    <SendTokenBasketForm
+                        link={link}
+                        isUpdating={isUpdating}
+                        initialValues={initialFormValues}
+                    />
+                );
             case LINK_TYPE.SEND_AIRDROP:
-                return <SendAirdropForm initialValues={initialFormValues} />;
+                return (
+                    <SendAirdropForm
+                        link={link}
+                        isUpdating={isUpdating}
+                        initialValues={initialFormValues}
+                    />
+                );
             case LINK_TYPE.SEND_TIP:
-                return <SendTipForm initialValues={initialFormValues} />;
+                return (
+                    <SendTipForm
+                        link={link}
+                        isUpdating={isUpdating}
+                        initialValues={initialFormValues}
+                    />
+                );
             case LINK_TYPE.RECEIVE_PAYMENT:
-                return <ReceivePaymentForm initialValues={initialFormValues} />;
+                return (
+                    <ReceivePaymentForm
+                        link={link}
+                        isUpdating={isUpdating}
+                        initialValues={initialFormValues}
+                    />
+                );
             default:
                 return null;
         }
