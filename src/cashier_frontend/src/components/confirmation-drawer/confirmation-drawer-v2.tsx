@@ -13,12 +13,13 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { ConfirmationPopupLegalSection } from "./confirmation-drawer-legal-section";
 import { ConfirmationPopupFeesSection } from "./confirmation-drawer-fees-section";
 import { FeeHelpers } from "@/services/fee.service";
-import { useLinkAction } from "@/hooks/useLinkAction";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 /**
  * Props interface for the ConfirmationDrawerV2 component
  */
 interface ConfirmationDrawerV2Props {
+    link: LinkDetailModel;
     /** The action model containing all information about the current action */
     action?: ActionModel;
 
@@ -53,6 +54,7 @@ interface ConfirmationDrawerV2Props {
  */
 // TODO: remove all the props that are not used in the component
 export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
+    link,
     open,
     action,
     onClose = () => {},
@@ -65,7 +67,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     const { t } = useTranslation();
     /** Toggle state for showing USD values instead of token values */
     const [countdown, setCountdown] = useState(0);
-    const { link } = useLinkAction();
     const [hasTriggeredByTimer, setHasTriggeredByTimer] = useState(false);
     const [hasClickedOnSuccessContinue, setHasClickedOnSuccessContinue] = useState(false);
 
@@ -236,6 +237,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             return (
                 <>
                     <ConfirmationPopupAssetsSection
+                        link={link}
                         actionType={action.type}
                         intents={action.intents}
                     />
@@ -245,6 +247,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                         action.intents[0].task,
                     ) && (
                         <ConfirmationPopupFeesSection
+                            link={link}
                             intents={action.intents}
                             maxActionNumber={maxActionNumber}
                             actionType={action.type}

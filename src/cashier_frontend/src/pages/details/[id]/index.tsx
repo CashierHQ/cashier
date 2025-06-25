@@ -19,11 +19,12 @@ import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { ActionModel } from "@/services/types/action.service.types";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
+import { useLinkDetailQuery } from "@/hooks/link-hooks";
+import { useLinkMutations } from "@/hooks/useLinkMutations";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -31,18 +32,15 @@ export default function DetailPage() {
     const navigate = useNavigate();
     const { renderSkeleton } = useSkeletonLoading();
 
-    const {
-        link,
-        isLoading,
-        setAction,
-        createAction,
-        callLinkStateMachine,
-        isUpdating,
-        isProcessingAction,
-        refetchLinkDetail,
-        refetchAction,
-        action,
-    } = useLinkAction(linkId, ACTION_TYPE.WITHDRAW_LINK);
+    const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.WITHDRAW_LINK);
+    const { callLinkStateMachine, isUpdating, createAction, isCreatingAction } = useLinkMutations();
+
+    const link = linkDetailQuery.data?.link;
+    const isLoading = linkDetailQuery.isLoading;
+    const queryAction = linkDetailQuery.data?.action;
+
+    // Local state for enriched action
+    const [currentAction, setCurrentAction] = React.useState<ActionModel | undefined>(undefined);
 
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
@@ -57,6 +55,17 @@ export default function DetailPage() {
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
+
+    // Update local action state when query action changes
+    React.useEffect(() => {
+        if (queryAction) {
+            setCurrentAction(queryAction);
+        }
+    }, [queryAction]);
+
+    React.useEffect(() => {
+        linkDetailQuery.refetch();
+    }, []);
 
     React.useEffect(() => {
         const driver = initializeDriver();
@@ -108,13 +117,13 @@ export default function DetailPage() {
             intervalId = setInterval(async () => {
                 try {
                     // Refresh action data
-                    await refetchAction(linkId!, ACTION_TYPE.WITHDRAW_LINK);
+                    await linkDetailQuery.refetch();
 
                     // If action is completed, stop polling
                     if (
-                        action &&
-                        (action.state === ACTION_STATE.SUCCESS ||
-                            action.state === ACTION_STATE.FAIL)
+                        currentAction &&
+                        (currentAction.state === ACTION_STATE.SUCCESS ||
+                            currentAction.state === ACTION_STATE.FAIL)
                     ) {
                         setIsProcessing(false);
                     }
@@ -129,7 +138,7 @@ export default function DetailPage() {
                 clearInterval(intervalId);
             }
         };
-    }, [isProcessing, refetchLinkDetail, action]);
+    }, [isProcessing, currentAction]);
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -157,6 +166,10 @@ export default function DetailPage() {
             localStorage.setItem("viewedLinks", JSON.stringify(updatedViewedLinks));
         }
     }, [linkId, identity]);
+
+    const refetchLinkDetail = async () => {
+        await linkDetailQuery.refetch();
+    };
 
     const setInactiveLink = async () => {
         try {
@@ -196,14 +209,20 @@ export default function DetailPage() {
     const initiateWithdrawAction = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
-            if (action) {
-                setAction(action);
+            if (currentAction) {
+                // Action already exists, use it
+                setShowConfirmationDrawer(true);
             } else {
-                const actionResult = await createAction(link.id, ACTION_TYPE.WITHDRAW_LINK);
-                setAction(actionResult);
+                // Create new action
+                const actionResult = await createAction({
+                    linkId: link.id,
+                    actionType: ACTION_TYPE.WITHDRAW_LINK,
+                });
+                if (actionResult) {
+                    setCurrentAction(actionResult);
+                }
+                setShowConfirmationDrawer(true);
             }
-
-            setShowConfirmationDrawer(true);
         } catch (error) {
             console.error("Error creating withdraw action:", error);
         }
@@ -212,7 +231,7 @@ export default function DetailPage() {
     const handleWithdrawProcess = async () => {
         try {
             if (!link) throw new Error("Link is not defined");
-            if (!action) throw new Error("Action is not defined");
+            if (!currentAction) throw new Error("Action is not defined");
 
             // Set processing state to true to activate polling
             setIsProcessing(true);
@@ -220,25 +239,26 @@ export default function DetailPage() {
             const firstUpdatedAction = await processAction({
                 linkId: link.id,
                 actionType: ACTION_TYPE.WITHDRAW_LINK,
-                actionId: action.id,
+                actionId: currentAction.id,
             });
 
-            setAction(firstUpdatedAction);
-
+            // Update local action state with enriched action
             if (firstUpdatedAction) {
+                setCurrentAction(firstUpdatedAction);
+
                 const response = await icrc112Execute({
                     transactions: firstUpdatedAction.icrc112Requests,
                 });
 
                 if (response) {
                     const secondUpdatedAction = await updateAction({
-                        actionId: action.id,
+                        actionId: currentAction.id,
                         linkId: link.id,
                         external: true,
                     });
 
                     if (secondUpdatedAction) {
-                        setAction(secondUpdatedAction);
+                        setCurrentAction(secondUpdatedAction);
                         handleActionResult(secondUpdatedAction);
 
                         // If action completed successfully, stop polling
@@ -268,7 +288,7 @@ export default function DetailPage() {
     };
 
     const handleActionResult = (actionResult: ActionModel) => {
-        setAction(actionResult);
+        setCurrentAction(actionResult);
     };
 
     return (
@@ -330,7 +350,7 @@ export default function DetailPage() {
                             {link?.state == LINK_STATE.INACTIVE && (
                                 <Button
                                     id="copy-link-button"
-                                    disabled={isProcessingAction || !hasWithdrawableAssets}
+                                    disabled={isCreatingAction || !hasWithdrawableAssets}
                                     onClick={() => {
                                         initiateWithdrawAction();
                                     }}
@@ -364,13 +384,13 @@ export default function DetailPage() {
 
             <ConfirmationDrawerV2
                 open={showConfirmationDrawer}
-                action={action}
+                link={link!}
+                action={currentAction}
                 onClose={() => setShowConfirmationDrawer(false)}
                 onInfoClick={() => {}}
                 onActionResult={handleActionResult}
                 onCashierError={handleCashierError}
                 handleSuccessContinue={async () => {
-                    console.log("Action completed successfully, continuing...");
                     await setInactiveEndedLink();
                 }}
                 handleConfirmTransaction={async () => {

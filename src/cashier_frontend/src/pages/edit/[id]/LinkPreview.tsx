@@ -12,7 +12,6 @@ import { getTokenImage } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
 import {
     ACTION_TYPE,
@@ -34,11 +33,15 @@ import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.servic
 import { FeeHelpers } from "@/services/fee.service";
 import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
+import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useLinkMutations } from "@/hooks/useLinkMutations";
+import { UseQueryResult } from "@tanstack/react-query";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
+    linkDetailQuery: UseQueryResult<{ link: LinkDetailModel; action?: ActionModel }, Error>;
 }
 
 // Define interface for asset info with logo
@@ -55,6 +58,7 @@ export default function LinkPreview({
     // onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
+    linkDetailQuery,
 }: LinkPreviewProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -65,16 +69,13 @@ export default function LinkPreview({
     const oldIdParam = searchParams.get("oldId");
     const shouldRedirect = redirectParam === "true";
 
-    const {
-        link,
-        action,
-        setAction,
-        refetchLinkDetail,
-        callLinkStateMachine,
-        createAction,
-        createNewLink,
-        isLoading,
-    } = useLinkAction();
+    // Use the passed query instead of creating a new one
+    const link = linkDetailQuery.data?.link;
+    const queryAction = linkDetailQuery.data?.action; // Rename to distinguish from internal state
+    const isLoading = linkDetailQuery.isLoading;
+
+    const { callLinkStateMachine, createAction, createNewLink } = useLinkMutations();
+
     const { getToken, getTokenPrice, rawTokenList, createTokenMap } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
     const [showAssetInfo, setShowAssetInfo] = useState(false);
@@ -89,6 +90,50 @@ export default function LinkPreview({
     // flag to indicate if the action is in progress
     const [createActionInProgress, setCreateActionInProgress] = useState(false);
 
+    // State to track if we're transitioning from local to backend link
+    const [isTransitioningToBackend, setIsTransitioningToBackend] = useState(false);
+
+    // ===== INTERNAL ACTION STATE MANAGEMENT =====
+    // The action from the query hook is read-only and managed by React Query's cache.
+    // When we call mutations like updateAction or processAction, the results don't
+    // automatically update the query cache. This internal action state allows us to
+    // track action updates independently of the query cache.
+
+    // Internal action state that can be updated independently
+    const [internalAction, setInternalAction] = useState<ActionModel | undefined>(undefined);
+
+    // Computed current action - use internal action if available, otherwise query action
+    // This ensures we always have the most up-to-date action state
+    const currentAction = internalAction || queryAction;
+
+    // Utility function to update internal action with proper typing and validation
+    const updateInternalAction = (action: ActionModel | undefined) => {
+        setInternalAction(action);
+
+        // Optionally trigger a callback when action changes
+        if (action && onActionResult) {
+            onActionResult(action);
+        }
+    };
+
+    // Sync internal action with query action when query action changes
+    // This ensures we get the initial action from the query
+    useEffect(() => {
+        if (queryAction && !internalAction) {
+            setInternalAction(queryAction);
+        }
+    }, [queryAction, internalAction]);
+
+    // Notify parent when current action changes (now handled in updateInternalAction)
+    // This effect is kept for cases where currentAction changes through other means
+    useEffect(() => {
+        if (currentAction && onActionResult && currentAction !== internalAction) {
+            onActionResult(currentAction);
+        }
+    }, [currentAction, onActionResult, internalAction]);
+
+    // ===== END INTERNAL ACTION STATE MANAGEMENT =====
+
     // Button state management has been moved to ConfirmationDrawerV2
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
@@ -97,12 +142,10 @@ export default function LinkPreview({
     // Use centralized validation hook with balance checking
     const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
 
-    // Button state is now managed directly in ConfirmationDrawerV2
-
-    // Handle process create action - this function is passed as startTransaction to ConfirmationDrawerV2
+    // Handle process create action - this function is passed as handleConfirmTransaction to ConfirmationDrawerV2
     const handleConfirmTransaction = async (): Promise<void> => {
         try {
-            if (!action || !link) {
+            if (!currentAction || !link) {
                 throw new Error("Action or Link is not defined");
             }
 
@@ -116,12 +159,12 @@ export default function LinkPreview({
             }
 
             const firstUpdatedAction = await processAction({
-                actionId: action.id,
+                actionId: currentAction.id,
                 linkId: link.id,
-                actionType: action.type,
+                actionType: currentAction.type,
             });
 
-            setAction(firstUpdatedAction);
+            updateInternalAction(firstUpdatedAction);
 
             if (firstUpdatedAction) {
                 const response = await icrc112Execute({
@@ -130,37 +173,40 @@ export default function LinkPreview({
 
                 if (response) {
                     const secondUpdatedAction = await updateAction({
-                        actionId: action.id,
+                        actionId: currentAction.id,
                         linkId: link.id,
                         external: true,
                     });
 
                     if (secondUpdatedAction) {
-                        setAction(secondUpdatedAction);
+                        updateInternalAction(secondUpdatedAction);
                     }
                 }
             }
         } catch (error) {
-            console.error("Error in startTransaction:", error);
+            console.error("Error in handleConfirmTransaction:", error);
             throw error;
         }
     };
 
     // Check if there's an existing action and show confirmation drawer
     useEffect(() => {
-        if (action && action.type === ACTION_TYPE.CREATE_LINK) {
+        if (currentAction && currentAction.type === ACTION_TYPE.CREATE_LINK) {
             setShowConfirmation(true);
         }
-    }, [action]);
+    }, [currentAction]);
 
     // Update the button state
     useEffect(() => {
         setButtonState({
-            label: isDisabled || isLoading ? t("processing") : t("create.create"),
-            isDisabled: isDisabled || isLoading,
+            label:
+                isDisabled || isLoading || isTransitioningToBackend
+                    ? t("processing")
+                    : t("create.create"),
+            isDisabled: isDisabled || isLoading || isTransitioningToBackend,
             action: initiateCreateLinkAction,
         });
-    }, [isDisabled, isLoading, shouldRedirect, showConfirmation]);
+    }, [isDisabled, isLoading, isTransitioningToBackend, shouldRedirect, showConfirmation]);
 
     // Effect to map rawTokenList logos to asset_info
     useEffect(() => {
@@ -211,7 +257,8 @@ export default function LinkPreview({
             createActionInProgress ||
             !link ||
             !shouldRedirect ||
-            link.id.startsWith(LOCAL_lINK_ID_PREFIX)
+            link.id.startsWith(LOCAL_lINK_ID_PREFIX) ||
+            isTransitioningToBackend
         ) {
             return;
         }
@@ -225,7 +272,7 @@ export default function LinkPreview({
                 setCreateActionInProgress(true); // Set flag to prevent multiple calls
 
                 // Only call handleCreateAction if there's no action yet
-                if (!action) {
+                if (!currentAction) {
                     await handleCreateAction();
                 }
 
@@ -247,7 +294,7 @@ export default function LinkPreview({
         };
 
         handleRedirect();
-    }, [shouldRedirect, link, action]); // Added action as dependency
+    }, [shouldRedirect, link, currentAction, isTransitioningToBackend]); // Added isTransitioningToBackend as dependency
 
     const handleCreateAction = async () => {
         // Validate link exists before creating action
@@ -269,8 +316,11 @@ export default function LinkPreview({
         }
 
         try {
-            const updatedAction = await createAction(link.id, ACTION_TYPE.CREATE_LINK);
-            setAction(updatedAction);
+            const updatedAction = await createAction({
+                linkId: link.id,
+                actionType: ACTION_TYPE.CREATE_LINK,
+            });
+            updateInternalAction(updatedAction);
             return updatedAction;
         } catch (error) {
             console.error("Error creating action:", error);
@@ -281,7 +331,7 @@ export default function LinkPreview({
     /**
      * Handles the submit action when user clicks the create/continue button.
      * If the link has a local ID (starts with LOCAL_lINK_ID_PREFIX), it creates a new link in the backend,
-     * updates the local storage with the newly created link data, and redirects to the edit page with the new link ID.
+     * updates the local storage with the newly created link data, and handles the transition smoothly.
      * If the link already exists in the backend, it creates an action (if one doesn't exist) and shows the confirmation drawer.
      * @returns {Promise<void>}
      */
@@ -304,6 +354,9 @@ export default function LinkPreview({
             }
 
             if (link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
+                // Set transition flag to prevent UI flickering
+                setIsTransitioningToBackend(true);
+
                 // First create the link in the backend
                 const res = await createNewLink(link.id);
 
@@ -314,12 +367,33 @@ export default function LinkPreview({
                 const input = mapLinkDtoToUserInputItem(res?.link);
                 addUserInput(res.link.id, input);
 
-                if (res) {
-                    navigate(`/edit/${res.link.id}?redirect=true&oldId=${res.oldId}`);
+                // Clean up old local storage entry
+                if (identity) {
+                    const localStorageService = new LinkLocalStorageServiceV2(
+                        identity.getPrincipal().toString(),
+                    );
+                    localStorageService.deleteLink(res.oldId);
                 }
+
+                // Create action for the new backend link
+                const newAction = await createAction({
+                    linkId: res.link.id,
+                    actionType: ACTION_TYPE.CREATE_LINK,
+                });
+
+                updateInternalAction(newAction);
+
+                // Update URL in browser history without navigation
+                navigate(`/edit/${res.link.id}?redirect=true&oldId=${res.oldId}`, {
+                    replace: true,
+                });
+
+                // Show confirmation drawer immediately
+                setShowConfirmation(true);
+                setIsTransitioningToBackend(false);
             } else {
-                if (!action) {
-                    handleCreateAction();
+                if (!currentAction) {
+                    await handleCreateAction();
                 }
                 setShowConfirmation(true);
             }
@@ -328,6 +402,7 @@ export default function LinkPreview({
             if (isCashierError(error)) {
                 onCashierError(error);
             }
+            setIsTransitioningToBackend(false);
         } finally {
             setIsDisabled(false);
         }
@@ -342,7 +417,6 @@ export default function LinkPreview({
 
         if (res.state === LINK_STATE.ACTIVE) {
             navigate(`/details/${link!.id}`);
-            refetchLinkDetail();
         }
     };
 
@@ -442,7 +516,7 @@ export default function LinkPreview({
 
     return (
         <div
-            className={`w-full flex flex-col flex-1 overflow-y-auto max-h-[calc(100vh-150px)] pb-24 mt-2 ${responsive.isSmallDevice ? "justify-start" : "gap-4"}`}
+            className={`w-full flex flex-col flex-1 overflow-y-auto max-h-[calc(100vh-150px)] pb-24 mt-2 ${responsive.isSmallDevice ? "justify-start" : "gap-4"} ${isTransitioningToBackend ? "relative" : ""}`}
         >
             <div>
                 <div className="flex gap-2 items-center mb-2 justify-between">
@@ -596,7 +670,8 @@ export default function LinkPreview({
                 onClose={() => setShowAssetInfo(false)}
             />
             <ConfirmationDrawerV2
-                action={action}
+                link={link}
+                action={currentAction}
                 open={showConfirmation && !showInfo}
                 onClose={() => {
                     setShowConfirmation(false);

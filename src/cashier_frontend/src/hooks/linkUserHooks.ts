@@ -9,7 +9,6 @@ import {
 import { Identity } from "@dfinity/agent";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLinkAction } from "./useLinkAction";
 
 // Helper to generate the query key
 export const getLinkUserStateQueryKey = (link_id: string, user_pid: string) =>
@@ -35,14 +34,12 @@ export function useUpdateLinkUserState() {
 export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: boolean) {
     const identity = useIdentity();
     const user_pid = identity?.getPrincipal().toText() ?? "";
-    const { setAction } = useLinkAction(input.link_id, input.action_type);
 
     return useQuery({
         queryKey: getLinkUserStateQueryKey(input.link_id, user_pid),
         queryFn: async () => {
             const linkService = new LinkService(identity);
             const userState = await linkService.getLinkUserState(input);
-            setAction(userState.action);
             return userState;
         },
         enabled: isEnabled,

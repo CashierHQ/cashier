@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { UpdateLinkParams } from "./useLinkAction";
+import { UpdateLinkParams } from "./useLinkMutations";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { groupLinkListByDate } from "@/utils";
 import { LinkModel } from "@/services/types/link.service.types";

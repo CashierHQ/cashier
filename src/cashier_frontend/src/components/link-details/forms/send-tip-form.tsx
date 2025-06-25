@@ -20,7 +20,6 @@ import {
     LINK_TYPE,
 } from "@/services/types/enum";
 import { AssetFormInput } from "../asset-form-input";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../../ui/separator";
 import {
@@ -30,6 +29,7 @@ import {
 } from "../form-handlers";
 import { useSendTipFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
 import { toast } from "sonner";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 interface SendTipFormProps {
     initialValues?: {
@@ -40,11 +40,16 @@ interface SendTipFormProps {
             chain: CHAIN | undefined;
         }[];
     };
+    link: LinkDetailModel;
+    isUpdating: boolean;
 }
 
-export const SendTipForm = ({ initialValues: propInitialValues }: SendTipFormProps) => {
+export const SendTipForm = ({
+    initialValues: propInitialValues,
+    link,
+    isUpdating,
+}: SendTipFormProps) => {
     const { t } = useTranslation();
-    const { link, isUpdating } = useLinkAction();
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
     const responsive = useDeviceSize();
@@ -65,7 +70,7 @@ export const SendTipForm = ({ initialValues: propInitialValues }: SendTipFormPro
     const allAvailableTokens = getDisplayTokens();
 
     // Use centralized submission handler
-    const { submitTipForm } = useSendTipFormHandler();
+    const { submitTipForm } = useSendTipFormHandler(link);
 
     useEffect(() => {
         if (!link) {
@@ -361,6 +366,7 @@ export const SendTipForm = ({ initialValues: propInitialValues }: SendTipFormPro
                             className={`${index !== assetFields.fields.length - 1 ? "" : "mb-10"}`}
                         >
                             <AssetFormInput
+                                link={link}
                                 key={field.id}
                                 fieldId={field.id}
                                 index={index}

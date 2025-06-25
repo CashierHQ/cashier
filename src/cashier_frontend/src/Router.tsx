@@ -6,6 +6,8 @@ import { useDeviceSize } from "./hooks/responsive-hook";
 import LinkPage from "./pages/edit/[id]";
 import HomePage from "@/pages";
 import ClaimPage from "./pages/[id]";
+import ChooseWalletPage from "./pages/[id]/choose-wallet";
+import CompletePage from "./pages/[id]/complete";
 import DetailPage from "./pages/details/[id]";
 import RequireAuth from "./router/RequireAuth";
 import { WalletProvider } from "./contexts/wallet-context";
@@ -29,11 +31,11 @@ const router = createHashRouter([
     },
     {
         path: "/:linkId/choose-wallet",
-        element: <ClaimPage />,
+        element: <ChooseWalletPage />,
     },
     {
         path: "/:linkId/complete",
-        element: <ClaimPage />,
+        element: <CompletePage />,
     },
     {
         path: "/details/:linkId",
