@@ -4,11 +4,11 @@
 import React from "react";
 import { Form } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
-import { UseSchema } from "@/pages/[id]";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimFormOptions from "./claim-form-options";
 import UseActionButton from "./use-action-button";
+import { UseSchema } from "@/pages/[id]/choose-wallet";
 
 interface UsePageFormProps {
     form: UseFormReturn<z.infer<typeof UseSchema>>;

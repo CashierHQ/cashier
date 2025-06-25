@@ -20,7 +20,6 @@ import {
     LINK_TYPE,
 } from "@/services/types/enum";
 import { AssetFormInput } from "../asset-form-input";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../../ui/separator";
 import { toast } from "sonner";
@@ -30,6 +29,7 @@ import {
     createRemoveAssetHandler,
 } from "../form-handlers";
 import { useReceivePaymentFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 interface ReceivePaymentFormProps {
     initialValues?: {
@@ -40,13 +40,16 @@ interface ReceivePaymentFormProps {
             chain: CHAIN | undefined;
         }[];
     };
+    link: LinkDetailModel;
+    isUpdating: boolean;
 }
 
 export const ReceivePaymentForm = ({
     initialValues: propInitialValues,
+    link,
+    isUpdating,
 }: ReceivePaymentFormProps) => {
     const { t } = useTranslation();
-    const { link, isUpdating } = useLinkAction();
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
     const responsive = useDeviceSize();
@@ -64,7 +67,7 @@ export const ReceivePaymentForm = ({
     const [maxActionNumber] = useState<number>(1);
 
     // Use centralized submission handler
-    const { submitReceivePaymentForm } = useReceivePaymentFormHandler();
+    const { submitReceivePaymentForm } = useReceivePaymentFormHandler(link);
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -368,6 +371,7 @@ export const ReceivePaymentForm = ({
                             className={`${index !== assetFields.fields.length - 1 ? "" : "mb-10"}`}
                         >
                             <AssetFormInput
+                                link={link}
                                 key={field.id}
                                 fieldId={field.id}
                                 index={index}

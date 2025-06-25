@@ -11,7 +11,6 @@ import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useLinksListQuery } from "@/hooks/link-hooks";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { AuthenticatedContent, UnauthenticatedContent } from "@/components/main-page";
 import { toast } from "sonner";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
@@ -23,14 +22,11 @@ export default function HomePage() {
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
     const { data: linkData, isLoading: isLinksLoading, refetch } = useLinksListQuery();
-    const { link, action, setAction, setLink } = useLinkAction();
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [disableCreateButton, setDisableCreateButton] = useState(false);
     const navigate = useNavigate();
-
-    const { resetLinkAndAction } = useLinkAction();
 
     const handleCreateLink = async () => {
         if (!identity) {
@@ -55,14 +51,6 @@ export default function HomePage() {
                 linkType: LINK_TYPE.SEND_TIP,
                 assets: [],
             });
-
-            if (action) {
-                setAction(undefined);
-            }
-
-            if (link) {
-                setLink(undefined);
-            }
 
             navigate(`/edit/${linkId}`);
         } catch {
@@ -153,7 +141,6 @@ export default function HomePage() {
                     handleCreateLink={handleCreateLink}
                     isLoading={isLoading}
                     linkData={linkData}
-                    resetLinkAndAction={resetLinkAndAction}
                 />
             )}
         </MainAppLayout>

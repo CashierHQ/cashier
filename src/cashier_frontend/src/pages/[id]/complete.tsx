@@ -7,24 +7,22 @@ import { ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
 import { useLinkUserState } from "@/hooks/linkUserHooks";
 import { DefaultPage } from "@/components/use-page/default-page";
-
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
 import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 
-export default function ClaimPage() {
+export default function CompletePage() {
     const { linkId } = useParams();
 
     const { renderSkeleton } = useSkeletonLoading();
 
     const identity = useIdentity();
     const { updateTokenInit } = useTokens();
-    const { goToChooseWallet, handleStateBasedNavigation } = useLinkUseNavigation(linkId);
+    const { handleStateBasedNavigation, goToChooseWallet } = useLinkUseNavigation(linkId);
 
     // Data fetching hooks
     const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
@@ -40,19 +38,12 @@ export default function ClaimPage() {
         !!linkId && !!identity,
     );
 
-    // Fetch link data when linkId changes
-    useEffect(() => {
-        if (linkId && !linkData) {
-            linkDetailQuery.refetch();
-        }
-    }, [linkId, linkData]);
-
-    // Enable linkUserState fetching when link data is available
+    // Initialize tokens when link data is available
     useEffect(() => {
         if (linkData) {
             updateTokenInit();
         }
-    }, [linkData]);
+    }, [linkData, updateTokenInit]);
 
     // Handle state-based navigation for logged-in users
     useEffect(() => {
@@ -85,7 +76,7 @@ export default function ClaimPage() {
                             onClickClaim={handleClickClaim}
                             isUserStateLoading={isUserStateLoading}
                             isLoggedIn={!!identity}
-                            isCompletePage={false}
+                            isCompletePage={true}
                         />
                     </div>
                 )}

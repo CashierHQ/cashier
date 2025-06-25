@@ -8,18 +8,18 @@ import {
     TemplateSubmissionContext,
 } from "./useSubmissionHandler";
 import { useLinkTemplateValidation } from "./useLinkTemplateValidation";
-import { useLinkAction } from "../useLinkAction";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { LINK_TYPE } from "@/services/types/enum";
 import { FormAsset } from "@/types/validation.types";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 /**
  * Hook for handling form submissions in link detail forms
  * (SendTipForm, SendAirdropForm, SendTokenBasketForm, ReceivePaymentForm)
  */
-export const useFormSubmissionHandler = () => {
-    const { handleFormSubmission } = useSubmissionHandler();
+export const useFormSubmissionHandler = (link: LinkDetailModel) => {
+    const { handleFormSubmission } = useSubmissionHandler(link);
 
     const submitForm = useCallback(
         async (
@@ -55,11 +55,10 @@ export const useFormSubmissionHandler = () => {
  * Hook for handling template submissions
  * (LinkTemplate component)
  */
-export const useLinkTemplateHandler = () => {
-    const { handleTemplateSubmission } = useSubmissionHandler();
+export const useLinkTemplateHandler = (link: LinkDetailModel) => {
+    const { handleTemplateSubmission } = useSubmissionHandler(link);
     const { validateLinkTemplate, isLinkTypeSupported } = useLinkTemplateValidation();
     const { getUserInput } = useLinkCreationFormStore();
-    const { link } = useLinkAction();
     const carousel = useCarousel();
 
     const submitTemplate = useCallback(
@@ -93,8 +92,8 @@ export const useLinkTemplateHandler = () => {
 /**
  * Hook specifically for SendTipForm component
  */
-export const useSendTipFormHandler = () => {
-    const { submitForm } = useFormSubmissionHandler();
+export const useSendTipFormHandler = (link: LinkDetailModel) => {
+    const { submitForm } = useFormSubmissionHandler(link);
 
     const submitTipForm = useCallback(
         async (
@@ -118,8 +117,8 @@ export const useSendTipFormHandler = () => {
 /**
  * Hook specifically for SendAirdropForm component
  */
-export const useSendAirdropFormHandler = () => {
-    const { submitForm } = useFormSubmissionHandler();
+export const useSendAirdropFormHandler = (link: LinkDetailModel) => {
+    const { submitForm } = useFormSubmissionHandler(link);
 
     const submitAirdropForm = useCallback(
         async (
@@ -143,8 +142,8 @@ export const useSendAirdropFormHandler = () => {
 /**
  * Hook specifically for SendTokenBasketForm component
  */
-export const useSendTokenBasketFormHandler = () => {
-    const { submitForm } = useFormSubmissionHandler();
+export const useSendTokenBasketFormHandler = (link: LinkDetailModel) => {
+    const { submitForm } = useFormSubmissionHandler(link);
 
     const submitTokenBasketForm = useCallback(
         async (
@@ -168,8 +167,8 @@ export const useSendTokenBasketFormHandler = () => {
 /**
  * Hook specifically for ReceivePaymentForm component
  */
-export const useReceivePaymentFormHandler = () => {
-    const { submitForm } = useFormSubmissionHandler();
+export const useReceivePaymentFormHandler = (link: LinkDetailModel) => {
+    const { submitForm } = useFormSubmissionHandler(link);
 
     const submitReceivePaymentForm = useCallback(
         async (

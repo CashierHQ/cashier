@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
 import LinkService, { UpdateActionInputModel } from "@/services/link/link.service";
 import { ACTION_TYPE } from "@/services/types/enum";
@@ -24,11 +24,18 @@ type AnonymousActionParams = BaseActionParams & {
  */
 export function useCreateAction() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (params: BaseActionParams) => {
             const linkService = new LinkService(identity);
             return linkService.createAction(params);
+        },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after action creation
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
+            });
         },
     });
 
@@ -40,6 +47,7 @@ export function useCreateAction() {
  */
 export function useProcessAction() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (params: BaseActionParams) => {
@@ -53,6 +61,12 @@ export function useProcessAction() {
                 actionId: params.actionId,
             });
         },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after action processing
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
+            });
+        },
     });
 
     return mutation;
@@ -63,6 +77,7 @@ export function useProcessAction() {
  */
 export function useCreateActionAnonymous() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (params: AnonymousActionParams) => {
@@ -74,8 +89,14 @@ export function useCreateActionAnonymous() {
 
             return linkService.createActionAnonymous({
                 linkId: params.linkId,
-                actionType: params.actionType,
+                actionType: params.actionType.toString(),
                 walletAddress: params.walletAddress,
+            });
+        },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after anonymous action creation
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
             });
         },
     });
@@ -88,6 +109,7 @@ export function useCreateActionAnonymous() {
  */
 export function useProcessActionAnonymous() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (params: AnonymousActionParams) => {
@@ -102,9 +124,15 @@ export function useProcessActionAnonymous() {
 
             return linkService.processActionAnonymousV2({
                 linkId: params.linkId,
-                actionType: params.actionType,
+                actionType: params.actionType.toString(),
                 actionId: params.actionId,
                 walletAddress: params.walletAddress,
+            });
+        },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after anonymous action processing
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
             });
         },
     });
@@ -114,11 +142,18 @@ export function useProcessActionAnonymous() {
 
 export function useUpdateAction() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (vars: UpdateActionInputModel) => {
             const linkService = new LinkService(identity);
             return linkService.updateAction(vars);
+        },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after action update
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
+            });
         },
     });
 

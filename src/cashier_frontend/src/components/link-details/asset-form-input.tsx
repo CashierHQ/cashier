@@ -13,9 +13,9 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { FeeHelpers } from "@/services/fee.service";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 
@@ -30,9 +30,11 @@ type AssetFormInputProps = {
     isAirdrop?: boolean;
     linkId?: string;
     isTip?: boolean;
+    link: LinkDetailModel;
 };
 
 export const AssetFormInput: FC<AssetFormInputProps> = ({
+    link,
     index,
     form,
     onAssetSelect,
@@ -49,14 +51,8 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     const [localTokenAmount, setLocalTokenAmount] = useState<string>("");
     const [localUsdAmount, setLocalUsdAmount] = useState<string>("");
 
-    const { link } = useLinkAction();
-
     const { t } = useTranslation();
-    const {
-        getValues,
-        formState: { errors },
-        watch,
-    } = form;
+    const { getValues, watch } = form;
     const { getToken, getTokenPrice } = useTokens();
     const { updateUserInput, getUserInput } = useLinkCreationFormStore();
 

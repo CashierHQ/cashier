@@ -112,9 +112,13 @@ export function MultiStepFormHeader({
 
 interface MultiStepFormItemsProps {
     children?: ReactNode;
+    disableAnimations?: boolean;
 }
 
-export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
+export function MultiStepFormItems({
+    children,
+    disableAnimations = false,
+}: MultiStepFormItemsProps) {
     const { step, setSteps, setStepName, direction } = useMultiStepFormContext();
 
     const stepsList = Children.toArray(children) as ReactElement<MultiStepFormItemProps>[];
@@ -130,17 +134,20 @@ export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
             <div
                 key={step}
                 className={cn(
-                    "w-full h-full flex flex-col flex-grow transition-all duration-300 ease-in-out",
-                    direction === "forward" && [
-                        "animate-in slide-in-from-right",
-                        "data-[state=entering]:translate-x-full",
-                        "data-[state=entered]:translate-x-0",
-                    ],
-                    direction === "backward" && [
-                        "animate-in slide-in-from-left",
-                        "data-[state=entering]:translate-x-[-100%]",
-                        "data-[state=entered]:translate-x-0",
-                    ],
+                    "w-full h-full flex flex-col flex-grow",
+                    !disableAnimations && "transition-all duration-300 ease-in-out",
+                    !disableAnimations &&
+                        direction === "forward" && [
+                            "animate-in slide-in-from-right",
+                            "data-[state=entering]:translate-x-full",
+                            "data-[state=entered]:translate-x-0",
+                        ],
+                    !disableAnimations &&
+                        direction === "backward" && [
+                            "animate-in slide-in-from-left",
+                            "data-[state=entering]:translate-x-[-100%]",
+                            "data-[state=entered]:translate-x-0",
+                        ],
                 )}
             >
                 {stepComponent}

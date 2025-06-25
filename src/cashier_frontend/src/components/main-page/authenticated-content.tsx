@@ -18,7 +18,6 @@ interface AuthenticatedContentProps {
     handleCreateLink: () => void;
     isLoading: boolean;
     linkData?: Record<string, LinkDetailModel[]>;
-    resetLinkAndAction: () => void;
 }
 
 export const AuthenticatedContent = ({
@@ -28,7 +27,6 @@ export const AuthenticatedContent = ({
     handleCreateLink,
     isLoading,
     linkData,
-    resetLinkAndAction,
 }: AuthenticatedContentProps) => {
     const { t } = useTranslation();
     const responsive = useDeviceSize();
@@ -53,9 +51,6 @@ export const AuthenticatedContent = ({
                                                 : `/edit/${item.id}`
                                         }
                                         key={item.id}
-                                        onClick={() => {
-                                            resetLinkAndAction();
-                                        }}
                                     >
                                         <LinkItem key={item.id} link={item} />
                                     </Link>
