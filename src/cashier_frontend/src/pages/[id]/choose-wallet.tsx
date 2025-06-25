@@ -18,7 +18,7 @@ import {
     useLinkUserState,
     fetchLinkUserState,
     useUpdateLinkUserState,
-    getLinkUserStateQueryKey,
+    getLinkUserState,
 } from "@/hooks/linkUserHooks";
 import { getCashierError, isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -40,7 +40,6 @@ import { isReceiveLinkType } from "@/utils/link-type.utils";
 import UseLinkForm from "@/components/use-page/use-link-form";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
-import { useQueryClient } from "@tanstack/react-query";
 
 export const UseSchema = z.object({
     token: z.string().min(5),
@@ -69,8 +68,6 @@ export default function ChooseWalletPage() {
 
     const link = linkDetailQuery.data?.link;
     const isLoadingLinkData = linkDetailQuery.isLoading;
-
-    const queryClient = useQueryClient();
 
     const {
         data: linkUserState,
@@ -319,16 +316,19 @@ export default function ChooseWalletPage() {
             // Start polling action state to track changes from CREATED to SUCCESS
             if (identity) {
                 intervalId = setInterval(async () => {
-                    queryClient.invalidateQueries({
-                        queryKey: getLinkUserStateQueryKey(
-                            linkId!,
-                            identity.getPrincipal().toString(),
-                        ),
-                    });
-                    const res = await refetchLinkUserStateFn();
-                    console.log("polling res", res);
-                    setInternalAction(res.data?.action);
-                }, 100);
+                    const res = await getLinkUserState(
+                        {
+                            action_type: ACTION_TYPE.USE_LINK,
+                            link_id: linkId ?? "",
+                            anonymous_wallet_address: "",
+                        },
+                        identity,
+                    );
+                    if (res.action) {
+                        console.log("polling res state", res.action.state);
+                        setInternalAction(res.action);
+                    }
+                }, 500);
                 // Process action for authenticated user
                 const processActionResult = await processAction({
                     linkId: link.id,

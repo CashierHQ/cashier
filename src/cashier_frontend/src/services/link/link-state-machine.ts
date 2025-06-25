@@ -141,13 +141,6 @@ export class LinkStateMachine {
 
                 return true;
             } else if (action === "Back") {
-                if (
-                    updateLinkInput.maxActionNumber !== undefined &&
-                    updateLinkInput.maxActionNumber <= BigInt(0)
-                ) {
-                    throw new Error("Maximum action count must be greater than zero");
-                }
-
                 // When going back, allow only changing assets and maxActionNumber
                 const whitelist = ["assets", "maxActionNumber"];
                 if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {

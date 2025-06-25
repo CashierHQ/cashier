@@ -33,7 +33,7 @@ export function useUpdateLinkUserState() {
 
 export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: boolean) {
     const identity = useIdentity();
-    const user_pid = identity?.getPrincipal().toText() ?? "";
+    const user_pid = identity?.getPrincipal().toString() ?? "";
 
     return useQuery({
         queryKey: getLinkUserStateQueryKey(input.link_id, user_pid),
@@ -52,6 +52,16 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
             return failureCount < 2;
         },
     });
+}
+
+export async function getLinkUserState(
+    input: LinkGetUserStateInputModel,
+    identity: Identity | undefined,
+) {
+    const linkService = new LinkService(identity);
+    const userState = await linkService.getLinkUserState(input);
+    console.log("userState", userState);
+    return userState;
 }
 
 export async function fetchLinkUserState(

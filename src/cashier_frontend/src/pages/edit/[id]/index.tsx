@@ -50,13 +50,14 @@ export default function LinkPage() {
     // Parse URL search parameters to get oldId if present
     const searchParams = new URLSearchParams(location.search);
     const oldIdParam = searchParams.get("oldId");
+    const redirectParam = searchParams.get("redirect");
+    const isRedirectHappening = redirectParam === "true";
 
     const [backButtonDisabled, setBackButtonDisabled] = useState(false);
 
     const { addUserInput, getUserInput, resetButtonState } = useLinkCreationFormStore();
     const { callLinkStateMachine, isUpdating } = useLinkMutations();
 
-    // Use currentLinkId instead of paramLinkId to handle URL updates
     const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.CREATE_LINK);
     const link = linkDetailQuery.data?.link;
     const action = linkDetailQuery.data?.action;
@@ -224,7 +225,7 @@ export default function LinkPage() {
                                 backButtonDisabled={backButtonDisabled}
                             />
 
-                            <MultiStepForm.Items>
+                            <MultiStepForm.Items disableAnimations={isRedirectHappening}>
                                 <MultiStepForm.Item name={t("create.linkName")}>
                                     <LinkTemplate
                                         link={link}

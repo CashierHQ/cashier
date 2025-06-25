@@ -23,7 +23,7 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
-import { useLinkDetailQuery, useInvalidateLinkDetailQueries } from "@/hooks/link-hooks";
+import { useLinkDetailQuery, getLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 
 export default function DetailPage() {
@@ -34,7 +34,6 @@ export default function DetailPage() {
 
     const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.WITHDRAW_LINK);
     const { callLinkStateMachine, isUpdating, createAction, isCreatingAction } = useLinkMutations();
-    const invalidateLinkDetailQueries = useInvalidateLinkDetailQueries();
 
     const link = linkDetailQuery.data?.link;
     const isLoading = linkDetailQuery.isLoading;
@@ -198,9 +197,23 @@ export default function DetailPage() {
     };
 
     const handleWithdrawProcess = async () => {
+        let intervalId: number | null = null;
+
         try {
             if (!link) throw new Error("Link is not defined");
             if (!currentAction) throw new Error("Action is not defined");
+
+            intervalId = setInterval(async () => {
+                const res = await getLinkDetailQuery(
+                    linkId ?? "",
+                    ACTION_TYPE.WITHDRAW_LINK,
+                    identity,
+                );
+                if (res.action) {
+                    console.log("polling res state", res.action.state);
+                    setCurrentAction(res.action);
+                }
+            }, 500);
 
             const firstUpdatedAction = await processAction({
                 linkId: link.id,
@@ -209,7 +222,7 @@ export default function DetailPage() {
             });
 
             // Update local action state with enriched action
-            if (firstUpdatedAction) {
+            if (firstUpdatedAction.icrc112Requests) {
                 setCurrentAction(firstUpdatedAction);
 
                 const response = await icrc112Execute({
@@ -226,15 +239,16 @@ export default function DetailPage() {
                     if (secondUpdatedAction) {
                         setCurrentAction(secondUpdatedAction);
                         handleActionResult(secondUpdatedAction);
-
-                        // Force refresh of link detail data to get the latest state
-                        invalidateLinkDetailQueries(link.id);
                     }
                 }
             }
         } catch (error) {
             console.error("Error in withdrawal process:", error);
             throw error;
+        } finally {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
         }
     };
 
@@ -352,21 +366,7 @@ export default function DetailPage() {
                 handleSuccessContinue={async () => {
                     await setInactiveEndedLink();
                 }}
-                handleConfirmTransaction={async () => {
-                    try {
-                        await handleWithdrawProcess();
-                    } catch (error) {
-                        console.error("Transaction error:", error);
-                        // Error is already handled in handleWithdrawProcess
-                    } finally {
-                        // Ensure we get latest data after transaction attempt
-                        try {
-                            await refetchLinkDetail();
-                        } catch (refreshError) {
-                            console.error("Error refreshing data after transaction:", refreshError);
-                        }
-                    }
-                }}
+                handleConfirmTransaction={handleWithdrawProcess}
             />
         </MainAppLayout>
     );

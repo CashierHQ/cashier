@@ -91,6 +91,10 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
 
             if (countdown === 1) {
                 // Button is disabled when countdown is 1
+                setButton((prev) => ({
+                    ...prev,
+                    disabled: true,
+                }));
             }
         } else if (hasTriggeredByTimer) {
             // If countdown has triggered continue, reset button text

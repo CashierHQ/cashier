@@ -14,6 +14,7 @@ import {
     mapPartialDtoToLinkDetailModel,
 } from "@/services/types/mapper/link.service.mapper";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
+import { Identity } from "@dfinity/agent";
 
 // Centralized query keys for consistent caching
 export const LINK_QUERY_KEYS = {
@@ -95,6 +96,16 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
         staleTime: staleTime, // Time in milliseconds data remains fresh
     });
 }
+
+export const getLinkDetailQuery = async (
+    linkId: string,
+    actionType: ACTION_TYPE,
+    identity: Identity | undefined,
+) => {
+    const linkService = new LinkService(identity);
+    const res = await linkService.getLink(linkId, actionType);
+    return res;
+};
 
 export function useUpdateLinkMutation() {
     const identity = useIdentity();

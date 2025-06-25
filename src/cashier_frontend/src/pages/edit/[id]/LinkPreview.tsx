@@ -3,12 +3,12 @@
 
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getTokenImage } from "@/utils";
+import { getTokenImage, safeParseJSON } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
@@ -55,7 +55,7 @@ interface EnhancedAsset {
     [key: string]: unknown; // For any additional properties that might exist
 }
 
-export default function LinkPreview({
+function LinkPreview({
     // onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
@@ -693,3 +693,50 @@ export default function LinkPreview({
         </div>
     );
 }
+
+// Memoize the component to prevent re-renders when link data is essentially the same
+// This is crucial when transitioning from local link ID to backend link ID
+export default React.memo(LinkPreview, (prevProps, nextProps) => {
+    // If we're in a transitioning state, don't re-render
+    const prevLink = prevProps.linkDetailQuery.data?.link;
+    const nextLink = nextProps.linkDetailQuery.data?.link;
+
+    console.log("prevLink", prevLink);
+    console.log("nextLink", nextLink);
+
+    // If both links exist and have the same core data, don't re-render
+    if (prevLink && nextLink) {
+        // Compare essential properties that matter for rendering
+        const prevCore = {
+            linkType: prevLink.linkType,
+            title: prevLink.title,
+            asset_info: prevLink.asset_info,
+            maxActionNumber: prevLink.maxActionNumber,
+            state: prevLink.state,
+        };
+
+        const nextCore = {
+            linkType: nextLink.linkType,
+            title: nextLink.title,
+            asset_info: nextLink.asset_info,
+            maxActionNumber: nextLink.maxActionNumber,
+            state: nextLink.state,
+        };
+
+        // Deep compare core properties
+        if (safeParseJSON(prevCore) === safeParseJSON(nextCore)) {
+            console.log("prevent re-render");
+            // Also compare other callback props
+            const propsEqual =
+                prevProps.onCashierError === nextProps.onCashierError &&
+                prevProps.onActionResult === nextProps.onActionResult;
+
+            return propsEqual; // Return true to prevent re-render
+        }
+    }
+
+    console.log("re-render");
+
+    // Default to re-render if we can't determine equivalence
+    return false;
+});
