@@ -21,7 +21,6 @@ import {
 } from "@/services/types/enum";
 import { Plus, Minus } from "lucide-react";
 import { AssetFormInput } from "../asset-form-input";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
 import { formatNumber } from "@/utils/helpers/currency";
@@ -34,6 +33,7 @@ import {
     createRemoveAssetHandler,
 } from "../form-handlers";
 import { useSendAirdropFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 interface SendAirdropFormProps {
     initialValues?: {
@@ -44,11 +44,16 @@ interface SendAirdropFormProps {
             chain: CHAIN | undefined;
         }[];
     };
+    link: LinkDetailModel;
+    isUpdating: boolean;
 }
 
-export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdropFormProps) => {
+export const SendAirdropForm = ({
+    initialValues: propInitialValues,
+    link,
+    isUpdating,
+}: SendAirdropFormProps) => {
     const { t } = useTranslation();
-    const { link, isUpdating } = useLinkAction();
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
     const responsive = useDeviceSize();
@@ -84,7 +89,7 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
     }, [link]);
 
     // Use centralized submission handler
-    const { submitAirdropForm } = useSendAirdropFormHandler();
+    const { submitAirdropForm } = useSendAirdropFormHandler(link);
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -446,6 +451,7 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
                             className={`${index !== assetFields.fields.length - 1 ? "" : "mb-10"}`}
                         >
                             <AssetFormInput
+                                link={link}
                                 key={field.id}
                                 fieldId={field.id}
                                 index={index}

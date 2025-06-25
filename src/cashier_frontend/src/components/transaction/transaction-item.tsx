@@ -14,12 +14,13 @@ import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
 import { FeeHelpers } from "@/services/fee.service";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { useLinkAction } from "@/hooks/useLinkAction";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 interface TransactionItemProps {
     actionType: ACTION_TYPE;
     intent: IntentModel;
     fees?: FeeModel[];
+    link: LinkDetailModel;
 }
 
 // apply memo to prevent unnecessary re-renders
@@ -27,6 +28,7 @@ export const TransactionItem = memo(function TransactionItem({
     actionType,
     intent,
     fees = [],
+    link,
 }: TransactionItemProps) {
     const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent, actionType);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
@@ -34,7 +36,6 @@ export const TransactionItem = memo(function TransactionItem({
     const { getToken, getTokenPrice } = useTokens();
     const token = getToken(intent.asset.address);
     const tokenUsdPrice = getTokenPrice(intent.asset.address);
-    const { link } = useLinkAction();
 
     // Calculate adjusted amount by subtracting only the network fee
     useEffect(() => {

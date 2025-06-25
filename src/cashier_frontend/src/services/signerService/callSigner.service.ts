@@ -24,7 +24,11 @@ class CallSignerService {
                 maxTimeToLive: BigInt(8) * BigInt(3_600_000_000_000),
             },
         });
-        const signer = new Signer({ transport });
+        const signer = new Signer({
+            transport,
+            autoCloseTransportChannel: false,
+            closeTransportChannelAfter: 60 * 60 * 1000, // 1 hour
+        });
 
         const request: JsonRequest = {
             id: "1",
