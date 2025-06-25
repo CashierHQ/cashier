@@ -326,7 +326,7 @@ export default function ChooseWalletPage() {
                         ),
                     });
                     const res = await refetchLinkUserStateFn();
-                    console.log("polling res", res.data);
+                    console.log("polling res", res);
                     setInternalAction(res.data?.action);
                 }, 100);
                 // Process action for authenticated user

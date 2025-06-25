@@ -36,6 +36,7 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { UseQueryResult } from "@tanstack/react-query";
+import { useInvalidateLinkDetailQueries } from "@/hooks/link-hooks";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -75,6 +76,7 @@ export default function LinkPreview({
     const isLoading = linkDetailQuery.isLoading;
 
     const { callLinkStateMachine, createAction, createNewLink } = useLinkMutations();
+    const invalidateLinkDetailQueries = useInvalidateLinkDetailQueries();
 
     const { getToken, getTokenPrice, rawTokenList, createTokenMap } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
@@ -180,6 +182,11 @@ export default function LinkPreview({
 
                     if (secondUpdatedAction) {
                         updateInternalAction(secondUpdatedAction);
+
+                        // Invalidate cache to ensure all components see the updated action
+                        if (link?.id) {
+                            invalidateLinkDetailQueries(link.id);
+                        }
                     }
                 }
             }

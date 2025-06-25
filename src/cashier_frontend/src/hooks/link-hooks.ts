@@ -19,7 +19,8 @@ import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.servic
 export const LINK_QUERY_KEYS = {
     all: ["links"] as const,
     list: () => [...LINK_QUERY_KEYS.all, "list"] as const,
-    detail: (linkId: string | undefined) => [...LINK_QUERY_KEYS.all, "detail", linkId] as const,
+    detail: (linkId: string | undefined, actionType?: ACTION_TYPE) =>
+        [...LINK_QUERY_KEYS.all, "detail", linkId, actionType] as const,
 };
 
 // React Query for fetching the list of links
@@ -60,7 +61,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     const staleTime = 60 * 1000; // 1 minute
 
     return useQuery({
-        queryKey: LINK_QUERY_KEYS.detail(linkId),
+        queryKey: LINK_QUERY_KEYS.detail(linkId, actionType),
         queryFn: async () => {
             if (!linkId) throw new Error("linkId are required");
 
@@ -127,8 +128,9 @@ export function useUpdateLinkMutation() {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: LINK_QUERY_KEYS.list() });
+            // Invalidate all detail queries for this link (all actionTypes)
             queryClient.invalidateQueries({
-                queryKey: LINK_QUERY_KEYS.detail(data?.id),
+                queryKey: ["links", "detail", data?.id],
             });
         },
         onError: (err) => {
@@ -164,8 +166,14 @@ export function useCreateNewLinkMutation() {
                 oldId: localLinkId,
             };
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: LINK_QUERY_KEYS.list() });
+            // Invalidate all detail queries for the new link
+            if (data?.link?.id) {
+                queryClient.invalidateQueries({
+                    queryKey: ["links", "detail", data.link.id],
+                });
+            }
         },
         onError: (err) => {
             throw err;
@@ -173,4 +181,16 @@ export function useCreateNewLinkMutation() {
     });
 
     return mutation;
+}
+
+// Utility function to invalidate link detail queries for action updates
+export function useInvalidateLinkDetailQueries() {
+    const queryClient = useQueryClient();
+
+    return (linkId: string) => {
+        // Invalidate all detail queries for this link (all actionTypes)
+        queryClient.invalidateQueries({
+            queryKey: ["links", "detail", linkId],
+        });
+    };
 }

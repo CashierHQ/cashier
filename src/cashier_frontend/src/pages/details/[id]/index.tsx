@@ -10,7 +10,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { ACTION_TYPE, ACTION_STATE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
@@ -23,7 +23,7 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
-import { useLinkDetailQuery } from "@/hooks/link-hooks";
+import { useLinkDetailQuery, useInvalidateLinkDetailQueries } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 
 export default function DetailPage() {
@@ -34,6 +34,7 @@ export default function DetailPage() {
 
     const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.WITHDRAW_LINK);
     const { callLinkStateMachine, isUpdating, createAction, isCreatingAction } = useLinkMutations();
+    const invalidateLinkDetailQueries = useInvalidateLinkDetailQueries();
 
     const link = linkDetailQuery.data?.link;
     const isLoading = linkDetailQuery.isLoading;
@@ -48,7 +49,6 @@ export default function DetailPage() {
     const [showShareLinkDrawer, setShowShareLinkDrawer] = React.useState(false);
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
-    const [isProcessing, setIsProcessing] = React.useState(false);
 
     const { t } = useTranslation();
 
@@ -108,37 +108,6 @@ export default function DetailPage() {
             });
         }
     }, [showOverlay, driverObj, link]);
-
-    // Polling effect to update action state during processing
-    React.useEffect(() => {
-        let intervalId: number | null = null;
-
-        if (isProcessing) {
-            intervalId = setInterval(async () => {
-                try {
-                    // Refresh action data
-                    await linkDetailQuery.refetch();
-
-                    // If action is completed, stop polling
-                    if (
-                        currentAction &&
-                        (currentAction.state === ACTION_STATE.SUCCESS ||
-                            currentAction.state === ACTION_STATE.FAIL)
-                    ) {
-                        setIsProcessing(false);
-                    }
-                } catch (error) {
-                    console.error("Error in polling interval:", error);
-                }
-            }, 1500); // Poll every 2 seconds
-        }
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
-    }, [isProcessing, currentAction]);
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -233,9 +202,6 @@ export default function DetailPage() {
             if (!link) throw new Error("Link is not defined");
             if (!currentAction) throw new Error("Action is not defined");
 
-            // Set processing state to true to activate polling
-            setIsProcessing(true);
-
             const firstUpdatedAction = await processAction({
                 linkId: link.id,
                 actionType: ACTION_TYPE.WITHDRAW_LINK,
@@ -261,20 +227,13 @@ export default function DetailPage() {
                         setCurrentAction(secondUpdatedAction);
                         handleActionResult(secondUpdatedAction);
 
-                        // If action completed successfully, stop polling
-                        if (
-                            secondUpdatedAction.state === ACTION_STATE.SUCCESS ||
-                            secondUpdatedAction.state === ACTION_STATE.FAIL
-                        ) {
-                            setIsProcessing(false);
-                        }
+                        // Force refresh of link detail data to get the latest state
+                        invalidateLinkDetailQueries(link.id);
                     }
                 }
             }
         } catch (error) {
             console.error("Error in withdrawal process:", error);
-            // Make sure to stop polling if there's an error
-            setIsProcessing(false);
             throw error;
         }
     };
