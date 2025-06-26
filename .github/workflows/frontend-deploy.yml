@@ -31,7 +31,7 @@ jobs:
         outputs:
             environment: ${{ steps.set-env.outputs.environment }}
             should_deploy: ${{ steps.set-env.outputs.should_deploy }}
-            version_bump: ${{ steps.set-env.outputs.version_bump }}
+            requires_version_check: ${{ steps.set-env.outputs.requires_version_check }}
             branch_name: ${{ steps.set-env.outputs.branch_name }}
         steps:
             - name: Set deployment environment
@@ -48,21 +48,21 @@ jobs:
                     if [[ "$TARGET_BRANCH" == "main" ]]; then
                       echo "environment=production" >> $GITHUB_OUTPUT
                       echo "should_deploy=true" >> $GITHUB_OUTPUT
-                      echo "version_bump=true" >> $GITHUB_OUTPUT
+                      echo "requires_version_check=true" >> $GITHUB_OUTPUT
                       echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
-                      echo "🚀 Production PR ($SOURCE_BRANCH → main) - will deploy with version bump"
+                      echo "🚀 Production PR ($SOURCE_BRANCH → main) - requires version bump check"
                     elif [[ "$TARGET_BRANCH" == "staging" ]]; then
                       echo "environment=staging" >> $GITHUB_OUTPUT
                       echo "should_deploy=true" >> $GITHUB_OUTPUT
-                      echo "version_bump=false" >> $GITHUB_OUTPUT
+                      echo "requires_version_check=false" >> $GITHUB_OUTPUT
                       echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
-                      echo "🔧 Staging PR ($SOURCE_BRANCH → staging) - will deploy without version bump"
+                      echo "🔧 Staging PR ($SOURCE_BRANCH → staging) - no version check required"
                     else
                       echo "environment=dev" >> $GITHUB_OUTPUT
                       echo "should_deploy=true" >> $GITHUB_OUTPUT
-                      echo "version_bump=false" >> $GITHUB_OUTPUT
+                      echo "requires_version_check=false" >> $GITHUB_OUTPUT
                       echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
-                      echo "🧪 Dev PR ($SOURCE_BRANCH → $TARGET_BRANCH) - will deploy without version bump"
+                      echo "🧪 Dev PR ($SOURCE_BRANCH → $TARGET_BRANCH) - no version check required"
                     fi
                   else
                     # Direct push to any branch
@@ -72,72 +72,63 @@ jobs:
                     # Deploy ALL branches to dev environment
                     echo "environment=dev" >> $GITHUB_OUTPUT
                     echo "should_deploy=true" >> $GITHUB_OUTPUT
-                    echo "version_bump=false" >> $GITHUB_OUTPUT
-                    echo "🧪 Branch push ($TARGET_BRANCH) - will deploy to dev without version bump"
+                    echo "requires_version_check=false" >> $GITHUB_OUTPUT
+                    echo "🧪 Branch push ($TARGET_BRANCH) - no version check required"
                   fi
 
-    bump_version:
-        if: needs.setup_environment.outputs.version_bump == 'true'
+    check_version_bump:
+        if: needs.setup_environment.outputs.requires_version_check == 'true'
         runs-on: ubuntu-latest
         needs: setup_environment
         outputs:
-            new_version: ${{ steps.bump.outputs.new_version }}
+            current_version: ${{ steps.version-check.outputs.current_version }}
+            version_changed: ${{ steps.version-check.outputs.version_changed }}
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
               with:
-                  token: ${{ secrets.GITHUB_TOKEN }}
-                  ref: ${{ github.head_ref }}
+                  fetch-depth: 0
 
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
                   node-version: "20"
 
-            - name: Get current version
-              id: current-version
+            - name: Check if version was bumped
+              id: version-check
               run: |
+                  # Get current version from PR branch
                   CURRENT_VERSION=$(node -p "require('./src/cashier_frontend/package.json').version")
                   echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-                  echo "Current version: $CURRENT_VERSION"
+                  echo "Current version in PR: $CURRENT_VERSION"
 
-            - name: Bump version
-              id: bump
-              run: |
-                  CURRENT_VERSION="${{ steps.current-version.outputs.current_version }}"
+                  # Get version from main branch
+                  git fetch origin main
+                  git checkout origin/main -- src/cashier_frontend/package.json
+                  MAIN_VERSION=$(node -p "require('./src/cashier_frontend/package.json').version")
+                  echo "Version in main branch: $MAIN_VERSION"
 
-                  # Parse version components
-                  IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
-
-                  # Increment patch version for PR deployments
-                  NEW_PATCH=$((patch + 1))
-                  NEW_VERSION="${major}.${minor}.${NEW_PATCH}"
-
-                  echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-                  echo "Bumping version: $CURRENT_VERSION → $NEW_VERSION"
-
-                  # Update package.json
-                  node -e "
-                    const fs = require('fs');
-                    const pkg = JSON.parse(fs.readFileSync('src/cashier_frontend/package.json', 'utf8'));
-                    pkg.version = '$NEW_VERSION';
-                    fs.writeFileSync('src/cashier_frontend/package.json', JSON.stringify(pkg, null, 4) + '\n');
-                  "
-
-            - name: Commit version bump
-              run: |
-                  git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Action"
-                  git add src/cashier_frontend/package.json
-                  git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
-                  git push
+                  # Check if version was changed
+                  if [[ "$CURRENT_VERSION" != "$MAIN_VERSION" ]]; then
+                    echo "version_changed=true" >> $GITHUB_OUTPUT
+                    echo "✅ Version was bumped: $MAIN_VERSION → $CURRENT_VERSION"
+                  else
+                    echo "version_changed=false" >> $GITHUB_OUTPUT
+                    echo "❌ Version was NOT bumped (still $CURRENT_VERSION)"
+                    echo ""
+                    echo "🚨 PRODUCTION DEPLOYMENT REQUIRES VERSION BUMP!"
+                    echo "Please update the version in src/cashier_frontend/package.json before deploying to production."
+                    echo ""
+                    echo "Suggestion: Update version from $CURRENT_VERSION to a new version (e.g., patch increment)"
+                    exit 1
+                  fi
 
     build_and_deploy:
         runs-on: ubuntu-latest
         needs:
             - setup_environment
-            - bump_version
-        if: always() && needs.setup_environment.outputs.should_deploy == 'true'
+            - check_version_bump
+        if: always() && needs.setup_environment.outputs.should_deploy == 'true' && (needs.check_version_bump.result == 'success' || needs.setup_environment.outputs.requires_version_check == 'false')
         environment: ${{ needs.setup_environment.outputs.environment }}
 
         steps:
@@ -175,11 +166,7 @@ jobs:
             - name: Get version info
               id: version-info
               run: |
-                  if [[ "${{ needs.setup_environment.outputs.version_bump }}" == "true" ]]; then
-                    VERSION="${{ needs.bump_version.outputs.new_version }}"
-                  else
-                    VERSION=$(node -p "require('./src/cashier_frontend/package.json').version")
-                  fi
+                  VERSION=$(node -p "require('./src/cashier_frontend/package.json').version")
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
                   echo "Deploying version: $VERSION"
 
@@ -231,26 +218,31 @@ jobs:
         needs:
             - setup_environment
             - build_and_deploy
-            - bump_version
+            - check_version_bump
         steps:
             - name: Comment on PR
               uses: actions/github-script@v7
               with:
                   script: |
                       const environment = '${{ needs.setup_environment.outputs.environment }}';
-                      const version = '${{ needs.bump_version.outputs.new_version }}' || 'current';
+                      const version = '${{ needs.check_version_bump.outputs.current_version }}' || 'current';
                       const branch = '${{ needs.setup_environment.outputs.branch_name }}';
                       const network = environment === 'production' ? 'IC Mainnet' : 
                                     environment === 'staging' ? 'Staging' : 'Dev';
 
-                      const message = `## 🚀 Deployment Complete!
+                      let message = `## 🚀 Deployment Complete!
 
                       **Environment:** ${environment.toUpperCase()}
                       **Network:** ${network}
                       **Branch:** ${branch}
-                      ${version !== 'current' ? `**Version:** ${version}` : ''}
+                      **Version:** ${version}
 
                       Deployment finished successfully! 🎉`;
+
+                      // Add version bump info for production
+                      if (environment === 'production' && '${{ needs.check_version_bump.outputs.version_changed }}' === 'true') {
+                        message += `\n\n✅ **Version was properly bumped for production deployment.**`;
+                      }
 
                       github.rest.issues.createComment({
                         issue_number: context.issue.number,
