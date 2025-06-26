@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, str::FromStr, time::Duration};
 
-use candid::Nat;
+use candid::{Nat, Principal};
 use cashier_types::{
     intent::v2::{Intent, IntentTask},
     transaction::v2::{
@@ -92,7 +92,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         self.intent_adapter.intent_to_transactions(chain, intent)
     }
 
-    pub async fn create_action(
+    pub fn create_action(
         &self,
         temp_action: &mut TemporaryAction,
     ) -> Result<ActionDto, CanisterError> {
@@ -181,8 +181,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             intent_tx_hashmap.clone(),
             temp_action.creator.clone(),
         );
-
-        //TODO: drop the lock here
 
         Ok(ActionDto::from_with_tx(
             temp_action.as_action(),

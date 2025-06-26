@@ -23,6 +23,7 @@ use crate::{
         action::ActionService,
         ext::icrc_batch::IcrcBatchService,
         link::v2::LinkService,
+        request_lock::RequestLockService,
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
         user::v2::UserService,
     },
@@ -309,6 +310,7 @@ pub struct LinkApi<E: IcEnvironment + Clone> {
     ic_env: E,
     validate_service: ValidateService,
     icrc_batch_service: services::ext::icrc_batch::IcrcBatchService,
+    request_lock_service: RequestLockService,
 }
 
 impl<E: IcEnvironment + Clone> LinkApi<E> {
@@ -325,6 +327,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ic_env: E::new(),
             validate_service: ValidateService::get_instance(),
             icrc_batch_service: IcrcBatchService::get_instance(),
+            request_lock_service: RequestLockService::get_instance(),
         }
     }
 
@@ -340,6 +343,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `action_service` - Service for action management
     /// * `ic_env` - Internet Computer environment interface
     /// * `validate_service` - Service for validation operations
+    /// * `request_lock_service` - Service for request locking operations
     pub fn new(
         link_service: LinkService<E>,
         user_service: UserService,
@@ -348,6 +352,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         ic_env: E,
         validate_service: ValidateService,
         icrc_batch_service: IcrcBatchService,
+        request_lock_service: RequestLockService,
     ) -> Self {
         Self {
             link_service,
@@ -357,6 +362,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ic_env,
             validate_service,
             icrc_batch_service,
+            request_lock_service,
         }
     }
 
@@ -629,17 +635,30 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        let action = self.link_service.get_action_of_link(
-            &input.link_id,
-            &input.action_type,
-            &user_id.as_ref().unwrap(),
-        );
+        // Create lock for action processing
+        let request_lock_key = self
+            .request_lock_service
+            .create_request_lock_for_processing_action(
+                caller,
+                input.link_id.clone(),
+                input.action_id.clone(),
+                self.ic_env.time(),
+            )?;
 
-        let res = if action.is_none() {
-            Err(CanisterError::ValidationErrors(format!(
-                "Action is not existed"
-            )))
-        } else {
+        // Execute main logic and capture result
+        let result = async {
+            let action = self.link_service.get_action_of_link(
+                &input.link_id,
+                &input.action_type,
+                &user_id.as_ref().unwrap(),
+            );
+
+            if action.is_none() {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Action is not existed"
+                )));
+            }
+
             self.link_service.link_validate_user_update_action(
                 &action.clone().unwrap(),
                 user_id.as_ref().unwrap(),
@@ -657,9 +676,13 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .await?;
 
             Ok(update_action_res)
-        };
+        }
+        .await;
 
-        res
+        // Drop lock regardless of success or failure
+        let _ = self.request_lock_service.drop(request_lock_key);
+
+        result
     }
 
     /// Creates a new action for authenticated users on a specific link.
@@ -695,76 +718,86 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let user_id = user_id.clone().unwrap();
 
-        // TODO: create a lock here
+        // Create lock for action creation
+        let request_lock_key = self
+            .request_lock_service
+            .create_request_lock_for_creating_action(
+                input.link_id.clone(),
+                caller,
+                self.ic_env.time(),
+            )?;
 
-        let action =
-            self.link_service
-                .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+        // Execute main logic and capture result
+        let result = async {
+            let action =
+                self.link_service
+                    .get_action_of_link(&input.link_id, &input.action_type, &user_id);
 
-        if action.is_some() {
-            return Err(CanisterError::ValidationErrors(format!(
-                "Action already exist!"
-            )));
+            if action.is_some() {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Action already exist!"
+                )));
+            }
+
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            // Validate user can create action
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            // Create temp action with default state
+            let default_link_user_state = match action_type {
+                ActionType::Use => Some(LinkUserState::ChooseWallet),
+                _ => None,
+            };
+
+            let assets = self
+                .link_service
+                .get_assets_for_action(&input.link_id, &action_type)?;
+
+            let fee_map = self
+                .icrc_batch_service
+                .get_batch_tokens_fee(&assets)
+                .await?;
+
+            //create temp action
+            // fill in link_id info
+            // fill in action_type info
+            // fill in default_link_user_state info
+            let mut temp_action = TemporaryAction {
+                id: Uuid::new_v4().to_string(),
+                r#type: action_type.clone(),
+                state: ActionState::Created,
+                creator: user_id.clone(),
+                link_id: input.link_id.clone(),
+                intents: vec![],
+                default_link_user_state,
+            };
+
+            // Assemble intents
+            let intents = self
+                .link_service
+                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller, &fee_map)
+                .await?;
+
+            temp_action.intents = intents;
+
+            // Create real action
+            self.tx_manager_service.create_action(&mut temp_action)
         }
+        .await;
 
-        self.link_service.link_validate_user_create_action(
-            &input.link_id,
-            &action_type,
-            &user_id,
-        )?;
+        // Drop lock regardless of success or failure
+        let _ = self.request_lock_service.drop(request_lock_key);
 
-        // Validate user can create action
-        self.link_service.link_validate_user_create_action(
-            &input.link_id,
-            &action_type,
-            &user_id,
-        )?;
-
-        // Create temp action with default state
-        let default_link_user_state = match action_type {
-            ActionType::Use => Some(LinkUserState::ChooseWallet),
-            _ => None,
-        };
-
-        let assets = self
-            .link_service
-            .get_assets_for_action(&input.link_id, &action_type)?;
-
-        let fee_map = self
-            .icrc_batch_service
-            .get_batch_tokens_fee(&assets)
-            .await?;
-
-        //create temp action
-        // fill in link_id info
-        // fill in action_type info
-        // fill in default_link_user_state info
-        let mut temp_action = TemporaryAction {
-            id: Uuid::new_v4().to_string(),
-            r#type: action_type.clone(),
-            state: ActionState::Created,
-            creator: user_id.clone(),
-            link_id: input.link_id.clone(),
-            intents: vec![],
-            default_link_user_state,
-        };
-
-        // Assemble intents
-        let intents = self
-            .link_service
-            .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller, &fee_map)
-            .await?;
-
-        temp_action.intents = intents;
-
-        // Create real action
-        let res = self
-            .tx_manager_service
-            .create_action(&mut temp_action)
-            .await;
-        // TODO: drop lock here
-
-        res
+        result
     }
 
     /// Creates a new action for anonymous users using wallet address authentication.
@@ -792,7 +825,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
 
         // check wallet address
-        let _ = match Principal::from_text(input.wallet_address.clone()) {
+        let wallet_principal = match Principal::from_text(input.wallet_address.clone()) {
             Ok(wa) => wa,
             Err(_) => {
                 return Err(CanisterError::ValidationErrors(
@@ -814,92 +847,102 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // add prefix for easy query
         let user_id = format!("ANON#{}", input.wallet_address);
 
-        let action =
-            self.link_service
-                .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+        // Create lock for action creation using wallet principal for anonymous users
+        let request_lock_key = self
+            .request_lock_service
+            .create_request_lock_for_creating_action(
+                input.link_id.clone(),
+                wallet_principal,
+                self.ic_env.time(),
+            )?;
 
-        if action.is_some() {
-            return Err(CanisterError::ValidationErrors(format!(
-                "Action already exist!"
-            )));
+        // Execute main logic and capture result
+        let result = async {
+            let action =
+                self.link_service
+                    .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+
+            if action.is_some() {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Action already exist!"
+                )));
+            }
+
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            let action =
+                self.link_service
+                    .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+
+            if action.is_some() {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Action already exist!"
+                )));
+            }
+
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            // Validate user can create action
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            // Create temp action with default state
+            let default_link_user_state = match action_type {
+                ActionType::Use => Some(LinkUserState::ChooseWallet),
+                _ => None,
+            };
+
+            //create temp action
+            // fill in link_id info
+            // fill in action_type info
+            // fill in default_link_user_state info
+            let mut temp_action = TemporaryAction {
+                id: Uuid::new_v4().to_string(),
+                r#type: action_type.clone(),
+                state: ActionState::Created,
+                creator: user_id.clone(),
+                link_id: input.link_id.clone(),
+                intents: vec![],
+                default_link_user_state,
+            };
+
+            let assets = self
+                .link_service
+                .get_assets_for_action(&temp_action.link_id, &temp_action.r#type)?;
+
+            let fee_map = self
+                .icrc_batch_service
+                .get_batch_tokens_fee(&assets)
+                .await?;
+
+            // Assemble intents
+            let intents = self
+                .link_service
+                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller, &fee_map)
+                .await?;
+
+            temp_action.intents = intents;
+
+            // Create real action
+            self.tx_manager_service.create_action(&mut temp_action)
         }
+        .await;
 
-        self.link_service.link_validate_user_create_action(
-            &input.link_id,
-            &action_type,
-            &user_id,
-        )?;
+        // Drop lock regardless of success or failure
+        let _ = self.request_lock_service.drop(request_lock_key);
 
-        // TODO: create a lock here
-
-        let action =
-            self.link_service
-                .get_action_of_link(&input.link_id, &input.action_type, &user_id);
-
-        if action.is_some() {
-            return Err(CanisterError::ValidationErrors(format!(
-                "Action already exist!"
-            )));
-        }
-
-        self.link_service.link_validate_user_create_action(
-            &input.link_id,
-            &action_type,
-            &user_id,
-        )?;
-
-        // Validate user can create action
-        self.link_service.link_validate_user_create_action(
-            &input.link_id,
-            &action_type,
-            &user_id,
-        )?;
-
-        // Create temp action with default state
-        let default_link_user_state = match action_type {
-            ActionType::Use => Some(LinkUserState::ChooseWallet),
-            _ => None,
-        };
-
-        //create temp action
-        // fill in link_id info
-        // fill in action_type info
-        // fill in default_link_user_state info
-        let mut temp_action = TemporaryAction {
-            id: Uuid::new_v4().to_string(),
-            r#type: action_type.clone(),
-            state: ActionState::Created,
-            creator: user_id.clone(),
-            link_id: input.link_id.clone(),
-            intents: vec![],
-            default_link_user_state,
-        };
-
-        let assets = self
-            .link_service
-            .get_assets_for_action(&temp_action.link_id, &temp_action.r#type)?;
-
-        let fee_map = self
-            .icrc_batch_service
-            .get_batch_tokens_fee(&assets)
-            .await?;
-
-        // Assemble intents
-        let intents = self
-            .link_service
-            .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller, &fee_map)
-            .await?;
-
-        temp_action.intents = intents;
-
-        // Create real action
-        let res = self
-            .tx_manager_service
-            .create_action(&mut temp_action)
-            .await;
-
-        // TODO: drop lock here
-        res
+        result
     }
 
     /// Retrieves the current user state for a specific link action.
@@ -1148,21 +1191,37 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        let args = UpdateActionArgs {
-            action_id: input.action_id.clone(),
-            link_id: input.link_id.clone(),
-            execute_wallet_tx: true,
-        };
+        // Create lock for action update
+        let request_lock_key = self
+            .request_lock_service
+            .create_request_lock_for_updating_action(
+                caller,
+                input.link_id.clone(),
+                input.action_id.clone(),
+                self.ic_env.time(),
+            )?;
 
-        let update_action_res = self
-            .tx_manager_service
-            .update_action(args)
-            .await
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!("Failed to update action: {}", e))
-            });
+        // Execute main logic and capture result
+        let result = async {
+            let args = UpdateActionArgs {
+                action_id: input.action_id.clone(),
+                link_id: input.link_id.clone(),
+                execute_wallet_tx: true,
+            };
 
-        update_action_res
+            self.tx_manager_service
+                .update_action(args)
+                .await
+                .map_err(|e| {
+                    CanisterError::HandleLogicError(format!("Failed to update action: {}", e))
+                })
+        }
+        .await;
+
+        // Drop lock regardless of success or failure
+        let _ = self.request_lock_service.drop(request_lock_key);
+
+        result
     }
 
     /// Updates an existing link's configuration, state, or parameters.

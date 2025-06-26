@@ -22,7 +22,7 @@ use crate::{
         CreateLinkInputV2, LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto,
     },
     domains::fee::Fee,
-    error, info,
+    error,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
         user_wallet::UserWalletRepository,

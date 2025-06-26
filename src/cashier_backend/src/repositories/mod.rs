@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::cell::RefCell;
 
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
@@ -15,6 +14,7 @@ pub mod intent_transaction;
 // pub mod intent_v2;
 pub mod link;
 pub mod link_action;
+pub mod request_lock;
 pub mod transaction;
 // pub mod transaction_v2;
 pub mod user;
@@ -54,6 +54,8 @@ const VERSIONED_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(22);
 //  Versioned Memory IDs V2 starting migrate from 23
 const VERSIONED_INTENT_MEMORY_ID_V2: MemoryId = MemoryId::new(23);
 const VERSIONED_TRANSACTION_MEMORY_ID_V2: MemoryId = MemoryId::new(24);
+
+const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(25);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -301,6 +303,14 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_TRANSACTION_MEMORY_ID_V2)),
         )
     );
+
+    pub static REQUEST_LOCK_STORE: RefCell<StableBTreeMap<
+        cashier_types::RequestLockKey,
+        cashier_types::RequestLock,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
+    );
 }
 
 pub fn get_upgrade_memory() -> Memory {
@@ -425,5 +435,10 @@ pub fn load() {
         *t.borrow_mut() = StableBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(VERSIONED_TRANSACTION_MEMORY_ID)),
         );
+    });
+
+    REQUEST_LOCK_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID)));
     });
 }
