@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, str::FromStr, time::Duration};
 
-use candid::Nat;
+use candid::{Nat, Principal};
 use cashier_types::{
     intent::v2::{Intent, IntentTask},
     transaction::v2::{
@@ -92,7 +92,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         self.intent_adapter.intent_to_transactions(chain, intent)
     }
 
-    pub async fn create_action(
+    pub fn create_action(
         &self,
         temp_action: &mut TemporaryAction,
     ) -> Result<ActionDto, CanisterError> {
@@ -181,8 +181,6 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             intent_tx_hashmap.clone(),
             temp_action.creator.clone(),
         );
-
-        //TODO: drop the lock here
 
         Ok(ActionDto::from_with_tx(
             temp_action.as_action(),
@@ -436,7 +434,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         Ok(is_all_dependencies_success)
     }
 
-    pub async fn has_dependency(&self, tx_id: String) -> Result<bool, CanisterError> {
+    pub fn has_dependency(&self, tx_id: String) -> Result<bool, CanisterError> {
         let tx: Transaction = self.transaction_service.get_tx_by_id(&tx_id)?;
 
         // checks if tx has other dependent txs that were not completed yet
@@ -613,6 +611,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             } // _ => return Err("Invalid protocol".to_string()),
         }
     }
+
     pub fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
         let tx_id = tx_id.clone();
 
@@ -706,18 +705,33 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             .get_action_data(args.action_id.clone())
             .map_err(|e| CanisterError::NotFound(e))?;
 
-        let txs = utils::collections::flatten_hashmap_values(&action_data.intent_txs);
+        let mut txs = utils::collections::flatten_hashmap_values(&action_data.intent_txs);
 
         // manually check the status of the tx of the action
         // update status to whaterver is returned by the manual check
-        // TODO: execute this in batch
-        for mut tx in txs.clone() {
-            let new_state = self.manual_check_status(&tx, txs.clone()).await?;
-            if tx.state == new_state.clone() {
-                continue;
-            }
+        let check_results = self
+            .manual_check_status_batch(txs.clone(), txs.clone())
+            .await;
+        let mut errors = vec![];
 
-            self.update_tx_state(&mut tx, &new_state)?
+        for (tx_id, result) in check_results {
+            match result {
+                Ok(new_state) => {
+                    // Find the tx in txs by id (must be mutable)
+                    if let Some(mut tx) = txs.iter_mut().find(|t| t.id == tx_id) {
+                        if tx.state != new_state {
+                            if let Err(e) = self.update_tx_state(&mut tx, &new_state) {
+                                errors.push(e);
+                            }
+                        }
+                    }
+                }
+                Err(e) => errors.push(e),
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(CanisterError::BatchError(errors));
         }
 
         let mut request = None;
@@ -759,7 +773,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             }
 
             // Check if tx has dependencies that need to be completed first
-            let has_dependency = match self.has_dependency(tx.id.clone()).await {
+            let has_dependency = match self.has_dependency(tx.id.clone()) {
                 Ok(has_dep) => has_dep,
                 Err(e) => return Err(e),
             };
@@ -836,19 +850,21 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             }
 
             // Second loop: execute the transactions
-            // TODO: execute this in batch
-            for tx in eligible_canister_txs.iter_mut() {
-                // this method update the tx state to success or fail inside of it
-                self.execute_canister_tx(tx).await?;
-            }
+            self.execute_canister_txs_batch(&mut eligible_canister_txs)
+                .await?;
         }
 
-        let get_resp: ActionData = self
+        let action_data: ActionData = self
             .action_service
             .get_action_data(args.action_id.clone())
             .map_err(|e| CanisterError::InvalidDataError(format!("Error getting action: {}", e)))?;
 
-        let action_dto = ActionDto::build(&get_resp, request);
+        let action_dto = ActionDto::build(&action_data, request);
+
+        let end = ic_cdk::api::time();
+        info!("[update_action] Action update end time: {:?}", end);
+        let cycles_end = ic_cdk::api::canister_cycle_balance();
+        info!("[update_action] Action update cycles_end: {:?}", cycles_end);
 
         Ok(action_dto)
     }
@@ -908,5 +924,46 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             link_id,
             &tx_execute_from_user_wallet,
         ))
+    }
+
+    /// Execute multiple canister transactions in parallel (batch)
+    ///
+    /// This method takes a mutable slice of transactions and executes them concurrently.
+    /// Returns Ok(()) if all succeed, or Err(Vec<CanisterError>) with all errors.
+    pub async fn execute_canister_txs_batch(
+        &self,
+        txs: &mut [Transaction],
+    ) -> Result<(), CanisterError> {
+        use futures::future;
+        let mut futures_vec = Vec::with_capacity(txs.len());
+        for tx in txs.iter_mut() {
+            futures_vec.push(self.execute_canister_tx(tx));
+        }
+        let results = future::join_all(futures_vec).await;
+        let errors: Vec<CanisterError> = results.into_iter().filter_map(|r| r.err()).collect();
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(CanisterError::BatchError(errors))
+        }
+    }
+
+    /// Batch manual check status for a list of transactions.
+    /// Returns a Vec of (tx_id, Result<TransactionState, CanisterError>) for each transaction.
+    pub async fn manual_check_status_batch(
+        &self,
+        txs: Vec<Transaction>,
+        all_txs: Vec<Transaction>,
+    ) -> Vec<(String, Result<TransactionState, CanisterError>)> {
+        use futures::future;
+        let futures_vec = txs
+            .iter()
+            .map(|tx| self.manual_check_status(tx, all_txs.clone()))
+            .collect::<Vec<_>>();
+        let results = future::join_all(futures_vec).await;
+        txs.into_iter()
+            .map(|tx| tx.id.clone())
+            .zip(results)
+            .collect()
     }
 }

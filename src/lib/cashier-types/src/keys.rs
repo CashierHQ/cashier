@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use cashier_macros::storable;
 
 pub type UserKey = String;
 
@@ -90,5 +91,95 @@ impl IntentTransactionKey {
             "TRANSACTION#{}#INTENT#{}",
             self.transaction_id, self.intent_id
         )
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+pub enum RequestLockKey {
+    /// User + Link + Action composite key
+    UserLinkAction {
+        user_principal: String,
+        link_id: String,
+        action_id: String,
+    },
+    /// User + Link composite key
+    UserLink {
+        user_principal: String,
+        link_id: String,
+    },
+    /// User + Action + Transaction composite key
+    UserActionTransaction {
+        user_principal: String,
+        action_id: String,
+        transaction_id: String,
+    },
+}
+
+impl RequestLockKey {
+    /// Convert the key to a string representation for storage/comparison
+    pub fn to_string(&self) -> String {
+        match self {
+            RequestLockKey::UserLinkAction {
+                user_principal,
+                link_id,
+                action_id,
+            } => {
+                format!(
+                    "USER#{}#LINK#{}#ACTION#{}",
+                    user_principal, link_id, action_id
+                )
+            }
+            RequestLockKey::UserLink {
+                user_principal,
+                link_id,
+            } => {
+                format!("USER#{}#LINK#{}", user_principal, link_id)
+            }
+            RequestLockKey::UserActionTransaction {
+                user_principal,
+                action_id,
+                transaction_id,
+            } => {
+                format!(
+                    "USER#{}#ACTION#{}#TRANSACTION#{}",
+                    user_principal, action_id, transaction_id
+                )
+            }
+        }
+    }
+
+    /// Create a User + Link + Action key
+    pub fn user_link_action(
+        user_principal: impl Into<String>,
+        link_id: impl Into<String>,
+        action_id: impl Into<String>,
+    ) -> Self {
+        Self::UserLinkAction {
+            user_principal: user_principal.into(),
+            link_id: link_id.into(),
+            action_id: action_id.into(),
+        }
+    }
+
+    /// Create a User + Link key
+    pub fn user_link(user_principal: impl Into<String>, link_id: impl Into<String>) -> Self {
+        Self::UserLink {
+            user_principal: user_principal.into(),
+            link_id: link_id.into(),
+        }
+    }
+
+    /// Create a User + Action + Transaction key
+    pub fn user_action_transaction(
+        user_principal: impl Into<String>,
+        action_id: impl Into<String>,
+        transaction_id: impl Into<String>,
+    ) -> Self {
+        Self::UserActionTransaction {
+            user_principal: user_principal.into(),
+            action_id: action_id.into(),
+            transaction_id: transaction_id.into(),
+        }
     }
 }
