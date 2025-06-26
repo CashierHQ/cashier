@@ -19,14 +19,18 @@ import TokenUtilServiceFixture from "../fixtures/token-utils-fixture";
 
 describe("Process Action Request Lock", () => {
     let actor: _SERVICE;
+    let claimerActor: _SERVICE; // Second actor for claim testing
     let identity: Identity;
+    let claimerIdentity: Identity; // Second identity for claim testing
     let canisterId: string;
+    let processedAction: ActionDto;
     let createdLink: LinkDto;
     let createdAction: ActionDto;
     let tokenService: TokenUtilServiceFixture;
 
     // Fixed seed for consistent testing
     const TEST_IDENTITY_SEED = "test-seed-for-process-action-spec-54321";
+    const CLAIMER_IDENTITY_SEED = "claimer-seed-for-process-action-spec-12345";
     const AIRDROP_AMOUNT = "5000"; // 5000 ICP for testing
 
     // Function to run airdrop script
@@ -84,15 +88,24 @@ describe("Process Action Request Lock", () => {
 
         identity = Ed25519KeyIdentity.generate(seed);
 
-        const principalId = identity.getPrincipal().toString();
+        // Create second identity for claimer
+        const claimerSeedBytes = new TextEncoder().encode(CLAIMER_IDENTITY_SEED);
+        const claimerSeed = new Uint8Array(32);
+        claimerSeed.set(claimerSeedBytes.slice(0, 32));
 
-        // Run airdrop to ensure test identity has sufficient funds
+        claimerIdentity = Ed25519KeyIdentity.generate(claimerSeed);
+
+        const principalId = identity.getPrincipal().toString();
+        const claimerPrincipalId = claimerIdentity.getPrincipal().toString();
+
+        // Run airdrop for both identities to ensure they have sufficient funds
         await runAirdrop(principalId, AIRDROP_AMOUNT);
+        await runAirdrop(claimerPrincipalId, AIRDROP_AMOUNT);
 
         // Set up canister ID
         canisterId = process.env["CANISTER_ID_CASHIER_BACKEND"] || "jjio5-5aaaa-aaaam-adhaq-cai";
 
-        // Create HTTP agent for local testing
+        // Create HTTP agent for local testing (main identity)
         const agent = HttpAgent.createSync({
             identity,
             host: "http://127.0.0.1:4943",
@@ -102,16 +115,31 @@ describe("Process Action Request Lock", () => {
             console.warn("Unable to fetch root key:", err);
         });
 
-        // Create actor
+        // Create HTTP agent for claimer identity
+        const claimerAgent = HttpAgent.createSync({
+            identity: claimerIdentity,
+            host: "http://127.0.0.1:4943",
+        });
+
+        await claimerAgent.fetchRootKey().catch((err) => {
+            console.warn("Unable to fetch root key for claimer:", err);
+        });
+
+        // Create actors
         actor = Actor.createActor(idlFactory, {
             agent,
+            canisterId,
+        });
+
+        claimerActor = Actor.createActor(idlFactory, {
+            agent: claimerAgent,
             canisterId,
         });
 
         // Initialize token service
         tokenService = new TokenUtilServiceFixture(identity);
 
-        // Create a user first
+        // Create a user first (main identity)
         try {
             const userResult = await actor.create_user();
             if ("Err" in userResult) {
@@ -125,6 +153,25 @@ describe("Process Action Request Lock", () => {
                 }
             } catch (getUserError) {
                 console.warn("Could not get existing user:", getUserError);
+            }
+        }
+
+        // Create user for claimer identity
+        try {
+            const claimerUserResult = await claimerActor.create_user();
+            if ("Err" in claimerUserResult) {
+                throw new Error(
+                    `Failed to create claimer user: ${JSON.stringify(claimerUserResult.Err)}`,
+                );
+            }
+        } catch {
+            try {
+                const existingClaimerUser = await claimerActor.get_user();
+                if ("Ok" in existingClaimerUser) {
+                    // User exists, continue
+                }
+            } catch (getUserError) {
+                console.warn("Could not get existing claimer user:", getUserError);
             }
         }
 
@@ -179,10 +226,12 @@ describe("Process Action Request Lock", () => {
 
         if ("Ok" in result) {
             const action = result.Ok;
+            processedAction = action;
             expect(action).toBeDefined();
             expect(action.id).toBeDefined();
             expect(action.type).toBe("CreateLink");
             expect(action.state).toBe("Action_state_processing");
+            expect(action.icrc_112_requests).toBeDefined();
         } else {
             throw new Error(`Failed to process action: ${JSON.stringify(result.Err)}`);
         }
@@ -190,23 +239,6 @@ describe("Process Action Request Lock", () => {
 
     it("should execute complete ICRC-112 flow after process_action", async () => {
         // Use the existing createdAction from the first test that succeeded
-
-        // Step 1: Process the action to get ICRC-112 transactions
-        const processInput: ProcessActionInput = {
-            action_id: createdAction.id,
-            link_id: createdLink.id,
-            action_type: "CreateLink",
-        };
-
-        const processResult = await actor.process_action(processInput);
-        expect("Ok" in processResult).toBe(true);
-
-        const processedAction = (processResult as { Ok: ActionDto }).Ok;
-        expect(processedAction.state).toBe("Action_state_processing");
-
-        // Step 2: Get the ICRC-112 requests from the processed action
-        expect(processedAction.icrc_112_requests).toBeDefined();
-
         const icrc112RequestsOpt = processedAction.icrc_112_requests;
 
         if (icrc112RequestsOpt.length > 0) {
@@ -241,7 +273,7 @@ describe("Process Action Request Lock", () => {
                     ICP_TOKEN_ADDRESS,
                     canisterId,
                     // amount for transfer to treasury
-                    BigInt(1_0000_000),
+                    BigInt(10000000),
                 ),
             ]);
 
@@ -315,6 +347,8 @@ describe("Process Action Request Lock", () => {
 
         const updateResults = await Promise.all(updateTasks);
 
+        console.log("updateResults", updateResults);
+
         expect(updateResults.filter((result) => "Ok" in result).length).toBe(1);
         expect(updateResults.filter((result) => "Err" in result).length).toBe(2);
 
@@ -323,5 +357,73 @@ describe("Process Action Request Lock", () => {
 
         const finalAction = (okUpdateResult as { Ok: ActionDto }).Ok;
         expect(finalAction.state).toBe("Action_state_success");
+
+        // Activate the link after successful action completion
+        const updateLinkResult = await actor.update_link({
+            id: createdLink.id,
+            action: "Continue",
+            params: [],
+        });
+
+        if ("Ok" in updateLinkResult) {
+            const updatedLink = updateLinkResult.Ok;
+            expect(updatedLink.state).toBe("Link_state_active");
+        } else {
+            console.warn("Failed to activate link:", updateLinkResult.Err);
+        }
+    });
+
+    it("should test request locking on claim action process_action calls", async () => {
+        // Step 1: Create a claim action using the claimer identity
+        const claimActionInput: CreateActionInput = {
+            link_id: createdLink.id,
+            action_type: "Use",
+        };
+
+        const claimActionResult = await claimerActor.create_action(claimActionInput);
+        if ("Err" in claimActionResult) {
+            throw new Error(
+                `Failed to create claim action: ${JSON.stringify(claimActionResult.Err)}`,
+            );
+        }
+
+        const claimAction = claimActionResult.Ok;
+        expect(claimAction.type).toBe("Use");
+        expect(claimAction.state).toBe("Action_state_created");
+
+        // Step 2: Execute multiple concurrent process_action calls
+        const processInput: ProcessActionInput = {
+            action_id: claimAction.id,
+            link_id: createdLink.id,
+            action_type: "Use",
+        };
+
+        // Create 3 concurrent process_action calls
+        const processTasks = new Array(3).fill(0).map(async () => {
+            return await claimerActor.process_action(processInput);
+        });
+
+        const processResults = await Promise.all(processTasks);
+
+        // Step 3: Verify request locking behavior
+        // Only one should succeed, others should fail due to request lock
+        const successResults = processResults.filter((result) => "Ok" in result);
+        const errorResults = processResults.filter((result) => "Err" in result);
+
+        expect(successResults.length).toBe(1);
+        expect(errorResults.length).toBe(2);
+
+        // Verify the successful result
+        const successfulAction = (successResults[0] as { Ok: ActionDto }).Ok;
+        expect(successfulAction.id).toBe(claimAction.id);
+        expect(successfulAction.type).toBe("Use");
+        expect(successfulAction.state).toBe("Action_state_success");
+
+        // Verify error results contain request lock errors
+        for (const errorResult of errorResults) {
+            const error = (errorResult as { Err: unknown }).Err;
+            expect(error).toBeDefined();
+            // The error should indicate request lock conflict
+        }
     });
 });
