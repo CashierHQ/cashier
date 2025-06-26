@@ -32,9 +32,9 @@ The Cashier Protocol implements request locking to prevent race conditions and r
 **What it tests**:
 
 -   ✅ **process_action** - Tests basic action processing (single call)
+-   ✅ **process_action** (concurrent) - Tests concurrent process_action calls with request locking
 -   ✅ **trigger_transaction** - Verifies concurrent trigger calls are properly locked
 -   ✅ **update_action** - Verifies concurrent update calls are properly locked
--   🔄 **process_action** (concurrent) - _Not yet implemented_ - Will test concurrent process_action calls
 
 **Test scenarios**:
 
@@ -50,6 +50,18 @@ The Cashier Protocol implements request locking to prevent race conditions and r
     - Makes 3 concurrent calls to `update_action`
     - Expects 1 success, 2 failures due to request locking
     - Validates final action state is "Action_state_success"
+5. **Link Activation**: Calls `update_link` with "Continue" action to activate the link
+
+#### Concurrent Process Action Test (Claim Actions)
+
+1. **Setup**: Creates a second identity (claimer) with separate actor and user account
+2. **Link Activation**: Ensures the test link is in "Active" state for claim eligibility
+3. **Claim Action Creation**: Claimer creates a "Use" action on the activated link
+4. **Concurrent Processing**:
+    - Makes 3 concurrent calls to `process_action` for the same claim action
+    - Expects exactly 1 success and 2 failures due to request locking
+    - Validates successful action reaches "Action_state_success" state
+5. **Error Validation**: Verifies failed calls contain request lock error information
 
 ## Request Locking Mechanism
 
@@ -66,7 +78,8 @@ The backend implements request locking using unique keys for different operation
 
 -   Uses fixed Ed25519 seeds for reproducible testing
 -   Each test file uses a different seed to avoid conflicts
--   Automatic ICP token airdrop for test funding
+-   Multiple identities per test file (e.g., creator + claimer identities)
+-   Automatic ICP token airdrop for test funding (5000 ICP per identity)
 
 ### Token Operations
 
@@ -109,22 +122,17 @@ npm test src/test/local-tests/src/request_lock/process_action.spec.ts
 
 ### Planned Tests (🔄 Not yet implemented)
 
-1. **Concurrent process_action calls**
-
-    - Test multiple simultaneous calls to `process_action` for the same action
-    - Verify only one processing succeeds
-
-2. **Cross-endpoint locking**
+1. **Cross-endpoint locking**
 
     - Test interactions between different endpoints (e.g., process_action + update_action)
     - Verify proper lock coordination
 
-3. **Timeout testing**
+2. **Timeout testing**
 
     - Test request lock timeout behavior
     - Verify locks are properly released after timeout
 
-4. **Error recovery**
+3. **Error recovery**
     - Test lock cleanup after failures
     - Verify system recovers from partial operations
 
