@@ -2,13 +2,13 @@
 
 Cashier is a no-code transaction builder for non-technical users, such as marketers, solopreneurs, or consumers.
 
-With Cashier, users can build and share payment, donation, tip, airdrop, swap, etc in minutes from their phone. Its quick, easy, and cheap. For custom needs, Cashier also supports flexible transaction flows and gating rules. Users can focus on their transaction needs rather than implementation.
+With Cashier, users can build and share payment, donation, tip, airdrop, swap, etc in minutes from their phone. It's quick, easy, and cheap. For custom needs, Cashier also supports flexible transaction flows and gating rules. Users can focus on their transaction needs rather than implementation.
 
-URL: cashierapp.io
+**URL:** [cashierapp.io](https://cashierapp.io)
 
 [![Video: Introducing Cashier](https://img.shields.io/badge/Watch_Demo-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=H8Qetnjz1Zs)
 
-# Introduction
+## 🎯 Introduction
 
 On a user level, Cashier is about providing a no-code transaction builder for non-technical users. The aim is to build a vast library of transaction templates that users can pick from and use quickly and easily.
 
@@ -20,45 +20,43 @@ Technically, Cashier is all about flexibly configuring and executing different t
 
 ![Cashier Architecture](docs/architecture.png)
 
-# Installation
+## 🚀 Quick Start
 
-## Prerequisites
+### Prerequisites
 
 -   [Rust](https://www.rust-lang.org/tools/install)
 -   [DFX](https://internetcomputer.org/docs/building-apps/getting-started/install)
 -   [NodeJS](https://nodejs.org/en)
 
-## Install
+### Installation
 
-`frontend`
+**Frontend:**
 
 ```bash
-// install all dependecies
+# Install all dependencies
 npm install
 
-// run local
+# Run local development server
 npm start
 ```
 
-`cashier_backend`
+**Backend:**
 
 ```bash
+# Build backend canister
 make build-backend
-```
 
-`token_storage`
-
-```bash
+# Build token storage canister
 make build-token-storage
 ```
 
-# Deployment Setup
+## 🏗️ Deployment Setup
 
-## CI/CD Automated Deployment
+### CI/CD Automated Deployment
 
 Cashier uses an automated CI/CD pipeline for seamless deployments across multiple environments:
 
-### 🚀 Quick Reference
+#### 🚀 Quick Reference
 
 | Trigger                | Environment   | Version Bump   | Use Case               |
 | ---------------------- | ------------- | -------------- | ---------------------- |
@@ -66,7 +64,7 @@ Cashier uses an automated CI/CD pipeline for seamless deployments across multipl
 | PR to **staging**      | 🔧 Staging    | ❌ No          | Pre-production testing |
 | PR to **main**         | 🚀 Production | ✅ Yes (patch) | Live release           |
 
-### Examples
+#### Examples
 
 ```bash
 # Deploy feature to dev
@@ -81,9 +79,9 @@ git push origin feature/new-feature  # ✅ Auto-deploys to dev
 
 📖 **[Complete Deployment Guide](docs/DEPLOYMENT.md)** - Detailed documentation with examples, troubleshooting, and best practices.
 
-## Manual Deployment
+### Manual Deployment
 
-## Quick Start
+#### Quick Start
 
 For lazy deployment with pre-configured identities, use the enhanced deployment script:
 
@@ -91,9 +89,9 @@ For lazy deployment with pre-configured identities, use the enhanced deployment 
 ./scripts/deploy.sh
 ```
 
-## Identity Configuration
+#### Identity Configuration
 
-### Private Identity Management
+**Private Identity Management**
 
 The deployment script supports storing identities in a private configuration file that won't be committed to git:
 
@@ -104,7 +102,7 @@ The deployment script supports storing identities in a private configuration fil
 # Format: network=identity_name
 
 staging=<DEPLOYER IDENTITY>
-dev=<DEPLOYER IDENTIT>
+dev=<DEPLOYER IDENTITY>
 ```
 
 2. **Automatic Identity Detection**: When running the script, it will:
@@ -112,7 +110,7 @@ dev=<DEPLOYER IDENTIT>
     - Prompt to use the stored identity (default: yes)
     - If no identity is stored, prompt for manual input and offer to save it
 
-### Deployment Networks
+#### Deployment Networks
 
 Available networks:
 
@@ -121,13 +119,13 @@ Available networks:
 -   `dev` - Development environment (uses `.env.dev`)
 -   `local` - Local development (uses `.env.local`)
 
-### Available Packages
+#### Available Packages
 
 -   `cashier_backend` - Main backend canister
 -   `token_storage` - Token storage canister
 -   `cashier_frontend` - Frontend application
 
-## Deployment Examples
+#### Deployment Examples
 
 **Interactive deployment:**
 
@@ -150,7 +148,7 @@ source .env.local
 dfx deploy cashier_backend --network local --identity your-identity
 ```
 
-## Environment Files
+#### Environment Files
 
 Make sure you have the appropriate environment file for your target network:
 
@@ -161,32 +159,33 @@ Make sure you have the appropriate environment file for your target network:
 
 Each environment file should contain the necessary configuration variables for that specific deployment environment.
 
-# Usage
+## 📱 Usage
 
-Using Cashier is easy. Start by going to cashierapp.io and log in with Internet Identity. We will support more login options going forward.
+Using Cashier is easy. Start by going to [cashierapp.io](https://cashierapp.io) and log in with Internet Identity. We will support more login options going forward.
 
-Create a transaction in 3 easy steps:
+**Create a transaction in 3 easy steps:**
 
--   Choose transaction type.
--   select assets to use in the transaction.
--   Generate the transaction.
+-   Choose transaction type
+-   Select assets to use in the transaction
+-   Generate the transaction
 
 And share the link for others to use.
 
-The link user can use the link in following steps:
+**The link user can use the link in following steps:**
 
--   Tap on link to open the transaction page.
--   Pick a wallet to transact with.
--   Execute the transaction.
+-   Tap on link to open the transaction page
+-   Pick a wallet to transact with
+-   Execute the transaction
 
-# Documentation
+## 📚 Documentation
 
-## Project Documentation
+### Project Documentation
 
 **Development & Deployment:**
 
 -   **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Complete CI/CD workflow, version management, and deployment strategies
 -   [Backend README](src/cashier_backend/README.md) - Backend canister documentation
+-   [Frontend README](src/cashier_frontend/README.md) - Frontend application documentation
 -   [Local Tests](src/test/local-tests/README.md) - Local testing setup and re-entrancy protection tests
 
 **Architecture & Design:**
