@@ -233,7 +233,7 @@ describe("Process Action Request Lock", () => {
                     ICP_TOKEN_ADDRESS,
                     createdLink.id,
                     // amount + fee
-                    BigInt(1_0000_0000 + 1_0000),
+                    BigInt(100010000),
                     canisterId,
                 ),
                 // Approve backend canister as spender
@@ -317,5 +317,11 @@ describe("Process Action Request Lock", () => {
 
         expect(updateResults.filter((result) => "Ok" in result).length).toBe(1);
         expect(updateResults.filter((result) => "Err" in result).length).toBe(2);
+
+        const okUpdateResult = updateResults.find((result) => "Ok" in result);
+        expect(okUpdateResult).toBeDefined();
+
+        const finalAction = (okUpdateResult as { Ok: ActionDto }).Ok;
+        expect(finalAction.state).toBe("Action_state_success");
     });
 });
