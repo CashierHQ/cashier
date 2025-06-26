@@ -163,17 +163,66 @@ Please find more documentation of the project in the following links:
 
 # Testing
 
-For backend unit test, go to `src/cashier_backend` and run
+## Backend Unit Tests
 
-```
+For backend unit tests, go to `src/cashier_backend` and run:
+
+```bash
 cargo test
 ```
 
-For intergration test, run
+## Integration Tests
 
-```
+For integration tests, run:
+
+```bash
 npx jest -- src/test/link
 ```
+
+## Local Re-entrancy Protection Tests
+
+The project includes comprehensive local tests that verify re-entrancy protection mechanisms for critical API endpoints. These tests ensure that concurrent calls are properly handled through request locking.
+
+### Setup
+
+Start dfx local:
+
+```bash
+dfx start --clean
+```
+
+Deploy canisters:
+
+```bash
+bash src/test/scripts/setup.sh
+```
+
+### Running Local Tests
+
+```bash
+# Run all local tests
+npm test src/test/local-tests
+
+# Run specific test files
+npm test src/test/local-tests/src/request_lock/create_action.spec.ts
+npm test src/test/local-tests/src/request_lock/process_action.spec.ts
+```
+
+### Test Coverage
+
+**`create_action.spec.ts`**:
+
+-   Tests concurrent `create_action` calls with request locking
+-   Prevents duplicate actions from being created simultaneously
+
+**`process_action.spec.ts`**:
+
+-   Tests basic and concurrent `process_action` calls
+-   Tests complete ICRC-112 flow with parallel operations
+-   Tests concurrent `trigger_transaction` and `update_action` calls
+-   Includes multi-identity testing (creator + claimer scenarios)
+
+For detailed information about the local tests, see [`src/test/local-tests/README.md`](src/test/local-tests/README.md).
 
 # Roadmap
 
