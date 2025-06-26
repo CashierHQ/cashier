@@ -158,7 +158,7 @@ describe("Test create and use receive payment link", () => {
                     [
                         "amount",
                         {
-                            U64: assetInfo.amount_per_link_use!,
+                            Nat: assetInfo.amount_per_link_use!,
                         },
                     ],
                     [
@@ -209,7 +209,7 @@ describe("Test create and use receive payment link", () => {
                     [
                         "amount",
                         {
-                            U64: assetInfo.amount_per_link_use!,
+                            Nat: assetInfo.amount_per_link_use!,
                         },
                     ],
                     [

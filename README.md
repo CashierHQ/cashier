@@ -176,7 +176,7 @@ cargo test
 For integration tests, run:
 
 ```bash
-npx jest -- src/test/link
+npx jest -- /test/picjs-tests
 ```
 
 ## Local Re-entrancy Protection Tests
