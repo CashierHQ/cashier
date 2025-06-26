@@ -20,9 +20,10 @@ import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { toast } from "sonner";
+import { useLinkDetailQuery } from "@/hooks/link-hooks";
+import { useLinkMutations } from "@/hooks/useLinkMutations";
 
 export function stateToStepIndex(state: string | undefined): number {
     if (state === LINK_STATE.CHOOSE_TEMPLATE) {
@@ -49,14 +50,31 @@ export default function LinkPage() {
     // Parse URL search parameters to get oldId if present
     const searchParams = new URLSearchParams(location.search);
     const oldIdParam = searchParams.get("oldId");
+    const redirectParam = searchParams.get("redirect");
+    const isRedirectHappening = redirectParam === "true";
 
     const [backButtonDisabled, setBackButtonDisabled] = useState(false);
 
     const { addUserInput, getUserInput, resetButtonState } = useLinkCreationFormStore();
-    const { link, action, callLinkStateMachine, isLoading } = useLinkAction(
-        linkId,
-        ACTION_TYPE.CREATE_LINK,
-    );
+    const { callLinkStateMachine, isUpdating } = useLinkMutations();
+
+    const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.CREATE_LINK);
+    const link = linkDetailQuery.data?.link;
+    const action = linkDetailQuery.data?.action;
+    const isLoading = linkDetailQuery.isLoading;
+
+    // Navigate to details page if link is in a non-editable state
+    useEffect(() => {
+        if (
+            link?.state &&
+            [LINK_STATE.ACTIVE, LINK_STATE.INACTIVE, LINK_STATE.INACTIVE_ENDED].includes(
+                link.state as LINK_STATE,
+            )
+        ) {
+            navigate(`/details/${link.id}`);
+            return;
+        }
+    }, [link?.state, link?.id, navigate]);
 
     // Navigate to details page if link is in a non-editable state
     useEffect(() => {
@@ -201,18 +219,18 @@ export default function LinkPage() {
     };
 
     // Determine if we should show content based on either having link data or user input data
-    const shouldShowContent = !isLoading || userInputData !== undefined;
+    const shouldShowContent = !isLoading || userInputData !== undefined || link !== undefined;
 
     return (
         <MainAppLayout>
             <div className="w-full h-full flex flex-col relative overflow-hidden">
-                {isLoading && !userInputData && (
+                {isLoading && !userInputData && !link && (
                     <div className="w-screen h-screen flex items-center justify-center">
                         <Spinner />
                     </div>
                 )}
 
-                {shouldShowContent && (
+                {shouldShowContent && link && (
                     <>
                         <MultiStepForm initialStep={getInitialStep()}>
                             <MultiStepForm.Header
@@ -220,9 +238,10 @@ export default function LinkPage() {
                                 backButtonDisabled={backButtonDisabled}
                             />
 
-                            <MultiStepForm.Items>
+                            <MultiStepForm.Items disableAnimations={isRedirectHappening}>
                                 <MultiStepForm.Item name={t("create.linkName")}>
                                     <LinkTemplate
+                                        link={link}
                                         onSelectUnsupportedLinkType={showUnsupportedLinkTypeToast}
                                     />
                                 </MultiStepForm.Item>
@@ -230,11 +249,12 @@ export default function LinkPage() {
                                 <MultiStepForm.Item
                                     name={t(`create.${link?.linkType}.link_detail_title`)}
                                 >
-                                    <LinkDetails />
+                                    <LinkDetails link={link} isUpdating={isUpdating} />
                                 </MultiStepForm.Item>
 
                                 <MultiStepForm.Item name={t("create.linkPreview")}>
                                     <LinkPreview
+                                        linkDetailQuery={linkDetailQuery}
                                         onInvalidActon={showInvalidActionToast}
                                         onCashierError={showCashierErrorToast}
                                         onActionResult={showActionResultToast}

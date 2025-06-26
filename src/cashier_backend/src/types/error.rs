@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::fmt;
 
 use candid::CandidType;
@@ -84,6 +83,9 @@ pub enum CanisterError {
     // Fallback
     #[error("Unknown error: {0}")]
     UnknownError(String),
+
+    #[error("Multi errors: {0:?}")]
+    BatchError(Vec<CanisterError>),
 }
 
 impl CanisterError {

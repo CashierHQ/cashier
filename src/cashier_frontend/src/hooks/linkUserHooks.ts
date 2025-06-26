@@ -15,6 +15,10 @@ import { useLinkAction } from "./useLinkAction";
 export const getLinkUserStateQueryKey = (link_id: string, user_pid: string) =>
     ["linkUserState", link_id, user_pid] as const;
 
+// Helper to generate the query key
+export const getLinkUserStateQueryKey = (link_id: string, user_pid: string) =>
+    ["linkUserState", link_id, user_pid] as const;
+
 export function useUpdateLinkUserState() {
     const identity = useIdentity();
 
@@ -34,15 +38,13 @@ export function useUpdateLinkUserState() {
 
 export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: boolean) {
     const identity = useIdentity();
-    const user_pid = identity?.getPrincipal().toText() ?? "";
-    const { setAction } = useLinkAction(input.link_id, input.action_type);
+    const user_pid = identity?.getPrincipal().toString() ?? "";
 
     return useQuery({
         queryKey: getLinkUserStateQueryKey(input.link_id, user_pid),
         queryFn: async () => {
             const linkService = new LinkService(identity);
             const userState = await linkService.getLinkUserState(input);
-            setAction(userState.action);
             return userState;
         },
         enabled: isEnabled,
@@ -55,6 +57,16 @@ export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: b
             return failureCount < 2;
         },
     });
+}
+
+export async function getLinkUserState(
+    input: LinkGetUserStateInputModel,
+    identity: Identity | undefined,
+) {
+    const linkService = new LinkService(identity);
+    const userState = await linkService.getLinkUserState(input);
+    console.log("userState", userState);
+    return userState;
 }
 
 export async function fetchLinkUserState(

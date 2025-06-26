@@ -11,24 +11,25 @@ import PhonePreview from "@/components/ui/phone-preview";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { toast } from "sonner";
 import { useLinkTemplateValidation } from "@/hooks/form/useLinkTemplateValidation";
 import { useLinkTemplateHandler } from "@/hooks/form/usePageSubmissionHandlers";
+import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useUpdateLinkMutation } from "@/hooks/link-hooks";
 
 export interface LinkTemplateProps {
     onSelectUnsupportedLinkType?: () => void;
+    link: LinkDetailModel;
 }
 
 export default function LinkTemplate({
     onSelectUnsupportedLinkType = () => {},
+    link,
 }: LinkTemplateProps) {
     const { t } = useTranslation();
     const { updateUserInput, userInputs, setButtonState } = useLinkCreationFormStore();
 
     const responsive = useDeviceSize();
-
-    const { link, isUpdating } = useLinkAction();
 
     const carousel = useCarousel();
 
@@ -37,7 +38,10 @@ export default function LinkTemplate({
         useLinkTemplateValidation();
 
     // Use centralized template submission handler
-    const { submitTemplate } = useLinkTemplateHandler();
+    const { submitTemplate } = useLinkTemplateHandler(link);
+
+    // Get loading state from update mutation if available
+    const updateLinkMutation = useUpdateLinkMutation();
 
     const handleSubmit = async () => {
         const customErrorHandler = (error: Error) => {
@@ -77,10 +81,10 @@ export default function LinkTemplate({
 
         setButtonState({
             label: isComingSoon ? "Coming Soon" : t("continue"),
-            isDisabled: isUpdating,
+            isDisabled: updateLinkMutation.isPending,
             action: handleSubmit,
         });
-    }, [carousel.current, userInputs, isUpdating, link]);
+    }, [carousel.current, userInputs, updateLinkMutation.isPending, link]);
 
     if (!link) {
         return null;

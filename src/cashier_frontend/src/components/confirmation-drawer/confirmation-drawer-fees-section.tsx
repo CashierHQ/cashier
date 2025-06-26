@@ -13,16 +13,17 @@ import { FeeBreakdownDrawer } from "./fee-breakdown-drawer";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "../ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTranslation } from "react-i18next";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
     isUsd?: boolean;
     maxActionNumber?: number;
     actionType: ACTION_TYPE;
+    link: LinkDetailModel;
 };
 
 // Define a type for fee token info
@@ -45,6 +46,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     intents,
     maxActionNumber,
     actionType,
+    link,
 }) => {
     const { t } = useTranslation();
     const { feeAmount } = useIntentMetadata(intents?.[0], actionType);
@@ -56,7 +58,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     const [feesBreakdown, setFeesBreakdown] = useState<FeeBreakdownItem[]>([]);
     // for avatar
     const [usedTokens, setUsedTokens] = useState<FeeTokenInfo[]>([]);
-    const { link } = useLinkAction();
 
     useEffect(() => {
         const initState = async () => {

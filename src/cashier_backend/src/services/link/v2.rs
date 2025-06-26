@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::{collections::HashMap, str::FromStr};
 
 use candid::{Nat, Principal};
@@ -23,7 +22,7 @@ use crate::{
         CreateLinkInputV2, LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto,
     },
     domains::fee::Fee,
-    error, info,
+    error,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
         user_wallet::UserWalletRepository,
@@ -480,11 +479,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         )
                         .await
                         .map_err(|e| e)?;
-
-                    info!(
-                        "[link_assemble_intents] link balance for {} is {}",
-                        link.id, link_balance
-                    );
 
                     let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
                         CanisterError::HandleLogicError(

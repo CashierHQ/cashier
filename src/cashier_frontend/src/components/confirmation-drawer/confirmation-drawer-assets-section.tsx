@@ -7,12 +7,13 @@ import { TransactionItem } from "@/components/transaction/transaction-item";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
 import { ACTION_TYPE, TASK } from "@/services/types/enum";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { FeeHelpers } from "@/services/fee.service";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 type ConfirmationPopupAssetsSectionProps = {
     actionType: ACTION_TYPE;
     intents: IntentModel[];
+    link: LinkDetailModel;
 };
 
 const getLabel = (intent: IntentModel) => {
@@ -46,12 +47,12 @@ const sortIntentsByAddress = (intents: IntentModel[]): IntentModel[] => {
 };
 
 export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
+    link,
     actionType,
     intents,
 }) => {
     const { t } = useTranslation();
     const { getToken } = useTokens();
-    const { link } = useLinkAction();
     const [feesMap, setFeesMap] = useState<Map<string, FeeModel[]>>(new Map());
     const [sortedIntents, setSortedIntents] = useState<IntentModel[]>([]);
 
@@ -119,6 +120,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 {sortedIntents.map((intent) => (
                     <li key={intent.id}>
                         <TransactionItem
+                            link={link}
                             actionType={actionType}
                             key={intent.id}
                             intent={intent}
