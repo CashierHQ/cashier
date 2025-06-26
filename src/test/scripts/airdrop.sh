@@ -41,7 +41,7 @@ show_usage() {
     echo "Prerequisites:"
     echo "  - dfx replica must be running"
     echo "  - ICP ledger canister must be deployed"
-    echo "  - cashier-dev identity must exist with minting privileges"
+    echo "  - Current dfx identity must have minting privileges"
 }
 
 # Function to validate principal ID format
@@ -84,16 +84,6 @@ check_canister() {
     log "${GREEN}ICP Ledger canister is available${NC}"
 }
 
-# Function to check if cashier-dev identity exists
-check_identity() {
-    if ! dfx identity list | grep -q "cashier-dev"; then
-        log "${RED}cashier-dev identity not found${NC}"
-        log "${YELLOW}Please create the identity first: dfx identity new cashier-dev --storage-mode plaintext${NC}"
-        exit 1
-    fi
-    log "${GREEN}cashier-dev identity found${NC}"
-}
-
 # Function to perform airdrop
 perform_airdrop() {
     local target_principal="$1"
@@ -103,14 +93,13 @@ perform_airdrop() {
     log "${GREEN}Starting airdrop...${NC}"
     log "${YELLOW}  Target: $target_principal${NC}"
     log "${YELLOW}  Amount: $amount_icp ICP ($amount_e8s e8s)${NC}"
-    
-    # Switch to cashier-dev identity (minter)
-    dfx identity use cashier-dev
+
+    dfx identity use default
     
     # Perform the transfer
-    local transfer_result=$(dfx canister call "$ICP_LEDGER_CANISTER_ID" icrc1_transfer "(record { 
+    local transfer_cmd="dfx canister call $ICP_LEDGER_CANISTER_ID icrc1_transfer \"(record { 
         to = record { 
-            owner = principal \"$target_principal\";
+            owner = principal \\\"$target_principal\\\";
             subaccount = null;
         };
         memo = null; 
@@ -118,17 +107,17 @@ perform_airdrop() {
         from_subaccount = null;
         amount = $amount_e8s;
         fee = null
-    })" --network "$NETWORK" --output json 2>&1)
+    })\" --network $NETWORK"
     
-    # Check if transfer was successful
-    if echo "$transfer_result" | jq -e '.Ok' >/dev/null 2>&1; then
-        local block_index=$(echo "$transfer_result" | jq -r '.Ok')
+    log "${BLUE}Executing: $transfer_cmd${NC}"
+    
+    local transfer_result
+    if transfer_result=$(eval "$transfer_cmd" 2>&1); then
         log "${GREEN}✅ Airdrop successful!${NC}"
-        log "${YELLOW}  Block Index: $block_index${NC}"
+        log "${YELLOW}  Response: $transfer_result${NC}"
         log "${YELLOW}  Transferred: $amount_icp ICP to $target_principal${NC}"
     else
-        local error_msg=$(echo "$transfer_result" | jq -r '.Err // "Unknown error"')
-        log "${RED}❌ Airdrop failed: $error_msg${NC}"
+        log "${RED}❌ Airdrop failed: $transfer_result${NC}"
         exit 1
     fi
 }
@@ -139,23 +128,14 @@ check_balance() {
     
     log "${BLUE}Checking balance...${NC}"
     
-    local balance_result=$(dfx canister call "$ICP_LEDGER_CANISTER_ID" icrc1_balance_of "(record { 
-        owner = principal \"$target_principal\"; 
+    local balance_cmd="dfx canister call $ICP_LEDGER_CANISTER_ID icrc1_balance_of \"(record { 
+        owner = principal \\\"$target_principal\\\"; 
         subaccount = null 
-    })" --network "$NETWORK" --output json 2>/dev/null)
+    })\" --network $NETWORK"
     
-    if [[ -n "$balance_result" ]]; then
-        local balance_e8s=$(echo "$balance_result" | jq -r '. // 0')
-        local balance_icp=$((balance_e8s / 100000000))
-        local balance_remainder=$((balance_e8s % 100000000))
-        
-        if [[ $balance_remainder -gt 0 ]]; then
-            local balance_formatted=$(printf "%d.%08d" $balance_icp $balance_remainder)
-        else
-            local balance_formatted="$balance_icp"
-        fi
-        
-        log "${GREEN}Current balance: $balance_formatted ICP${NC}"
+    local balance_result
+    if balance_result=$(eval "$balance_cmd" 2>/dev/null); then
+        echo "Balance result: $balance_result"
     else
         log "${YELLOW}Could not check balance${NC}"
     fi
@@ -185,7 +165,6 @@ main() {
     # Check prerequisites
     check_dfx
     check_canister "$ICP_LEDGER_CANISTER_ID"
-    check_identity
     
     # Perform airdrop
     perform_airdrop "$target_principal" "$amount_icp"
@@ -197,4 +176,4 @@ main() {
 }
 
 # Run main function
-main "$@" 
+main "$@"

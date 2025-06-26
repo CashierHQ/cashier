@@ -645,6 +645,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 self.ic_env.time(),
             )?;
 
+        info!("Request lock key: {:?}", request_lock_key);
+
         // Execute main logic and capture result
         let result = async {
             let action = self.link_service.get_action_of_link(
@@ -681,6 +683,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         // Drop lock regardless of success or failure
         let _ = self.request_lock_service.drop(request_lock_key);
+
+        info!("Drop lock key: ");
 
         result
     }
