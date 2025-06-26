@@ -1,62 +1,150 @@
 name: Frontend Deployment
 on:
-    # For main and staging branches, only trigger on closed PRs
+    # PRs to main (production) and staging
     pull_request:
         paths:
             - "src/cashier_frontend/**"
         branches:
             - main
             - staging
-            - dev
         types:
-            - closed
+            - opened
+            - synchronize
+            - reopened
+
+    # Any branch push (deploy all to dev)
     push:
         paths:
             - "src/cashier_frontend/**"
-        branches-ignore:
-            - main
-            - staging
+        branches:
+            - "**" # This catches ALL branches
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
     actions: write # This allows the workflow to delete workflow runs
-    contents: read # Default permission to read the repository contents
+    contents: write # Need write access to commit version changes
+    pull-requests: write # Allow commenting on PRs
 
 jobs:
     setup_environment:
         runs-on: ubuntu-latest
         outputs:
             environment: ${{ steps.set-env.outputs.environment }}
+            should_deploy: ${{ steps.set-env.outputs.should_deploy }}
+            version_bump: ${{ steps.set-env.outputs.version_bump }}
+            branch_name: ${{ steps.set-env.outputs.branch_name }}
         steps:
             - name: Set deployment environment
               id: set-env
               run: |
-                  # For pull requests, use base_ref, for pushes use ref_name
+                  echo "Event: ${{ github.event_name }}"
+                  echo "Ref: ${{ github.ref }}"
+                  echo "Ref name: ${{ github.ref_name }}"
+
                   if [[ "${{ github.event_name }}" == "pull_request" ]]; then
                     TARGET_BRANCH="${{ github.base_ref }}"
+                    SOURCE_BRANCH="${{ github.head_ref }}"
+                    
+                    if [[ "$TARGET_BRANCH" == "main" ]]; then
+                      echo "environment=production" >> $GITHUB_OUTPUT
+                      echo "should_deploy=true" >> $GITHUB_OUTPUT
+                      echo "version_bump=true" >> $GITHUB_OUTPUT
+                      echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
+                      echo "🚀 Production PR ($SOURCE_BRANCH → main) - will deploy with version bump"
+                    elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+                      echo "environment=staging" >> $GITHUB_OUTPUT
+                      echo "should_deploy=true" >> $GITHUB_OUTPUT
+                      echo "version_bump=false" >> $GITHUB_OUTPUT
+                      echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
+                      echo "🔧 Staging PR ($SOURCE_BRANCH → staging) - will deploy without version bump"
+                    else
+                      echo "environment=dev" >> $GITHUB_OUTPUT
+                      echo "should_deploy=true" >> $GITHUB_OUTPUT
+                      echo "version_bump=false" >> $GITHUB_OUTPUT
+                      echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
+                      echo "🧪 Dev PR ($SOURCE_BRANCH → $TARGET_BRANCH) - will deploy without version bump"
+                    fi
                   else
+                    # Direct push to any branch
                     TARGET_BRANCH="${{ github.ref_name }}"
-                  fi
-
-                  echo "Detected branch: $TARGET_BRANCH"
-
-                  if [[ "$TARGET_BRANCH" == "main" ]]; then
-                    echo "environment=production" >> $GITHUB_OUTPUT
-                  elif [[ "$TARGET_BRANCH" == "staging" ]]; then
-                    echo "environment=staging" >> $GITHUB_OUTPUT
-                  else
-                    # Any other branch will deploy to dev environment
+                    echo "branch_name=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+                    
+                    # Deploy ALL branches to dev environment
                     echo "environment=dev" >> $GITHUB_OUTPUT
+                    echo "should_deploy=true" >> $GITHUB_OUTPUT
+                    echo "version_bump=false" >> $GITHUB_OUTPUT
+                    echo "🧪 Branch push ($TARGET_BRANCH) - will deploy to dev without version bump"
                   fi
+
+    bump_version:
+        if: needs.setup_environment.outputs.version_bump == 'true'
+        runs-on: ubuntu-latest
+        needs: setup_environment
+        outputs:
+            new_version: ${{ steps.bump.outputs.new_version }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  ref: ${{ github.head_ref }}
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Get current version
+              id: current-version
+              run: |
+                  CURRENT_VERSION=$(node -p "require('./src/cashier_frontend/package.json').version")
+                  echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+                  echo "Current version: $CURRENT_VERSION"
+
+            - name: Bump version
+              id: bump
+              run: |
+                  CURRENT_VERSION="${{ steps.current-version.outputs.current_version }}"
+
+                  # Parse version components
+                  IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+
+                  # Increment patch version for PR deployments
+                  NEW_PATCH=$((patch + 1))
+                  NEW_VERSION="${major}.${minor}.${NEW_PATCH}"
+
+                  echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+                  echo "Bumping version: $CURRENT_VERSION → $NEW_VERSION"
+
+                  # Update package.json
+                  node -e "
+                    const fs = require('fs');
+                    const pkg = JSON.parse(fs.readFileSync('src/cashier_frontend/package.json', 'utf8'));
+                    pkg.version = '$NEW_VERSION';
+                    fs.writeFileSync('src/cashier_frontend/package.json', JSON.stringify(pkg, null, 4) + '\n');
+                  "
+
+            - name: Commit version bump
+              run: |
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+                  git add src/cashier_frontend/package.json
+                  git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
+                  git push
 
     build_and_deploy:
         runs-on: ubuntu-latest
-        needs: setup_environment
+        needs:
+            - setup_environment
+            - bump_version
+        if: always() && needs.setup_environment.outputs.should_deploy == 'true'
         environment: ${{ needs.setup_environment.outputs.environment }}
 
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.head_ref || github.ref_name }}
 
             - name: Set up Node.js
               uses: actions/setup-node@v4
@@ -73,10 +161,8 @@ jobs:
               run: |
                   echo "${{ secrets.DEPLOYER }}" > private_key.pem
 
-            # DANGEROUS: This is a plaintext identity import
             - name: Import identity
               run: dfx identity import deployer private_key.pem --storage-mode=plaintext
-            # DANGEROUS: Do not echo the private key to the console
 
             - name: Get cashier dev address
               run: |
@@ -85,6 +171,17 @@ jobs:
 
             - name: Install project dependencies
               run: npm install
+
+            - name: Get version info
+              id: version-info
+              run: |
+                  if [[ "${{ needs.setup_environment.outputs.version_bump }}" == "true" ]]; then
+                    VERSION="${{ needs.bump_version.outputs.new_version }}"
+                  else
+                    VERSION=$(node -p "require('./src/cashier_frontend/package.json').version")
+                  fi
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+                  echo "Deploying version: $VERSION"
 
             - name: Deploy to ${{ needs.setup_environment.outputs.environment }} environment
               env:
@@ -98,12 +195,21 @@ jobs:
                   if [[ "$ENVIRONMENT" == "production" ]]; then
                     NETWORK="ic"
                     ENV_FILE=".env.production"
+                    echo "🚀 Deploying to PRODUCTION (IC Mainnet)"
+                    echo "Branch: ${{ needs.setup_environment.outputs.branch_name }}"
+                    echo "Version: ${{ steps.version-info.outputs.version }}"
                   elif [[ "$ENVIRONMENT" == "staging" ]]; then
                     NETWORK="staging"
                     ENV_FILE=".env.staging"
+                    echo "🔧 Deploying to STAGING"
+                    echo "Branch: ${{ needs.setup_environment.outputs.branch_name }}"
+                    echo "Version: ${{ steps.version-info.outputs.version }}"
                   else
                     NETWORK="dev"
                     ENV_FILE=".env.dev"
+                    echo "🧪 Deploying to DEV"
+                    echo "Branch: ${{ needs.setup_environment.outputs.branch_name }}"
+                    echo "Version: ${{ steps.version-info.outputs.version }}"
                   fi
 
                   # Create environment file with the correct values
@@ -111,9 +217,44 @@ jobs:
                   echo "VITE_BACKEND_CANISTER_ID=${VITE_BACKEND_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
                   echo "VITE_TOKEN_STORAGE_CANISTER_ID=${VITE_TOKEN_STORAGE_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
                   echo "VITE_ENV=${ENVIRONMENT}" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_BRANCH=${{ needs.setup_environment.outputs.branch_name }}" >> src/cashier_frontend/${ENV_FILE}
 
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
 
                   make g
                   dfx deploy cashier_frontend --network ${NETWORK}
+
+    comment_pr:
+        if: github.event_name == 'pull_request' && needs.setup_environment.outputs.should_deploy == 'true'
+        runs-on: ubuntu-latest
+        needs:
+            - setup_environment
+            - build_and_deploy
+            - bump_version
+        steps:
+            - name: Comment on PR
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const environment = '${{ needs.setup_environment.outputs.environment }}';
+                      const version = '${{ needs.bump_version.outputs.new_version }}' || 'current';
+                      const branch = '${{ needs.setup_environment.outputs.branch_name }}';
+                      const network = environment === 'production' ? 'IC Mainnet' : 
+                                    environment === 'staging' ? 'Staging' : 'Dev';
+
+                      const message = `## 🚀 Deployment Complete!
+
+                      **Environment:** ${environment.toUpperCase()}
+                      **Network:** ${network}
+                      **Branch:** ${branch}
+                      ${version !== 'current' ? `**Version:** ${version}` : ''}
+
+                      Deployment finished successfully! 🎉`;
+
+                      github.rest.issues.createComment({
+                        issue_number: context.issue.number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body: message
+                      });
