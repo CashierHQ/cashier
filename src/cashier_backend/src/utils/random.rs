@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::{cell::RefCell, time::Duration};
 
 use candid::Principal;
@@ -24,11 +23,12 @@ pub fn init_ic_rand() {
 }
 
 async fn set_rand() {
-    let (seed,) = ic_cdk::call(Principal::management_canister(), "raw_rand", ())
+    let (seed,): (Vec<u8>,) = ic_cdk::call(Principal::management_canister(), "raw_rand", ())
         .await
         .unwrap();
+    let seed_array: [u8; 32] = seed.try_into().unwrap_or_else(|_| [0u8; 32]);
     RNG.with(|rng| {
-        *rng.borrow_mut() = Some(StdRng::from_seed(seed));
+        *rng.borrow_mut() = Some(StdRng::from_seed(seed_array));
     });
 }
 

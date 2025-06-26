@@ -1,8 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    fmt::format,
+};
 
 use crate::{
     core::action::types::TriggerTransactionInput,
@@ -66,7 +68,10 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
     pub fn get_tx_by_id(&self, tx_id: &String) -> Result<Transaction, CanisterError> {
         self.transaction_repository
             .get(tx_id)
-            .ok_or(CanisterError::NotFound("Transaction not found".to_string()))
+            .ok_or(CanisterError::NotFound(format!(
+                "Transaction not found: {}",
+                tx_id
+            )))
     }
 
     pub fn batch_get(&self, tx_ids: Vec<String>) -> Result<Vec<Transaction>, CanisterError> {
