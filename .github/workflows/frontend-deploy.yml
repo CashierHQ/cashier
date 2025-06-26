@@ -12,12 +12,12 @@ on:
             - synchronize
             - reopened
 
-    # Dev: Direct pushes to dev branch
+    # Any branch push (deploy all to dev)
     push:
         paths:
             - "src/cashier_frontend/**"
         branches:
-            - dev
+            - "**" # This catches ALL branches
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -32,6 +32,7 @@ jobs:
             environment: ${{ steps.set-env.outputs.environment }}
             should_deploy: ${{ steps.set-env.outputs.should_deploy }}
             version_bump: ${{ steps.set-env.outputs.version_bump }}
+            branch_name: ${{ steps.set-env.outputs.branch_name }}
         steps:
             - name: Set deployment environment
               id: set-env
@@ -42,37 +43,37 @@ jobs:
 
                   if [[ "${{ github.event_name }}" == "pull_request" ]]; then
                     TARGET_BRANCH="${{ github.base_ref }}"
+                    SOURCE_BRANCH="${{ github.head_ref }}"
                     
                     if [[ "$TARGET_BRANCH" == "main" ]]; then
                       echo "environment=production" >> $GITHUB_OUTPUT
                       echo "should_deploy=true" >> $GITHUB_OUTPUT
                       echo "version_bump=true" >> $GITHUB_OUTPUT
-                      echo "🚀 Production PR - will deploy with version bump"
+                      echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
+                      echo "🚀 Production PR ($SOURCE_BRANCH → main) - will deploy with version bump"
                     elif [[ "$TARGET_BRANCH" == "staging" ]]; then
                       echo "environment=staging" >> $GITHUB_OUTPUT
                       echo "should_deploy=true" >> $GITHUB_OUTPUT
                       echo "version_bump=false" >> $GITHUB_OUTPUT
-                      echo "🔧 Staging PR - will deploy without version bump"
+                      echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
+                      echo "🔧 Staging PR ($SOURCE_BRANCH → staging) - will deploy without version bump"
                     else
                       echo "environment=dev" >> $GITHUB_OUTPUT
                       echo "should_deploy=true" >> $GITHUB_OUTPUT
                       echo "version_bump=false" >> $GITHUB_OUTPUT
-                      echo "🧪 Dev PR - will deploy without version bump"
+                      echo "branch_name=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
+                      echo "🧪 Dev PR ($SOURCE_BRANCH → $TARGET_BRANCH) - will deploy without version bump"
                     fi
                   else
-                    # Direct push to dev branch
+                    # Direct push to any branch
                     TARGET_BRANCH="${{ github.ref_name }}"
-                    if [[ "$TARGET_BRANCH" == "dev" ]]; then
-                      echo "environment=dev" >> $GITHUB_OUTPUT
-                      echo "should_deploy=true" >> $GITHUB_OUTPUT
-                      echo "version_bump=false" >> $GITHUB_OUTPUT
-                      echo "🧪 Dev branch push - will deploy without version bump"
-                    else
-                      echo "environment=none" >> $GITHUB_OUTPUT
-                      echo "should_deploy=false" >> $GITHUB_OUTPUT
-                      echo "version_bump=false" >> $GITHUB_OUTPUT
-                      echo "⏹️ Direct push to non-dev branch, skipping deployment"
-                    fi
+                    echo "branch_name=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+                    
+                    # Deploy ALL branches to dev environment
+                    echo "environment=dev" >> $GITHUB_OUTPUT
+                    echo "should_deploy=true" >> $GITHUB_OUTPUT
+                    echo "version_bump=false" >> $GITHUB_OUTPUT
+                    echo "🧪 Branch push ($TARGET_BRANCH) - will deploy to dev without version bump"
                   fi
 
     bump_version:
@@ -143,7 +144,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
               with:
-                  ref: ${{ github.head_ref }}
+                  ref: ${{ github.head_ref || github.ref_name }}
 
             - name: Set up Node.js
               uses: actions/setup-node@v4
@@ -195,16 +196,19 @@ jobs:
                     NETWORK="ic"
                     ENV_FILE=".env.production"
                     echo "🚀 Deploying to PRODUCTION (IC Mainnet)"
+                    echo "Branch: ${{ needs.setup_environment.outputs.branch_name }}"
                     echo "Version: ${{ steps.version-info.outputs.version }}"
                   elif [[ "$ENVIRONMENT" == "staging" ]]; then
                     NETWORK="staging"
                     ENV_FILE=".env.staging"
                     echo "🔧 Deploying to STAGING"
+                    echo "Branch: ${{ needs.setup_environment.outputs.branch_name }}"
                     echo "Version: ${{ steps.version-info.outputs.version }}"
                   else
                     NETWORK="dev"
                     ENV_FILE=".env.dev"
                     echo "🧪 Deploying to DEV"
+                    echo "Branch: ${{ needs.setup_environment.outputs.branch_name }}"
                     echo "Version: ${{ steps.version-info.outputs.version }}"
                   fi
 
@@ -213,6 +217,7 @@ jobs:
                   echo "VITE_BACKEND_CANISTER_ID=${VITE_BACKEND_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
                   echo "VITE_TOKEN_STORAGE_CANISTER_ID=${VITE_TOKEN_STORAGE_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
                   echo "VITE_ENV=${ENVIRONMENT}" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_BRANCH=${{ needs.setup_environment.outputs.branch_name }}" >> src/cashier_frontend/${ENV_FILE}
 
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
@@ -234,6 +239,7 @@ jobs:
                   script: |
                       const environment = '${{ needs.setup_environment.outputs.environment }}';
                       const version = '${{ needs.bump_version.outputs.new_version }}' || 'current';
+                      const branch = '${{ needs.setup_environment.outputs.branch_name }}';
                       const network = environment === 'production' ? 'IC Mainnet' : 
                                     environment === 'staging' ? 'Staging' : 'Dev';
 
@@ -241,6 +247,7 @@ jobs:
 
                       **Environment:** ${environment.toUpperCase()}
                       **Network:** ${network}
+                      **Branch:** ${branch}
                       ${version !== 'current' ? `**Version:** ${version}` : ''}
 
                       Deployment finished successfully! 🎉`;

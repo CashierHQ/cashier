@@ -54,6 +54,35 @@ make build-token-storage
 
 # Deployment Setup
 
+## CI/CD Automated Deployment
+
+Cashier uses an automated CI/CD pipeline for seamless deployments across multiple environments:
+
+### 🚀 Quick Reference
+
+| Trigger                | Environment   | Version Bump   | Use Case               |
+| ---------------------- | ------------- | -------------- | ---------------------- |
+| Push to **any branch** | 🧪 Dev        | ❌ No          | Feature testing        |
+| PR to **staging**      | 🔧 Staging    | ❌ No          | Pre-production testing |
+| PR to **main**         | 🚀 Production | ✅ Yes (patch) | Live release           |
+
+### Examples
+
+```bash
+# Deploy feature to dev
+git push origin feature/new-feature  # ✅ Auto-deploys to dev
+
+# Deploy to staging
+# Create PR: feature/new-feature → staging  # ✅ Auto-deploys to staging
+
+# Deploy to production (with version bump)
+# Create PR: staging → main  # ✅ Version 0.0.9 → 0.0.10, deploys to production
+```
+
+📖 **[Complete Deployment Guide](docs/DEPLOYMENT.md)** - Detailed documentation with examples, troubleshooting, and best practices.
+
+## Manual Deployment
+
 ## Quick Start
 
 For lazy deployment with pre-configured identities, use the enhanced deployment script:
@@ -152,7 +181,15 @@ The link user can use the link in following steps:
 
 # Documentation
 
-Please find more documentation of the project in the following links:
+## Project Documentation
+
+**Development & Deployment:**
+
+-   **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Complete CI/CD workflow, version management, and deployment strategies
+-   [Backend README](src/cashier_backend/README.md) - Backend canister documentation
+-   [Local Tests](src/test/local-tests/README.md) - Local testing setup and re-entrancy protection tests
+
+**Architecture & Design:**
 
 -   [Cashier project overview](https://doc.clickup.com/9012452868/d/h/8cjy7g4-4292/9a3796b6e853ef0)
 -   [High level architecture overview](https://doc.clickup.com/9012452868/d/h/8cjy7g4-5612/2e2ccfa01dd19ed)
