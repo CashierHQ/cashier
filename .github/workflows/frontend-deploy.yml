@@ -123,6 +123,62 @@ jobs:
                     exit 1
                   fi
 
+    bump_version:
+        if: needs.setup_environment.outputs.version_bump == 'true'
+        runs-on: ubuntu-latest
+        needs: setup_environment
+        outputs:
+            new_version: ${{ steps.bump.outputs.new_version }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  ref: ${{ github.head_ref }}
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Get current version
+              id: current-version
+              run: |
+                  CURRENT_VERSION=$(node -p "require('./src/cashier_frontend/package.json').version")
+                  echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+                  echo "Current version: $CURRENT_VERSION"
+
+            - name: Bump version
+              id: bump
+              run: |
+                  CURRENT_VERSION="${{ steps.current-version.outputs.current_version }}"
+
+                  # Parse version components
+                  IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+
+                  # Increment patch version for PR deployments
+                  NEW_PATCH=$((patch + 1))
+                  NEW_VERSION="${major}.${minor}.${NEW_PATCH}"
+
+                  echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+                  echo "Bumping version: $CURRENT_VERSION → $NEW_VERSION"
+
+                  # Update package.json
+                  node -e "
+                    const fs = require('fs');
+                    const pkg = JSON.parse(fs.readFileSync('src/cashier_frontend/package.json', 'utf8'));
+                    pkg.version = '$NEW_VERSION';
+                    fs.writeFileSync('src/cashier_frontend/package.json', JSON.stringify(pkg, null, 4) + '\n');
+                  "
+
+            - name: Commit version bump
+              run: |
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+                  git add src/cashier_frontend/package.json
+                  git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
+                  git push
+
     build_and_deploy:
         runs-on: ubuntu-latest
         needs:
