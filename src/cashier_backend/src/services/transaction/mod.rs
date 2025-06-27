@@ -1,20 +1,10 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    fmt::format,
+};
 
 use crate::{
     core::action::types::TriggerTransactionInput,
@@ -26,8 +16,8 @@ use crate::{
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 use base64::Engine;
-use candid::{Encode, Nat, Principal};
-use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
+use candid::{Encode, Principal};
+use cashier_types::transaction::v2::{IcTransaction, Protocol, Transaction, TransactionState};
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
@@ -78,7 +68,10 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
     pub fn get_tx_by_id(&self, tx_id: &String) -> Result<Transaction, CanisterError> {
         self.transaction_repository
             .get(tx_id)
-            .ok_or(CanisterError::NotFound("Transaction not found".to_string()))
+            .ok_or(CanisterError::NotFound(format!(
+                "Transaction not found: {}",
+                tx_id
+            )))
     }
 
     pub fn batch_get(&self, tx_ids: Vec<String>) -> Result<Vec<Transaction>, CanisterError> {
@@ -109,7 +102,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
 
                 let arg = TransferArg {
                     to: account,
-                    amount: Nat::from(tx_transfer.amount),
+                    amount: tx_transfer.amount.clone(),
                     memo: None,
                     fee: None,
                     created_at_time: None,
@@ -137,11 +130,11 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                 let arg = ApproveArgs {
                     from_subaccount: None,
                     spender,
-                    amount: Nat::from(tx_approve.amount),
+                    amount: tx_approve.amount.clone(),
                     expected_allowance: None,
                     expires_at: None,
                     fee: None,
-                    memo: None,
+                    memo: tx_approve.memo.clone(),
                     created_at_time: None,
                 };
 

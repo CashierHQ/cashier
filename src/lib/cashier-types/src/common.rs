@@ -1,18 +1,6 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 
 use candid::{types::principal::PrincipalError, CandidType, Principal};
 use icrc_ledger_types::icrc1::account::{Account, ICRC1TextReprError};
@@ -70,6 +58,18 @@ impl FromStr for Chain {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct Wallet {
+    /// The wallet address as a string representation of an ICRC-1 Account.
+    ///
+    /// Format: `{owner}.{subaccount}`
+    /// - `owner`: Principal ID (e.g., "rdmx6-jaaaa-aaaah-qcaiq-cai")
+    /// - `subaccount`: 64-character hex string (32 bytes)
+    ///
+    /// Examples:
+    /// - Main account: "rdmx6-jaaaa-aaaah-qcaiq-cai.0000000000000000000000000000000000000000000000000000000000000000"
+    /// - Subaccount: "rdmx6-jaaaa-aaaah-qcaiq-cai.0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+    ///
+    /// If no subaccount is specified, defaults to 32 zero bytes (64 zeros in hex).
+    /// This format is compatible with ICRC-1 Account::from_str() parsing.
     pub address: String,
     pub chain: Chain,
 }

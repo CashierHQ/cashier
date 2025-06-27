@@ -1,21 +1,8 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useAuth } from "@nfid/identitykit/react";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
 import WalletSheetWrapper from "@/components/wallet/wallet-sheet-wrapper";
@@ -28,7 +15,7 @@ type MainAppLayoutProps = {
 };
 
 export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
-    const responsive = useResponsive();
+    const responsive = useDeviceSize();
     const { pathname } = useLocation();
     const { user: walletUser } = useAuth();
     const { isWalletOpen, closeWallet } = useWalletContext();
@@ -77,8 +64,8 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
                         <div
                             className={`flex items-center justify-center flex-col ${
                                 responsive.isSmallDevice
-                                    ? "px-4 pt-4 h-full overflow-y-auto overscroll-none"
-                                    : "h-[90%] w-[600px] px-4 items-center bg-[white] shadow-[#D6EDE433] shadow-sm rounded-[16px] mx-auto pt-8 pb-4 overflow-y-auto overscroll-none"
+                                    ? "px-3 pt-4 h-full overflow-y-auto overscroll-none"
+                                    : "h-[90%] w-[600px] px-3 items-center bg-[white] shadow-[#D6EDE433] shadow-sm rounded-[16px] mx-auto pt-4 pb-4 overflow-y-auto overscroll-none"
                             }`}
                         >
                             {children}

@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { UserInputAsset, UserInputItem } from "@/stores/linkCreationFormStore";
@@ -60,9 +47,7 @@ class LinkLocalStorageService {
      * @returns Generated local link id
      */
     createLink(): string {
-        // Use UUIDv7 for better B-tree performance
         const linkId = LOCAL_lINK_ID_PREFIX + uuidv4();
-        // TODO: remove after get rid of backend for create link
         const links = this.getLinks();
 
         const linkData: LinkDetailModel = {
@@ -83,8 +68,6 @@ class LinkLocalStorageService {
 
         links[linkId] = linkDto;
         this.saveLinks(links);
-
-        console.log("Link created with ID:", linkId);
 
         return linkId;
     }
@@ -163,6 +146,7 @@ class LinkLocalStorageService {
         return true;
     }
 
+    // !Frontend state machine
     /**
      * Determines the next state based on current state and transition direction
      * @param linkId The link id

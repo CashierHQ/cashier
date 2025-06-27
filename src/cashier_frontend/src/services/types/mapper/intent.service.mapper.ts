@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { convertNanoSecondsToDate } from "@/utils";
 import {
@@ -51,7 +38,7 @@ export const mapIntentDtoToIntentModel = (dto: IntentDto): IntentModel => {
         from: mapMetadataToWalletModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.FROM),
         to: mapMetadataToWalletModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.TO),
         asset: mapMetadataToAssetModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.ASSET),
-        amount: mapMetadataToAmount(dto.type_metadata, dto.type, METADATA_PROP_NAMES.AMOUNT),
+        amount: mapMetadataFromNatToAmount(dto.type_metadata, dto.type, METADATA_PROP_NAMES.AMOUNT),
     };
 };
 
@@ -101,14 +88,50 @@ const mapMetadataToAssetModel = (
     }
 };
 
-const mapMetadataToAmount = (
+// const mapMetadataToAmount = (
+//     metadata: [string, MetadataValue][],
+//     intentType: string,
+//     propName: string,
+// ): bigint => {
+//     if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
+//         const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
+//         return (item?.[1] as { U64: bigint })?.U64?.valueOf() ?? BigInt(0);
+//     } else {
+//         return BigInt(0);
+//     }
+// };
+
+const mapMetadataFromNatToAmount = (
     metadata: [string, MetadataValue][],
     intentType: string,
     propName: string,
 ): bigint => {
     if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
         const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
-        return (item?.[1] as { U64: bigint })?.U64?.valueOf() ?? BigInt(0);
+
+        if (!item?.[1]) {
+            return BigInt(0);
+        }
+
+        const value = item[1];
+
+        // Handle Nat variant
+        if ("Nat" in value) {
+            return value.Nat;
+        }
+
+        // Handle MaybeNat variant
+        if ("MaybeNat" in value) {
+            // MaybeNat is [] | [bigint] - empty array means None, array with value means Some
+            return value.MaybeNat.length > 0 ? value.MaybeNat[0]! : BigInt(0);
+        }
+
+        // Handle existing U64 variant for backward compatibility
+        if ("U64" in value) {
+            return value.U64;
+        }
+
+        return BigInt(0);
     } else {
         return BigInt(0);
     }

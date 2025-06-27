@@ -1,18 +1,6 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 
 // #[cfg(test)]
 // pub mod transaction_manager;
@@ -30,9 +18,9 @@ pub mod tests {
 
     use cashier_types::{
         Action, ActionIntent, ActionState, ActionType, Asset, AssetInfo, Chain, FromCallType,
-        IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Intent, IntentState,
-        IntentTask, IntentTransaction, IntentType, Link, LinkState, LinkType, Protocol,
-        Transaction, TransactionState, TransferData, TransferFromData, Wallet,
+        IcTransactionV2, Icrc1TransferV2, Icrc2ApproveV2, Intent, IntentState, IntentTask,
+        IntentTransaction, IntentType, Link, LinkState, LinkType, ProtocolV2, TransactionState,
+        TransactionV2, TransferData, TransferFromData, Wallet, V2,
     };
 
     use candid::Principal;
@@ -194,17 +182,17 @@ pub mod tests {
         }
     }
 
-    impl Dummy<Transaction> for Transaction {
+    impl Dummy<TransactionV2> for TransactionV2 {
         fn dummy<R: Rng>(_: &mut R) -> Self {
             let rand = &mut rand::thread_rng();
-            Transaction {
+            TransactionV2 {
                 id: Uuid::new_v4().to_string(),
                 created_at: generate_timestamp(),
                 state: TransactionState::dummy(rand),
                 dependency: None,
                 group: 1,
                 from_call_type: FromCallType::dummy(rand),
-                protocol: Protocol::dummy(rand),
+                protocol: ProtocolV2::dummy(rand),
                 start_ts: Some(generate_timestamp()),
             }
         }
@@ -230,18 +218,18 @@ pub mod tests {
         }
     }
 
-    impl Dummy<Protocol> for Protocol {
+    impl Dummy<ProtocolV2> for ProtocolV2 {
         fn dummy<R: Rng>(rng: &mut R) -> Self {
             match rng.gen_range(0..=1) {
-                0 => Protocol::IC(IcTransaction::dummy(rng)),
-                _ => Protocol::IC(IcTransaction::dummy(rng)),
+                0 => ProtocolV2::IC(IcTransactionV2::dummy(rng)),
+                _ => ProtocolV2::IC(IcTransactionV2::dummy(rng)),
             }
         }
     }
 
-    impl Dummy<Icrc1Transfer> for Icrc1Transfer {
+    impl Dummy<Icrc1TransferV2> for Icrc1TransferV2 {
         fn dummy<R: Rng>(_: &mut R) -> Self {
-            Icrc1Transfer {
+            Icrc1TransferV2 {
                 from: Wallet {
                     address: generate_random_principal().to_text(),
                     chain: Chain::IC,
@@ -261,9 +249,9 @@ pub mod tests {
         }
     }
 
-    impl Dummy<Icrc2Approve> for Icrc2Approve {
+    impl Dummy<Icrc2ApproveV2> for Icrc2ApproveV2 {
         fn dummy<R: Rng>(_: &mut R) -> Self {
-            Icrc2Approve {
+            Icrc2ApproveV2 {
                 from: Wallet {
                     address: generate_random_principal().to_text(),
                     chain: Chain::IC,
@@ -281,9 +269,9 @@ pub mod tests {
         }
     }
 
-    impl Dummy<Icrc2TransferFrom> for Icrc2TransferFrom {
+    impl Dummy<V2> for V2 {
         fn dummy<R: Rng>(_: &mut R) -> Self {
-            Icrc2TransferFrom {
+            V2 {
                 from: Wallet {
                     address: generate_random_principal().to_text(),
                     chain: Chain::IC,
@@ -307,12 +295,12 @@ pub mod tests {
         }
     }
 
-    impl Dummy<IcTransaction> for IcTransaction {
+    impl Dummy<IcTransactionV2> for IcTransactionV2 {
         fn dummy<R: Rng>(rng: &mut R) -> Self {
             match rng.gen_range(0..=2) {
-                0 => IcTransaction::Icrc1Transfer(Icrc1Transfer::dummy(rng)),
-                1 => IcTransaction::Icrc2Approve(Icrc2Approve::dummy(rng)),
-                _ => IcTransaction::Icrc2TransferFrom(Icrc2TransferFrom::dummy(rng)),
+                0 => IcTransactionV2::Icrc1Transfer(Icrc1TransferV2::dummy(rng)),
+                1 => IcTransactionV2::Icrc2Approve(Icrc2ApproveV2::dummy(rng)),
+                _ => IcTransactionV2::Icrc2TransferFrom(V2::dummy(rng)),
             }
         }
     }
@@ -322,7 +310,7 @@ pub mod tests {
             match rng.gen_range(0..=2) {
                 0 => ActionType::CreateLink,
                 1 => ActionType::Withdraw,
-                _ => ActionType::Use ,
+                _ => ActionType::Use,
             }
         }
     }
@@ -350,7 +338,7 @@ pub mod tests {
         }
     }
 
-    pub fn convert_txs_to_dummy_icrc_112_request(txs: Vec<Transaction>) -> Icrc112Requests {
+    pub fn convert_txs_to_dummy_icrc_112_request(txs: Vec<TransactionV2>) -> Icrc112Requests {
         let mut icrc_112_requests: Icrc112Requests = vec![];
 
         for tx in txs {
@@ -361,7 +349,7 @@ pub mod tests {
         return icrc_112_requests;
     }
 
-    pub fn convert_tx_to_dummy_icrc_112_request(tx: &Transaction) -> Icrc112Request {
+    pub fn convert_tx_to_dummy_icrc_112_request(tx: &TransactionV2) -> Icrc112Request {
         return Icrc112Request {
             canister_id: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
             method: "dummy".to_string(),
@@ -384,37 +372,39 @@ pub mod tests {
         }
     }
 
-    pub fn create_dummy_transaction(state: TransactionState) -> Transaction {
+    pub fn create_dummy_transaction(state: TransactionState) -> TransactionV2 {
         let mut rng = rand::thread_rng();
-        Transaction {
+        TransactionV2 {
             id: Uuid::new_v4().to_string(),
             created_at: generate_timestamp(),
             state,
             dependency: None,
             group: 1,
             from_call_type: FromCallType::dummy(&mut rng),
-            protocol: Protocol::dummy(&mut rng),
+            protocol: ProtocolV2::dummy(&mut rng),
             start_ts: None,
         }
     }
 
-    pub fn create_dummy_tx_protocol(state: TransactionState, protocol_str: &str) -> Transaction {
+    pub fn create_dummy_tx_protocol(state: TransactionState, protocol_str: &str) -> TransactionV2 {
         let mut rng = rand::thread_rng();
 
         let protocol = match protocol_str {
-            "icrc1_transfer" => {
-                Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer::dummy(&mut rng)))
-            }
-            "icrc2_approve" => {
-                Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve::dummy(&mut rng)))
-            }
-            "icrc2_transfer_from" => Protocol::IC(IcTransaction::Icrc2TransferFrom(
-                Icrc2TransferFrom::dummy(&mut rng),
+            "icrc1_transfer" => ProtocolV2::IC(IcTransactionV2::Icrc1Transfer(
+                Icrc1TransferV2::dummy(&mut rng),
             )),
-            _ => Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer::dummy(&mut rng))),
+            "icrc2_approve" => ProtocolV2::IC(IcTransactionV2::Icrc2Approve(
+                Icrc2ApproveV2::dummy(&mut rng),
+            )),
+            "icrc2_transfer_from" => {
+                ProtocolV2::IC(IcTransactionV2::Icrc2TransferFrom(V2::dummy(&mut rng)))
+            }
+            _ => ProtocolV2::IC(IcTransactionV2::Icrc1Transfer(Icrc1TransferV2::dummy(
+                &mut rng,
+            ))),
         };
 
-        Transaction {
+        TransactionV2 {
             id: Uuid::new_v4().to_string(),
             created_at: generate_timestamp(),
             state,
@@ -432,7 +422,7 @@ pub mod tests {
         expected_sender: &Wallet,
         expected_fee_walelt: &Wallet,
         expected_spender: &Wallet,
-    ) -> Transaction {
+    ) -> TransactionV2 {
         let mut rng = rand::thread_rng();
 
         let transfer_asset = Asset {
@@ -457,29 +447,31 @@ pub mod tests {
 
         let protocol = match protocol_str {
             "icrc1_transfer" => {
-                let mut icrc1_transfer = Icrc1Transfer::dummy(&mut rng);
+                let mut icrc1_transfer = Icrc1TransferV2::dummy(&mut rng);
                 icrc1_transfer.asset = transfer_asset;
                 icrc1_transfer.from = from_wallet.clone();
                 icrc1_transfer.to = to_wallet.clone();
-                Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer))
+                ProtocolV2::IC(IcTransactionV2::Icrc1Transfer(icrc1_transfer))
             }
             "icrc2_approve" => {
-                let mut icrc2_approve = Icrc2Approve::dummy(&mut rng);
+                let mut icrc2_approve = Icrc2ApproveV2::dummy(&mut rng);
                 icrc2_approve.asset = fee_asset;
                 icrc2_approve.from = from_wallet.clone();
                 icrc2_approve.spender = spender_wallet.clone();
-                Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve))
+                ProtocolV2::IC(IcTransactionV2::Icrc2Approve(icrc2_approve))
             }
             "icrc2_transfer_from" => {
-                let mut icrc2_transfer_from = Icrc2TransferFrom::dummy(&mut rng);
+                let mut icrc2_transfer_from = V2::dummy(&mut rng);
                 icrc2_transfer_from.asset = fee_asset;
                 icrc2_transfer_from.from = from_wallet.clone();
                 icrc2_transfer_from.to = fee_wallet.clone();
                 icrc2_transfer_from.spender = spender_wallet.clone();
 
-                Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from))
+                ProtocolV2::IC(IcTransactionV2::Icrc2TransferFrom(icrc2_transfer_from))
             }
-            _ => Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer::dummy(&mut rng))),
+            _ => ProtocolV2::IC(IcTransactionV2::Icrc1Transfer(Icrc1TransferV2::dummy(
+                &mut rng,
+            ))),
         };
 
         let from_call_type = match protocol_str {
@@ -489,7 +481,7 @@ pub mod tests {
             _ => FromCallType::Wallet,
         };
 
-        Transaction {
+        TransactionV2 {
             id: Uuid::new_v4().to_string(),
             created_at: generate_timestamp(),
             state,
@@ -524,15 +516,15 @@ pub mod tests {
 
     pub fn generate_intents_and_txs(
         intent: Intent,
-        txs: Vec<Transaction>,
+        txs: Vec<TransactionV2>,
     ) -> (
         HashMap<String, Vec<IntentTransaction>>,
-        HashMap<String, Vec<Transaction>>,
-        HashMap<String, Transaction>,
+        HashMap<String, Vec<TransactionV2>>,
+        HashMap<String, TransactionV2>,
     ) {
         let mut intent_tx_relation: HashMap<String, Vec<IntentTransaction>> = HashMap::new();
-        let mut intent_txs: HashMap<String, Vec<Transaction>> = HashMap::new();
-        let mut txs_hash_map: HashMap<String, Transaction> = HashMap::new();
+        let mut intent_txs: HashMap<String, Vec<TransactionV2>> = HashMap::new();
+        let mut txs_hash_map: HashMap<String, TransactionV2> = HashMap::new();
 
         intent_txs.insert(intent.id.clone(), txs.clone());
 

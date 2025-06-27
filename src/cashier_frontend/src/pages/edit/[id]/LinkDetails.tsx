@@ -1,21 +1,7 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useEffect } from "react";
-import { useLinkActionStore } from "@/stores/linkActionStore";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { LINK_TYPE } from "@/services/types/enum";
 import {
@@ -28,25 +14,17 @@ import { useTokens } from "@/hooks/useTokens";
 // Import our custom hook for form initialization
 import { useLinkFormInitialization } from "@/hooks/useLinkFormInitialization";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
-export default function LinkDetails() {
-    const { link } = useLinkActionStore();
+export interface LinkDetailsProps {
+    link?: LinkDetailModel;
+    isUpdating: boolean;
+}
+
+export default function LinkDetails({ link, isUpdating }: LinkDetailsProps) {
     const { setButtonState, getUserInput } = useLinkCreationFormStore();
     const { getDisplayTokens } = useTokens();
     const { renderSkeleton } = useSkeletonLoading();
-
-    // Get tokens data
-    const allAvailableTokens = getDisplayTokens();
-
-    // Get current input from store
-    const currentInput = link?.id ? getUserInput(link.id) : undefined;
-
-    if (!link) {
-        return renderSkeleton();
-    }
-
-    // Initialize form values using our custom hook
-    const initialFormValues = useLinkFormInitialization(currentInput, allAvailableTokens, link);
 
     // When this component mounts, we'll receive the button state from the form
     useEffect(() => {
@@ -56,17 +34,53 @@ export default function LinkDetails() {
             isDisabled: true,
         });
     }, []);
+    // Get tokens data
+    const allAvailableTokens = getDisplayTokens();
+
+    // Get current input from store
+    const currentInput = link?.id ? getUserInput(link.id) : undefined;
+
+    // Initialize form values using our custom hook
+    const initialFormValues = useLinkFormInitialization(currentInput, allAvailableTokens, link);
+
+    if (!link) {
+        return renderSkeleton();
+    }
 
     const getLinkForm = () => {
         switch (link?.linkType) {
             case LINK_TYPE.SEND_TOKEN_BASKET:
-                return <SendTokenBasketForm initialValues={initialFormValues} />;
+                return (
+                    <SendTokenBasketForm
+                        link={link}
+                        isUpdating={isUpdating}
+                        initialValues={initialFormValues}
+                    />
+                );
             case LINK_TYPE.SEND_AIRDROP:
-                return <SendAirdropForm initialValues={initialFormValues} />;
+                return (
+                    <SendAirdropForm
+                        link={link}
+                        isUpdating={isUpdating}
+                        initialValues={initialFormValues}
+                    />
+                );
             case LINK_TYPE.SEND_TIP:
-                return <SendTipForm initialValues={initialFormValues} />;
+                return (
+                    <SendTipForm
+                        link={link}
+                        isUpdating={isUpdating}
+                        initialValues={initialFormValues}
+                    />
+                );
             case LINK_TYPE.RECEIVE_PAYMENT:
-                return <ReceivePaymentForm initialValues={initialFormValues} />;
+                return (
+                    <ReceivePaymentForm
+                        link={link}
+                        isUpdating={isUpdating}
+                        initialValues={initialFormValues}
+                    />
+                );
             default:
                 return null;
         }

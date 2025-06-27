@@ -1,48 +1,31 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import * as React from "react";
-import { StateBadge } from "@/components/link-item";
 import { Driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { Button } from "@/components/ui/button";
+import { LinkDetail } from "@/components/detail-page/link-detail";
 import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { ACTION_TYPE, ACTION_STATE, getLinkTypeString } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
-import { Label } from "@/components/ui/label";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
 import { ShareLinkDrawer } from "@/components/link-details/share-link-drawer";
 import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { ActionModel } from "@/services/types/action.service.types";
-import { useLinkAction } from "@/hooks/useLinkAction";
-import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
-import { formatNumber } from "@/utils/helpers/currency";
-import { Share2 } from "lucide-react";
 import { toast } from "sonner";
-
+import { useLinkDetailQuery } from "@/hooks/link-hooks";
+import { useLinkMutations } from "@/hooks/useLinkMutations";
+import { usePollingLinkAndAction } from "@/hooks/polling/usePollingLinkAndAction";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -50,16 +33,15 @@ export default function DetailPage() {
     const navigate = useNavigate();
     const { renderSkeleton } = useSkeletonLoading();
 
-    const {
-        link,
-        isLoading,
-        setAction,
-        createAction,
-        callLinkStateMachine,
-        isUpdating,
-        refetchLinkDetail,
-        action,
-    } = useLinkAction(linkId, ACTION_TYPE.WITHDRAW_LINK);
+    const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.WITHDRAW_LINK);
+    const { callLinkStateMachine, isUpdating, createAction, isCreatingAction } = useLinkMutations();
+
+    const link = linkDetailQuery.data?.link;
+    const isLoading = linkDetailQuery.isLoading;
+    const queryAction = linkDetailQuery.data?.action;
+
+    // Local state for enriched action
+    const [currentAction, setCurrentAction] = React.useState<ActionModel | undefined>(undefined);
 
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
@@ -68,13 +50,32 @@ export default function DetailPage() {
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
 
-    // Button state for confirmation drawer
-    const [confirmButtonDisabled, setConfirmButtonDisabled] = React.useState(false);
-    const [confirmButtonText, setConfirmButtonText] = React.useState("");
+    const { t } = useTranslation();
 
     const { mutateAsync: processAction } = useProcessAction();
     const { mutateAsync: updateAction } = useUpdateAction();
     const { mutateAsync: icrc112Execute } = useIcrc112Execute();
+
+    // Polling hook for tracking action state during withdrawal
+    const { startPollingLinkDetail, stopPolling } = usePollingLinkAndAction({
+        onUpdate: (action) => {
+            setCurrentAction(action);
+        },
+        onError: (error) => {
+            console.error("Polling error:", error);
+        },
+    });
+
+    // Update local action state when query action changes
+    React.useEffect(() => {
+        if (queryAction) {
+            setCurrentAction(queryAction);
+        }
+    }, [queryAction]);
+
+    React.useEffect(() => {
+        linkDetailQuery.refetch();
+    }, []);
 
     React.useEffect(() => {
         const driver = initializeDriver();
@@ -89,15 +90,20 @@ export default function DetailPage() {
         };
     }, []);
 
-    React.useEffect(() => {
-        console.log("link", link);
-    }, [link]);
-
     // Check if link has assets that can be withdrawn
     const hasWithdrawableAssets = React.useMemo(() => {
         if (!link) return false;
-        // If useActionCounter is less than maxActionNumber, there are still actions/assets available
-        return link.useActionCounter < link.maxActionNumber;
+
+        // based on the link type, check if it has assets
+        if (
+            link.linkType === LINK_TYPE.SEND_AIRDROP ||
+            link.linkType === LINK_TYPE.SEND_TIP ||
+            link.linkType === LINK_TYPE.SEND_TOKEN_BASKET
+        ) {
+            return link.useActionCounter < link.maxActionNumber;
+        } else if (link.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+            return link.useActionCounter > 0;
+        }
     }, [link]);
 
     React.useEffect(() => {
@@ -112,29 +118,6 @@ export default function DetailPage() {
             });
         }
     }, [showOverlay, driverObj, link]);
-
-    const { t } = useTranslation();
-    const { getToken } = useTokens();
-
-    // Update button text based on action state
-    React.useEffect(() => {
-        if (!action) return;
-
-        const actionState = action.state;
-        if (actionState === ACTION_STATE.SUCCESS) {
-            setConfirmButtonText(t("continue"));
-            setConfirmButtonDisabled(false);
-        } else if (actionState === ACTION_STATE.PROCESSING) {
-            setConfirmButtonText(t("confirmation_drawer.inprogress_button"));
-            setConfirmButtonDisabled(true);
-        } else if (actionState === ACTION_STATE.FAIL) {
-            setConfirmButtonText(t("retry"));
-            setConfirmButtonDisabled(false);
-        } else {
-            setConfirmButtonText(t("confirmation_drawer.confirm_button"));
-            setConfirmButtonDisabled(false);
-        }
-    }, [action, t]);
 
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
@@ -163,6 +146,10 @@ export default function DetailPage() {
         }
     }, [linkId, identity]);
 
+    const refetchLinkDetail = async () => {
+        await linkDetailQuery.refetch();
+    };
+
     const setInactiveLink = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
@@ -181,88 +168,86 @@ export default function DetailPage() {
     const setInactiveEndedLink = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
-            await callLinkStateMachine({
+
+            const res = await callLinkStateMachine({
                 linkId: link.id,
                 linkModel: {},
                 isContinue: true,
             });
+            console.log("Link state machine response:", res);
+
             await refetchLinkDetail();
+
             setShowConfirmationDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
         }
     };
 
-    const handleWithdrawAssets = async () => {
+    const initiateWithdrawAction = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
-            const actionResult = await createAction(link.id, ACTION_TYPE.WITHDRAW_LINK);
-            setAction(actionResult);
+            if (currentAction) {
+                // Action already exists, use it
+                setShowConfirmationDrawer(true);
+            } else {
+                // Create new action
+                const actionResult = await createAction({
+                    linkId: link.id,
+                    actionType: ACTION_TYPE.WITHDRAW_LINK,
+                });
+                if (actionResult) {
+                    setCurrentAction(actionResult);
+                }
+                setShowConfirmationDrawer(true);
+            }
         } catch (error) {
             console.error("Error creating withdraw action:", error);
         }
     };
 
     const handleWithdrawProcess = async () => {
-        if (!link) throw new Error("Link is not defined");
-        if (!action) throw new Error("Action is not defined");
-        const start = Date.now();
+        try {
+            if (!link) throw new Error("Link is not defined");
+            if (!currentAction) throw new Error("Action is not defined");
 
-        console.log("[handleWithdrawProcess] Starting processAction...");
-        const processActionStartTime = Date.now();
-        const firstUpdatedAction = await processAction({
-            linkId: link.id,
-            actionType: ACTION_TYPE.WITHDRAW_LINK,
-            actionId: action.id,
-        });
-        const processActionEndTime = Date.now();
-        const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
-        console.log(
-            `[handleWithdrawProcess] processAction completed in ${processActionDuration.toFixed(2)}s`,
-        );
+            // Start polling to track action state changes
+            startPollingLinkDetail(linkId ?? "", ACTION_TYPE.WITHDRAW_LINK, identity);
 
-        setAction(firstUpdatedAction);
-
-        if (firstUpdatedAction) {
-            console.log("[handleWithdrawProcess] Starting icrc112Execute...");
-            const icrc112StartTime = Date.now();
-            const response = await icrc112Execute({
-                transactions: firstUpdatedAction.icrc112Requests,
+            const firstUpdatedAction = await processAction({
+                linkId: link.id,
+                actionType: ACTION_TYPE.WITHDRAW_LINK,
+                actionId: currentAction.id,
             });
-            const icrc112EndTime = Date.now();
-            const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
-            console.log(
-                `[handleWithdrawProcess] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
-            );
 
-            if (response) {
-                console.log("[handleWithdrawProcess] Starting updateAction...");
-                const updateActionStartTime = Date.now();
-                const secondUpdatedAction = await updateAction({
-                    actionId: action.id,
-                    linkId: link.id,
-                    external: true,
+            // Update local action state with enriched action
+            if (firstUpdatedAction.icrc112Requests) {
+                setCurrentAction(firstUpdatedAction);
+
+                const response = await icrc112Execute({
+                    transactions: firstUpdatedAction.icrc112Requests,
                 });
-                const updateActionEndTime = Date.now();
-                const updateActionDuration = (updateActionEndTime - updateActionStartTime) / 1000;
-                console.log(
-                    `[handleWithdrawProcess] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
-                );
 
-                if (secondUpdatedAction) {
-                    setAction(secondUpdatedAction);
-                    handleActionResult(secondUpdatedAction);
+                if (response) {
+                    const secondUpdatedAction = await updateAction({
+                        actionId: currentAction.id,
+                        linkId: link.id,
+                        external: true,
+                    });
+
+                    if (secondUpdatedAction) {
+                        setCurrentAction(secondUpdatedAction);
+                        handleActionResult(secondUpdatedAction);
+                    }
                 }
             }
+        } catch (error) {
+            console.error("Error in withdrawal process:", error);
+            throw error;
+        } finally {
+            // Stop polling when process is complete
+            stopPolling();
         }
-
-        const end = Date.now();
-        const duration = end - start;
-        const durationInSeconds = (duration / 1000).toFixed(2);
-        console.log(
-            "[handleWithdrawProcess] Total withdraw process completed in",
-            `${durationInSeconds}s`,
-        );
     };
 
     const handleCashierError = (error: Error) => {
@@ -274,13 +259,13 @@ export default function DetailPage() {
     };
 
     const handleActionResult = (actionResult: ActionModel) => {
-        setAction(actionResult);
+        setCurrentAction(actionResult);
     };
 
     return (
         <MainAppLayout>
             <div className="w-full flex flex-col h-full relative pb-24">
-                {isLoading || !link ? (
+                {isLoading && !link ? (
                     renderSkeleton()
                 ) : (
                     <>
@@ -303,144 +288,23 @@ export default function DetailPage() {
                         </div>
 
                         {/* Scrollable Content Area */}
-                        <div className="flex-grow overflow-y-auto pb-24 scrollbar-hide">
-                            <div className="flex gap-2 items-center mb-2 justify-between">
-                                <Label>{t("details.linkInfo")}</Label>
-                                <button
-                                    className="flex items-center justify-center"
-                                    onClick={() => setShowShareLinkDrawer(true)}
-                                >
-                                    <Share2 color="#35A18B" width={18} height={18} />
-                                </button>
+                        {link && (
+                            <div className="flex-grow overflow-y-auto pb-24 scrollbar-hide">
+                                <LinkDetail
+                                    link={link}
+                                    onShareClick={() => setShowShareLinkDrawer(true)}
+                                />
                             </div>
-                            <div
-                                id="link-detail-section"
-                                className="flex flex-col border-[1px] rounded-lg border-lightgreen"
-                            >
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">Status</p>
-                                    <StateBadge state={link?.state} />
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">Type</p>
-                                    <p className="text-sm text-primary/80">
-                                        {getLinkTypeString(link.linkType!)}
-                                    </p>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">User pays</p>
-                                    <p className="text-sm text-primary/80">-</p>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">User claims</p>
-                                    <div className="flex flex-col items-end gap-2">
-                                        {link.asset_info
-                                            .sort((a, b) => {
-                                                return (a.address ?? "").localeCompare(
-                                                    b.address ?? "",
-                                                );
-                                            })
-                                            .map((asset, index) => {
-                                                const token = getToken(asset.address);
-                                                if (!token) return null;
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center gap-2"
-                                                    >
-                                                        <p className="text-sm text-primary/80">
-                                                            {formatNumber(
-                                                                (
-                                                                    Number(asset.amountPerUse) /
-                                                                    10 ** token.decimals
-                                                                ).toString(),
-                                                            )}{" "}
-                                                            {token.symbol}
-                                                        </p>
-                                                        <AssetAvatarV2
-                                                            token={token}
-                                                            className="w-4 h-4"
-                                                        />
-                                                    </div>
-                                                );
-                                            })}
-                                    </div>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
-                                    <p className="font-medium text-sm">Max use</p>
-                                    <p className="text-sm text-primary/80">
-                                        {link.maxActionNumber.toString()}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 items-center mb-2 mt-4">
-                                <Label>{t("details.usageInfo")}</Label>
-                            </div>
-                            <div
-                                id="link-detail-section"
-                                className="flex flex-col border-[1px] rounded-lg border-lightgreen"
-                            >
-                                <div className="flex flex-row items-center justify-between border-lightgreen px-5 py-3">
-                                    <p className="font-medium text-sm">
-                                        {t("details.assetsInLink")}
-                                    </p>
-                                    <div className="flex flex-col items-end gap-2">
-                                        {link.asset_info
-                                            .sort((a, b) => {
-                                                return (a.address ?? "").localeCompare(
-                                                    b.address ?? "",
-                                                );
-                                            })
-                                            .map((asset, index) => {
-                                                const token = getToken(asset.address);
-                                                if (!token) return null;
-
-                                                const amountPerUse =
-                                                    Number(asset.amountPerUse) /
-                                                    10 ** token.decimals;
-                                                const totalNumberOfAssets =
-                                                    amountPerUse * Number(link.maxActionNumber);
-                                                const numberOfAssetsLeft =
-                                                    totalNumberOfAssets -
-                                                    amountPerUse * Number(link.useActionCounter);
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center gap-2"
-                                                    >
-                                                        <p className="text-sm text-primary/80">
-                                                            {formatNumber(
-                                                                numberOfAssetsLeft.toString(),
-                                                            )}{" "}
-                                                            {token.symbol}
-                                                        </p>
-                                                        <AssetAvatarV2
-                                                            token={token}
-                                                            className="w-4 h-4"
-                                                        />
-                                                    </div>
-                                                );
-                                            })}
-                                    </div>
-                                </div>
-                                <div className="flex flex-row items-center justify-between border-lightgreen border-t px-5 py-3">
-                                    <p className="font-medium text-sm">Used</p>
-                                    <p className="text-sm text-primary/80">
-                                        {link.useActionCounter.toString()}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                        )}
 
                         {/* Fixed Footer */}
-                        <div className="absolute bottom-0 left-0 right-0 pt-4 pb-6 px-5 flex flex-col items-center gap-4">
+                        <div className="absolute bottom-0 left-0 right-0 pt-4 pb-[21px] w-full flex flex-col items-center gap-4">
                             {link?.state == LINK_STATE.ACTIVE && (
                                 <button
                                     onClick={() => {
                                         setShowEndLinkDrawer(true);
                                     }}
-                                    className="w-full border bg-white border-[#D26060] mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] h-[44px] hover:bg-[#D26060] hover:text-white transition-colors"
+                                    className="w-[95%] h-[44px] border bg-white border-[#D26060] mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] hover:bg-[#D26060] hover:text-white transition-colors"
                                 >
                                     End Link
                                 </button>
@@ -449,7 +313,7 @@ export default function DetailPage() {
                                 <Button
                                     id="copy-link-button"
                                     onClick={handleCopyLink}
-                                    className="w-full"
+                                    className="w-[95%] h-[44px]"
                                 >
                                     {t("details.copyLink")}
                                 </Button>
@@ -457,12 +321,11 @@ export default function DetailPage() {
                             {link?.state == LINK_STATE.INACTIVE && (
                                 <Button
                                     id="copy-link-button"
-                                    disabled={!hasWithdrawableAssets}
+                                    disabled={isCreatingAction || !hasWithdrawableAssets}
                                     onClick={() => {
-                                        handleWithdrawAssets();
-                                        setShowConfirmationDrawer(true);
+                                        initiateWithdrawAction();
                                     }}
-                                    className="w-full disabled:bg-gray-300"
+                                    className="w-[95%] h-[44px] disabled:bg-gray-300"
                                 >
                                     {hasWithdrawableAssets
                                         ? t("details.withdrawAssets")
@@ -492,21 +355,16 @@ export default function DetailPage() {
 
             <ConfirmationDrawerV2
                 open={showConfirmationDrawer}
-                action={action}
+                link={link!}
+                action={currentAction}
                 onClose={() => setShowConfirmationDrawer(false)}
                 onInfoClick={() => {}}
                 onActionResult={handleActionResult}
                 onCashierError={handleCashierError}
-                onSuccessContinue={async () => {
+                handleSuccessContinue={async () => {
                     await setInactiveEndedLink();
                 }}
-                startTransaction={async () => {
-                    await handleWithdrawProcess();
-                }}
-                isButtonDisabled={confirmButtonDisabled}
-                setButtonDisabled={setConfirmButtonDisabled}
-                buttonText={confirmButtonText}
-                setButtonText={setConfirmButtonText}
+                handleConfirmTransaction={handleWithdrawProcess}
             />
         </MainAppLayout>
     );

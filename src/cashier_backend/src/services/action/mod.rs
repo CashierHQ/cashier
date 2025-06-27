@@ -1,18 +1,6 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 
 use crate::repositories;
 use crate::types::transaction_manager::RollUpStateResp;
@@ -22,7 +10,8 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 use cashier_types::{
-    Action, ActionIntent, Intent, IntentTransaction, LinkAction, Transaction, UserAction,
+    action_intent::v1::ActionIntent, intent::v2::Intent, intent_transaction::v1::IntentTransaction,
+    transaction::v2::Transaction, Action, LinkAction, UserAction,
 };
 
 pub fn get_intents_by_action_id(action_id: String) -> Vec<Intent> {

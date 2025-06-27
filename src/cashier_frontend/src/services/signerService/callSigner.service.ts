@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
@@ -33,8 +20,15 @@ class CallSignerService {
     async execute(input: Icrc112Requests): Promise<Icrc112Response> {
         const transport = await ClientTransport.create({
             agent: this.agent,
+            authClientLoginOptions: {
+                maxTimeToLive: BigInt(8) * BigInt(3_600_000_000_000),
+            },
         });
-        const signer = new Signer({ transport });
+        const signer = new Signer({
+            transport,
+            autoCloseTransportChannel: false,
+            closeTransportChannelAfter: 60 * 60 * 1000, // 1 hour
+        });
 
         const request: JsonRequest = {
             id: "1",

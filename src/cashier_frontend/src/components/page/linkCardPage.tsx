@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { ReactNode, useEffect, useState } from "react";
 import { LinkDetailModel } from "../../services/types/link.service.types";
@@ -20,7 +7,9 @@ import { LINK_TYPE } from "../../services/types/enum";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatNumber } from "@/utils/helpers/currency";
-import { ArrowDownFromLine, ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
+import { Skeleton } from "../ui/skeleton";
+import { FeeHelpers } from "@/services/fee.service";
 
 export const getTitleForLink = (
     linkData?: LinkDetailModel,
@@ -29,14 +18,24 @@ export const getTitleForLink = (
     if (!linkData || !getToken) return "";
 
     const tokenAddress = linkData?.asset_info?.[0]?.address;
-    const token = tokenAddress ? getToken(tokenAddress) : undefined;
+    const token = getToken(tokenAddress);
+
+    if (!token) return "Unknown Token";
+
+    let amount = Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
+    if (token) {
+        amount = FeeHelpers.forecastActualAmountForLinkUsePage(
+            linkData?.linkType ?? "",
+            token,
+            linkData?.asset_info?.[0]?.amountPerUse ?? "0",
+            Number(linkData?.maxActionNumber ?? 1),
+        );
+    }
 
     switch (linkData?.linkType) {
         case LINK_TYPE.SEND_TIP:
         case LINK_TYPE.SEND_AIRDROP:
         case LINK_TYPE.RECEIVE_PAYMENT:
-            const amount =
-                Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
             return `${amount} ${token?.symbol}`;
         case LINK_TYPE.SEND_AIRDROP:
             return "Send Airdrop";
@@ -47,43 +46,64 @@ export const getTitleForLink = (
     }
 };
 
-export const getMessageForLink = (
-    linkData?: LinkDetailModel,
-    getToken?: (tokenAddress: string) => FungibleToken | undefined,
-    isClaimed?: boolean,
-) => {
-    if (!linkData) return "";
-
-    if (linkData?.linkType === LINK_TYPE.RECEIVE_PAYMENT && getToken) {
-        const tokenAddress = linkData?.asset_info?.[0]?.address;
-        const token = tokenAddress ? getToken(tokenAddress) : undefined;
-        const amount =
-            Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
-        return `You have been requested to pay the amount of ${amount} ${token?.symbol}`;
-    }
-
-    switch (linkData?.linkType) {
-        case LINK_TYPE.SEND_TIP:
-            return `Congratulations, you ${isClaimed ? "claimed" : "received"} a tip!`;
-        case LINK_TYPE.SEND_AIRDROP:
-            return `Congratulations, you ${isClaimed ? "claimed" : "received"} an airdrop!`;
-        case LINK_TYPE.SEND_TOKEN_BASKET:
-            return `Congratulations, you ${isClaimed ? "claimed" : "received"} a token basket!`;
-        default:
-            return "";
-    }
-};
-
 export const getDisplayComponentForLink = (
     linkData?: LinkDetailModel,
     getToken?: (tokenAddress: string) => FungibleToken | undefined,
+    isLoading?: boolean,
 ): ReactNode => {
     if (!linkData || !getToken) return null;
+
+    // If tokens are still loading, show skeleton loaders based on link type
+    if (isLoading) {
+        switch (linkData?.linkType) {
+            case LINK_TYPE.SEND_TIP:
+            case LINK_TYPE.SEND_AIRDROP:
+            case LINK_TYPE.RECEIVE_PAYMENT:
+                return (
+                    <div className="w-[100px] h-[100px] rounded-3xl bg-primary/10 animate-pulse flex items-center justify-center">
+                        <Skeleton className="w-16 h-16 rounded-full" />
+                    </div>
+                );
+            case LINK_TYPE.SEND_TOKEN_BASKET:
+                return (
+                    <div className="w-[200px] min-h-[200px] bg-white rounded-2xl p-4 flex flex-col gap-4">
+                        {Array.from({ length: 3 }).map((_, index) => (
+                            <div key={index} className="flex items-center">
+                                <Skeleton className="w-8 h-8 rounded-sm" />
+                                <div className="ml-2">
+                                    <Skeleton className="h-4 w-[100px]" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
+            default:
+                return null;
+        }
+    }
 
     const tokenAddress = linkData?.asset_info?.[0]?.address;
     const token = tokenAddress ? getToken(tokenAddress) : undefined;
     // Extract logoFallback from token or use a default fallback image
-    const logoFallback = token?.logoFallback || "/defaultLinkImage.png";
+    let logoFallback = token?.logoFallback;
+
+    switch (linkData?.linkType) {
+        case LINK_TYPE.SEND_TIP:
+            logoFallback = "/tip-link-default.svg";
+            break;
+        case LINK_TYPE.SEND_AIRDROP:
+            logoFallback = "/airdrop-default.svg";
+            break;
+        case LINK_TYPE.SEND_TOKEN_BASKET:
+            logoFallback = "/token-basket-default.svg";
+            break;
+        case LINK_TYPE.RECEIVE_PAYMENT:
+            logoFallback = "/receive-payment-default.svg";
+            break;
+        default:
+            logoFallback = "/tip-link-default.svg"; // Fallback for other link types
+            break;
+    }
 
     switch (linkData?.linkType) {
         case LINK_TYPE.SEND_TIP:
@@ -145,14 +165,14 @@ const TokenImage = ({ token, logoFallback }: { token?: FungibleToken; logoFallba
     return (
         <>
             {isLoading && (
-                <div className="w-[200px] h-[200px] rounded-3xl bg-gray-200 animate-pulse flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-gray-300" />
+                <div className="w-[100px] h-[100px] rounded-3xl bg-primary/10 animate-pulse flex items-center justify-center">
+                    <Skeleton className="w-16 h-16 rounded-full" />
                 </div>
             )}
             <img
                 src={imageSrc}
                 alt="Token Image"
-                className={`w-[200px] rounded-3xl ${isLoading ? "hidden" : "block"}`}
+                className={`w-[100px] rounded-3xl ${isLoading ? "hidden" : "block"}`}
                 onLoad={handleImageLoad}
                 onError={handleImageError}
             />
@@ -263,16 +283,5 @@ export const getHeaderTextColorForLink = (linkData?: LinkDetailModel): string =>
             return headerColors.receive.text;
         default:
             return headerColors.miscellaneous.text;
-    }
-};
-
-export const getClaimButtonLabel = (linkData?: LinkDetailModel): string => {
-    if (!linkData) return "";
-
-    switch (linkData?.linkType) {
-        case LINK_TYPE.RECEIVE_PAYMENT:
-            return "Pay";
-        default:
-            return "Claim";
     }
 };

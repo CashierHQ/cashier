@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { IC_HOST } from "@/const";
 import { FungibleToken } from "@/types/fungible-token.speculative";
@@ -82,6 +69,35 @@ export class TokenUtilService {
         }
     }
 
+    async batchBalanceOfAccount(
+        account: {
+            owner: Principal;
+            subaccount?: Uint8Array | undefined;
+        },
+        ledgers: Principal[],
+    ) {
+        const tasks = ledgers.map(async (ledgerCanisterId) => {
+            const ledgerCanister = IcrcLedgerCanister.create({
+                agent: this.agent,
+                canisterId: ledgerCanisterId,
+            });
+
+            try {
+                const balance = await ledgerCanister.balance(account);
+                console.log(
+                    `Fetched balance for ${ledgerCanisterId.toString()}: ${balance.toString()}`,
+                );
+                return { tokenAddress: ledgerCanisterId, balance };
+            } catch (error) {
+                console.error(error);
+                // Return the original token address with zero balance when there's an error
+                return { tokenAddress: ledgerCanisterId, balance: BigInt(0) };
+            }
+        });
+
+        return await Promise.all(tasks);
+    }
+
     async batchBalanceOf(tokenAddresses: Principal[]) {
         const tasks = tokenAddresses.map(async (tokenAddress) => {
             const ledgerCanister = IcrcLedgerCanister.create({
@@ -97,7 +113,7 @@ export class TokenUtilService {
                 });
                 return { tokenAddress, balance };
             } catch (error) {
-                console.error(`Error fetching balance for ${tokenAddress.toString()}:`, error);
+                console.error("Error fetching balance for ${tokenAddress.toString()}:", error);
                 // Return the original token address with zero balance when there's an error
                 return { tokenAddress, balance: BigInt(0) };
             }

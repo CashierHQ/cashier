@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { memo } from "react";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
@@ -21,25 +8,29 @@ import { mapIntentsStateToStatus } from "@/utils/map/status.map";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
 import { convert } from "@/utils/helpers/convert";
 import { Avatar } from "@radix-ui/react-avatar";
-import { formatNumber } from "@/utils/helpers/currency";
+import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
+import { FeeHelpers } from "@/services/fee.service";
+import { ACTION_TYPE } from "@/services/types/enum";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 interface TransactionItemProps {
-    title: string;
+    actionType: ACTION_TYPE;
     intent: IntentModel;
-    isUsd?: boolean;
     fees?: FeeModel[];
-    networkFee?: FeeModel;
+    link: LinkDetailModel;
 }
 
 // apply memo to prevent unnecessary re-renders
 export const TransactionItem = memo(function TransactionItem({
+    actionType,
     intent,
     fees = [],
+    link,
 }: TransactionItemProps) {
-    const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent);
+    const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent, actionType);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
 
     const { getToken, getTokenPrice } = useTokens();
@@ -55,16 +46,37 @@ export const TransactionItem = memo(function TransactionItem({
             (fee) => fee.address === intent.asset.address && fee.type === "network_fee",
         );
 
-        // Calculate adjusted amount by subtracting only the network fee
-        if (networkFee && token.decimals !== undefined) {
-            const networkFeeAmount = Number(networkFee.amount) / 10 ** token.decimals;
-            const newAdjustedAmount = assetAmount - networkFeeAmount;
+        if (!link || !link.linkType) {
+            console.error("Link or link type is undefined");
+            return;
+        }
 
-            setAdjustedAmount(newAdjustedAmount);
+        if (networkFee && token.decimals !== undefined) {
+            const totalTokenAmount = FeeHelpers.forecastIcrcFeeForIntent(
+                link.linkType,
+                actionType,
+                intent,
+                token,
+            );
+
+            setAdjustedAmount(totalTokenAmount);
         } else {
-            setAdjustedAmount(assetAmount);
+            // only for create link fee
+            const totalTokenAmount = FeeHelpers.forecastIcrc2Fee(token, intent.amount, 1);
+            setAdjustedAmount(totalTokenAmount);
         }
     }, [assetAmount, fees, intent.asset.address, token]);
+
+    const getDisplayAmount = () => {
+        return formatNumber(adjustedAmount?.toString() || "0");
+    };
+
+    const getUsdAmount = () => {
+        if (tokenUsdPrice && tokenUsdPrice > 0) {
+            return formatDollarAmount(convert(adjustedAmount, tokenUsdPrice) || 0);
+        }
+        return "No price available";
+    };
 
     return (
         <div className="flex items-center">
@@ -88,46 +100,13 @@ export const TransactionItem = memo(function TransactionItem({
                         </span>
                     </p>
                 </div>
-                <div
-                    onClick={() => {
-                        console.log("adjusted amount: ", adjustedAmount);
-                    }}
-                    className="flex flex-col items-end"
-                >
+                <div className="flex flex-col items-end">
                     <div className="flex items-center gap-1">
-                        <p className="text-[14px] font-normal">
-                            {formatNumber(adjustedAmount?.toString() || "0")}
-                        </p>
+                        <p className="text-[14px] font-normal">{getDisplayAmount()}</p>
                     </div>
-                    <p className="text-[10px] font-normal text-grey/50">
-                        {tokenUsdPrice && tokenUsdPrice > 0
-                            ? "~$" +
-                              formatNumber((convert(adjustedAmount, tokenUsdPrice) || 0).toString())
-                            : "No price available"}
-                    </p>
+                    <p className="text-[10px] font-normal text-grey/50">{getUsdAmount()}</p>
                 </div>
             </div>
-
-            {/* <div className="flex flex-col w-full"> */}
-            {/* <Asset
-                    title={intentTitle}
-                    isLoading={isLoading}
-                    amount={assetAmount}
-                    usdAmount={convert(assetAmount, tokenUsdPrice)}
-                    src={assetSrc}
-                    symbol={assetSymbol}
-                    isUsd={isUsd}
-                /> */}
-
-            {/* <Fee
-                    title={t("transaction.confirm_popup.network_fee_label")}
-                    isLoading={isLoading}
-                    amount={feeAmount}
-                    usdAmount={convert(feeAmount, tokenUsdPrice)}
-                    symbol={feeSymbol}
-                    isUsd={isUsd}
-                /> */}
-            {/* </div> */}
         </div>
     );
 });

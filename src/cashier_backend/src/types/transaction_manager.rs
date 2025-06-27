@@ -1,39 +1,29 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 
 use std::collections::HashMap;
 
-use cashier_types::ActionState;
+use cashier_types::{
+    intent::v2::Intent, transaction::v2::Transaction, Action, ActionState, ActionType,
+};
 
 #[derive(Debug, Clone)]
 pub struct ActionData {
     pub action: cashier_types::Action,
-    pub intents: Vec<cashier_types::Intent>,
-    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
+    pub intents: Vec<Intent>,
+    pub intent_txs: HashMap<String, Vec<Transaction>>,
 }
 
 pub struct RollUpStateResp {
     pub previous_state: ActionState,
     pub current_state: ActionState,
-    pub action: cashier_types::Action,
+    pub action: Action,
     pub link_id: String,
-    pub action_type: cashier_types::ActionType,
+    pub action_type: ActionType,
     pub action_id: String,
-    pub intents: Vec<cashier_types::Intent>,
-    pub intent_txs: HashMap<String, Vec<cashier_types::Transaction>>,
+    pub intents: Vec<Intent>,
+    pub intent_txs: HashMap<String, Vec<Transaction>>,
 }
 
 impl From<(ActionData, ActionState)> for RollUpStateResp {
@@ -55,7 +45,7 @@ impl ActionData {
     pub fn get_intent_and_txs_by_its_tx_id(
         &self,
         tx_id: String,
-    ) -> Result<(cashier_types::Intent, Vec<cashier_types::Transaction>), String> {
+    ) -> Result<(Intent, Vec<Transaction>), String> {
         for (intent_id, txs) in &self.intent_txs {
             for tx in txs {
                 if tx.id == tx_id {
@@ -74,7 +64,7 @@ impl ActionData {
             tx_id
         ))
     }
-    pub fn get_tx(&self, tx_id: &str) -> Result<&cashier_types::Transaction, String> {
+    pub fn get_tx(&self, tx_id: &str) -> Result<&Transaction, String> {
         for (_intent_id, txs) in &self.intent_txs {
             for tx in txs {
                 if tx.id == tx_id {
@@ -116,4 +106,12 @@ impl ActionData {
 
         (group_index, id_index)
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct UpdateActionArgs {
+    pub action_id: String,
+    pub link_id: String,
+    // using for marking the method called outside of icrc-112
+    pub execute_wallet_tx: bool,
 }

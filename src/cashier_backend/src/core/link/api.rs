@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use std::str::FromStr;
 
@@ -34,13 +21,16 @@ use crate::{
     services::{
         self,
         action::ActionService,
+        ext::icrc_batch::IcrcBatchService,
         link::v2::LinkService,
-        transaction_manager::{
-            validate::ValidateService, TransactionManagerService, UpdateActionArgs,
-        },
+        request_lock::RequestLockService,
+        transaction_manager::{service::TransactionManagerService, validate::ValidateService},
         user::v2::UserService,
     },
-    types::{api::PaginateInput, error::CanisterError, temp_action::TemporaryAction},
+    types::{
+        api::PaginateInput, error::CanisterError, temp_action::TemporaryAction,
+        transaction_manager::UpdateActionArgs,
+    },
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
@@ -49,54 +39,151 @@ use super::types::{
     LinkUpdateUserStateInput, UpdateActionInput, UserStateMachineGoto,
 };
 
+/// Retrieves a paginated list of links created by the authenticated caller.
+///
+/// This endpoint requires the caller to be authenticated (non-anonymous) and returns
+/// only the links that were created by the calling principal.
+///
+/// # Arguments
+/// * `input` - Optional pagination parameters (page size, offset, etc.)
+///
+/// # Returns
+/// * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
+/// * `Err(String)` - Error message if retrieval fails
 #[query(guard = "is_not_anonymous")]
 async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.get_links(input)
 }
 
+/// Retrieves a specific link by its ID with optional action data.
+///
+/// This endpoint is accessible to both anonymous and authenticated users. The response
+/// includes the link details and optionally associated action data based on the caller's
+/// permissions and the requested action type.
+///
+/// # Arguments
+/// * `id` - The unique identifier of the link to retrieve
+/// * `options` - Optional parameters including action type to include in response
+///
+/// # Returns
+/// * `Ok(GetLinkResp)` - Link data with optional action information
+/// * `Err(String)` - Error message if link not found or access denied
 #[query]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.get_link(id, options)
 }
 
+/// Creates a new link using the legacy v1 API format.
+///
+/// This endpoint requires authentication and creates a new blockchain transaction link
+/// owned by the calling principal. Returns only the link ID.
+///
+/// # Arguments
+/// * `input` - Link creation parameters (legacy format)
+///
+/// # Returns
+/// * `Ok(String)` - The unique identifier of the created link
+/// * `Err(CanisterError)` - Error if link creation fails
 #[update(guard = "is_not_anonymous")]
 async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.create_link(input)
 }
 
+/// Creates a new link using the v2 API format with enhanced features.
+///
+/// This endpoint requires authentication and creates a new blockchain transaction link
+/// owned by the calling principal. Returns the complete link data structure.
+///
+/// # Arguments
+/// * `input` - Link creation parameters (v2 format with additional features)
+///
+/// # Returns
+/// * `Ok(LinkDto)` - Complete data of the created link
+/// * `Err(CanisterError)` - Error if link creation fails
 #[update(guard = "is_not_anonymous")]
 async fn create_link_v2(input: CreateLinkInputV2) -> Result<LinkDto, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.create_link_v2(input).await
 }
 
+/// Updates an existing link's configuration or state.
+///
+/// This endpoint requires authentication and allows the link creator to modify
+/// link properties, trigger state transitions, or update link parameters.
+///
+/// # Arguments
+/// * `input` - Link update parameters including ID and new configuration
+///
+/// # Returns
+/// * `Ok(LinkDto)` - Updated link data
+/// * `Err(CanisterError)` - Error if update fails or unauthorized
 #[update(guard = "is_not_anonymous")]
 async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.update_link(input).await
 }
 
+/// Processes an existing action for authenticated users.
+///
+/// This endpoint executes a blockchain action that was previously created by the user.
+/// It validates the action state, executes the associated blockchain transactions,
+/// and updates the action status accordingly.
+///
+/// # Arguments
+/// * `input` - Action processing parameters including link ID and action type
+///
+/// # Returns
+/// * `Ok(ActionDto)` - Updated action data after processing
+/// * `Err(CanisterError)` - Error if processing fails or action not found
 #[update(guard = "is_not_anonymous")]
 pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
+    info!("=======================================================");
+    let start = ic_cdk::api::time();
+    info!("[process_action] Processing action start time: {:?}", start);
+    let cycles_start = ic_cdk::api::canister_cycle_balance();
+    info!(
+        "[process_action] Processing action cycles_start: {:?}",
+        cycles_start
+    );
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.process_action(input).await
+
+    let res = api.process_action(input).await;
+    res
 }
 
+/// Creates a new action for authenticated users on a specific link.
+///
+/// This endpoint allows users to create blockchain actions (like claims, transfers, etc.)
+/// on existing links. The action is prepared with all necessary intents and transactions
+/// but not immediately executed.
+///
+/// # Arguments
+/// * `input` - Action creation parameters including link ID and action type
+///
+/// # Returns
+/// * `Ok(ActionDto)` - Created action data with associated intents
+/// * `Err(CanisterError)` - Error if creation fails or action already exists
 #[update(guard = "is_not_anonymous")]
-pub async fn process_action_v2(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
+pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.process_action_v2(input).await
+    api.create_action(input).await
 }
 
-#[update(guard = "is_not_anonymous")]
-pub fn create_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.create_action(input)
-}
-
+/// Processes an existing action for anonymous users with wallet address.
+///
+/// This endpoint allows anonymous users to execute blockchain actions (typically claims)
+/// by providing their wallet address. Only supports "Use" action types for security.
+/// Actions are executed without requiring user authentication.
+///
+/// # Arguments
+/// * `input` - Anonymous action processing parameters including wallet address
+///
+/// # Returns
+/// * `Ok(ActionDto)` - Updated action data after processing
+/// * `Err(CanisterError)` - Error if processing fails or invalid action type
 #[update]
 pub async fn process_action_anonymous(
     input: ProcessActionAnonymousInput,
@@ -105,22 +192,39 @@ pub async fn process_action_anonymous(
     api.process_action_anonymous(input).await
 }
 
+/// Creates a new action for anonymous users with wallet address.
+///
+/// This endpoint allows anonymous users to create blockchain actions (typically claims)
+/// by providing their wallet address. Only supports "Use" action types and validates
+/// that the action doesn't already exist for the given wallet.
+///
+/// # Arguments
+/// * `input` - Anonymous action creation parameters including wallet address
+///
+/// # Returns
+/// * `Ok(ActionDto)` - Created action data with associated intents
+/// * `Err(CanisterError)` - Error if creation fails or action already exists
 #[update]
-pub fn create_action_anonymous(
+pub async fn create_action_anonymous(
     input: CreateActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.create_action_anonymous(input)
+    api.create_action_anonymous(input).await
 }
 
-#[update]
-pub async fn process_action_anonymous_v2(
-    input: ProcessActionAnonymousInput,
-) -> Result<ActionDto, CanisterError> {
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.process_action_anonymous_v2(input).await
-}
-
+/// Retrieves the current user state for a specific link action.
+///
+/// This endpoint returns the user's current progress/state within a link's action flow.
+/// It supports both authenticated users (via session) and anonymous users (via wallet address).
+/// Currently only supports "Use" action types for security.
+///
+/// # Arguments
+/// * `input` - Parameters including link ID, action type, and optional wallet address
+///
+/// # Returns
+/// * `Ok(Some(LinkGetUserStateOutput))` - Current user state and action data if found
+/// * `Ok(None)` - If no action exists for the user
+/// * `Err(CanisterError)` - Error if validation fails or invalid parameters
 #[update]
 pub async fn link_get_user_state(
     input: LinkGetUserStateInput,
@@ -129,6 +233,19 @@ pub async fn link_get_user_state(
     api.link_get_user_state(input)
 }
 
+/// Updates the user state for a specific link action.
+///
+/// This endpoint transitions the user through different states in a link's action flow
+/// (e.g., from wallet selection to transaction signing). It implements a state machine
+/// to guide users through the complete action process.
+///
+/// # Arguments
+/// * `input` - Parameters including link ID, action type, target state, and optional wallet address
+///
+/// # Returns
+/// * `Ok(Some(LinkGetUserStateOutput))` - Updated user state and action data
+/// * `Ok(None)` - If state transition is not valid
+/// * `Err(CanisterError)` - Error if validation fails or transition not allowed
 #[update]
 pub async fn link_update_user_state(
     input: LinkUpdateUserStateInput,
@@ -137,6 +254,18 @@ pub async fn link_update_user_state(
     api.link_update_user_state(input)
 }
 
+/// Updates an existing action's state and executes associated transactions.
+///
+/// This endpoint allows action creators to modify and execute their blockchain actions.
+/// It validates ownership, processes the action through the transaction manager,
+/// and executes wallet transactions if specified.
+///
+/// # Arguments
+/// * `input` - Action update parameters including action ID and link ID
+///
+/// # Returns
+/// * `Ok(ActionDto)` - Updated action data after processing
+/// * `Err(CanisterError)` - Error if update fails, unauthorized, or action not found
 #[update(guard = "is_not_anonymous")]
 pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
     let start = ic_cdk::api::time();
@@ -145,13 +274,34 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 
     let end = ic_cdk::api::time();
 
-    let elapsed = end - start;
-    let elapsed_seconds = (elapsed as f64) / 1_000_000_000.0;
-    info!("[update_action] elapsed time: {} seconds", elapsed_seconds);
+    let _elapsed = end - start; // Track timing for performance monitoring
 
     res
 }
 
+/// Main API controller for blockchain link and action management operations.
+///
+/// The LinkApi struct serves as the primary interface for all link-related operations
+/// including creation, retrieval, updates, and action processing. It orchestrates
+/// interactions between multiple services to provide a complete blockchain transaction
+/// link management system.
+///
+/// # Key Responsibilities
+/// - Link lifecycle management (create, read, update)
+/// - Action processing for both authenticated and anonymous users
+/// - User state management within action workflows
+/// - Transaction execution and validation
+/// - Access control and permission validation
+///
+/// # Supported Operations
+/// - **Link Management**: Create, retrieve, and update blockchain transaction links
+/// - **Action Processing**: Execute blockchain actions like claims, transfers, withdrawals
+/// - **State Management**: Track user progress through multi-step action workflows  
+/// - **Anonymous Support**: Allow anonymous users to interact with links using wallet addresses
+/// - **Permission Control**: Enforce creator permissions and action-specific access rules
+///
+/// # Generic Parameters
+/// * `E` - Environment interface for Internet Computer operations (typically `RealIcEnvironment`)
 pub struct LinkApi<E: IcEnvironment + Clone> {
     link_service: LinkService<E>,
     user_service: UserService,
@@ -159,9 +309,15 @@ pub struct LinkApi<E: IcEnvironment + Clone> {
     action_service: ActionService<E>,
     ic_env: E,
     validate_service: ValidateService,
+    icrc_batch_service: services::ext::icrc_batch::IcrcBatchService,
+    request_lock_service: RequestLockService,
 }
 
 impl<E: IcEnvironment + Clone> LinkApi<E> {
+    /// Creates a new instance of LinkApi with all required services.
+    ///
+    /// This method initializes all the dependent services needed for link operations
+    /// including link management, user management, transaction processing, and validation.
     pub fn get_instance() -> Self {
         Self {
             link_service: LinkService::get_instance(),
@@ -170,9 +326,24 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             action_service: ActionService::get_instance(),
             ic_env: E::new(),
             validate_service: ValidateService::get_instance(),
+            icrc_batch_service: IcrcBatchService::get_instance(),
+            request_lock_service: RequestLockService::get_instance(),
         }
     }
 
+    /// Creates a new LinkApi instance with custom service dependencies.
+    ///
+    /// This constructor is primarily used for testing and dependency injection,
+    /// allowing custom implementations of services to be provided.
+    ///
+    /// # Arguments
+    /// * `link_service` - Service for link management operations
+    /// * `user_service` - Service for user management operations  
+    /// * `tx_manager_service` - Service for transaction processing
+    /// * `action_service` - Service for action management
+    /// * `ic_env` - Internet Computer environment interface
+    /// * `validate_service` - Service for validation operations
+    /// * `request_lock_service` - Service for request locking operations
     pub fn new(
         link_service: LinkService<E>,
         user_service: UserService,
@@ -180,6 +351,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         action_service: ActionService<E>,
         ic_env: E,
         validate_service: ValidateService,
+        icrc_batch_service: IcrcBatchService,
+        request_lock_service: RequestLockService,
     ) -> Self {
         Self {
             link_service,
@@ -188,10 +361,22 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             action_service,
             ic_env,
             validate_service,
+            icrc_batch_service,
+            request_lock_service,
         }
     }
 
-    /// Get links created by the caller
+    /// Retrieves links created by the calling principal with pagination support.
+    ///
+    /// This method fetches all links owned by the authenticated caller and converts
+    /// them to DTOs for API response. Supports pagination to handle large result sets.
+    ///
+    /// # Arguments
+    /// * `input` - Optional pagination parameters (defaults to first page if None)
+    ///
+    /// # Returns
+    /// * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by caller
+    /// * `Err(String)` - Error message if retrieval fails
     pub fn get_links(
         &self,
         input: Option<PaginateInput>,
@@ -210,6 +395,21 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
     }
 
+    /// Retrieves a specific link by ID with optional action data based on permissions.
+    ///
+    /// This method handles complex access control logic:
+    /// - Anonymous users can view links but with limited action access
+    /// - Authenticated users can access their own actions
+    /// - Link creators have full access to all action types
+    /// - Non-creators can only access "Use" actions (claims)
+    ///
+    /// # Arguments
+    /// * `id` - The unique identifier of the link to retrieve
+    /// * `options` - Optional parameters including action type filter
+    ///
+    /// # Returns
+    /// * `Ok(GetLinkResp)` - Link data with optional action information
+    /// * `Err(String)` - Error if link not found or access denied
     pub fn get_link(
         &self,
         id: String,
@@ -276,6 +476,17 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         })
     }
 
+    /// Creates a new link using the legacy v1 input format.
+    ///
+    /// This method creates a blockchain transaction link owned by the authenticated caller.
+    /// Uses the original link creation format for backward compatibility.
+    ///
+    /// # Arguments
+    /// * `input` - Link creation parameters in legacy format
+    ///
+    /// # Returns
+    /// * `Ok(String)` - The unique identifier of the created link
+    /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
     /// Create a new link
     pub fn create_link(&self, input: CreateLinkInput) -> Result<String, CanisterError> {
         let creator = self.ic_env.caller();
@@ -289,6 +500,18 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
     }
 
+    /// Creates a new link using the enhanced v2 input format.
+    ///
+    /// This method creates a blockchain transaction link with enhanced features and
+    /// better error handling. Returns the complete link data structure instead of just ID.
+    /// The link will be in preview state if validation passes, else it will return an error.
+    ///
+    /// # Arguments
+    /// * `input` - Link creation parameters in v2 format with additional capabilities
+    ///
+    /// # Returns
+    /// * `Ok(LinkDto)` - Complete data of the newly created link
+    /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
     pub async fn create_link_v2(&self, input: CreateLinkInputV2) -> Result<LinkDto, CanisterError> {
         let creator = self.ic_env.caller();
 
@@ -305,125 +528,19 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
     }
 
+    /// Processes an existing action for anonymous users using wallet address authentication.
+    ///
+    /// This method allows anonymous users to execute blockchain actions (typically claims)
+    /// by providing their wallet address. Validates the wallet address format, ensures
+    /// only "Use" actions are allowed, and executes the action without requiring user registration.
+    ///
+    /// # Arguments
+    /// * `input` - Anonymous processing parameters including wallet address and action details
+    ///
+    /// # Returns
+    /// * `Ok(ActionDto)` - Updated action data after successful processing
+    /// * `Err(CanisterError)` - Error if validation fails, action doesn't exist, or processing fails
     pub async fn process_action_anonymous(
-        &self,
-        input: ProcessActionAnonymousInput,
-    ) -> Result<ActionDto, CanisterError> {
-        let caller = self.ic_env.caller();
-
-        if caller != Principal::anonymous() {
-            return Err(CanisterError::ValidationErrors(
-                "Only anonymous caller can call this function".to_string(),
-            ));
-        }
-
-        // check wallet address
-        let wallet_address = match Principal::from_text(input.wallet_address.clone()) {
-            Ok(wa) => wa,
-            Err(_) => {
-                return Err(CanisterError::ValidationErrors(
-                    "Invalid wallet address".to_string(),
-                ));
-            }
-        };
-
-        let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
-
-        // check action type is claim
-        if action_type != ActionType::Use {
-            return Err(CanisterError::ValidationErrors(
-                "Invalid action type, only Claim or Use action type is allowed".to_string(),
-            ));
-        }
-
-        // add prefix for easy query
-        let user_id = format!("ANON#{}", input.wallet_address);
-
-        let action =
-            self.link_service
-                .get_action_of_link(&input.link_id, &input.action_type, &user_id);
-
-        // if action is not found, create a new action
-        // only allow == action type
-        let res = if action.is_none() {
-            // validate create action
-            self.link_service.link_validate_user_create_action(
-                &input.link_id,
-                &action_type,
-                &user_id,
-            )?;
-
-            //create temp action
-            // fill in link_id info
-            // fill in action_type info
-            // fill in default_link_user_state info
-            let default_link_user_state = match action_type {
-                ActionType::Use => Some(LinkUserState::ChooseWallet),
-                _ => None,
-            };
-            let mut temp_action = TemporaryAction {
-                id: Uuid::new_v4().to_string(),
-                r#type: action_type,
-                state: ActionState::Created,
-                creator: user_id.clone(),
-                link_id: input.link_id.clone(),
-                intents: vec![],
-                default_link_user_state,
-            };
-
-            // fill the intent info
-            let intents = self
-                .link_service
-                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &wallet_address)
-                .map_err(|e| {
-                    CanisterError::HandleLogicError(format!(
-                        "[process_action_anonymous] Failed to assemble intents: {}",
-                        e
-                    ))
-                })?;
-            temp_action.intents = intents;
-
-            info!("temp_action: {:#?}", temp_action);
-
-            // create real action
-            let res = self.tx_manager_service.create_action(&temp_action)?;
-
-            info!(
-                "[process_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-                &user_id, input.link_id, res.id
-            );
-
-            Ok(res)
-        } else {
-            // validate action
-            self.link_service
-                .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id)?;
-
-            let action_id = action.unwrap().id.clone();
-
-            info!(
-                "[process_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-                &user_id, input.link_id, action_id
-            );
-
-            // execute action with our standalone callback
-            let update_action_res = self
-                .tx_manager_service
-                .update_action(UpdateActionArgs {
-                    action_id: action_id.clone(),
-                    link_id: input.link_id.clone(),
-                    execute_wallet_tx: false,
-                })
-                .await?;
-
-            Ok(update_action_res)
-        };
-
-        res
-    }
-
-    pub async fn process_action_anonymous_v2(
         &self,
         input: ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
@@ -487,97 +604,19 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         Ok(update_action_res)
     }
 
+    /// Processes an existing action for authenticated users.
+    ///
+    /// This method executes a blockchain action that was previously created by the user.
+    /// It validates the user's identity, checks action existence and permissions, then
+    /// processes the action through the transaction manager without executing wallet transactions.
+    ///
+    /// # Arguments
+    /// * `input` - Processing parameters including link ID and action type
+    ///
+    /// # Returns
+    /// * `Ok(ActionDto)` - Updated action data after successful processing
+    /// * `Err(CanisterError)` - Error if user not found, action doesn't exist, or processing fails
     pub async fn process_action(
-        &self,
-        input: ProcessActionInput,
-    ) -> Result<ActionDto, CanisterError> {
-        let caller = self.ic_env.caller();
-
-        // input validate
-        let user_id = self.user_service.get_user_id_by_wallet(&caller);
-
-        let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
-
-        // basic validations
-        if user_id.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "User not found".to_string(),
-            ));
-        }
-
-        let action = self.link_service.get_action_of_link(
-            &input.link_id,
-            &input.action_type,
-            &user_id.as_ref().unwrap(),
-        );
-
-        let res = if action.is_none() {
-            self.link_service.link_validate_user_create_action(
-                &input.link_id,
-                &action_type,
-                user_id.as_ref().unwrap(),
-            )?;
-            //create temp action
-            // fill in link_id info
-            // fill in action_type info
-            // fill in default_link_user_state info
-            let default_link_user_state = match action_type {
-                ActionType::Use => Some(LinkUserState::ChooseWallet),
-                _ => None,
-            };
-            let mut temp_action = TemporaryAction {
-                id: Uuid::new_v4().to_string(),
-                r#type: action_type,
-                state: ActionState::Created,
-                creator: user_id.as_ref().unwrap().to_string(),
-                link_id: input.link_id.clone(),
-                intents: vec![],
-                default_link_user_state,
-            };
-
-            let caller = self.ic_env.caller();
-
-            // fill the intent info
-            let intents = self
-                .link_service
-                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller)
-                .map_err(|e| {
-                    CanisterError::HandleLogicError(format!(
-                        "[process_action] Failed to assemble intents: {}",
-                        e
-                    ))
-                })?;
-            temp_action.intents = intents;
-
-            // create real action
-            let res = self.tx_manager_service.create_action(&temp_action)?;
-
-            Ok(res)
-        } else {
-            self.link_service.link_validate_user_update_action(
-                &action.clone().unwrap(),
-                user_id.as_ref().unwrap(),
-            )?;
-            let action_id = action.clone().unwrap().id.clone();
-
-            // execute action
-            let update_action_res = self
-                .tx_manager_service
-                .update_action(UpdateActionArgs {
-                    action_id: action_id.clone(),
-                    link_id: input.link_id.clone(),
-                    execute_wallet_tx: false,
-                })
-                .await?;
-
-            Ok(update_action_res)
-        };
-
-        res
-    }
-
-    pub async fn process_action_v2(
         &self,
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
@@ -596,17 +635,32 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        let action = self.link_service.get_action_of_link(
-            &input.link_id,
-            &input.action_type,
-            &user_id.as_ref().unwrap(),
-        );
+        // Create lock for action processing
+        let request_lock_key = self
+            .request_lock_service
+            .create_request_lock_for_processing_action(
+                caller,
+                input.link_id.clone(),
+                input.action_id.clone(),
+                self.ic_env.time(),
+            )?;
 
-        let res = if action.is_none() {
-            Err(CanisterError::ValidationErrors(format!(
-                "Action is not existed"
-            )))
-        } else {
+        info!("[process_action] Request lock");
+
+        // Execute main logic and capture result
+        let result = async {
+            let action = self.link_service.get_action_of_link(
+                &input.link_id,
+                &input.action_type,
+                &user_id.as_ref().unwrap(),
+            );
+
+            if action.is_none() {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Action is not existed"
+                )));
+            }
+
             self.link_service.link_validate_user_update_action(
                 &action.clone().unwrap(),
                 user_id.as_ref().unwrap(),
@@ -624,12 +678,33 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 .await?;
 
             Ok(update_action_res)
-        };
+        }
+        .await;
 
-        res
+        // Drop lock regardless of success or failure
+        let _ = self.request_lock_service.drop(request_lock_key);
+
+        info!("[process_action] Drop lock");
+
+        result
     }
 
-    pub fn create_action(&self, input: CreateActionInput) -> Result<ActionDto, CanisterError> {
+    /// Creates a new action for authenticated users on a specific link.
+    ///
+    /// This method allows users to create blockchain actions on existing links. It validates
+    /// the user's identity, ensures the action doesn't already exist, assembles all necessary
+    /// intents and transactions, then creates the action through the transaction manager.
+    ///
+    /// # Arguments
+    /// * `input` - Action creation parameters including link ID and action type
+    ///
+    /// # Returns
+    /// * `Ok(ActionDto)` - Created action data with all associated intents
+    /// * `Err(CanisterError)` - Error if user not found, action exists, or creation fails
+    pub async fn create_action(
+        &self,
+        input: CreateActionInput,
+    ) -> Result<ActionDto, CanisterError> {
         let caller = self.ic_env.caller();
 
         // input validate
@@ -645,63 +720,103 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        let action = self.link_service.get_action_of_link(
-            &input.link_id,
-            &input.action_type,
-            &user_id.as_ref().unwrap(),
-        );
+        let user_id = user_id.clone().unwrap();
 
-        if action.is_some() {
-            return Err(CanisterError::ValidationErrors(format!(
-                "Action already exist!"
-            )));
+        // Create lock for action creation
+        let request_lock_key = self
+            .request_lock_service
+            .create_request_lock_for_creating_action(
+                input.link_id.clone(),
+                caller,
+                self.ic_env.time(),
+            )?;
+
+        // Execute main logic and capture result
+        let result = async {
+            let action =
+                self.link_service
+                    .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+
+            if action.is_some() {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Action already exist!"
+                )));
+            }
+
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            // Validate user can create action
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            // Create temp action with default state
+            let default_link_user_state = match action_type {
+                ActionType::Use => Some(LinkUserState::ChooseWallet),
+                _ => None,
+            };
+
+            let assets = self
+                .link_service
+                .get_assets_for_action(&input.link_id, &action_type)?;
+
+            let fee_map = self
+                .icrc_batch_service
+                .get_batch_tokens_fee(&assets)
+                .await?;
+
+            //create temp action
+            // fill in link_id info
+            // fill in action_type info
+            // fill in default_link_user_state info
+            let mut temp_action = TemporaryAction {
+                id: Uuid::new_v4().to_string(),
+                r#type: action_type.clone(),
+                state: ActionState::Created,
+                creator: user_id.clone(),
+                link_id: input.link_id.clone(),
+                intents: vec![],
+                default_link_user_state,
+            };
+
+            // Assemble intents
+            let intents = self
+                .link_service
+                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller, &fee_map)
+                .await?;
+
+            temp_action.intents = intents;
+
+            // Create real action
+            self.tx_manager_service.create_action(&mut temp_action)
         }
+        .await;
 
-        self.link_service.link_validate_user_create_action(
-            &input.link_id,
-            &action_type,
-            user_id.as_ref().unwrap(),
-        )?;
+        // Drop lock regardless of success or failure
+        let _ = self.request_lock_service.drop(request_lock_key);
 
-        //create temp action
-        // fill in link_id info
-        // fill in action_type info
-        // fill in default_link_user_state info
-        let default_link_user_state = match action_type {
-            ActionType::Use => Some(LinkUserState::ChooseWallet),
-            _ => None,
-        };
-        let mut temp_action = TemporaryAction {
-            id: Uuid::new_v4().to_string(),
-            r#type: action_type,
-            state: ActionState::Created,
-            creator: user_id.as_ref().unwrap().to_string(),
-            link_id: input.link_id.clone(),
-            intents: vec![],
-            default_link_user_state,
-        };
-
-        let caller = self.ic_env.caller();
-
-        // fill the intent info
-        let intents = self
-            .link_service
-            .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller)
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!(
-                    "[create_action] Failed to assemble intents: {}",
-                    e
-                ))
-            })?;
-        temp_action.intents = intents;
-
-        // create real action
-        let res = self.tx_manager_service.create_action(&temp_action)?;
-
-        Ok(res)
+        result
     }
 
-    pub fn create_action_anonymous(
+    /// Creates a new action for anonymous users using wallet address authentication.
+    ///
+    /// This method allows anonymous users to create blockchain actions (typically claims)
+    /// by providing their wallet address. Validates the wallet format, ensures only "Use"
+    /// actions are allowed, assembles intents, and creates the action with an anonymous user ID.
+    ///
+    /// # Arguments
+    /// * `input` - Anonymous creation parameters including wallet address and action details
+    ///
+    /// # Returns
+    /// * `Ok(ActionDto)` - Created action data with all associated intents
+    /// * `Err(CanisterError)` - Error if validation fails, action exists, or creation fails
+    pub async fn create_action_anonymous(
         &self,
         input: CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
@@ -714,7 +829,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
 
         // check wallet address
-        let wallet_address = match Principal::from_text(input.wallet_address.clone()) {
+        let wallet_principal = match Principal::from_text(input.wallet_address.clone()) {
             Ok(wa) => wa,
             Err(_) => {
                 return Err(CanisterError::ValidationErrors(
@@ -736,65 +851,117 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // add prefix for easy query
         let user_id = format!("ANON#{}", input.wallet_address);
 
-        let action =
-            self.link_service
-                .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+        // Create lock for action creation using wallet principal for anonymous users
+        let request_lock_key = self
+            .request_lock_service
+            .create_request_lock_for_creating_action(
+                input.link_id.clone(),
+                wallet_principal,
+                self.ic_env.time(),
+            )?;
 
-        if action.is_some() {
-            return Err(CanisterError::ValidationErrors(format!(
-                "Action already exist!"
-            )));
+        // Execute main logic and capture result
+        let result = async {
+            let action =
+                self.link_service
+                    .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+
+            if action.is_some() {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Action already exist!"
+                )));
+            }
+
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            let action =
+                self.link_service
+                    .get_action_of_link(&input.link_id, &input.action_type, &user_id);
+
+            if action.is_some() {
+                return Err(CanisterError::ValidationErrors(format!(
+                    "Action already exist!"
+                )));
+            }
+
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            // Validate user can create action
+            self.link_service.link_validate_user_create_action(
+                &input.link_id,
+                &action_type,
+                &user_id,
+            )?;
+
+            // Create temp action with default state
+            let default_link_user_state = match action_type {
+                ActionType::Use => Some(LinkUserState::ChooseWallet),
+                _ => None,
+            };
+
+            //create temp action
+            // fill in link_id info
+            // fill in action_type info
+            // fill in default_link_user_state info
+            let mut temp_action = TemporaryAction {
+                id: Uuid::new_v4().to_string(),
+                r#type: action_type.clone(),
+                state: ActionState::Created,
+                creator: user_id.clone(),
+                link_id: input.link_id.clone(),
+                intents: vec![],
+                default_link_user_state,
+            };
+
+            let assets = self
+                .link_service
+                .get_assets_for_action(&temp_action.link_id, &temp_action.r#type)?;
+
+            let fee_map = self
+                .icrc_batch_service
+                .get_batch_tokens_fee(&assets)
+                .await?;
+
+            // Assemble intents
+            let intents = self
+                .link_service
+                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller, &fee_map)
+                .await?;
+
+            temp_action.intents = intents;
+
+            // Create real action
+            self.tx_manager_service.create_action(&mut temp_action)
         }
+        .await;
 
-        self.link_service.link_validate_user_create_action(
-            &input.link_id,
-            &action_type,
-            &user_id,
-        )?;
+        // Drop lock regardless of success or failure
+        let _ = self.request_lock_service.drop(request_lock_key);
 
-        //create temp action
-        // fill in link_id info
-        // fill in action_type info
-        // fill in default_link_user_state info
-        let default_link_user_state = match action_type {
-            ActionType::Use => Some(LinkUserState::ChooseWallet),
-            _ => None,
-        };
-        let mut temp_action = TemporaryAction {
-            id: Uuid::new_v4().to_string(),
-            r#type: action_type,
-            state: ActionState::Created,
-            creator: user_id.clone(),
-            link_id: input.link_id.clone(),
-            intents: vec![],
-            default_link_user_state,
-        };
-
-        // fill the intent info
-        let intents = self
-            .link_service
-            .assemble_intents(&temp_action.link_id, &temp_action.r#type, &wallet_address)
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!(
-                    "[create_action_anonymous] Failed to assemble intents: {}",
-                    e
-                ))
-            })?;
-        temp_action.intents = intents;
-
-        info!("temp_action: {:#?}", temp_action);
-
-        // create real action
-        let res = self.tx_manager_service.create_action(&temp_action)?;
-
-        info!(
-            "[create_action_anonymous] user_id: {:?}, link_id: {:?}, action_id: {:?}",
-            &user_id, input.link_id, res.id
-        );
-
-        Ok(res)
+        result
     }
 
+    /// Retrieves the current user state for a specific link action.
+    ///
+    /// This method returns the user's progress within a link's action workflow. It supports
+    /// both authenticated users (via session key) and anonymous users (via wallet address).
+    /// The method validates input parameters and returns the current action state if found.
+    ///
+    /// # Arguments
+    /// * `input` - Parameters including link ID, action type, and authentication method
+    ///
+    /// # Returns
+    /// * `Ok(Some(LinkGetUserStateOutput))` - Current user state and action data if action exists
+    /// * `Ok(None)` - If no action found for the user
+    /// * `Err(CanisterError)` - Error if validation fails or conflicting authentication methods
     pub fn link_get_user_state(
         &self,
         input: LinkGetUserStateInput,
@@ -869,11 +1036,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             return Ok(None);
         }
 
-        info!(
-            "[link_get_user_state] user_id: {:?}, link_id: {:?}, action_type: {:?}",
-            temp_user_id, input.link_id, input.action_type
-        );
-
         // If found "LinkAction" values
         // return action = get action from (action _id)
         // return state = record user_state
@@ -898,6 +1060,19 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }));
     }
 
+    /// Updates the user state for a specific link action using state machine transitions.
+    ///
+    /// This method implements a state machine to guide users through different stages of
+    /// an action workflow (e.g., wallet selection → transaction signing → completion).
+    /// It validates the transition request and updates the user's progress accordingly.
+    ///
+    /// # Arguments
+    /// * `input` - Parameters including link ID, action type, target state, and authentication method
+    ///
+    /// # Returns
+    /// * `Ok(Some(LinkGetUserStateOutput))` - Updated user state and action data after transition
+    /// * `Ok(None)` - If state transition is not valid or action not found
+    /// * `Err(CanisterError)` - Error if validation fails or transition not allowed
     pub fn link_update_user_state(
         &self,
         input: LinkUpdateUserStateInput,
@@ -989,6 +1164,18 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }));
     }
 
+    /// Updates an existing action's state and executes associated blockchain transactions.
+    ///
+    /// This method allows action creators to modify their actions and execute the associated
+    /// blockchain transactions. It validates ownership, processes the action through the
+    /// transaction manager, and executes wallet transactions when specified.
+    ///
+    /// # Arguments
+    /// * `input` - Update parameters including action ID and link ID
+    ///
+    /// # Returns
+    /// * `Ok(ActionDto)` - Updated action data after processing and transaction execution
+    /// * `Err(CanisterError)` - Error if unauthorized, validation fails, or execution fails
     pub async fn update_action(
         &self,
         input: UpdateActionInput,
@@ -1008,23 +1195,51 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        let args = UpdateActionArgs {
-            action_id: input.action_id.clone(),
-            link_id: input.link_id.clone(),
-            execute_wallet_tx: true,
-        };
+        // Create lock for action update
+        let request_lock_key = self
+            .request_lock_service
+            .create_request_lock_for_updating_action(
+                caller,
+                input.link_id.clone(),
+                input.action_id.clone(),
+                self.ic_env.time(),
+            )?;
 
-        let update_action_res = self
-            .tx_manager_service
-            .update_action(args)
-            .await
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!("Failed to update action: {}", e))
-            });
+        // Execute main logic and capture result
+        let result = async {
+            let args = UpdateActionArgs {
+                action_id: input.action_id.clone(),
+                link_id: input.link_id.clone(),
+                execute_wallet_tx: true,
+            };
 
-        update_action_res
+            self.tx_manager_service
+                .update_action(args)
+                .await
+                .map_err(|e| {
+                    CanisterError::HandleLogicError(format!("Failed to update action: {}", e))
+                })
+        }
+        .await;
+
+        // Drop lock regardless of success or failure
+        let _ = self.request_lock_service.drop(request_lock_key);
+
+        result
     }
 
+    /// Updates an existing link's configuration, state, or parameters.
+    ///
+    /// This method allows link creators to modify their links by triggering state transitions
+    /// or updating link parameters. It validates ownership, retrieves the current link state,
+    /// and processes the requested changes through the link service.
+    ///
+    /// # Arguments
+    /// * `input` - Update parameters including link ID, action type, and new parameters
+    ///
+    /// # Returns
+    /// * `Ok(LinkDto)` - Updated link data after successful modification
+    /// * `Err(CanisterError)` - Error if unauthorized, link not found, or update fails
     /// Update an existing link
     pub async fn update_link(&self, input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
         let creator = self.ic_env.caller();

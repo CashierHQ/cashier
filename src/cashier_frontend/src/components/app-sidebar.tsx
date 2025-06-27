@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { SheetHeader, SheetContent, SheetTitle, SheetFooter, SheetClose } from "./ui/sheet";
 import { cn } from "@/lib/utils";
@@ -25,6 +12,7 @@ import { Copy } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { MouseEventHandler } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export interface SidebarMenuItem {
     title: string;
@@ -37,6 +25,7 @@ interface AppSidebarProps {
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { disconnect } = useAuth();
 
@@ -44,7 +33,7 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
         try {
             e.stopPropagation();
             copy(user?.principal.toString() ?? "");
-            toast.success("Address copied to clipboard");
+            toast.success(t("common.success.copied_address"));
         } catch (err) {
             console.log("🚀 ~ handleCopyLink ~ err:", err);
         }

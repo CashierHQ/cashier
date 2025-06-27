@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { convertTokenAmountToNumber, parseResultResponse } from "@/utils";
 import {
@@ -132,8 +119,6 @@ class LinkService {
     }
 
     async getLink(linkId: string, actionType?: string) {
-        console.log("🚀 ~ LinkService ~ getLink ~ linkId:", linkId);
-        console.log("🚀 ~ LinkService ~ getLink ~ actionType:", actionType);
         const response = parseResultResponse(
             await this.actor.get_link(
                 linkId,
@@ -178,7 +163,7 @@ class LinkService {
             link_id: input.linkId,
             action_type: input.actionType,
         };
-        const response = parseResultResponse(await this.actor.process_action_v2(inputModel));
+        const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         return action;
     }
@@ -223,9 +208,7 @@ class LinkService {
             action_type: input.actionType,
             wallet_address: input.walletAddress,
         };
-        const response = parseResultResponse(
-            await this.actor.process_action_anonymous_v2(inputModel),
-        );
+        const response = parseResultResponse(await this.actor.process_action_anonymous(inputModel));
         const action = mapActionModel(response);
         return action;
     }

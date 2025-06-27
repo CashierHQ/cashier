@@ -1,25 +1,13 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
 use crate::info;
-use crate::services::transaction_manager::TransactionManagerService;
-use crate::utils::runtime::RealIcEnvironment;
+use crate::services::request_lock::RequestLockService;
+use crate::services::transaction_manager::service::TransactionManagerService;
+use crate::utils::runtime::{IcEnvironment, RealIcEnvironment};
 use crate::{
     core::CanisterError,
     services::{self},
@@ -29,9 +17,13 @@ use super::types::TriggerTransactionInput;
 
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
-    let start_time = ic_cdk::api::time();
     let caller = ic_cdk::api::caller();
+    let ic_env = RealIcEnvironment::new();
+
     let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
+    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
+        TransactionManagerService::get_instance();
+    let request_lock_service = RequestLockService::get_instance();
 
     let is_creator = validate_service
         .is_action_creator(caller.to_text(), input.action_id.clone())
@@ -45,19 +37,33 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
         ));
     }
 
-    info!("Triggering transaction for action: {}", input.action_id);
+    // Create lock for transaction execution
+    let request_lock_key = request_lock_service.create_request_lock_for_executing_transaction(
+        caller,
+        input.action_id.clone(),
+        input.transaction_id.clone(),
+        ic_env.time(),
+    )?;
 
-    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
-        TransactionManagerService::get_instance();
+    info!(
+        "[trigger_transaction] Request lock key: {:?}",
+        request_lock_key
+    );
 
-    transaction_manager
-        .execute_tx_by_id(input.transaction_id)
-        .await?;
+    // Execute main logic and capture result
+    let result = async {
+        transaction_manager
+            .execute_tx_by_id(input.transaction_id)
+            .await?;
 
-    let end_time = ic_cdk::api::time();
-    let elapsed_time = end_time - start_time;
-    let elapsed_seconds = (elapsed_time as f64) / 1_000_000_000.0;
-    info!("[trigger_transaction] in {} seconds", elapsed_seconds);
+        Ok("Executed success".to_string())
+    }
+    .await;
 
-    return Ok("Executed success".to_string());
+    // Drop lock regardless of success or failure
+    let _ = request_lock_service.drop(request_lock_key);
+
+    info!("[trigger_transaction] Request lock dropped");
+
+    result
 }

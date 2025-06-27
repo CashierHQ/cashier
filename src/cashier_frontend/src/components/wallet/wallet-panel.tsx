@@ -1,19 +1,7 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 /* eslint-disable react/prop-types */
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { WalletTabs } from "@/components/wallet/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,7 +28,7 @@ const MainWalletPanel: React.FC<{
     navigateSendPage: () => void;
     navigateReceivePage: () => void;
     totalUsdEquivalent: number;
-}> = React.memo(({ navigateSendPage, navigateReceivePage, totalUsdEquivalent }) => {
+}> = ({ navigateSendPage, navigateReceivePage, totalUsdEquivalent }) => {
     // Balance visibility state
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
     const [isVisible, setIsVisible] = useState(() => {
@@ -87,17 +75,12 @@ const MainWalletPanel: React.FC<{
             </div>
         </div>
     );
-});
+};
 
 // Memoize panel components
-const MemoizedSendPanel = React.memo(SendPanel);
-const MemoizedReceivePanel = React.memo(ReceivePanel);
-const MemoizedDetailsPanel = React.memo(DetailsPanel);
-const MemoizedManagePanel = React.memo(ManagePanel);
-const MemoizedImportPanel = React.memo(ImportPanel);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
+const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
     const { isLoading, getDisplayTokens, rawTokenList } = useTokens();
     const { activePanel, panelParams, navigateToPanel } = useWalletContext();
 
@@ -188,30 +171,15 @@ const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
 
         switch (activePanel) {
             case "send":
-                return (
-                    <MemoizedSendPanel
-                        tokenId={panelParams.tokenId}
-                        onBack={navigateToMainWallet}
-                    />
-                );
+                return <SendPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "receive":
-                return (
-                    <MemoizedReceivePanel
-                        tokenId={panelParams.tokenId}
-                        onBack={navigateToMainWallet}
-                    />
-                );
+                return <ReceivePanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "details":
-                return (
-                    <MemoizedDetailsPanel
-                        tokenId={panelParams.tokenId}
-                        onBack={navigateToMainWallet}
-                    />
-                );
+                return <DetailsPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "manage":
-                return <MemoizedManagePanel onBack={navigateToMainWallet} />;
+                return <ManagePanel onBack={navigateToMainWallet} />;
             case "import":
-                return <MemoizedImportPanel onBack={navigateToManage} />;
+                return <ImportPanel onBack={navigateToManage} />;
             case "wallet":
             default:
                 return (
@@ -267,7 +235,7 @@ const WalletPanel: React.FC<WalletPanelProps> = React.memo(({ onClose }) => {
             {content}
         </SheetContent>
     );
-});
+};
 
 WalletPanel.displayName = "WalletPanel";
 MainWalletPanel.displayName = "MainWalletPanel";

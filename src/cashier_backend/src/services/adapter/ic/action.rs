@@ -1,22 +1,11 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
+
+use candid::Nat;
 use cashier_types::{
-    ActionType, Asset, Chain, Intent, IntentState, IntentTask, IntentType, LinkType, TransferData,
-    TransferFromData, Wallet,
+    intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData, TransferFromData},
+    ActionType, Asset, Chain, LinkType, Wallet,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -85,7 +74,9 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
                 to: vault_wallet,
                 spender: spender_wallet,
                 asset: fee_asset,
-                amount: fee_amount,
+                amount: Nat::from(fee_amount),
+                actual_amount: None,
+                approve_amount: None,
             }),
             state: IntentState::Created,
             created_at: ts,
@@ -145,7 +136,7 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
                 to: deposit_wallet,
                 asset,
                 // tip link full amount of the first asset
-                amount: total_amount,
+                amount: Nat::from(total_amount),
             }),
             state: IntentState::Created,
             created_at: ts,

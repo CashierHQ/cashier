@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -48,7 +35,7 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
 
     return (
         <Drawer open={open}>
-            <DrawerContent className="max-w-[400px] mx-auto p-1 rounded-t-[1.5rem]">
+            <DrawerContent className="max-w-[400px] mx-auto p-3 rounded-t-[1.5rem]">
                 <DrawerHeader>
                     <DrawerTitle className="relative flex items-center justify-start">
                         <div className="text-lg">End link</div>
@@ -61,12 +48,12 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                     </DrawerTitle>
                 </DrawerHeader>
 
-                <div className="flex flex-col px-4 pb-8">
-                    <div className="flex p-3 bg-lightgreen rounded-full w-fit">
+                <div className="flex flex-col">
+                    <div className="flex p-3 bg-lightgreen rounded-full w-fit mx-2">
                         <Unlink className="text-green" />
                     </div>
 
-                    <div className="flex flex-col gap-2 mt-4 text-[14px] text-primary/75">
+                    <div className="flex flex-col gap-2 mt-4 text-[14px] text-primary/75 mx-2">
                         <p>Are you sure you want to end the link?</p>
                         <p>
                             Ending the link will deactivate the link page and users will no longer
@@ -75,7 +62,7 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                         </p>
                     </div>
 
-                    <div className="flex flex-col items-start justify-start gap-1 mt-4">
+                    <div className="flex flex-col items-start justify-start gap-1 mt-4 mx-2">
                         <p className="font-semibold text-sm">To confirm, please type "End link"</p>
                         <Input
                             className="pl-3 placeholder:text-grey/75 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
@@ -88,7 +75,7 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                     {isEnding ? (
                         <Button
                             size="default"
-                            className="mt-4 mx-1 disabled:opacity-50"
+                            className="mt-4 w-[95%] mb-2 h-[44px] mx-auto disabled:opacity-50"
                             onClick={onClickConfirm}
                             disabled={isEnding}
                         >
@@ -97,7 +84,7 @@ export const EndLinkDrawer: FC<EndLinkDrawerProps> = ({
                     ) : (
                         <Button
                             size="default"
-                            className="mt-4 mx-1 disabled:opacity-50"
+                            className="mt-4 w-[95%] mb-2 h-[44px] mx-auto disabled:opacity-50"
                             onClick={onClickConfirm}
                             disabled={confirmText !== "End link"}
                         >

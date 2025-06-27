@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +7,23 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { X } from "lucide-react";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
+import { formatDollarAmount } from "@/utils/helpers/currency";
+import { FeeHelpers } from "@/services/fee.service";
+import { FungibleToken } from "@/types/fungible-token.speculative";
+import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
+
+// Helper method to calculate the display amount for fees
+const calculateFeeDisplayAmount = (
+    token: FungibleToken,
+    feeName: string,
+    feeAmount: string,
+): number => {
+    if (feeName.toLowerCase().includes("link creation fee")) {
+        const linkCreationFee = FeeHelpers.forecastIcrc2Fee(token, DEFAULT_CREATION_FEE, 1);
+        return linkCreationFee;
+    }
+    return Number(feeAmount);
+};
 
 export type FeeBreakdownDrawerProps = {
     open?: boolean;
@@ -30,7 +34,7 @@ export type FeeBreakdownDrawerProps = {
         amount: string;
         tokenSymbol: string;
         tokenAddress: string;
-        usdAmount: string;
+        usdAmount?: string;
     }[];
 };
 
@@ -79,7 +83,12 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                                         <div className="flex items-center gap-2">
                                             <div className="flex items-center gap-1">
                                                 <span className="text-[14px] font-normal">
-                                                    {fee.amount} {fee.tokenSymbol}
+                                                    {calculateFeeDisplayAmount(
+                                                        token!,
+                                                        fee.name,
+                                                        fee.amount,
+                                                    )}{" "}
+                                                    {fee.tokenSymbol}
                                                 </span>
                                                 <AssetAvatarV2
                                                     token={token}
@@ -90,7 +99,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                                     </div>
                                     <div className="flex justify-end">
                                         <p className="text-[10px] font-normal text-grey/50">
-                                            ~${fee.usdAmount}
+                                            {formatDollarAmount(Number(fee.usdAmount))}
                                         </p>
                                     </div>
                                 </div>
@@ -98,7 +107,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                         })}
                 </div>
 
-                <div className="mt-2 light-borders-green px-4 py-4 flex flex-col">
+                <div className="mt-2 light-borders-green px-4 py-4 mb-2 flex flex-col">
                     {" "}
                     <div className="flex justify-between items-center">
                         <span className="text-[14px] font-normal">Total fees</span>
@@ -121,12 +130,12 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                     </div>
                     <div className="flex justify-end">
                         <p className="text-[10px] font-normal text-grey/50">
-                            {totalFees === 0 ? "-" : `~$${totalFees.toFixed(4)}`}
+                            {totalFees === 0 ? "-" : formatDollarAmount(totalFees)}
                         </p>
                     </div>
                 </div>
 
-                <Button className="mt-6" onClick={onClose}>
+                <Button className="mt-6 mx-auto w-[95%] my-2" onClick={onClose}>
                     Close
                 </Button>
             </DrawerContent>

@@ -1,20 +1,7 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
 import LinkService, { UpdateActionInputModel } from "@/services/link/link.service";
 import { ACTION_TYPE } from "@/services/types/enum";
@@ -37,11 +24,18 @@ type AnonymousActionParams = BaseActionParams & {
  */
 export function useCreateAction() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (params: BaseActionParams) => {
             const linkService = new LinkService(identity);
             return linkService.createAction(params);
+        },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after action creation
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
+            });
         },
     });
 
@@ -53,6 +47,7 @@ export function useCreateAction() {
  */
 export function useProcessAction() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (params: BaseActionParams) => {
@@ -66,6 +61,12 @@ export function useProcessAction() {
                 actionId: params.actionId,
             });
         },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after action processing
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
+            });
+        },
     });
 
     return mutation;
@@ -76,6 +77,7 @@ export function useProcessAction() {
  */
 export function useCreateActionAnonymous() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (params: AnonymousActionParams) => {
@@ -87,8 +89,14 @@ export function useCreateActionAnonymous() {
 
             return linkService.createActionAnonymous({
                 linkId: params.linkId,
-                actionType: params.actionType,
+                actionType: params.actionType.toString(),
                 walletAddress: params.walletAddress,
+            });
+        },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after anonymous action creation
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
             });
         },
     });
@@ -101,6 +109,7 @@ export function useCreateActionAnonymous() {
  */
 export function useProcessActionAnonymous() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (params: AnonymousActionParams) => {
@@ -115,9 +124,15 @@ export function useProcessActionAnonymous() {
 
             return linkService.processActionAnonymousV2({
                 linkId: params.linkId,
-                actionType: params.actionType,
+                actionType: params.actionType.toString(),
                 actionId: params.actionId,
                 walletAddress: params.walletAddress,
+            });
+        },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after anonymous action processing
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
             });
         },
     });
@@ -127,11 +142,18 @@ export function useProcessActionAnonymous() {
 
 export function useUpdateAction() {
     const identity = useIdentity();
+    const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (vars: UpdateActionInputModel) => {
             const linkService = new LinkService(identity);
             return linkService.updateAction(vars);
+        },
+        onSuccess: (data, variables) => {
+            // Invalidate all link detail queries for this link after action update
+            queryClient.invalidateQueries({
+                queryKey: ["links", "detail", variables.linkId],
+            });
         },
     });
 

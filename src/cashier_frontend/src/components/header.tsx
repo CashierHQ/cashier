@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useAuth } from "@nfid/identitykit/react";
 import React, { useState } from "react";
@@ -22,7 +9,7 @@ import { Button } from "./ui/button";
 import { SheetTrigger } from "./ui/sheet";
 import { RiMenu2Line } from "react-icons/ri";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useResponsive } from "@/hooks/responsive-hook";
+import { useDeviceSize, useHeader } from "@/hooks/responsive-hook";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useWalletContext } from "@/contexts/wallet-context";
 import WalletConnectDialog from "./wallet-connect-dialog";
@@ -36,7 +23,9 @@ const Header: React.FC<HeaderProps> = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const responsive = useResponsive();
+    const { isSmallDevice } = useDeviceSize();
+    const { showHeaderWithBackButtonAndWalletButton, showCompactHeader, hideHeader } = useHeader();
+
     const { connectToWallet } = useConnectToWallet();
     const { openWallet } = useWalletContext();
     const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
@@ -67,9 +56,9 @@ const Header: React.FC<HeaderProps> = () => {
     if (!user) {
         return (
             <div
-                className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4 pt-4" : `px-8 py-3 mb-4 ${location.pathname === "/" ? "" : "bg-white"}`}`}
+                className={`w-full flex justify-between items-center ${isSmallDevice ? "px-4 pt-4" : `px-8 pb-3 mb-4 ${location.pathname === "/" ? "" : "bg-white"}`}`}
             >
-                {responsive.showHeaderWithBackButtonAndWalletButton(
+                {showHeaderWithBackButtonAndWalletButton(
                     location.pathname,
                     location.search,
                     !user,
@@ -81,11 +70,7 @@ const Header: React.FC<HeaderProps> = () => {
                     />
                 ) : (
                     <img
-                        src={
-                            responsive.showCompactHeader(location.pathname)
-                                ? "./cLogo.svg"
-                                : "./logo.svg"
-                        }
+                        src={showCompactHeader(location.pathname) ? "./cLogo.svg" : "./logo.svg"}
                         alt="Cashier logo"
                         className="max-w-[130px]"
                         onClick={() => navigate("/")}
@@ -110,18 +95,15 @@ const Header: React.FC<HeaderProps> = () => {
             </div>
         );
     } else if (
-        !responsive.hideHeader(location.pathname) ||
-        (responsive.hideHeader(location.pathname) && !responsive.isSmallDevice)
+        !hideHeader(location.pathname) ||
+        (hideHeader(location.pathname) && !isSmallDevice)
     ) {
         return (
             <>
                 <div
-                    className={`w-full flex justify-between items-center ${responsive.isSmallDevice ? "px-4 pt-4" : "px-8 py-3 mb-4 bg-white"}`}
+                    className={`w-full flex justify-between items-center ${isSmallDevice ? "px-4 pt-4" : "px-8 py-3 mb-4 bg-white"}`}
                 >
-                    {responsive.showHeaderWithBackButtonAndWalletButton(
-                        location.pathname,
-                        location.search,
-                    ) ? (
+                    {showHeaderWithBackButtonAndWalletButton(location.pathname, location.search) ? (
                         <ChevronLeft
                             size={24}
                             className="cursor-pointer"
@@ -146,9 +128,9 @@ const Header: React.FC<HeaderProps> = () => {
                         </Button>
                     )}
 
-                    {responsive.hideHeader(location.pathname) && !responsive.isSmallDevice ? (
+                    {hideHeader(location.pathname) && !isSmallDevice ? (
                         <></> // Don't show X button on big device header when hideHeader is true
-                    ) : responsive.showCompactHeader(location.pathname) ? (
+                    ) : showCompactHeader(location.pathname) ? (
                         <X
                             size={24}
                             className="cursor-pointer"

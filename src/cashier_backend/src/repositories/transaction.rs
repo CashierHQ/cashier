@@ -1,21 +1,10 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-use super::{base_repository::Store, TRANSACTION_STORE};
-use cashier_types::{Transaction, TransactionKey};
+
+use crate::repositories::VERSIONED_TRANSACTION_V2_STORE;
+
+use cashier_types::{transaction::v2::Transaction, TransactionKey, VersionedTransaction};
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -29,8 +18,10 @@ impl TransactionRepository {
 
     pub fn create(&self, transaction: Transaction) -> Transaction {
         let id: TransactionKey = transaction.id.clone();
-        TRANSACTION_STORE.with_borrow_mut(|store| {
-            store.insert(id, transaction.clone());
+        VERSIONED_TRANSACTION_V2_STORE.with_borrow_mut(|store| {
+            let versioned_transaction = VersionedTransaction::build_v2(transaction.clone())
+                .expect("Failed to create versioned transaction");
+            store.insert(id, versioned_transaction);
         });
 
         transaction
@@ -38,41 +29,56 @@ impl TransactionRepository {
 
     pub fn update(&self, transaction: Transaction) -> Transaction {
         let id: TransactionKey = transaction.id.clone();
-        TRANSACTION_STORE.with_borrow_mut(|store| {
-            store.insert(id, transaction.clone());
+        VERSIONED_TRANSACTION_V2_STORE.with_borrow_mut(|store| {
+            let versioned_transaction = VersionedTransaction::build_v2(transaction.clone())
+                .expect("Failed to create versioned transaction");
+            store.insert(id, versioned_transaction);
         });
 
         transaction
     }
 
     pub fn batch_create(&self, transactions: Vec<Transaction>) {
-        TRANSACTION_STORE.with_borrow_mut(|store| {
+        VERSIONED_TRANSACTION_V2_STORE.with_borrow_mut(|store| {
             for transaction in transactions {
                 let id: TransactionKey = transaction.id.clone();
-                store.insert(id, transaction.clone());
+                let versioned_transaction = VersionedTransaction::build_v2(transaction)
+                    .expect("Failed to create versioned transaction");
+                store.insert(id, versioned_transaction);
             }
         });
     }
 
     pub fn batch_update(&self, transactions: Vec<Transaction>) {
-        TRANSACTION_STORE.with_borrow_mut(|store| {
+        VERSIONED_TRANSACTION_V2_STORE.with_borrow_mut(|store| {
             for transaction in transactions {
                 let id: TransactionKey = transaction.id.clone();
-                store.insert(id, transaction.clone());
+                let versioned_transaction = VersionedTransaction::build_v2(transaction)
+                    .expect("Failed to create versioned transaction");
+                store.insert(id, versioned_transaction);
             }
         });
     }
 
     pub fn batch_get(&self, ids: Vec<TransactionKey>) -> Vec<Transaction> {
-        TRANSACTION_STORE.with_borrow(|store| store.batch_get(ids))
+        VERSIONED_TRANSACTION_V2_STORE.with_borrow(|store| {
+            ids.into_iter()
+                .filter_map(|id| store.get(&id))
+                .map(|versioned_transaction| versioned_transaction.to_v2())
+                .collect()
+        })
     }
 
     pub fn get(&self, id: &TransactionKey) -> Option<Transaction> {
-        TRANSACTION_STORE.with_borrow(|store| store.get(id).clone())
+        VERSIONED_TRANSACTION_V2_STORE.with_borrow(|store| {
+            store
+                .get(id)
+                .map(|versioned_transaction| versioned_transaction.to_v2())
+        })
     }
 
     pub fn delete(&self, id: &TransactionKey) {
-        TRANSACTION_STORE.with_borrow_mut(|store| {
+        VERSIONED_TRANSACTION_V2_STORE.with_borrow_mut(|store| {
             store.remove(id);
         });
     }

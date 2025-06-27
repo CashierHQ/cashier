@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { FC, useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
@@ -26,8 +13,9 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokens } from "@/hooks/useTokens";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { convertDecimalBigIntToNumber } from "@/utils";
+import { FeeHelpers } from "@/services/fee.service";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 
@@ -42,9 +30,11 @@ type AssetFormInputProps = {
     isAirdrop?: boolean;
     linkId?: string;
     isTip?: boolean;
+    link: LinkDetailModel;
 };
 
 export const AssetFormInput: FC<AssetFormInputProps> = ({
+    link,
     index,
     form,
     onAssetSelect,
@@ -61,14 +51,8 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
     const [localTokenAmount, setLocalTokenAmount] = useState<string>("");
     const [localUsdAmount, setLocalUsdAmount] = useState<string>("");
 
-    const { link } = useLinkAction();
-
     const { t } = useTranslation();
-    const {
-        getValues,
-        formState: { errors },
-        watch,
-    } = form;
+    const { getValues, watch } = form;
     const { getToken, getTokenPrice } = useTokens();
     const { updateUserInput, getUserInput } = useLinkCreationFormStore();
 
@@ -215,18 +199,27 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
                             const maxTokenAmount = convertDecimalBigIntToNumber(
                                 token?.amount || 0n,
                                 token?.decimals || 8,
-                            ).toString();
+                            );
+                            if (!token) return;
+                            const feeAmount = FeeHelpers.calculateNetworkFees(token);
 
-                            setLocalTokenAmount(maxTokenAmount);
+                            const maxTokenAmountWithoutFee = maxTokenAmount - feeAmount;
+
+                            setLocalTokenAmount(maxTokenAmountWithoutFee.toString());
 
                             // Also update the USD value if conversion is possible
-                            if (canConvert && tokenUsdPrice && !isNaN(parseFloat(maxTokenAmount))) {
-                                const usdValue = parseFloat(maxTokenAmount) * tokenUsdPrice;
+                            if (
+                                canConvert &&
+                                tokenUsdPrice &&
+                                !isNaN(parseFloat(maxTokenAmountWithoutFee.toString()))
+                            ) {
+                                const usdValue =
+                                    parseFloat(maxTokenAmountWithoutFee.toString()) * tokenUsdPrice;
                                 setLocalUsdAmount(usdValue.toFixed(7));
                             }
 
                             // Update the form value
-                            setTokenAmount(maxTokenAmount);
+                            setTokenAmount(maxTokenAmountWithoutFee.toString());
                         }}
                         className="ml-auto text-[#36A18B] text-[12px] font-medium"
                     >

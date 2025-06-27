@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use std::{cell::RefCell, time::Duration};
 
@@ -36,11 +23,12 @@ pub fn init_ic_rand() {
 }
 
 async fn set_rand() {
-    let (seed,) = ic_cdk::call(Principal::management_canister(), "raw_rand", ())
+    let (seed,): (Vec<u8>,) = ic_cdk::call(Principal::management_canister(), "raw_rand", ())
         .await
         .unwrap();
+    let seed_array: [u8; 32] = seed.try_into().unwrap_or_else(|_| [0u8; 32]);
     RNG.with(|rng| {
-        *rng.borrow_mut() = Some(StdRng::from_seed(seed));
+        *rng.borrow_mut() = Some(StdRng::from_seed(seed_array));
     });
 }
 

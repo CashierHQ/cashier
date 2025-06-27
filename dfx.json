@@ -27,10 +27,10 @@
             "type": "custom",
             "candid": "https://raw.githubusercontent.com/dfinity/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/rs/rosetta-api/icp_ledger/ledger.did",
             "wasm": "https://download.dfinity.systems/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/canisters/ledger-canister.wasm.gz",
-            "specified_id": "x5qut-viaaa-aaaar-qajda-cai",
+            "specified_id": "ryjl3-tyaaa-aaaaa-aaaba-cai",
             "remote": {
                 "id": {
-                    "ic": "x5qut-viaaa-aaaar-qajda-cai"
+                    "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
                 }
             }
         }
@@ -55,11 +55,8 @@
             "providers": ["https://icp0.io"]
         },
         "local": {
-            "bind": "localhost:4943",
-            "type": "ephemeral",
-            "replica": {
-                "subnet_type": "system"
-            }
+            "bind": "127.0.0.1:4943",
+            "type": "ephemeral"
         }
     },
     "output_env_file": ".env",
