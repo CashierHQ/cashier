@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use ic_cdk::api::msg_caller;
 use ic_cdk::update;
 
 use crate::core::guard::is_not_anonymous;
@@ -17,7 +18,7 @@ use super::types::TriggerTransactionInput;
 
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
-    let caller = ic_cdk::api::caller();
+    let caller = msg_caller();
     let ic_env = RealIcEnvironment::new();
 
     let validate_service = services::transaction_manager::validate::ValidateService::get_instance();

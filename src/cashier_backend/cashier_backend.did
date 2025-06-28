@@ -52,7 +52,7 @@ type CreateActionInput = record { link_id : text; action_type : text };
 type CreateLinkInput = record { link_type : text };
 type CreateLinkInputV2 = record {
   title : text;
-  asset_info : vec AssetInfoDto;
+  asset_info : vec LinkDetailUpdateAssetInfoInput;
   link_type : text;
   description : opt text;
   link_image_url : opt text;
@@ -112,6 +112,12 @@ type IntentDto = record {
   type_metadata : vec record { text; MetadataValue };
   state : text;
   transactions : vec TransactionDto;
+};
+type LinkDetailUpdateAssetInfoInput = record {
+  amount_per_link_use_action : nat64;
+  chain : text;
+  label : text;
+  address : text;
 };
 type LinkDetailUpdateInput = record {
   title : opt text;
@@ -207,14 +213,13 @@ type RejectionCode = variant {
   CanisterReject;
 };
 type Result = variant { Ok : ActionDto; Err : CanisterError };
-type Result_1 = variant { Ok : LinkDto; Err : CanisterError };
-type Result_2 = variant { Ok : TransactionDto; Err : CanisterError };
-type Result_3 = variant { Ok : text; Err : CanisterError };
-type Result_4 = variant { Ok : UserDto; Err : text };
-type Result_5 = variant { Ok : GetLinkResp; Err : text };
-type Result_6 = variant { Ok : PaginateResult; Err : text };
-type Result_7 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
-type Result_8 = variant {
+type Result_1 = variant { Ok : text; Err : CanisterError };
+type Result_2 = variant { Ok : LinkDto; Err : CanisterError };
+type Result_3 = variant { Ok : UserDto; Err : text };
+type Result_4 = variant { Ok : GetLinkResp; Err : text };
+type Result_5 = variant { Ok : PaginateResult; Err : text };
+type Result_6 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
+type Result_7 = variant {
   Ok : opt LinkGetUserStateOutput;
   Err : CanisterError;
 };
@@ -245,31 +250,28 @@ type UpdateLinkInput = record {
 };
 type UserDto = record { id : text; email : opt text; wallet : text };
 service : () -> {
-  admin_get_intent : (text) -> (Result) query;
-  admin_get_link : (text) -> (Result_1) query;
-  admin_get_transaction : (text) -> (Result_2) query;
   create_action : (CreateActionInput) -> (Result);
   create_action_anonymous : (CreateActionAnonymousInput) -> (Result);
-  create_link : (CreateLinkInput) -> (Result_3);
-  create_link_v2 : (CreateLinkInputV2) -> (Result_1);
-  create_user : () -> (Result_4);
-  get_link : (text, opt GetLinkOptions) -> (Result_5) query;
-  get_links : (opt PaginateInput) -> (Result_6) query;
+  create_link : (CreateLinkInput) -> (Result_1);
+  create_link_v2 : (CreateLinkInputV2) -> (Result_2);
+  create_user : () -> (Result_3);
+  get_link : (text, opt GetLinkOptions) -> (Result_4) query;
+  get_links : (opt PaginateInput) -> (Result_5) query;
   get_migration_overview : () -> (MigrationStatus, MigrationStatus) query;
   get_status : (text) -> (MigrationStatus) query;
-  get_user : () -> (Result_4) query;
+  get_user : () -> (Result_3) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
   icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
-      Result_7,
+      Result_6,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
-  link_get_user_state : (LinkGetUserStateInput) -> (Result_8);
-  link_update_user_state : (LinkUpdateUserStateInput) -> (Result_8);
+  link_get_user_state : (LinkGetUserStateInput) -> (Result_7);
+  link_update_user_state : (LinkUpdateUserStateInput) -> (Result_7);
   migrate : (text) -> (MigrationResult);
   migrate_all : () -> (MigrationResult, MigrationResult);
   process_action : (ProcessActionInput) -> (Result);
   process_action_anonymous : (ProcessActionAnonymousInput) -> (Result);
-  trigger_transaction : (TriggerTransactionInput) -> (Result_3);
+  trigger_transaction : (TriggerTransactionInput) -> (Result_1);
   update_action : (UpdateActionInput) -> (Result);
-  update_link : (UpdateLinkInput) -> (Result_1);
+  update_link : (UpdateLinkInput) -> (Result_2);
 }

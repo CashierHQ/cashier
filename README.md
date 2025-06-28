@@ -207,6 +207,33 @@ For backend unit tests, go to `src/cashier_backend` and run:
 cargo test
 ```
 
+## Code Quality (Clippy)
+
+The project uses Clippy for Rust code linting across all crates. Run Clippy checks with:
+
+```bash
+# Run Clippy on all crates
+bash scripts/clippy.sh
+
+# Apply automatic fixes
+bash scripts/clippy.sh --fix
+
+# List all crates that will be checked
+bash scripts/clippy.sh --list
+
+# Get help
+bash scripts/clippy.sh --help
+```
+
+**Crates checked**:
+
+-   `src/cashier_backend` - Main backend canister
+-   `src/token_storage` - Token storage canister
+-   `src/lib/cashier-types` - Shared type definitions
+-   `src/lib/cashier-macros` - Procedural macros
+
+The Clippy configuration (`.clippy.toml`) is tuned for IC canister development with appropriate thresholds for complexity, function length, and other metrics.
+
 ## Integration Tests
 
 For integration tests, run:
