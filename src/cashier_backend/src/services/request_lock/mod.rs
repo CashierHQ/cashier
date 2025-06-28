@@ -4,7 +4,7 @@
 use candid::Principal;
 use cashier_types::{RequestLock, RequestLockKey};
 
-use crate::{info, repositories::request_lock::RequestLockRepository, types::error::CanisterError};
+use crate::{repositories::request_lock::RequestLockRepository, types::error::CanisterError};
 
 #[cfg_attr(test, faux::create)]
 pub struct RequestLockService {
