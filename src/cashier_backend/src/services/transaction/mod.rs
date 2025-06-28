@@ -1,10 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    fmt::format,
-};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::{
     core::action::types::TriggerTransactionInput,

@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use candid::Principal;
 use cashier_types::{ActionState, ActionType, LinkUserState};
-use ic_cdk::{query, update};
+use ic_cdk::{api::msg_caller, query, update};
 use uuid::Uuid;
 
 use crate::{
@@ -306,7 +306,7 @@ pub struct LinkApi<E: IcEnvironment + Clone> {
     link_service: LinkService<E>,
     user_service: UserService,
     tx_manager_service: TransactionManagerService<E>,
-    action_service: ActionService<E>,
+    action_service: ActionService,
     ic_env: E,
     validate_service: ValidateService,
     icrc_batch_service: services::ext::icrc_batch::IcrcBatchService,
@@ -348,7 +348,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         link_service: LinkService<E>,
         user_service: UserService,
         tx_manager_service: TransactionManagerService<E>,
-        action_service: ActionService<E>,
+        action_service: ActionService,
         ic_env: E,
         validate_service: ValidateService,
         icrc_batch_service: IcrcBatchService,
@@ -1180,7 +1180,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         &self,
         input: UpdateActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        let caller = ic_cdk::api::caller();
+        let caller = msg_caller();
 
         let is_creator = self
             .validate_service

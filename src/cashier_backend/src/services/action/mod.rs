@@ -1,13 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use crate::repositories;
 use crate::types::transaction_manager::RollUpStateResp;
 use crate::{
     domains::action::ActionDomainLogic,
     types::{error::CanisterError, transaction_manager::ActionData},
-    utils::runtime::IcEnvironment,
 };
 use cashier_types::{
     action_intent::v1::ActionIntent, intent::v2::Intent, intent_transaction::v1::IntentTransaction,
@@ -34,43 +32,29 @@ pub fn is_action_exist(action_id: String) -> bool {
 
 use std::collections::HashMap;
 
-#[cfg_attr(test, faux::create)]
-#[derive(Clone)]
-
-// Without traits/interfaces for repositories
-pub struct ActionService<E: IcEnvironment + Clone> {
+pub struct ActionService {
     // Concrete repository implementations
     action_repository: repositories::action::ActionRepository,
     intent_repository: repositories::intent::IntentRepository,
     action_intent_repository: repositories::action_intent::ActionIntentRepository,
     transaction_repository: repositories::transaction::TransactionRepository,
     intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
-    link_repository: repositories::link::LinkRepository,
     link_action_repository: repositories::link_action::LinkActionRepository,
     user_action_repository: repositories::user_action::UserActionRepository,
-    user_wallet_repository: repositories::user_wallet::UserWalletRepository,
 
     // Domain logic
     domain_logic: ActionDomainLogic,
-    ic_env: E,
 }
 
-#[cfg_attr(test, faux::methods)]
-impl<E> ActionService<E>
-where
-    E: IcEnvironment + Clone,
-{
+impl ActionService {
     pub fn new(
         action_repository: repositories::action::ActionRepository,
         intent_repository: repositories::intent::IntentRepository,
         action_intent_repository: repositories::action_intent::ActionIntentRepository,
         transaction_repository: repositories::transaction::TransactionRepository,
         intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
-        link_repository: repositories::link::LinkRepository,
         link_action_repository: repositories::link_action::LinkActionRepository,
         user_action_repository: repositories::user_action::UserActionRepository,
-        user_wallet_repository: repositories::user_wallet::UserWalletRepository,
-        ic_env: E,
     ) -> Self {
         Self {
             action_repository,
@@ -78,12 +62,9 @@ where
             action_intent_repository,
             transaction_repository,
             intent_transaction_repository,
-            link_repository,
             link_action_repository,
             user_action_repository,
-            user_wallet_repository,
             domain_logic: ActionDomainLogic::new(),
-            ic_env,
         }
     }
 
@@ -94,11 +75,8 @@ where
             repositories::action_intent::ActionIntentRepository::new(),
             repositories::transaction::TransactionRepository::new(),
             repositories::intent_transaction::IntentTransactionRepository::new(),
-            repositories::link::LinkRepository::new(),
             repositories::link_action::LinkActionRepository::new(),
             repositories::user_action::UserActionRepository::new(),
-            repositories::user_wallet::UserWalletRepository::new(),
-            IcEnvironment::new(),
         )
     }
 

@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::error;
 
 pub const CASHIER_NFT_CANISTER_ID: &str = "hfevg-caaaa-aaaai-actwa-cai";
 
@@ -22,10 +23,13 @@ pub const TX_TIMEOUT_IN_SECONDS: &str = match option_env!("TX_TIMEOUT") {
 pub fn get_tx_timeout_seconds() -> u64 {
     TX_TIMEOUT_IN_SECONDS.parse::<u64>().unwrap_or_else(|_| {
         // Log the error
-        ic_cdk::api::print(format!(
-            "Warning: Could not parse TX_TIMEOUT '{}'. Using default value of 300 seconds.",
-            TX_TIMEOUT_IN_SECONDS
-        ));
+        error!(
+            "{}",
+            format!(
+                "Warning: Could not parse TX_TIMEOUT '{}'. Using default value of 300 seconds.",
+                TX_TIMEOUT_IN_SECONDS
+            )
+        );
         300
     })
 }

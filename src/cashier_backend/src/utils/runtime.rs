@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::{future::Future, time::Duration};
 
 use candid::Principal;
@@ -19,7 +18,10 @@ pub trait IcEnvironment {
     // Add other IC-specific methods as needed
 }
 
-use ic_cdk::api;
+use ic_cdk::{
+    api::{self, canister_self, msg_caller},
+    futures::spawn,
+};
 use ic_cdk_timers::TimerId;
 
 #[derive(Clone)]
@@ -30,10 +32,10 @@ impl IcEnvironment for RealIcEnvironment {
         Self {}
     }
     fn caller(&self) -> Principal {
-        api::caller()
+        msg_caller()
     }
     fn id(&self) -> Principal {
-        api::id()
+        canister_self()
     }
     fn time(&self) -> u64 {
         api::time()
@@ -45,7 +47,7 @@ impl IcEnvironment for RealIcEnvironment {
     where
         F: Future<Output = ()> + 'static,
     {
-        ic_cdk::spawn(future)
+        spawn(future)
     }
 
     fn set_timer(&self, delay: Duration, f: impl FnOnce() + 'static) -> TimerId {
