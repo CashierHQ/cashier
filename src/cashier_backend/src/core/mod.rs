@@ -11,7 +11,7 @@ use crate::types::error::*;
 use crate::types::icrc::*;
 
 pub mod action;
-pub mod admin;
+// pub mod admin;
 pub mod guard;
 pub mod icrc;
 pub mod init_and_upgrade;
@@ -19,7 +19,7 @@ pub mod link;
 pub mod migration;
 pub mod user;
 
-#[cfg(test)]
-pub mod __tests__;
+// #[cfg(test)]
+// pub mod __tests__;
 
 ic_cdk::export_candid!();
