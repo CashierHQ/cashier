@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, str::FromStr, time::Duration};
 
-use candid::{Nat, Principal};
+use candid::Nat;
 use cashier_types::{
     intent::v2::{Intent, IntentTask},
     transaction::v2::{
@@ -43,7 +43,7 @@ use crate::{
 #[cfg_attr(test, faux::create)]
 pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     transaction_service: TransactionService<E>,
-    action_service: ActionService<E>,
+    action_service: ActionService,
     ic_env: E,
     icrc_service: IcrcService,
     // Adapter registry
@@ -56,7 +56,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
 impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
         transaction_service: TransactionService<E>,
-        action_service: ActionService<E>,
+        action_service: ActionService,
         ic_env: E,
         icrc_service: IcrcService,
         intent_adapter: IntentAdapterImpl<E>,
@@ -453,9 +453,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         //| `is_group_has_dependency = true`  | `true`                                  | `true`                                 |
 
         if is_all_dependencies_success == true && is_group_has_dependency == false {
-            return Ok(false);
+            Ok(false)
         } else {
-            return Ok(true);
+            Ok(true)
         }
     }
 

@@ -137,7 +137,6 @@ impl TokenApi {
         caller: &Principal,
         input: AddTokensInput,
     ) -> Result<(Vec<TokenDto>, bool, Option<UserPreference>), String> {
-        let user_id = caller.to_text();
         let mut registry_updated = false;
 
         // First check if all tokens exist in the registry

@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
