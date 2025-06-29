@@ -1,11 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::marker::PhantomData;
 
 use cashier_types::{
-    intent::v2::Intent, transaction::v2::Transaction, ActionType, Chain, Link, LinkType,
+    action::v1::ActionType,
+    common::Chain,
+    intent::v2::Intent,
+    link::v1::{Link, LinkType},
+    transaction::v2::Transaction,
 };
 use ic::{action::IcActionAdapter, intent::IcIntentAdapter};
 

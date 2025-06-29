@@ -1,6 +1,24 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+//! # Transaction v1 Module (DEPRECATED)
+//!
+//! **⚠️ DEPRECATED**: This module is deprecated as of version 2.0.0.
+//! Please use `crate::transaction::v2` instead.
+//!
+//! ## Migration Guide
+//! - v1 uses `u64` for amounts, v2 uses `Nat` which better supports blockchain operations
+//! - All transaction types (Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom) now use `Nat`
+//! - All other functionality remains the same
+//!
+//! ## Usage
+//! ```rust
+//! // ❌ Old (deprecated)
+//! use crate::transaction::v1::Transaction;
+//!
+//! // ✅ New (recommended)  
+//! use crate::transaction::v2::Transaction;
+//! ```
 
 use candid::Nat;
 use cashier_macros::storable;
@@ -14,8 +32,12 @@ use icrc_ledger_types::{
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::{common::Wallet, Asset, Chain};
+use crate::common::{Asset, Chain, Wallet};
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use Transaction from v2 module instead. v1 Transaction uses u64 for amounts, while v2 uses Nat which better supports blockchain operations."
+)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[storable]
 pub struct Transaction {
@@ -106,6 +128,7 @@ impl Transaction {
     }
 }
 
+#[deprecated(since = "2.0.0", note = "Use Protocol from v2 module instead")]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Protocol {
     IC(IcTransaction),
@@ -120,6 +143,7 @@ impl Protocol {
     }
 }
 
+#[deprecated(since = "2.0.0", note = "Use IcTransaction from v2 module instead")]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum IcTransaction {
     Icrc1Transfer(Icrc1Transfer),
@@ -158,6 +182,10 @@ impl IcTransaction {
     }
 }
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use Icrc1Transfer from v2 module instead. v2 uses Nat for amount instead of u64."
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Icrc1Transfer {
     pub from: Wallet,
@@ -196,6 +224,10 @@ impl TryFrom<Icrc1Transfer> for TransferArg {
     }
 }
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use Icrc2Approve from v2 module instead. v2 uses Nat for amount instead of u64."
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Icrc2Approve {
     pub from: Wallet,
@@ -205,6 +237,10 @@ pub struct Icrc2Approve {
     pub memo: Option<Memo>,
 }
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use Icrc2TransferFrom from v2 module instead. v2 uses Nat for amount instead of u64."
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Icrc2TransferFrom {
     pub from: Wallet,
@@ -250,6 +286,7 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
     }
 }
 
+#[deprecated(since = "2.0.0", note = "Use FromCallType from v2 module instead")]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum FromCallType {
     Canister,
@@ -281,6 +318,10 @@ impl FromStr for FromCallType {
     }
 }
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use TransactionProtocol from v2 module instead"
+)]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TransactionProtocol {
     Irrc1Transfer,
@@ -315,6 +356,7 @@ impl FromStr for TransactionProtocol {
     }
 }
 
+#[deprecated(since = "2.0.0", note = "Use TransactionState from v2 module instead")]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TransactionState {
     Created,

@@ -1,16 +1,17 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::collections::HashMap;
 
 use cashier_types::{
-    intent::v2::Intent, transaction::v2::Transaction, Action, ActionState, ActionType,
+    action::v1::{Action, ActionState, ActionType},
+    intent::v2::Intent,
+    transaction::v2::Transaction,
 };
 
 #[derive(Debug, Clone)]
 pub struct ActionData {
-    pub action: cashier_types::Action,
+    pub action: Action,
     pub intents: Vec<Intent>,
     pub intent_txs: HashMap<String, Vec<Transaction>>,
 }
