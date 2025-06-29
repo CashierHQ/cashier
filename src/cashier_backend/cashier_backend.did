@@ -167,19 +167,6 @@ type MetadataValue = variant {
   Asset : AssetDto;
   Wallet : AssetDto;
 };
-type MigrationResult = record {
-  transaction_v2_total : nat64;
-  intents_migrated : nat64;
-  intent_v1_total : nat64;
-  intent_v2_total : nat64;
-  transactions_migrated : nat64;
-  transaction_v1_total : nat64;
-};
-type MigrationStatus = record {
-  v1_total : nat64;
-  v2_total : nat64;
-  migration_complete : bool;
-};
 type PaginateInput = record { offset : nat64; limit : nat64 };
 type PaginateResult = record {
   metadata : PaginateResultMetadata;
@@ -257,8 +244,6 @@ service : () -> {
   create_user : () -> (Result_3);
   get_link : (text, opt GetLinkOptions) -> (Result_4) query;
   get_links : (opt PaginateInput) -> (Result_5) query;
-  get_migration_overview : () -> (MigrationStatus, MigrationStatus) query;
-  get_status : (text) -> (MigrationStatus) query;
   get_user : () -> (Result_3) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
   icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
@@ -267,8 +252,6 @@ service : () -> {
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
   link_get_user_state : (LinkGetUserStateInput) -> (Result_7);
   link_update_user_state : (LinkUpdateUserStateInput) -> (Result_7);
-  migrate : (text) -> (MigrationResult);
-  migrate_all : () -> (MigrationResult, MigrationResult);
   process_action : (ProcessActionInput) -> (Result);
   process_action_anonymous : (ProcessActionAnonymousInput) -> (Result);
   trigger_transaction : (TriggerTransactionInput) -> (Result_1);

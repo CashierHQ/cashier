@@ -1,6 +1,6 @@
 use cashier_macros::storable;
 
-use crate::RequestLockKey;
+use crate::keys::RequestLockKey;
 
 #[derive(Debug, Clone)]
 #[storable]
@@ -23,7 +23,7 @@ impl RequestLock {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::keys::RequestLockKey;
 
     #[test]
     fn test_request_lock_key_to_string() {

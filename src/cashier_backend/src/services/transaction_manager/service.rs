@@ -5,12 +5,13 @@ use std::{collections::HashMap, str::FromStr, time::Duration};
 
 use candid::Nat;
 use cashier_types::{
+    common::Chain,
     intent::v2::{Intent, IntentTask},
+    link_action::v1::LinkAction,
     transaction::v2::{
         FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
         Transaction, TransactionState,
     },
-    Chain, LinkAction,
 };
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},

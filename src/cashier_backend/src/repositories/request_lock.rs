@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::{RequestLock, RequestLockKey};
+use cashier_types::{keys::RequestLockKey, request_lock::RequestLock};
 
 use super::REQUEST_LOCK_STORE;
 

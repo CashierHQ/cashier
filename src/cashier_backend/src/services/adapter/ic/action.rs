@@ -1,11 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use candid::Nat;
 use cashier_types::{
+    action::v1::ActionType,
+    common::{Asset, Chain, Wallet},
     intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData, TransferFromData},
-    ActionType, Asset, Chain, LinkType, Wallet,
+    link::v1::LinkType,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;

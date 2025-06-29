@@ -4,7 +4,10 @@
 use std::str::FromStr;
 
 use candid::Principal;
-use cashier_types::{ActionState, ActionType, LinkUserState};
+use cashier_types::{
+    action::v1::{ActionState, ActionType},
+    link_action::v1::LinkUserState,
+};
 use ic_cdk::{api::msg_caller, query, update};
 use uuid::Uuid;
 
@@ -1151,8 +1154,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // If found "LinkAction" values
         // return action = get action from (action _id)
         // return state = record user_state
-        let link_user_state: Option<cashier_types::LinkUserState> =
-            link_action.link_user_state.clone();
+        let link_user_state: Option<LinkUserState> = link_action.link_user_state.clone();
         let action = self
             .action_service
             .get_action_data(link_action.action_id.clone())

@@ -3,7 +3,7 @@
 
 use crate::{services::ext::icrc_token::Service, types::error::CanisterError};
 use candid::{Nat, Principal};
-use cashier_types::{Asset, Chain};
+use cashier_types::common::{Asset, Chain};
 use futures::future::{self, BoxFuture};
 use ic_cdk::api::call::CallResult;
 use std::collections::HashMap;
