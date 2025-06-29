@@ -1,14 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use cashier_types::{intent_transaction::v1::IntentTransaction, keys::IntentTransactionKey};
 
-use cashier_types::{
-    intent_transaction::v1::IntentTransaction, IntentTransactionKey, VersionedIntentTransaction,
-};
-
-use super::VERSIONED_INTENT_TRANSACTION_STORE;
-
-const CURRENT_DATA_VERSION: u32 = 1;
+use super::INTENT_TRANSACTION_STORE;
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -22,36 +17,28 @@ impl IntentTransactionRepository {
     }
 
     pub fn create(&self, intent_transaction: IntentTransaction) -> IntentTransaction {
-        VERSIONED_INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
+        INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
             let key = IntentTransactionKey {
                 intent_id: intent_transaction.intent_id.clone(),
                 transaction_id: intent_transaction.transaction_id.clone(),
             };
 
-            let versioned_intent_transaction =
-                VersionedIntentTransaction::build(CURRENT_DATA_VERSION, intent_transaction.clone())
-                    .expect("Failed to create versioned intent transaction");
-            store.insert(key.to_str(), versioned_intent_transaction.clone());
-            store.insert(key.to_str_reverse(), versioned_intent_transaction);
+            store.insert(key.to_str(), intent_transaction.clone());
+            store.insert(key.to_str_reverse(), intent_transaction.clone());
             intent_transaction
         })
     }
 
     pub fn batch_create(&self, intent_transactions: Vec<IntentTransaction>) {
-        VERSIONED_INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
+        INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
             for intent_transaction in intent_transactions {
                 let key = IntentTransactionKey {
                     intent_id: intent_transaction.intent_id.clone(),
                     transaction_id: intent_transaction.transaction_id.clone(),
                 };
 
-                let versioned_intent_transaction = VersionedIntentTransaction::build(
-                    CURRENT_DATA_VERSION,
-                    intent_transaction.clone(),
-                )
-                .expect("Failed to create versioned intent transaction");
-                store.insert(key.to_str(), versioned_intent_transaction.clone());
-                store.insert(key.to_str_reverse(), versioned_intent_transaction);
+                store.insert(key.to_str(), intent_transaction.clone());
+                store.insert(key.to_str_reverse(), intent_transaction);
             }
         });
     }
@@ -61,15 +48,11 @@ impl IntentTransactionRepository {
             intent_id: intent_id.clone(),
             transaction_id: transaction_id.clone(),
         };
-        VERSIONED_INTENT_TRANSACTION_STORE.with_borrow(|store| {
-            store
-                .get(&id.to_str())
-                .map(|versioned_data| versioned_data.into_intent_transaction())
-        })
+        INTENT_TRANSACTION_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
     pub fn get_by_intent_id(&self, intent_id: String) -> Vec<IntentTransaction> {
-        VERSIONED_INTENT_TRANSACTION_STORE.with_borrow(|store| {
+        INTENT_TRANSACTION_STORE.with_borrow(|store| {
             let key = IntentTransactionKey {
                 intent_id: intent_id.clone(),
                 transaction_id: "".to_string(),
@@ -80,13 +63,13 @@ impl IntentTransactionRepository {
             store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value.into_intent_transaction())
+                .map(|(_, value)| value)
                 .collect()
         })
     }
 
     pub fn get_by_transaction_id(&self, transaction_id: String) -> Vec<IntentTransaction> {
-        VERSIONED_INTENT_TRANSACTION_STORE.with_borrow(|store| {
+        INTENT_TRANSACTION_STORE.with_borrow(|store| {
             let key = IntentTransactionKey {
                 intent_id: "".to_string(),
                 transaction_id: transaction_id.clone(),
@@ -97,7 +80,7 @@ impl IntentTransactionRepository {
             store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value.into_intent_transaction())
+                .map(|(_, value)| value)
                 .collect()
         })
     }

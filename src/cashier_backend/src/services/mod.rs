@@ -6,12 +6,10 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
 #![warn(clippy::indexing_slicing)]
-#![warn(clippy::integer_arithmetic)]
 // Clone-related lints
 #![warn(clippy::clone_on_ref_ptr)]
 #![warn(clippy::clone_on_copy)]
 #![warn(clippy::redundant_clone)]
-#![warn(clippy::unnecessary_clone)]
 // Performance and best practices
 #![warn(clippy::inefficient_to_string)]
 #![warn(clippy::large_types_passed_by_value)]

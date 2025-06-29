@@ -1,11 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::{collections::HashMap, str::FromStr};
 
 use candid::{CandidType, Principal};
-use cashier_types::{AssetInfo, Chain, IntentType, LinkType, Template};
+use cashier_types::{
+    asset_info::AssetInfo,
+    common::Chain,
+    intent::v2::{Intent, IntentType},
+    link::v1::{Link, LinkType, Template},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::core::action::types::ActionDto;
@@ -148,8 +152,8 @@ pub struct GetLinkResp {
     pub action: Option<ActionDto>,
 }
 
-impl From<cashier_types::Intent> for IntentDto {
-    fn from(intent: cashier_types::Intent) -> Self {
+impl From<Intent> for IntentDto {
+    fn from(intent: Intent) -> Self {
         IntentDto {
             id: intent.id,
             state: intent.state.to_string(),
@@ -161,14 +165,14 @@ impl From<cashier_types::Intent> for IntentDto {
     }
 }
 
-impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
+impl From<LinkDetailUpdateAssetInfoInput> for AssetInfo {
     fn from(input: LinkDetailUpdateAssetInfoInput) -> Self {
         let chain = match Chain::from_str(input.chain.as_str()) {
             Ok(chain) => chain,
             Err(_) => Chain::IC,
         };
 
-        cashier_types::AssetInfo {
+        AssetInfo {
             address: input.address,
             chain,
             label: input.label,
@@ -177,8 +181,8 @@ impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
     }
 }
 
-impl From<&cashier_types::AssetInfo> for AssetInfoDto {
-    fn from(input: &cashier_types::AssetInfo) -> Self {
+impl From<&AssetInfo> for AssetInfoDto {
+    fn from(input: &AssetInfo) -> Self {
         let chain = input.chain.to_string();
 
         AssetInfoDto {
@@ -190,8 +194,8 @@ impl From<&cashier_types::AssetInfo> for AssetInfoDto {
     }
 }
 
-impl From<cashier_types::Link> for LinkDto {
-    fn from(link: cashier_types::Link) -> Self {
+impl From<Link> for LinkDto {
+    fn from(link: Link) -> Self {
         let asset_info = match link.asset_info {
             Some(asset_info) => {
                 let asset_info_vec = asset_info

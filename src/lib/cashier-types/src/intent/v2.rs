@@ -1,16 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use candid::{CandidType, Nat};
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::{
-    common::{Chain, Wallet},
-    Asset,
-};
+use crate::common::{Asset, Chain, Wallet};
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 #[storable]
