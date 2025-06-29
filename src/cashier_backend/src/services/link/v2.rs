@@ -5,9 +5,13 @@ use std::{collections::HashMap, str::FromStr};
 
 use candid::{Nat, Principal};
 use cashier_types::{
+    action::v1::{Action, ActionState, ActionType},
+    asset_info::AssetInfo,
+    common::{Asset, Chain, Wallet},
     intent::v2::{Intent, IntentState, IntentTask, IntentType},
-    Action, ActionState, ActionType, Asset, AssetInfo, Chain, Link, LinkAction, LinkState,
-    LinkType, LinkUserState, Template, UserLink, Wallet,
+    link::v1::{Link, LinkState, LinkType, Template},
+    link_action::v1::{LinkAction, LinkUserState},
+    user_link::v1::UserLink,
 };
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
@@ -1705,7 +1709,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             description: None,
             link_type: Some(link_type),
             asset_info: None,
-            template: Some(cashier_types::Template::Central),
+            template: Some(Template::Central),
             creator: user_id.clone(),
             create_at: ts,
             metadata: None,
@@ -1749,7 +1753,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             description: None,
             link_type: Some(link_type),
             asset_info: None,
-            template: Some(cashier_types::Template::Central),
+            template: Some(Template::Central),
             creator: user_id.clone(),
             create_at: ts,
             metadata: None,

@@ -1,17 +1,36 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+//! # Intent v1 Module (DEPRECATED)
+//!
+//! **⚠️ DEPRECATED**: This module is deprecated as of version 2.0.0.
+//! Please use `crate::intent::v2` instead.
+//!
+//! ## Migration Guide
+//! - v1 uses `u64` for amounts, v2 uses `Nat` which better supports blockchain operations
+//! - `IntentTask::TransferPayment` has been removed in v2
+//! - All other functionality remains the same
+//!
+//! ## Usage
+//! ```rust
+//! // ❌ Old (deprecated)
+//! use crate::intent::v1::Intent;
+//!
+//! // ✅ New (recommended)  
+//! use crate::intent::v2::Intent;
+//! ```
 
 use candid::CandidType;
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::{
-    common::{Chain, Wallet},
-    Asset,
-};
+use crate::common::{Asset, Chain, Wallet};
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use Intent from v2 module instead. v1 Intent uses u64 for amounts, while v2 uses Nat which better supports blockchain operations."
+)]
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 #[storable]
 pub struct Intent {
@@ -45,6 +64,7 @@ impl Default for Intent {
     }
 }
 
+#[deprecated(since = "2.0.0", note = "Use IntentState from v2 module instead")]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentState {
     Created,
@@ -53,6 +73,10 @@ pub enum IntentState {
     Fail,
 }
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use IntentType from v2 module instead. v2 uses Nat for amounts instead of u64."
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentType {
     Transfer(TransferData),
@@ -102,6 +126,10 @@ impl IntentType {
     }
 }
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use TransferData from v2 module instead. v2 uses Nat for amount instead of u64."
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType, PartialEq, Eq, Ord, PartialOrd)]
 pub struct TransferData {
     pub from: Wallet,
@@ -110,6 +138,10 @@ pub struct TransferData {
     pub amount: u64,
 }
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use TransferFromData from v2 module instead. v2 uses Nat for amounts instead of u64."
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType, PartialEq, Eq, Ord, PartialOrd)]
 pub struct TransferFromData {
     pub from: Wallet,
@@ -124,6 +156,10 @@ pub struct TransferFromData {
     pub approve_amount: Option<u64>,
 }
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use IntentTask from v2 module instead. TransferPayment variant has been removed in v2."
+)]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentTask {
     TransferWalletToTreasury,
