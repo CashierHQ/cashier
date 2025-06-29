@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use candid::Nat;
 use cashier_macros::storable;
 use icrc_ledger_types::{
@@ -14,7 +13,7 @@ use icrc_ledger_types::{
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use crate::{common::Wallet, Asset, Chain};
+use crate::common::{Asset, Chain, Wallet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[storable]

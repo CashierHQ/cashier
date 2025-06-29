@@ -1,11 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::collections::HashMap;
 
 use candid::{CandidType, Nat};
 use cashier_types::{
+    action::v1::Action,
     intent::v2::{Intent, IntentType},
     transaction::v2::{IcTransaction, Protocol, Transaction},
 };
@@ -130,7 +130,7 @@ pub enum MetadataValue {
 }
 
 impl ActionDto {
-    pub fn from(action: cashier_types::Action, intents: Vec<Intent>) -> Self {
+    pub fn from(action: Action, intents: Vec<Intent>) -> Self {
         let intents_dto = intents
             .into_iter()
             .map(|intent| IntentDto::from(intent))
@@ -146,7 +146,7 @@ impl ActionDto {
     }
 
     pub fn from_with_tx(
-        action: cashier_types::Action,
+        action: Action,
         intents: Vec<Intent>,
         tx_intent_hashmap: HashMap<String, Vec<Transaction>>,
     ) -> Self {
@@ -212,8 +212,8 @@ impl ActionDto {
     }
 }
 
-impl From<cashier_types::Wallet> for WalletDto {
-    fn from(wallet: cashier_types::Wallet) -> Self {
+impl From<cashier_types::common::Wallet> for WalletDto {
+    fn from(wallet: cashier_types::common::Wallet) -> Self {
         Self {
             address: wallet.address,
             chain: wallet.chain.to_string(),
@@ -221,8 +221,8 @@ impl From<cashier_types::Wallet> for WalletDto {
     }
 }
 
-impl From<cashier_types::Asset> for AssetDto {
-    fn from(asset: cashier_types::Asset) -> Self {
+impl From<cashier_types::common::Asset> for AssetDto {
+    fn from(asset: cashier_types::common::Asset) -> Self {
         Self {
             address: asset.address,
             chain: asset.chain.to_string(),

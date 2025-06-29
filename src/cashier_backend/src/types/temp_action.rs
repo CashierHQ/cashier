@@ -1,8 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
-use cashier_types::{intent::v2::Intent, Action, ActionState, ActionType, LinkUserState};
+use cashier_types::{
+    action::v1::{Action, ActionState, ActionType},
+    intent::v2::Intent,
+    link_action::v1::LinkUserState,
+};
 
 #[derive(Debug, Clone)]
 pub struct TemporaryAction {

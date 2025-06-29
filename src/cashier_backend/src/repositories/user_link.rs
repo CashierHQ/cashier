@@ -1,12 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
-use super::VERSIONED_USER_LINK_STORE;
+use super::USER_LINK_STORE;
 use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
-use cashier_types::{user_link::v1::UserLink, UserLinkKey, VersionedUserLink};
-
-const CURRENT_DATA_VERSION: u32 = 1;
+use cashier_types::{keys::UserLinkKey, user_link::v1::UserLink};
 
 #[cfg_attr(test, faux::create)]
 #[derive(Clone)]
@@ -20,37 +17,29 @@ impl UserLinkRepository {
     }
 
     pub fn create(&self, user_link: UserLink) {
-        VERSIONED_USER_LINK_STORE.with_borrow_mut(|store| {
+        USER_LINK_STORE.with_borrow_mut(|store| {
             let id: UserLinkKey = UserLinkKey {
                 user_id: user_link.user_id.clone(),
                 link_id: user_link.link_id.clone(),
             };
-            let versioned_user_link = VersionedUserLink::build(CURRENT_DATA_VERSION, user_link)
-                .expect("Failed to create versioned user link");
-            store.insert(id.to_str(), versioned_user_link);
+            store.insert(id.to_str(), user_link);
         });
     }
 
     pub fn batch_create(&self, user_links: Vec<UserLink>) {
-        VERSIONED_USER_LINK_STORE.with_borrow_mut(|store| {
+        USER_LINK_STORE.with_borrow_mut(|store| {
             for user_link in user_links {
                 let id = UserLinkKey {
                     user_id: user_link.user_id.clone(),
                     link_id: user_link.link_id.clone(),
                 };
-                let versioned_user_link = VersionedUserLink::build(CURRENT_DATA_VERSION, user_link)
-                    .expect("Failed to create versioned user link");
-                store.insert(id.to_str(), versioned_user_link);
+                store.insert(id.to_str(), user_link);
             }
         });
     }
 
     pub fn get(&self, id: UserLinkKey) -> Option<UserLink> {
-        VERSIONED_USER_LINK_STORE.with_borrow(|store| {
-            store
-                .get(&id.to_str())
-                .map(|versioned_user_link| versioned_user_link.into_user_link())
-        })
+        USER_LINK_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
     pub fn delete(&self, id: UserLink) {
@@ -58,7 +47,7 @@ impl UserLinkRepository {
             user_id: id.user_id.clone(),
             link_id: id.link_id.clone(),
         };
-        VERSIONED_USER_LINK_STORE.with_borrow_mut(|store| store.remove(&id.to_str()));
+        USER_LINK_STORE.with_borrow_mut(|store| store.remove(&id.to_str()));
     }
 
     pub fn get_links_by_user_id(
@@ -66,7 +55,7 @@ impl UserLinkRepository {
         user_id: String,
         paginate: PaginateInput,
     ) -> PaginateResult<UserLink> {
-        VERSIONED_USER_LINK_STORE.with_borrow(|store| {
+        USER_LINK_STORE.with_borrow(|store| {
             let user_link_key = UserLinkKey {
                 user_id: user_id.clone(),
                 link_id: "".to_string(),
@@ -76,7 +65,7 @@ impl UserLinkRepository {
             let all_links: Vec<UserLink> = store
                 .range(prefix.to_string()..)
                 .take_while(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, versioned_user_link)| versioned_user_link.into_user_link())
+                .map(|(_, user_link)| user_link)
                 .collect();
 
             let total = all_links.len();

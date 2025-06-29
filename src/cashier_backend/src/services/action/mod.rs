@@ -7,9 +7,12 @@ use crate::{
     domains::action::ActionDomainLogic,
     types::{error::CanisterError, transaction_manager::ActionData},
 };
+use cashier_types::action::v1::Action;
+use cashier_types::link_action::v1::LinkAction;
+use cashier_types::user_action::v1::UserAction;
 use cashier_types::{
     action_intent::v1::ActionIntent, intent::v2::Intent, intent_transaction::v1::IntentTransaction,
-    transaction::v2::Transaction, Action, LinkAction, UserAction,
+    transaction::v2::Transaction,
 };
 
 pub fn get_intents_by_action_id(action_id: String) -> Vec<Intent> {
