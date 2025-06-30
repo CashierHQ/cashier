@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 // File: src/token_storage/src/services/user_perference.rs
 use crate::repository::user_preference::UserPreferenceRepository;
 use crate::types::UserPreference;
@@ -31,9 +30,9 @@ impl UserPreferenceService {
     /// Set user preferences
     pub fn set_preferences(&self, user_id: String, preferences: UserPreference) {
         if self.repository.has_preferences(&user_id) {
-            self.repository.update(user_id, preferences);
+            self.repository.update(&user_id, preferences);
         } else {
-            self.repository.add(user_id, preferences);
+            self.repository.add(&user_id, preferences);
         }
     }
 

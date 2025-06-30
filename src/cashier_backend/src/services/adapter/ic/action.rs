@@ -94,7 +94,7 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
         Ok(vec![intent])
     }
 
-    fn build_create_link_intent(&self, input: ActionToIntentInput) -> Result<Vec<Intent>, String> {
+    fn build_create_link_intent(&self, input: &ActionToIntentInput) -> Result<Vec<Intent>, String> {
         let first_asset = input
             .link
             .asset_info
@@ -114,9 +114,11 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
 
         let id = Uuid::new_v4();
 
+        let subaccount = to_subaccount(&input.link.id)?;
+
         let deposit_account = Account {
             owner: self.ic_env.id(),
-            subaccount: Some(to_subaccount(&input.link.id.clone())),
+            subaccount: Some(subaccount),
         };
 
         let deposit_wallet = Wallet {
@@ -157,18 +159,17 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
 
 impl<E: IcEnvironment + Clone> ActionAdapter for IcActionAdapter<E> {
     fn action_to_intents(&self, input: ActionToIntentInput) -> Result<Vec<Intent>, String> {
-        match (
-            input.link.link_type.unwrap(),
-            input.action.r#type.clone(),
-        ) {
+        let link_type = input
+            .link
+            .link_type
+            .ok_or_else(|| "Link type is missing".to_string())?;
+
+        match (link_type, input.action.r#type.clone()) {
             (LinkType::SendTip, ActionType::CreateLink) => {
                 let fee_intent = self.build_create_link_fee_intent()?;
-                let tip_intent = self.build_create_link_intent(input)?;
+                let tip_intent = self.build_create_link_intent(&input)?;
 
-                let result: Vec<_> = fee_intent
-                    .into_iter()
-                    .chain(tip_intent)
-                    .collect();
+                let result: Vec<_> = fee_intent.into_iter().chain(tip_intent).collect();
 
                 Ok(result)
             }

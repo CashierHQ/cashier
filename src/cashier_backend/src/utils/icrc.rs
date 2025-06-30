@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use candid::{Nat, Principal};
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
@@ -117,10 +116,7 @@ impl IcrcService {
     ) -> Result<Nat, CanisterError> {
         let token_service = Service::new(token_pid);
 
-        let memo = match arg.memo.is_some() {
-            true => Some(arg.memo.unwrap().0),
-            false => None,
-        };
+        let memo = arg.memo.map(|m| m.0);
 
         let arg: ExtTransferFromArgs = ExtTransferFromArgs {
             to: ExtAccount {
@@ -170,10 +166,7 @@ impl IcrcService {
     ) -> Result<Nat, CanisterError> {
         let token_service = Service::new(token_pid);
 
-        let memo = match arg.memo.is_some() {
-            true => Some(arg.memo.unwrap().0),
-            false => None,
-        };
+        let memo = arg.memo.map(|m| m.0);
 
         let transfer_arg = ExtTransferArg {
             to: ExtAccount {

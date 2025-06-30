@@ -91,16 +91,14 @@ impl ActionService {
 
         let all_intents = self.action_intent_repository.get_by_action_id(action_id);
 
-        let intents = all_intents
+        let intents: Vec<Intent> = all_intents
             .iter()
-            .map(|action_intent| {
-                
-                self
-                    .intent_repository
-                    .get(action_intent.intent_id.clone())
-                    .unwrap()
+            .map(|ai| {
+                self.intent_repository
+                    .get(ai.intent_id.clone())
+                    .ok_or_else(|| format!("intent not found: {}", ai.intent_id))
             })
-            .collect();
+            .collect::<Result<_, _>>()?;
 
         let mut intent_txs_hashmap = HashMap::new();
 
@@ -183,7 +181,9 @@ impl ActionService {
         let mut action = action_data.action;
 
         for intent in &mut intents {
-            let txs = intent_txs.get(&intent.id).unwrap();
+            let txs = intent_txs
+                .get(&intent.id)
+                .ok_or_else(|| format!("intent_txs not found for intent: {}", intent.id))?;
             let intent_state = self.domain_logic.roll_up_intent_state(txs);
             intent.state = intent_state;
         }

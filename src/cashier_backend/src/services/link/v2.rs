@@ -273,13 +273,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         let temp_intents = self.look_up_intent(&link, action_type)?;
 
-        if temp_intents.is_none() {
-            return Err(CanisterError::HandleLogicError(
+        let mut intents = temp_intents.ok_or_else(|| {
+            CanisterError::HandleLogicError(
                 "Not found intents config for {link_type}_{action_type}".to_string(),
-            ));
-        }
-
-        let mut intents = temp_intents.unwrap();
+            )
+        })?;
 
         // enrich data for intent
         for intent in intents.iter_mut() {
@@ -332,7 +330,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     let to_wallet = Wallet {
                         address: Account {
                             owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id.clone())),
+                            subaccount: Some(to_subaccount(&link.id)?),
                         }
                         .to_string(),
                         chain: Chain::IC,
@@ -369,7 +367,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     };
                     let to_wallet = Wallet {
                         address: Account {
-                            owner: Principal::from_str(FEE_TREASURY_ADDRESS).unwrap(),
+                            owner: Principal::from_str(FEE_TREASURY_ADDRESS).map_err(|e| {
+                                CanisterError::HandleLogicError(format!(
+                                    "Error converting fee treasury address to principal: {:?}",
+                                    e
+                                ))
+                            })?,
                             subaccount: None,
                         }
                         .to_string(),
@@ -413,7 +416,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     let from_wallet = Wallet {
                         address: Account {
                             owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id.clone())),
+                            subaccount: Some(to_subaccount(&link.id)?),
                         }
                         .to_string(),
                         chain: Chain::IC,
@@ -452,7 +455,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     let to_wallet = Wallet {
                         address: Account {
                             owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id.clone())),
+                            subaccount: Some(to_subaccount(&link.id)?),
                         }
                         .to_string(),
                         chain: Chain::IC,
@@ -473,10 +476,15 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     let link_balance = self
                         .icrc_service
                         .balance_of(
-                            Principal::from_text(asset_info.address.clone()).unwrap(),
+                            Principal::from_text(asset_info.address.clone()).map_err(|e| {
+                                CanisterError::HandleLogicError(format!(
+                                    "Error converting token address to principal: {:?}",
+                                    e
+                                ))
+                            })?,
                             Account {
                                 owner: self.ic_env.id(),
-                                subaccount: Some(to_subaccount(&link.id.clone())),
+                                subaccount: Some(to_subaccount(&link.id)?),
                             },
                         )
                         .await?;
@@ -488,7 +496,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     })?;
                     let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
-                    if link_balance <= 0 {
+                    if link_balance == 0 {
                         return Err(CanisterError::ValidationErrors(
                             "Not enough asset in link".to_string(),
                         ));
@@ -508,7 +516,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     let from_wallet = Wallet {
                         address: Account {
                             owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id.clone())),
+                            subaccount: Some(to_subaccount(&link.id)?),
                         }
                         .to_string(),
                         chain: Chain::IC,
@@ -533,7 +541,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             match &spender_wallet as &Option<Wallet> {
                 Some(spender) => {
                     // TransferFrom case
-                    let mut transfer_from_data = intent.r#type.as_transfer_from().unwrap();
+                    let mut transfer_from_data =
+                        intent.r#type.as_transfer_from().ok_or_else(|| {
+                            CanisterError::HandleLogicError(
+                                "TransferFrom data not found".to_string(),
+                            )
+                        })?;
                     transfer_from_data.amount = Nat::from(amount);
                     transfer_from_data.approve_amount = maybe_approve_amount.map(Nat::from);
                     transfer_from_data.actual_amount = maybe_transfer_amount.map(Nat::from);
@@ -545,7 +558,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
                 None => {
                     // Transfer case
-                    let mut transfer_data = intent.r#type.as_transfer().unwrap();
+                    let mut transfer_data = intent.r#type.as_transfer().ok_or_else(|| {
+                        CanisterError::HandleLogicError("Transfer data not found".to_string())
+                    })?;
                     transfer_data.amount = Nat::from(amount);
                     transfer_data.asset = asset;
                     transfer_data.from = from_wallet;
@@ -580,13 +595,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         let link = self.get_link_by_id(link_id.to_string())?;
         let temp_intents = self.look_up_intent(&link, action_type)?;
 
-        if temp_intents.is_none() {
-            return Err(CanisterError::HandleLogicError(
+        let intents = temp_intents.ok_or_else(|| {
+            CanisterError::HandleLogicError(
                 "Not found intents config for {link_type}_{action_type}".to_string(),
-            ));
-        }
+            )
+        })?;
 
-        let intents = temp_intents.unwrap();
         let mut assets = Vec::new();
 
         // Extract assets from each intent based on task type
@@ -649,15 +663,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             user_id.to_string(),
         );
 
-        if link_actions.is_empty() {
-            return None;
-        }
-
-        
-
-        self
-            .action_repository
-            .get(link_actions[0].action_id.clone())
+        link_actions
+            .first()
+            .and_then(|la| self.action_repository.get(la.action_id.clone()))
     }
 
     // this method validate for each action type
@@ -678,13 +686,13 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         caller: &Principal,
     ) -> Result<(), CanisterError> {
         // get link
-        let link = self.get_link_by_id(link_id.to_string()).unwrap();
+        let link = self.get_link_by_id(link_id.to_string())?;
 
         match action_type {
             ActionType::CreateLink => {
                 // validate user id == link creator
                 if link.creator == user_id {
-                    // validate user’s balance
+                    // validate user's balance
                     self.link_validate_balance_with_asset_info(action_type, link_id, caller)
                         .await?;
                     Ok(())
@@ -700,19 +708,27 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     let asset = link.asset_info.clone().ok_or_else(|| {
                         CanisterError::HandleLogicError("Asset info not found".to_string())
                     })?;
-                    let asset_address = asset[0].address.clone();
+                    let asset_address_text = asset[0].address.clone();
+                    let asset_address =
+                        Principal::from_text(asset_address_text.as_str()).map_err(|e| {
+                            CanisterError::HandleLogicError(format!(
+                                "Error converting token address to principal: {:?}",
+                                e
+                            ))
+                        })?;
+
                     let link_balance = self
                         .icrc_service
                         .balance_of(
-                            Principal::from_text(asset_address).unwrap(),
+                            asset_address,
                             Account {
                                 owner: self.ic_env.id(),
-                                subaccount: Some(to_subaccount(&link.id.clone())),
+                                subaccount: Some(to_subaccount(&link.id)?),
                             },
                         )
                         .await?;
 
-                    if link_balance <= 0 {
+                    if link_balance == 0 {
                         return Err(CanisterError::ValidationErrors(
                             "Not enough asset".to_string(),
                         ));
@@ -738,20 +754,27 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     let asset = link.asset_info.clone().ok_or_else(|| {
                         CanisterError::HandleLogicError("Asset info not found".to_string())
                     })?;
-                    let asset_address = asset[0].address.clone();
+                    let asset_address_text = asset[0].address.clone();
+                    let asset_address =
+                        Principal::from_text(asset_address_text.as_str()).map_err(|e| {
+                            CanisterError::HandleLogicError(format!(
+                                "Error converting token address to principal: {:?}",
+                                e
+                            ))
+                        })?;
 
                     let link_balance = self
                         .icrc_service
                         .balance_of(
-                            Principal::from_text(asset_address).unwrap(),
+                            asset_address,
                             Account {
                                 owner: self.ic_env.id(),
-                                subaccount: Some(to_subaccount(&link.id.clone())),
+                                subaccount: Some(to_subaccount(&link.id)?),
                             },
                         )
                         .await?;
 
-                    if link_balance <= 0 {
+                    if link_balance == 0 {
                         return Err(CanisterError::ValidationErrors(
                             "Not enough asset".to_string(),
                         ));
@@ -760,11 +783,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
                 Ok(())
             }
-            _ => {
-                Err(CanisterError::ValidationErrors(
-                    "Unsupported action type".to_string(),
-                ))
-            }
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type".to_string(),
+            )),
         }
     }
 
@@ -866,11 +887,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 // Synchronous validation passes
                 Ok(())
             }
-            _ => {
-                Err(CanisterError::ValidationErrors(
-                    "Unsupported action type".to_string(),
-                ))
-            }
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type".to_string(),
+            )),
         }
     }
 
@@ -938,7 +957,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .get_link_by_id(link_id.to_string())
             .map_err(|e| CanisterError::NotFound(e.to_string()))?;
 
-        if link.link_type.unwrap() == LinkType::ReceivePayment {
+        if link.link_type == Some(LinkType::ReceivePayment) {
             return Ok(());
         }
 
@@ -960,10 +979,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 subaccount: None,
             };
 
-            let balance = self
-                .icrc_service
-                .balance_of(token_pid, account)
-                .await?;
+            let balance = self.icrc_service.balance_of(token_pid, account).await?;
 
             let expected_amount = asset.amount_per_link_use_action * link.link_use_action_max_count;
 
@@ -980,14 +996,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
     pub fn get_link_action_user(
         &self,
-        link_id: String,
-        action_type: String,
-        user_id: String,
+        link_id: &str,
+        action_type: &str,
+        user_id: &str,
     ) -> Result<Option<LinkAction>, CanisterError> {
         let link_action = self.link_action_repository.get_by_prefix(
-            link_id,
-            action_type,
-            user_id,
+            link_id.to_string(),
+            action_type.to_string(),
+            user_id.to_string(),
         );
         if link_action.is_empty() {
             return Ok(None);
@@ -998,16 +1014,16 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
     pub fn handle_user_link_state_machine(
         &self,
-        link_id: String,
-        action_type: String,
-        user_id: String,
-        goto: UserStateMachineGoto,
+        link_id: &str,
+        action_type: &str,
+        user_id: &str,
+        goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError> {
         // check inputs that can be changed this state
         let action_list = self.link_action_repository.get_by_prefix(
-            link_id.clone(),
-            action_type.clone(),
-            user_id.clone(),
+            link_id.to_string(),
+            action_type.to_string(),
+            user_id.to_string(),
         );
 
         if action_list.is_empty() {
@@ -1036,11 +1052,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         //
         // Check for valid transition: ChooseWallet -> CompletedLink
         else if current_user_state == LinkUserState::ChooseWallet
-            && goto == UserStateMachineGoto::Continue
+            && *goto == UserStateMachineGoto::Continue
         {
             // Validate the action exists and is successful
             let action = self
-                .get_action_of_link(&link_id, &action_type, &user_id)
+                .get_action_of_link(link_id, action_type, user_id)
                 .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
 
             if action.state != ActionState::Success {
@@ -1076,12 +1092,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     /// Returns true if link properties were updated, false otherwise
     pub fn update_link_use_counter(
         &self,
-        link_id: String,
-        action_id: String,
+        link_id: &str,
+        action_id: &str,
     ) -> Result<bool, CanisterError> {
         // Get the link and action
-        let link = self.get_link_by_id(link_id)?;
-        let action = match self.action_repository.get(action_id) {
+        let link = self.get_link_by_id(link_id.to_string())?;
+        let action = match self.action_repository.get(action_id.to_string()) {
             Some(action) => action,
             None => return Ok(false),
         };
@@ -1131,14 +1147,16 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
             asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0 && *link_use_action_max_count == 1
+                && asset_infos[0].amount_per_link_use_action > 0
+                && *link_use_action_max_count == 1
         } else if link.link_type == Some(LinkType::SendAirdrop) {
             // Send airdrop use multiple time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count >= 1
 
             return asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0 && *link_use_action_max_count >= 1
+                && asset_infos[0].amount_per_link_use_action > 0
+                && *link_use_action_max_count >= 1;
         } else if link.link_type == Some(LinkType::SendTokenBasket) {
             // Send token basket use one time with multiple asset
             // check amount_per_link_use_action for asset > 0
@@ -1159,7 +1177,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
             return asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0 && *link_use_action_max_count == 1
+                && asset_infos[0].amount_per_link_use_action > 0
+                && *link_use_action_max_count == 1;
         } else {
             // link type is not supported
             return false;
@@ -1173,8 +1192,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         let asset_info = link
             .asset_info
             .clone()
-            .ok_or_else(|| CanisterError::HandleLogicError("Asset info not found".to_string()))
-            .unwrap();
+            .ok_or_else(|| CanisterError::HandleLogicError("Asset info not found".to_string()))?;
 
         if asset_info.is_empty() {
             return Err(CanisterError::HandleLogicError(
@@ -1192,13 +1210,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
             let account = Account {
                 owner: self.ic_env.id(),
-                subaccount: Some(to_subaccount(&link.id.clone())),
+                subaccount: Some(to_subaccount(&link.id)?),
             };
 
-            let balance = self
-                .icrc_service
-                .balance_of(token_pid, account)
-                .await?;
+            let balance = self.icrc_service.balance_of(token_pid, account).await?;
 
             if balance > 0 {
                 return Ok(true);
@@ -1298,14 +1313,16 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         params: &LinkDetailUpdateInput,
         link: &Link,
     ) -> bool {
-        let props_list = ["title".to_string(),
+        let props_list = [
+            "title".to_string(),
             "description".to_string(),
             "asset_info".to_string(),
             "template".to_string(),
             "link_type".to_string(),
             "link_image_url".to_string(),
             "nft_image".to_string(),
-            "link_use_action_max_count".to_string()];
+            "link_use_action_max_count".to_string(),
+        ];
 
         let check_props = props_list
             .iter()
@@ -1351,7 +1368,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
                 }
                 "link_type" => {
-                    let link_link_type_str = link.link_type.as_ref().map(cashier_types::link::v1::LinkType::to_string);
+                    let link_link_type_str = link
+                        .link_type
+                        .as_ref()
+                        .map(cashier_types::link::v1::LinkType::to_string);
 
                     if params.link_type.is_none() {
                         return false;
@@ -1361,7 +1381,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
                 }
                 "template" => {
-                    let link_template_str = link.template.as_ref().map(cashier_types::link::v1::Template::to_string);
+                    let link_template_str = link
+                        .template
+                        .as_ref()
+                        .map(cashier_types::link::v1::Template::to_string);
                     if params.template.is_none() {
                         return false;
                     }
@@ -1370,12 +1393,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
                 }
                 "link_use_action_max_count" => {
-                    if params.link_use_action_max_count.is_none() {
+                    if let Some(max_count) = params.link_use_action_max_count {
+                        if max_count != link.link_use_action_max_count {
+                            return true;
+                        }
+                    } else {
                         return false;
-                    }
-
-                    if params.link_use_action_max_count.unwrap() != link.link_use_action_max_count {
-                        return true;
                     }
                 }
                 "asset_info" => {
@@ -1429,8 +1452,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     ) -> Result<Link, CanisterError> {
         let mut link = self.get_link_by_id(link_id.to_string())?;
 
-        let link_state_goto = LinkStateMachineGoto::from_string(&action)
-            .map_err(CanisterError::ValidationErrors)?;
+        let link_state_goto =
+            LinkStateMachineGoto::from_string(&action).map_err(CanisterError::ValidationErrors)?;
 
         // if params is None, all params are None
         // some goto not required params like Back
@@ -1566,18 +1589,15 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
             // ===== Continue Go to =====
             if link_state_goto == LinkStateMachineGoto::Continue {
-                if create_action.is_none() {
-                    return Err(CanisterError::ValidationErrors(
-                        "Create action not found".to_string(),
-                    ));
-                } else if create_action.as_ref().unwrap().state != ActionState::Success {
-                    return Err(CanisterError::ValidationErrors(
-                        format!(
-                            "Create action not success, current state: {:?}",
-                            create_action.as_ref().unwrap().state
-                        )
-                        ,
-                    ));
+                let create_action = create_action.ok_or_else(|| {
+                    CanisterError::ValidationErrors("Create action not found".to_string())
+                })?;
+
+                if create_action.state != ActionState::Success {
+                    return Err(CanisterError::ValidationErrors(format!(
+                        "Create action not success, current state: {:?}",
+                        create_action.state
+                    )));
                 } else {
                     link.state = LinkState::Active;
                     self.link_repository.update(link.clone());
@@ -1768,8 +1788,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             self.link_repository.delete(&link_id_str);
             self.user_link_repository.delete(new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
-                "Create link failed: transition from ChooseLinkType to AddAssets{}",
-                result.err().unwrap()
+                "Create link failed: transition from ChooseLinkType to AddAssets {:?}",
+                result.err()
             )));
         }
 
@@ -1799,8 +1819,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             self.link_repository.delete(&link_id_str);
             self.user_link_repository.delete(new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
-                "Create link failed: transition from AddAssets to Preview: {}",
-                result.err().unwrap()
+                "Create link failed: transition from AddAssets to Preview {:?}",
+                result.err()
             )));
         }
 
@@ -1829,8 +1849,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             self.link_repository.delete(&link_id_str);
             self.user_link_repository.delete(new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
-                "Create link failed: transition from Preview to CreateLink: {}",
-                result.err().unwrap()
+                "Create link failed: transition from Preview to CreateLink {:?}",
+                result.err()
             )));
         }
 
@@ -1892,17 +1912,15 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .link_action_repository
             .get_by_prefix(link_id, action_type, user_id);
 
-        if link_actions.is_empty() {
-            return None;
-        }
-
-        let action_id = link_actions.first().unwrap().action_id.clone();
-        self.action_repository.get(action_id)
+        link_actions
+            .first()
+            .map(|link_action| link_action.action_id.clone())
+            .and_then(|action_id| self.action_repository.get(action_id))
     }
 
     /// Check if caller is the creator of a link
-    pub fn is_link_creator(&self, caller: String, link_id: &String) -> bool {
-        let user_wallet = match self.user_wallet_repository.get(&caller) {
+    pub fn is_link_creator(&self, caller: &str, link_id: &String) -> bool {
+        let user_wallet = match self.user_wallet_repository.get(&caller.to_string()) {
             Some(u) => u,
             None => {
                 warn!("User not found");
@@ -1917,17 +1935,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     }
 
     /// Check if link exists
-    pub fn is_link_exist(&self, link_id: String) -> bool {
-        self.link_repository.get(&link_id).is_some()
+    pub fn is_link_exist(&self, link_id: &str) -> bool {
+        self.link_repository.get(&link_id.to_string()).is_some()
     }
 
     pub fn link_handle_tx_update(
         &self,
-        previous_state: ActionState,
-        current_state: ActionState,
-        link_id: String,
-        action_type: ActionType,
-        action_id: String,
+        previous_state: &ActionState,
+        current_state: &ActionState,
+        link_id: &str,
+        action_type: &ActionType,
+        action_id: &str,
     ) -> Result<(), CanisterError> {
         // Return early if state hasn't changed
         if previous_state == current_state {
@@ -1935,7 +1953,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
 
         // Return early if this isn't a claim/use action or if it's not a successful state
-        if (action_type != ActionType::Use) || current_state != ActionState::Success {
+        if (action_type != &ActionType::Use) || current_state != &ActionState::Success {
             return Ok(());
         }
 
@@ -1945,7 +1963,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         // 3. The current state is Success
 
         // Update link properties
-        let result = self.update_link_use_counter(link_id.clone(), action_id.clone());
+        let result = self.update_link_use_counter(link_id, action_id);
         if let Err(err) = result {
             error!(
                 "[link_handle_tx_update] Failed to update link properties for link_id: {:?}, action_id: {:?}, error: {:?}",

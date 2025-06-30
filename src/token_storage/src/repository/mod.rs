@@ -20,7 +20,7 @@ use crate::types::{
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
-const UPGRADES: MemoryId = MemoryId::new(0);
+const _UPGRADES: MemoryId = MemoryId::new(0);
 const TOKEN_MEMORY_ID: MemoryId = MemoryId::new(1);
 const USER_PREFERENCE_MEMORY_ID: MemoryId = MemoryId::new(2);
 const TOKEN_REGISTRY_MEMORY_ID: MemoryId = MemoryId::new(3);

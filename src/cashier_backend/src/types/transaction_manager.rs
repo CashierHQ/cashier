@@ -80,14 +80,19 @@ impl ActionData {
         ))
     }
 
-    pub fn get_txs_of_tx_group(&self, tx_id: String) -> Result<Vec<String>, String> {
+    pub fn get_txs_of_tx_group(&self, tx_id: &str) -> Result<Vec<String>, String> {
         let (group_index, id_index) = self.flatten_intent_txs();
 
         let group_key = id_index
-            .get(&tx_id)
+            .get(&tx_id.to_string())
             .ok_or_else(|| format!("Transaction with id {} not found in intent_txs", tx_id))?;
 
-        Ok(group_index.get(group_key).unwrap().to_vec())
+        group_index.get(group_key).cloned().ok_or_else(|| {
+            format!(
+                "Group key {:?} not found in intent_txs for transaction {}",
+                group_key, tx_id
+            )
+        })
     }
 
     pub fn flatten_intent_txs(&self) -> (HashMap<u16, Vec<String>>, HashMap<String, u16>) {

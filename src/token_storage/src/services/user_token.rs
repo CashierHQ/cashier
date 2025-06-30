@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use crate::{
     repository::{
         balance_cache::BalanceCacheRepository, token_registry::TokenRegistryRepository,
@@ -38,7 +37,10 @@ impl UserTokenService {
 
     pub fn list_tokens(&self, user_id: &str) -> Vec<TokenDto> {
         // Try to get the user's token list
-        let user_token_list = self.token_repository.list_tokens(user_id).unwrap_or_default();
+        let user_token_list = self
+            .token_repository
+            .list_tokens(user_id)
+            .unwrap_or_default();
 
         self.convert_to_token_dtos(user_id, &user_token_list)
     }
@@ -126,7 +128,7 @@ impl UserTokenService {
                 self.token_repository
                     .update_token_list(user_id, &user_token_list)?;
                 self.user_preference_repository
-                    .update(user_id.to_string(), user_preference);
+                    .update(user_id, user_preference);
 
                 Ok(())
             }
@@ -205,7 +207,10 @@ impl UserTokenService {
         let _ = self.ensure_token_list_initialized(user_id);
 
         // Get the user's token list
-        let mut user_token_list = self.token_repository.list_tokens(user_id).unwrap_or_default();
+        let mut user_token_list = self
+            .token_repository
+            .list_tokens(user_id)
+            .unwrap_or_default();
 
         // Get the registry metadata to check version
         let registry_metadata = self.metadata_repository.get();

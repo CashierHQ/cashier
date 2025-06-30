@@ -3,9 +3,8 @@
 
 use std::{cell::RefCell, time::Duration};
 
-use candid::Principal;
 use getrandom::register_custom_getrandom;
-use rand::{rngs::StdRng, Rng, RngCore, SeedableRng};
+use rand::{rngs::StdRng, RngCore, SeedableRng};
 
 thread_local! {
     pub static RNG: RefCell<Option<StdRng>> = const { RefCell::new(None) };
@@ -18,32 +17,30 @@ thread_local! {
 /// a custom random number generator.
 ///
 pub fn init_ic_rand() {
-    ic_cdk_timers::set_timer(Duration::from_secs(0), || ic_cdk::spawn(set_rand()));
+    ic_cdk_timers::set_timer(Duration::from_secs(0), || {
+        ic_cdk::futures::spawn(async {
+            let _ = set_rand().await; // Ignore potential error; randomness will be retried later
+        });
+    });
     register_custom_getrandom!(custom_getrandom);
 }
 
-async fn set_rand() {
-    let (seed,): (Vec<u8>,) = ic_cdk::call(Principal::management_canister(), "raw_rand", ())
-        .await
-        .unwrap();
+async fn set_rand() -> Result<(), ic_cdk::call::Error> {
+    let seed = ic_cdk::management_canister::raw_rand().await?;
     let seed_array: [u8; 32] = seed.try_into().unwrap_or([0u8; 32]);
     RNG.with(|rng| {
         *rng.borrow_mut() = Some(StdRng::from_seed(seed_array));
     });
-}
-
-fn custom_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
-    RNG.with(|rng| rng.borrow_mut().as_mut().unwrap().fill_bytes(buf));
     Ok(())
 }
 
-pub fn generate_random_number() -> i32 {
-    RNG.with_borrow_mut(|r| r.as_mut().unwrap().gen())
-}
-
-pub fn generate_random_number_between_ranges(from: i32, to: i32) -> i32 {
-    if to < from {
-        ic_cdk::trap("To is smaller than From")
-    }
-    RNG.with_borrow_mut(|r| r.as_mut().unwrap().gen_range(from..to))
+fn custom_getrandom(buf: &mut [u8]) -> Result<(), getrandom::Error> {
+    RNG.with(|rng| {
+        if let Some(r) = rng.borrow_mut().as_mut() {
+            r.fill_bytes(buf);
+            Ok(())
+        } else {
+            Err(getrandom::Error::UNEXPECTED)
+        }
+    })
 }
