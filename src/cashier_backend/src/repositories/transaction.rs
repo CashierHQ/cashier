@@ -5,11 +5,15 @@ use crate::repositories::TRANSACTION_STORE;
 
 use cashier_types::{keys::TransactionKey, transaction::v2::Transaction};
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct TransactionRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for TransactionRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TransactionRepository {
     pub fn new() -> Self {
         Self {}

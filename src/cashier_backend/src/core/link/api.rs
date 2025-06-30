@@ -75,7 +75,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDt
 #[query]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.get_link(id, options)
+    api.get_link(&id, options)
 }
 
 /// Creates a new link using the legacy v1 API format.
@@ -92,7 +92,7 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
 #[update(guard = "is_not_anonymous")]
 async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.create_link(input)
+    api.create_link(&input)
 }
 
 /// Creates a new link using the v2 API format with enhanced features.
@@ -153,8 +153,7 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
     );
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
 
-    let res = api.process_action(input).await;
-    res
+    api.process_action(input).await
 }
 
 /// Creates a new action for authenticated users on a specific link.
@@ -233,7 +232,7 @@ pub async fn link_get_user_state(
     input: LinkGetUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.link_get_user_state(input)
+    api.link_get_user_state(&input)
 }
 
 /// Updates the user state for a specific link action.
@@ -254,7 +253,7 @@ pub async fn link_update_user_state(
     input: LinkUpdateUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.link_update_user_state(input)
+    api.link_update_user_state(&input)
 }
 
 /// Updates an existing action's state and executes associated transactions.
@@ -388,9 +387,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         match self
             .link_service
-            .get_links_by_principal(caller.to_text(), input.unwrap_or_default())
+            .get_links_by_principal(&caller.to_text(), &input.unwrap_or_default())
         {
-            Ok(links) => Ok(links.map(|link| LinkDto::from(link))),
+            Ok(links) => Ok(links.map(LinkDto::from)),
             Err(e) => {
                 error!("Failed to get links: {}", e);
                 Err(e)
@@ -415,7 +414,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(String)` - Error if link not found or access denied
     pub fn get_link(
         &self,
-        id: String,
+        id: &str,
         options: Option<GetLinkOptions>,
     ) -> Result<GetLinkResp, String> {
         let caller = self.ic_env.caller();
@@ -424,8 +423,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         // Allow both anonymous callers and non-anonymous callers without user IDs to proceed
 
-        let is_valid_creator = if !(caller == Principal::anonymous()) {
-            self.link_service.is_link_creator(caller.to_text(), &id)
+        let is_valid_creator = if caller != Principal::anonymous() {
+            self.link_service.is_link_creator(&caller.to_text(), id)
         } else {
             false // Anonymous callers can't be creators
         };
@@ -454,7 +453,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         };
 
         // Get link and action data
-        let link = match self.link_service.get_link_by_id(id.clone()) {
+        let link = match self.link_service.get_link_by_id(id) {
             Ok(link) => link,
             Err(e) => return Err(e.to_string()),
         };
@@ -463,13 +462,13 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let action = match (action_type, &user_id) {
             (Some(action_type), Some(user_id)) => {
                 self.link_service
-                    .get_link_action(id, action_type.to_string(), user_id.clone())
+                    .get_link_action(id, action_type.to_str(), user_id)
             }
             _ => None,
         };
 
         let action_dto = action.map(|action| {
-            let intents = services::action::get_intents_by_action_id(action.id.clone());
+            let intents = self.action_service.get_intents_by_action_id(&action.id);
             ActionDto::from(action, intents)
         });
 
@@ -490,11 +489,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// # Returns
     /// * `Ok(String)` - The unique identifier of the created link
     /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
-    /// Create a new link
-    pub fn create_link(&self, input: CreateLinkInput) -> Result<String, CanisterError> {
+    pub fn create_link(&self, input: &CreateLinkInput) -> Result<String, CanisterError> {
         let creator = self.ic_env.caller();
 
-        match self.link_service.create_new(creator.to_text(), input) {
+        match self.link_service.create_new(&creator.to_text(), input) {
             Ok(id) => Ok(id),
             Err(e) => {
                 error!("Failed to create link: {}", e);
@@ -566,7 +564,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         };
 
         let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
+            .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
 
         // check action type is claim
         if action_type != ActionType::Use {
@@ -582,17 +580,14 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             self.link_service
                 .get_action_of_link(&input.link_id, &input.action_type, &user_id);
 
-        if action.is_none() {
-            return Err(CanisterError::ValidationErrors(format!(
-                "Action is not existed"
-            )));
-        }
+        let action = action
+            .ok_or_else(|| CanisterError::ValidationErrors("Action does not exist".to_string()))?;
 
         // validate action
         self.link_service
-            .link_validate_user_update_action(&action.as_ref().unwrap(), &user_id)?;
+            .link_validate_user_update_action(&action, &user_id)?;
 
-        let action_id = action.unwrap().id.clone();
+        let action_id = action.id.clone();
 
         // execute action with our standalone callback
         let update_action_res = self
@@ -629,7 +624,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let user_id = self.user_service.get_user_id_by_wallet(&caller);
 
         let _ = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
+            .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
 
         // basic validations
         if user_id.is_none() {
@@ -652,23 +647,23 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         // Execute main logic and capture result
         let result = async {
+            let user_id_ref = user_id
+                .as_ref()
+                .ok_or_else(|| CanisterError::ValidationErrors("User not found".to_string()))?;
+
             let action = self.link_service.get_action_of_link(
                 &input.link_id,
                 &input.action_type,
-                &user_id.as_ref().unwrap(),
+                user_id_ref,
             );
 
-            if action.is_none() {
-                return Err(CanisterError::ValidationErrors(format!(
-                    "Action is not existed"
-                )));
-            }
+            let action_ref = action.as_ref().ok_or_else(|| {
+                CanisterError::ValidationErrors("Action is not existed".to_string())
+            })?;
 
-            self.link_service.link_validate_user_update_action(
-                &action.clone().unwrap(),
-                user_id.as_ref().unwrap(),
-            )?;
-            let action_id = action.clone().unwrap().id.clone();
+            self.link_service
+                .link_validate_user_update_action(action_ref, user_id_ref)?;
+            let action_id = action_ref.id.clone();
 
             // execute action
             let update_action_res = self
@@ -685,7 +680,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         .await;
 
         // Drop lock regardless of success or failure
-        let _ = self.request_lock_service.drop(request_lock_key);
+        let _ = self.request_lock_service.drop(&request_lock_key);
 
         info!("[process_action] Drop lock");
 
@@ -714,16 +709,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let user_id = self.user_service.get_user_id_by_wallet(&caller);
 
         let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type ")))?;
+            .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
 
-        // basic validations
-        if user_id.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "User not found".to_string(),
-            ));
-        }
-
-        let user_id = user_id.clone().unwrap();
+        let user_id =
+            user_id.ok_or_else(|| CanisterError::ValidationErrors("User not found".to_string()))?;
 
         // Create lock for action creation
         let request_lock_key = self
@@ -741,9 +730,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                     .get_action_of_link(&input.link_id, &input.action_type, &user_id);
 
             if action.is_some() {
-                return Err(CanisterError::ValidationErrors(format!(
-                    "Action already exist!"
-                )));
+                return Err(CanisterError::ValidationErrors(
+                    "Action already exist!".to_string(),
+                ));
             }
 
             self.link_service.link_validate_user_create_action(
@@ -802,7 +791,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         .await;
 
         // Drop lock regardless of success or failure
-        let _ = self.request_lock_service.drop(request_lock_key);
+        let _ = self.request_lock_service.drop(&request_lock_key);
 
         result
     }
@@ -842,7 +831,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         };
 
         let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors(format!("Invalid action type")))?;
+            .map_err(|_| CanisterError::ValidationErrors("Invalid action type".to_string()))?;
 
         // check action type is claim
         if action_type != ActionType::Use {
@@ -870,9 +859,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                     .get_action_of_link(&input.link_id, &input.action_type, &user_id);
 
             if action.is_some() {
-                return Err(CanisterError::ValidationErrors(format!(
-                    "Action already exist!"
-                )));
+                return Err(CanisterError::ValidationErrors(
+                    "Action already exist!".to_string(),
+                ));
             }
 
             self.link_service.link_validate_user_create_action(
@@ -886,9 +875,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                     .get_action_of_link(&input.link_id, &input.action_type, &user_id);
 
             if action.is_some() {
-                return Err(CanisterError::ValidationErrors(format!(
-                    "Action already exist!"
-                )));
+                return Err(CanisterError::ValidationErrors(
+                    "Action already exist!".to_string(),
+                ));
             }
 
             self.link_service.link_validate_user_create_action(
@@ -947,7 +936,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         .await;
 
         // Drop lock regardless of success or failure
-        let _ = self.request_lock_service.drop(request_lock_key);
+        let _ = self.request_lock_service.drop(&request_lock_key);
 
         result
     }
@@ -967,32 +956,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(CanisterError)` - Error if validation fails or conflicting authentication methods
     pub fn link_get_user_state(
         &self,
-        input: LinkGetUserStateInput,
+        input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         let caller = self.ic_env.caller();
-
-        let mut temp_user_id = match caller != Principal::anonymous() {
-            true => self.user_service.get_user_id_by_wallet(&caller),
-            false => None,
-        };
-
-        // Validation
-        // cannot have both session key & anonymous_wallet_address
-        if temp_user_id.is_some() && input.anonymous_wallet_address.is_some() {
-            return Err(CanisterError::ValidationErrors(
-                "Cannot have both session key & anonymous_wallet_address".to_string(),
-            ));
-        }
-
-        // cannot have both empty session key & anonymous_wallet_address
-        if temp_user_id.is_none() && input.anonymous_wallet_address.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "
-                Cannot have both empty session key & anonymous_wallet_address
-                "
-                .to_string(),
-            ));
-        }
 
         // only support claim action type
         match ActionType::from_str(&input.action_type) {
@@ -1000,8 +966,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 if action_type != ActionType::Use {
                     return Err(CanisterError::ValidationErrors(
                         "
-                        Invalid action type, only Claim or Use action type is allowed
-                        "
+                            Invalid action type, only Claim or Use action type is allowed
+                            "
                         .to_string(),
                     ));
                 }
@@ -1009,58 +975,62 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             Err(_) => {
                 return Err(CanisterError::ValidationErrors(
                     "
-                    Invalid action type
-                    "
+                        Invalid action type
+                        "
                     .to_string(),
                 ));
             }
         }
-        // if session key not null, temp_user_id = fetch id from (session_key) -- already did above
 
-        // if anonymous_wallet_address not null, temp_user_id = anonymous_wallet_address
-        if input.anonymous_wallet_address.is_some() {
-            temp_user_id = Some(format!(
-                "ANON#{}",
-                input.anonymous_wallet_address.clone().unwrap().to_string()
-            ));
-        }
+        let temp_user_id = if caller != Principal::anonymous() {
+            self.user_service.get_user_id_by_wallet(&caller)
+        } else {
+            input
+                .anonymous_wallet_address
+                .as_ref()
+                .map(|addr| format!("ANON#{}", addr))
+        };
+        // Check if temp_user_id is None and return error
+        let temp_user_id = temp_user_id
+            .ok_or_else(|| CanisterError::ValidationErrors("User ID is required".to_string()))?;
 
         // Check "LinkAction" table to check records with
         // link_action link_id = input link_id
         // link_action type = input action type
         // link_action user_id = search_user_id
         let link_action = self.link_service.get_link_action_user(
-            input.link_id.clone(),
-            input.action_type.clone(),
-            temp_user_id.clone().unwrap(),
+            &input.link_id,
+            &input.action_type,
+            &temp_user_id,
         )?;
 
         if link_action.is_none() {
             return Ok(None);
         }
 
+        let link_action = link_action
+            .ok_or_else(|| CanisterError::HandleLogicError("Link action not found".to_string()))?;
+
         // If found "LinkAction" values
         // return action = get action from (action _id)
         // return state = record user_state
-        let action_id = link_action.as_ref().unwrap().action_id.clone();
-        let link_user_state = link_action
-            .as_ref()
-            .unwrap()
-            .link_user_state
-            .clone()
-            .ok_or(CanisterError::HandleLogicError(
-                "Link user state is not found".to_string(),
-            ))?;
+        let action_id = link_action.action_id.clone();
+        let link_user_state =
+            link_action
+                .link_user_state
+                .ok_or(CanisterError::HandleLogicError(
+                    "Link user state is not found".to_string(),
+                ))?;
 
         let action = self
             .action_service
-            .get_action_data(action_id)
+            .get_action_data(&action_id)
             .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
 
-        return Ok(Some(LinkGetUserStateOutput {
-            action: ActionDto::from_with_tx(action.action, action.intents, action.intent_txs),
+        Ok(Some(LinkGetUserStateOutput {
+            action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
             link_user_state: link_user_state.to_string(),
-        }));
+        }))
     }
 
     /// Updates the user state for a specific link action using state machine transitions.
@@ -1078,28 +1048,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(CanisterError)` - Error if validation fails or transition not allowed
     pub fn link_update_user_state(
         &self,
-        input: LinkUpdateUserStateInput,
+        input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         let caller = self.ic_env.caller();
-        let mut temp_user_id = match caller != Principal::anonymous() {
-            true => self.user_service.get_user_id_by_wallet(&caller),
-            false => None,
-        };
-
-        // Validation
-        // cannot have both session key & anonymous_wallet_address
-        if temp_user_id.is_some() && input.anonymous_wallet_address.is_some() {
-            return Err(CanisterError::ValidationErrors(
-                "Cannot have both session key & anonymous_wallet_address".to_string(),
-            ));
-        }
-
-        // cannot have both empty session key & anonymous_wallet_address
-        if temp_user_id.is_none() && input.anonymous_wallet_address.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "Cannot have both empty session key & anonymous_wallet_address".to_string(),
-            ));
-        }
 
         // validate action type
         match ActionType::from_str(&input.action_type) {
@@ -1107,8 +1058,8 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 if action_type != ActionType::Use {
                     return Err(CanisterError::ValidationErrors(
                         "
-                        Invalid action type, only Claim or Use  action type is allowed
-                        "
+                            Invalid action type, only Claim or Use  action type is allowed
+                            "
                         .to_string(),
                     ));
                 }
@@ -1116,36 +1067,33 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             Err(_) => {
                 return Err(CanisterError::ValidationErrors(
                     "
-                    Invalid action type
-                    "
+                        Invalid action type
+                        "
                     .to_string(),
                 ));
             }
         }
 
-        //         Logic
-        // if session key not null, temp_user_id = fetch id from (session_key) -- already did in 301
+        let temp_user_id = if caller != Principal::anonymous() {
+            self.user_service.get_user_id_by_wallet(&caller)
+        } else {
+            input
+                .anonymous_wallet_address
+                .as_ref()
+                .map(|addr| format!("ANON#{}", addr))
+        };
+        // Check if temp_user_id is None and return error
+        let temp_user_id = temp_user_id
+            .ok_or_else(|| CanisterError::ValidationErrors("User ID is required".to_string()))?;
 
-        // if anonymous_wallet_address not null, temp_user_id = anonymous_wallet_address
-        if input.anonymous_wallet_address.is_some() {
-            temp_user_id = Some(format!(
-                "ANON#{}",
-                input.anonymous_wallet_address.clone().unwrap().to_string()
-            ));
-        }
-
-        let goto = UserStateMachineGoto::from_str(&input.goto.clone())
+        let goto = UserStateMachineGoto::from_str(&input.goto)
             .map_err(|e| CanisterError::ValidationErrors(format!("Invalid goto: {}", e)))?;
 
-        // Check "LinkAction" table to check records with
-        // link_action link_id = input link_id
-        // link_action type = input action type
-        // link_action user_id = search_user_id
         let link_action = self.link_service.handle_user_link_state_machine(
-            input.link_id.clone(),
-            input.action_type.clone(),
-            temp_user_id.clone().unwrap(),
-            goto,
+            &input.link_id,
+            &input.action_type,
+            &temp_user_id,
+            &goto,
         )?;
 
         // If not found
@@ -1154,16 +1102,23 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // If found "LinkAction" values
         // return action = get action from (action _id)
         // return state = record user_state
-        let link_user_state: Option<LinkUserState> = link_action.link_user_state.clone();
+        let link_user_state =
+            link_action
+                .link_user_state
+                .clone()
+                .ok_or(CanisterError::HandleLogicError(
+                    "Link user state is not found".to_string(),
+                ))?;
+
         let action = self
             .action_service
-            .get_action_data(link_action.action_id.clone())
+            .get_action_data(&link_action.action_id)
             .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
 
-        return Ok(Some(LinkGetUserStateOutput {
-            action: ActionDto::from_with_tx(action.action, action.intents, action.intent_txs),
-            link_user_state: link_user_state.unwrap().to_string(),
-        }));
+        Ok(Some(LinkGetUserStateOutput {
+            action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
+            link_user_state: link_user_state.to_string(),
+        }))
     }
 
     /// Updates an existing action's state and executes associated blockchain transactions.
@@ -1186,7 +1141,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let is_creator = self
             .validate_service
-            .is_action_creator(caller.to_text(), input.action_id.clone())
+            .is_action_creator(&caller.to_text(), &input.action_id)
             .map_err(|e| {
                 CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
             })?;
@@ -1225,7 +1180,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         .await;
 
         // Drop lock regardless of success or failure
-        let _ = self.request_lock_service.drop(request_lock_key);
+        let _ = self.request_lock_service.drop(&request_lock_key);
 
         result
     }
@@ -1242,12 +1197,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// # Returns
     /// * `Ok(LinkDto)` - Updated link data after successful modification
     /// * `Err(CanisterError)` - Error if unauthorized, link not found, or update fails
-    /// Update an existing link
     pub async fn update_link(&self, input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
         let creator = self.ic_env.caller();
 
         // Get link
-        let link = match self.link_service.get_link_by_id(input.id.clone()) {
+        let link = match self.link_service.get_link_by_id(&input.id) {
             Ok(rsp) => rsp,
             Err(e) => {
                 error!("Failed to get link: {:#?}", e);
@@ -1258,7 +1212,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // Verify creator
         if !self
             .link_service
-            .is_link_creator(creator.to_text(), &input.id)
+            .is_link_creator(&creator.to_text(), &input.id)
         {
             return Err(CanisterError::Unauthorized(
                 "Caller are not the creator of this link".to_string(),
@@ -1266,7 +1220,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
 
         // Validate link type
-        let link_type = link.link_type.clone();
+        let link_type = link.link_type;
         if link_type.is_none() {
             return Err(CanisterError::ValidationErrors(
                 "Link type is missing".to_string(),
@@ -1276,7 +1230,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let params = input.params.clone();
         let updated_link = self
             .link_service
-            .handle_link_state_transition(&input.id, input.action, params)
+            .handle_link_state_transition(&input.id, &input.action, params)
             .await?;
 
         Ok(LinkDto::from(updated_link))

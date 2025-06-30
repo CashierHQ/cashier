@@ -5,12 +5,16 @@ use cashier_types::user::v1::User;
 
 use super::USER_STORE;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct UserRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for UserRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserRepository {
     pub fn new() -> Self {
         Self {}

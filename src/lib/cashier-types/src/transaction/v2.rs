@@ -11,6 +11,7 @@ use icrc_ledger_types::{
     icrc2::transfer_from::TransferFromArgs,
 };
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::str::FromStr;
 
 use crate::common::{Asset, Chain, Wallet};
@@ -63,7 +64,7 @@ impl Transaction {
         }
     }
 
-    pub fn set_from(&mut self, from_account: Account) -> () {
+    pub fn set_from(&mut self, from_account: Account) {
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
                 icrc1_transfer.from = Wallet {
@@ -86,7 +87,7 @@ impl Transaction {
         }
     }
 
-    pub fn set_to(&mut self, to_account: Account) -> () {
+    pub fn set_to(&mut self, to_account: Account) {
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
                 icrc1_transfer.to = Wallet {
@@ -174,14 +175,14 @@ impl TryFrom<Icrc1Transfer> for TransferArg {
         let from = value
             .from
             .get_account()
-            .map_err(|e| format!("Failed to parse from account: {}", e.to_string()))?;
+            .map_err(|e| format!("Failed to parse from account: {}", e))?;
 
         let to = value
             .to
             .get_account()
-            .map_err(|e| format!("Failed to parse to account: {}", e.to_string()))?;
+            .map_err(|e| format!("Failed to parse to account: {}", e))?;
 
-        let amount = Nat::from(value.amount);
+        let amount = value.amount;
         let memo = value.memo;
 
         Ok(TransferArg {
@@ -222,19 +223,19 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
         let spender_account = value
             .spender
             .get_account()
-            .map_err(|e| format!("Failed to parse spender account: {}", e.to_string()))?;
+            .map_err(|e| format!("Failed to parse spender account: {}", e))?;
 
         let from = value
             .from
             .get_account()
-            .map_err(|e| format!("Failed to parse from account: {}", e.to_string()))?;
+            .map_err(|e| format!("Failed to parse from account: {}", e))?;
 
         let to = value
             .to
             .get_account()
-            .map_err(|e| format!("Failed to parse to account: {}", e.to_string()))?;
+            .map_err(|e| format!("Failed to parse to account: {}", e))?;
 
-        let amount = Nat::from(value.amount);
+        let amount = value.amount;
         let memo = value.memo;
 
         Ok(TransferFromArgs {
@@ -262,9 +263,11 @@ impl FromCallType {
             FromCallType::Wallet => "Wallet",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for FromCallType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 
@@ -295,9 +298,11 @@ impl TransactionProtocol {
             TransactionProtocol::Icrc2TransferFrom => "Icrc2TransferFrom",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for TransactionProtocol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 
@@ -331,9 +336,11 @@ impl TransactionState {
             TransactionState::Fail => "Transaction_state_fail",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for TransactionState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 

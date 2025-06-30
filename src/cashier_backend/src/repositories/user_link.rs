@@ -5,12 +5,16 @@ use super::USER_LINK_STORE;
 use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
 use cashier_types::{keys::UserLinkKey, user_link::v1::UserLink};
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct UserLinkRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for UserLinkRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserLinkRepository {
     pub fn new() -> Self {
         Self {}
@@ -38,26 +42,26 @@ impl UserLinkRepository {
         });
     }
 
-    pub fn get(&self, id: UserLinkKey) -> Option<UserLink> {
+    pub fn get(&self, id: &UserLinkKey) -> Option<UserLink> {
         USER_LINK_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
     pub fn delete(&self, id: UserLink) {
         let id = UserLinkKey {
             user_id: id.user_id.clone(),
-            link_id: id.link_id.clone(),
+            link_id: id.link_id,
         };
         USER_LINK_STORE.with_borrow_mut(|store| store.remove(&id.to_str()));
     }
 
     pub fn get_links_by_user_id(
         &self,
-        user_id: String,
-        paginate: PaginateInput,
+        user_id: &str,
+        paginate: &PaginateInput,
     ) -> PaginateResult<UserLink> {
         USER_LINK_STORE.with_borrow(|store| {
             let user_link_key = UserLinkKey {
-                user_id: user_id.clone(),
+                user_id: user_id.to_string(),
                 link_id: "".to_string(),
             };
 

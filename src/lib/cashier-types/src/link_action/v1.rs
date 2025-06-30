@@ -3,6 +3,7 @@
 
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, Clone)]
 #[storable]
@@ -20,15 +21,17 @@ pub enum LinkUserState {
     CompletedLink,
 }
 
+impl fmt::Display for LinkUserState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
+}
+
 impl LinkUserState {
     pub fn to_str(&self) -> &str {
         match self {
             LinkUserState::ChooseWallet => "User_state_choose_wallet",
             LinkUserState::CompletedLink => "User_state_completed_link",
         }
-    }
-
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
     }
 }

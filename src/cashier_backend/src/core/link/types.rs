@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::fmt;
 use std::{collections::HashMap, str::FromStr};
 
 use candid::{CandidType, Principal};
@@ -98,6 +99,15 @@ pub struct LinkDetailUpdate {
 pub enum LinkStateMachineGoto {
     Continue,
     Back,
+}
+
+impl fmt::Display for LinkStateMachineGoto {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            LinkStateMachineGoto::Continue => write!(f, "Continue"),
+            LinkStateMachineGoto::Back => write!(f, "Back"),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -198,21 +208,14 @@ impl From<Link> for LinkDto {
     fn from(link: Link) -> Self {
         let asset_info = match link.asset_info {
             Some(asset_info) => {
-                let asset_info_vec = asset_info
-                    .iter()
-                    .map(|asset| AssetInfoDto::from(asset))
-                    .collect();
+                let asset_info_vec = asset_info.iter().map(AssetInfoDto::from).collect();
 
                 Some(asset_info_vec)
             }
             None => None,
         };
 
-        let link_type_str = if let Some(link_type) = link.link_type {
-            Some(link_type.to_string())
-        } else {
-            None
-        };
+        let link_type_str = link.link_type.map(|link_type| link_type.to_string());
 
         LinkDto {
             id: link.id,
@@ -249,11 +252,11 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
 impl LinkDetailUpdateInput {
     pub fn validate(&self) -> Result<(), String> {
         if let Some(template) = &self.template {
-            Template::from_str(template).map_err(|_| format!("Invalid template: "))?;
+            Template::from_str(template).map_err(|_| "Invalid template: ".to_string())?;
         }
 
         if let Some(link_type) = &self.link_type {
-            LinkType::from_str(link_type).map_err(|_| format!("Invalid link type "))?;
+            LinkType::from_str(link_type).map_err(|_| "Invalid link type ".to_string())?;
         }
 
         if let Some(asset_info) = &self.asset_info {
@@ -267,13 +270,6 @@ impl LinkDetailUpdateInput {
 }
 
 impl LinkStateMachineGoto {
-    pub fn to_string(&self) -> String {
-        match self {
-            LinkStateMachineGoto::Continue => "Continue".to_string(),
-            LinkStateMachineGoto::Back => "Back".to_string(),
-        }
-    }
-
     pub fn from_string(intent: &str) -> Result<LinkStateMachineGoto, String> {
         match intent {
             "Continue" => Ok(LinkStateMachineGoto::Continue),
@@ -311,15 +307,18 @@ pub enum UserStateMachineGoto {
     Back,
 }
 
-impl UserStateMachineGoto {
-    pub fn to_string(&self) -> String {
+impl fmt::Display for UserStateMachineGoto {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            UserStateMachineGoto::Continue => "Continue".to_string(),
-            UserStateMachineGoto::Back => "Back".to_string(),
+            UserStateMachineGoto::Continue => write!(f, "Continue"),
+            UserStateMachineGoto::Back => write!(f, "Back"),
         }
     }
+}
 
-    pub fn from_str(intent: &str) -> Result<UserStateMachineGoto, String> {
+impl FromStr for UserStateMachineGoto {
+    type Err = String;
+    fn from_str(intent: &str) -> Result<Self, Self::Err> {
         match intent {
             "Continue" => Ok(UserStateMachineGoto::Continue),
             "Back" => Ok(UserStateMachineGoto::Back),
