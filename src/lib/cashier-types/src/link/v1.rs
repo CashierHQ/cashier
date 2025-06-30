@@ -1,9 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::{collections::HashMap, str::FromStr};
 
 use crate::asset_info::AssetInfo;
@@ -65,9 +65,11 @@ impl LinkType {
             LinkType::SwapMultiAsset => "SwapMultiAsset",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for LinkType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 
@@ -112,9 +114,11 @@ impl LinkState {
             LinkState::InactiveEnded => "Link_state_inactive_ended",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for LinkState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 
@@ -150,10 +154,6 @@ impl Template {
             Template::Central => "Central",
         }
     }
-
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
-    }
 }
 
 impl FromStr for Template {
@@ -166,5 +166,11 @@ impl FromStr for Template {
             "Central" => Ok(Template::Central),
             _ => Err(()),
         }
+    }
+}
+
+impl fmt::Display for Template {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }

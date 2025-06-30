@@ -170,7 +170,7 @@ pub fn get_stores_count_report() -> String {
     let versioned_total = 0u64;
 
     // Summary
-    report.push_str(&format!("\n🎯 **Summary**\n"));
+    report.push_str("\n🎯 **Summary**\n");
     report.push_str("=============\n");
     report.push_str(&format!("• Normal stores: {}\n", normal_total));
     report.push_str(&format!(

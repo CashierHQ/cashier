@@ -4,12 +4,16 @@
 use super::LINK_STORE;
 use cashier_types::{keys::LinkKey, link::v1::Link};
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct LinkRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for LinkRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LinkRepository {
     pub fn new() -> Self {
         Self {}

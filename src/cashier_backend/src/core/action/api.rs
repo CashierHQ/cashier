@@ -27,7 +27,7 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     let request_lock_service = RequestLockService::get_instance();
 
     let is_creator = validate_service
-        .is_action_creator(caller.to_text(), input.action_id.clone())
+        .is_action_creator(&caller.to_text(), &input.action_id)
         .map_err(|e| {
             CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
         })?;
@@ -62,7 +62,7 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     .await;
 
     // Drop lock regardless of success or failure
-    let _ = request_lock_service.drop(request_lock_key);
+    let _ = request_lock_service.drop(&request_lock_key);
 
     info!("[trigger_transaction] Request lock dropped");
 

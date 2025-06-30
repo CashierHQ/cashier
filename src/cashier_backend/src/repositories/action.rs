@@ -5,11 +5,15 @@ use cashier_types::{action::v1::Action, keys::ActionKey};
 
 use crate::repositories::ACTION_STORE;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct ActionRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for ActionRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActionRepository {
     pub fn new() -> Self {
         Self {}
@@ -22,8 +26,8 @@ impl ActionRepository {
         });
     }
 
-    pub fn get(&self, action_id: ActionKey) -> Option<Action> {
-        ACTION_STORE.with_borrow(|store| store.get(&action_id))
+    pub fn get(&self, action_id: &str) -> Option<Action> {
+        ACTION_STORE.with_borrow(|store| store.get(&action_id.to_string()))
     }
 
     pub fn batch_get(&self, ids: Vec<ActionKey>) -> Vec<Action> {

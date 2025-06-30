@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_types::{user::v1::User, user_wallet::v1::UserWallet};
+use ic_cdk::api::msg_caller;
 use uuid::Uuid;
 
 use crate::{
@@ -28,13 +29,13 @@ pub fn create_new() -> Result<UserDto, String> {
         user_id: id_str.clone(),
     };
 
-    let caller = ic_cdk::api::caller();
+    let caller = msg_caller();
 
     let user_repository = repositories::user::UserRepository::new();
     let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
 
-    user_repository.create(user.clone());
-    user_wallet_repository.create(caller.to_text(), user_wallet.clone());
+    user_repository.create(user);
+    user_wallet_repository.create(caller.to_text(), user_wallet);
 
     Ok(UserDto {
         id: id_str,
@@ -46,7 +47,7 @@ pub fn create_new() -> Result<UserDto, String> {
 pub fn get() -> Option<UserDto> {
     let user_repository = repositories::user::UserRepository::new();
     let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
-    let caller = ic_cdk::api::caller();
+    let caller = msg_caller();
 
     let user_wallet = match user_wallet_repository.get(&caller.to_string()) {
         Some(user_id) => user_id,
@@ -66,7 +67,7 @@ pub fn get() -> Option<UserDto> {
 }
 
 pub fn is_existed() -> bool {
-    let caller = ic_cdk::api::caller();
+    let caller = msg_caller();
     let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
     user_wallet_repository.get(&caller.to_string()).is_some()
 }

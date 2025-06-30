@@ -1,11 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 // File: src/token_storage/src/types.rs
 
 use std::borrow::Cow;
 use std::collections::HashSet;
+use std::str::FromStr;
 
 use candid::CandidType;
 use candid::Principal;
@@ -67,14 +67,17 @@ pub enum Chain {
     // Can add more chains in the future
 }
 
-impl Chain {
-    pub fn from_str(chain: &str) -> Result<Self, String> {
+impl FromStr for Chain {
+    type Err = String;
+    fn from_str(chain: &str) -> Result<Self, Self::Err> {
         match chain {
             "IC" => Ok(Chain::IC),
             _ => Err(format!("Unsupported chain: {}", chain)),
         }
     }
+}
 
+impl Chain {
     pub fn to_str(&self) -> String {
         match self {
             Chain::IC => "IC".to_string(),

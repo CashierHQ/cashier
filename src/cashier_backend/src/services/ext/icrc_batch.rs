@@ -106,7 +106,7 @@ impl IcrcBatchService {
             match result {
                 Ok((fee,)) => {
                     // If call succeeds, convert fee to Nat and add to the HashMap
-                    let fee_n = Nat::from(fee);
+                    let fee_n = fee;
                     fee_map.insert(principal.to_text(), fee_n);
                 }
                 Err((reject_code, reject_msg)) => {
