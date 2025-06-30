@@ -45,8 +45,8 @@ impl IntentRepository {
         });
     }
 
-    pub fn get(&self, id: String) -> Option<Intent> {
-        INTENT_STORE.with_borrow(|store| store.get(&id))
+    pub fn get(&self, id: &str) -> Option<Intent> {
+        INTENT_STORE.with_borrow(|store| store.get(&id.to_string()))
     }
 
     pub fn batch_get(&self, ids: Vec<String>) -> Vec<Intent> {
@@ -60,9 +60,9 @@ impl IntentRepository {
         });
     }
 
-    pub fn delete(&self, id: &String) {
+    pub fn delete(&self, id: &str) {
         INTENT_STORE.with_borrow_mut(|store| {
-            store.remove(id);
+            store.remove(&id.to_string());
         });
     }
 }

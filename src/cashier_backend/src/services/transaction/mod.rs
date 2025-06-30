@@ -69,8 +69,8 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
             )))
     }
 
-    pub fn batch_get(&self, tx_ids: Vec<String>) -> Result<Vec<Transaction>, CanisterError> {
-        let txs = self.transaction_repository.batch_get(tx_ids.clone());
+    pub fn batch_get(&self, tx_ids: &[String]) -> Result<Vec<Transaction>, CanisterError> {
+        let txs = self.transaction_repository.batch_get(tx_ids.to_vec());
 
         if txs.len() != tx_ids.len() {
             return Err(CanisterError::NotFound(
@@ -170,7 +170,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
         &self,
         action_id: &str,
         link_id: &str,
-        transactions: &Vec<Transaction>,
+        transactions: &[Transaction],
     ) -> Result<Option<Icrc112Requests>, CanisterError> {
         let canister_id = self.ic_env.id();
 
@@ -190,7 +190,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
         // For consistency, use topological sort regardless of number of transactions
         let mut icrc_112_requests: Vec<Vec<Icrc112Request>> = Vec::new();
         let mut processed_tx_ids: HashSet<String> = HashSet::new();
-        let tx_clone = transactions.clone();
+        let tx_clone = transactions.to_owned();
 
         // Build dependency graph (corrected direction)
         // If A depends on B, then A should appear in B's adjacency list

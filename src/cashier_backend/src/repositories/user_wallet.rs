@@ -25,7 +25,7 @@ impl UserWalletRepository {
         });
     }
 
-    pub fn get(&self, wallet: &UserWalletKey) -> Option<UserWallet> {
-        USER_WALLET_STORE.with_borrow(|store| store.get(wallet))
+    pub fn get(&self, wallet: &str) -> Option<UserWallet> {
+        USER_WALLET_STORE.with_borrow(|store| store.get(&wallet.to_string()))
     }
 }

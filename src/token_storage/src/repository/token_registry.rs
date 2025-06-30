@@ -1,13 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use crate::{
     api::token::types::RegisterTokenInput,
     types::{Chain, RegistryToken, TokenId},
 };
 
 use super::{token_registry_metadata::TokenRegistryMetadataRepository, TOKEN_REGISTRY_STORE};
+use std::str::FromStr;
 
 pub struct TokenRegistryRepository {}
 

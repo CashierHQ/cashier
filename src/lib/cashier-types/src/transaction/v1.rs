@@ -30,6 +30,7 @@ use icrc_ledger_types::{
     icrc2::transfer_from::TransferFromArgs,
 };
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::str::FromStr;
 
 use crate::common::{Asset, Chain, Wallet};
@@ -300,10 +301,6 @@ impl FromCallType {
             FromCallType::Wallet => "Wallet",
         }
     }
-
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
-    }
 }
 
 impl FromStr for FromCallType {
@@ -315,6 +312,12 @@ impl FromStr for FromCallType {
             "Wallet" => Ok(FromCallType::Wallet),
             _ => Err(()),
         }
+    }
+}
+
+impl fmt::Display for FromCallType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 
@@ -337,10 +340,6 @@ impl TransactionProtocol {
             TransactionProtocol::Icrc2TransferFrom => "Icrc2TransferFrom",
         }
     }
-
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
-    }
 }
 
 impl FromStr for TransactionProtocol {
@@ -353,6 +352,12 @@ impl FromStr for TransactionProtocol {
             "Icrc2TransferFrom" => Ok(TransactionProtocol::Icrc2TransferFrom),
             _ => Err(()),
         }
+    }
+}
+
+impl fmt::Display for TransactionProtocol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 
@@ -374,9 +379,11 @@ impl TransactionState {
             TransactionState::Fail => "Transaction_state_fail",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for TransactionState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 

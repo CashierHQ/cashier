@@ -75,7 +75,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDt
 #[query]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.get_link(id, options)
+    api.get_link(&id, options)
 }
 
 /// Creates a new link using the legacy v1 API format.
@@ -92,7 +92,7 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
 #[update(guard = "is_not_anonymous")]
 async fn create_link(input: CreateLinkInput) -> Result<String, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.create_link(input)
+    api.create_link(&input)
 }
 
 /// Creates a new link using the v2 API format with enhanced features.
@@ -232,7 +232,7 @@ pub async fn link_get_user_state(
     input: LinkGetUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.link_get_user_state(input)
+    api.link_get_user_state(&input)
 }
 
 /// Updates the user state for a specific link action.
@@ -387,7 +387,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         match self
             .link_service
-            .get_links_by_principal(caller.to_text(), input.unwrap_or_default())
+            .get_links_by_principal(&caller.to_text(), &input.unwrap_or_default())
         {
             Ok(links) => Ok(links.map(LinkDto::from)),
             Err(e) => {
@@ -414,7 +414,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(String)` - Error if link not found or access denied
     pub fn get_link(
         &self,
-        id: String,
+        id: &str,
         options: Option<GetLinkOptions>,
     ) -> Result<GetLinkResp, String> {
         let caller = self.ic_env.caller();
@@ -424,7 +424,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // Allow both anonymous callers and non-anonymous callers without user IDs to proceed
 
         let is_valid_creator = if caller != Principal::anonymous() {
-            self.link_service.is_link_creator(&caller.to_text(), &id)
+            self.link_service.is_link_creator(&caller.to_text(), id)
         } else {
             false // Anonymous callers can't be creators
         };
@@ -453,7 +453,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         };
 
         // Get link and action data
-        let link = match self.link_service.get_link_by_id(id.clone()) {
+        let link = match self.link_service.get_link_by_id(id) {
             Ok(link) => link,
             Err(e) => return Err(e.to_string()),
         };
@@ -462,13 +462,13 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let action = match (action_type, &user_id) {
             (Some(action_type), Some(user_id)) => {
                 self.link_service
-                    .get_link_action(id, action_type.to_string(), user_id.clone())
+                    .get_link_action(id, action_type.to_str(), user_id)
             }
             _ => None,
         };
 
         let action_dto = action.map(|action| {
-            let intents = services::action::get_intents_by_action_id(action.id.clone());
+            let intents = self.action_service.get_intents_by_action_id(&action.id);
             ActionDto::from(action, intents)
         });
 
@@ -489,11 +489,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// # Returns
     /// * `Ok(String)` - The unique identifier of the created link
     /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
-    /// Create a new link
-    pub fn create_link(&self, input: CreateLinkInput) -> Result<String, CanisterError> {
+    pub fn create_link(&self, input: &CreateLinkInput) -> Result<String, CanisterError> {
         let creator = self.ic_env.caller();
 
-        match self.link_service.create_new(creator.to_text(), input) {
+        match self.link_service.create_new(&creator.to_text(), input) {
             Ok(id) => Ok(id),
             Err(e) => {
                 error!("Failed to create link: {}", e);
@@ -681,7 +680,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         .await;
 
         // Drop lock regardless of success or failure
-        let _ = self.request_lock_service.drop(request_lock_key);
+        let _ = self.request_lock_service.drop(&request_lock_key);
 
         info!("[process_action] Drop lock");
 
@@ -792,7 +791,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         .await;
 
         // Drop lock regardless of success or failure
-        let _ = self.request_lock_service.drop(request_lock_key);
+        let _ = self.request_lock_service.drop(&request_lock_key);
 
         result
     }
@@ -937,7 +936,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         .await;
 
         // Drop lock regardless of success or failure
-        let _ = self.request_lock_service.drop(request_lock_key);
+        let _ = self.request_lock_service.drop(&request_lock_key);
 
         result
     }
@@ -957,7 +956,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(CanisterError)` - Error if validation fails or conflicting authentication methods
     pub fn link_get_user_state(
         &self,
-        input: LinkGetUserStateInput,
+        input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         let caller = self.ic_env.caller();
 
@@ -1025,11 +1024,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let action = self
             .action_service
-            .get_action_data(action_id)
+            .get_action_data(&action_id)
             .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
 
         Ok(Some(LinkGetUserStateOutput {
-            action: ActionDto::from_with_tx(action.action, action.intents, action.intent_txs),
+            action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
             link_user_state: link_user_state.to_string(),
         }))
     }
@@ -1113,11 +1112,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let action = self
             .action_service
-            .get_action_data(link_action.action_id)
+            .get_action_data(&link_action.action_id)
             .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
 
         Ok(Some(LinkGetUserStateOutput {
-            action: ActionDto::from_with_tx(action.action, action.intents, action.intent_txs),
+            action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
             link_user_state: link_user_state.to_string(),
         }))
     }
@@ -1142,7 +1141,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let is_creator = self
             .validate_service
-            .is_action_creator(caller.to_text(), input.action_id.clone())
+            .is_action_creator(&caller.to_text(), &input.action_id)
             .map_err(|e| {
                 CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
             })?;
@@ -1181,7 +1180,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         .await;
 
         // Drop lock regardless of success or failure
-        let _ = self.request_lock_service.drop(request_lock_key);
+        let _ = self.request_lock_service.drop(&request_lock_key);
 
         result
     }
@@ -1198,12 +1197,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// # Returns
     /// * `Ok(LinkDto)` - Updated link data after successful modification
     /// * `Err(CanisterError)` - Error if unauthorized, link not found, or update fails
-    /// Update an existing link
     pub async fn update_link(&self, input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
         let creator = self.ic_env.caller();
 
         // Get link
-        let link = match self.link_service.get_link_by_id(input.id.clone()) {
+        let link = match self.link_service.get_link_by_id(&input.id) {
             Ok(rsp) => rsp,
             Err(e) => {
                 error!("Failed to get link: {:#?}", e);
@@ -1232,7 +1230,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let params = input.params.clone();
         let updated_link = self
             .link_service
-            .handle_link_state_transition(&input.id, input.action, params)
+            .handle_link_state_transition(&input.id, &input.action, params)
             .await?;
 
         Ok(LinkDto::from(updated_link))

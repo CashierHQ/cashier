@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 // File: src/token_storage/src/repository/token.rs
 use super::USER_TOKEN_STORE;
 use crate::types::{TokenId, UserTokenList};
@@ -46,7 +45,7 @@ impl TokenRepository {
         })
     }
 
-    pub fn add_bulk_tokens(&self, user_id: &str, token_ids: &Vec<TokenId>) -> Result<(), String> {
+    pub fn add_bulk_tokens(&self, user_id: &str, token_ids: &[TokenId]) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id.to_string())

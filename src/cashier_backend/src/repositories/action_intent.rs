@@ -45,14 +45,14 @@ impl ActionIntentRepository {
         });
     }
 
-    pub fn get(&self, action_intent_key: ActionIntentKey) -> Option<ActionIntent> {
+    pub fn get(&self, action_intent_key: &ActionIntentKey) -> Option<ActionIntent> {
         ACTION_INTENT_STORE.with_borrow(|store| store.get(&action_intent_key.to_str()))
     }
 
-    pub fn get_by_action_id(&self, action_id: String) -> Vec<ActionIntent> {
+    pub fn get_by_action_id(&self, action_id: &str) -> Vec<ActionIntent> {
         ACTION_INTENT_STORE.with_borrow(|store| {
             let key = ActionIntentKey {
-                action_id: action_id.clone(),
+                action_id: action_id.to_string(),
                 intent_id: "".to_string(),
             };
 
@@ -68,11 +68,11 @@ impl ActionIntentRepository {
         })
     }
 
-    pub fn get_by_intent_id(&self, intent_id: String) -> Vec<ActionIntent> {
+    pub fn get_by_intent_id(&self, intent_id: &str) -> Vec<ActionIntent> {
         ACTION_INTENT_STORE.with_borrow(|store| {
             let key = ActionIntentKey {
                 action_id: "".to_string(),
-                intent_id: intent_id.clone(),
+                intent_id: intent_id.to_string(),
             };
 
             let prefix = key.to_str_reverse();

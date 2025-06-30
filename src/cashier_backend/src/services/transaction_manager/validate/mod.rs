@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use crate::repositories::{action, user_wallet};
 
 pub struct ValidateService {
@@ -26,8 +25,8 @@ impl ValidateService {
         }
     }
 
-    pub fn is_action_creator(&self, caller: String, action_id: String) -> Result<bool, String> {
-        let user_wallet = match self.user_wallet_repository.get(&caller) {
+    pub fn is_action_creator(&self, caller: &str, action_id: &str) -> Result<bool, String> {
+        let user_wallet = match self.user_wallet_repository.get(caller) {
             Some(user_id) => user_id,
             None => {
                 return Err("User not found".to_string());
@@ -36,9 +35,7 @@ impl ValidateService {
         let action = self.action_repository.get(action_id);
         match action {
             Some(action) => Ok(action.creator == user_wallet.user_id),
-            None => {
-                Err("Action not found".to_string())
-            }
+            None => Err("Action not found".to_string()),
         }
     }
 }

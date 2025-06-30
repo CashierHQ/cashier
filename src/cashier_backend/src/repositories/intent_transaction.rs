@@ -47,18 +47,18 @@ impl IntentTransactionRepository {
         });
     }
 
-    pub fn get(&self, intent_id: String, transaction_id: String) -> Option<IntentTransaction> {
+    pub fn get(&self, intent_id: &str, transaction_id: &str) -> Option<IntentTransaction> {
         let id = IntentTransactionKey {
-            intent_id,
-            transaction_id,
+            intent_id: intent_id.to_string(),
+            transaction_id: transaction_id.to_string(),
         };
         INTENT_TRANSACTION_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
-    pub fn get_by_intent_id(&self, intent_id: String) -> Vec<IntentTransaction> {
+    pub fn get_by_intent_id(&self, intent_id: &str) -> Vec<IntentTransaction> {
         INTENT_TRANSACTION_STORE.with_borrow(|store| {
             let key = IntentTransactionKey {
-                intent_id: intent_id.clone(),
+                intent_id: intent_id.to_string(),
                 transaction_id: "".to_string(),
             };
 
@@ -72,11 +72,11 @@ impl IntentTransactionRepository {
         })
     }
 
-    pub fn get_by_transaction_id(&self, transaction_id: String) -> Vec<IntentTransaction> {
+    pub fn get_by_transaction_id(&self, transaction_id: &str) -> Vec<IntentTransaction> {
         INTENT_TRANSACTION_STORE.with_borrow(|store| {
             let key = IntentTransactionKey {
                 intent_id: "".to_string(),
-                transaction_id: transaction_id.clone(),
+                transaction_id: transaction_id.to_string(),
             };
 
             let prefix = key.to_str_reverse();

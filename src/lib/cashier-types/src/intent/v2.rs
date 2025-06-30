@@ -4,6 +4,7 @@
 use candid::{CandidType, Nat};
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::str::FromStr;
 
 use crate::common::{Asset, Chain, Wallet};
@@ -135,9 +136,11 @@ impl IntentTask {
             IntentTask::TransferLinkToWallet => "transfer_link_to_wallet",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for IntentTask {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 
@@ -163,9 +166,11 @@ impl IntentState {
             IntentState::Fail => "Intent_state_fail",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for IntentState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 

@@ -23,7 +23,8 @@ use crate::{
         INTENT_LABEL_SEND_TIP_ASSET, INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     },
     core::link::types::{
-        CreateLinkInputV2, LinkDetailUpdateInput, LinkStateMachineGoto, UserStateMachineGoto,
+        CreateLinkInput, CreateLinkInputV2, LinkDetailUpdateInput, LinkStateMachineGoto,
+        UserStateMachineGoto,
     },
     domains::fee::Fee,
     error,
@@ -88,10 +89,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
     }
 
-    pub fn get_link_by_id(&self, id: String) -> Result<Link, CanisterError> {
+    pub fn get_link_by_id(&self, id: &str) -> Result<Link, CanisterError> {
         let link = self
             .link_repository
-            .get(&id)
+            .get(&id.to_string())
             .ok_or_else(|| CanisterError::NotFound("link not found".to_string()))?;
 
         Ok(link)
@@ -269,7 +270,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         user_wallet: &Principal,
         fee_map: &HashMap<String, Nat>,
     ) -> Result<Vec<Intent>, CanisterError> {
-        let link = self.get_link_by_id(link_id.to_string())?;
+        let link = self.get_link_by_id(link_id)?;
 
         let temp_intents = self.look_up_intent(&link, action_type)?;
 
@@ -592,7 +593,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         link_id: &str,
         action_type: &ActionType,
     ) -> Result<Vec<Asset>, CanisterError> {
-        let link = self.get_link_by_id(link_id.to_string())?;
+        let link = self.get_link_by_id(link_id)?;
         let temp_intents = self.look_up_intent(&link, action_type)?;
 
         let intents = temp_intents.ok_or_else(|| {
@@ -657,15 +658,13 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         action_type: &str,
         user_id: &str,
     ) -> Option<Action> {
-        let link_actions = self.link_action_repository.get_by_prefix(
-            link_id.to_string(),
-            action_type.to_string(),
-            user_id.to_string(),
-        );
+        let link_actions = self
+            .link_action_repository
+            .get_by_prefix(link_id, action_type, user_id);
 
         link_actions
             .first()
-            .and_then(|la| self.action_repository.get(la.action_id.clone()))
+            .and_then(|la| self.action_repository.get(&la.action_id))
     }
 
     // this method validate for each action type
@@ -686,7 +685,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         caller: &Principal,
     ) -> Result<(), CanisterError> {
         // get link
-        let link = self.get_link_by_id(link_id.to_string())?;
+        let link = self.get_link_by_id(link_id)?;
 
         match action_type {
             ActionType::CreateLink => {
@@ -798,7 +797,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         //validate user_id
         match action.r#type.clone() {
             ActionType::CreateLink => {
-                let link = self.get_link_by_id(action.link_id.clone())?;
+                let link = self.get_link_by_id(&action.link_id)?;
                 if !(action.creator == user_id && link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -809,7 +808,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     .await?;
             }
             ActionType::Withdraw => {
-                let link = self.get_link_by_id(action.link_id.clone())?;
+                let link = self.get_link_by_id(&action.link_id)?;
                 if !(action.creator == user_id && link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -841,7 +840,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         user_id: &str,
     ) -> Result<(), CanisterError> {
         // Get link
-        let link = self.get_link_by_id(link_id.to_string())?;
+        let link = self.get_link_by_id(link_id)?;
 
         match action_type {
             ActionType::CreateLink => {
@@ -902,7 +901,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         //validate user_id
         match action.r#type.clone() {
             ActionType::CreateLink => {
-                let link = self.get_link_by_id(action.link_id.clone())?;
+                let link = self.get_link_by_id(&action.link_id)?;
                 if !(action.creator == user_id && link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -910,7 +909,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
             }
             ActionType::Withdraw => {
-                let link = self.get_link_by_id(action.link_id.clone())?;
+                let link = self.get_link_by_id(&action.link_id)?;
                 if !(action.creator == user_id && link.creator == user_id) {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -954,7 +953,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
 
         let link = self
-            .get_link_by_id(link_id.to_string())
+            .get_link_by_id(link_id)
             .map_err(|e| CanisterError::NotFound(e.to_string()))?;
 
         if link.link_type == Some(LinkType::ReceivePayment) {
@@ -1000,11 +999,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         action_type: &str,
         user_id: &str,
     ) -> Result<Option<LinkAction>, CanisterError> {
-        let link_action = self.link_action_repository.get_by_prefix(
-            link_id.to_string(),
-            action_type.to_string(),
-            user_id.to_string(),
-        );
+        let link_action = self
+            .link_action_repository
+            .get_by_prefix(link_id, action_type, user_id);
         if link_action.is_empty() {
             return Ok(None);
         }
@@ -1020,11 +1017,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError> {
         // check inputs that can be changed this state
-        let action_list = self.link_action_repository.get_by_prefix(
-            link_id.to_string(),
-            action_type.to_string(),
-            user_id.to_string(),
-        );
+        let action_list = self
+            .link_action_repository
+            .get_by_prefix(link_id, action_type, user_id);
 
         if action_list.is_empty() {
             return Err(CanisterError::NotFound("Link action not found".to_string()));
@@ -1096,8 +1091,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         action_id: &str,
     ) -> Result<bool, CanisterError> {
         // Get the link and action
-        let link = self.get_link_by_id(link_id.to_string())?;
-        let action = match self.action_repository.get(action_id.to_string()) {
+        let link = self.get_link_by_id(link_id)?;
+        let action = match self.action_repository.get(action_id) {
             Some(action) => action,
             None => return Ok(false),
         };
@@ -1139,7 +1134,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     pub fn link_type_add_asset_validate(
         &self,
         link: &Link,
-        asset_infos: &Vec<AssetInfo>,
+        asset_infos: &[AssetInfo],
         link_use_action_max_count: &u64,
     ) -> bool {
         if link.link_type == Some(LinkType::SendTip) {
@@ -1270,9 +1265,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
     pub fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
         let link_creation_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
-            link.id.clone(),
-            ActionType::CreateLink.to_string(),
-            link.creator.clone(),
+            &link.id,
+            ActionType::CreateLink.to_str(),
+            &link.creator,
         );
 
         if link_creation_action.is_empty() {
@@ -1281,16 +1276,16 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         let create_action = self
             .action_repository
-            .get(link_creation_action[0].action_id.clone());
+            .get(&link_creation_action[0].action_id);
 
         Ok(create_action)
     }
 
     pub fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
         let link_withdraw_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
-            link.id.clone(),
-            ActionType::Withdraw.to_string(),
-            link.creator.clone(),
+            &link.id,
+            &ActionType::Withdraw.to_string(),
+            &link.creator.clone(),
         );
 
         if link_withdraw_action.is_empty() {
@@ -1299,7 +1294,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         let withdraw_action = self
             .action_repository
-            .get(link_withdraw_action[0].action_id.clone());
+            .get(&link_withdraw_action[0].action_id);
 
         Ok(withdraw_action)
     }
@@ -1309,7 +1304,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     // if not changed, return false
     pub fn is_props_changed(
         &self,
-        whitelist_props: Vec<String>,
+        whitelist_props: &[String],
         params: &LinkDetailUpdateInput,
         link: &Link,
     ) -> bool {
@@ -1447,13 +1442,13 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     pub async fn handle_link_state_transition(
         &self,
         link_id: &str,
-        action: String,
+        go_to: &str,
         params: Option<LinkDetailUpdateInput>,
     ) -> Result<Link, CanisterError> {
-        let mut link = self.get_link_by_id(link_id.to_string())?;
+        let mut link = self.get_link_by_id(link_id)?;
 
         let link_state_goto =
-            LinkStateMachineGoto::from_string(&action).map_err(CanisterError::ValidationErrors)?;
+            LinkStateMachineGoto::from_string(&go_to).map_err(CanisterError::ValidationErrors)?;
 
         // if params is None, all params are None
         // some goto not required params like Back
@@ -1474,7 +1469,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             let (template, link_type) = self.prefetch_template(&params)?;
 
             if self.is_props_changed(
-                vec![
+                &[
                     "title".to_string(),
                     "template".to_string(),
                     "link_type".to_string(),
@@ -1515,7 +1510,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 self.prefetch_params_add_asset(&params)?;
 
             if self.is_props_changed(
-                vec![
+                &[
                     "link_use_action_max_count".to_string(),
                     "asset_info".to_string(),
                 ],
@@ -1560,7 +1555,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
         } else if link.state == LinkState::Preview {
-            if self.is_props_changed(vec![], &params, &link) {
+            if self.is_props_changed(&[], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
                     "[Preview] Link properties are not allowed to change".to_string(),
                 ));
@@ -1611,7 +1606,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
         } else if link.state == LinkState::Active {
-            if self.is_props_changed(vec![], &params, &link) {
+            if self.is_props_changed(&[], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
                     "[Active] Link properties are not allowed to change".to_string(),
                 ));
@@ -1631,7 +1626,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 ));
             }
         } else if link.state == LinkState::Inactive {
-            if self.is_props_changed(vec![], &params, &link) {
+            if self.is_props_changed(&[], &params, &link) {
                 return Err(CanisterError::ValidationErrors(
                     "[Inactive] Link properties are not allowed to change".to_string(),
                 ));
@@ -1676,14 +1671,10 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     }
 
     /// Create a new link
-    pub fn create_new(
-        &self,
-        caller: String,
-        input: crate::core::link::types::CreateLinkInput,
-    ) -> Result<String, String> {
+    pub fn create_new(&self, caller: &str, input: &CreateLinkInput) -> Result<String, String> {
         let user_wallet = self
             .user_wallet_repository
-            .get(&caller)
+            .get(caller)
             .ok_or_else(|| "User not found".to_string())?;
 
         let user_id = user_wallet.user_id;
@@ -1776,11 +1767,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         };
 
         let result = self
-            .handle_link_state_transition(
-                &link_id_str,
-                "Continue".to_string(),
-                Some(choose_link_type_params),
-            )
+            .handle_link_state_transition(&link_id_str, "Continue", Some(choose_link_type_params))
             .await;
 
         if result.is_err() {
@@ -1807,11 +1794,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         };
 
         let result = self
-            .handle_link_state_transition(
-                &link_id_str,
-                "Continue".to_string(),
-                Some(add_assets_params),
-            )
+            .handle_link_state_transition(&link_id_str, "Continue", Some(add_assets_params))
             .await;
 
         if result.is_err() {
@@ -1837,11 +1820,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         };
 
         let result = self
-            .handle_link_state_transition(
-                &link_id_str,
-                "Continue".to_string(),
-                Some(add_assets_params),
-            )
+            .handle_link_state_transition(&link_id_str, "Continue", Some(add_assets_params))
             .await;
 
         if result.is_err() {
@@ -1861,17 +1840,17 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     /// Get links by principal
     pub fn get_links_by_principal(
         &self,
-        principal: String,
-        pagination: PaginateInput,
+        principal: &str,
+        pagination: &PaginateInput,
     ) -> Result<PaginateResult<Link>, String> {
         let user_wallet = self
             .user_wallet_repository
-            .get(&principal)
+            .get(principal)
             .ok_or_else(|| "User not found".to_string())?;
 
         let user_id = user_wallet.user_id;
 
-        let links = match self.get_links_by_user_id(user_id, pagination) {
+        let links = match self.get_links_by_user_id(&user_id, pagination) {
             Ok(link_users) => link_users,
             Err(e) => return Err(e),
         };
@@ -1882,8 +1861,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     /// Get links by user ID
     pub fn get_links_by_user_id(
         &self,
-        user_id: String,
-        pagination: PaginateInput,
+        user_id: &str,
+        pagination: &PaginateInput,
     ) -> Result<PaginateResult<Link>, String> {
         let user_links = self
             .user_link_repository
@@ -1904,9 +1883,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     /// Get link action
     pub fn get_link_action(
         &self,
-        link_id: String,
-        action_type: String,
-        user_id: String,
+        link_id: &str,
+        action_type: &str,
+        user_id: &str,
     ) -> Option<Action> {
         let link_actions = self
             .link_action_repository
@@ -1915,12 +1894,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         link_actions
             .first()
             .map(|link_action| link_action.action_id.clone())
-            .and_then(|action_id| self.action_repository.get(action_id))
+            .and_then(|action_id| self.action_repository.get(&action_id))
     }
 
     /// Check if caller is the creator of a link
-    pub fn is_link_creator(&self, caller: &str, link_id: &String) -> bool {
-        let user_wallet = match self.user_wallet_repository.get(&caller.to_string()) {
+    pub fn is_link_creator(&self, caller: &str, link_id: &str) -> bool {
+        let user_wallet = match self.user_wallet_repository.get(caller) {
             Some(u) => u,
             None => {
                 warn!("User not found");
@@ -1928,7 +1907,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
         };
 
-        match self.link_repository.get(link_id) {
+        match self.link_repository.get(&link_id.to_string()) {
             None => false,
             Some(link_detail) => link_detail.creator == user_wallet.user_id,
         }

@@ -42,7 +42,7 @@ impl UserLinkRepository {
         });
     }
 
-    pub fn get(&self, id: UserLinkKey) -> Option<UserLink> {
+    pub fn get(&self, id: &UserLinkKey) -> Option<UserLink> {
         USER_LINK_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
@@ -56,12 +56,12 @@ impl UserLinkRepository {
 
     pub fn get_links_by_user_id(
         &self,
-        user_id: String,
-        paginate: PaginateInput,
+        user_id: &str,
+        paginate: &PaginateInput,
     ) -> PaginateResult<UserLink> {
         USER_LINK_STORE.with_borrow(|store| {
             let user_link_key = UserLinkKey {
-                user_id: user_id.clone(),
+                user_id: user_id.to_string(),
                 link_id: "".to_string(),
             };
 

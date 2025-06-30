@@ -26,8 +26,8 @@ impl ActionRepository {
         });
     }
 
-    pub fn get(&self, action_id: ActionKey) -> Option<Action> {
-        ACTION_STORE.with_borrow(|store| store.get(&action_id))
+    pub fn get(&self, action_id: &str) -> Option<Action> {
+        ACTION_STORE.with_borrow(|store| store.get(&action_id.to_string()))
     }
 
     pub fn batch_get(&self, ids: Vec<ActionKey>) -> Vec<Action> {

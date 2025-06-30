@@ -1,10 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use candid::{types::principal::PrincipalError, CandidType, Principal};
 use icrc_ledger_types::icrc1::account::{Account, ICRC1TextReprError};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
@@ -39,9 +39,11 @@ impl Chain {
             Chain::IC => "IC",
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
+impl fmt::Display for Chain {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }
 

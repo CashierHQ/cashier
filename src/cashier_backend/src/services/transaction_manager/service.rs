@@ -98,7 +98,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         let mut intent_tx_ids_hashmap: HashMap<String, Vec<String>> = HashMap::new();
 
         // check action id
-        let action = self.action_service.get_action_by_id(temp_action.id.clone());
+        let action = self.action_service.get_action_by_id(&temp_action.id);
         if action.is_some() {
             return Err(CanisterError::HandleLogicError(
                 "Action already exists".to_string(),
@@ -185,7 +185,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         Ok(ActionDto::from_with_tx(
             temp_action.as_action(),
             temp_action.intents.clone(),
-            intent_tx_hashmap,
+            &intent_tx_hashmap,
         ))
     }
     /// Execute a transaction by ID
@@ -205,9 +205,8 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             let is_all_dependencies_success = self.is_all_depdendency_success(tx, true)?;
 
             if is_all_dependencies_success {
-                let action_belong = self.action_service.get_action_by_tx_id(tx.id.clone())?;
-                let (intent_belong, txs) =
-                    action_belong.get_intent_and_txs_by_its_tx_id(tx.id.clone())?;
+                let action_belong = self.action_service.get_action_by_tx_id(&tx.id)?;
+                let (intent_belong, txs) = action_belong.get_intent_and_txs_by_its_tx_id(&tx.id)?;
 
                 // Execute the transaction
                 match self.execute_transaction(tx).await {
@@ -288,7 +287,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         &self,
         tx: &Icrc2TransferFrom,
     ) -> Result<(), CanisterError> {
-        let mut args: TransferFromArgs =
+        let args: TransferFromArgs =
             TransferFromArgs::try_from(tx.clone()).map_err(CanisterError::HandleLogicError)?;
 
         // get asset
@@ -303,7 +302,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     }
 
     pub async fn execute_icrc1_transfer(&self, tx: &Icrc1Transfer) -> Result<(), CanisterError> {
-        let mut args: TransferArg =
+        let args: TransferArg =
             TransferArg::try_from(tx.clone()).map_err(CanisterError::HandleLogicError)?;
 
         // get asset
@@ -353,7 +352,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     ) -> Result<bool, CanisterError> {
         let action = self
             .action_service
-            .get_action_by_tx_id(transaction.id.clone())
+            .get_action_by_tx_id(&transaction.id)
             .map_err(|e| {
                 CanisterError::NotFound(format!("Error getting action by tx id: {}", e))
             })?;
@@ -399,7 +398,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             Some(dependencies) => {
                 let txs = self
                     .transaction_service
-                    .batch_get(dependencies.clone())
+                    .batch_get(dependencies)
                     .map_err(|e| {
                         CanisterError::NotFound(format!("Error getting dependencies: {}", e))
                     })?;
@@ -643,14 +642,12 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
             let _ = self.transaction_service.update_tx_state(&mut tx, &state);
 
-            self.action_service
-                .roll_up_state(tx.id.clone())
-                .map_err(|e| {
-                    CanisterError::HandleLogicError(format!(
-                        "Failed to roll up state for action: {}",
-                        e
-                    ))
-                })?;
+            self.action_service.roll_up_state(&tx.id).map_err(|e| {
+                CanisterError::HandleLogicError(format!(
+                    "Failed to roll up state for action: {}",
+                    e
+                ))
+            })?;
 
             Ok(())
         } else {
@@ -681,7 +678,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
         let action_data = self
             .action_service
-            .get_action_data(args.action_id.clone())
+            .get_action_data(&args.action_id)
             .map_err(CanisterError::NotFound)?;
 
         let mut txs = utils::collections::flatten_hashmap_values(&action_data.intent_txs);
@@ -722,7 +719,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         // - if tx is grouped into a batch ICRC-112, dependency between txs in the batch is ignored during eligibility check
         // - if tx is gropued into a batch ICRC-112, tx is only eligible if all other tx in batch have no dependencies (so that al txs can be executed in batch together)
         // - if execute_wallet_tx = fase, all tx grouped into a batach ICRC-112 are not eligible. client calls update_action with this arg to relay ICRC-112 reponse to tx manager, so we don't want to execute wallet tx again.
-        let all_txs = match self.action_service.get_action_data(args.action_id.clone()) {
+        let all_txs = match self.action_service.get_action_data(&args.action_id) {
             Ok(action_data) => utils::collections::flatten_hashmap_values(&action_data.intent_txs),
             Err(e) => {
                 return Err(CanisterError::InvalidDataError(e));
@@ -830,7 +827,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 
         let action_data: ActionData = self
             .action_service
-            .get_action_data(args.action_id.clone())
+            .get_action_data(&args.action_id)
             .map_err(|e| CanisterError::InvalidDataError(format!("Error getting action: {}", e)))?;
 
         let action_dto = ActionDto::build(&action_data, request);
@@ -852,15 +849,9 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         info!("Updating transaction state: {} to {:?}", tx.id, state);
         self.transaction_service.update_tx_state(tx, state)?;
         // roll up
-        let roll_up_resp = self
-            .action_service
-            .roll_up_state(tx.id.clone())
-            .map_err(|e| {
-                CanisterError::HandleLogicError(format!(
-                    "Failed to roll up state for action: {}",
-                    e
-                ))
-            })?;
+        let roll_up_resp = self.action_service.roll_up_state(&tx.id).map_err(|e| {
+            CanisterError::HandleLogicError(format!("Failed to roll up state for action: {}", e))
+        })?;
 
         // Pass the action state info to link_handle_tx_update
         self.link_service.link_handle_tx_update(

@@ -45,7 +45,7 @@ impl From<(ActionData, ActionState)> for RollUpStateResp {
 impl ActionData {
     pub fn get_intent_and_txs_by_its_tx_id(
         &self,
-        tx_id: String,
+        tx_id: &str,
     ) -> Result<(Intent, Vec<Transaction>), String> {
         for (intent_id, txs) in &self.intent_txs {
             for tx in txs {
@@ -84,7 +84,7 @@ impl ActionData {
         let (group_index, id_index) = self.flatten_intent_txs();
 
         let group_key = id_index
-            .get(&tx_id.to_string())
+            .get(tx_id)
             .ok_or_else(|| format!("Transaction with id {} not found in intent_txs", tx_id))?;
 
         group_index.get(group_key).cloned().ok_or_else(|| {
