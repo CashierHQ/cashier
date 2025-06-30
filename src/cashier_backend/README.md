@@ -113,3 +113,198 @@ user_wallet_repo.create(user_wallet);
 let intent_tx = IntentTransaction { intent_id, transaction_id };
 intent_transaction_repo.create(intent_tx);
 ```
+
+# Service Layer
+
+The service layer implements the business logic and orchestrates operations across the Cashier backend. It follows the Domain-Driven Design (DDD) pattern, separating concerns into distinct services that handle specific business domains while coordinating complex workflows.
+
+## Architecture Overview
+
+The service layer sits between the API endpoints and the repository layer, providing:
+
+-   **Business Logic Implementation** - Core application rules and workflows
+-   **Transaction Orchestration** - Complex multi-step operations with proper error handling
+-   **Cross-Domain Coordination** - Services that work together to achieve business goals
+-   **External Integration** - Adapters for blockchain and external service interactions
+
+## Core Services
+
+### User Service
+
+Manages user lifecycle, authentication, and wallet associations.
+
+**Key Operations:**
+
+-   `create_new()` - Creates new users with wallet linking
+-   `get()` - Retrieves user profile with wallet information
+-   `is_existed()` - Checks user existence by wallet address
+
+**Features:**
+
+-   Automatic wallet-to-user mapping using IC caller principal
+-   UUID-based user identification
+-   Email integration support
+
+### Transaction Service
+
+Handles transaction lifecycle, state management, and blockchain interactions.
+
+**Key Operations:**
+
+-   `update_tx_state()` - Manages transaction state transitions
+-   `get_tx_by_id()` / `batch_get()` - Transaction retrieval
+-   `convert_tx_to_icrc_112_request()` - Blockchain transaction formatting
+
+**Features:**
+
+-   State machine implementation for transaction lifecycle
+-   Timeout tracking with automatic state updates
+-   ICRC-1/ICRC-2 transaction support
+-   Batch processing capabilities
+
+### Action Service
+
+Orchestrates complex actions that span multiple intents and transactions.
+
+**Key Operations:**
+
+-   `get_action_data()` - Retrieves complete action with related data
+-   Action-Intent-Transaction relationship management
+-   Cross-entity data aggregation
+
+**Features:**
+
+-   Domain logic integration via `ActionDomainLogic`
+-   Hierarchical data retrieval (Actions → Intents → Transactions)
+-   Repository coordination across multiple entities
+
+### Transaction Manager Service
+
+The central orchestrator for complex multi-chain, multi-step operations.
+
+**Key Operations:**
+
+-   `create_action()` - Assembles complete actions from temporary definitions
+-   `assemble_txs()` - Converts intents to blockchain transactions
+-   Dependency management between related transactions
+
+**Features:**
+
+-   Intent-to-transaction adaptation via chain-specific adapters
+-   Dependency resolution and ordering
+-   Cross-chain transaction coordination
+-   Error handling and rollback capabilities
+
+### Link Service
+
+Manages shareable payment links and their associated actions.
+
+**Features:**
+
+-   Link creation and management
+-   Action-link associations
+-   Access control and sharing mechanisms
+
+## Adapter Pattern Implementation
+
+### Intent Adapters
+
+Transform high-level intents into blockchain-specific transactions.
+
+**Chain-Specific Adapters:**
+
+-   `IcIntentAdapter` - Internet Computer specific transaction generation
+-   Extensible design for additional blockchain support
+
+**Key Features:**
+
+-   Chain abstraction for multi-blockchain support
+-   Intent-to-transaction conversion
+-   Protocol-specific transaction formatting
+
+### Action Adapters
+
+Convert user actions into executable intents.
+
+**Features:**
+
+-   Action-to-intent transformation
+-   Link type and action type coordination
+-   Business rule application during conversion
+
+## External Service Integration
+
+### ICRC Services
+
+Handles interaction with ICRC token standards on the Internet Computer.
+
+**Components:**
+
+-   `icrc_token.rs` - Token metadata and operations
+-   `icrc_batch.rs` - Batch transaction processing
+
+**Features:**
+
+-   ICRC-1 transfer operations
+-   ICRC-2 approve/transfer-from patterns
+-   Batch transaction optimization
+
+### Request Lock Service
+
+Implements distributed locking for concurrent request handling.
+
+**Features:**
+
+-   Prevents double-spending and race conditions
+-   Request deduplication
+-   Timeout-based lock cleanup
+
+## Service Composition Patterns
+
+### Dependency Injection
+
+Services use constructor injection for dependencies:
+
+```rust
+impl TransactionManagerService<E> {
+    pub fn new(
+        transaction_service: TransactionService<E>,
+        action_service: ActionService,
+        // ... other dependencies
+    ) -> Self
+}
+```
+
+### Factory Pattern
+
+Services provide `get_instance()` methods for default configurations:
+
+```rust
+pub fn get_instance() -> Self {
+    Self::new(
+        TransactionService::get_instance(),
+        ActionService::get_instance(),
+        // ... default implementations
+    )
+}
+```
+
+### Environment Abstraction
+
+Generic over environment types for testing and runtime flexibility:
+
+```rust
+pub struct TransactionService<E: IcEnvironment + Clone> {
+    ic_env: E,
+    // ... other fields
+}
+```
+
+## Error Handling Strategy
+
+The service layer implements comprehensive error handling:
+
+-   **Domain-Specific Errors** - Business logic violations
+-   **Not Found Errors** - Missing entity handling
+-   **Validation Errors** - Input validation failures
+-   **External Service Errors** - Blockchain interaction failures

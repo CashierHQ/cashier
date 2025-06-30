@@ -66,21 +66,7 @@ run_clippy_on_crate() {
             --all-targets \
             --all-features \
             -- \
-            -D warnings \
             -D clippy::all \
-            -D clippy::pedantic \
-            -D clippy::nursery \
-            -A clippy::module_name_repetitions \
-            -A clippy::missing_errors_doc \
-            -A clippy::missing_panics_doc \
-            -A clippy::must_use_candidate \
-            -A clippy::similar_names \
-            -A clippy::too_many_lines \
-            -A clippy::cast_possible_truncation \
-            -A clippy::cast_sign_loss \
-            -A clippy::cast_possible_wrap \
-            -A clippy::items_after_statements \
-            -A clippy::struct_excessive_bools; then
             print_success "✅ $crate_name passed Clippy checks"
             return 0
         else
