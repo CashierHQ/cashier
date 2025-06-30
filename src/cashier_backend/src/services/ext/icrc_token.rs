@@ -494,10 +494,8 @@ pub struct SupportedBlockType {
     pub block_type: String,
 }
 
-#[cfg_attr(test, faux::create)]
 pub struct Service(pub Principal);
 
-#[cfg_attr(test, faux::methods)]
 impl Service {
     pub fn new(canister_id: Principal) -> Self {
         Self(canister_id)

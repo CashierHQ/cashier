@@ -5,12 +5,10 @@ use cashier_types::{intent_transaction::v1::IntentTransaction, keys::IntentTrans
 
 use super::INTENT_TRANSACTION_STORE;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct IntentTransactionRepository {}
 
-#[cfg_attr(test, faux::methods)]
 impl Default for IntentTransactionRepository {
     fn default() -> Self {
         Self::new()

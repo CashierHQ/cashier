@@ -4,12 +4,10 @@
 use super::USER_WALLET_STORE;
 use cashier_types::{keys::UserWalletKey, user_wallet::v1::UserWallet};
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct UserWalletRepository {}
 
-#[cfg_attr(test, faux::methods)]
 impl Default for UserWalletRepository {
     fn default() -> Self {
         Self::new()

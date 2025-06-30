@@ -6,12 +6,10 @@ use cashier_types::{keys::RequestLockKey, request_lock::RequestLock};
 
 use crate::{repositories::request_lock::RequestLockRepository, types::error::CanisterError};
 
-#[cfg_attr(test, faux::create)]
 pub struct RequestLockService {
     request_lock_repository: RequestLockRepository,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl RequestLockService {
     pub fn new(request_lock_repository: RequestLockRepository) -> Self {
         Self {

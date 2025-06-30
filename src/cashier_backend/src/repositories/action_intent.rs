@@ -5,10 +5,8 @@ use cashier_types::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
 
 use super::ACTION_INTENT_STORE;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct ActionIntentRepository {}
-#[cfg_attr(test, faux::methods)]
 
 impl Default for ActionIntentRepository {
     fn default() -> Self {

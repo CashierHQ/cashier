@@ -18,11 +18,9 @@ use crate::{
     types::error::{CanisterError, DisplayRejectionCode},
 };
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct IcrcService {}
 
-#[cfg_attr(test, faux::methods)]
 impl Default for IcrcService {
     fn default() -> Self {
         Self::new()

@@ -20,14 +20,12 @@ use icrc_ledger_types::{
     icrc2::approve::ApproveArgs,
 };
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct TransactionService<E: IcEnvironment + Clone> {
     transaction_repository: TransactionRepository,
     ic_env: E,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> TransactionService<E> {
     pub fn new(transaction_repository: TransactionRepository, ic_env: E) -> Self {
         Self {

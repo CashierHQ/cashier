@@ -43,7 +43,6 @@ use crate::{
     warn,
 };
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct LinkService<E: IcEnvironment + Clone> {
     // LinkService fields go here
@@ -56,7 +55,6 @@ pub struct LinkService<E: IcEnvironment + Clone> {
     ic_env: E,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> LinkService<E> {
     pub fn new(
         link_repository: repositories::link::LinkRepository,

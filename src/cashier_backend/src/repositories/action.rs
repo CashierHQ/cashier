@@ -5,11 +5,9 @@ use cashier_types::{action::v1::Action, keys::ActionKey};
 
 use crate::repositories::ACTION_STORE;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct ActionRepository {}
 
-#[cfg_attr(test, faux::methods)]
 impl Default for ActionRepository {
     fn default() -> Self {
         Self::new()

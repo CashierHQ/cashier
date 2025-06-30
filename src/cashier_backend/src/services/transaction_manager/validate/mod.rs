@@ -4,13 +4,11 @@
 
 use crate::repositories::{action, user_wallet};
 
-#[cfg_attr(test, faux::create)]
 pub struct ValidateService {
     user_wallet_repository: user_wallet::UserWalletRepository,
     action_repository: action::ActionRepository,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl ValidateService {
     pub fn get_instance() -> Self {
         ValidateService::new(

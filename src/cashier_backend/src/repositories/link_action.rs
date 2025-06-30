@@ -7,12 +7,10 @@ use cashier_types::{
     link_action::v1::LinkAction,
 };
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct LinkActionRepository {}
 
-#[cfg_attr(test, faux::methods)]
 impl Default for LinkActionRepository {
     fn default() -> Self {
         Self::new()

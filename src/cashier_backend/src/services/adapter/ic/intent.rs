@@ -17,13 +17,11 @@ use crate::{
     utils::{helper::to_memo, runtime::IcEnvironment},
 };
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct IcIntentAdapter<E: IcEnvironment + Clone> {
     pub ic_env: E,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl<'a, E: IcEnvironment + Clone> Default for IcIntentAdapter<E> {
     fn default() -> Self {
         Self::new()
@@ -171,7 +169,6 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     }
 }
 
-#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
     fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
         match (intent.task.clone(), intent.r#type.clone()) {

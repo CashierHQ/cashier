@@ -40,7 +40,6 @@ use crate::{
     warn,
 };
 
-#[cfg_attr(test, faux::create)]
 pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     transaction_service: TransactionService<E>,
     action_service: ActionService,
@@ -52,7 +51,6 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     link_service: LinkService<E>,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
         transaction_service: TransactionService<E>,

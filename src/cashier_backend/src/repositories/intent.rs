@@ -5,12 +5,10 @@ use cashier_types::intent::v2::Intent;
 
 use crate::repositories::INTENT_STORE;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct IntentRepository {}
 
-#[cfg_attr(test, faux::methods)]
 impl Default for IntentRepository {
     fn default() -> Self {
         Self::new()

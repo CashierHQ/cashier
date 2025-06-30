@@ -5,12 +5,10 @@ use super::USER_LINK_STORE;
 use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
 use cashier_types::{keys::UserLinkKey, user_link::v1::UserLink};
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct UserLinkRepository {}
 
-#[cfg_attr(test, faux::methods)]
 impl Default for UserLinkRepository {
     fn default() -> Self {
         Self::new()

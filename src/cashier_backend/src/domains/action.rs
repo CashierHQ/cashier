@@ -11,11 +11,9 @@ use cashier_types::{
 
 use crate::types::error::CanisterError;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct ActionDomainLogic {}
 
-#[cfg_attr(test, faux::methods)]
 // Domain logic for business rules related to actions
 impl Default for ActionDomainLogic {
     fn default() -> Self {
