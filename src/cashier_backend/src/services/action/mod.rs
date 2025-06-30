@@ -15,24 +15,6 @@ use cashier_types::{
     transaction::v2::Transaction,
 };
 
-pub fn get_intents_by_action_id(action_id: String) -> Vec<Intent> {
-    let action_intent_reposiroty = repositories::action_intent::ActionIntentRepository::new();
-    let intent_repository = repositories::intent::IntentRepository::new();
-    let action_intents = action_intent_reposiroty.get_by_action_id(action_id);
-
-    let intent_ids = action_intents
-        .iter()
-        .map(|action_intent| action_intent.intent_id.clone())
-        .collect();
-
-    intent_repository.batch_get(intent_ids)
-}
-
-pub fn is_action_exist(action_id: String) -> bool {
-    let action_repository = repositories::action::ActionRepository::new();
-    action_repository.get(action_id).is_some()
-}
-
 use std::collections::HashMap;
 
 pub struct ActionService {
@@ -83,31 +65,29 @@ impl ActionService {
         )
     }
 
-    pub fn get_action_data(&self, action_id: String) -> Result<ActionData, String> {
+    pub fn get_action_data(&self, action_id: &str) -> Result<ActionData, String> {
         let action = self
             .action_repository
-            .get(action_id.clone())
+            .get(action_id)
             .ok_or_else(|| "action not found".to_string())?;
 
-        let all_intents = self.action_intent_repository.get_by_action_id(action_id);
+        let all_intents = self.action_intent_repository.get_by_action_id(&action_id);
 
-        let intents = all_intents
+        let intents: Vec<Intent> = all_intents
             .iter()
-            .map(|action_intent| {
-                let intent = self
-                    .intent_repository
-                    .get(action_intent.intent_id.clone())
-                    .unwrap();
-                intent
+            .map(|ai| {
+                self.intent_repository
+                    .get(&ai.intent_id)
+                    .ok_or_else(|| format!("intent not found: {}", ai.intent_id))
             })
-            .collect();
+            .collect::<Result<_, _>>()?;
 
         let mut intent_txs_hashmap = HashMap::new();
 
         for action_intent in all_intents {
             let intent_transactions = self
                 .intent_transaction_repository
-                .get_by_intent_id(action_intent.intent_id.clone());
+                .get_by_intent_id(&action_intent.intent_id);
 
             let mut txs = vec![];
             for intent_tx in intent_transactions {
@@ -128,11 +108,11 @@ impl ActionService {
         })
     }
 
-    pub fn get_action_by_id(&self, action_id: String) -> Option<Action> {
+    pub fn get_action_by_id(&self, action_id: &str) -> Option<Action> {
         self.action_repository.get(action_id)
     }
 
-    pub fn get_action_by_tx_id(&self, tx_id: String) -> Result<ActionData, String> {
+    pub fn get_action_by_tx_id(&self, tx_id: &str) -> Result<ActionData, String> {
         let get_intent_tx_res = self
             .intent_transaction_repository
             .get_by_transaction_id(tx_id);
@@ -141,15 +121,13 @@ impl ActionService {
             .ok_or("intent_transaction not found")?;
         let intent_id = intent_tx_belong.intent_id.clone();
 
-        let get_action_intent_res = self.action_intent_repository.get_by_intent_id(intent_id);
+        let get_action_intent_res = self.action_intent_repository.get_by_intent_id(&intent_id);
 
         let action_intent = get_action_intent_res
             .first()
             .ok_or("action_intent not found")?;
 
-        let action_id = action_intent.action_id.clone();
-
-        self.get_action_data(action_id)
+        self.get_action_data(&action_intent.action_id)
     }
 
     /// Rolls up and updates the state of an action and its associated intents based on a given transaction ID.
@@ -171,7 +149,7 @@ impl ActionService {
     /// # State Changes
     /// - Updates intent states in the intent repository
     /// - Updates action state in the action repository
-    pub fn roll_up_state(&self, tx_id: String) -> Result<RollUpStateResp, String> {
+    pub fn roll_up_state(&self, tx_id: &str) -> Result<RollUpStateResp, String> {
         let action_data = self
             .get_action_by_tx_id(tx_id)
             .map_err(|e| format!("get_action_by_tx_id failed: {}", e))?;
@@ -183,7 +161,9 @@ impl ActionService {
         let mut action = action_data.action;
 
         for intent in &mut intents {
-            let txs = intent_txs.get(&intent.id).unwrap();
+            let txs = intent_txs
+                .get(&intent.id)
+                .ok_or_else(|| format!("intent_txs not found for intent: {}", intent.id))?;
             let intent_state = self.domain_logic.roll_up_intent_state(txs);
             intent.state = intent_state;
         }
@@ -235,7 +215,7 @@ impl ActionService {
         }
 
         let user_action = UserAction {
-            user_id: user_id.to_string(),
+            user_id,
             action_id: action.id.clone(),
         };
 
@@ -249,5 +229,18 @@ impl ActionService {
         self.transaction_repository.batch_create(transactions);
 
         Ok(())
+    }
+
+    pub fn get_intents_by_action_id(&self, action_id: &str) -> Vec<Intent> {
+        let action_intent_reposiroty = repositories::action_intent::ActionIntentRepository::new();
+        let intent_repository = repositories::intent::IntentRepository::new();
+        let action_intents = action_intent_reposiroty.get_by_action_id(action_id);
+
+        let intent_ids = action_intents
+            .iter()
+            .map(|action_intent| action_intent.intent_id.clone())
+            .collect();
+
+        intent_repository.batch_get(intent_ids)
     }
 }

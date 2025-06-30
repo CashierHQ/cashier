@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use cashier_types::{
     intent::v2::{Intent, IntentTask, IntentType, TransferData, TransferFromData},
     transaction::v2::{
@@ -17,13 +16,17 @@ use crate::{
     utils::{helper::to_memo, runtime::IcEnvironment},
 };
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct IcIntentAdapter<E: IcEnvironment + Clone> {
     pub ic_env: E,
 }
 
-#[cfg_attr(test, faux::methods)]
+impl<'a, E: IcEnvironment + Clone> Default for IcIntentAdapter<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     pub fn new() -> Self {
         Self { ic_env: E::new() }
@@ -36,13 +39,15 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
         let id: Uuid = Uuid::new_v4();
         let ts = self.ic_env.time();
 
+        let memo = to_memo(&id.to_string())?;
+
         let icrc1_transfer = Icrc1Transfer {
             from: transfer_intent.from,
             to: transfer_intent.to,
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
             ts: Some(ts),
-            memo: Some(to_memo(&id.to_string())),
+            memo: Some(memo),
         };
 
         let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
@@ -88,12 +93,14 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
             ));
         }
 
+        let memo = to_memo(&approve_id.to_string())?;
+
         let icrc2_approve = Icrc2Approve {
             from: transfer_intent.from.clone(),
             spender: transfer_intent.spender.clone(),
             asset: transfer_intent.asset.clone(),
             amount: approve_amount,
-            memo: Some(to_memo(&approve_id.to_string())),
+            memo: Some(memo),
         };
 
         let ic_approve_tx = IcTransaction::Icrc2Approve(icrc2_approve);
@@ -109,6 +116,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
         };
 
         let transfer_id = Uuid::new_v4();
+        let transfer_memo = to_memo(&transfer_id.to_string())?;
         let icrc2_transfer_from = Icrc2TransferFrom {
             from: transfer_intent.from,
             to: transfer_intent.to,
@@ -116,7 +124,7 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
             asset: transfer_intent.asset,
             amount: transfer_from_amount,
             ts: Some(ts),
-            memo: Some(to_memo(&transfer_id.to_string())),
+            memo: Some(transfer_memo),
         };
         let ic_transfer_from_tx = IcTransaction::Icrc2TransferFrom(icrc2_transfer_from);
         let transfer_from_tx = Transaction {
@@ -140,13 +148,15 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
         let id: Uuid = Uuid::new_v4();
         let ts = self.ic_env.time();
 
+        let memo = to_memo(&id.to_string())?;
+
         let icrc1_transfer = Icrc1Transfer {
             from: transfer_intent.from,
             to: transfer_intent.to,
             asset: transfer_intent.asset,
             amount: transfer_intent.amount,
             ts: Some(ts),
-            memo: Some(to_memo(&id.to_string())),
+            memo: Some(memo),
         };
 
         let ic_transaction = IcTransaction::Icrc1Transfer(icrc1_transfer);
@@ -165,7 +175,6 @@ impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     }
 }
 
-#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
     fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
         match (intent.task.clone(), intent.r#type.clone()) {
@@ -178,11 +187,9 @@ impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
             (IntentTask::TransferLinkToWallet, IntentType::Transfer(transfer_intent)) => {
                 self.assemble_icrc1_canister_transfer(transfer_intent)
             }
-            _ => {
-                return Err(CanisterError::InvalidInput(
-                    "Unsupported intent task or type".to_string(),
-                ));
-            }
+            _ => Err(CanisterError::InvalidInput(
+                "Unsupported intent task or type".to_string(),
+            )),
         }
     }
 }

@@ -84,7 +84,7 @@ impl From<AddTokenItem> for RegisterTokenInput {
     fn from(item: AddTokenItem) -> Self {
         let id = format!("{}:{}", item.chain, item.ledger_id.unwrap());
         Self {
-            id: id,
+            id,
             chain: item.chain,
             ledger_id: item.ledger_id,
             index_id: item.index_id,

@@ -1,9 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::str::FromStr;
 
 #[derive(Debug, Clone)]
@@ -54,10 +54,6 @@ impl ActionType {
             ActionType::Claim => "Use",
         }
     }
-
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
-    }
 }
 
 impl FromStr for ActionType {
@@ -83,10 +79,6 @@ impl ActionState {
             ActionState::Fail => "Action_state_fail",
         }
     }
-
-    pub fn to_string(&self) -> String {
-        self.to_str().to_string()
-    }
 }
 
 impl FromStr for ActionState {
@@ -100,5 +92,17 @@ impl FromStr for ActionState {
             "Action_state_fail" => Ok(ActionState::Fail),
             _ => Err(()),
         }
+    }
+}
+
+impl fmt::Display for ActionType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
+}
+
+impl fmt::Display for ActionState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
     }
 }

@@ -3,5 +3,4 @@
 
 pub mod versioned_to_normal_migration;
 
-use candid::CandidType;
 pub use versioned_to_normal_migration::*;

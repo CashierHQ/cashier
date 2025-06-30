@@ -4,6 +4,7 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
+#![allow(deprecated)]
 use candid::{self, CandidType, Deserialize, Principal};
 use core::fmt;
 use ic_cdk::api::call::CallResult as Result;
@@ -494,10 +495,8 @@ pub struct SupportedBlockType {
     pub block_type: String,
 }
 
-#[cfg_attr(test, faux::create)]
 pub struct Service(pub Principal);
 
-#[cfg_attr(test, faux::methods)]
 impl Service {
     pub fn new(canister_id: Principal) -> Self {
         Self(canister_id)

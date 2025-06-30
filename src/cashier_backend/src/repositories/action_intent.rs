@@ -5,10 +5,14 @@ use cashier_types::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
 
 use super::ACTION_INTENT_STORE;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct ActionIntentRepository {}
-#[cfg_attr(test, faux::methods)]
+
+impl Default for ActionIntentRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ActionIntentRepository {
     pub fn new() -> Self {
@@ -41,18 +45,18 @@ impl ActionIntentRepository {
         });
     }
 
-    pub fn get(&self, action_intent_key: ActionIntentKey) -> Option<ActionIntent> {
+    pub fn get(&self, action_intent_key: &ActionIntentKey) -> Option<ActionIntent> {
         ACTION_INTENT_STORE.with_borrow(|store| store.get(&action_intent_key.to_str()))
     }
 
-    pub fn get_by_action_id(&self, action_id: String) -> Vec<ActionIntent> {
+    pub fn get_by_action_id(&self, action_id: &str) -> Vec<ActionIntent> {
         ACTION_INTENT_STORE.with_borrow(|store| {
             let key = ActionIntentKey {
-                action_id: action_id.clone(),
+                action_id: action_id.to_string(),
                 intent_id: "".to_string(),
             };
 
-            let prefix = key.to_str().clone();
+            let prefix = key.to_str();
 
             let action_intents = store
                 .range(prefix.clone()..)
@@ -60,15 +64,15 @@ impl ActionIntentRepository {
                 .map(|(_, action_intent)| action_intent)
                 .collect();
 
-            return action_intents;
+            action_intents
         })
     }
 
-    pub fn get_by_intent_id(&self, intent_id: String) -> Vec<ActionIntent> {
+    pub fn get_by_intent_id(&self, intent_id: &str) -> Vec<ActionIntent> {
         ACTION_INTENT_STORE.with_borrow(|store| {
             let key = ActionIntentKey {
                 action_id: "".to_string(),
-                intent_id: intent_id.clone(),
+                intent_id: intent_id.to_string(),
             };
 
             let prefix = key.to_str_reverse();

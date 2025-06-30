@@ -7,6 +7,12 @@ use super::REQUEST_LOCK_STORE;
 
 pub struct RequestLockRepository {}
 
+impl Default for RequestLockRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RequestLockRepository {
     pub fn new() -> Self {
         Self {}
