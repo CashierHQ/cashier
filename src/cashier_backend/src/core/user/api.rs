@@ -10,11 +10,8 @@ use super::types::UserDto;
 
 #[update(guard = "is_not_anonymous")]
 fn create_user() -> Result<UserDto, String> {
-    let user = services::user::create_new();
-    match user {
-        Ok(user) => Ok(user),
-        Err(e) => Err(e),
-    }
+    
+    services::user::create_new()
 }
 
 #[query(guard = "is_not_anonymous")]

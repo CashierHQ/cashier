@@ -131,10 +131,7 @@ pub enum MetadataValue {
 
 impl ActionDto {
     pub fn from(action: Action, intents: Vec<Intent>) -> Self {
-        let intents_dto = intents
-            .into_iter()
-            .map(|intent| IntentDto::from(intent))
-            .collect();
+        let intents_dto = intents.into_iter().map(IntentDto::from).collect();
         Self {
             id: action.id,
             r#type: action.r#type.to_string(),
@@ -148,7 +145,7 @@ impl ActionDto {
     pub fn from_with_tx(
         action: Action,
         intents: Vec<Intent>,
-        tx_intent_hashmap: HashMap<String, Vec<Transaction>>,
+        tx_intent_hashmap: &HashMap<String, Vec<Transaction>>,
     ) -> Self {
         let intents_dto = intents
             .into_iter()
@@ -177,7 +174,7 @@ impl ActionDto {
     }
 
     pub fn build(action_data: &ActionData, icrc_112_requests: Option<Icrc112Requests>) -> Self {
-        let intents = action_data.clone().intents.clone();
+        let intents = action_data.clone().intents;
 
         let intents_dto = intents
             .into_iter()

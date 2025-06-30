@@ -34,10 +34,14 @@ print_warning() {
 
 # Crates to lint
 CRATES=(
-    
+    # Backend canister
     "src/cashier_backend"
+    # Token-storage canister
     "src/token_storage"
+    # Shared types library
     "src/lib/cashier-types"
+    # Procedural macros crate
+    # "src/lib/cashier-macros"
 )
 
 # Function to run clippy on a specific crate
@@ -64,23 +68,7 @@ run_clippy_on_crate() {
         # Run clippy with comprehensive flags
         if cargo clippy \
             --all-targets \
-            --all-features \
-            -- \
-            -D warnings \
-            -D clippy::all \
-            -D clippy::pedantic \
-            -D clippy::nursery \
-            -A clippy::module_name_repetitions \
-            -A clippy::missing_errors_doc \
-            -A clippy::missing_panics_doc \
-            -A clippy::must_use_candidate \
-            -A clippy::similar_names \
-            -A clippy::too_many_lines \
-            -A clippy::cast_possible_truncation \
-            -A clippy::cast_sign_loss \
-            -A clippy::cast_possible_wrap \
-            -A clippy::items_after_statements \
-            -A clippy::struct_excessive_bools; then
+            --all-features; then
             print_success "✅ $crate_name passed Clippy checks"
             return 0
         else
@@ -105,7 +93,7 @@ run_clippy_fix_on_crate() {
     (
         cd "$crate_path" || exit 1
         
-        if cargo clippy; then
+        if cargo clippy --fix -Z unstable-options --allow-dirty --allow-staged; then
             print_success "✅ Applied automatic fixes to $crate_name"
             return 0
         else

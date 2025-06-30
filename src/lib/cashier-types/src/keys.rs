@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_macros::storable;
+use std::fmt;
 
 pub type UserKey = String;
 
@@ -116,16 +117,16 @@ pub enum RequestLockKey {
     },
 }
 
-impl RequestLockKey {
-    /// Convert the key to a string representation for storage/comparison
-    pub fn to_string(&self) -> String {
+impl fmt::Display for RequestLockKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             RequestLockKey::UserLinkAction {
                 user_principal,
                 link_id,
                 action_id,
             } => {
-                format!(
+                write!(
+                    f,
                     "USER#{}#LINK#{}#ACTION#{}",
                     user_principal, link_id, action_id
                 )
@@ -134,21 +135,24 @@ impl RequestLockKey {
                 user_principal,
                 link_id,
             } => {
-                format!("USER#{}#LINK#{}", user_principal, link_id)
+                write!(f, "USER#{}#LINK#{}", user_principal, link_id)
             }
             RequestLockKey::UserActionTransaction {
                 user_principal,
                 action_id,
                 transaction_id,
             } => {
-                format!(
+                write!(
+                    f,
                     "USER#{}#ACTION#{}#TRANSACTION#{}",
                     user_principal, action_id, transaction_id
                 )
             }
         }
     }
+}
 
+impl RequestLockKey {
     /// Create a User + Link + Action key
     pub fn user_link_action(
         user_principal: impl Into<String>,

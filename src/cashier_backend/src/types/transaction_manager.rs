@@ -37,7 +37,7 @@ impl From<(ActionData, ActionState)> for RollUpStateResp {
             action_type: data.action.r#type.clone(),
             action_id: data.action.id.clone(),
             intents: data.intents.clone(),
-            intent_txs: data.intent_txs.clone(),
+            intent_txs: data.intent_txs,
         }
     }
 }
@@ -45,7 +45,7 @@ impl From<(ActionData, ActionState)> for RollUpStateResp {
 impl ActionData {
     pub fn get_intent_and_txs_by_its_tx_id(
         &self,
-        tx_id: String,
+        tx_id: &str,
     ) -> Result<(Intent, Vec<Transaction>), String> {
         for (intent_id, txs) in &self.intent_txs {
             for tx in txs {
@@ -66,7 +66,7 @@ impl ActionData {
         ))
     }
     pub fn get_tx(&self, tx_id: &str) -> Result<&Transaction, String> {
-        for (_intent_id, txs) in &self.intent_txs {
+        for txs in self.intent_txs.values() {
             for tx in txs {
                 if tx.id == tx_id {
                     return Ok(tx);
@@ -80,25 +80,30 @@ impl ActionData {
         ))
     }
 
-    pub fn get_txs_of_tx_group(&self, tx_id: String) -> Result<Vec<String>, String> {
+    pub fn get_txs_of_tx_group(&self, tx_id: &str) -> Result<Vec<String>, String> {
         let (group_index, id_index) = self.flatten_intent_txs();
 
         let group_key = id_index
-            .get(&tx_id)
+            .get(tx_id)
             .ok_or_else(|| format!("Transaction with id {} not found in intent_txs", tx_id))?;
 
-        Ok(group_index.get(group_key).unwrap().to_vec())
+        group_index.get(group_key).cloned().ok_or_else(|| {
+            format!(
+                "Group key {:?} not found in intent_txs for transaction {}",
+                group_key, tx_id
+            )
+        })
     }
 
     pub fn flatten_intent_txs(&self) -> (HashMap<u16, Vec<String>>, HashMap<String, u16>) {
         let mut group_index: HashMap<u16, Vec<String>> = HashMap::new();
         let mut id_index: HashMap<String, u16> = HashMap::new();
 
-        for (_intent_id, txs) in &self.intent_txs {
+        for txs in self.intent_txs.values() {
             for tx in txs {
-                let group_key = tx.group.clone();
+                let group_key = tx.group;
                 group_index
-                    .entry(group_key.clone())
+                    .entry(group_key)
                     .or_default()
                     .push(tx.id.clone());
                 id_index.insert(tx.id.clone(), group_key);
