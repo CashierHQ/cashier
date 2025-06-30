@@ -94,11 +94,11 @@ impl ActionService {
         let intents = all_intents
             .iter()
             .map(|action_intent| {
-                let intent = self
+                
+                self
                     .intent_repository
                     .get(action_intent.intent_id.clone())
-                    .unwrap();
-                intent
+                    .unwrap()
             })
             .collect();
 
@@ -235,7 +235,7 @@ impl ActionService {
         }
 
         let user_action = UserAction {
-            user_id: user_id.to_string(),
+            user_id,
             action_id: action.id.clone(),
         };
 

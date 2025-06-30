@@ -11,6 +11,12 @@ use super::USER_STORE;
 pub struct UserRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for UserRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserRepository {
     pub fn new() -> Self {
         Self {}

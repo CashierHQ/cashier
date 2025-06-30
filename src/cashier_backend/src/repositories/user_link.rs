@@ -11,6 +11,12 @@ use cashier_types::{keys::UserLinkKey, user_link::v1::UserLink};
 pub struct UserLinkRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for UserLinkRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserLinkRepository {
     pub fn new() -> Self {
         Self {}
@@ -45,7 +51,7 @@ impl UserLinkRepository {
     pub fn delete(&self, id: UserLink) {
         let id = UserLinkKey {
             user_id: id.user_id.clone(),
-            link_id: id.link_id.clone(),
+            link_id: id.link_id,
         };
         USER_LINK_STORE.with_borrow_mut(|store| store.remove(&id.to_str()));
     }

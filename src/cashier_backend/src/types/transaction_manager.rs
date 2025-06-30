@@ -37,7 +37,7 @@ impl From<(ActionData, ActionState)> for RollUpStateResp {
             action_type: data.action.r#type.clone(),
             action_id: data.action.id.clone(),
             intents: data.intents.clone(),
-            intent_txs: data.intent_txs.clone(),
+            intent_txs: data.intent_txs,
         }
     }
 }
@@ -66,7 +66,7 @@ impl ActionData {
         ))
     }
     pub fn get_tx(&self, tx_id: &str) -> Result<&Transaction, String> {
-        for (_intent_id, txs) in &self.intent_txs {
+        for txs in self.intent_txs.values() {
             for tx in txs {
                 if tx.id == tx_id {
                     return Ok(tx);
@@ -94,11 +94,11 @@ impl ActionData {
         let mut group_index: HashMap<u16, Vec<String>> = HashMap::new();
         let mut id_index: HashMap<String, u16> = HashMap::new();
 
-        for (_intent_id, txs) in &self.intent_txs {
+        for txs in self.intent_txs.values() {
             for tx in txs {
-                let group_key = tx.group.clone();
+                let group_key = tx.group;
                 group_index
-                    .entry(group_key.clone())
+                    .entry(group_key)
                     .or_default()
                     .push(tx.id.clone());
                 id_index.insert(tx.id.clone(), group_key);

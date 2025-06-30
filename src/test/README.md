@@ -2,10 +2,27 @@
 
 This folder included two kind of test
 
-### Picjs tests
+-   Picjs tests: for testing normal flow
 
--   For testing normal flow
+-   Local tests: for testing request lock
 
-### Local tests
+## Setup and run
 
--   For testing request lock
+### PicJS
+
+Install dependencies in root
+
+```bash
+# install jest and other package
+npm i
+
+# build backend wasm
+make setup-test
+
+```
+
+then run
+
+```bash
+npx jest -- src/test/picjs-tests
+```

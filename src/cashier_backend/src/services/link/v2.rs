@@ -325,7 +325,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     };
                     let from_wallet = Wallet {
                         address: Account {
-                            owner: user_wallet.clone(),
+                            owner: *user_wallet,
                             subaccount: None,
                         }
                         .to_string(),
@@ -363,7 +363,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     };
                     let from_wallet = Wallet {
                         address: Account {
-                            owner: user_wallet.clone(),
+                            owner: *user_wallet,
                             subaccount: None,
                         }
                         .to_string(),
@@ -445,7 +445,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     };
                     let from_wallet = Wallet {
                         address: Account {
-                            owner: user_wallet.clone(),
+                            owner: *user_wallet,
                             subaccount: None,
                         }
                         .to_string(),
@@ -481,8 +481,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                                 subaccount: Some(to_subaccount(&link.id.clone())),
                             },
                         )
-                        .await
-                        .map_err(|e| e)?;
+                        .await?;
 
                     let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
                         CanisterError::HandleLogicError(
@@ -656,11 +655,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             return None;
         }
 
-        let action = self
-            .action_repository
-            .get(link_actions[0].action_id.clone());
+        
 
-        return action;
+        self
+            .action_repository
+            .get(link_actions[0].action_id.clone())
     }
 
     // this method validate for each action type
@@ -690,11 +689,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     // validate user’s balance
                     self.link_validate_balance_with_asset_info(action_type, link_id, caller)
                         .await?;
-                    return Ok(());
+                    Ok(())
                 } else {
-                    return Err(CanisterError::ValidationErrors(
+                    Err(CanisterError::ValidationErrors(
                         "User is not the creator of the link".to_string(),
-                    ));
+                    ))
                 }
             }
             ActionType::Withdraw => {
@@ -713,8 +712,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                                 subaccount: Some(to_subaccount(&link.id.clone())),
                             },
                         )
-                        .await
-                        .map_err(|e| e)?;
+                        .await?;
 
                     if link_balance <= 0 {
                         return Err(CanisterError::ValidationErrors(
@@ -722,11 +720,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                         ));
                     }
 
-                    return Ok(());
+                    Ok(())
                 } else {
-                    return Err(CanisterError::ValidationErrors(
+                    Err(CanisterError::ValidationErrors(
                         "User is not the creator of the link".to_string(),
-                    ));
+                    ))
                 }
             }
             ActionType::Use => {
@@ -753,8 +751,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                                 subaccount: Some(to_subaccount(&link.id.clone())),
                             },
                         )
-                        .await
-                        .map_err(|e| e)?;
+                        .await?;
 
                     if link_balance <= 0 {
                         return Err(CanisterError::ValidationErrors(
@@ -763,12 +760,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
                 }
 
-                return Ok(());
+                Ok(())
             }
             _ => {
-                return Err(CanisterError::ValidationErrors(
+                Err(CanisterError::ValidationErrors(
                     "Unsupported action type".to_string(),
-                ));
+                ))
             }
         }
     }
@@ -814,7 +811,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 
     // This method is a synchronous version that performs basic validation without async checks
@@ -832,22 +829,22 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 // Validate user ID == link creator
                 if link.creator == user_id {
                     // Basic validation passes, async balance validation would happen separately
-                    return Ok(());
+                    Ok(())
                 } else {
-                    return Err(CanisterError::ValidationErrors(
+                    Err(CanisterError::ValidationErrors(
                         "User is not the creator of the link".to_string(),
-                    ));
+                    ))
                 }
             }
             ActionType::Withdraw => {
                 // Validate user ID == link creator
                 if link.creator == user_id {
                     // Synchronous validation passes
-                    return Ok(());
+                    Ok(())
                 } else {
-                    return Err(CanisterError::ValidationErrors(
+                    Err(CanisterError::ValidationErrors(
                         "User is not the creator of the link".to_string(),
-                    ));
+                    ))
                 }
             }
             ActionType::Use => {
@@ -869,12 +866,12 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 }
 
                 // Synchronous validation passes
-                return Ok(());
+                Ok(())
             }
             _ => {
-                return Err(CanisterError::ValidationErrors(
+                Err(CanisterError::ValidationErrors(
                     "Unsupported action type".to_string(),
-                ));
+                ))
             }
         }
     }
@@ -925,7 +922,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 
     // This method mostly use for "Send" link type
@@ -968,8 +965,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             let balance = self
                 .icrc_service
                 .balance_of(token_pid, account)
-                .await
-                .map_err(|e| e)?;
+                .await?;
 
             let expected_amount = asset.amount_per_link_use_action * link.link_use_action_max_count;
 
@@ -991,9 +987,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         user_id: String,
     ) -> Result<Option<LinkAction>, CanisterError> {
         let link_action = self.link_action_repository.get_by_prefix(
-            link_id.clone(),
-            action_type.clone(),
-            user_id.clone(),
+            link_id,
+            action_type,
+            user_id,
         );
         if link_action.is_empty() {
             return Ok(None);
@@ -1086,8 +1082,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         action_id: String,
     ) -> Result<bool, CanisterError> {
         // Get the link and action
-        let link = self.get_link_by_id(link_id.clone())?;
-        let action = match self.action_repository.get(action_id.clone()) {
+        let link = self.get_link_by_id(link_id)?;
+        let action = match self.action_repository.get(action_id) {
             Some(action) => action,
             None => return Ok(false),
         };
@@ -1099,7 +1095,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         // At this point we know we have a successful claim on a TipLink
         // Update link's properties here
-        let mut updated_link = link.clone();
+        let mut updated_link = link;
         let mut is_update: bool = false;
 
         if action.r#type == ActionType::Use {
@@ -1136,32 +1132,20 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // Send tip only use one time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
-            if asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0
-                && *link_use_action_max_count == 1
-            {
-                return true;
-            } else {
-                return false;
-            }
+            asset_infos.len() == 1
+                && asset_infos[0].amount_per_link_use_action > 0 && *link_use_action_max_count == 1
         } else if link.link_type == Some(LinkType::SendAirdrop) {
             // Send airdrop use multiple time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count >= 1
 
-            if asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0
-                && *link_use_action_max_count >= 1
-            {
-                return true;
-            } else {
-                return false;
-            }
+            return asset_infos.len() == 1
+                && asset_infos[0].amount_per_link_use_action > 0 && *link_use_action_max_count >= 1
         } else if link.link_type == Some(LinkType::SendTokenBasket) {
             // Send token basket use one time with multiple asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
-            if asset_infos.len() >= 1 {
+            if !asset_infos.is_empty() {
                 for asset in asset_infos.iter() {
                     if asset.amount_per_link_use_action == 0 && *link_use_action_max_count != 1 {
                         return false;
@@ -1176,14 +1160,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             // Receive payment use one time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
-            if asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0
-                && *link_use_action_max_count == 1
-            {
-                return true;
-            } else {
-                return false;
-            }
+            return asset_infos.len() == 1
+                && asset_infos[0].amount_per_link_use_action > 0 && *link_use_action_max_count == 1
         } else {
             // link type is not supported
             return false;
@@ -1200,7 +1178,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .ok_or_else(|| CanisterError::HandleLogicError("Asset info not found".to_string()))
             .unwrap();
 
-        if asset_info.len() == 0 {
+        if asset_info.is_empty() {
             return Err(CanisterError::HandleLogicError(
                 "Asset info not found".to_string(),
             ));
@@ -1222,15 +1200,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             let balance = self
                 .icrc_service
                 .balance_of(token_pid, account)
-                .await
-                .map_err(|e| e)?;
+                .await?;
 
             if balance > 0 {
                 return Ok(true);
             }
         }
 
-        return Ok(false);
+        Ok(false)
     }
 
     pub fn prefetch_template(
@@ -1273,7 +1250,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             link_use_action_max_count,
             asset_info_input
                 .iter()
-                .map(|asset| asset.to_model())
+                .map(crate::core::link::types::LinkDetailUpdateAssetInfoInput::to_model)
                 .collect(),
         ))
     }
@@ -1293,7 +1270,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .action_repository
             .get(link_creation_action[0].action_id.clone());
 
-        return Ok(create_action);
+        Ok(create_action)
     }
 
     pub fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
@@ -1311,7 +1288,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             .action_repository
             .get(link_withdraw_action[0].action_id.clone());
 
-        return Ok(withdraw_action);
+        Ok(withdraw_action)
     }
 
     // this method checking non-whitelist props are changed or not
@@ -1323,16 +1300,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         params: &LinkDetailUpdateInput,
         link: &Link,
     ) -> bool {
-        let props_list = vec![
-            "title".to_string(),
+        let props_list = ["title".to_string(),
             "description".to_string(),
             "asset_info".to_string(),
             "template".to_string(),
             "link_type".to_string(),
             "link_image_url".to_string(),
             "nft_image".to_string(),
-            "link_use_action_max_count".to_string(),
-        ];
+            "link_use_action_max_count".to_string()];
 
         let check_props = props_list
             .iter()
@@ -1378,7 +1353,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
                 }
                 "link_type" => {
-                    let link_link_type_str = link.link_type.as_ref().map(|lt| lt.to_string());
+                    let link_link_type_str = link.link_type.as_ref().map(cashier_types::link::v1::LinkType::to_string);
 
                     if params.link_type.is_none() {
                         return false;
@@ -1388,7 +1363,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
                 }
                 "template" => {
-                    let link_template_str = link.template.as_ref().map(|t| t.to_string());
+                    let link_template_str = link.template.as_ref().map(cashier_types::link::v1::Template::to_string);
                     if params.template.is_none() {
                         return false;
                     }
@@ -1457,7 +1432,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         let mut link = self.get_link_by_id(link_id.to_string())?;
 
         let link_state_goto = LinkStateMachineGoto::from_string(&action)
-            .map_err(|e| CanisterError::ValidationErrors(e))?;
+            .map_err(CanisterError::ValidationErrors)?;
 
         // if params is None, all params are None
         // some goto not required params like Back
@@ -1498,7 +1473,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                 link.link_type = Some(link_type);
                 link.state = LinkState::AddAssets;
                 self.link_repository.update(link.clone());
-                return Ok(link.clone());
+                Ok(link.clone())
 
             // ====== Back Go to =====
             } else if link_state_goto == LinkStateMachineGoto::Back {
@@ -1603,7 +1578,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                             "Create action not success, current state: {:?}",
                             create_action.as_ref().unwrap().state
                         )
-                        .to_string(),
+                        ,
                     ));
                 } else {
                     link.state = LinkState::Active;
@@ -1717,7 +1692,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             link_use_action_max_count: 0,
         };
         let new_user_link = UserLink {
-            user_id: user_id.clone(),
+            user_id,
             link_id: link_id_str.clone(),
         };
 
@@ -1937,7 +1912,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
         };
 
-        match self.link_repository.get(&link_id) {
+        match self.link_repository.get(link_id) {
             None => false,
             Some(link_detail) => link_detail.creator == user_wallet.user_id,
         }

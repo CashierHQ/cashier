@@ -39,7 +39,7 @@ impl ValidateService {
         match action {
             Some(action) => Ok(action.creator == user_wallet.user_id),
             None => {
-                return Err("Action not found".to_string());
+                Err("Action not found".to_string())
             }
         }
     }

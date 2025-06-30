@@ -52,6 +52,12 @@ pub struct ActionAdapterImpl<E: IcEnvironment + Clone> {
 }
 
 #[cfg_attr(test, faux::methods)]
+impl<E: IcEnvironment + Clone> Default for ActionAdapterImpl<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: IcEnvironment + Clone> ActionAdapterImpl<E> {
     pub fn new() -> Self {
         Self {
@@ -80,6 +86,12 @@ pub struct IntentAdapterImpl<E: IcEnvironment + Clone> {
 }
 
 #[cfg_attr(test, faux::methods)]
+impl<E: IcEnvironment + Clone> Default for IntentAdapterImpl<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: IcEnvironment + Clone> IntentAdapterImpl<E> {
     pub fn new() -> Self {
         Self {

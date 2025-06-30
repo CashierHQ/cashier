@@ -13,6 +13,12 @@ use cashier_types::{
 pub struct LinkActionRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for LinkActionRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LinkActionRepository {
     pub fn new() -> Self {
         Self {}
@@ -61,7 +67,7 @@ impl LinkActionRepository {
                 action_id: "".to_string(),
             };
 
-            let prefix = key.to_str().clone();
+            let prefix = key.to_str();
 
             let link_actions: Vec<_> = store
                 .range(prefix.clone()..)

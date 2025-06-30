@@ -23,6 +23,12 @@ use crate::{
 pub struct IcrcService {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for IcrcService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IcrcService {
     pub fn new() -> Self {
         Self {}
@@ -34,12 +40,12 @@ impl IcrcService {
         let res = token_service.icrc_1_fee().await;
 
         match res {
-            Ok((fee,)) => Ok(fee.0.to_u64_digits().first().unwrap_or(&0).clone()),
+            Ok((fee,)) => Ok(*fee.0.to_u64_digits().first().unwrap_or(&0)),
             Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
                 method: "icrc1_fee".to_string(),
                 canister_id: token_service.get_canister_id().to_string(),
                 code: DisplayRejectionCode(code),
-                message: error.to_string(),
+                message: error,
             }),
         }
     }
@@ -59,12 +65,12 @@ impl IcrcService {
         let res = token_service.icrc_1_balance_of(&account).await;
 
         match res {
-            Ok((balance,)) => Ok(balance.0.to_u64_digits().first().unwrap_or(&0).clone()),
+            Ok((balance,)) => Ok(*balance.0.to_u64_digits().first().unwrap_or(&0)),
             Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
                 method: "icrc1_balance_of".to_string(),
                 canister_id: token_service.get_canister_id().to_string(),
                 code: DisplayRejectionCode(code),
-                message: error.to_string(),
+                message: error,
             }),
         }
     }
@@ -101,7 +107,7 @@ impl IcrcService {
                 method: "icrc2_allowance".to_string(),
                 canister_id: token_service.get_canister_id().to_string(),
                 code: DisplayRejectionCode(code),
-                message: error.to_string(),
+                message: error,
             }),
         }
     }
@@ -142,7 +148,7 @@ impl IcrcService {
                 Ok(_block_id) => Ok(_block_id),
                 Err(error) => match error {
                     // likely a duplicate transfer, return the original transfer id
-                    TransferFromError::Duplicate { duplicate_of } => return Ok(duplicate_of),
+                    TransferFromError::Duplicate { duplicate_of } => Ok(duplicate_of),
                     _ => Err(CanisterError::CanisterCallError {
                         method: "icrc2_transfer_from".to_string(),
                         canister_id: token_service.get_canister_id().to_string(),
@@ -154,7 +160,7 @@ impl IcrcService {
                 method: "icrc2_transfer_from".to_string(),
                 canister_id: token_service.get_canister_id().to_string(),
                 code: DisplayRejectionCode(code),
-                message: error.to_string(),
+                message: error,
             }),
         }
     }
@@ -199,7 +205,7 @@ impl IcrcService {
                 method: "icrc1_transfer".to_string(),
                 canister_id: token_service.get_canister_id().to_string(),
                 code: DisplayRejectionCode(code),
-                message: error.to_string(),
+                message: error,
             }),
         }
     }

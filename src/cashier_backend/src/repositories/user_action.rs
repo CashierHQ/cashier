@@ -10,6 +10,12 @@ use cashier_types::{keys::UserActionKey, user_action::v1::UserAction};
 pub struct UserActionRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for UserActionRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserActionRepository {
     pub fn new() -> Self {
         Self {}

@@ -11,6 +11,12 @@ use super::{token_registry_metadata::TokenRegistryMetadataRepository, TOKEN_REGI
 
 pub struct TokenRegistryRepository {}
 
+impl Default for TokenRegistryRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TokenRegistryRepository {
     pub fn new() -> Self {
         Self {}

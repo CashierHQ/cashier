@@ -11,6 +11,12 @@ use crate::repositories::INTENT_STORE;
 pub struct IntentRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for IntentRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IntentRepository {
     pub fn new() -> Self {
         Self {}

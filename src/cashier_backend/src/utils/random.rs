@@ -8,7 +8,7 @@ use getrandom::register_custom_getrandom;
 use rand::{rngs::StdRng, Rng, RngCore, SeedableRng};
 
 thread_local! {
-    pub static RNG: RefCell<Option<StdRng>> = RefCell::new(None);
+    pub static RNG: RefCell<Option<StdRng>> = const { RefCell::new(None) };
 }
 
 /// Initializes the random number generator for the Internet Computer (IC).
@@ -26,7 +26,7 @@ async fn set_rand() {
     let (seed,): (Vec<u8>,) = ic_cdk::call(Principal::management_canister(), "raw_rand", ())
         .await
         .unwrap();
-    let seed_array: [u8; 32] = seed.try_into().unwrap_or_else(|_| [0u8; 32]);
+    let seed_array: [u8; 32] = seed.try_into().unwrap_or([0u8; 32]);
     RNG.with(|rng| {
         *rng.borrow_mut() = Some(StdRng::from_seed(seed_array));
     });

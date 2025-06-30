@@ -17,6 +17,12 @@ pub struct ActionDomainLogic {}
 
 #[cfg_attr(test, faux::methods)]
 // Domain logic for business rules related to actions
+impl Default for ActionDomainLogic {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActionDomainLogic {
     pub fn new() -> Self {
         Self {}
@@ -96,7 +102,7 @@ impl ActionDomainLogic {
             .iter()
             .all(|tx| tx.state == TransactionState::Created)
         {
-            return IntentState::Created;
+            IntentState::Created
         } else if transactions
             .iter()
             .any(|tx| tx.state == TransactionState::Fail)
@@ -118,7 +124,7 @@ impl ActionDomainLogic {
             .iter()
             .all(|intent| intent.state == IntentState::Created)
         {
-            return ActionState::Created;
+            ActionState::Created
         } else if intents
             .iter()
             .any(|intent| intent.state == IntentState::Fail)

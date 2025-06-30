@@ -19,6 +19,12 @@ pub struct UserTokenService {
     balance_cache_repository: BalanceCacheRepository,
 }
 
+impl Default for UserTokenService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserTokenService {
     pub fn new() -> Self {
         Self {
@@ -32,10 +38,7 @@ impl UserTokenService {
 
     pub fn list_tokens(&self, user_id: &str) -> Vec<TokenDto> {
         // Try to get the user's token list
-        let user_token_list = match self.token_repository.list_tokens(user_id) {
-            Ok(list) => list,
-            Err(_) => UserTokenList::default(),
-        };
+        let user_token_list = self.token_repository.list_tokens(user_id).unwrap_or_default();
 
         self.convert_to_token_dtos(user_id, &user_token_list)
     }
@@ -202,10 +205,7 @@ impl UserTokenService {
         let _ = self.ensure_token_list_initialized(user_id);
 
         // Get the user's token list
-        let mut user_token_list = match self.token_repository.list_tokens(user_id) {
-            Ok(list) => list,
-            Err(_) => UserTokenList::default(),
-        };
+        let mut user_token_list = self.token_repository.list_tokens(user_id).unwrap_or_default();
 
         // Get the registry metadata to check version
         let registry_metadata = self.metadata_repository.get();

@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::collections::HashSet;
 
 use candid::Principal;
 use ic_cdk::{query, update};
@@ -23,6 +22,12 @@ pub struct TokenApi {
     user_token_service: UserTokenService,
     token_registry_service: TokenRegistryService,
     user_perference_service: UserPreferenceService,
+}
+
+impl Default for TokenApi {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TokenApi {
@@ -69,7 +74,7 @@ impl TokenApi {
 
                 // If token list is empty, return registry tokens
                 if list.enable_list.is_empty() && list.disable_list.is_empty() {
-                    return (
+                    (
                         self.token_registry_service
                             .list_tokens()
                             .iter()
@@ -77,19 +82,19 @@ impl TokenApi {
                             .collect(),
                         need_update_version,
                         Some(user_preferences),
-                    );
+                    )
                 } else {
                     // Get user's tokens
                     let tokens = self
                         .user_token_service
                         .convert_to_token_dtos(&caller.to_string(), &list);
 
-                    return (tokens, need_update_version, Some(user_preferences));
+                    (tokens, need_update_version, Some(user_preferences))
                 }
             }
             Err(_) => {
                 // Token list doesn't exist, return registry tokens and flag for initialization
-                return (
+                (
                     self.token_registry_service
                         .list_tokens()
                         .iter()
@@ -97,9 +102,9 @@ impl TokenApi {
                         .collect(),
                     true, // Need to update version since it doesn't exist
                     Some(user_preferences),
-                );
+                )
             }
-        };
+        }
     }
 
     pub fn add_token(
@@ -145,9 +150,9 @@ impl TokenApi {
             if self.token_registry_service.get_token(token_id).is_none() {
                 // Token doesn't exist in registry, try to register it
                 if let Some(token_data) = maybe_token_data {
-                    if let Ok(_) = self
+                    if self
                         .token_registry_service
-                        .register_token(RegisterTokenInput::from(token_data.clone()))
+                        .register_token(RegisterTokenInput::from(token_data.clone())).is_ok()
                     {
                         registry_updated = true;
                         ic_cdk::println!("Registered new token {}", token_id);
@@ -164,9 +169,9 @@ impl TokenApi {
             if self.token_registry_service.get_token(token_id).is_none() {
                 // Token doesn't exist in registry, try to register it
                 if let Some(token_data) = maybe_token_data {
-                    if let Ok(_) = self
+                    if self
                         .token_registry_service
-                        .register_token(RegisterTokenInput::from(token_data.clone()))
+                        .register_token(RegisterTokenInput::from(token_data.clone())).is_ok()
                     {
                         registry_updated = true;
                         ic_cdk::println!("Registered new token {}", token_id);
@@ -206,13 +211,11 @@ impl TokenApi {
         }
 
         // Update the token's status, initialization is handled by the service
-        if let Err(e) = self.user_token_service.update_token_status(
+        self.user_token_service.update_token_status(
             &caller.to_text(),
             token_id,
             input.is_enabled,
-        ) {
-            return Err(e);
-        }
+        )?;
 
         // Return the updated token list
         Ok(self.list_tokens(caller))
@@ -229,7 +232,7 @@ impl TokenApi {
         let updates: Vec<(TokenId, u128)> = input
             .iter()
             .filter_map(|token| {
-                return Some((token.token_id.clone(), token.balance));
+                Some((token.token_id.clone(), token.balance))
             })
             .collect();
 

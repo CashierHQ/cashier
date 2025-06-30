@@ -133,7 +133,7 @@ impl ActionDto {
     pub fn from(action: Action, intents: Vec<Intent>) -> Self {
         let intents_dto = intents
             .into_iter()
-            .map(|intent| IntentDto::from(intent))
+            .map(IntentDto::from)
             .collect();
         Self {
             id: action.id,
@@ -177,7 +177,7 @@ impl ActionDto {
     }
 
     pub fn build(action_data: &ActionData, icrc_112_requests: Option<Icrc112Requests>) -> Self {
-        let intents = action_data.clone().intents.clone();
+        let intents = action_data.clone().intents;
 
         let intents_dto = intents
             .into_iter()

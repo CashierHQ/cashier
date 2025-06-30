@@ -10,6 +10,12 @@ use std::collections::HashMap;
 
 pub struct BalanceCacheRepository {}
 
+impl Default for BalanceCacheRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BalanceCacheRepository {
     pub fn new() -> Self {
         Self {}
@@ -21,7 +27,7 @@ impl BalanceCacheRepository {
             let mut balance_map = store
                 .get(&user_id.to_string())
                 .map(|candid| candid.into_inner())
-                .unwrap_or_else(|| HashMap::new());
+                .unwrap_or_default();
 
             // Update or add new balances
             let now = time();
@@ -46,7 +52,7 @@ impl BalanceCacheRepository {
             let mut balance_map = store
                 .get(&user_id.to_string())
                 .map(|candid| candid.into_inner())
-                .unwrap_or_else(|| HashMap::new());
+                .unwrap_or_default();
 
             // Add or update the balance
             let now = time();
@@ -70,7 +76,7 @@ impl BalanceCacheRepository {
                 .and_then(|Candid(balances)| {
                     balances
                         .get(token_id)
-                        .map(|balance| balance.balance.clone())
+                        .map(|balance| balance.balance)
                 })
         })
     }

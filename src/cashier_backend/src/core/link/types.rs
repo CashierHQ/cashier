@@ -200,7 +200,7 @@ impl From<Link> for LinkDto {
             Some(asset_info) => {
                 let asset_info_vec = asset_info
                     .iter()
-                    .map(|asset| AssetInfoDto::from(asset))
+                    .map(AssetInfoDto::from)
                     .collect();
 
                 Some(asset_info_vec)
@@ -208,11 +208,7 @@ impl From<Link> for LinkDto {
             None => None,
         };
 
-        let link_type_str = if let Some(link_type) = link.link_type {
-            Some(link_type.to_string())
-        } else {
-            None
-        };
+        let link_type_str = link.link_type.map(|link_type| link_type.to_string());
 
         LinkDto {
             id: link.id,
@@ -249,11 +245,11 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
 impl LinkDetailUpdateInput {
     pub fn validate(&self) -> Result<(), String> {
         if let Some(template) = &self.template {
-            Template::from_str(template).map_err(|_| format!("Invalid template: "))?;
+            Template::from_str(template).map_err(|_| "Invalid template: ".to_string())?;
         }
 
         if let Some(link_type) = &self.link_type {
-            LinkType::from_str(link_type).map_err(|_| format!("Invalid link type "))?;
+            LinkType::from_str(link_type).map_err(|_| "Invalid link type ".to_string())?;
         }
 
         if let Some(asset_info) = &self.asset_info {

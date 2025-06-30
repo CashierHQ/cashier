@@ -10,6 +10,12 @@ use crate::repositories::ACTION_STORE;
 pub struct ActionRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for ActionRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActionRepository {
     pub fn new() -> Self {
         Self {}

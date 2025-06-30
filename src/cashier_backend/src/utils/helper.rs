@@ -19,7 +19,7 @@ use crate::types::error::CanisterError;
 /// to maintain consistent addressing across the system.
 // apply for link id only
 pub fn to_subaccount(id: &str) -> Subaccount {
-    let uuid = Uuid::parse_str(&id).expect("Invalid UUID format");
+    let uuid = Uuid::parse_str(id).expect("Invalid UUID format");
     let uuid_bytes = uuid.as_bytes();
 
     // DO NOT CHANGE THE ORDER OF THE BYTES
@@ -38,7 +38,7 @@ pub fn to_subaccount(id: &str) -> Subaccount {
 /// Used for creating memos in ICRC1 transfers and ICRC2 transfer_from operations
 /// to maintain traceability of transactions.
 pub fn to_memo(id: &str) -> Memo {
-    let uuid = Uuid::parse_str(&id).expect("Invalid UUID format");
+    let uuid = Uuid::parse_str(id).expect("Invalid UUID format");
     let uuid_bytes = uuid.as_bytes();
 
     let mut memo: [u8; 32] = [0; 32];

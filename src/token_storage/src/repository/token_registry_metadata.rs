@@ -9,6 +9,12 @@ use crate::types::TokenRegistryMetadata;
 
 pub struct TokenRegistryMetadataRepository {}
 
+impl Default for TokenRegistryMetadataRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TokenRegistryMetadataRepository {
     pub fn new() -> Self {
         Self {}

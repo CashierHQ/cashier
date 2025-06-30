@@ -10,6 +10,12 @@ pub struct UserPreferenceService {
     repository: UserPreferenceRepository,
 }
 
+impl Default for UserPreferenceService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserPreferenceService {
     pub fn new() -> Self {
         Self {

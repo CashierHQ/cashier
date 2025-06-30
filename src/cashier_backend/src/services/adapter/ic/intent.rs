@@ -24,6 +24,12 @@ pub struct IcIntentAdapter<E: IcEnvironment + Clone> {
 }
 
 #[cfg_attr(test, faux::methods)]
+impl<'a, E: IcEnvironment + Clone> Default for IcIntentAdapter<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
     pub fn new() -> Self {
         Self { ic_env: E::new() }
@@ -179,9 +185,9 @@ impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
                 self.assemble_icrc1_canister_transfer(transfer_intent)
             }
             _ => {
-                return Err(CanisterError::InvalidInput(
+                Err(CanisterError::InvalidInput(
                     "Unsupported intent task or type".to_string(),
-                ));
+                ))
             }
         }
     }

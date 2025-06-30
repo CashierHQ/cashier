@@ -10,6 +10,12 @@ use super::ACTION_INTENT_STORE;
 pub struct ActionIntentRepository {}
 #[cfg_attr(test, faux::methods)]
 
+impl Default for ActionIntentRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActionIntentRepository {
     pub fn new() -> Self {
         Self {}
@@ -52,7 +58,7 @@ impl ActionIntentRepository {
                 intent_id: "".to_string(),
             };
 
-            let prefix = key.to_str().clone();
+            let prefix = key.to_str();
 
             let action_intents = store
                 .range(prefix.clone()..)
@@ -60,7 +66,7 @@ impl ActionIntentRepository {
                 .map(|(_, action_intent)| action_intent)
                 .collect();
 
-            return action_intents;
+            action_intents
         })
     }
 

@@ -15,7 +15,7 @@ pub fn is_not_anonymous() -> Result<(), String> {
 pub fn is_not_admin() -> Result<(), String> {
     let caller = msg_caller();
     assert!(caller != ANONYMOUS, "Anonymous caller is not allowed");
-    let msg = format!("Caller is not admin");
+    let msg = "Caller is not admin".to_string();
     assert!(
         caller
             == Principal::from_text(

@@ -11,6 +11,12 @@ use super::INTENT_TRANSACTION_STORE;
 pub struct IntentTransactionRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for IntentTransactionRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IntentTransactionRepository {
     pub fn new() -> Self {
         Self {}
@@ -45,8 +51,8 @@ impl IntentTransactionRepository {
 
     pub fn get(&self, intent_id: String, transaction_id: String) -> Option<IntentTransaction> {
         let id = IntentTransactionKey {
-            intent_id: intent_id.clone(),
-            transaction_id: transaction_id.clone(),
+            intent_id,
+            transaction_id,
         };
         INTENT_TRANSACTION_STORE.with_borrow(|store| store.get(&id.to_str()))
     }

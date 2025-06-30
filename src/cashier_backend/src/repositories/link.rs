@@ -10,6 +10,12 @@ use cashier_types::{keys::LinkKey, link::v1::Link};
 pub struct LinkRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for LinkRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LinkRepository {
     pub fn new() -> Self {
         Self {}

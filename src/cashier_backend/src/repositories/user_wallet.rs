@@ -10,6 +10,12 @@ use cashier_types::{keys::UserWalletKey, user_wallet::v1::UserWallet};
 pub struct UserWalletRepository {}
 
 #[cfg_attr(test, faux::methods)]
+impl Default for UserWalletRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserWalletRepository {
     pub fn new() -> Self {
         Self {}

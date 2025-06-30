@@ -33,8 +33,8 @@ pub fn create_new() -> Result<UserDto, String> {
     let user_repository = repositories::user::UserRepository::new();
     let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
 
-    user_repository.create(user.clone());
-    user_wallet_repository.create(caller.to_text(), user_wallet.clone());
+    user_repository.create(user);
+    user_wallet_repository.create(caller.to_text(), user_wallet);
 
     Ok(UserDto {
         id: id_str,

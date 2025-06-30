@@ -8,6 +8,12 @@ use crate::types::UserPreference;
 
 pub struct UserPreferenceRepository {}
 
+impl Default for UserPreferenceRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserPreferenceRepository {
     pub fn new() -> Self {
         Self {}
@@ -22,7 +28,7 @@ impl UserPreferenceRepository {
     pub fn get(&self, id: &String) -> UserPreference {
         USER_PREFERENCE_STORE
             .with_borrow(|store| store.get(id))
-            .unwrap_or(UserPreference::default())
+            .unwrap_or_default()
     }
 
     pub fn update(&self, id: String, user_preference: UserPreference) {

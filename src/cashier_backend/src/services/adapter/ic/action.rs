@@ -25,6 +25,12 @@ pub struct IcActionAdapter<E: IcEnvironment + Clone> {
 }
 
 #[cfg_attr(test, faux::methods)]
+impl<E: IcEnvironment + Clone> Default for IcActionAdapter<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
     pub fn new() -> Self {
         Self { ic_env: E::new() }
@@ -87,7 +93,7 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
             label: "1001".to_string(),
         };
 
-        return Ok(vec![intent]);
+        Ok(vec![intent])
     }
 
     fn build_create_link_intent(&self, input: ActionToIntentInput) -> Result<Vec<Intent>, String> {
@@ -147,14 +153,14 @@ impl<E: IcEnvironment + Clone> IcActionAdapter<E> {
             label: "1002".to_string(),
         };
 
-        return Ok(vec![intent]);
+        Ok(vec![intent])
     }
 }
 
 impl<E: IcEnvironment + Clone> ActionAdapter for IcActionAdapter<E> {
     fn action_to_intents(&self, input: ActionToIntentInput) -> Result<Vec<Intent>, String> {
         match (
-            input.link.link_type.unwrap().clone(),
+            input.link.link_type.unwrap(),
             input.action.r#type.clone(),
         ) {
             (LinkType::SendTip, ActionType::CreateLink) => {
@@ -163,7 +169,7 @@ impl<E: IcEnvironment + Clone> ActionAdapter for IcActionAdapter<E> {
 
                 let result: Vec<_> = fee_intent
                     .into_iter()
-                    .chain(tip_intent.into_iter())
+                    .chain(tip_intent)
                     .collect();
 
                 Ok(result)

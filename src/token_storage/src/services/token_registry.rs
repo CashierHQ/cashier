@@ -16,6 +16,12 @@ pub struct TokenRegistryService {
     metadata_repository: TokenRegistryMetadataRepository,
 }
 
+impl Default for TokenRegistryService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TokenRegistryService {
     pub fn new() -> Self {
         Self {
