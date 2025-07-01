@@ -49,8 +49,7 @@ type CreateActionAnonymousInput = record {
   wallet_address : text;
 };
 type CreateActionInput = record { link_id : text; action_type : text };
-type CreateLinkInput = record { link_type : text };
-type CreateLinkInputV2 = record {
+type CreateLinkInput = record {
   title : text;
   asset_info : vec LinkDetailUpdateAssetInfoInput;
   link_type : text;
@@ -200,16 +199,16 @@ type RejectionCode = variant {
   CanisterReject;
 };
 type Result = variant { Ok : ActionDto; Err : CanisterError };
-type Result_1 = variant { Ok : text; Err : CanisterError };
-type Result_2 = variant { Ok : LinkDto; Err : CanisterError };
-type Result_3 = variant { Ok : UserDto; Err : text };
-type Result_4 = variant { Ok : GetLinkResp; Err : text };
-type Result_5 = variant { Ok : PaginateResult; Err : text };
-type Result_6 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
-type Result_7 = variant {
+type Result_1 = variant { Ok : LinkDto; Err : CanisterError };
+type Result_2 = variant { Ok : UserDto; Err : text };
+type Result_3 = variant { Ok : GetLinkResp; Err : text };
+type Result_4 = variant { Ok : PaginateResult; Err : text };
+type Result_5 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
+type Result_6 = variant {
   Ok : opt LinkGetUserStateOutput;
   Err : CanisterError;
 };
+type Result_7 = variant { Ok : text; Err : CanisterError };
 type TransactionDto = record {
   id : text;
   protocol : text;
@@ -240,21 +239,20 @@ service : () -> {
   create_action : (CreateActionInput) -> (Result);
   create_action_anonymous : (CreateActionAnonymousInput) -> (Result);
   create_link : (CreateLinkInput) -> (Result_1);
-  create_link_v2 : (CreateLinkInputV2) -> (Result_2);
-  create_user : () -> (Result_3);
-  get_link : (text, opt GetLinkOptions) -> (Result_4) query;
-  get_links : (opt PaginateInput) -> (Result_5) query;
-  get_user : () -> (Result_3) query;
+  create_user : () -> (Result_2);
+  get_link : (text, opt GetLinkOptions) -> (Result_3) query;
+  get_links : (opt PaginateInput) -> (Result_4) query;
+  get_user : () -> (Result_2) query;
   icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
   icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
-      Result_6,
+      Result_5,
     );
   icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
-  link_get_user_state : (LinkGetUserStateInput) -> (Result_7);
-  link_update_user_state : (LinkUpdateUserStateInput) -> (Result_7);
+  link_get_user_state : (LinkGetUserStateInput) -> (Result_6);
+  link_update_user_state : (LinkUpdateUserStateInput) -> (Result_6);
   process_action : (ProcessActionInput) -> (Result);
   process_action_anonymous : (ProcessActionAnonymousInput) -> (Result);
-  trigger_transaction : (TriggerTransactionInput) -> (Result_1);
+  trigger_transaction : (TriggerTransactionInput) -> (Result_7);
   update_action : (UpdateActionInput) -> (Result);
-  update_link : (UpdateLinkInput) -> (Result_2);
+  update_link : (UpdateLinkInput) -> (Result_1);
 }

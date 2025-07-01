@@ -5,7 +5,6 @@ import {
     _SERVICE,
     CreateActionAnonymousInput,
     CreateActionInput,
-    CreateLinkInputV2,
     idlFactory,
     LinkDto,
     LinkGetUserStateInput,
@@ -15,6 +14,7 @@ import {
     UpdateActionInput,
     ActionDto,
     UpdateLinkInput,
+    CreateLinkInput,
 } from "../../../../declarations/cashier_backend/cashier_backend.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
@@ -117,8 +117,8 @@ export class LinkServiceFixture {
         return response;
     }
 
-    async createLinkV2(input: CreateLinkInputV2): Promise<LinkDto> {
-        return parseResultResponse(await this.actor.create_link_v2(input));
+    async createLinkV2(input: CreateLinkInput): Promise<LinkDto> {
+        return parseResultResponse(await this.actor.create_link(input));
     }
 
     async updateLink(linkId: string, isContinue: boolean) {
@@ -261,7 +261,7 @@ export class LinkServiceFixtureExtended extends LinkServiceFixture {
             amount_per_link_use_action: asset.amount_per_link_use || BigInt(10_0000_0000),
         }));
 
-        const input: CreateLinkInputV2 = {
+        const input: CreateLinkInput = {
             title: config.title,
             asset_info: formattedAssets,
             link_type: linkType,
