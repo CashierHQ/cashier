@@ -19,11 +19,6 @@ use crate::core::action::types::ActionDto;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateLinkInput {
-    pub link_type: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct CreateLinkInputV2 {
     pub title: String,
     pub link_use_action_max_count: u64,
     pub asset_info: Vec<LinkDetailUpdateAssetInfoInput>,

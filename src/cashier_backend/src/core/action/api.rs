@@ -8,6 +8,7 @@ use crate::core::guard::is_not_anonymous;
 use crate::info;
 use crate::services::request_lock::RequestLockService;
 use crate::services::transaction_manager::service::TransactionManagerService;
+use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::utils::runtime::{IcEnvironment, RealIcEnvironment};
 use crate::{
     core::CanisterError,
@@ -40,9 +41,9 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
 
     // Create lock for transaction execution
     let request_lock_key = request_lock_service.create_request_lock_for_executing_transaction(
-        caller,
-        input.action_id.clone(),
-        input.transaction_id.clone(),
+        &caller,
+        &input.action_id,
+        &input.transaction_id,
         ic_env.time(),
     )?;
 
