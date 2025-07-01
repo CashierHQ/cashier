@@ -25,12 +25,18 @@ if [ -z "$1" ]; then
   echo "No test file specified as argument."
   ask_for_test_file
 else
-  TEST_FILE=$1
+  TEST_FILE="$1"
+  
+  echo "Using test file: $TEST_FILE"
   
   # Check if provided file exists
   if [ ! -f "$TEST_FILE" ]; then
     echo "Warning: File '$TEST_FILE' does not exist."
-    ask_for_test_file
+    echo "Do you want to continue anyway? (y/n)"
+    read -r response
+    if [[ "$response" != "y" && "$response" != "Y" ]]; then
+      exit 1
+    fi
   fi
 fi
 
