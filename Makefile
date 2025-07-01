@@ -32,6 +32,13 @@ test-file:
 		bash scripts/test/run_test_and_dump_logs.sh "$(word 2,$(MAKECMDGOALS))"; \
 	fi
 
+request-lock-test:
+	dfx start --clean --background
+	bash src/test/scripts/setup.sh
+	npm test src/test/local-tests
+	dfx stop
+
+
 # Catch-all target to handle additional arguments
 %:
 	@:

@@ -14,9 +14,10 @@
         "build:backend": "make build-backend && dfx generate cashier_backend",
         "build:artifact": "bash scripts/compress_build_wasm.sh",
         "setup:test": "bash scripts/setup_test.sh",
-        "test": "jest",
+        "test": "npm run test:integration-backend && npm run test:request-lock",
         "pretest:integration-backend": "make setup-test",
         "test:integration-backend": "npx jest -- src/test/picjs-tests",
+        "test:request-lock": "make request-lock-test",
         "prepare": "npx husky",
         "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
         "lint": "eslint src/cashier_frontend --config eslint.config.js"

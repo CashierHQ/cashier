@@ -94,8 +94,6 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
             }
         };
 
-        info!("all_txs: {:#?}", all_txs);
-
         // User wallet account
         let caller = Account {
             owner: self.ic_env.caller(),
