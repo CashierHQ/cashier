@@ -16,7 +16,7 @@
         "setup:test": "bash scripts/setup_test.sh",
         "test": "jest",
         "pretest:integration-backend": "make setup-test",
-        "test:integration-backend": "npx jest -- src/test",
+        "test:integration-backend": "npx jest -- src/test/picjs-tests",
         "prepare": "npx husky",
         "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
         "lint": "eslint src/cashier_frontend --config eslint.config.js"
