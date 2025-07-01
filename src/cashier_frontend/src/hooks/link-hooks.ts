@@ -10,7 +10,7 @@ import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service
 import { groupLinkListByDate } from "@/utils";
 import { LinkModel } from "@/services/types/link.service.types";
 import {
-    mapParitalLinkDtoToCreateLinkInputV2,
+    mapParitalLinkDtoToCreateLinkInput,
     mapPartialDtoToLinkDetailModel,
 } from "@/services/types/mapper/link.service.mapper";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
@@ -168,7 +168,7 @@ export function useCreateNewLinkMutation() {
 
             const link = linkLocalStorageService.getLink(localLinkId);
 
-            const input = mapParitalLinkDtoToCreateLinkInputV2(link);
+            const input = mapParitalLinkDtoToCreateLinkInput(link);
 
             const backendLink = await linkService.createLinkV2(input);
 

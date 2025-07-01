@@ -12,16 +12,16 @@ import {
     ProcessActionInput,
     GetLinkOptions,
     Icrc112Request,
-    CreateLinkInputV2,
     ActionDto,
     GetLinkResp,
     LinkGetUserStateOutput,
     CreateActionInput,
     LinkDto,
     UserDto,
+    CreateLinkInput,
 } from "../../../declarations/cashier_backend/cashier_backend.did";
 import { ICP_LABEL, MultipleTokenHelper } from "../utils/multiple-token-helper";
-import { parseResultResponse } from "../utils/parser";
+import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { flattenAndFindByMethod } from "../utils/icrc-112";
 import LinkHelper from "../utils/link-helper";
 import { fromNullable, toNullable } from "@dfinity/utils";
@@ -184,7 +184,7 @@ export class LinkTestFixture {
                 asset.amount_per_link_use || asset.amount_per_link_use || BigInt(10_0000_0000),
         }));
 
-        const input: CreateLinkInputV2 = {
+        const input: CreateLinkInput = {
             title: config.title,
             asset_info: formattedAssets,
             link_type: linkType,
@@ -194,7 +194,7 @@ export class LinkTestFixture {
             link_use_action_max_count: maxUseCount || BigInt(1),
             nft_image: [],
         };
-        const response = await this.actor.create_link_v2(input);
+        const response = await this.actor.create_link(input);
         const link = parseResultResponse(response);
 
         return link;
@@ -254,6 +254,7 @@ export class LinkTestFixture {
         };
 
         const response = await this.actor.process_action(input);
+        console.log("[confirmAction] response", safeParseJSON(response));
         return parseResultResponse(response);
     }
 

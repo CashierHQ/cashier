@@ -9,10 +9,10 @@ import * as path from "path";
 import {
     _SERVICE,
     idlFactory,
-    CreateLinkInputV2,
     CreateActionInput,
     LinkDto,
     ActionDto,
+    CreateLinkInput,
 } from "../../../../declarations/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
 
@@ -152,7 +152,7 @@ describe("Create Link Action", () => {
     it("should create a link successfully", async () => {
         console.log("Creating test link...");
 
-        const linkInput: CreateLinkInputV2 = {
+        const linkInput: CreateLinkInput = {
             title: "Test Link for Action Creation",
             asset_info: [
                 {
@@ -170,7 +170,7 @@ describe("Create Link Action", () => {
             nft_image: [],
         };
 
-        const result = await actor.create_link_v2(linkInput);
+        const result = await actor.create_link(linkInput);
 
         expect(result).toBeDefined();
         expect("Ok" in result).toBe(true);

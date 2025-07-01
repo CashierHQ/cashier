@@ -26,11 +26,22 @@ run-test:
 
 # Run a specific test file if provided, otherwise ask for the file path
 test-file:
-	@if [ -z "$(file)" ]; then \
+	@if [ -z "$(MAKECMDGOALS)" ] || [ "$(MAKECMDGOALS)" = "test-file" ]; then \
 		bash scripts/test/run_test_and_dump_logs.sh; \
 	else \
-		bash scripts/test/run_test_and_dump_logs.sh "$(file)"; \
+		bash scripts/test/run_test_and_dump_logs.sh "$(word 2,$(MAKECMDGOALS))"; \
 	fi
+
+request-lock-test:
+	dfx start --clean --background
+	bash src/test/scripts/setup.sh
+	npm test src/test/local-tests
+	dfx stop
+
+
+# Catch-all target to handle additional arguments
+%:
+	@:
 
 # have to run local-setup before running this, need create did file in .dfx
 g: 

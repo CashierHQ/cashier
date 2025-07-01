@@ -23,9 +23,9 @@ impl RequestLockService {
 
     pub fn create_request_lock_for_executing_transaction(
         &self,
-        principal: Principal,
-        action_id: String,
-        transaction_id: String,
+        principal: &Principal,
+        action_id: &str,
+        transaction_id: &str,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
         let key =
@@ -35,8 +35,8 @@ impl RequestLockService {
 
     pub fn create_request_lock_for_creating_action(
         &self,
-        link_id: String,
-        principal: Principal,
+        link_id: &str,
+        principal: &Principal,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
         let key = RequestLockKey::user_link(principal.to_text(), link_id);
@@ -45,9 +45,9 @@ impl RequestLockService {
 
     pub fn create_request_lock_for_processing_action(
         &self,
-        principal: Principal,
-        link_id: String,
-        action_id: String,
+        principal: &Principal,
+        link_id: &str,
+        action_id: &str,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
         let key = RequestLockKey::user_link_action(principal.to_text(), link_id, action_id);
@@ -56,9 +56,9 @@ impl RequestLockService {
 
     pub fn create_request_lock_for_updating_action(
         &self,
-        principal: Principal,
-        link_id: String,
-        action_id: String,
+        principal: &Principal,
+        link_id: &str,
+        action_id: &str,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
         let key = RequestLockKey::user_link_action(principal.to_text(), link_id, action_id);
