@@ -82,6 +82,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         // Skip button state update during countdown to avoid conflicts
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (action?.state === ACTION_STATE.SUCCESS && countdown > 0) {
+            console.log("[Button State Update] SUCCESS state with countdown > 0");
             // Only update text for countdown, preserve other button states
             setButton((prev) => ({
                 ...prev,
@@ -90,6 +91,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             }));
 
             if (countdown === 1) {
+                console.log("[Button State Update] Countdown is 1, disabling button");
                 // Button is disabled when countdown is 1
                 setButton((prev) => ({
                     ...prev,
@@ -97,12 +99,14 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                 }));
             }
         } else if (hasTriggeredByTimer) {
+            console.log("[Button State Update] Has triggered by timer");
             // If countdown has triggered continue, reset button text
             setButton({
                 text: t("confirmation_drawer.processing"),
                 disabled: true, // Button should be disabled during processing
             });
         } else if (hasClickedOnSuccessContinue) {
+            console.log("[Button State Update] Has clicked on success continue");
             setButton({
                 text: t("confirmation_drawer.processing"),
                 disabled: true, // Button should be disabled during processing
@@ -110,11 +114,13 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         }
         // Handle non-countdown button states
         else if (action?.state === ACTION_STATE.PROCESSING) {
+            console.log("[Button State Update] PROCESSING state");
             setButton({
                 text: t("confirmation_drawer.processing"),
                 disabled: true, // Button should be disabled during processing
             });
         } else if (action?.state === ACTION_STATE.FAIL) {
+            console.log("[Button State Update] FAIL state");
             setButton({
                 text: t("confirmation_drawer.retry_button"),
                 disabled: false, // Allow retrying
@@ -123,6 +129,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
             if (countdown > 0) {
                 return;
             }
+            console.log("[Button State Update] Default state (confirm button)");
             setButton({
                 text: t("confirmation_drawer.confirm_button"),
                 disabled: false, // Button should not be disabled on initial submission

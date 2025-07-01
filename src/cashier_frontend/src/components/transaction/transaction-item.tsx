@@ -13,7 +13,7 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
 import { FeeHelpers } from "@/services/fee.service";
-import { ACTION_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, TASK } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
 interface TransactionItemProps {
@@ -94,7 +94,7 @@ export const TransactionItem = memo(function TransactionItem({
                     <p className="text-[14px] font-normal flex items-center gap-2">
                         {assetSymbol}
                         <span className="text-grey/60 text-[10px] font-normal">
-                            {intentTitle.toLowerCase().includes("link creation fee")
+                            {intent.task === TASK.TRANSFER_WALLET_TO_TREASURY
                                 ? "Link creation fee"
                                 : ""}
                         </span>
