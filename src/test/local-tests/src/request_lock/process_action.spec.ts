@@ -9,11 +9,11 @@ import * as path from "path";
 import {
     _SERVICE,
     idlFactory,
-    CreateLinkInputV2,
     CreateActionInput,
     ProcessActionInput,
     LinkDto,
     ActionDto,
+    CreateLinkInput,
 } from "../../../../declarations/cashier_backend/cashier_backend.did";
 import TokenUtilServiceFixture from "../fixtures/token-utils-fixture";
 
@@ -176,7 +176,7 @@ describe("Process Action Request Lock", () => {
         }
 
         // Create a link for testing
-        const linkInput: CreateLinkInputV2 = {
+        const linkInput: CreateLinkInput = {
             title: "Test Link for Process Action",
             asset_info: [
                 {
@@ -194,7 +194,7 @@ describe("Process Action Request Lock", () => {
             nft_image: [],
         };
 
-        const linkResult = await actor.create_link_v2(linkInput);
+        const linkResult = await actor.create_link(linkInput);
         if ("Ok" in linkResult) {
             createdLink = linkResult.Ok;
         } else {

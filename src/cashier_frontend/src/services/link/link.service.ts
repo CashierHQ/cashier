@@ -6,7 +6,7 @@ import {
     _SERVICE,
     CreateActionAnonymousInput,
     CreateActionInput,
-    CreateLinkInputV2,
+    CreateLinkInput,
     idlFactory,
     LinkDto,
     LinkGetUserStateInput,
@@ -135,8 +135,8 @@ class LinkService {
         return result;
     }
 
-    async createLinkV2(input: CreateLinkInputV2) {
-        return parseResultResponse(await this.actor.create_link_v2(input));
+    async createLinkV2(input: CreateLinkInput) {
+        return parseResultResponse(await this.actor.create_link(input));
     }
 
     async updateLink(linkId: string, data: Partial<UserInputItem>, isContinue: boolean) {

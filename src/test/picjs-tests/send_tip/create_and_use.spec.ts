@@ -7,6 +7,7 @@ import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { CREATE_LINK_FEE, FEE_CANISTER_ID, TREASURY_WALLET } from "../constant";
 import { Icrc112ExecutorV2 } from "../utils/icrc-112-v2";
+import { safeParseJSON } from "../utils/parser";
 
 describe("Test create and claim tip link", () => {
     const fixture = new LinkTestFixture();
@@ -126,6 +127,7 @@ describe("Test create and claim tip link", () => {
 
         it("should create use action", async () => {
             const action = await fixture.createAction(linkId, "Use");
+            console.log("[createAction] action", safeParseJSON(action.id as any));
             expect(action).toBeTruthy();
 
             claimActionId = action.id;
@@ -207,6 +209,7 @@ describe("Test create and claim tip link", () => {
 
             // Process claim action
             const action = await fixture.confirmAction(linkId, claimActionId, "Use");
+            console.log("[confirmAction] action", safeParseJSON(action.id as any));
             expect(action.state).toEqual("Action_state_success");
 
             const intent = action.intents[0];

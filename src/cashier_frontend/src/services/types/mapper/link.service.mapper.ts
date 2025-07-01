@@ -3,7 +3,7 @@
 
 import { convertNanoSecondsToDate } from "@/utils";
 import {
-    CreateLinkInputV2,
+    CreateLinkInput,
     GetLinkResp,
     LinkDto,
     LinkGetUserStateOutput,
@@ -255,7 +255,7 @@ export const mapUserInputItemToLinkDetailModel = (
     };
 };
 
-export const mapLinkModelToCreateLinkInputV2 = (model: LinkDetailModel): CreateLinkInputV2 => {
+export const mapLinkModelToCreateLinkInput = (model: LinkDetailModel): CreateLinkInput => {
     // Map asset_info to LinkDetailUpdateAssetInfoInput format
     const assetInfo = model.asset_info.map((asset) => ({
         address: asset.address,
@@ -276,7 +276,7 @@ export const mapLinkModelToCreateLinkInputV2 = (model: LinkDetailModel): CreateL
     };
 };
 
-export const mapParitalLinkDtoToCreateLinkInputV2 = (dto: Partial<LinkDto>): CreateLinkInputV2 => {
+export const mapParitalLinkDtoToCreateLinkInput = (dto: Partial<LinkDto>): CreateLinkInput => {
     // Map asset_info from LinkDto to LinkDetailUpdateAssetInfoInput array
     const assetInfo =
         dto.asset_info && dto.asset_info[0]
