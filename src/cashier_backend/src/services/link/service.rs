@@ -10,9 +10,8 @@ use cashier_types::{
 use std::str::FromStr;
 
 use crate::services::link::traits::LinkStateMachine;
-use crate::{core::link::types::UpdateLinkInput, services::link::traits::LinkValidation};
 use crate::{
-    core::{action::types::ActionDto, link::types::GetLinkOptions},
+    core::link::types::GetLinkOptions,
     error,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
@@ -28,6 +27,7 @@ use crate::{
     },
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
+use crate::{core::link::types::UpdateLinkInput, services::link::traits::LinkValidation};
 
 pub struct LinkService<E: IcEnvironment + Clone> {
     // LinkService fields go here
@@ -346,8 +346,6 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         caller: &Principal,
         input: &UpdateLinkInput,
     ) -> Result<Link, CanisterError> {
-        let link = self.get_link_by_id(&input.id)?;
-
         // Get link
         let link = match self.get_link_by_id(&input.id) {
             Ok(rsp) => rsp,

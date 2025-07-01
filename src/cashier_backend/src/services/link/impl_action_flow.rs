@@ -11,7 +11,6 @@ use crate::core::action::types::{
     ProcessActionInput,
 };
 use crate::core::link::types::UpdateActionInput;
-use crate::info;
 use crate::services::link::service::LinkService;
 use crate::services::link::traits::ActionFlow;
 use crate::services::link::traits::IntentAssembler;
