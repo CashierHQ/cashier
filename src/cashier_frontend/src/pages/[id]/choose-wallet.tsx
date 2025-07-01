@@ -93,16 +93,6 @@ export default function ChooseWalletPage() {
     // Internal action state that can be updated independently
     const [internalAction, setInternalAction] = useState<ActionModel | undefined>(queryAction);
 
-    // Debug logging to track action selection
-    useEffect(() => {
-        console.log("Action State Debug:", {
-            hasInternalAction: !!internalAction,
-            hasQueryAction: !!queryAction,
-            currentActionId: internalAction?.id,
-            currentActionState: internalAction?.state,
-        });
-    }, [internalAction, queryAction, internalAction]);
-
     // Sync internal action with query action when query action changes
     // This ensures we get the initial action from the query
     useEffect(() => {
@@ -115,14 +105,12 @@ export default function ChooseWalletPage() {
     useEffect(() => {
         return () => {
             // Stop polling when component unmounts
-            console.log("Component unmounting - stopping action polling");
         };
     }, []);
 
     // Stop polling if link or action becomes unavailable
     useEffect(() => {
         if (!link || !internalAction) {
-            console.log("Link or action unavailable - stopping action polling");
         }
     }, [link, internalAction]);
 
@@ -338,8 +326,6 @@ export default function ChooseWalletPage() {
                     actionType: internalAction?.type ?? ACTION_TYPE.USE_LINK,
                     actionId: internalAction.id,
                 });
-
-                console.log("processActionResult", processActionResult);
 
                 setInternalAction(processActionResult);
 

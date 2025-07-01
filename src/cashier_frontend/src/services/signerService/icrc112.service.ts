@@ -71,13 +71,6 @@ export const SUPPORTED_PARSED_METHODS = [
     "icrc7_transfer",
 ];
 
-const STANDARDS_USING_BLOCK_ID = [
-    "icrc1_transfer",
-    "icrc2_approve",
-    "icrc2_transfer",
-    "icrc7_transfer",
-];
-
 export type Icrc112ResponseItem = SuccessResponse | ErrorResponse;
 
 export interface Icrc112Response {
@@ -134,7 +127,6 @@ export class ICRC112Service {
             // Step #1 Parallel executes all the requests in the sub-array
             const rowRequest = arg.params.requests[rowIndex];
             const rowResponse = await this.parallelExecuteIcrcRequests(rowRequest);
-            console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ rowResponse:", rowResponse);
 
             // Step #2 Validate responses of each request in the sub-array
             for (let requestIndex = 0; requestIndex < rowRequest.length; requestIndex++) {
@@ -231,8 +223,6 @@ export class ICRC112Service {
                     requestIndex,
                     successResult: singleResponse.result,
                 });
-
-                console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ finalResponse:", finalResponse);
             }
 
             // If any of the requests in this row failed valididation, do not execute following rows (sub-arrays)
@@ -258,12 +248,10 @@ export class ICRC112Service {
             }
         }
 
-        console.log("🚀 ~ ICRC112Service ~ icrc112Execute ~ finalResponse:", finalResponse);
         return finalResponse;
     }
 
     private setResponse(params: SetResponseParams) {
-        console.log(params.finalResponse);
         if (params.isError) {
             params.finalResponse.responses[params.rowIndex][params.requestIndex] = {
                 error: {
@@ -318,8 +306,6 @@ export class ICRC112Service {
         const responses: Array<Icrc112ResponseItem> = [];
 
         for (const request of requests) {
-            console.log(`Processing request for method: ${request.method}`);
-            console.log("Request:", request);
             const task = this.callCanisterService.call({
                 canisterId: request.canisterId,
                 calledMethodName: request.method,

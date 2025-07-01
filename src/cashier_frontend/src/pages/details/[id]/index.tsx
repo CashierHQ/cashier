@@ -169,12 +169,11 @@ export default function DetailPage() {
         try {
             if (!link) throw new Error("Link data is not available");
 
-            const res = await callLinkStateMachine({
+            await callLinkStateMachine({
                 linkId: link.id,
                 linkModel: {},
                 isContinue: true,
             });
-            console.log("Link state machine response:", res);
 
             await refetchLinkDetail();
 

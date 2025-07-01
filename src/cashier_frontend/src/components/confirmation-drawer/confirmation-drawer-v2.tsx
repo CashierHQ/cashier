@@ -80,6 +80,7 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
 
     useEffect(() => {
         // Skip button state update during countdown to avoid conflicts
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (action?.state === ACTION_STATE.SUCCESS && countdown > 0) {
             // Only update text for countdown, preserve other button states
             setButton((prev) => ({
@@ -119,6 +120,9 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
                 disabled: false, // Allow retrying
             });
         } else {
+            if (countdown > 0) {
+                return;
+            }
             setButton({
                 text: t("confirmation_drawer.confirm_button"),
                 disabled: false, // Button should not be disabled on initial submission
@@ -145,8 +149,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         });
         setCountdown(0);
         try {
-            // Call appropriate handler based on transaction state
-            console.log("[onClickSubmit] Action state:", action?.state);
             if (action?.state === ACTION_STATE.SUCCESS) {
                 // For successful transactions, continue to next step
                 await onSuccessContinue();
@@ -157,11 +159,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         } catch (e) {
             const errorMessage = e instanceof Error ? e : new Error("unknown error");
             onCashierError(errorMessage);
-        } finally {
-            setButton({
-                text: t("confirmation_drawer.confirm_button"),
-                disabled: false, // Re-enable button for next action
-            });
         }
     };
 
