@@ -236,10 +236,16 @@ The Clippy configuration (`.clippy.toml`) is tuned for IC canister development w
 
 ## Integration Tests
 
+Setup
+
+```bash
+make setup-test
+```
+
 For integration tests, run:
 
 ```bash
-npx jest -- /test/picjs-tests
+npm run test:integration-backend
 ```
 
 ## Local Re-entrancy Protection Tests
