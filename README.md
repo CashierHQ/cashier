@@ -239,7 +239,11 @@ The Clippy configuration (`.clippy.toml`) is tuned for IC canister development w
 Setup
 
 ```bash
+# build backend wasm and move to artifacts
 make setup-test
+
+# generate ts file for interacting with test code in typescript
+make g
 ```
 
 For integration tests, run:
