@@ -239,6 +239,9 @@ The Clippy configuration (`.clippy.toml`) is tuned for IC canister development w
 Setup
 
 ```bash
+# install nodejs packages
+npm i
+
 # build backend wasm and move to artifacts
 make setup-test
 
