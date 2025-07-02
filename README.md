@@ -245,6 +245,9 @@ npm i
 # build backend wasm and move to artifacts
 make setup-test
 
+# download and build icp ledger - for get wasm and generate ts file next step
+make build-icp-ledger
+
 # generate ts file for interacting with test code in typescript
 make g
 ```
