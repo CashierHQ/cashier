@@ -20,12 +20,10 @@ import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { ActionModel } from "@/services/types/action.service.types";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
-import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
-import { usePollingLinkAndAction } from "@/hooks/polling/usePollingLinkAndAction";
+import { useWithdrawConfirmation } from "@/hooks/tx-cart/useWithdrawConfirmation";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -52,19 +50,22 @@ export default function DetailPage() {
 
     const { t } = useTranslation();
 
-    const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: updateAction } = useUpdateAction();
-    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
+    // Refetch function for the hook
+    const refetchLinkDetail = async () => {
+        await linkDetailQuery.refetch();
+    };
 
-    // Polling hook for tracking action state during withdrawal
-    const { startPollingLinkDetail, stopPolling } = usePollingLinkAndAction({
-        onUpdate: (action) => {
-            setCurrentAction(action);
-        },
-        onError: (error) => {
-            console.error("Polling error:", error);
-        },
-    });
+    // Use withdrawal confirmation hook
+    const { handleSuccessContinue, handleConfirmTransaction, onActionResult, onCashierError } =
+        useWithdrawConfirmation({
+            linkId: linkId ?? "",
+            link: link!,
+            currentAction,
+            setCurrentAction,
+            identity,
+            refetchLinkDetail,
+            setShowConfirmationDrawer,
+        });
 
     // Update local action state when query action changes
     React.useEffect(() => {
@@ -146,10 +147,6 @@ export default function DetailPage() {
         }
     }, [linkId, identity]);
 
-    const refetchLinkDetail = async () => {
-        await linkDetailQuery.refetch();
-    };
-
     const setInactiveLink = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
@@ -160,25 +157,6 @@ export default function DetailPage() {
             });
             await refetchLinkDetail();
             setShowEndLinkDrawer(false);
-        } catch (error) {
-            console.error("Error setting link inactive:", error);
-        }
-    };
-
-    const setInactiveEndedLink = async () => {
-        try {
-            if (!link) throw new Error("Link data is not available");
-
-            const res = await callLinkStateMachine({
-                linkId: link.id,
-                linkModel: {},
-                isContinue: true,
-            });
-            console.log("Link state machine response:", res);
-
-            await refetchLinkDetail();
-
-            setShowConfirmationDrawer(false);
         } catch (error) {
             console.error("Error setting link inactive:", error);
         }
@@ -204,62 +182,6 @@ export default function DetailPage() {
         } catch (error) {
             console.error("Error creating withdraw action:", error);
         }
-    };
-
-    const handleWithdrawProcess = async () => {
-        try {
-            if (!link) throw new Error("Link is not defined");
-            if (!currentAction) throw new Error("Action is not defined");
-
-            // Start polling to track action state changes
-            startPollingLinkDetail(linkId ?? "", ACTION_TYPE.WITHDRAW_LINK, identity);
-
-            const firstUpdatedAction = await processAction({
-                linkId: link.id,
-                actionType: ACTION_TYPE.WITHDRAW_LINK,
-                actionId: currentAction.id,
-            });
-
-            // Update local action state with enriched action
-            if (firstUpdatedAction.icrc112Requests) {
-                setCurrentAction(firstUpdatedAction);
-
-                const response = await icrc112Execute({
-                    transactions: firstUpdatedAction.icrc112Requests,
-                });
-
-                if (response) {
-                    const secondUpdatedAction = await updateAction({
-                        actionId: currentAction.id,
-                        linkId: link.id,
-                        external: true,
-                    });
-
-                    if (secondUpdatedAction) {
-                        setCurrentAction(secondUpdatedAction);
-                        handleActionResult(secondUpdatedAction);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Error in withdrawal process:", error);
-            throw error;
-        } finally {
-            // Stop polling when process is complete
-            stopPolling();
-        }
-    };
-
-    const handleCashierError = (error: Error) => {
-        toast.error(t("common.error"), {
-            description: error.message,
-        });
-        console.error("Cashier error:", error);
-        setShowConfirmationDrawer(false);
-    };
-
-    const handleActionResult = (actionResult: ActionModel) => {
-        setCurrentAction(actionResult);
     };
 
     return (
@@ -359,12 +281,10 @@ export default function DetailPage() {
                 action={currentAction}
                 onClose={() => setShowConfirmationDrawer(false)}
                 onInfoClick={() => {}}
-                onActionResult={handleActionResult}
-                onCashierError={handleCashierError}
-                handleSuccessContinue={async () => {
-                    await setInactiveEndedLink();
-                }}
-                handleConfirmTransaction={handleWithdrawProcess}
+                onActionResult={onActionResult}
+                onCashierError={onCashierError}
+                handleSuccessContinue={handleSuccessContinue}
+                handleConfirmTransaction={handleConfirmTransaction}
             />
         </MainAppLayout>
     );

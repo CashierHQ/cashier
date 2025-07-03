@@ -115,5 +115,5 @@ jobs:
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
 
-                  make g
+                  make generate-ci
                   dfx deploy cashier_frontend --network ${NETWORK}
