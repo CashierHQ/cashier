@@ -94,5 +94,5 @@ jobs:
                   rustup target add wasm32-unknown-unknown
                   dfx generate cashier_backend 
                   dfx generate token_storage
-                  make g  # Generate types
+                  make generate-ci
                   npm run build

@@ -58,6 +58,16 @@ g:
 	rm src/declarations/icp_ledger_canister/index.d.ts
 	rm src/declarations/icp_ledger_canister/index.js
 
+generate-ci:
+	@dfx generate cashier_backend
+	rm src/declarations/cashier_backend/cashier_backend.did
+	rm src/declarations/cashier_backend/index.d.ts
+	rm src/declarations/cashier_backend/index.js
+	@dfx generate token_storage
+	rm src/declarations/token_storage/token_storage.did
+	rm src/declarations/token_storage/index.d.ts
+	rm src/declarations/token_storage/index.js
+
 
 predeploy:
 	make build-backend
@@ -82,7 +92,7 @@ frontend-setup:
 	# dfx start --background --clean
 	# @bash scripts/deploy.sh --skip
 	# @bash scripts/local/setup_icp_ledger.sh
-	make g
+	make generate-ci
 	# dfx stop
 
 
