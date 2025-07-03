@@ -81,20 +81,11 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     useEffect(() => {
         // Skip button state update during countdown to avoid conflicts
         if (action?.state === ACTION_STATE.SUCCESS && countdown > 0) {
-            // Only update text for countdown, preserve other button states
-            setButton((prev) => ({
-                ...prev,
+            // During countdown: enabled (5-2s), disabled (1s)
+            setButton({
                 text: `Continue in ${countdown}s`,
-                disabled: countdown === 1 ? true : prev.disabled,
-            }));
-
-            if (countdown === 1) {
-                // Button is disabled when countdown is 1
-                setButton((prev) => ({
-                    ...prev,
-                    disabled: true,
-                }));
-            }
+                disabled: countdown === 1, // Only disable at countdown = 1
+            });
         } else if (hasTriggeredByTimer) {
             // If countdown has triggered continue, reset button text
             setButton({
@@ -157,11 +148,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
         } catch (e) {
             const errorMessage = e instanceof Error ? e : new Error("unknown error");
             onCashierError(errorMessage);
-        } finally {
-            setButton({
-                text: t("confirmation_drawer.confirm_button"),
-                disabled: false, // Re-enable button for next action
-            });
         }
     };
 
