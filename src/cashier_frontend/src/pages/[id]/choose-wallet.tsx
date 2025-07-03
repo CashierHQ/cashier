@@ -6,20 +6,10 @@ import { useParams } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-    ACTION_STATE,
-    ACTION_TYPE,
-    LINK_STATE,
-    LINK_USER_STATE,
-    LINK_TYPE,
-} from "@/services/types/enum";
+import { ACTION_TYPE, LINK_STATE, LINK_USER_STATE, LINK_TYPE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
-import {
-    useLinkUserState,
-    fetchLinkUserState,
-    useUpdateLinkUserState,
-} from "@/hooks/linkUserHooks";
-import { getCashierError, isCashierError } from "@/services/errorProcess.service";
+import { useLinkUserState, fetchLinkUserState } from "@/hooks/linkUserHooks";
+import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useTranslation } from "react-i18next";
@@ -32,14 +22,12 @@ import { toast } from "sonner";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
-import { useProcessAction, useProcessActionAnonymous, useUpdateAction } from "@/hooks/action-hooks";
-import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useLinkUsageValidation } from "@/hooks/form/useLinkUsageValidation";
 import { isReceiveLinkType } from "@/utils/link-type.utils";
 import UseLinkForm from "@/components/use-page/use-link-form";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
-import { usePollingLinkUserState } from "@/hooks/polling/usePollingLinkUserState";
+import { useUseConfirmation } from "@/hooks/tx-cart/useUseConfirmation";
 
 export const UseSchema = z.object({
     token: z.string().min(5),
@@ -134,22 +122,18 @@ export default function ChooseWalletPage() {
     const [manuallyClosedDrawer, setManuallyClosedDrawer] = useState(false);
     const [anonymousWalletAddress, setAnonymousWalletAddress] = useState<string>("");
 
-    // Action hooks
-    const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous();
-    const { mutateAsync: updateAction } = useUpdateAction();
-    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
-    const updateLinkUserState = useUpdateLinkUserState();
-
-    // Polling hook
-    const { startPolling, stopPolling } = usePollingLinkUserState({
-        onUpdate: (action) => {
-            setInternalAction(action);
-        },
-        onError: (error) => {
-            console.error("Polling error:", error);
-        },
-    });
+    // Use confirmation hook for all confirmation-related methods
+    const { handleSuccessContinue, handleConfirmTransaction, onActionResult, onCashierError } =
+        useUseConfirmation({
+            linkId: linkId ?? "",
+            link: link!,
+            internalAction,
+            setInternalAction,
+            anonymousWalletAddress,
+            identity,
+            refetchLinkUserStateFn,
+            linkDetailQuery,
+        });
 
     // Button state
     const [useLinkButton, setUseLinkButton] = useState<{
@@ -188,16 +172,6 @@ export default function ChooseWalletPage() {
             disabled: !!isUserStateLoading,
         }));
     }, [isUserStateLoading]);
-
-    const enhancedRefresh = async () => {
-        try {
-            await refetchLinkUserStateFn();
-            await linkDetailQuery.refetch();
-        } catch (error) {
-            console.error("Error in enhanced refresh:", error);
-            throw error;
-        }
-    };
 
     /**
      * Creates an action for authenticated users
@@ -303,7 +277,7 @@ export default function ChooseWalletPage() {
             }
         } catch (error) {
             if (isCashierError(error)) {
-                showCashierErrorToast(error);
+                onCashierError(error as Error);
             }
         } finally {
             setUseLinkButton({
@@ -312,158 +286,6 @@ export default function ChooseWalletPage() {
             });
         }
     };
-
-    /**
-     * Processes the use action with the backend
-     */
-    const handleProcessUseAction = async () => {
-        if (!link) throw new Error("Link is not defined");
-        if (!internalAction) throw new Error("Action is not defined");
-
-        try {
-            // Start polling action state to track changes from CREATED to SUCCESS
-            if (identity) {
-                startPolling(
-                    {
-                        action_type: ACTION_TYPE.USE_LINK,
-                        link_id: linkId ?? "",
-                        anonymous_wallet_address: "",
-                    },
-                    identity,
-                );
-
-                // Process action for authenticated user
-                const processActionResult = await processAction({
-                    linkId: link.id,
-                    actionType: internalAction?.type ?? ACTION_TYPE.USE_LINK,
-                    actionId: internalAction.id,
-                });
-
-                console.log("processActionResult", processActionResult);
-
-                setInternalAction(processActionResult);
-
-                // Execute ICRC-1 transactions if needed
-                if (processActionResult.icrc112Requests) {
-                    const response = await icrc112Execute({
-                        transactions: processActionResult.icrc112Requests,
-                    });
-
-                    if (response) {
-                        const secondUpdatedAction = await updateAction({
-                            actionId: internalAction.id,
-                            linkId: link.id,
-                            external: true,
-                        });
-
-                        if (secondUpdatedAction) {
-                            setInternalAction(secondUpdatedAction);
-                        }
-                    }
-                }
-
-                if (processActionResult) {
-                    await refetchLinkUserStateFn();
-                }
-            } else {
-                // Process action for anonymous user
-                const processActionResult = await processActionAnonymous({
-                    linkId: link!.id,
-                    actionId: internalAction!.id,
-                    walletAddress: anonymousWalletAddress ?? "",
-                    actionType: ACTION_TYPE.USE_LINK,
-                });
-
-                if (processActionResult) {
-                    setInternalAction(processActionResult);
-                    await refetchLinkUserStateFn();
-                }
-            }
-        } finally {
-            // Stop polling when done
-            stopPolling();
-        }
-    };
-
-    /**
-     * Starts the transaction process
-     */
-    const startTransaction = async () => {
-        try {
-            // Validation for send-type links
-            if (isReceiveLinkType(link!.linkType as LINK_TYPE)) {
-                const validationResult = validateAssetAndFees(link!);
-                if (!validationResult.isValid) {
-                    const msg = validationResult.errors.map((error) => error.message).join(", ");
-                    throw new Error(msg);
-                }
-            }
-            await handleProcessUseAction();
-        } catch (error) {
-            console.error("Transaction error:", error);
-            if (isCashierError(error)) {
-                showCashierErrorToast(error);
-            }
-        }
-    };
-
-    /**
-     * Updates link user state after successful transaction
-     */
-    const handleUpdateLinkUserState = async () => {
-        try {
-            const result = await updateLinkUserState.mutateAsync({
-                input: {
-                    action_type: ACTION_TYPE.USE_LINK,
-                    link_id: linkId ?? "",
-                    isContinue: true,
-                    anonymous_wallet_address: anonymousWalletAddress,
-                },
-            });
-
-            try {
-                await enhancedRefresh();
-                await linkDetailQuery.refetch();
-            } catch (refreshError) {
-                console.error("Error during comprehensive data refresh:", refreshError);
-            }
-
-            if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
-                setTimeout(() => {
-                    goToComplete({ replace: true });
-                }, 500);
-            }
-        } catch (error) {
-            if (isCashierError(error)) {
-                showCashierErrorToast(error);
-            }
-        }
-    };
-
-    // Memoized callbacks
-    const showCashierErrorToast = useMemo(
-        () => (error: Error) => {
-            const cashierError = getCashierError(error);
-            toast.error(t("common.error"), {
-                description: cashierError.message,
-            });
-        },
-        [t],
-    );
-
-    const onActionResult = useMemo(
-        () => (action: ActionModel) => {
-            if (action.state === ACTION_STATE.SUCCESS || action.state === ACTION_STATE.FAIL) {
-                const linkType = link?.linkType;
-                if (action.state === ACTION_STATE.SUCCESS) {
-                    toast.success(t(`claim_page.${linkType}.transaction_success`));
-                } else {
-                    toast.error(t(`claim_page.${linkType}.transaction_failed`));
-                }
-            }
-        },
-        [t, link?.linkType],
-    );
 
     const memoizedOnBack = useMemo(
         () => () => {
@@ -517,9 +339,9 @@ export default function ChooseWalletPage() {
                             }}
                             onInfoClick={() => setShowInfo(true)}
                             onActionResult={onActionResult}
-                            onCashierError={showCashierErrorToast}
-                            handleSuccessContinue={handleUpdateLinkUserState}
-                            handleConfirmTransaction={startTransaction}
+                            onCashierError={onCashierError}
+                            handleSuccessContinue={handleSuccessContinue}
+                            handleConfirmTransaction={handleConfirmTransaction}
                         />
                     </>
                 )}
