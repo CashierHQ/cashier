@@ -13,13 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { useTokens } from "@/hooks/useTokens";
-import {
-    ACTION_TYPE,
-    CHAIN,
-    LINK_STATE,
-    LINK_TYPE,
-    getLinkTypeString,
-} from "@/services/types/enum";
+import { ACTION_TYPE, CHAIN, LINK_TYPE, getLinkTypeString } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { Info } from "lucide-react";
@@ -28,15 +22,13 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
-import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 import { FeeHelpers } from "@/services/fee.service";
 import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
-import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { UseQueryResult } from "@tanstack/react-query";
-import { useInvalidateLinkDetailQueries } from "@/hooks/link-hooks";
+import { useCreateConfirmation } from "@/hooks/tx-cart/useCreateConfirmation";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -75,8 +67,7 @@ function LinkPreview({
     const queryAction = linkDetailQuery.data?.action; // Rename to distinguish from internal state
     const isLoading = linkDetailQuery.isLoading;
 
-    const { callLinkStateMachine, createAction, createNewLink } = useLinkMutations();
-    const invalidateLinkDetailQueries = useInvalidateLinkDetailQueries();
+    const { createAction, createNewLink } = useLinkMutations();
 
     const { getToken, getTokenPrice, rawTokenList, createTokenMap } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
@@ -136,65 +127,16 @@ function LinkPreview({
 
     // ===== END INTERNAL ACTION STATE MANAGEMENT =====
 
-    // Button state management has been moved to ConfirmationDrawerV2
-    const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: updateAction } = useUpdateAction();
-    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
-
     // Use centralized validation hook with balance checking
     const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
 
-    // Handle process create action - this function is passed as handleConfirmTransaction to ConfirmationDrawerV2
-    const handleConfirmTransaction = async (): Promise<void> => {
-        try {
-            if (!currentAction || !link) {
-                throw new Error("Action or Link is not defined");
-            }
-
-            const validationResult = validateLinkPreviewWithBalance(link, {
-                maxActionNumber: link.maxActionNumber,
-                includeLinkCreationFee: true, // No creation fee for processing existing actions
-            });
-            if (!validationResult.isValid) {
-                const msg = validationResult.errors.map((error) => error.message).join(", ");
-                throw new Error(msg);
-            }
-
-            const firstUpdatedAction = await processAction({
-                actionId: currentAction.id,
-                linkId: link.id,
-                actionType: currentAction.type,
-            });
-
-            updateInternalAction(firstUpdatedAction);
-
-            if (firstUpdatedAction) {
-                const response = await icrc112Execute({
-                    transactions: firstUpdatedAction.icrc112Requests,
-                });
-
-                if (response) {
-                    const secondUpdatedAction = await updateAction({
-                        actionId: currentAction.id,
-                        linkId: link.id,
-                        external: true,
-                    });
-
-                    if (secondUpdatedAction) {
-                        updateInternalAction(secondUpdatedAction);
-
-                        // Invalidate cache to ensure all components see the updated action
-                        if (link?.id) {
-                            invalidateLinkDetailQueries(link.id);
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Error in handleConfirmTransaction:", error);
-            throw error;
-        }
-    };
+    // Use create confirmation hook for all confirmation-related methods
+    const { handleSuccessContinue, handleConfirmTransaction } = useCreateConfirmation({
+        link: link!,
+        currentAction,
+        updateInternalAction,
+        onCashierError,
+    });
 
     // Check if there's an existing action and show confirmation drawer
     useEffect(() => {
@@ -412,18 +354,6 @@ function LinkPreview({
             setIsTransitioningToBackend(false);
         } finally {
             setIsDisabled(false);
-        }
-    };
-
-    const handleSetLinkToActive = async () => {
-        const res = await callLinkStateMachine({
-            linkId: link!.id,
-            linkModel: {},
-            isContinue: true,
-        });
-
-        if (res.state === LINK_STATE.ACTIVE) {
-            navigate(`/details/${link!.id}`);
         }
     };
 
@@ -686,7 +616,7 @@ function LinkPreview({
                 onInfoClick={() => setShowInfo(true)}
                 onActionResult={onActionResult}
                 onCashierError={onCashierError}
-                handleSuccessContinue={handleSetLinkToActive}
+                handleSuccessContinue={handleSuccessContinue}
                 handleConfirmTransaction={handleConfirmTransaction}
                 maxActionNumber={Number(link?.maxActionNumber ?? 1)}
             />

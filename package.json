@@ -6,7 +6,7 @@
     "name": "cashier",
     "license": "GPL-3.0-or-later",
     "scripts": {
-        "prebuild": "make g",
+        "prebuild": "make generate-ci",
         "build": "npm run build --workspaces --if-present",
         "pretest": "make setup-test",
         "start": "npm start --workspaces --if-present",

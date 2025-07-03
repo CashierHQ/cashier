@@ -32,3 +32,4 @@ artifacts
 .deploy-config
 
 logs/*
+.cursor
