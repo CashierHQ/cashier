@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,15 @@ import { TransactionStatus } from "@/services/types/wallet.types";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { useTokens } from "@/hooks/useTokens";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 
-export const SendAssetConfirmationDrawer: FC = () => {
+export interface SendAssetConfirmationDrawerProps {
+    onSuccessfulTransaction?: () => void;
+}
+
+export const SendAssetConfirmationDrawer: FC<SendAssetConfirmationDrawerProps> = ({
+    onSuccessfulTransaction,
+}) => {
     const { t } = useTranslation();
     const identity = useIdentity();
 
@@ -36,45 +43,27 @@ export const SendAssetConfirmationDrawer: FC = () => {
     const [isDisabled, setIsDisabled] = useState(false);
     const { updateTokenBalance } = useTokens();
 
-    // Update button text based on transaction status
-    useEffect(() => {
-        switch (transactionStatus) {
-            case TransactionStatus.PROCESSING:
-                setButtonText(t("transaction.confirm_popup.inprogress_button"));
-                setIsDisabled(true);
-                break;
-            case TransactionStatus.SUCCESS:
-                setButtonText(t("transaction.confirm_popup.info.close"));
-                setIsDisabled(false);
-                break;
-            case TransactionStatus.FAILED:
-                setButtonText(t("transaction.confirm_popup.retry_button"));
-                setIsDisabled(false);
-                break;
-            default:
-                setButtonText(t("transaction.confirm_popup.confirm_button"));
-                setIsDisabled(false);
-        }
-    }, [transactionStatus, t]);
-
     const onClickSubmit = async () => {
+        // If transaction was successful, close the drawer
         if (transactionStatus === TransactionStatus.SUCCESS) {
             closeConfirmation();
             return;
         }
 
+        // If we're starting a new transaction or retrying
         if (
             transactionStatus === TransactionStatus.IDLE ||
             transactionStatus === TransactionStatus.FAILED
         ) {
+            // Set status to processing first (this updates UI)
             setTransactionStatus(TransactionStatus.PROCESSING);
+            setButtonText(t("transaction.confirm_popup.inprogress_button"));
+            setIsDisabled(true);
 
             try {
                 if (!sendAssetInfo?.destinationAddress) {
                     throw new Error("Destination address is required");
                 }
-
-                console.log("Sending asset info:", sendAssetInfo);
 
                 const canisterUtils = new TokenUtilService(identity);
 
@@ -84,15 +73,37 @@ export const SendAssetConfirmationDrawer: FC = () => {
                     sendAssetInfo.amountNumber,
                 );
 
-                // Generate a mock transaction hash - in a real app this would come from the blockchain
                 console.log("Transaction Hash:", block_id);
                 setTransactionHash(block_id.toString());
-                setTransactionStatus(TransactionStatus.SUCCESS);
 
+                // Transaction succeeded
+                setTransactionStatus(TransactionStatus.SUCCESS);
+                setButtonText(t("transaction.confirm_popup.info.close"));
+                setIsDisabled(false);
+
+                // Show success toast
+                toast.success(t("send_panel.confirm_popup.transaction.success.title"), {
+                    description: t("send_panel.confirm_popup.transaction.success.message"),
+                });
+
+                // Update token balance and call success callback
                 updateTokenBalance();
+                if (onSuccessfulTransaction) {
+                    onSuccessfulTransaction();
+                }
             } catch (e) {
                 console.error(e);
                 setError(e as Error);
+
+                // Transaction failed
+                setTransactionStatus(TransactionStatus.FAILED);
+                setButtonText(t("transaction.confirm_popup.retry_button"));
+                setIsDisabled(false);
+
+                // Show error toast
+                toast.error(t("send_panel.confirm_popup.transaction.failed.title"), {
+                    description: t("send_panel.confirm_popup.transaction.failed.message"),
+                });
             }
         }
     };
@@ -153,7 +164,7 @@ export const SendAssetConfirmationDrawer: FC = () => {
                 )}
 
                 <Button
-                    className="my-3 mx-auto py-6 w-[95%]"
+                    className="my-3 mx-auto py-6 w-[95%] disabled:bg-disabledgreen"
                     disabled={isDisabled}
                     onClick={onClickSubmit}
                 >

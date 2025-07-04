@@ -17,6 +17,7 @@ import ReceivePanel from "./receive-panel";
 import DetailsPanel from "./details-panel";
 import ManagePanel from "./manage-panel";
 import ImportPanel from "./import-panel";
+import SwapPanel from "./swap-panel";
 import { formatNumber } from "@/utils/helpers/currency";
 import React from "react";
 
@@ -27,8 +28,9 @@ interface WalletPanelProps {
 const MainWalletPanel: React.FC<{
     navigateSendPage: () => void;
     navigateReceivePage: () => void;
+    navigateSwapPage: () => void;
     totalUsdEquivalent: number;
-}> = ({ navigateSendPage, navigateReceivePage, totalUsdEquivalent }) => {
+}> = ({ navigateSendPage, navigateReceivePage, navigateSwapPage, totalUsdEquivalent }) => {
     // Balance visibility state
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
     const [isVisible, setIsVisible] = useState(() => {
@@ -67,7 +69,11 @@ const MainWalletPanel: React.FC<{
                     </button>
                 </div>
 
-                <SendReceive onSend={navigateSendPage} onReceive={navigateReceivePage} />
+                <SendReceive
+                    onSend={navigateSendPage}
+                    onReceive={navigateReceivePage}
+                    onSwap={navigateSwapPage}
+                />
             </div>
 
             <div className="flex-1 overflow-hidden h-full">
@@ -115,6 +121,10 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
 
     const navigateSendPage = useCallback(() => {
         navigateToPanel("send");
+    }, [navigateToPanel]);
+
+    const navigateSwapPage = useCallback(() => {
+        navigateToPanel("swap");
     }, [navigateToPanel]);
 
     const navigateToMainWallet = useCallback(() => {
@@ -174,6 +184,8 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
                 return <SendPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "receive":
                 return <ReceivePanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
+            case "swap":
+                return <SwapPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "details":
                 return <DetailsPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "manage":
@@ -186,6 +198,7 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
                     <MainWalletPanel
                         navigateSendPage={navigateSendPage}
                         navigateReceivePage={navigateReceivePage}
+                        navigateSwapPage={navigateSwapPage}
                         totalUsdEquivalent={totalUsdEquivalent}
                     />
                 );
@@ -198,6 +211,7 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
         navigateToMainWallet,
         navigateSendPage,
         navigateReceivePage,
+        navigateSwapPage,
         totalUsdEquivalent,
         navigateToManage,
         loadingSkeleton,

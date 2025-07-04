@@ -28,6 +28,8 @@ dist/
 .env.*
 artifacts
 
+# AI
+CLAUDE.md
 # private deployment configuration
 .deploy-config
 
