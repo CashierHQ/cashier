@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import * as React from "react";
 import { Driver } from "driver.js";
@@ -23,7 +10,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
-import { ACTION_TYPE, ACTION_STATE, LINK_TYPE } from "@/services/types/enum";
+import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { EndLinkDrawer } from "@/components/link-details/end-link-drawer";
@@ -32,11 +19,11 @@ import { LINK_STATE } from "@/services/types/enum";
 import { customDriverStyles, initializeDriver } from "@/components/onboarding";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { ActionModel } from "@/services/types/action.service.types";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
-import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { toast } from "sonner";
+import { useLinkDetailQuery } from "@/hooks/link-hooks";
+import { useLinkMutations } from "@/hooks/useLinkMutations";
+import { useWithdrawConfirmation } from "@/hooks/tx-cart/useWithdrawConfirmation";
 
 export default function DetailPage() {
     const { linkId } = useParams();
@@ -44,18 +31,15 @@ export default function DetailPage() {
     const navigate = useNavigate();
     const { renderSkeleton } = useSkeletonLoading();
 
-    const {
-        link,
-        isLoading,
-        setAction,
-        createAction,
-        callLinkStateMachine,
-        isUpdating,
-        isProcessingAction,
-        refetchLinkDetail,
-        refetchAction,
-        action,
-    } = useLinkAction(linkId, ACTION_TYPE.WITHDRAW_LINK);
+    const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.WITHDRAW_LINK);
+    const { callLinkStateMachine, isUpdating, createAction, isCreatingAction } = useLinkMutations();
+
+    const link = linkDetailQuery.data?.link;
+    const isLoading = linkDetailQuery.isLoading;
+    const queryAction = linkDetailQuery.data?.action;
+
+    // Local state for enriched action
+    const [currentAction, setCurrentAction] = React.useState<ActionModel | undefined>(undefined);
 
     const [showOverlay, setShowOverlay] = React.useState(true);
     const [driverObj, setDriverObj] = React.useState<Driver | undefined>(undefined);
@@ -63,23 +47,36 @@ export default function DetailPage() {
     const [showShareLinkDrawer, setShowShareLinkDrawer] = React.useState(false);
     const [showEndLinkDrawer, setShowEndLinkDrawer] = React.useState(false);
     const [showConfirmationDrawer, setShowConfirmationDrawer] = React.useState(false);
-    const [isProcessing, setIsProcessing] = React.useState(false);
-    const [isCallStateMachine, setIsCallStateMachine] = React.useState(false);
 
     const { t } = useTranslation();
 
-    // Button state for confirmation drawer
-    const [drawerConfirmButton, setDrawerConfirmButton] = React.useState<{
-        text: string;
-        disabled: boolean;
-    }>({
-        text: t("confirmation_drawer.confirm_button"),
-        disabled: false,
-    });
+    // Refetch function for the hook
+    const refetchLinkDetail = async () => {
+        await linkDetailQuery.refetch();
+    };
 
-    const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: updateAction } = useUpdateAction();
-    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
+    // Use withdrawal confirmation hook
+    const { handleSuccessContinue, handleConfirmTransaction, onActionResult, onCashierError } =
+        useWithdrawConfirmation({
+            linkId: linkId ?? "",
+            link: link!,
+            currentAction,
+            setCurrentAction,
+            identity,
+            refetchLinkDetail,
+            setShowConfirmationDrawer,
+        });
+
+    // Update local action state when query action changes
+    React.useEffect(() => {
+        if (queryAction) {
+            setCurrentAction(queryAction);
+        }
+    }, [queryAction]);
+
+    React.useEffect(() => {
+        linkDetailQuery.refetch();
+    }, []);
 
     React.useEffect(() => {
         const driver = initializeDriver();
@@ -123,80 +120,6 @@ export default function DetailPage() {
         }
     }, [showOverlay, driverObj, link]);
 
-    // Update button text based on action state and processing state
-    React.useEffect(() => {
-        // If we're actively processing, show "Processing..." regardless of action state
-        if (isProcessing || isCallStateMachine) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-            return;
-        }
-
-        if (!action) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.confirm_button"),
-                disabled: false,
-            });
-            return;
-        }
-
-        const actionState = action.state;
-        if (actionState === ACTION_STATE.SUCCESS) {
-            setDrawerConfirmButton({
-                text: t("continue"),
-                disabled: false,
-            });
-        } else if (actionState === ACTION_STATE.PROCESSING) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-        } else if (actionState === ACTION_STATE.FAIL) {
-            setDrawerConfirmButton({
-                text: t("retry"),
-                disabled: false,
-            });
-        } else {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.confirm_button"),
-                disabled: false,
-            });
-        }
-    }, [action, isProcessing, t]);
-
-    // Polling effect to update action state during processing
-    React.useEffect(() => {
-        let intervalId: number | null = null;
-
-        if (isProcessing) {
-            intervalId = setInterval(async () => {
-                try {
-                    // Refresh action data
-                    await refetchAction(linkId!, ACTION_TYPE.WITHDRAW_LINK);
-
-                    // If action is completed, stop polling
-                    if (
-                        action &&
-                        (action.state === ACTION_STATE.SUCCESS ||
-                            action.state === ACTION_STATE.FAIL)
-                    ) {
-                        setIsProcessing(false);
-                    }
-                } catch (error) {
-                    console.error("Error in polling interval:", error);
-                }
-            }, 1500); // Poll every 2 seconds
-        }
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
-    }, [isProcessing, refetchLinkDetail, action]);
-
     const handleCopyLink = (e: React.SyntheticEvent) => {
         try {
             e.stopPropagation();
@@ -239,108 +162,26 @@ export default function DetailPage() {
         }
     };
 
-    const setInactiveEndedLink = async () => {
+    const initiateWithdrawAction = async () => {
         try {
             if (!link) throw new Error("Link data is not available");
-
-            setDrawerConfirmButton({
-                text: t("processing"),
-                disabled: true,
-            });
-            setIsCallStateMachine(true);
-
-            await callLinkStateMachine({
-                linkId: link.id,
-                linkModel: {},
-                isContinue: true,
-            });
-
-            await refetchLinkDetail();
-
-            setShowConfirmationDrawer(false);
-        } catch (error) {
-            console.error("Error setting link inactive:", error);
-        } finally {
-            setIsCallStateMachine(false);
-        }
-    };
-
-    const handleWithdrawAssets = async () => {
-        try {
-            if (!link) throw new Error("Link data is not available");
-            if (action) {
-                setAction(action);
+            if (currentAction) {
+                // Action already exists, use it
+                setShowConfirmationDrawer(true);
             } else {
-                const actionResult = await createAction(link.id, ACTION_TYPE.WITHDRAW_LINK);
-                setAction(actionResult);
+                // Create new action
+                const actionResult = await createAction({
+                    linkId: link.id,
+                    actionType: ACTION_TYPE.WITHDRAW_LINK,
+                });
+                if (actionResult) {
+                    setCurrentAction(actionResult);
+                }
+                setShowConfirmationDrawer(true);
             }
-
-            setShowConfirmationDrawer(true);
         } catch (error) {
             console.error("Error creating withdraw action:", error);
         }
-    };
-
-    const handleWithdrawProcess = async () => {
-        try {
-            if (!link) throw new Error("Link is not defined");
-            if (!action) throw new Error("Action is not defined");
-
-            // Set processing state to true to activate polling
-            setIsProcessing(true);
-
-            const firstUpdatedAction = await processAction({
-                linkId: link.id,
-                actionType: ACTION_TYPE.WITHDRAW_LINK,
-                actionId: action.id,
-            });
-
-            setAction(firstUpdatedAction);
-
-            if (firstUpdatedAction) {
-                const response = await icrc112Execute({
-                    transactions: firstUpdatedAction.icrc112Requests,
-                });
-
-                if (response) {
-                    const secondUpdatedAction = await updateAction({
-                        actionId: action.id,
-                        linkId: link.id,
-                        external: true,
-                    });
-
-                    if (secondUpdatedAction) {
-                        setAction(secondUpdatedAction);
-                        handleActionResult(secondUpdatedAction);
-
-                        // If action completed successfully, stop polling
-                        if (
-                            secondUpdatedAction.state === ACTION_STATE.SUCCESS ||
-                            secondUpdatedAction.state === ACTION_STATE.FAIL
-                        ) {
-                            setIsProcessing(false);
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Error in withdrawal process:", error);
-            // Make sure to stop polling if there's an error
-            setIsProcessing(false);
-            throw error;
-        }
-    };
-
-    const handleCashierError = (error: Error) => {
-        toast.error(t("common.error"), {
-            description: error.message,
-        });
-        console.error("Cashier error:", error);
-        setShowConfirmationDrawer(false);
-    };
-
-    const handleActionResult = (actionResult: ActionModel) => {
-        setAction(actionResult);
     };
 
     return (
@@ -402,9 +243,9 @@ export default function DetailPage() {
                             {link?.state == LINK_STATE.INACTIVE && (
                                 <Button
                                     id="copy-link-button"
-                                    disabled={isProcessingAction || !hasWithdrawableAssets}
+                                    disabled={isCreatingAction || !hasWithdrawableAssets}
                                     onClick={() => {
-                                        handleWithdrawAssets();
+                                        initiateWithdrawAction();
                                     }}
                                     className="w-[95%] h-[44px] disabled:bg-gray-300"
                                 >
@@ -436,35 +277,14 @@ export default function DetailPage() {
 
             <ConfirmationDrawerV2
                 open={showConfirmationDrawer}
-                action={action}
+                link={link!}
+                action={currentAction}
                 onClose={() => setShowConfirmationDrawer(false)}
                 onInfoClick={() => {}}
-                onActionResult={handleActionResult}
-                onCashierError={handleCashierError}
-                onSuccessContinue={async () => {
-                    await setInactiveEndedLink();
-                }}
-                startTransaction={async () => {
-                    try {
-                        await handleWithdrawProcess();
-                    } catch (error) {
-                        console.error("Transaction error:", error);
-                        // Error is already handled in handleWithdrawProcess
-                    } finally {
-                        // Ensure we get latest data after transaction attempt
-                        try {
-                            await refetchLinkDetail();
-                        } catch (refreshError) {
-                            console.error("Error refreshing data after transaction:", refreshError);
-                        }
-                    }
-                }}
-                isButtonDisabled={drawerConfirmButton.disabled}
-                setButtonDisabled={(disabled) =>
-                    setDrawerConfirmButton((prev) => ({ ...prev, disabled }))
-                }
-                buttonText={drawerConfirmButton.text}
-                setButtonText={(text) => setDrawerConfirmButton((prev) => ({ ...prev, text }))}
+                onActionResult={onActionResult}
+                onCashierError={onCashierError}
+                handleSuccessContinue={handleSuccessContinue}
+                handleConfirmTransaction={handleConfirmTransaction}
             />
         </MainAppLayout>
     );

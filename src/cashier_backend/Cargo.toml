@@ -32,12 +32,13 @@ rm = {workspace = true}
 ic-icrc-tx = {workspace = true}
 cashier-types = { path = "../lib/cashier-types" }
 thiserror = "2.0.11"
+futures = "0.3.31"
+async-trait = "0.1.86"
 
 
 [dev-dependencies]
 async-trait = "0.1.86"
 tokio =  {version = "1.43.0", features = ["full"]}
-faux = { version = "0.1.12" }
 
 # [features]
 # test = ["faux"]

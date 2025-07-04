@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use ic_cdk::{query, update};
 use itertools::Itertools;
@@ -60,7 +47,7 @@ fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
         String::from("https://jg57n-xyaaa-aaaam-admqq-cai.icp0.io"),
     ];
 
-    return Icrc28TrustedOriginsResponse { trusted_origins };
+    Icrc28TrustedOriginsResponse { trusted_origins }
 }
 
 #[update]
@@ -128,7 +115,7 @@ fn consent_msg_text_pages(
                 .into_iter()
                 .chunks(characters_per_line as usize)
                 .into_iter()
-                .map(|chunk| chunk.collect::<String>())
+                .map(std::iter::Iterator::collect)
                 .collect::<Vec<String>>()
         })
         .collect::<Vec<String>>();

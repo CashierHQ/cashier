@@ -1,18 +1,6 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 
 // File: src/token_storage/src/repository/balance_cache.rs
 use super::BALANCE_CACHE_STORE;
@@ -21,6 +9,12 @@ use ic_cdk::api::time;
 use std::collections::HashMap;
 
 pub struct BalanceCacheRepository {}
+
+impl Default for BalanceCacheRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl BalanceCacheRepository {
     pub fn new() -> Self {
@@ -33,7 +27,7 @@ impl BalanceCacheRepository {
             let mut balance_map = store
                 .get(&user_id.to_string())
                 .map(|candid| candid.into_inner())
-                .unwrap_or_else(|| HashMap::new());
+                .unwrap_or_default();
 
             // Update or add new balances
             let now = time();
@@ -58,7 +52,7 @@ impl BalanceCacheRepository {
             let mut balance_map = store
                 .get(&user_id.to_string())
                 .map(|candid| candid.into_inner())
-                .unwrap_or_else(|| HashMap::new());
+                .unwrap_or_default();
 
             // Add or update the balance
             let now = time();
@@ -82,7 +76,7 @@ impl BalanceCacheRepository {
                 .and_then(|Candid(balances)| {
                     balances
                         .get(token_id)
-                        .map(|balance| balance.balance.clone())
+                        .map(|balance| balance.balance)
                 })
         })
     }

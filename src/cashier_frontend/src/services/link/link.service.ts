@@ -1,25 +1,12 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { convertTokenAmountToNumber, parseResultResponse } from "@/utils";
 import {
     _SERVICE,
     CreateActionAnonymousInput,
     CreateActionInput,
-    CreateLinkInputV2,
+    CreateLinkInput,
     idlFactory,
     LinkDto,
     LinkGetUserStateInput,
@@ -148,8 +135,8 @@ class LinkService {
         return result;
     }
 
-    async createLinkV2(input: CreateLinkInputV2) {
-        return parseResultResponse(await this.actor.create_link_v2(input));
+    async createLinkV2(input: CreateLinkInput) {
+        return parseResultResponse(await this.actor.create_link(input));
     }
 
     async updateLink(linkId: string, data: Partial<UserInputItem>, isContinue: boolean) {
@@ -176,7 +163,7 @@ class LinkService {
             link_id: input.linkId,
             action_type: input.actionType,
         };
-        const response = parseResultResponse(await this.actor.process_action_v2(inputModel));
+        const response = parseResultResponse(await this.actor.process_action(inputModel));
         const action = mapActionModel(response);
         return action;
     }
@@ -221,9 +208,7 @@ class LinkService {
             action_type: input.actionType,
             wallet_address: input.walletAddress,
         };
-        const response = parseResultResponse(
-            await this.actor.process_action_anonymous_v2(inputModel),
-        );
+        const response = parseResultResponse(await this.actor.process_action_anonymous(inputModel));
         const action = mapActionModel(response);
         return action;
     }

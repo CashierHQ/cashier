@@ -1,33 +1,19 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TransactionItem } from "@/components/transaction/transaction-item";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
-import { TASK, FEE_TYPE } from "@/services/types/enum";
-import { feeService } from "@/services/fee.service";
+import { ACTION_TYPE, TASK } from "@/services/types/enum";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkAction } from "@/hooks/useLinkAction";
+import { FeeHelpers } from "@/services/fee.service";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 type ConfirmationPopupAssetsSectionProps = {
+    actionType: ACTION_TYPE;
     intents: IntentModel[];
-    onInfoClick?: () => void;
-    isUsd?: boolean;
-    onUsdClick?: () => void;
+    link: LinkDetailModel;
 };
 
 const getLabel = (intent: IntentModel) => {
@@ -61,12 +47,12 @@ const sortIntentsByAddress = (intents: IntentModel[]): IntentModel[] => {
 };
 
 export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
+    link,
+    actionType,
     intents,
-    isUsd,
 }) => {
     const { t } = useTranslation();
     const { getToken } = useTokens();
-    const { link } = useLinkAction();
     const [feesMap, setFeesMap] = useState<Map<string, FeeModel[]>>(new Map());
     const [sortedIntents, setSortedIntents] = useState<IntentModel[]>([]);
 
@@ -78,6 +64,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
         const calculateFees = async () => {
             const newFeesMap = new Map<string, FeeModel[]>();
 
+            console.log("intents", intents);
             // Process each intent to get associated fees
             for (const intent of intents) {
                 const tokenAddress = intent.asset.address;
@@ -89,7 +76,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 const tokenFees = newFeesMap.get(tokenAddress) || [];
 
                 // Network fee for this token
-                if (token.fee) {
+                if (token.fee && intent.task !== TASK.TRANSFER_WALLET_TO_TREASURY) {
                     tokenFees.push({
                         chain: intent.asset.chain,
                         type: "network_fee",
@@ -100,18 +87,14 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
 
                 // Link creation fee if applicable
                 if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
-                    const linkCreationFee = feeService.getFee(
-                        intent.asset.chain,
-                        link.linkType!,
-                        FEE_TYPE.LINK_CREATION,
-                    );
+                    const linkCreationFee = FeeHelpers.getLinkCreationFee().amount;
 
                     if (linkCreationFee) {
                         tokenFees.push({
                             chain: intent.asset.chain,
                             type: "link_creation_fee",
                             address: tokenAddress,
-                            amount: linkCreationFee.amount,
+                            amount: linkCreationFee,
                         });
                     }
                 }
@@ -137,10 +120,10 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
                 {sortedIntents.map((intent) => (
                     <li key={intent.id}>
                         <TransactionItem
+                            link={link}
+                            actionType={actionType}
                             key={intent.id}
-                            title={t("confirmation_drawer.asset_label")}
                             intent={intent}
-                            isUsd={isUsd}
                             fees={feesMap.get(intent.asset.address) || []}
                         />
                     </li>

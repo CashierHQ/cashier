@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
     repository::{
@@ -31,6 +18,12 @@ pub struct UserTokenService {
     balance_cache_repository: BalanceCacheRepository,
 }
 
+impl Default for UserTokenService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserTokenService {
     pub fn new() -> Self {
         Self {
@@ -44,10 +37,10 @@ impl UserTokenService {
 
     pub fn list_tokens(&self, user_id: &str) -> Vec<TokenDto> {
         // Try to get the user's token list
-        let user_token_list = match self.token_repository.list_tokens(user_id) {
-            Ok(list) => list,
-            Err(_) => UserTokenList::default(),
-        };
+        let user_token_list = self
+            .token_repository
+            .list_tokens(user_id)
+            .unwrap_or_default();
 
         self.convert_to_token_dtos(user_id, &user_token_list)
     }
@@ -135,7 +128,7 @@ impl UserTokenService {
                 self.token_repository
                     .update_token_list(user_id, &user_token_list)?;
                 self.user_preference_repository
-                    .update(user_id.to_string(), user_preference);
+                    .update(user_id, user_preference);
 
                 Ok(())
             }
@@ -214,10 +207,10 @@ impl UserTokenService {
         let _ = self.ensure_token_list_initialized(user_id);
 
         // Get the user's token list
-        let mut user_token_list = match self.token_repository.list_tokens(user_id) {
-            Ok(list) => list,
-            Err(_) => UserTokenList::default(),
-        };
+        let mut user_token_list = self
+            .token_repository
+            .list_tokens(user_id)
+            .unwrap_or_default();
 
         // Get the registry metadata to check version
         let registry_metadata = self.metadata_repository.get();

@@ -1,20 +1,6 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-import { USER_LINK_QUERY } from "@/lib/queryKeys";
 import LinkService from "@/services/link/link.service";
 import {
     LinkUpdateUserStateInputModel,
@@ -23,6 +9,10 @@ import {
 import { Identity } from "@dfinity/agent";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+
+// Helper to generate the query key
+export const getLinkUserStateQueryKey = (link_id: string, user_pid: string) =>
+    ["linkUserState", link_id, user_pid] as const;
 
 export function useUpdateLinkUserState() {
     const identity = useIdentity();
@@ -43,32 +33,35 @@ export function useUpdateLinkUserState() {
 
 export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: boolean) {
     const identity = useIdentity();
+    const user_pid = identity?.getPrincipal().toString() ?? "";
 
     return useQuery({
-        queryKey: USER_LINK_QUERY.userState(
-            input.link_id,
-            input.action_type,
-            identity?.getPrincipal().toText() ?? "",
-        ),
+        queryKey: getLinkUserStateQueryKey(input.link_id, user_pid),
         queryFn: async () => {
             const linkService = new LinkService(identity);
             const userState = await linkService.getLinkUserState(input);
-            console.log("Fetched link user state: ", userState);
             return userState;
         },
         enabled: isEnabled,
         refetchOnWindowFocus: false,
-        // Add stale time to prevent immediate refetches when identity changes
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        // Add retry options to manage refetches
+        staleTime: 1 * 1000, // 5 seconds
         retry: (failureCount, error) => {
             if (error.toString().includes("Identity is required")) {
-                // Don't retry identity errors - wait for proper identity
                 return false;
             }
             return failureCount < 2;
         },
     });
+}
+
+export async function getLinkUserState(
+    input: LinkGetUserStateInputModel,
+    identity: Identity | undefined,
+) {
+    const linkService = new LinkService(identity);
+    const userState = await linkService.getLinkUserState(input);
+    console.log("userState", userState);
+    return userState;
 }
 
 export async function fetchLinkUserState(

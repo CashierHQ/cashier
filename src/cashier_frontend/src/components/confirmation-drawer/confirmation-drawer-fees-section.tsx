@@ -1,24 +1,11 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { FC, useEffect, useState } from "react";
 import { IntentModel } from "@/services/types/intent.service.types";
-import { feeService, Transfer } from "@/services/fee.service";
+import { FeeHelpers, Transfer } from "@/services/fee.service";
 import { useIntentMetadata } from "@/hooks/useIntentMetadata";
-import { FEE_TYPE, TASK } from "@/services/types/enum";
+import { ACTION_TYPE, TASK } from "@/services/types/enum";
 import { Spinner } from "../ui/spinner";
 import { ICP_ADDRESS } from "@/const";
 import { ChevronRight } from "lucide-react";
@@ -26,13 +13,17 @@ import { FeeBreakdownDrawer } from "./fee-breakdown-drawer";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "../ui/avatar";
 import { useTokens } from "@/hooks/useTokens";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTranslation } from "react-i18next";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
+import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
     isUsd?: boolean;
+    maxActionNumber?: number;
+    actionType: ACTION_TYPE;
+    link: LinkDetailModel;
 };
 
 // Define a type for fee token info
@@ -53,9 +44,12 @@ type FeeBreakdownItem = {
 
 export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps> = ({
     intents,
+    maxActionNumber,
+    actionType,
+    link,
 }) => {
     const { t } = useTranslation();
-    const { feeAmount } = useIntentMetadata(intents?.[0]);
+    const { feeAmount } = useIntentMetadata(intents?.[0], actionType);
     const { getTokenPrice, isLoading, getToken } = useTokens();
 
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
@@ -64,7 +58,6 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
     const [feesBreakdown, setFeesBreakdown] = useState<FeeBreakdownItem[]>([]);
     // for avatar
     const [usedTokens, setUsedTokens] = useState<FeeTokenInfo[]>([]);
-    const { link } = useLinkAction();
 
     useEffect(() => {
         const initState = async () => {
@@ -74,22 +67,21 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
             for (const intent of intents) {
                 const token = getToken(intent.asset.address);
                 if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
-                    const fee = feeService.getFee(
-                        intent.asset.chain,
-                        link.linkType!,
-                        FEE_TYPE.LINK_CREATION,
+                    const final_amount = FeeHelpers.forecastIcrc2FeeEs8(
+                        token!,
+                        DEFAULT_CREATION_FEE,
+                        1,
                     );
-                    if (fee) {
-                        totalFeesMapArray.push({
-                            intent,
-                            fee: {
-                                chain: intent.asset.chain,
-                                type: "link_creation_fee",
-                                address: intent.asset.address,
-                                amount: fee.amount,
-                            },
-                        });
-                    }
+
+                    totalFeesMapArray.push({
+                        intent,
+                        fee: {
+                            chain: intent.asset.chain,
+                            type: "link_creation_fee",
+                            address: intent.asset.address,
+                            amount: final_amount,
+                        },
+                    });
                 } else {
                     const transfer: Transfer = {
                         intent,
@@ -153,7 +145,10 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                 }
 
                 const feeType = intent.fee?.type;
-                const tokenAddress = intent.fee?.address;
+                const tokenAddress =
+                    feeType === "link_creation_fee"
+                        ? FeeHelpers.getLinkCreationFee().address
+                        : intent.fee?.address;
                 const token = tokenInfoMap.get(tokenAddress!);
                 const tokenInfo = getToken(tokenAddress!);
 
@@ -165,15 +160,34 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 
                 // Safe conversion from bigint to number for calculation
                 // Use Number() for explicit conversion and provide defaults for undefined values
-                const tokenFee = tokenInfo.fee;
-                const tokenDecimals = tokenInfo.decimals;
-                const tokenAmount = Number(tokenFee) / Math.pow(10, tokenDecimals);
+                // const tokenFee =
+                //     feeType === "link_creation_fee"
+                //         ? FeeHelpers.getLinkCreationFee().amount
+                //         : tokenInfo.fee;
+                const tokenDecimals =
+                    feeType === "link_creation_fee"
+                        ? FeeHelpers.getLinkCreationFee().decimals
+                        : tokenInfo.decimals;
+
+                const tokenAmount =
+                    feeType === "link_creation_fee"
+                        ? Number(FeeHelpers.getLinkCreationFee().amount) /
+                          Math.pow(10, tokenDecimals)
+                        : FeeHelpers.calculateNetworkFees(tokenInfo!);
 
                 let tokenPrice = getTokenPrice(tokenAddress!);
                 if (tokenPrice === undefined) {
                     tokenPrice = 0;
                 }
-                const usdValue = tokenPrice * tokenAmount;
+                let actionNum = 1;
+                if (maxActionNumber) {
+                    if (isNaN(Number(maxActionNumber))) {
+                        actionNum = 1; // Default to 1 if maxActionNumber is not a number
+                    } else {
+                        actionNum = Number(maxActionNumber);
+                    }
+                }
+                const usdValue = tokenPrice * tokenAmount * Number(actionNum ?? 1);
                 totalUsdValue += usdValue;
 
                 const breakdownItem: FeeBreakdownItem = {
@@ -181,7 +195,9 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
                         feeType === "link_creation_fee"
                             ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
                             : t("confirmation_drawer.fee-breakdown.network_fee"),
-                    amount: formatNumber(tokenAmount.toString()),
+                    amount: formatNumber(
+                        (tokenAmount * (Number(maxActionNumber ?? 1) + 1)).toString(),
+                    ),
                     tokenSymbol: token?.symbol || "Unknown",
                     tokenAddress: tokenAddress!,
                     usdAmount: usdValue.toString(),

@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Identity } from "@dfinity/agent";
@@ -37,6 +24,7 @@ import { useIdentity } from "@nfid/identitykit/react";
 import TokenCacheService from "@/services/backend/tokenCache.service";
 import { mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
 import { fromNullable } from "@dfinity/utils";
+import { TOKEN_STORAGE_CANISTER_ID } from "@/const";
 
 /**
  * Response from tokenListQuery with combined token list data
@@ -88,7 +76,10 @@ export function useTokenListQuery() {
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.all,
         queryFn: async () => {
-            console.log("Fetching token list...", identity?.getPrincipal().toString());
+            console.log(
+                "TokenStorageService initialized with canister:",
+                TOKEN_STORAGE_CANISTER_ID,
+            );
             const tokenService = new TokenStorageService(identity);
             let tokens: TokenDto[] = [];
 

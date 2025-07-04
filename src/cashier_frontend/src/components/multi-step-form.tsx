@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { Children, ReactElement, ReactNode, useEffect } from "react";
 import { ChevronLeft, LoaderCircle, Wallet } from "lucide-react";
@@ -125,9 +112,13 @@ export function MultiStepFormHeader({
 
 interface MultiStepFormItemsProps {
     children?: ReactNode;
+    disableAnimations?: boolean;
 }
 
-export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
+export function MultiStepFormItems({
+    children,
+    disableAnimations = false,
+}: MultiStepFormItemsProps) {
     const { step, setSteps, setStepName, direction } = useMultiStepFormContext();
 
     const stepsList = Children.toArray(children) as ReactElement<MultiStepFormItemProps>[];
@@ -143,17 +134,20 @@ export function MultiStepFormItems({ children }: MultiStepFormItemsProps) {
             <div
                 key={step}
                 className={cn(
-                    "w-full h-full flex flex-col flex-grow transition-all duration-300 ease-in-out",
-                    direction === "forward" && [
-                        "animate-in slide-in-from-right",
-                        "data-[state=entering]:translate-x-full",
-                        "data-[state=entered]:translate-x-0",
-                    ],
-                    direction === "backward" && [
-                        "animate-in slide-in-from-left",
-                        "data-[state=entering]:translate-x-[-100%]",
-                        "data-[state=entered]:translate-x-0",
-                    ],
+                    "w-full h-full flex flex-col flex-grow",
+                    !disableAnimations && "transition-all duration-300 ease-in-out",
+                    !disableAnimations &&
+                        direction === "forward" && [
+                            "animate-in slide-in-from-right",
+                            "data-[state=entering]:translate-x-full",
+                            "data-[state=entered]:translate-x-0",
+                        ],
+                    !disableAnimations &&
+                        direction === "backward" && [
+                            "animate-in slide-in-from-left",
+                            "data-[state=entering]:translate-x-[-100%]",
+                            "data-[state=entered]:translate-x-0",
+                        ],
                 )}
             >
                 {stepComponent}

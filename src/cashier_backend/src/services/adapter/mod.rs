@@ -1,25 +1,21 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use std::marker::PhantomData;
 
-use cashier_types::{ActionType, Chain, Intent, Link, LinkType, Transaction};
+use cashier_types::{
+    action::v1::ActionType,
+    common::Chain,
+    intent::v2::Intent,
+    link::v1::{Link, LinkType},
+    transaction::v2::Transaction,
+};
 use ic::{action::IcActionAdapter, intent::IcIntentAdapter};
 
-use crate::{types::temp_action::TemporaryAction, utils::runtime::IcEnvironment};
+use crate::{
+    types::{error::CanisterError, temp_action::TemporaryAction},
+    utils::runtime::IcEnvironment,
+};
 
 pub mod ic;
 
@@ -46,16 +42,20 @@ pub trait ActionAdapter {
 
 /// Specialization for converting intents to transactions
 pub trait IntentAdapter {
-    fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, String>;
+    fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError>;
 }
 
-#[cfg_attr(test, faux::create)]
 pub struct ActionAdapterImpl<E: IcEnvironment + Clone> {
     // PhantomData tells Rust that we're conceptually storing E, even though we don't
     _phantom: PhantomData<E>,
 }
 
-#[cfg_attr(test, faux::methods)]
+impl<E: IcEnvironment + Clone> Default for ActionAdapterImpl<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: IcEnvironment + Clone> ActionAdapterImpl<E> {
     pub fn new() -> Self {
         Self {
@@ -77,13 +77,17 @@ impl<E: IcEnvironment + Clone> ActionAdapterImpl<E> {
     }
 }
 
-#[cfg_attr(test, faux::create)]
 pub struct IntentAdapterImpl<E: IcEnvironment + Clone> {
     // PhantomData tells Rust that we're conceptually storing E, even though we don't
     _phantom: PhantomData<E>,
 }
 
-#[cfg_attr(test, faux::methods)]
+impl<E: IcEnvironment + Clone> Default for IntentAdapterImpl<E> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<E: IcEnvironment + Clone> IntentAdapterImpl<E> {
     pub fn new() -> Self {
         Self {
@@ -95,7 +99,7 @@ impl<E: IcEnvironment + Clone> IntentAdapterImpl<E> {
         &self,
         chain: &Chain,
         intent: &Intent,
-    ) -> Result<Vec<Transaction>, String> {
+    ) -> Result<Vec<Transaction>, CanisterError> {
         match chain {
             Chain::IC => {
                 let ic_intent_adapter: IcIntentAdapter<E> = IcIntentAdapter::new();

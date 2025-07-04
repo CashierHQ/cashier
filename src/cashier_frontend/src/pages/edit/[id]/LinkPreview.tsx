@@ -1,42 +1,19 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getTokenImage } from "@/utils";
+import { getTokenImage, safeParseJSON } from "@/utils";
 import { Label } from "@/components/ui/label";
-import { useResponsive, useDeviceSize } from "@/hooks/responsive-hook";
+import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { useTokens } from "@/hooks/useTokens";
-import {
-    ACTION_TYPE,
-    CHAIN,
-    FEE_TYPE,
-    LINK_STATE,
-    LINK_TYPE,
-    ACTION_STATE,
-    getLinkTypeString,
-} from "@/services/types/enum";
+import { ACTION_TYPE, CHAIN, LINK_TYPE, getLinkTypeString } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { Info } from "lucide-react";
@@ -45,16 +22,19 @@ import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
-import { useFeeService } from "@/hooks/useFeeService";
-import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
-import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
-import { StateBadge } from "@/components/link-item";
+import { FeeHelpers } from "@/services/fee.service";
+import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
+import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useLinkMutations } from "@/hooks/useLinkMutations";
+import { UseQueryResult } from "@tanstack/react-query";
+import { useCreateConfirmation } from "@/hooks/tx-cart/useCreateConfirmation";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;
+    linkDetailQuery: UseQueryResult<{ link: LinkDetailModel; action?: ActionModel }, Error>;
 }
 
 // Define interface for asset info with logo
@@ -67,10 +47,11 @@ interface EnhancedAsset {
     [key: string]: unknown; // For any additional properties that might exist
 }
 
-export default function LinkPreview({
+function LinkPreview({
     // onInvalidActon = () => {},
     onCashierError = () => {},
     onActionResult,
+    linkDetailQuery,
 }: LinkPreviewProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -81,16 +62,13 @@ export default function LinkPreview({
     const oldIdParam = searchParams.get("oldId");
     const shouldRedirect = redirectParam === "true";
 
-    const {
-        link,
-        action,
-        setAction,
-        refetchLinkDetail,
-        callLinkStateMachine,
-        createAction,
-        createNewLink,
-        isLoading,
-    } = useLinkAction();
+    // Use the passed query instead of creating a new one
+    const link = linkDetailQuery.data?.link;
+    const queryAction = linkDetailQuery.data?.action; // Rename to distinguish from internal state
+    const isLoading = linkDetailQuery.isLoading;
+
+    const { createAction, createNewLink } = useLinkMutations();
+
     const { getToken, getTokenPrice, rawTokenList, createTokenMap } = useTokens();
     const [showInfo, setShowInfo] = useState(false);
     const [showAssetInfo, setShowAssetInfo] = useState(false);
@@ -104,169 +82,80 @@ export default function LinkPreview({
 
     // flag to indicate if the action is in progress
     const [createActionInProgress, setCreateActionInProgress] = useState(false);
-    // Debug state for countering redirects
-    const [redirectCounter, setRedirectCounter] = useState(0);
 
-    // Button state for confirmation drawer
-    const [drawerConfirmButton, setDrawerConfirmButton] = useState<{
-        text: string;
-        disabled: boolean;
-    }>({
-        text: t("confirmation_drawer.confirm_button"),
-        disabled: false,
-    });
+    // State to track if we're transitioning from local to backend link
+    const [isTransitioningToBackend, setIsTransitioningToBackend] = useState(false);
 
-    useEffect(() => {
-        if (!action) return;
+    // ===== INTERNAL ACTION STATE MANAGEMENT =====
+    // The action from the query hook is read-only and managed by React Query's cache.
+    // When we call mutations like updateAction or processAction, the results don't
+    // automatically update the query cache. This internal action state allows us to
+    // track action updates independently of the query cache.
 
-        const actionState = action.state;
-        if (actionState === ACTION_STATE.SUCCESS) {
-            setDrawerConfirmButton({
-                text: t("continue"),
-                disabled: false,
-            });
-        } else if (actionState === ACTION_STATE.PROCESSING) {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.inprogress_button"),
-                disabled: true,
-            });
-        } else if (actionState === ACTION_STATE.FAIL) {
-            setDrawerConfirmButton({
-                text: t("retry"),
-                disabled: false,
-            });
-        } else {
-            setDrawerConfirmButton({
-                text: t("confirmation_drawer.confirm_button"),
-                disabled: false,
-            });
-        }
-    }, [action, t]);
+    // Internal action state that can be updated independently
+    const [internalAction, setInternalAction] = useState<ActionModel | undefined>(undefined);
 
-    const { getFee } = useFeeService();
+    // Computed current action - use internal action if available, otherwise query action
+    // This ensures we always have the most up-to-date action state
+    const currentAction = internalAction || queryAction;
 
-    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
-    const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: updateAction } = useUpdateAction();
+    // Utility function to update internal action with proper typing and validation
+    const updateInternalAction = (action: ActionModel | undefined) => {
+        setInternalAction(action);
 
-    // Handle process create action - this function is passed as startTransaction to ConfirmationDrawerV2
-    const handleStartTransaction = async () => {
-        try {
-            if (!link) throw new Error("Link is not defined");
-            if (!action) throw new Error("Action is not defined");
-
-            // Validate user has sufficient balance for all assets in the link
-            if (action.intents && action.intents.length > 0) {
-                for (const intent of action.intents) {
-                    const token = getToken(intent.asset.address);
-
-                    // this like the useTokens didn't load all tokens
-                    if (!token || token.amount === undefined || token.amount === null) {
-                        throw new Error(`Could not find token balance for ${intent.asset.address}`);
-                    }
-
-                    const totalAmount = BigInt(intent.amount);
-
-                    const userBalance = token.amount;
-
-                    const tokenDecimals = token.decimals || 8;
-
-                    // Check if user has sufficient balance
-                    if (userBalance < totalAmount) {
-                        const formattedRequired = Number(totalAmount) / 10 ** tokenDecimals;
-                        const formattedBalance = Number(userBalance) / 10 ** tokenDecimals;
-
-                        throw new Error(
-                            `Insufficient balance for ${token.symbol}. Required: ${formattedRequired}, Available: ${formattedBalance}`,
-                        );
-                    }
-                }
-            }
-
-            const start = Date.now();
-
-            console.log("[handleStartTransaction] Starting processAction...");
-            const processActionStartTime = Date.now();
-            const firstUpdatedAction = await processAction({
-                linkId: link.id,
-                actionType: action?.type ?? ACTION_TYPE.CREATE_LINK,
-                actionId: action.id,
-            });
-            const processActionEndTime = Date.now();
-            const processActionDuration = (processActionEndTime - processActionStartTime) / 1000;
-            console.log(
-                `[handleStartTransaction] processAction completed in ${processActionDuration.toFixed(2)}s`,
-            );
-
-            setAction(firstUpdatedAction);
-
-            if (firstUpdatedAction) {
-                console.log("[handleStartTransaction] Starting icrc112Execute...");
-                const icrc112StartTime = Date.now();
-                const response = await icrc112Execute({
-                    transactions: firstUpdatedAction.icrc112Requests,
-                });
-                const icrc112EndTime = Date.now();
-                const icrc112Duration = (icrc112EndTime - icrc112StartTime) / 1000;
-                console.log(
-                    `[handleStartTransaction] icrc112Execute completed in ${icrc112Duration.toFixed(2)}s`,
-                );
-
-                if (response) {
-                    console.log("[handleStartTransaction] Starting updateAction...");
-                    const updateActionStartTime = Date.now();
-                    const secondUpdatedAction = await updateAction({
-                        actionId: action.id,
-                        linkId: link.id,
-                        external: true,
-                    });
-                    const updateActionEndTime = Date.now();
-                    const updateActionDuration =
-                        (updateActionEndTime - updateActionStartTime) / 1000;
-                    console.log(
-                        `[handleStartTransaction] updateAction completed in ${updateActionDuration.toFixed(2)}s`,
-                    );
-
-                    if (secondUpdatedAction) {
-                        setAction(secondUpdatedAction);
-                        if (onActionResult) onActionResult(secondUpdatedAction);
-                    }
-                }
-            }
-
-            const end = Date.now();
-            const duration = end - start;
-            const durationInSeconds = (duration / 1000).toFixed(2);
-            console.log(
-                "[handleStartTransaction] Total create action process completed in",
-                `${durationInSeconds}s`,
-            );
-        } catch (error) {
-            console.error("Error in startTransaction:", error);
-            if (isCashierError(error)) {
-                onCashierError(error);
-            } else {
-                console.error(error);
-            }
-            throw error;
+        // Optionally trigger a callback when action changes
+        if (action && onActionResult) {
+            onActionResult(action);
         }
     };
 
+    // Sync internal action with query action when query action changes
+    // This ensures we get the initial action from the query
+    useEffect(() => {
+        if (queryAction && !internalAction) {
+            setInternalAction(queryAction);
+        }
+    }, [queryAction, internalAction]);
+
+    // Notify parent when current action changes (now handled in updateInternalAction)
+    // This effect is kept for cases where currentAction changes through other means
+    useEffect(() => {
+        if (currentAction && onActionResult && currentAction !== internalAction) {
+            onActionResult(currentAction);
+        }
+    }, [currentAction, onActionResult, internalAction]);
+
+    // ===== END INTERNAL ACTION STATE MANAGEMENT =====
+
+    // Use centralized validation hook with balance checking
+    const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
+
+    // Use create confirmation hook for all confirmation-related methods
+    const { handleSuccessContinue, handleConfirmTransaction } = useCreateConfirmation({
+        link: link!,
+        currentAction,
+        updateInternalAction,
+        onCashierError,
+    });
+
     // Check if there's an existing action and show confirmation drawer
     useEffect(() => {
-        if (action && action.type === ACTION_TYPE.CREATE_LINK) {
+        if (currentAction && currentAction.type === ACTION_TYPE.CREATE_LINK) {
             setShowConfirmation(true);
         }
-    }, [action]);
+    }, [currentAction]);
 
     // Update the button state
     useEffect(() => {
         setButtonState({
-            label: isDisabled || isLoading ? t("processing") : t("create.create"),
-            isDisabled: isDisabled || isLoading,
-            action: handleSubmit,
+            label:
+                isDisabled || isLoading || isTransitioningToBackend
+                    ? t("processing")
+                    : t("create.create"),
+            isDisabled: isDisabled || isLoading || isTransitioningToBackend,
+            action: initiateCreateLinkAction,
         });
-    }, [isDisabled, isLoading, shouldRedirect, showConfirmation]);
+    }, [isDisabled, isLoading, isTransitioningToBackend, shouldRedirect, showConfirmation]);
 
     // Effect to map rawTokenList logos to asset_info
     useEffect(() => {
@@ -317,18 +206,14 @@ export default function LinkPreview({
             createActionInProgress ||
             !link ||
             !shouldRedirect ||
-            link.id.startsWith(LOCAL_lINK_ID_PREFIX)
+            link.id.startsWith(LOCAL_lINK_ID_PREFIX) ||
+            isTransitioningToBackend
         ) {
             return;
         }
 
         // Track the number of times this effect is triggered (for debugging)
-        setRedirectCounter((prev) => {
-            const newCount = prev + 1;
-            console.log(`Redirect effect called ${newCount} times`);
-            console.log("timestamp:", new Date().toISOString());
-            return newCount;
-        });
+        console.log(`Redirect effect called at timestamp: ${new Date().toISOString()}`);
 
         const handleRedirect = async () => {
             try {
@@ -336,7 +221,7 @@ export default function LinkPreview({
                 setCreateActionInProgress(true); // Set flag to prevent multiple calls
 
                 // Only call handleCreateAction if there's no action yet
-                if (!action) {
+                if (!currentAction) {
                     await handleCreateAction();
                 }
 
@@ -358,27 +243,69 @@ export default function LinkPreview({
         };
 
         handleRedirect();
-    }, [shouldRedirect, link, action]); // Added action as dependency
+    }, [shouldRedirect, link, currentAction, isTransitioningToBackend]); // Added isTransitioningToBackend as dependency
 
     const handleCreateAction = async () => {
+        // Validate link exists before creating action
         if (!link) {
             throw new Error("Link is not defined");
         }
-        const updatedAction = await createAction(link.id, ACTION_TYPE.CREATE_LINK);
-        setAction(updatedAction);
+
+        console.log("Creating action for link:", link);
+
+        // Validate action creation prerequisites using centralized validation with balance check (no creation fee for existing links)
+        const validationResult = validateLinkPreviewWithBalance(link, {
+            maxActionNumber: link.maxActionNumber,
+            includeLinkCreationFee: true,
+        });
+        if (!validationResult.isValid) {
+            const msg = validationResult.errors.map((error) => error.message).join(", ");
+            console.error("Validation failed:", msg);
+            throw new Error(msg);
+        }
+
+        try {
+            const updatedAction = await createAction({
+                linkId: link.id,
+                actionType: ACTION_TYPE.CREATE_LINK,
+            });
+            updateInternalAction(updatedAction);
+            return updatedAction;
+        } catch (error) {
+            console.error("Error creating action:", error);
+            throw error;
+        }
     };
 
     /**
      * Handles the submit action when user clicks the create/continue button.
      * If the link has a local ID (starts with LOCAL_lINK_ID_PREFIX), it creates a new link in the backend,
-     * updates the local storage with the newly created link data, and redirects to the edit page with the new link ID.
+     * updates the local storage with the newly created link data, and handles the transition smoothly.
      * If the link already exists in the backend, it creates an action (if one doesn't exist) and shows the confirmation drawer.
      * @returns {Promise<void>}
      */
-    const handleSubmit = async () => {
+    const initiateCreateLinkAction = async () => {
         try {
             setIsDisabled(true);
-            if (link && link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
+
+            // Check if link exists first
+            if (!link) {
+                throw new Error("Link is not defined");
+            }
+
+            // Validate the link using centralized validation with balance check (include creation fee for new links)
+            const validationResult = validateLinkPreviewWithBalance(link, {
+                includeLinkCreationFee: true, // Include creation fee for new link creation
+            });
+            if (!validationResult.isValid) {
+                const msg = validationResult.errors.map((error) => error.message).join(", ");
+                throw new Error(msg);
+            }
+
+            if (link.id.startsWith(LOCAL_lINK_ID_PREFIX)) {
+                // Set transition flag to prevent UI flickering
+                setIsTransitioningToBackend(true);
+
                 // First create the link in the backend
                 const res = await createNewLink(link.id);
 
@@ -389,34 +316,44 @@ export default function LinkPreview({
                 const input = mapLinkDtoToUserInputItem(res?.link);
                 addUserInput(res.link.id, input);
 
-                if (res) {
-                    navigate(`/edit/${res.link.id}?redirect=true&oldId=${res.oldId}`);
+                // Clean up old local storage entry
+                if (identity) {
+                    const localStorageService = new LinkLocalStorageServiceV2(
+                        identity.getPrincipal().toString(),
+                    );
+                    localStorageService.deleteLink(res.oldId);
                 }
+
+                // Create action for the new backend link
+                const newAction = await createAction({
+                    linkId: res.link.id,
+                    actionType: ACTION_TYPE.CREATE_LINK,
+                });
+
+                updateInternalAction(newAction);
+
+                // Update URL in browser history without navigation
+                navigate(`/edit/${res.link.id}?redirect=true&oldId=${res.oldId}`, {
+                    replace: true,
+                });
+
+                // Show confirmation drawer immediately
+                setShowConfirmation(true);
+                setIsTransitioningToBackend(false);
             } else {
-                if (!action) {
-                    handleCreateAction();
+                if (!currentAction) {
+                    await handleCreateAction();
                 }
                 setShowConfirmation(true);
             }
         } catch (error) {
+            console.error("Error initiating create link action:", error);
             if (isCashierError(error)) {
                 onCashierError(error);
             }
+            setIsTransitioningToBackend(false);
         } finally {
             setIsDisabled(false);
-        }
-    };
-
-    const handleSetLinkToActive = async () => {
-        const res = await callLinkStateMachine({
-            linkId: link!.id,
-            linkModel: {},
-            isContinue: true,
-        });
-
-        if (res.state === LINK_STATE.ACTIVE) {
-            navigate(`/details/${link!.id}`);
-            refetchLinkDetail();
         }
     };
 
@@ -516,7 +453,7 @@ export default function LinkPreview({
 
     return (
         <div
-            className={`w-full flex flex-col flex-1 overflow-y-auto max-h-[calc(100vh-150px)] pb-24 mt-2 ${responsive.isSmallDevice ? "justify-start" : "gap-4"}`}
+            className={`w-full flex flex-col flex-1 overflow-y-auto max-h-[calc(100vh-150px)] pb-24 mt-2 ${responsive.isSmallDevice ? "justify-start" : "gap-4"} ${isTransitioningToBackend ? "relative" : ""}`}
         >
             <div>
                 <div className="flex gap-2 items-center mb-2 justify-between">
@@ -575,15 +512,16 @@ export default function LinkPreview({
                                 // Calculate token amount with proper decimals
                                 const token = getToken(asset.address);
 
-                                const tokenDecimals = token?.decimals ?? 8;
-                                const totalTokenAmount =
-                                    (Number(asset.amountPerUse) * Number(link?.maxActionNumber)) /
-                                    10 ** tokenDecimals;
+                                const forecastAmount = FeeHelpers.forecastActualAmountForPreview(
+                                    token!,
+                                    BigInt(asset.amountPerUse),
+                                    Number(link?.maxActionNumber ?? 1),
+                                );
                                 const tokenSymbol = token?.symbol;
 
                                 // Calculate approximate USD value
                                 const tokenPrice = getTokenPrice(asset.address) || 0;
-                                const approximateUsdValue = totalTokenAmount * tokenPrice;
+                                const approximateUsdValue = forecastAmount * tokenPrice;
 
                                 return (
                                     <div key={index} className="flex justify-between items-center">
@@ -599,7 +537,7 @@ export default function LinkPreview({
                                         <div className="flex flex-col items-end">
                                             <div className="flex items-center gap-1">
                                                 <p className="text-[14px] font-normal">
-                                                    {formatNumber(totalTokenAmount.toString())}
+                                                    {formatNumber(forecastAmount.toString())}
                                                 </p>
                                             </div>
                                             <p className="text-[10px] font-normal text-[#b6b6b6]">
@@ -623,19 +561,16 @@ export default function LinkPreview({
                 <div className="light-borders-green px-4 py-3 flex flex-col gap-3">
                     {/* Use getFee instead of getAllFees to get fee information */}
                     {(() => {
-                        const fee = getFee(
-                            CHAIN.IC,
-                            link.linkType as LINK_TYPE,
-                            FEE_TYPE.LINK_CREATION,
-                        );
-                        if (!fee) return null;
-
+                        const fee = FeeHelpers.getLinkCreationFee();
                         const token = getToken(fee.address);
+                        const tokenSymbol = fee.symbol;
+                        const displayAmount = FeeHelpers.forecastIcrc2Fee(
+                            token!,
+                            BigInt(fee.amount),
+                            // only for link creation fee
+                            Number(1),
+                        );
 
-                        const tokenSymbol = token?.symbol || fee.symbol || "ICP";
-
-                        const tokenDecimals = fee.decimals || token?.decimals || 8;
-                        const displayAmount = Number(fee.amount) / 10 ** tokenDecimals;
                         const tokenPrice = getTokenPrice(fee.address) || 0;
                         const usdValue = displayAmount * tokenPrice;
 
@@ -653,7 +588,7 @@ export default function LinkPreview({
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center gap-1">
                                         <p className="text-[14px] font-normal">
-                                            {formatNumber(displayAmount.toString())}
+                                            {formatNumber(Number(displayAmount).toString())}
                                         </p>
                                     </div>
                                     <p className="text-[10px] font-normal text-[#b6b6b6]">
@@ -672,43 +607,66 @@ export default function LinkPreview({
                 onClose={() => setShowAssetInfo(false)}
             />
             <ConfirmationDrawerV2
-                // The ActionModel to be displayed and processed
-                action={action}
-                // Controls whether the drawer is visible
+                link={link}
+                action={currentAction}
                 open={showConfirmation && !showInfo}
-                // Called when the drawer is closed
                 onClose={() => {
                     setShowConfirmation(false);
                 }}
-                // Called when the info button is clicked, typically to show fee information
                 onInfoClick={() => setShowInfo(true)}
-                // Called after the action result is received, to update UI or state
                 onActionResult={onActionResult}
-                // Called when an error occurs during the transaction process
                 onCashierError={onCashierError}
-                // Called after successful transaction to continue the workflow
-                onSuccessContinue={handleSetLinkToActive}
-                // The main function that handles the transaction process
-                startTransaction={handleStartTransaction}
-                // Controls whether the action button is disabled
-                isButtonDisabled={drawerConfirmButton.disabled}
-                // Function to update the button's disabled state
-                setButtonDisabled={(disabled: boolean) => {
-                    setDrawerConfirmButton((prev) => ({
-                        ...prev,
-                        disabled,
-                    }));
-                }}
-                // The text to display on the action button
-                buttonText={drawerConfirmButton.text}
-                // Function to update the action button's text
-                setButtonText={(text: string) => {
-                    setDrawerConfirmButton((prev) => ({
-                        ...prev,
-                        text,
-                    }));
-                }}
+                handleSuccessContinue={handleSuccessContinue}
+                handleConfirmTransaction={handleConfirmTransaction}
+                maxActionNumber={Number(link?.maxActionNumber ?? 1)}
             />
         </div>
     );
 }
+
+// Memoize the component to prevent re-renders when link data is essentially the same
+// This is crucial when transitioning from local link ID to backend link ID
+export default React.memo(LinkPreview, (prevProps, nextProps) => {
+    // If we're in a transitioning state, don't re-render
+    const prevLink = prevProps.linkDetailQuery.data?.link;
+    const nextLink = nextProps.linkDetailQuery.data?.link;
+
+    console.log("prevLink", prevLink);
+    console.log("nextLink", nextLink);
+
+    // If both links exist and have the same core data, don't re-render
+    if (prevLink && nextLink) {
+        // Compare essential properties that matter for rendering
+        const prevCore = {
+            linkType: prevLink.linkType,
+            title: prevLink.title,
+            asset_info: prevLink.asset_info,
+            maxActionNumber: prevLink.maxActionNumber,
+            state: prevLink.state,
+        };
+
+        const nextCore = {
+            linkType: nextLink.linkType,
+            title: nextLink.title,
+            asset_info: nextLink.asset_info,
+            maxActionNumber: nextLink.maxActionNumber,
+            state: nextLink.state,
+        };
+
+        // Deep compare core properties
+        if (safeParseJSON(prevCore) === safeParseJSON(nextCore)) {
+            console.log("prevent re-render");
+            // Also compare other callback props
+            const propsEqual =
+                prevProps.onCashierError === nextProps.onCashierError &&
+                prevProps.onActionResult === nextProps.onActionResult;
+
+            return propsEqual; // Return true to prevent re-render
+        }
+    }
+
+    console.log("re-render");
+
+    // Default to re-render if we can't determine equivalence
+    return false;
+});

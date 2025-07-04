@@ -6,8 +6,6 @@
         "linkTemplate": "Link template",
         "chooseLinkType": "Choose link type",
         "linkDetails": "Link details",
-        "addAssets": "Add assets",
-        "selectAssets": "Select assets",
         "linkPreview": "Create link",
         "create": "Create",
         "photo": "Photo",
@@ -25,7 +23,19 @@
         "errors": {
             "no_name": "Please enter a name for your link.",
             "not_enough_balance": "You don't have enough balance for the asset: ",
-            "not_enough_claims": "The number of claims must be at least 1."
+            "not_enough_uses": "The number of uses must be at least 1."
+        },
+        "ReceivePayment": {
+            "link_detail_title": "Select assets"
+        },
+        "SendTip": {
+            "link_detail_title": "Add assets"
+        },
+        "SendAirdrop": {
+            "link_detail_title": "Add assets"
+        },
+        "SendTokenBasket": {
+            "link_detail_title": "Add assets"
         }
     },
     "details": {
@@ -35,9 +45,9 @@
         "copyLink": "Copy link",
         "withdrawAssets": "Withdraw assets"
     },
-    "claim": {
-        "claim": "Claim",
-        "claimToken": "Claim token",
+    "use": {
+        "use": "Use",
+        "useToken": "Use token",
         "amount": "Amount",
         "address": "Address",
         "asset": "Receive asset",
@@ -47,7 +57,11 @@
         "receive_options": "Receive options",
         "send_options": "Send options",
         "receive": "Receive",
-        "payment": "Payment"
+        "SendAirdrop": {
+            "title": "Airdrop",
+            "description": "Airdrop tokens to a recipient",
+            "button": "Airdrop"
+        }
     },
     "continue": "Continue",
     "submit": "Submit",
@@ -84,7 +98,10 @@
             "cashier_link_label": "Cashier link",
             "send_label": "You send",
             "asset_label": "Asset to add to link",
-            "asset_claim_label": "Asset",
+            "asset_withdraw_label": "Asset to withdraw",
+            "asset_claim_label": "Asset received",
+            "asset_payment_label": "Asset to pay",
+            "asset_use_label": "Asset",
             "cashier_fee_label": "Cashier fee",
             "network_fee_label": "Network fee",
             "link_creation_fee_label": "Link creation fee",
@@ -257,14 +274,14 @@
         "cashier_link_label": "Cashier link",
         "send_label": "You send",
         "asset_label": "Asset to add to link",
-        "asset_claim_label": "Asset",
+        "asset_use_label": "Asset",
         "total_fee_label": "Total fees",
         "confirm_button": "Confirm",
         "inprogress_button": "Transaction in progress...",
-        "retry_button": "Retry",
         "processing": "Processing...",
         "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
         "continue_button": "Continue",
+        "retry_button": "Retry",
         "fee-breakdown": {
             "title": "Total fees breakdown",
             "close_button": "Close",
@@ -286,30 +303,42 @@
             "connect_wallet_title": "Connect your wallet"
         }
     },
-    "claim_page": {
+    "use_page": {
         "SendTip": {
-            "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later.",
-            "use_link_button": "Claim",
+            "transaction_success": "Congratulations! Your use was successful.",
+            "transaction_failed": "Your use failed. Please try again later.",
+            "use_link_button": "Use",
             "use_link_message": "Congratulations, you received a tip!",
-            "complete_message": "Congratulations, you claimed a tip!",
-            "complete_button": "Claimed"
+            "complete_message": "Congratulations, you used a tip!",
+            "complete_button": "Used",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
         },
         "SendAirdrop": {
-            "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later.",
-            "use_link_button": "Claim",
+            "transaction_success": "Congratulations! Your use was successful.",
+            "transaction_failed": "Your use failed. Please try again later.",
+            "use_link_button": "Use",
             "use_link_message": "Congratulations, you received an airdrop!",
-            "complete_message": "Congratulations, you claimed an airdrop!",
-            "complete_button": "Claimed"
+            "complete_message": "Congratulations, you used an airdrop!",
+            "complete_button": "Used",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
         },
         "SendTokenBasket": {
-            "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later.",
-            "use_link_button": "Claim",
+            "transaction_success": "Congratulations! Your use was successful.",
+            "transaction_failed": "Your use failed. Please try again later.",
+            "use_link_button": "Use",
             "use_link_message": "Congratulations, you received a token basket!",
-            "complete_message": "Congratulations, you claimed a token basket!",
-            "complete_button": "Claimed"
+            "complete_message": "Congratulations, you used a token basket!",
+            "complete_button": "Used",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
         },
         "ReceivePayment": {
             "transaction_success": "Congratulations! Your payment was successful.",
@@ -317,12 +346,11 @@
             "use_link_button": "Pay",
             "use_link_message": "Pay for the link",
             "complete_message": "Congratulations, you paid successfully!",
-            "complete_button": "Paid"
-        },
-        "unknown": {
-            "use_link_button": "Unknown! Need to check link type",
-            "complete_message": "Unknown! Need to check link type",
-            "complete_button": "Unknown! Need to check link type"
+            "complete_button": "Paid",
+            "choose_wallet": {
+                "use_asset": "Send asset",
+                "wallet_options": "Send options"
+            }
         }
     },
     "add_asset_form": {
@@ -362,8 +390,111 @@
     },
     "link_detail": {
         "error": {
-            "claim_without_login_or_wallet": "You need to login or input your wallet",
+            "use_without_login_or_wallet": "You need to login or input your wallet",
             "unknown_action_state": "Unknown action state"
+        }
+    },
+    "error": {
+        "generic": {
+            "unknown_error": "An unknown error occurred. Please try again later.",
+            "network_error": "Network connection failed. Please check your internet connection.",
+            "timeout_error": "Request timed out. Please try again."
+        },
+        "authentication": {
+            "unauthorized": "You are not authorized to perform this action.",
+            "anonymous_call": "Anonymous calls are not allowed. Please log in.",
+            "permission_denied": "Permission denied. You don't have access to this resource."
+        },
+        "validation": {
+            "required": "This field is required.",
+            "invalid_input": "Invalid input provided.",
+            "invalid_format": "Invalid format. Please check your input.",
+            "invalid_amount": "Amount must be greater than 0.",
+            "invalid_address": "Invalid address format.",
+            "invalid_chain": "Invalid or unsupported chain.",
+            "invalid_token_address": "Invalid token address.",
+            "invalid_max_actions": "Maximum actions must be greater than 0.",
+            "invalid_state_transition": "Invalid state transition from {{from}} to {{to}}."
+        },
+        "resource": {
+            "not_found": "Resource not found.",
+            "link_not_found": "Link not found.",
+            "action_not_found": "Action not found.",
+            "token_not_found": "Token not found for address {{address}}.",
+            "user_input_not_found": "User input not found."
+        },
+        "balance": {
+            "insufficient_balance": "Insufficient balance for {{tokenSymbol}}. Available: {{available}}, Required: {{required}}.",
+            "insufficient_balance_create": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
+            "no_uses_available": "No more uses available.",
+            "balance_check_failed": "Failed to check token balance."
+        },
+        "asset": {
+            "no_assets_found": "No assets found."
+        },
+        "link": {
+            "link_id_missing": "Link ID is missing.",
+            "link_type_unsupported": "This link type is not supported.",
+            "link_creation_failed": "Failed to create link."
+        },
+        "template": {
+            "template_coming_soon": "This feature is coming soon."
+        },
+        "transaction": {
+            "transaction_failed": "Transaction failed"
+        },
+        "form": {
+            "form_validation_failed": "Form validation failed. Please check your inputs."
+        }
+    },
+    "claim_page": {
+        "SendTip": {
+            "transaction_success": "Congratulations! Your claim was successful.",
+            "transaction_failed": "Your claim failed. Please try again later.",
+            "use_link_button": "Claim",
+            "use_link_message": "Congratulations, you received a tip!",
+            "complete_message": "Congratulations, you claimed a tip!",
+            "complete_button": "Claimed",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
+        },
+        "SendAirdrop": {
+            "transaction_success": "Congratulations! Your claim was successful.",
+            "transaction_failed": "Your claim failed. Please try again later.",
+            "use_link_button": "Claim",
+            "use_link_message": "Congratulations, you received an airdrop!",
+            "complete_message": "Congratulations, you claimed an airdrop!",
+            "complete_button": "Claimed",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
+        },
+        "SendTokenBasket": {
+            "transaction_success": "Congratulations! Your claim was successful.",
+            "transaction_failed": "Your claim failed. Please try again later.",
+            "use_link_button": "Claim",
+            "use_link_message": "Congratulations, you received a token basket!",
+            "complete_message": "Congratulations, you claimed a token basket!",
+            "complete_button": "Claimed",
+            "choose_wallet": {
+                "use_asset": "Receive asset",
+                "wallet_options": "Receive options"
+            }
+        },
+        "ReceivePayment": {
+            "transaction_success": "Congratulations! Your payment was successful.",
+            "transaction_failed": "Your payment failed. Please try again later.",
+            "use_link_button": "Pay",
+            "use_link_message": "Pay for the link",
+            "complete_message": "Congratulations, you paid successfully!",
+            "complete_button": "Paid",
+            "choose_wallet": {
+                "use_asset": "Send asset",
+                "wallet_options": "Send options"
+            }
         }
     }
 }

@@ -1,125 +1,57 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "react-i18next";
 import { useCarousel } from "@/components/link-template/link-template.hooks";
 import { LINK_TEMPLATES } from "@/constants/linkTemplates";
-import { getAssetLabelForLinkType, LINK_TYPE } from "@/services/types/enum";
-import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import PhonePreview from "@/components/ui/phone-preview";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Label } from "@/components/ui/label";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
-import { useLinkAction } from "@/hooks/useLinkAction";
-import { stateToStepIndex } from ".";
-import { MessageBanner } from "@/components/ui/message-banner";
 import { toast } from "sonner";
-
-function isLinkTypeSupported(linkType: LINK_TYPE) {
-    const supportedLinkTypes = [
-        LINK_TYPE.SEND_TIP,
-        LINK_TYPE.SEND_TOKEN_BASKET,
-        LINK_TYPE.SEND_AIRDROP,
-        LINK_TYPE.RECEIVE_PAYMENT,
-    ];
-
-    return supportedLinkTypes.includes(linkType);
-}
+import { useLinkTemplateValidation } from "@/hooks/form/useLinkTemplateValidation";
+import { useLinkTemplateHandler } from "@/hooks/form/usePageSubmissionHandlers";
+import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useUpdateLinkMutation } from "@/hooks/link-hooks";
 
 export interface LinkTemplateProps {
     onSelectUnsupportedLinkType?: () => void;
+    link: LinkDetailModel;
 }
 
 export default function LinkTemplate({
     onSelectUnsupportedLinkType = () => {},
+    link,
 }: LinkTemplateProps) {
     const { t } = useTranslation();
-    const { setStep } = useMultiStepFormContext();
-    const { updateUserInput, getUserInput, userInputs, setButtonState } =
-        useLinkCreationFormStore();
+    const { updateUserInput, userInputs, setButtonState } = useLinkCreationFormStore();
 
     const responsive = useDeviceSize();
 
-    const { link, callLinkStateMachine, isUpdating } = useLinkAction();
-
     const carousel = useCarousel();
 
-    const [showComingSoonError, setShowComingSoonError] = useState(false);
-    const [showNoNameError, setShowNoNameError] = useState(false);
+    // Use centralized validation hook - now with toast notifications
+    const { validationState, clearValidationError, clearValidationErrorsByField } =
+        useLinkTemplateValidation();
+
+    // Use centralized template submission handler
+    const { submitTemplate } = useLinkTemplateHandler(link);
+
+    // Get loading state from update mutation if available
+    const updateLinkMutation = useUpdateLinkMutation();
 
     const handleSubmit = async () => {
-        const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
+        const customErrorHandler = (error: Error) => {
+            console.error("Error calling state machine", error);
+            toast.error(t("common.error"), {
+                description: t("link_template.error.failed_to_call"),
+            });
+        };
 
-        const currentLink = link ? getUserInput(link.id) : undefined;
-
-        if (!currentLink?.title || currentLink.title.trim() === "") {
-            setShowNoNameError(true);
-            return;
-        }
-
-        if (LINK_TEMPLATES[carousel.current].isComingSoon) {
-            setShowComingSoonError(true);
-            return;
-        }
-
-        if (isLinkTypeSupported(currentLink?.linkType as LINK_TYPE)) {
-            if (!currentLink || !currentLink.linkId) {
-                toast.error(t("common.error"), {
-                    description: t("link_template.error.link_not_found"),
-                });
-                return;
-            }
-
-            // force the asset should change the label if transition from multiple to single asset
-            if (
-                !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
-                currentLink.assets &&
-                currentLink.assets.length > 1
-            ) {
-                const forceNewAsset = currentLink.assets[0];
-                forceNewAsset.label = getAssetLabelForLinkType(
-                    currentLink.linkType as LINK_TYPE,
-                    forceNewAsset.address,
-                );
-                currentLink.assets = [forceNewAsset];
-            }
-
-            try {
-                const stateMachineRes = await callLinkStateMachine({
-                    linkId: currentLink.linkId,
-                    linkModel: currentLink,
-                    isContinue: true,
-                });
-
-                console.log("🚀 ~ stateMachineRes:", stateMachineRes);
-
-                const stepIndex = stateToStepIndex(stateMachineRes.state);
-                setStep(stepIndex);
-            } catch (error) {
-                console.error("Error calling state machine", error);
-                toast.error(t("common.error"), {
-                    description: t("link_template.error.failed_to_call"),
-                });
-            }
-        } else {
-            onSelectUnsupportedLinkType();
-        }
+        await submitTemplate(onSelectUnsupportedLinkType, customErrorHandler);
     };
 
     useEffect(() => {
@@ -135,7 +67,12 @@ export default function LinkTemplate({
                 linkType: selectedTemplate.linkType,
             });
         }
-    }, [carousel.current]);
+
+        // Clear coming soon error when carousel changes
+        if (validationState.showComingSoonError) {
+            clearValidationError("showComingSoonError");
+        }
+    }, [carousel.current, link?.id, validationState.showComingSoonError, clearValidationError]);
 
     // Update button state
     useEffect(() => {
@@ -144,10 +81,10 @@ export default function LinkTemplate({
 
         setButtonState({
             label: isComingSoon ? "Coming Soon" : t("continue"),
-            isDisabled: isUpdating,
+            isDisabled: updateLinkMutation.isPending,
             action: handleSubmit,
         });
-    }, [carousel.current, userInputs, isUpdating, link]);
+    }, [carousel.current, userInputs, updateLinkMutation.isPending, link]);
 
     if (!link) {
         return null;
@@ -161,15 +98,20 @@ export default function LinkTemplate({
                     <Input
                         value={userInputs.get(link.id)?.title}
                         onChange={(e) => {
+                            // Clear name validation error when user starts typing
+                            if (validationState.showNoNameError) {
+                                clearValidationError("showNoNameError");
+                            }
+                            // Clear any field-specific validation errors for title
+                            clearValidationErrorsByField("title");
+
                             updateUserInput(link.id, {
                                 title: e.target.value,
                             });
                         }}
                         placeholder={t("create.linkNamePlaceholder")}
                     />
-                    {showNoNameError && (
-                        <MessageBanner variant="info" text={t("create.errors.no_name")} />
-                    )}
+                    {/* Name validation error no longer shown here - using toast instead */}
                 </div>
             </div>
 
@@ -248,6 +190,8 @@ export default function LinkTemplate({
                         </div>
                     </div>
                 </div>
+
+                {/* All validation errors are now displayed via toast notifications */}
             </div>
         </div>
     );

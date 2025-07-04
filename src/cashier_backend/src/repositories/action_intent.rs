@@ -1,27 +1,18 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::repositories::ACTION_INTENT_STORE;
-use cashier_types::{ActionIntent, ActionIntentKey};
+use cashier_types::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
 
-#[cfg_attr(test, faux::create)]
+use super::ACTION_INTENT_STORE;
+
 #[derive(Clone)]
-
 pub struct ActionIntentRepository {}
-#[cfg_attr(test, faux::methods)]
+
+impl Default for ActionIntentRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ActionIntentRepository {
     pub fn new() -> Self {
@@ -36,7 +27,7 @@ impl ActionIntentRepository {
             };
 
             store.insert(key.to_str(), action_intent.clone());
-            store.insert(key.to_str_reverse(), action_intent.clone());
+            store.insert(key.to_str_reverse(), action_intent);
         });
     }
 
@@ -49,39 +40,39 @@ impl ActionIntentRepository {
                 };
 
                 store.insert(key.to_str(), action_intent.clone());
-                store.insert(key.to_str_reverse(), action_intent.clone());
+                store.insert(key.to_str_reverse(), action_intent);
             }
         });
     }
 
-    pub fn get(&self, action_intent_key: ActionIntentKey) -> Option<ActionIntent> {
-        ACTION_INTENT_STORE.with_borrow(|store| store.get(&action_intent_key.to_str()).clone())
+    pub fn get(&self, action_intent_key: &ActionIntentKey) -> Option<ActionIntent> {
+        ACTION_INTENT_STORE.with_borrow(|store| store.get(&action_intent_key.to_str()))
     }
 
-    pub fn get_by_action_id(&self, action_id: String) -> Vec<ActionIntent> {
+    pub fn get_by_action_id(&self, action_id: &str) -> Vec<ActionIntent> {
         ACTION_INTENT_STORE.with_borrow(|store| {
             let key = ActionIntentKey {
-                action_id: action_id.clone(),
+                action_id: action_id.to_string(),
                 intent_id: "".to_string(),
             };
 
-            let prefix = key.to_str().clone();
+            let prefix = key.to_str();
 
             let action_intents = store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value.clone())
+                .map(|(_, action_intent)| action_intent)
                 .collect();
 
-            return action_intents;
+            action_intents
         })
     }
 
-    pub fn get_by_intent_id(&self, intent_id: String) -> Vec<ActionIntent> {
+    pub fn get_by_intent_id(&self, intent_id: &str) -> Vec<ActionIntent> {
         ACTION_INTENT_STORE.with_borrow(|store| {
             let key = ActionIntentKey {
                 action_id: "".to_string(),
-                intent_id: intent_id.clone(),
+                intent_id: intent_id.to_string(),
             };
 
             let prefix = key.to_str_reverse();
@@ -89,7 +80,7 @@ impl ActionIntentRepository {
             store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value.clone())
+                .map(|(_, action_intent)| action_intent)
                 .collect()
         })
     }

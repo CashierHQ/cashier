@@ -1,39 +1,31 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::USER_WALLET_STORE;
-use cashier_types::{UserWallet, UserWalletKey};
+use cashier_types::{keys::UserWalletKey, user_wallet::v1::UserWallet};
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct UserWalletRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for UserWalletRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UserWalletRepository {
     pub fn new() -> Self {
         Self {}
     }
+
     pub fn create(&self, wallet: UserWalletKey, user: UserWallet) {
         USER_WALLET_STORE.with_borrow_mut(|store| {
             store.insert(wallet, user);
         });
     }
 
-    pub fn get(&self, wallet: &UserWalletKey) -> Option<UserWallet> {
-        USER_WALLET_STORE.with_borrow(|store| store.get(wallet))
+    pub fn get(&self, wallet: &str) -> Option<UserWallet> {
+        USER_WALLET_STORE.with_borrow(|store| store.get(&wallet.to_string()))
     }
 }

@@ -1,28 +1,19 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-use super::{base_repository::Store, LINK_STORE};
-use cashier_types::{Link, LinkKey};
+use super::LINK_STORE;
+use cashier_types::{keys::LinkKey, link::v1::Link};
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct LinkRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for LinkRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LinkRepository {
     pub fn new() -> Self {
         Self {}
@@ -45,11 +36,11 @@ impl LinkRepository {
     }
 
     pub fn get(&self, id: &LinkKey) -> Option<Link> {
-        LINK_STORE.with_borrow(|store| store.get(&id))
+        LINK_STORE.with_borrow(|store| store.get(id))
     }
 
     pub fn get_batch(&self, ids: Vec<LinkKey>) -> Vec<Link> {
-        LINK_STORE.with_borrow(|store| store.batch_get(ids))
+        LINK_STORE.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 
     pub fn update(&self, link: Link) {

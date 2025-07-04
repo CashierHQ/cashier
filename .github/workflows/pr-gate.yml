@@ -50,10 +50,23 @@ jobs:
             - name: Confirm successful installation
               run: dfx --version
 
+            - name: Get changed files
+              id: changed-files
+              uses: tj-actions/changed-files@v44
+
+            # Backend: Run cargo clippy if backend or token_storage changed
+            - name: Run cargo clippy (backend)
+              if: steps.changed-files.outputs.any_changed == 'true' && (contains(steps.changed-files.outputs.all_changed_files, 'src/cashier_backend/') || contains(steps.changed-files.outputs.all_changed_files, 'src/token_storage/'))
+              run: |
+                  bash scripts/clippy.sh
+
+            # Frontend: Install dependencies if frontend changed
             - name: Install project dependencies
+              if: steps.changed-files.outputs.any_changed == 'true' && contains(steps.changed-files.outputs.all_changed_files, 'src/cashier_frontend/')
               run: npm install
 
             - name: Build project for ${{ needs.setup_environment.outputs.environment }} validation
+              if: steps.changed-files.outputs.any_changed == 'true' && contains(steps.changed-files.outputs.all_changed_files, 'src/cashier_frontend/')
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
                   VITE_BACKEND_CANISTER_ID: ${{ vars.VITE_BACKEND_CANISTER_ID }}
@@ -81,5 +94,5 @@ jobs:
                   rustup target add wasm32-unknown-unknown
                   dfx generate cashier_backend 
                   dfx generate token_storage
-                  make g  # Generate types
+                  make generate-ci
                   npm run build

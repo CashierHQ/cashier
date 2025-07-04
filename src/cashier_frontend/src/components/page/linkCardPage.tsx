@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { ReactNode, useEffect, useState } from "react";
 import { LinkDetailModel } from "../../services/types/link.service.types";
@@ -22,6 +9,7 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatNumber } from "@/utils/helpers/currency";
 import { ArrowDownToLine, ArrowUpFromLine, Wallet2 } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
+import { FeeHelpers } from "@/services/fee.service";
 
 export const getTitleForLink = (
     linkData?: LinkDetailModel,
@@ -30,14 +18,24 @@ export const getTitleForLink = (
     if (!linkData || !getToken) return "";
 
     const tokenAddress = linkData?.asset_info?.[0]?.address;
-    const token = tokenAddress ? getToken(tokenAddress) : undefined;
+    const token = getToken(tokenAddress);
+
+    if (!token) return "Unknown Token";
+
+    let amount = Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
+    if (token) {
+        amount = FeeHelpers.forecastActualAmountForLinkUsePage(
+            linkData?.linkType ?? "",
+            token,
+            linkData?.asset_info?.[0]?.amountPerUse ?? "0",
+            Number(linkData?.maxActionNumber ?? 1),
+        );
+    }
 
     switch (linkData?.linkType) {
         case LINK_TYPE.SEND_TIP:
         case LINK_TYPE.SEND_AIRDROP:
         case LINK_TYPE.RECEIVE_PAYMENT:
-            const amount =
-                Number(linkData?.asset_info?.[0]?.amountPerUse) / 10 ** (token?.decimals ?? 0);
             return `${amount} ${token?.symbol}`;
         case LINK_TYPE.SEND_AIRDROP:
             return "Send Airdrop";

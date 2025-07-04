@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use std::{future::Future, time::Duration};
 
@@ -31,7 +18,10 @@ pub trait IcEnvironment {
     // Add other IC-specific methods as needed
 }
 
-use ic_cdk::api;
+use ic_cdk::{
+    api::{self, canister_self, msg_caller},
+    futures::spawn,
+};
 use ic_cdk_timers::TimerId;
 
 #[derive(Clone)]
@@ -42,10 +32,10 @@ impl IcEnvironment for RealIcEnvironment {
         Self {}
     }
     fn caller(&self) -> Principal {
-        api::caller()
+        msg_caller()
     }
     fn id(&self) -> Principal {
-        api::id()
+        canister_self()
     }
     fn time(&self) -> u64 {
         api::time()
@@ -57,7 +47,7 @@ impl IcEnvironment for RealIcEnvironment {
     where
         F: Future<Output = ()> + 'static,
     {
-        ic_cdk::spawn(future)
+        spawn(future)
     }
 
     fn set_timer(&self, delay: Duration, f: impl FnOnce() + 'static) -> TimerId {

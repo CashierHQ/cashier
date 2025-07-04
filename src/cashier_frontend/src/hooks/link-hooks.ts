@@ -1,38 +1,27 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-import { QueryFunctionContext, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { UpdateLinkParams } from "./useLinkAction";
+import { UpdateLinkParams } from "./useLinkMutations";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { groupLinkListByDate } from "@/utils";
 import { LinkModel } from "@/services/types/link.service.types";
 import {
-    mapParitalLinkDtoToCreateLinkInputV2,
+    mapParitalLinkDtoToCreateLinkInput,
     mapPartialDtoToLinkDetailModel,
 } from "@/services/types/mapper/link.service.mapper";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
+import { Identity } from "@dfinity/agent";
 
 // Centralized query keys for consistent caching
 export const LINK_QUERY_KEYS = {
     all: ["links"] as const,
     list: () => [...LINK_QUERY_KEYS.all, "list"] as const,
-    detail: (linkId: string | undefined) => [...LINK_QUERY_KEYS.all, "detail", linkId] as const,
+    detail: (linkId: string | undefined, actionType?: ACTION_TYPE) =>
+        [...LINK_QUERY_KEYS.all, "detail", linkId, actionType] as const,
 };
 
 // React Query for fetching the list of links
@@ -70,10 +59,10 @@ export function useLinksListQuery() {
 // React Query for fetching link details
 export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     const identity = useIdentity();
-    const staleTime = 30 * 60 * 1000; // Default 30 minutes, or use provided value
+    const staleTime = 60 * 1000; // 1 minute
 
     return useQuery({
-        queryKey: LINK_QUERY_KEYS.detail(linkId),
+        queryKey: LINK_QUERY_KEYS.detail(linkId, actionType),
         queryFn: async () => {
             if (!linkId) throw new Error("linkId are required");
 
@@ -89,8 +78,6 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
                     link: linkDetailModel,
                 };
 
-                console.log("[useLinkDetailQuery] linkModel", linkModel);
-
                 if (localLink) {
                     return Promise.resolve(linkModel);
                 } else {
@@ -101,6 +88,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
             } else {
                 const linkService = new LinkService(identity);
                 const res = await linkService.getLink(linkId, actionType);
+
                 return res;
             }
         },
@@ -109,12 +97,22 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
     });
 }
 
+export const getLinkDetailQuery = async (
+    linkId: string,
+    actionType: ACTION_TYPE,
+    identity: Identity | undefined,
+) => {
+    const linkService = new LinkService(identity);
+    const res = await linkService.getLink(linkId, actionType);
+    return res;
+};
+
 export function useUpdateLinkMutation() {
     const identity = useIdentity();
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (data: UpdateLinkParams) => {
+        mutationFn: async (data: UpdateLinkParams) => {
             if (!identity) throw new Error("Identity is required");
             const linkService = new LinkService(identity);
             const linkLocalStorageService = new LinkLocalStorageServiceV2(
@@ -130,7 +128,7 @@ export function useUpdateLinkMutation() {
                 );
                 return Promise.resolve(localStorageLink);
             } else {
-                const updated_link = linkService.updateLink(
+                const updated_link = await linkService.updateLink(
                     data.linkId,
                     data.linkModel,
                     data.isContinue,
@@ -141,8 +139,9 @@ export function useUpdateLinkMutation() {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: LINK_QUERY_KEYS.list() });
+            // Invalidate all detail queries for this link (all actionTypes)
             queryClient.invalidateQueries({
-                queryKey: LINK_QUERY_KEYS.detail(data?.id),
+                queryKey: ["links", "detail", data?.id],
             });
         },
         onError: (err) => {
@@ -169,7 +168,7 @@ export function useCreateNewLinkMutation() {
 
             const link = linkLocalStorageService.getLink(localLinkId);
 
-            const input = mapParitalLinkDtoToCreateLinkInputV2(link);
+            const input = mapParitalLinkDtoToCreateLinkInput(link);
 
             const backendLink = await linkService.createLinkV2(input);
 
@@ -178,8 +177,14 @@ export function useCreateNewLinkMutation() {
                 oldId: localLinkId,
             };
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: LINK_QUERY_KEYS.list() });
+            // Invalidate all detail queries for the new link
+            if (data?.link?.id) {
+                queryClient.invalidateQueries({
+                    queryKey: ["links", "detail", data.link.id],
+                });
+            }
         },
         onError: (err) => {
             throw err;
@@ -187,4 +192,16 @@ export function useCreateNewLinkMutation() {
     });
 
     return mutation;
+}
+
+// Utility function to invalidate link detail queries for action updates
+export function useInvalidateLinkDetailQueries() {
+    const queryClient = useQueryClient();
+
+    return (linkId: string) => {
+        // Invalidate all detail queries for this link (all actionTypes)
+        queryClient.invalidateQueries({
+            queryKey: ["links", "detail", linkId],
+        });
+    };
 }

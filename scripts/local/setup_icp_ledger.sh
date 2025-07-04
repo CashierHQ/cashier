@@ -34,7 +34,7 @@ dfx deploy icp_ledger_canister --argument "
 
 echo "=== TRANSFER 10000 ICP TO DEFAULT ACCOUNT ==="
 
-dfx canister call x5qut-viaaa-aaaar-qajda-cai icrc1_transfer "(record { 
+dfx canister call ryjl3-tyaaa-aaaaa-aaaba-cai icrc1_transfer "(record { 
     to =  record { 
         owner = principal \"4smbz-v7nlc-x47yh-pjad3-7m5wa-5kpto-wej5c-5t4i4-wq33k-opfbk-yae\";
         subaccount = null;

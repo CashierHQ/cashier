@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use std::collections::{HashMap, HashSet, VecDeque};
 
@@ -26,21 +13,19 @@ use crate::{
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 use base64::Engine;
-use candid::{Encode, Nat, Principal};
-use cashier_types::{IcTransaction, Protocol, Transaction, TransactionState};
+use candid::{Encode, Principal};
+use cashier_types::transaction::v2::{IcTransaction, Protocol, Transaction, TransactionState};
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
 };
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct TransactionService<E: IcEnvironment + Clone> {
     transaction_repository: TransactionRepository,
     ic_env: E,
 }
 
-#[cfg_attr(test, faux::methods)]
 impl<E: IcEnvironment + Clone> TransactionService<E> {
     pub fn new(transaction_repository: TransactionRepository, ic_env: E) -> Self {
         Self {
@@ -78,11 +63,14 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
     pub fn get_tx_by_id(&self, tx_id: &String) -> Result<Transaction, CanisterError> {
         self.transaction_repository
             .get(tx_id)
-            .ok_or(CanisterError::NotFound("Transaction not found".to_string()))
+            .ok_or(CanisterError::NotFound(format!(
+                "Transaction not found: {}",
+                tx_id
+            )))
     }
 
-    pub fn batch_get(&self, tx_ids: Vec<String>) -> Result<Vec<Transaction>, CanisterError> {
-        let txs = self.transaction_repository.batch_get(tx_ids.clone());
+    pub fn batch_get(&self, tx_ids: &[String]) -> Result<Vec<Transaction>, CanisterError> {
+        let txs = self.transaction_repository.batch_get(tx_ids.to_vec());
 
         if txs.len() != tx_ids.len() {
             return Err(CanisterError::NotFound(
@@ -99,17 +87,17 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
         link_id: &str,
         tx: &Transaction,
         canister_id: &Principal,
-    ) -> Icrc112Request {
+    ) -> Result<Icrc112Request, CanisterError> {
         match &tx.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
                 let account = Account {
                     owner: *canister_id,
-                    subaccount: Some(to_subaccount(link_id)),
+                    subaccount: Some(to_subaccount(link_id)?),
                 };
 
                 let arg = TransferArg {
                     to: account,
-                    amount: Nat::from(tx_transfer.amount),
+                    amount: tx_transfer.amount.clone(),
                     memo: None,
                     fee: None,
                     created_at_time: None,
@@ -121,12 +109,12 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                     arg,
                 );
 
-                Icrc112Request {
+                Ok(Icrc112Request {
                     canister_id: canister_call.canister_id,
                     method: canister_call.method,
                     arg: canister_call.arg,
                     nonce: Some(tx.id.clone()),
-                }
+                })
             }
             Protocol::IC(IcTransaction::Icrc2Approve(tx_approve)) => {
                 let spender = Account {
@@ -137,11 +125,11 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                 let arg = ApproveArgs {
                     from_subaccount: None,
                     spender,
-                    amount: Nat::from(tx_approve.amount),
+                    amount: tx_approve.amount.clone(),
                     expected_allowance: None,
                     expires_at: None,
                     fee: None,
-                    memo: None,
+                    memo: tx_approve.memo.clone(),
                     created_at_time: None,
                 };
 
@@ -150,12 +138,12 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                     arg,
                 );
 
-                Icrc112Request {
+                Ok(Icrc112Request {
                     canister_id: canister_call.canister_id,
                     method: canister_call.method,
                     arg: canister_call.arg,
                     nonce: Some(tx.id.clone()),
-                }
+                })
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(_tx_transfer_from)) => {
                 let input = TriggerTransactionInput {
@@ -168,12 +156,12 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                 let arg =
                     base64::engine::general_purpose::STANDARD.encode(Encode!(&input).unwrap());
 
-                Icrc112Request {
+                Ok(Icrc112Request {
                     canister_id: canister_id.to_text(),
                     method: method.to_string(),
                     arg,
                     nonce: Some(tx.id.clone()),
-                }
+                })
             }
         }
     }
@@ -182,27 +170,27 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
         &self,
         action_id: &str,
         link_id: &str,
-        transactions: &Vec<Transaction>,
-    ) -> Option<Icrc112Requests> {
+        transactions: &[Transaction],
+    ) -> Result<Option<Icrc112Requests>, CanisterError> {
         let canister_id = self.ic_env.id();
 
         if transactions.is_empty() {
-            return None;
+            return Ok(None);
         }
 
         // handle the case when there is only one transaction
         if transactions.len() == 1 {
             let tx = &transactions[0];
             let icrc_112_request =
-                self.convert_tx_to_icrc_112_request(action_id, link_id, tx, &canister_id);
+                self.convert_tx_to_icrc_112_request(action_id, link_id, tx, &canister_id)?;
 
-            return Some(vec![vec![icrc_112_request]]);
+            return Ok(Some(vec![vec![icrc_112_request]]));
         }
 
         // For consistency, use topological sort regardless of number of transactions
         let mut icrc_112_requests: Vec<Vec<Icrc112Request>> = Vec::new();
         let mut processed_tx_ids: HashSet<String> = HashSet::new();
-        let tx_clone = transactions.clone();
+        let tx_clone = transactions.to_owned();
 
         // Build dependency graph (corrected direction)
         // If A depends on B, then A should appear in B's adjacency list
@@ -239,7 +227,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
             while let Some(tx_id) = queue.pop_front() {
                 if let Some(tx) = tx_clone.iter().find(|tx| tx.id == tx_id) {
                     let icrc_112_request =
-                        self.convert_tx_to_icrc_112_request(action_id, link_id, tx, &canister_id);
+                        self.convert_tx_to_icrc_112_request(action_id, link_id, tx, &canister_id)?;
 
                     current_group.push(icrc_112_request);
 
@@ -265,6 +253,6 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
             queue = next_queue;
         }
 
-        Some(icrc_112_requests)
+        Ok(Some(icrc_112_requests))
     }
 }

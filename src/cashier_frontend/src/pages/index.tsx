@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +11,6 @@ import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useLinksListQuery } from "@/hooks/link-hooks";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { AuthenticatedContent, UnauthenticatedContent } from "@/components/main-page";
 import { toast } from "sonner";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
@@ -36,14 +22,11 @@ export default function HomePage() {
     const { user: walletUser } = useAuth();
     const { connectToWallet } = useConnectToWallet();
     const { data: linkData, isLoading: isLinksLoading, refetch } = useLinksListQuery();
-    const { link, action, setAction, setLink } = useLinkAction();
 
     const [showGuide, setShowGuide] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [disableCreateButton, setDisableCreateButton] = useState(false);
     const navigate = useNavigate();
-
-    const { resetLinkAndAction } = useLinkAction();
 
     const handleCreateLink = async () => {
         if (!identity) {
@@ -68,14 +51,6 @@ export default function HomePage() {
                 linkType: LINK_TYPE.SEND_TIP,
                 assets: [],
             });
-
-            if (action) {
-                setAction(undefined);
-            }
-
-            if (link) {
-                setLink(undefined);
-            }
 
             navigate(`/edit/${linkId}`);
         } catch {
@@ -166,7 +141,6 @@ export default function HomePage() {
                     handleCreateLink={handleCreateLink}
                     isLoading={isLoading}
                     linkData={linkData}
-                    resetLinkAndAction={resetLinkAndAction}
                 />
             )}
         </MainAppLayout>

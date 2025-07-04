@@ -1,18 +1,8 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use cashier_macros::storable;
+use std::fmt;
 
 pub type UserKey = String;
 
@@ -102,5 +92,98 @@ impl IntentTransactionKey {
             "TRANSACTION#{}#INTENT#{}",
             self.transaction_id, self.intent_id
         )
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
+pub enum RequestLockKey {
+    /// User + Link + Action composite key
+    UserLinkAction {
+        user_principal: String,
+        link_id: String,
+        action_id: String,
+    },
+    /// User + Link composite key
+    UserLink {
+        user_principal: String,
+        link_id: String,
+    },
+    /// User + Action + Transaction composite key
+    UserActionTransaction {
+        user_principal: String,
+        action_id: String,
+        transaction_id: String,
+    },
+}
+
+impl fmt::Display for RequestLockKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RequestLockKey::UserLinkAction {
+                user_principal,
+                link_id,
+                action_id,
+            } => {
+                write!(
+                    f,
+                    "USER#{}#LINK#{}#ACTION#{}",
+                    user_principal, link_id, action_id
+                )
+            }
+            RequestLockKey::UserLink {
+                user_principal,
+                link_id,
+            } => {
+                write!(f, "USER#{}#LINK#{}", user_principal, link_id)
+            }
+            RequestLockKey::UserActionTransaction {
+                user_principal,
+                action_id,
+                transaction_id,
+            } => {
+                write!(
+                    f,
+                    "USER#{}#ACTION#{}#TRANSACTION#{}",
+                    user_principal, action_id, transaction_id
+                )
+            }
+        }
+    }
+}
+
+impl RequestLockKey {
+    /// Create a User + Link + Action key
+    pub fn user_link_action(
+        user_principal: impl Into<String>,
+        link_id: impl Into<String>,
+        action_id: impl Into<String>,
+    ) -> Self {
+        Self::UserLinkAction {
+            user_principal: user_principal.into(),
+            link_id: link_id.into(),
+            action_id: action_id.into(),
+        }
+    }
+
+    /// Create a User + Link key
+    pub fn user_link(user_principal: impl Into<String>, link_id: impl Into<String>) -> Self {
+        Self::UserLink {
+            user_principal: user_principal.into(),
+            link_id: link_id.into(),
+        }
+    }
+
+    /// Create a User + Action + Transaction key
+    pub fn user_action_transaction(
+        user_principal: impl Into<String>,
+        action_id: impl Into<String>,
+        transaction_id: impl Into<String>,
+    ) -> Self {
+        Self::UserActionTransaction {
+            user_principal: user_principal.into(),
+            action_id: action_id.into(),
+            transaction_id: transaction_id.into(),
+        }
     }
 }

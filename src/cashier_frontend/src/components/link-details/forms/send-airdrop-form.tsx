@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useState, useEffect, useMemo } from "react";
 import { useFieldArray } from "react-hook-form";
@@ -34,23 +21,19 @@ import {
 } from "@/services/types/enum";
 import { Plus, Minus } from "lucide-react";
 import { AssetFormInput } from "../asset-form-input";
-import { useLinkAction } from "@/hooks/useLinkAction";
-import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
-import { stateToStepIndex } from "@/pages/edit/[id]";
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { Separator } from "../../ui/separator";
-import { MessageBanner } from "../../ui/message-banner";
+import { toast } from "sonner";
 import {
     createAssetSelectHandler,
     createTokenAddressHandler,
     createRemoveAssetHandler,
-    validateFormAssets,
-    checkInsufficientBalance,
-    formatAssetsForSubmission,
 } from "../form-handlers";
+import { useSendAirdropFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
+import { LinkDetailModel } from "@/services/types/link.service.types";
 
 interface SendAirdropFormProps {
     initialValues?: {
@@ -61,14 +44,18 @@ interface SendAirdropFormProps {
             chain: CHAIN | undefined;
         }[];
     };
+    link: LinkDetailModel;
+    isUpdating: boolean;
 }
 
-export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdropFormProps) => {
+export const SendAirdropForm = ({
+    initialValues: propInitialValues,
+    link,
+    isUpdating,
+}: SendAirdropFormProps) => {
     const { t } = useTranslation();
-    const { link, isUpdating, callLinkStateMachine } = useLinkAction();
     const { userInputs, getUserInput, updateUserInput, setButtonState } =
         useLinkCreationFormStore();
-    const { setStep } = useMultiStepFormContext();
     const responsive = useDeviceSize();
 
     const { getToken } = useTokens();
@@ -77,10 +64,6 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
     const [showAssetDrawer, setShowAssetDrawer] = useState<boolean>(false);
     const [editingAssetIndex, setEditingAssetIndex] = useState<number>(-1);
     const [selectedAssetAddresses, setSelectedAssetAddresses] = useState<string[]>([]);
-    const [notEnoughBalanceErrorToken, setNotEnoughBalanceErrorToken] = useState<string | null>(
-        null,
-    );
-    const [showNotEnoughClaimsError, setShowNotEnoughClaimsError] = useState<boolean>(false);
 
     // Get current input and link type from store
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
@@ -104,6 +87,9 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
             setMaxActionNumber(Number(link.maxActionNumber));
         }
     }, [link]);
+
+    // Use centralized submission handler
+    const { submitAirdropForm } = useSendAirdropFormHandler(link);
 
     // Get tokens data
     const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
@@ -286,66 +272,31 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
     );
 
     const handleSubmit = async () => {
-        setNotEnoughBalanceErrorToken(null);
-        setShowNotEnoughClaimsError(false);
-        if (!link?.id) throw new Error("Link ID not found");
+        try {
+            if (!link?.id) {
+                toast.error(t("common.error"), { description: t("error.link.link_id_missing") });
+                return;
+            }
 
-        const formAssets = getValues("assets");
-        if (!formAssets || formAssets.length === 0) throw new Error("No assets found");
+            const formAssets = getValues("assets");
+            if (!formAssets || formAssets.length === 0) {
+                toast.error(t("common.error"), { description: t("error.asset.no_assets_found") });
+                return;
+            }
 
-        // Use the centralized handler to check for insufficient balance
-        const insufficientToken = checkInsufficientBalance(formAssets, allAvailableTokens);
-        if (insufficientToken) {
-            setNotEnoughBalanceErrorToken(insufficientToken);
-            return;
-        }
+            if (maxActionNumber <= 0) {
+                toast.error(t("create.errors.not_enough_uses"));
+                return;
+            }
 
-        if (maxActionNumber <= 0) {
-            setShowNotEnoughClaimsError(true);
-            return;
-        }
-
-        if (
-            validateFormAssets(formAssets, allAvailableTokens, t, {
-                isAirdrop: true,
-                maxActionNumber,
-            })
-        ) {
-            // Format assets with correct labels using the centralized handler
-            const formattedAssets = formatAssetsForSubmission(formAssets, link);
-
-            // Update the store with the formatted assets
-            const storeAssets = formattedAssets.map((asset) => {
-                return {
-                    address: asset.tokenAddress,
-                    linkUseAmount: asset.amount,
-                    chain: asset.chain!,
-                    label: asset.label!,
-                    usdEquivalent: 0,
-                    usdConversionRate: getTokenPrice(asset.tokenAddress) || 0,
-                };
+            // Use centralized submission handler (hooks now handle toast errors)
+            await submitAirdropForm(link.id, formAssets, maxActionNumber);
+        } catch (error) {
+            console.error("SendAirdropForm error:", error);
+            // Fallback error toast for any unexpected errors
+            toast.error(t("error.form.form_validation_failed"), {
+                description: error instanceof Error ? error.message : t("common.unknown_error"),
             });
-
-            updateUserInput(link.id, {
-                assets: storeAssets,
-                maxActionNumber: BigInt(maxActionNumber),
-            });
-
-            const input = getUserInput(link.id);
-
-            if (!input) throw new Error("Input not found");
-
-            console.log("Submitting form with input:", input);
-
-            const stateMachineResponse = await callLinkStateMachine({
-                linkId: link.id,
-                linkModel: input,
-                isContinue: true,
-            });
-
-            const stepIndex = stateToStepIndex(stateMachineResponse.state);
-
-            setStep(stepIndex);
         }
     };
 
@@ -414,7 +365,7 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
                     LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET + "_" + firstAsset.address;
             }
 
-            // Use linkUseAmount directly for the form input (this is the per-claim amount)
+            // Use linkUseAmount directly for the form input (this is the per-use amount)
             const amount = firstAsset.amountPerUse || firstAsset.amountPerUse;
 
             assetFields.append({
@@ -444,7 +395,7 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
         // Create initial asset with proper typing
         const initialAsset: UserInputAsset = {
             address: firstToken.address,
-            linkUseAmount: BigInt(0), // This is the per-claim amount
+            linkUseAmount: BigInt(0), // This is the per-use amount
             usdEquivalent: 0,
             usdConversionRate: getTokenPrice(firstToken.address) || 0,
             chain: CHAIN.IC,
@@ -494,19 +445,13 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
                         paddingBottom: "0px",
                     }}
                 >
-                    {notEnoughBalanceErrorToken && (
-                        <MessageBanner
-                            variant="info"
-                            text={`${t("create.errors.not_enough_balance")} ${notEnoughBalanceErrorToken}`}
-                            className="mb-2"
-                        />
-                    )}
                     {assetFields.fields.map((field, index) => (
                         <div
                             key={field.id}
                             className={`${index !== assetFields.fields.length - 1 ? "" : "mb-10"}`}
                         >
                             <AssetFormInput
+                                link={link}
                                 key={field.id}
                                 fieldId={field.id}
                                 index={index}
@@ -527,16 +472,9 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
                 </div>
 
                 <div>
-                    {showNotEnoughClaimsError && (
-                        <MessageBanner
-                            variant="info"
-                            text={t("create.errors.not_enough_claims")}
-                            className="mb-2"
-                        />
-                    )}
                     <div className="flex gap-4 mb-4">
                         <div className="input-label-field-container">
-                            <Label>Claims</Label>
+                            <Label>Uses</Label>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleDecreaseMaxUse}
@@ -573,12 +511,12 @@ export const SendAirdropForm = ({ initialValues: propInitialValues }: SendAirdro
                                             const token = getToken(asset?.tokenAddress || "");
                                             if (!asset || !token) return "0";
 
-                                            // Calculate total from amount per claim * maxActionNumber
+                                            // Calculate total from amount per use * maxActionNumber
                                             const amountPerUse =
                                                 Number(asset.amount) /
                                                 Math.pow(10, token.decimals || 8);
 
-                                            // Total amount = amount per claim * maxActionNumber
+                                            // Total amount = amount per use * maxActionNumber
                                             const totalAmount = amountPerUse * maxActionNumber;
 
                                             // Format small numbers to avoid scientific notation

@@ -1,23 +1,16 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::fmt;
 use std::{collections::HashMap, str::FromStr};
 
 use candid::{CandidType, Principal};
-use cashier_types::{AssetInfo, Chain, IntentType, LinkType, Template};
+use cashier_types::{
+    asset_info::AssetInfo,
+    common::Chain,
+    intent::v2::{Intent, IntentType},
+    link::v1::{Link, LinkType, Template},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::core::action::types::ActionDto;
@@ -26,11 +19,6 @@ use crate::core::action::types::ActionDto;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateLinkInput {
-    pub link_type: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct CreateLinkInputV2 {
     pub title: String,
     pub link_use_action_max_count: u64,
     pub asset_info: Vec<LinkDetailUpdateAssetInfoInput>,
@@ -108,6 +96,15 @@ pub enum LinkStateMachineGoto {
     Back,
 }
 
+impl fmt::Display for LinkStateMachineGoto {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            LinkStateMachineGoto::Continue => write!(f, "Continue"),
+            LinkStateMachineGoto::Back => write!(f, "Back"),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct UpdateLinkInput {
     pub id: String,
@@ -160,8 +157,8 @@ pub struct GetLinkResp {
     pub action: Option<ActionDto>,
 }
 
-impl From<cashier_types::Intent> for IntentDto {
-    fn from(intent: cashier_types::Intent) -> Self {
+impl From<Intent> for IntentDto {
+    fn from(intent: Intent) -> Self {
         IntentDto {
             id: intent.id,
             state: intent.state.to_string(),
@@ -173,14 +170,14 @@ impl From<cashier_types::Intent> for IntentDto {
     }
 }
 
-impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
+impl From<LinkDetailUpdateAssetInfoInput> for AssetInfo {
     fn from(input: LinkDetailUpdateAssetInfoInput) -> Self {
         let chain = match Chain::from_str(input.chain.as_str()) {
             Ok(chain) => chain,
             Err(_) => Chain::IC,
         };
 
-        cashier_types::AssetInfo {
+        AssetInfo {
             address: input.address,
             chain,
             label: input.label,
@@ -189,8 +186,8 @@ impl From<LinkDetailUpdateAssetInfoInput> for cashier_types::AssetInfo {
     }
 }
 
-impl From<&cashier_types::AssetInfo> for AssetInfoDto {
-    fn from(input: &cashier_types::AssetInfo) -> Self {
+impl From<&AssetInfo> for AssetInfoDto {
+    fn from(input: &AssetInfo) -> Self {
         let chain = input.chain.to_string();
 
         AssetInfoDto {
@@ -202,25 +199,18 @@ impl From<&cashier_types::AssetInfo> for AssetInfoDto {
     }
 }
 
-impl From<cashier_types::Link> for LinkDto {
-    fn from(link: cashier_types::Link) -> Self {
+impl From<Link> for LinkDto {
+    fn from(link: Link) -> Self {
         let asset_info = match link.asset_info {
             Some(asset_info) => {
-                let asset_info_vec = asset_info
-                    .iter()
-                    .map(|asset| AssetInfoDto::from(asset))
-                    .collect();
+                let asset_info_vec = asset_info.iter().map(AssetInfoDto::from).collect();
 
                 Some(asset_info_vec)
             }
             None => None,
         };
 
-        let link_type_str = if let Some(link_type) = link.link_type {
-            Some(link_type.to_string())
-        } else {
-            None
-        };
+        let link_type_str = link.link_type.map(|link_type| link_type.to_string());
 
         LinkDto {
             id: link.id,
@@ -257,11 +247,11 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
 impl LinkDetailUpdateInput {
     pub fn validate(&self) -> Result<(), String> {
         if let Some(template) = &self.template {
-            Template::from_str(template).map_err(|_| format!("Invalid template: "))?;
+            Template::from_str(template).map_err(|_| "Invalid template: ".to_string())?;
         }
 
         if let Some(link_type) = &self.link_type {
-            LinkType::from_str(link_type).map_err(|_| format!("Invalid link type "))?;
+            LinkType::from_str(link_type).map_err(|_| "Invalid link type ".to_string())?;
         }
 
         if let Some(asset_info) = &self.asset_info {
@@ -275,13 +265,6 @@ impl LinkDetailUpdateInput {
 }
 
 impl LinkStateMachineGoto {
-    pub fn to_string(&self) -> String {
-        match self {
-            LinkStateMachineGoto::Continue => "Continue".to_string(),
-            LinkStateMachineGoto::Back => "Back".to_string(),
-        }
-    }
-
     pub fn from_string(intent: &str) -> Result<LinkStateMachineGoto, String> {
         match intent {
             "Continue" => Ok(LinkStateMachineGoto::Continue),
@@ -319,15 +302,18 @@ pub enum UserStateMachineGoto {
     Back,
 }
 
-impl UserStateMachineGoto {
-    pub fn to_string(&self) -> String {
+impl fmt::Display for UserStateMachineGoto {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            UserStateMachineGoto::Continue => "Continue".to_string(),
-            UserStateMachineGoto::Back => "Back".to_string(),
+            UserStateMachineGoto::Continue => write!(f, "Continue"),
+            UserStateMachineGoto::Back => write!(f, "Back"),
         }
     }
+}
 
-    pub fn from_str(intent: &str) -> Result<UserStateMachineGoto, String> {
+impl FromStr for UserStateMachineGoto {
+    type Err = String;
+    fn from_str(intent: &str) -> Result<Self, Self::Err> {
         match intent {
             "Continue" => Ok(UserStateMachineGoto::Continue),
             "Back" => Ok(UserStateMachineGoto::Back),

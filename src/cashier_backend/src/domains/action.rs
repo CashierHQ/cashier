@@ -1,32 +1,26 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_types::{
-    Action, ActionIntent, ActionState, ActionType, Intent, IntentState, IntentTask, Link,
-    LinkState, Transaction, TransactionState,
+    action::v1::{Action, ActionState, ActionType},
+    action_intent::v1::ActionIntent,
+    intent::v2::{Intent, IntentState, IntentTask},
+    link::v1::{Link, LinkState},
+    transaction::v2::{Transaction, TransactionState},
 };
 
 use crate::types::error::CanisterError;
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 pub struct ActionDomainLogic {}
 
-#[cfg_attr(test, faux::methods)]
 // Domain logic for business rules related to actions
+impl Default for ActionDomainLogic {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActionDomainLogic {
     pub fn new() -> Self {
         Self {}
@@ -50,6 +44,11 @@ impl ActionDomainLogic {
                         "Link is not active".to_string(),
                     ));
                 }
+            }
+            _ => {
+                return Err(CanisterError::ValidationErrors(
+                    "Unsupported action type".to_string(),
+                ));
             }
         }
 
@@ -101,7 +100,7 @@ impl ActionDomainLogic {
             .iter()
             .all(|tx| tx.state == TransactionState::Created)
         {
-            return IntentState::Created;
+            IntentState::Created
         } else if transactions
             .iter()
             .any(|tx| tx.state == TransactionState::Fail)
@@ -123,7 +122,7 @@ impl ActionDomainLogic {
             .iter()
             .all(|intent| intent.state == IntentState::Created)
         {
-            return ActionState::Created;
+            ActionState::Created
         } else if intents
             .iter()
             .any(|intent| intent.state == IntentState::Fail)

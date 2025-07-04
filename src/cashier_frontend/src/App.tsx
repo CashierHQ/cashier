@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import AppRouter from "./Router";
 import { IdentityKitProvider } from "@nfid/identitykit/react";
@@ -24,18 +11,18 @@ import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
+import { IdleTimeoutProvider } from "@/contexts/IdleTimeoutProvider";
+import { BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID } from "./const";
 // useEffect removed - console logging now handled at build time
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-const targets = [
-    import.meta.env.VITE_BACKEND_CANISTER_ID,
-    import.meta.env.VITE_TOKEN_STORAGE_CANISTER_ID,
-];
+const targets = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
 
 // nano second
-const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
+export const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
 
 // milli
-const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
+export const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
 
 // only apply for production
 const getDerivationOrigin = () => {
@@ -47,6 +34,19 @@ const getDerivationOrigin = () => {
 
     return {};
 };
+const logBuildInfo = () => {
+    const buildInfo = {
+        appVersion: __APP_VERSION__,
+        buildHash: __BUILD_HASH__,
+    };
+
+    if (import.meta.env.MODE === "dev") {
+        console.log("App Version:", buildInfo.appVersion);
+        console.log("Build Hash:", buildInfo.buildHash);
+    }
+};
+
+logBuildInfo();
 
 function App() {
     const queryClient = new QueryClient();
@@ -64,6 +64,15 @@ function App() {
             onConnectSuccess={() => {}}
             onDisconnect={() => {
                 queryClient.clear();
+                // Clear idle timeout keys for all users
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith("cashier_lastActive_")) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach((key) => localStorage.removeItem(key));
             }}
             authType={IdentityKitAuthType.DELEGATION}
             signers={signers}
@@ -71,7 +80,7 @@ function App() {
                 targets,
                 maxTimeToLive: TIMEOUT_NANO_SEC,
                 idleOptions: {
-                    idleTimeout: IDLE_TIMEOUT_MILLI_SEC,
+                    idleTimeout: IDLE_TIMEOUT_MILLI_SEC * 2,
                 },
                 // if derivationOrigin is not null, it will be used to derive the signer
                 ...getDerivationOrigin(),
@@ -80,7 +89,9 @@ function App() {
         >
             <QueryClientProvider client={queryClient}>
                 <ImageCacheProvider>
-                    <AppRouter />
+                    <IdleTimeoutProvider>
+                        <AppRouter />
+                    </IdleTimeoutProvider>
                 </ImageCacheProvider>
                 <Toaster
                     position="top-center"
@@ -97,6 +108,7 @@ function App() {
                         },
                     }}
                 />
+                <ReactQueryDevtools initialIsOpen={true} />
             </QueryClientProvider>
         </IdentityKitProvider>
     );

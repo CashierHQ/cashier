@@ -1,18 +1,5 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useEffect, useState } from "react";
 import LinkTemplate from "./LinkTemplate";
@@ -25,7 +12,6 @@ import {
     ACTION_STATE,
     ACTION_TYPE,
     LINK_STATE,
-    LINK_TYPE,
     mapStringToLinkState,
     mapStringToLinkType,
 } from "@/services/types/enum";
@@ -34,9 +20,10 @@ import { MultiStepFormContext } from "@/contexts/multistep-form-context";
 import { ActionModel } from "@/services/types/action.service.types";
 import { getCashierError } from "@/services/errorProcess.service";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
-import { useLinkAction } from "@/hooks/useLinkAction";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { toast } from "sonner";
+import { useLinkDetailQuery } from "@/hooks/link-hooks";
+import { useLinkMutations } from "@/hooks/useLinkMutations";
 
 export function stateToStepIndex(state: string | undefined): number {
     if (state === LINK_STATE.CHOOSE_TEMPLATE) {
@@ -63,14 +50,31 @@ export default function LinkPage() {
     // Parse URL search parameters to get oldId if present
     const searchParams = new URLSearchParams(location.search);
     const oldIdParam = searchParams.get("oldId");
+    const redirectParam = searchParams.get("redirect");
+    const isRedirectHappening = redirectParam === "true";
 
     const [backButtonDisabled, setBackButtonDisabled] = useState(false);
 
     const { addUserInput, getUserInput, resetButtonState } = useLinkCreationFormStore();
-    const { link, action, callLinkStateMachine, isLoading } = useLinkAction(
-        linkId,
-        ACTION_TYPE.CREATE_LINK,
-    );
+    const { callLinkStateMachine, isUpdating } = useLinkMutations();
+
+    const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.CREATE_LINK);
+    const link = linkDetailQuery.data?.link;
+    const action = linkDetailQuery.data?.action;
+    const isLoading = linkDetailQuery.isLoading;
+
+    // Navigate to details page if link is in a non-editable state
+    useEffect(() => {
+        if (
+            link?.state &&
+            [LINK_STATE.ACTIVE, LINK_STATE.INACTIVE, LINK_STATE.INACTIVE_ENDED].includes(
+                link.state as LINK_STATE,
+            )
+        ) {
+            navigate(`/details/${link.id}`);
+            return;
+        }
+    }, [link?.state, link?.id, navigate]);
 
     // Get user input data, prioritizing from the oldIdParam if present
     const userInputData = oldIdParam
@@ -154,9 +158,8 @@ export default function LinkPage() {
 
     // TODO: update toaster to context, so toasts/banners can be triggered inside components
     const showUnsupportedLinkTypeToast = () => {
-        toast.error("Unsupported link type", {
-            description:
-                "The current link type is currently not supported now. Please choose another link type.",
+        toast.error(t("error.link.link_type_unsupported"), {
+            description: t("error.link.link_type_unsupported"),
         });
     };
 
@@ -169,7 +172,7 @@ export default function LinkPage() {
     const showCashierErrorToast = (error: Error) => {
         const cahierError = getCashierError(error);
 
-        toast.error(t("transaction.create_intent.action_failed"), {
+        toast.error(t("error.transaction.transaction_failed"), {
             description: cahierError.message,
         });
     };
@@ -203,18 +206,18 @@ export default function LinkPage() {
     };
 
     // Determine if we should show content based on either having link data or user input data
-    const shouldShowContent = !isLoading || userInputData !== undefined;
+    const shouldShowContent = !isLoading || userInputData !== undefined || link !== undefined;
 
     return (
         <MainAppLayout>
             <div className="w-full h-full flex flex-col relative overflow-hidden">
-                {isLoading && !userInputData && (
+                {isLoading && !userInputData && !link && (
                     <div className="w-screen h-screen flex items-center justify-center">
                         <Spinner />
                     </div>
                 )}
 
-                {shouldShowContent && (
+                {shouldShowContent && link && (
                     <>
                         <MultiStepForm initialStep={getInitialStep()}>
                             <MultiStepForm.Header
@@ -222,25 +225,23 @@ export default function LinkPage() {
                                 backButtonDisabled={backButtonDisabled}
                             />
 
-                            <MultiStepForm.Items>
+                            <MultiStepForm.Items disableAnimations={isRedirectHappening}>
                                 <MultiStepForm.Item name={t("create.linkName")}>
                                     <LinkTemplate
+                                        link={link}
                                         onSelectUnsupportedLinkType={showUnsupportedLinkTypeToast}
                                     />
                                 </MultiStepForm.Item>
 
                                 <MultiStepForm.Item
-                                    name={
-                                        link?.linkType === LINK_TYPE.RECEIVE_PAYMENT
-                                            ? t("create.selectAssets")
-                                            : t("create.addAssets")
-                                    }
+                                    name={t(`create.${link?.linkType}.link_detail_title`)}
                                 >
-                                    <LinkDetails />
+                                    <LinkDetails link={link} isUpdating={isUpdating} />
                                 </MultiStepForm.Item>
 
                                 <MultiStepForm.Item name={t("create.linkPreview")}>
                                     <LinkPreview
+                                        linkDetailQuery={linkDetailQuery}
                                         onInvalidActon={showInvalidActionToast}
                                         onCashierError={showCashierErrorToast}
                                         onActionResult={showActionResultToast}

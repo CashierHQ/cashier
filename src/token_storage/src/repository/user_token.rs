@@ -1,24 +1,17 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 // File: src/token_storage/src/repository/token.rs
 use super::USER_TOKEN_STORE;
 use crate::types::{TokenId, UserTokenList};
 
 pub struct TokenRepository {}
+
+impl Default for TokenRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl TokenRepository {
     pub fn new() -> Self {
@@ -31,7 +24,7 @@ impl TokenRepository {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id.to_string())
-                .ok_or_else(|| format!("user token list is not init"))?;
+                .ok_or_else(|| "user token list is not init".to_string())?;
 
             user_token_list.enable_list.insert(token_id.to_string());
             store.insert(user_id.to_string(), user_token_list.clone());
@@ -43,7 +36,7 @@ impl TokenRepository {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id.to_string())
-                .ok_or_else(|| format!("user token list is not init"))?;
+                .ok_or_else(|| "user token list is not init".to_string())?;
 
             user_token_list.disable_list.insert(token_id.to_string());
 
@@ -52,11 +45,11 @@ impl TokenRepository {
         })
     }
 
-    pub fn add_bulk_tokens(&self, user_id: &str, token_ids: &Vec<TokenId>) -> Result<(), String> {
+    pub fn add_bulk_tokens(&self, user_id: &str, token_ids: &[TokenId]) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id.to_string())
-                .ok_or_else(|| format!("user token list is not init"))?;
+                .ok_or_else(|| "user token list is not init".to_string())?;
 
             token_ids
                 .iter()
@@ -78,7 +71,7 @@ impl TokenRepository {
         USER_TOKEN_STORE.with_borrow(|store| {
             store
                 .get(&user_id.to_string())
-                .ok_or_else(|| format!("user token list is not init 1"))
+                .ok_or_else(|| "user token list is not init 1".to_string())
         })
     }
 
@@ -91,7 +84,7 @@ impl TokenRepository {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id.to_string())
-                .ok_or_else(|| format!("user token list is not init"))?;
+                .ok_or_else(|| "user token list is not init".to_string())?;
 
             if is_enable {
                 user_token_list.disable_list.remove(&token_id.to_string());
@@ -103,7 +96,7 @@ impl TokenRepository {
 
             store.insert(user_id.to_string(), user_token_list.clone());
 
-            return Ok(());
+            Ok(())
         })
     }
 

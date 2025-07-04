@@ -1,28 +1,20 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use cashier_types::{intent_transaction::v1::IntentTransaction, keys::IntentTransactionKey};
 
 use super::INTENT_TRANSACTION_STORE;
-use cashier_types::{IntentTransaction, IntentTransactionKey};
 
-#[cfg_attr(test, faux::create)]
 #[derive(Clone)]
 
 pub struct IntentTransactionRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for IntentTransactionRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IntentTransactionRepository {
     pub fn new() -> Self {
         Self {}
@@ -50,23 +42,23 @@ impl IntentTransactionRepository {
                 };
 
                 store.insert(key.to_str(), intent_transaction.clone());
-                store.insert(key.to_str_reverse(), intent_transaction.clone());
+                store.insert(key.to_str_reverse(), intent_transaction);
             }
         });
     }
 
-    pub fn get(&self, intent_id: String, transaction_id: String) -> Option<IntentTransaction> {
+    pub fn get(&self, intent_id: &str, transaction_id: &str) -> Option<IntentTransaction> {
         let id = IntentTransactionKey {
-            intent_id: intent_id.clone(),
-            transaction_id: transaction_id.clone(),
+            intent_id: intent_id.to_string(),
+            transaction_id: transaction_id.to_string(),
         };
-        INTENT_TRANSACTION_STORE.with_borrow(|store| store.get(&id.to_str()).clone())
+        INTENT_TRANSACTION_STORE.with_borrow(|store| store.get(&id.to_str()))
     }
 
-    pub fn get_by_intent_id(&self, intent_id: String) -> Vec<IntentTransaction> {
+    pub fn get_by_intent_id(&self, intent_id: &str) -> Vec<IntentTransaction> {
         INTENT_TRANSACTION_STORE.with_borrow(|store| {
             let key = IntentTransactionKey {
-                intent_id: intent_id.clone(),
+                intent_id: intent_id.to_string(),
                 transaction_id: "".to_string(),
             };
 
@@ -75,16 +67,16 @@ impl IntentTransactionRepository {
             store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value.clone())
+                .map(|(_, value)| value)
                 .collect()
         })
     }
 
-    pub fn get_by_transaction_id(&self, transaction_id: String) -> Vec<IntentTransaction> {
+    pub fn get_by_transaction_id(&self, transaction_id: &str) -> Vec<IntentTransaction> {
         INTENT_TRANSACTION_STORE.with_borrow(|store| {
             let key = IntentTransactionKey {
                 intent_id: "".to_string(),
-                transaction_id: transaction_id.clone(),
+                transaction_id: transaction_id.to_string(),
             };
 
             let prefix = key.to_str_reverse();
@@ -92,7 +84,7 @@ impl IntentTransactionRepository {
             store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value.clone())
+                .map(|(_, value)| value)
                 .collect()
         })
     }

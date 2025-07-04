@@ -1,23 +1,11 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 // File: src/token_storage/src/types.rs
 
 use std::borrow::Cow;
 use std::collections::HashSet;
+use std::str::FromStr;
 
 use candid::CandidType;
 use candid::Principal;
@@ -79,14 +67,17 @@ pub enum Chain {
     // Can add more chains in the future
 }
 
-impl Chain {
-    pub fn from_str(chain: &str) -> Result<Self, String> {
+impl FromStr for Chain {
+    type Err = String;
+    fn from_str(chain: &str) -> Result<Self, Self::Err> {
         match chain {
             "IC" => Ok(Chain::IC),
             _ => Err(format!("Unsupported chain: {}", chain)),
         }
     }
+}
 
+impl Chain {
     pub fn to_str(&self) -> String {
         match self {
             Chain::IC => "IC".to_string(),

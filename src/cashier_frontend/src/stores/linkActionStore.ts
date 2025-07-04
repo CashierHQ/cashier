@@ -1,25 +1,9 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-import { UpdateLinkParams } from "@/hooks/useLinkAction";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { create } from "zustand";
-import { ACTION_TYPE } from "@/services/types/enum";
-import { LinkDto } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 // export interface ILinkModel<T extends LINK_TYPE> {
 //     id: string;
@@ -68,26 +52,6 @@ export interface LinkActionStoreData {
     updateLink(data: Partial<LinkDetailModel>): void;
     setAnonymousWalletAddress(walletAddress: string): void;
     clearStore(): void;
-    getLinkDetail: () => Promise<void>;
-
-    callLinkStateMachine(data: UpdateLinkParams): Promise<LinkDto>;
-
-    createNewLink: (localLinkId: string) => Promise<
-        | {
-              link: LinkDto;
-              oldId: string;
-          }
-        | undefined
-    >;
-
-    createAction: (
-        linkId: string,
-        actionType: ACTION_TYPE,
-        actionId?: string,
-    ) => Promise<ActionModel | undefined>;
-
-    refetchLinkDetail: () => Promise<void>;
-    refetchAction: (linkId: string, actionType?: ACTION_TYPE) => Promise<void>;
 }
 
 export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({
@@ -113,28 +77,4 @@ export const useLinkActionStore = create<LinkActionStoreData>((set, get) => ({
     setAnonymousWalletAddress: (walletAddress) => set({ anonymousWalletAddress: walletAddress }),
     clearStore: () =>
         set({ link: undefined, action: undefined, anonymousWalletAddress: undefined }),
-
-    getLinkDetail: async () => {
-        throw new Error("Not implemented - will be set by useLinkAction hook");
-    },
-
-    callLinkStateMachine: async () => {
-        throw new Error("Not implemented - will be set by useLinkAction hook");
-    },
-
-    createNewLink: async () => {
-        throw new Error("Not implemented - will be set by useLinkAction hook");
-    },
-
-    createAction: async () => {
-        throw new Error("Not implemented - will be set by useLinkAction hook");
-    },
-
-    refetchLinkDetail: async () => {
-        throw new Error("Not implemented - will be set by useLinkAction hook");
-    },
-
-    refetchAction: async () => {
-        throw new Error("Not implemented - will be set by useLinkAction hook");
-    },
 }));

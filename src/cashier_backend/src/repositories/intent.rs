@@ -1,28 +1,20 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-use super::{base_repository::Store, INTENT_STORE};
-use cashier_types::Intent;
+use cashier_types::intent::v2::Intent;
 
-#[cfg_attr(test, faux::create)]
+use crate::repositories::INTENT_STORE;
+
 #[derive(Clone)]
 
 pub struct IntentRepository {}
 
-#[cfg_attr(test, faux::methods)]
+impl Default for IntentRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IntentRepository {
     pub fn new() -> Self {
         Self {}
@@ -53,12 +45,12 @@ impl IntentRepository {
         });
     }
 
-    pub fn get(&self, id: String) -> Option<Intent> {
-        INTENT_STORE.with_borrow(|store| store.get(&id).clone())
+    pub fn get(&self, id: &str) -> Option<Intent> {
+        INTENT_STORE.with_borrow(|store| store.get(&id.to_string()))
     }
 
     pub fn batch_get(&self, ids: Vec<String>) -> Vec<Intent> {
-        INTENT_STORE.with_borrow(|store| store.batch_get(ids))
+        INTENT_STORE.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 
     pub fn update(&self, intent: Intent) {
@@ -68,9 +60,9 @@ impl IntentRepository {
         });
     }
 
-    pub fn delete(&self, id: &String) {
+    pub fn delete(&self, id: &str) {
         INTENT_STORE.with_borrow_mut(|store| {
-            store.remove(id);
+            store.remove(&id.to_string());
         });
     }
 }

@@ -1,18 +1,6 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 
 #[derive(Clone, Copy)]
 // If you change this, make sure to update the fee in the frontend as well
@@ -21,9 +9,10 @@ pub enum Fee {
     // 1_0000_0000 = 1 ICP
     // 100_000 = 0.001 ICP
     // 10_000 = 0.0001 ICP
-    // CreateTipLinkFeeIcp = 100_000,
     // TODO: change back to 0.001, this is for testing only
-    CreateTipLinkFeeIcp = 20_000,
+    // the actual cost should be + 2 ledger fees
+    // eg: 10_000 + 10_000 (1 approve fee) + 10_000 (1 transfer fee) = 30_000
+    CreateTipLinkFeeIcp = 10_000,
 }
 
 impl Fee {

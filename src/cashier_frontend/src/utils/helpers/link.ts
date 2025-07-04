@@ -1,25 +1,12 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import CanisterUtilsService from "@/services/canisterUtils.service";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
-export const getLinkIsClaimed = async (link: LinkDetailModel) => {
+export const getLinkIsUsed = async (link: LinkDetailModel) => {
     const canisterUtils = new CanisterUtilsService();
-    let linkIsClaimed = true;
+    let linkIsUsed = true;
 
     const linkId = link.id;
     const linkAssets = link.asset_info;
@@ -30,12 +17,12 @@ export const getLinkIsClaimed = async (link: LinkDetailModel) => {
             asset.address,
         );
         if (balance > 0n) {
-            linkIsClaimed = false;
+            linkIsUsed = false;
             break;
         }
     }
 
-    return linkIsClaimed;
+    return linkIsUsed;
 };
 
 export const getLinkAssetAmounts = async (link: LinkDetailModel) => {
@@ -47,8 +34,8 @@ export const getLinkAssetAmounts = async (link: LinkDetailModel) => {
         address: string;
         totalAmount: bigint;
         pendingAmount: bigint;
-        claimsAmount: bigint | undefined;
-        assetClaimed: boolean;
+        usesAmount: bigint | undefined;
+        assetUsed: boolean;
     }[] = [];
 
     for (const asset of linkAssets) {
@@ -60,8 +47,8 @@ export const getLinkAssetAmounts = async (link: LinkDetailModel) => {
             address: asset.address,
             totalAmount: asset.amountPerUse * link.maxActionNumber,
             pendingAmount: balance,
-            claimsAmount: link.useActionCounter,
-            assetClaimed: balance === 0n,
+            usesAmount: link.useActionCounter,
+            assetUsed: balance === 0n,
         });
     }
 

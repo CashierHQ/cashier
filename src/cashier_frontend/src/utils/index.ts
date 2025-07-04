@@ -1,22 +1,7 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { IC_EXPLORER_IMAGES_PATH } from "@/const";
-import { MediaQuery } from "@/hooks/responsive-hook";
-import { UIResponsiveType } from "@/pages/edit/[id]/index_responsive";
 import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
@@ -149,29 +134,34 @@ export const formatDateString = (dateString: string): string => {
     }
 };
 
-export const getResponsiveClassname = (
-    responsive: MediaQuery,
-    responsiveObject: UIResponsiveType | undefined,
-): string | undefined => {
-    if (responsiveObject) {
-        if (responsive.isSmallDevice) {
-            return responsiveObject.responsive.mobile;
-        } else if (responsive.isMediumDevice) {
-            return responsiveObject.responsive.tablet ?? responsiveObject.responsive.mobile;
-        } else if (responsive.isLargeDevice) {
-            return responsiveObject.responsive.desktop ?? responsiveObject.responsive.mobile;
-        } else if (responsive.isExtraLargeDevice) {
-            return responsiveObject.responsive.widescreen ?? responsiveObject.responsive.mobile;
-        }
-    }
-};
-
 // Convert token amount to number with exponential token's decimals
 export const convertTokenAmountToNumber = (amount: number, decimals: number): number => {
     return Math.floor(amount * 10 ** decimals);
 };
 export const convertDecimalBigIntToNumber = (amount: bigint, decimals: number): number => {
-    return Number(amount) / 10 ** decimals;
+    // Use string conversion to avoid floating-point precision issues
+    const amountStr = amount.toString();
+    const divisor = 10 ** decimals;
+
+    // For very large numbers, we still need to use division
+    // but we can improve precision by using parseFloat with proper formatting
+    if (amountStr.length <= 15) {
+        // Safe range for JavaScript number precision
+        return Number(amount) / divisor;
+    }
+
+    // For larger numbers, use string manipulation to maintain precision
+    const wholePart = amountStr.slice(0, -decimals) || "0";
+    const fractionalPart = amountStr.slice(-decimals).padStart(decimals, "0");
+
+    // Remove trailing zeros from fractional part
+    const trimmedFractional = fractionalPart.replace(/0+$/, "");
+
+    if (trimmedFractional) {
+        return parseFloat(`${wholePart}.${trimmedFractional}`);
+    } else {
+        return parseFloat(wholePart);
+    }
 };
 
 export const transformShortAddress = (address: string): string => {
@@ -196,3 +186,6 @@ export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
             return `/smallLogo.svg`;
     }
 };
+
+// Export link default utilities
+export { getDefaultMaxActionNumber } from "./linkDefaults";

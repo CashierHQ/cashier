@@ -1,26 +1,13 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
 import { UseFormReturn } from "react-hook-form";
 import { UseFieldArrayReturn } from "react-hook-form";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { CHAIN, LINK_TYPE, LINK_INTENT_ASSET_LABEL } from "@/services/types/enum";
-import { toast } from "sonner";
-import { formatNumber } from "@/utils/helpers/currency";
+import { FeeHelpers } from "@/services/fee.service";
+import { ValidationService } from "@/services/validation.service";
 
 /**
  * Creates an asset select handler function for opening the asset drawer
@@ -117,15 +104,15 @@ export const createRemoveAssetHandler = (
 };
 
 /**
- * Validates form assets for errors
+ * Validates form assets for errors - now uses unified validation system with token map
  * @param assets Form asset objects
- * @param allAvailableTokens List of all available tokens
+ * @param tokenMap Map of all available tokens for O(1) lookup
  * @param t Translation function
  * @param options Optional configuration parameters
  * @param options.isAirdrop Whether this is an airdrop form
  * @param options.maxActionNumber Maximum number of actions
  * @param options.skipCheckingBalance Whether to skip checking token balance
- * @returns Boolean indicating if assets are valid
+ * @returns Boolean indicating if assets are valid and error messages
  */
 export const validateFormAssets = (
     assets: {
@@ -134,126 +121,112 @@ export const validateFormAssets = (
         label?: string | LINK_INTENT_ASSET_LABEL | undefined;
         chain?: CHAIN | undefined;
     }[],
-    allAvailableTokens: FungibleToken[] | undefined,
-    t: (key: string) => string,
+    tokenMap: Record<string, FungibleToken>,
+    t: (key: string, options?: Record<string, unknown>) => string,
     options: {
         isAirdrop?: boolean;
         maxActionNumber?: number;
         skipCheckingBalance?: boolean;
     } = {},
-): boolean => {
-    // Set default values
+): {
+    isValid: boolean;
+    errorMessages: string[];
+} => {
     const { isAirdrop = false, maxActionNumber = 1, skipCheckingBalance = false } = options;
-    let isValid = true;
-    const errorMessages: string[] = [];
 
+    // Convert assets to FormAsset format
+    const formAssets = assets.map((asset) => ({
+        tokenAddress: asset.tokenAddress,
+        amount: asset.amount,
+        chain: asset.chain || CHAIN.IC,
+        label: asset.label,
+    }));
+
+    // Use the unified validation system
+    const linkType = isAirdrop ? LINK_TYPE.SEND_AIRDROP : LINK_TYPE.SEND_TIP;
+    const result = ValidationService.validateAssetsWithFees(formAssets, tokenMap, {
+        useCase: "create",
+        linkType,
+        maxActionNumber,
+        includeLinkCreationFee: false,
+        skipBalanceCheck: skipCheckingBalance,
+    });
+
+    // Convert validation errors to error messages using translation
+    const errorMessages = result.errors.map((error) => {
+        if (error.metadata && error.message.startsWith("error.")) {
+            return t(error.message, error.metadata);
+        }
+        return error.message;
+    });
+
+    // Basic validation for required fields (amount, chain, label)
     assets.forEach((asset, index) => {
-        const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
+        const token = tokenMap[asset.tokenAddress]; // O(1) lookup
         const tokenSymbol = token?.symbol || "Unknown";
-
         // Check amount
         if (!asset.amount || asset.amount === BigInt(0)) {
             const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.amount_error_message")}`;
             errorMessages.push(errorMsg);
-            isValid = false;
         }
 
         // Check chain
         if (!asset.chain) {
             const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.chain_error_message")}`;
             errorMessages.push(errorMsg);
-            isValid = false;
         }
 
         // Check label
         if (!asset.label) {
             const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.label_error_message")}`;
             errorMessages.push(errorMsg);
-            isValid = false;
-        }
-
-        // Check balance
-        if (
-            !skipCheckingBalance &&
-            token &&
-            token.amount !== null &&
-            typeof token.amount !== "undefined"
-        ) {
-            console.log("token.amount", token.amount);
-            // Calculate total amount needed based on form type
-            const totalAmountNeeded = isAirdrop
-                ? asset.amount * BigInt(maxActionNumber)
-                : asset.amount;
-
-            const hasEnoughBalance = Number(totalAmountNeeded) <= Number(token.amount);
-
-            if (!hasEnoughBalance) {
-                const availableAmountInDecimal = token?.amount ? Number(token.amount) : 0;
-                const requestedAmountInDecimal = Number(totalAmountNeeded);
-                const availableAmount =
-                    availableAmountInDecimal / (Math.pow(10, token.decimals) || 1);
-                const requestedAmount =
-                    requestedAmountInDecimal / (Math.pow(10, token.decimals) || 1);
-                const errorMsg = `Asset #${index + 1} (${tokenSymbol}): Insufficient balance. Available: ${formatNumber(
-                    availableAmount.toString(),
-                )}, Requested: ${formatNumber(requestedAmount.toString())}`;
-                errorMessages.push(errorMsg);
-                isValid = false;
-            }
         }
     });
 
-    // Display all errors as a summary if there are multiple issues
-    if (errorMessages.length > 0) {
-        if (errorMessages.length === 1) {
-            // Only one error, show it directly
-            toast.error(t("add_asset_form.error.validation.title"), {
-                description: errorMessages[0],
-            });
-        } else {
-            toast.error(t("add_asset_form.error.validation.title"), {
-                description: `Found ${errorMessages.length} issues:\n${errorMessages
-                    .slice(0, 3)
-                    .join("\n")}${errorMessages.length > 3 ? "\n...and more" : ""}`,
-            });
-
-            // Log all errors to console for debugging
-            console.error("Form validation errors:", errorMessages);
-        }
-    }
-
-    return isValid;
+    return {
+        isValid: result.isValid && errorMessages.length === 0,
+        errorMessages,
+    };
 };
 
 /**
- * Check if there's insufficient balance for any asset
- * @param formAssets Form asset objects
- * @param allAvailableTokens List of all available tokens
- * @returns Token symbol with insufficient balance, or null
+ * Calculate total fees for a token including network fees and link creation fee
+ * @param token The fungible token
+ * @param includeLinkCreationFee Whether to include link creation fee
+ * @returns Total fees in token's smallest unit
  */
-export const checkInsufficientBalance = (
-    formAssets: {
-        tokenAddress: string;
-        amount: bigint;
-    }[],
-    allAvailableTokens: FungibleToken[] | undefined,
+export const calculateTotalFees = (
+    token: FungibleToken,
+    includeLinkCreationFee: boolean = true,
+): bigint => {
+    const networkFees = FeeHelpers.calculateNetworkFeesInES8(token);
+    const linkCreationFee = includeLinkCreationFee
+        ? FeeHelpers.getLinkCreationFee().amount
+        : BigInt(0);
+    return networkFees + linkCreationFee;
+};
+
+/**
+ * Calculate total fees for multiple assets - now uses unified validation system
+ * @param assets Array of asset objects with token addresses and amounts
+ * @param tokenMap HashMap of tokens for O(1) lookup
+ * @param maxUses Number of uses for the link
+ * @param includeLinkCreationFee Whether to include link creation fee (only once per link)
+ * @returns Object with total fees broken down by token or error symbol
+ */
+export const calculateTotalFeesForAssets = (
+    assets: { tokenAddress: string; amount: bigint }[],
+    tokenMap: Record<string, FungibleToken>,
+    maxUses: number = 1,
+    includeLinkCreationFee: boolean = false,
 ): string | null => {
-    const notEnoughBalanceAssets = formAssets.filter((asset) => {
-        const token = allAvailableTokens?.find((t) => t.address === asset.tokenAddress);
-        if (!token) return false;
-        return Number(asset.amount) > Number(token.amount);
-    });
-
-    if (notEnoughBalanceAssets.length > 0) {
-        const token = allAvailableTokens?.find(
-            (t) => t.address === notEnoughBalanceAssets[0].tokenAddress,
-        );
-        if (token) {
-            return token.symbol || "";
-        }
-    }
-
-    return null;
+    // Use the unified validation system from ValidationService
+    return ValidationService.calculateTotalFeesForAssets(
+        assets,
+        tokenMap,
+        maxUses,
+        includeLinkCreationFee,
+    );
 };
 
 /**

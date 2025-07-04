@@ -1,20 +1,8 @@
-// Cashier — No-code blockchain transaction builder
-// Copyright (C) 2025 TheCashierApp LLC
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::{User, UserWallet};
+use cashier_types::{user::v1::User, user_wallet::v1::UserWallet};
+use ic_cdk::api::msg_caller;
 use uuid::Uuid;
 
 use crate::{
@@ -41,13 +29,13 @@ pub fn create_new() -> Result<UserDto, String> {
         user_id: id_str.clone(),
     };
 
-    let caller = ic_cdk::api::caller();
+    let caller = msg_caller();
 
     let user_repository = repositories::user::UserRepository::new();
     let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
 
-    user_repository.create(user.clone());
-    user_wallet_repository.create(caller.to_text(), user_wallet.clone());
+    user_repository.create(user);
+    user_wallet_repository.create(caller.to_text(), user_wallet);
 
     Ok(UserDto {
         id: id_str,
@@ -59,7 +47,7 @@ pub fn create_new() -> Result<UserDto, String> {
 pub fn get() -> Option<UserDto> {
     let user_repository = repositories::user::UserRepository::new();
     let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
-    let caller = ic_cdk::api::caller();
+    let caller = msg_caller();
 
     let user_wallet = match user_wallet_repository.get(&caller.to_string()) {
         Some(user_id) => user_id,
@@ -79,7 +67,7 @@ pub fn get() -> Option<UserDto> {
 }
 
 pub fn is_existed() -> bool {
-    let caller = ic_cdk::api::caller();
+    let caller = msg_caller();
     let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
     user_wallet_repository.get(&caller.to_string()).is_some()
 }
