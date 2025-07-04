@@ -80,8 +80,13 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     const userTokens = getDisplayTokens();
 
     // Transaction state from store
-    const { transactionStatus, setSendAssetInfo, setTransactionStatus, openConfirmation } =
-        useSendAssetStore();
+    const {
+        transactionStatus,
+        setSendAssetInfo,
+        setTransactionStatus,
+        openConfirmation,
+        resetSendAsset,
+    } = useSendAssetStore();
 
     // Constants
     const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -115,6 +120,12 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     // Get form actions
     const { setTokenAddress, setTokenAmount, setWalletAddress } =
         useWalletSendAssetFormActions(form);
+
+    // Reset transaction state when component mounts
+    useEffect(() => {
+        // Reset the send asset store to clear any previous transaction status
+        resetSendAsset();
+    }, [resetSendAsset]);
 
     // Set default token in form if no token is selected
     useEffect(() => {
