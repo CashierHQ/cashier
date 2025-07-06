@@ -68,6 +68,10 @@ export default function ClaimPage() {
         [goToChooseWallet],
     );
 
+    const isCompletePage = useMemo(() => {
+        return location.pathname.endsWith("/complete");
+    }, [location.pathname]);
+
     // Early return for inactive links
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
         return <LinkNotFound />;
