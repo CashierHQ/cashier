@@ -20,6 +20,7 @@ import ImportPanel from "./import-panel";
 import SwapPanel from "./swap-panel";
 import { formatNumber } from "@/utils/helpers/currency";
 import React from "react";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 interface WalletPanelProps {
     onClose: () => void;
@@ -31,6 +32,7 @@ const MainWalletPanel: React.FC<{
     navigateSwapPage: () => void;
     totalUsdEquivalent: number;
 }> = ({ navigateSendPage, navigateReceivePage, navigateSwapPage, totalUsdEquivalent }) => {
+    const { isSwapEnabled } = useFeatureFlags();
     // Balance visibility state
     const WALLET_BALANCE_VISIBILITY_KEY = "wallet_balance_visibility";
     const [isVisible, setIsVisible] = useState(() => {
@@ -72,7 +74,7 @@ const MainWalletPanel: React.FC<{
                 <SendReceive
                     onSend={navigateSendPage}
                     onReceive={navigateReceivePage}
-                    onSwap={navigateSwapPage}
+                    onSwap={isSwapEnabled ? navigateSwapPage : undefined}
                 />
             </div>
 
@@ -175,6 +177,8 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
 
     // Render panel content based on active panel type
     const renderPanelContent = useCallback(() => {
+        const { isSwapEnabled } = useFeatureFlags();
+
         if (isLoading && activePanel === "wallet" && (!rawTokenList || rawTokenList.length === 0)) {
             return loadingSkeleton;
         }
@@ -185,7 +189,12 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
             case "receive":
                 return <ReceivePanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "swap":
-                return <SwapPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
+                // Only render swap panel if feature is enabled, otherwise redirect to main wallet
+                return isSwapEnabled ? (
+                    <SwapPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />
+                ) : (
+                    navigateToMainWallet()
+                );
             case "details":
                 return <DetailsPanel tokenId={panelParams.tokenId} onBack={navigateToMainWallet} />;
             case "manage":
@@ -215,6 +224,7 @@ const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
         totalUsdEquivalent,
         navigateToManage,
         loadingSkeleton,
+        // No need to add useFeatureFlags here as it's a static import
     ]);
 
     // Memoize the content of the sheet

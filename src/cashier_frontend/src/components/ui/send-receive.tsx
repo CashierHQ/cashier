@@ -13,7 +13,7 @@ interface SendReceiveProps {
 export function SendReceive({
     onSend = () => {},
     onReceive = () => {},
-    onSwap = () => {},
+    onSwap, // Make this optional with no default - we'll check if it exists to conditionally render
 }: SendReceiveProps) {
     const { t } = useTranslation();
 
@@ -35,13 +35,15 @@ export function SendReceive({
                 <span className="text-xs text-lightgrey mt-1">{t("wallet.details.receive")}</span>
             </button>
 
-            <button className="flex flex-col items-center w-14" onClick={onSwap}>
-                <div className="bg-lightgreen rounded-full p-2.5">
-                    <ArrowDownUp size={18} />
-                </div>
+            {onSwap && (
+                <button className="flex flex-col items-center w-14" onClick={onSwap}>
+                    <div className="bg-lightgreen rounded-full p-2.5">
+                        <ArrowDownUp size={18} />
+                    </div>
 
-                <span className="text-xs text-lightgrey mt-1">{t("wallet.details.swap")}</span>
-            </button>
+                    <span className="text-xs text-lightgrey mt-1">{t("wallet.details.swap")}</span>
+                </button>
+            )}
         </div>
     );
 }
