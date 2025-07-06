@@ -34,10 +34,8 @@ import { useSendAssetStore } from "@/stores/sendAssetStore";
 
 // Types & Constants
 import { CHAIN } from "@/services/types/enum";
-import { TransactionStatus } from "@/services/types/wallet.types";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useWalletContext } from "@/contexts/wallet-context";
-import { toast } from "sonner";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 interface SendPanelProps {
@@ -67,8 +65,7 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     const userTokens = getDisplayTokens();
 
     // Transaction state from store
-    const { transactionStatus, setSendAssetInfo, setTransactionStatus, openConfirmation } =
-        useSendAssetStore();
+    const { setSendAssetInfo, openConfirmation, resetSendAsset } = useSendAssetStore();
 
     // Constants
     const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -102,6 +99,12 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     // Get form actions
     const { setTokenAddress, setTokenAmount, setWalletAddress } =
         useWalletSendAssetFormActions(form);
+
+    // Reset transaction state when component mounts
+    useEffect(() => {
+        // Reset the send asset store to clear any previous transaction status
+        resetSendAsset();
+    }, []);
 
     // Set default token in form if no token is selected
     useEffect(() => {
@@ -148,31 +151,26 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     }, [form.watch("assetNumber"), form.watch("walletAddress"), form.formState.errors.assetNumber]);
 
     /**
-     * Handle transaction status changes
+     * Handle form reset after successful transaction (callback from drawer)
      */
-    useEffect(() => {
-        switch (transactionStatus) {
-            case TransactionStatus.FAILED:
-                toast.error(t("send_panel.confirm_popup.transaction.failed.title"), {
-                    description: t("send_panel.confirm_popup.transaction.failed.message"),
-                });
-                break;
+    const handleTransactionSuccess = () => {
+        // Reset form after successful transaction
+        form.reset({
+            address: selectedToken?.address ?? "",
+            amount: BigInt(0),
+            assetNumber: 0,
+            walletAddress: "",
+        });
 
-            case TransactionStatus.SUCCESS:
-                toast.success(t("send_panel.confirm_popup.transaction.success.title"), {
-                    description: t("send_panel.confirm_popup.transaction.success.message"),
-                });
+        // Reset UI state
+        setUsdAmount("");
+        setIsDisabled(true);
 
-                // Reset form after successful transaction
-                form.reset({
-                    address: selectedToken?.address ?? "",
-                    amount: BigInt(0),
-                    assetNumber: 0,
-                    walletAddress: "",
-                });
-                break;
-        }
-    }, [transactionStatus, t, form, selectedToken]);
+        // Note: We don't call resetSendAsset() here because:
+        // 1. It would close the confirmation drawer prematurely
+        // 2. We want to keep the success state visible in the drawer
+        // 3. The next transaction will call resetSendAsset() when submitted
+    };
 
     /**
      * Clear amount errors when selected token changes
@@ -286,7 +284,9 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     const handleSubmit = async (data: WalletSendAssetFormSchema) => {
         if (!selectedToken) return;
 
-        console.log("Submitting form with data:", data);
+        // Reset any previous transaction state first
+        // This ensures we're starting fresh with each new transaction
+        resetSendAsset();
 
         // Build send asset info for the store
         setSendAssetInfo({
@@ -304,8 +304,7 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
             feeSymbol: selectedToken.symbol,
         });
 
-        // Reset transaction status to IDLE and open confirmation
-        setTransactionStatus(TransactionStatus.IDLE);
+        // Open confirmation drawer
         openConfirmation();
     };
 
@@ -495,7 +494,7 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
             </div>
 
             {/* Confirmation drawer */}
-            <SendAssetConfirmationDrawer />
+            <SendAssetConfirmationDrawer onSuccessfulTransaction={handleTransactionSuccess} />
 
             {/* Asset Selection Drawer */}
             <AssetDrawer
