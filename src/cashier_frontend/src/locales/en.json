@@ -162,7 +162,8 @@
         "details": {
             "header": "Wallet Balance",
             "send": "Send",
-            "receive": "Receive"
+            "receive": "Receive",
+            "swap": "Swap"
         },
         "tabs": {
             "tokens": {
