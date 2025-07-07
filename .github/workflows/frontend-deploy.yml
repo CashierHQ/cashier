@@ -110,6 +110,7 @@ jobs:
                   echo "VITE_IC_EXPLORER_BASE_URL=${VITE_IC_EXPLORER_BASE_URL}" > src/cashier_frontend/${ENV_FILE}
                   echo "VITE_BACKEND_CANISTER_ID=${VITE_BACKEND_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
                   echo "VITE_TOKEN_STORAGE_CANISTER_ID=${VITE_TOKEN_STORAGE_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_FEATURE_FLAGS_ENABLE_SWAP=true" >> src/cashier_frontend/${ENV_FILE}
                   echo "VITE_ENV=${ENVIRONMENT}" >> src/cashier_frontend/${ENV_FILE}
 
                   echo "Created ${ENV_FILE} with values:"
