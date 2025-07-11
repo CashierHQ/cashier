@@ -35,3 +35,5 @@ CLAUDE.md
 
 logs/*
 .cursor
+
+package-lock.json
