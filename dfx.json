@@ -5,17 +5,13 @@
             "package": "cashier_backend",
             "type": "rust",
             "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai",
-            "gzip": true,
-            "wasm": "target/wasm32-unknown-unknown/release/cashier_backend.wasm",
-            "build": "bash ./scripts/build_package.sh cashier_backend"
+            "gzip": true
         },
         "token_storage": {
             "candid": "src/token_storage/token_storage.did",
             "package": "token_storage",
             "type": "rust",
-            "gzip": true,
-            "wasm": "target/wasm32-unknown-unknown/release/token_storage.wasm",
-            "build": "bash ./scripts/build_package.sh token_storage"
+            "gzip": true
         },
         "cashier_frontend": {
             "source": ["src/cashier_frontend/dist"],
@@ -25,8 +21,8 @@
         },
         "icp_ledger_canister": {
             "type": "custom",
-            "candid": "https://raw.githubusercontent.com/dfinity/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/rs/rosetta-api/icp_ledger/ledger.did",
-            "wasm": "https://download.dfinity.systems/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/canisters/ledger-canister.wasm.gz",
+            "candid": "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did",
+            "wasm": "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz",
             "specified_id": "ryjl3-tyaaa-aaaaa-aaaba-cai",
             "remote": {
                 "id": {
