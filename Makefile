@@ -1,8 +1,8 @@
 build-backend:
-	bash ./scripts/build_package.sh cashier_backend
+	cargo build --release --target wasm32-unknown-unknown --package cashier_backend --locked
 
 build-token-storage:
-	bash ./scripts/build_package.sh token_storage
+	cargo build --release --target wasm32-unknown-unknown --package token_storage --locked
 
 # staging
 build-icp-ledger:
@@ -97,3 +97,8 @@ frontend-setup:
 
 
 #
+
+extract-candid:
+	candid-extractor "target/wasm32-unknown-unknown/release/cashier_backend.wasm" > "src/cashier_backend/cashier_backend.did"
+	candid-extractor "target/wasm32-unknown-unknown/release/token_storage.wasm" > "src/token_storage/token_storage.did"
+
