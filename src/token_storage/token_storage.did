@@ -1,6 +1,3 @@
-// Copyright (c) 2025 Cashier Protocol Labs
-// Licensed under the MIT License (see LICENSE file in the project root)
-
 type AddTokenInput = record { token_id : text; token_data : opt AddTokenItem };
 type AddTokenItem = record {
   fee : opt nat;
