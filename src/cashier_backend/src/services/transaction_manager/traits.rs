@@ -9,8 +9,6 @@
 use async_trait::async_trait;
 use candid::Principal;
 use cashier_types::{
-    common::Chain,
-    intent::v2::Intent,
     transaction::v2::{
         Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Transaction, TransactionState,
     },
@@ -25,16 +23,6 @@ use crate::{
     },
     utils::runtime::IcEnvironment,
 };
-
-// ---------- 1. Intent → Transaction assembly ----------
-/// Takes an Intent and produces chain-specific Transactions.
-pub trait TransactionAssembler<E: IcEnvironment + Clone> {
-    fn assemble_txs(
-        &self,
-        chain: &Chain,
-        intent: &Intent,
-    ) -> Result<Vec<Transaction>, CanisterError>;
-}
 
 // ---------- 2. Action creation ----------
 /// Persists a TemporaryAction (and its transactions) into storage.
