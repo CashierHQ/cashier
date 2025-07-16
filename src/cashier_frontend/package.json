@@ -2,7 +2,7 @@
     "name": "cashier_frontend",
     "private": true,
     "version": "0.0.12",
-    "license": "GPL-3.0-or-later",
+    "license": "MIT",
     "type": "module",
     "scripts": {
         "setup": "npm i && dfx canister create cashier_backend && dfx generate cashier_backend",
