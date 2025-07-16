@@ -334,7 +334,7 @@ export function useMultipleTokenMutation(identity: Identity | undefined) {
 }
 
 // Improved hook for toggling token visibility
-export function useUpdateTokenStateMutation(identity: Identity | undefined) {
+export function useUpdateTokenEnableMutation(identity: Identity | undefined) {
     const queryClient = useQueryClient();
 
     return useMutation({

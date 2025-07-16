@@ -47,8 +47,7 @@ interface TokenState {
     // Backend operations - these get implemented by useTokens
     addToken: (input: AddTokenInput) => Promise<void>;
     removeToken: (tokenId: string) => Promise<void>;
-    toggleTokenVisibility: (tokenId: string, hidden: boolean) => Promise<void>;
-    batchToggleTokenVisibility: (toggles: Array<[string, boolean]>) => Promise<void>;
+    toggleTokenEnable: (tokenId: string, hidden: boolean) => Promise<void>;
     updateUserFilters: (filterUpdates: Partial<TokenFilters>) => Promise<void>;
     updateTokenInit: () => Promise<void>;
     updateToken: () => Promise<void>;
@@ -202,10 +201,7 @@ export const useTokenStore = create<TokenState>((set, get) => ({
     removeToken: async () => {
         throw new Error("Not implemented - will be set by useTokens hook");
     },
-    toggleTokenVisibility: async () => {
-        throw new Error("Not implemented - will be set by useTokens hook");
-    },
-    batchToggleTokenVisibility: async () => {
+    toggleTokenEnable: async () => {
         throw new Error("Not implemented - will be set by useTokens hook");
     },
     updateUserFilters: async () => {

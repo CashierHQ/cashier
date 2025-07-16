@@ -6,7 +6,7 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { useTokenStore } from "@/stores/tokenStore";
 import {
     useAddTokenMutation,
-    useUpdateTokenStateMutation,
+    useUpdateTokenEnableMutation,
     useTokenBalancesQuery,
     useTokenMetadataQuery,
     useTokenPricesQuery,
@@ -45,7 +45,7 @@ export function useTokens() {
     const syncTokenListMutation = useSyncTokenList(identity);
     const addTokenMutation = useAddTokenMutation(identity);
     const addMultipleTokenMutation = useMultipleTokenMutation(identity);
-    const updateTokenState = useUpdateTokenStateMutation(identity);
+    const updateTokenEnableState = useUpdateTokenEnableMutation(identity);
 
     // Implement operation functions
     const addToken = async (input: AddTokenInput) => {
@@ -56,9 +56,9 @@ export function useTokens() {
     };
 
     // Toggle a single token's visibility in preferences
-    const toggleTokenVisibility = async (tokenId: string, enable: boolean) => {
+    const toggleTokenEnable = async (tokenId: string, enable: boolean) => {
         setIsSyncPreferences(true);
-        await updateTokenState.mutateAsync({ tokenId, enable });
+        await updateTokenEnableState.mutateAsync({ tokenId, enable });
         await tokenListQuery.refetch();
         setIsSyncPreferences(false);
     };
@@ -264,7 +264,7 @@ export function useTokens() {
     useEffect(() => {
         useTokenStore.setState({
             addToken,
-            toggleTokenVisibility,
+            toggleTokenEnable,
             updateTokenInit,
             updateTokenExplorer,
             updateTokenBalance,
