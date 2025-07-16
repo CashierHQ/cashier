@@ -14,14 +14,9 @@ import {
     useSyncTokenList,
     useMultipleTokenMutation,
 } from "./token-hooks";
-import {
-    ICExplorerService,
-    IcExplorerTokenDetail,
-    mapTokenListItemToAddTokenItem,
-} from "@/services/icExplorer.service";
+import { ICExplorerService, IcExplorerTokenDetail } from "@/services/icExplorer.service";
 import {
     AddTokenInput,
-    AddTokenItem,
     AddTokensInput,
 } from "../../../declarations/token_storage/token_storage.did";
 
@@ -114,22 +109,15 @@ export function useTokens() {
 
         if (tokenList.length > 0) {
             // Format tokens as required by the AddTokensInput interface: Array<[string, [] | [RegisterTokenInput]]>
-            const tokenTuples = tokenList.map((token) => {
-                const tokenId = `IC:${token.ledgerId}`; // Create token ID using proper format
-                const tokenData = mapTokenListItemToAddTokenItem(token); // Convert to TokenListItem
-                return [tokenId, [tokenData]];
-            }) as Array<[string, [] | [AddTokenItem]]>;
+            const tokenIds = tokenList.map((token) => {
+                return `IC:${token.ledgerId}`; // Create token ID using proper format
+            });
 
-            // Create the proper AddTokensInput object
-            const tokensToAdd: AddTokensInput = {
-                tokens_disable: tokenTuples,
-                tokens_enable: [],
+            const addTokensInput: AddTokensInput = {
+                token_ids: tokenIds,
             };
-
-            console.log("tokensToAdd", tokensToAdd);
-
             try {
-                await addMultipleTokenMutation.mutateAsync(tokensToAdd);
+                await addMultipleTokenMutation.mutateAsync(addTokensInput);
             } catch (error) {
                 console.error("Error adding tokens:", error);
             } finally {

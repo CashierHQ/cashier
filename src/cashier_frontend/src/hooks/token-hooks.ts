@@ -17,14 +17,13 @@ import {
     AddTokensInput,
     Chain,
     TokenDto,
-    UpdateTokenStatusInput,
+    UpdateTokenInput,
 } from "../../../declarations/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import TokenCacheService from "@/services/backend/tokenCache.service";
 import { mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
 import { fromNullable } from "@dfinity/utils";
-import { TOKEN_STORAGE_CANISTER_ID } from "@/const";
 
 /**
  * Response from tokenListQuery with combined token list data
@@ -76,10 +75,6 @@ export function useTokenListQuery() {
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.all,
         queryFn: async () => {
-            console.log(
-                "TokenStorageService initialized with canister:",
-                TOKEN_STORAGE_CANISTER_ID,
-            );
             const tokenService = new TokenStorageService(identity);
             let tokens: TokenDto[] = [];
 
@@ -321,6 +316,7 @@ export function useMultipleTokenMutation(identity: Identity | undefined) {
 
             const tokenService = new TokenStorageService(identity);
             try {
+                console.log("Adding tokens:", input.token_ids.length);
                 await tokenService.addTokens(input);
                 return true;
             } catch (error) {
@@ -346,11 +342,11 @@ export function useUpdateTokenStateMutation(identity: Identity | undefined) {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            const input: UpdateTokenStatusInput = {
+            const input: UpdateTokenInput = {
                 token_id: tokenId,
                 is_enabled: enable,
             };
-            await tokenService.updateToken(input);
+            await tokenService.updateTokenEnable(input);
             return { tokenId, hidden: enable };
         },
         onSuccess: () => {

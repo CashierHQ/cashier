@@ -8,7 +8,6 @@ import {
 import { TokenModel } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
 import { IC_EXPLORER_IMAGES_PATH } from "@/const";
-import { fromNullable } from "@dfinity/utils";
 
 export interface TokenFilters {
     hideZeroBalance: boolean;
@@ -54,7 +53,7 @@ export const mapStringToBackendChain = (chain: string): BackendChain => {
 
 // Helper function to map UserToken to FungibleToken
 export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
-    const tokenId = token.icrc_ledger_id?.toString() || "";
+    const tokenId = token.details.IC.ledger_id?.toString() || "";
 
     let enable = false;
     if ("enabled" in token) {
@@ -70,6 +69,6 @@ export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
         logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
         decimals: token.decimals || 8,
         enabled: enable,
-        fee: fromNullable(token.fee || undefined),
+        fee: token.details.IC.fee,
     };
 };

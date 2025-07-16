@@ -7,7 +7,7 @@ use crate::{
         token_registry_metadata::TokenRegistryMetadataRepository,
         user_preference::UserPreferenceRepository, user_token::TokenRepository,
     },
-    types::{RegistryToken, TokenDto, TokenId, UserPreference, UserTokenList},
+    types::{TokenDto, TokenId, UserPreference, UserTokenList},
 };
 
 pub struct UserTokenService {
@@ -114,9 +114,9 @@ impl UserTokenService {
 
     /// Add multiple tokens to the user's list
     /// Tokens that don't exist in the registry will be filtered out
-    pub fn add_tokens(&self, user_id: &str, token_ids: &[TokenId]) -> Result<Vec<TokenId>, String> {
+    pub fn add_tokens(&self, user_id: &str, token_ids: &[TokenId]) -> Result<(), String> {
         if token_ids.is_empty() {
-            return Ok(vec![]);
+            return Ok(());
         }
 
         // Ensure user has a token list initialized
@@ -137,14 +137,13 @@ impl UserTokenService {
         self.token_repository
             .add_bulk_tokens(user_id, &valid_tokens)?;
 
-        // Return the list of tokens that were successfully added
-        Ok(valid_tokens)
+        Ok(())
     }
 
     /// Update a token's status (enable/disable)
     /// This only swaps a token between the enable and disable lists
     /// Returns an error if the token doesn't exist in the registry
-    pub fn update_token_status(
+    pub fn update_token_enable(
         &self,
         user_id: &str,
         token_id: &TokenId,

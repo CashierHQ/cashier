@@ -7,9 +7,9 @@ import {
     AddTokenInput,
     idlFactory,
     AddTokensInput,
-    UpdateTokenStatusInput,
     TokenListResponse,
     UpdateTokenBalanceInput,
+    UpdateTokenInput,
 } from "../../../../declarations/token_storage/token_storage.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
@@ -33,18 +33,16 @@ class TokenStorageService {
         const response = parseResultResponse(await this.actor.list_tokens());
         return response;
     }
-    async addToken(input: AddTokenInput): Promise<TokenListResponse> {
+    async addToken(input: AddTokenInput): Promise<null> {
         const res = parseResultResponse(await this.actor.add_token(input));
         return res;
     }
-    async addTokens(input: AddTokensInput): Promise<TokenListResponse> {
-        const res = parseResultResponse(await this.actor.add_tokens(input));
+    async addTokens(input: AddTokensInput): Promise<null> {
+        const res = parseResultResponse(await this.actor.add_token_batch(input));
         return res;
     }
-    async updateToken(input: UpdateTokenStatusInput): Promise<TokenListResponse> {
-        console.log("updateToken", input);
-        const res = parseResultResponse(await this.actor.update_token_status(input));
-        console.log("updateToken", res);
+    async updateTokenEnable(input: UpdateTokenInput): Promise<null> {
+        const res = parseResultResponse(await this.actor.update_token_enable(input));
         return res;
     }
     async syncTokenList(): Promise<void> {
