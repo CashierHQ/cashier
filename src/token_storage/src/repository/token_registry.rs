@@ -1,13 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{
-    api::token::types::RegisterTokenInput,
-    types::{Chain, RegistryToken, TokenId},
-};
+use crate::types::{RegistryToken, TokenId};
 
 use super::{token_registry_metadata::TokenRegistryMetadataRepository, TOKEN_REGISTRY_STORE};
-use std::str::FromStr;
 
 pub struct TokenRegistryRepository {}
 
@@ -23,29 +19,11 @@ impl TokenRegistryRepository {
     }
 
     // this function will update the token registry version if a new token is added
-    pub fn register_token(&self, input: RegisterTokenInput) -> Result<TokenId, String> {
-        let chain = Chain::from_str(&input.chain)?;
-
-        if chain == Chain::IC && input.ledger_id.is_none() {
-            return Err("Ledger ID is required for IC chain".to_string());
-        }
-
-        let token = RegistryToken {
-            id: input.id.clone(),
-            icrc_ledger_id: input.ledger_id,
-            icrc_index_id: input.index_id,
-            symbol: input.symbol,
-            name: input.name,
-            decimals: input.decimals,
-            chain,
-            enabled_by_default: input.enabled_by_default,
-            fee: input.fee,
-        };
-
+    pub fn register_token(&self, input: &RegistryToken) -> Result<TokenId, String> {
         let is_new_token = !TOKEN_REGISTRY_STORE.with_borrow(|store| store.contains_key(&input.id));
 
         TOKEN_REGISTRY_STORE.with_borrow_mut(|store| {
-            store.insert(input.id.clone(), token);
+            store.insert(input.id.clone(), input.clone());
         });
 
         // If this is a new token, increment the registry version
@@ -58,12 +36,12 @@ impl TokenRegistryRepository {
     }
 
     // this function will update the token registry version if a new token is added
-    pub fn add_bulk_tokens(&self, tokens: Vec<RegisterTokenInput>) -> Result<Vec<TokenId>, String> {
+    pub fn add_bulk_tokens(&self, tokens: &Vec<RegistryToken>) -> Result<Vec<TokenId>, String> {
         let mut token_ids = Vec::new();
         let mut any_new_tokens = false;
 
         // First pass: check if any tokens are new
-        for input in &tokens {
+        for input in tokens {
             let is_new = !TOKEN_REGISTRY_STORE.with_borrow(|store| store.contains_key(&input.id));
             if is_new {
                 any_new_tokens = true;

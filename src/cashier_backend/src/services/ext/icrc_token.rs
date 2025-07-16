@@ -1,386 +1,234 @@
-// Copyright (c) 2025 Cashier Protocol Labs
-// Licensed under the MIT License (see LICENSE file in the project root)
-
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
-#![allow(deprecated)]
 use candid::{self, CandidType, Deserialize, Principal};
-use core::fmt;
 use ic_cdk::api::call::CallResult as Result;
-use serde::Serialize;
-use std::vec::Vec as StdVec;
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ChangeArchiveOptions {
-    pub num_blocks_to_archive: Option<u64>,
-    pub max_transactions_per_response: Option<u64>,
-    pub trigger_threshold: Option<u64>,
-    pub more_controller_ids: Option<StdVec<Principal>>,
-    pub max_message_size_bytes: Option<u64>,
-    pub cycles_for_archive_creation: Option<u64>,
-    pub node_max_memory_size_bytes: Option<u64>,
-    pub controller_id: Option<Principal>,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum MetadataValue {
-    Int(candid::Int),
-    Nat(candid::Nat),
-    Blob(serde_bytes::ByteBuf),
-    Text(String),
-}
-#[derive(CandidType, Deserialize, Clone, Debug, Serialize)]
+
+pub type SubAccount = serde_bytes::ByteBuf;
+#[derive(CandidType, Deserialize)]
 pub struct Account {
     pub owner: Principal,
-    pub subaccount: Option<serde_bytes::ByteBuf>,
+    pub subaccount: Option<SubAccount>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum ChangeFeeCollector {
-    SetTo(Account),
-    Unset,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
 pub struct FeatureFlags {
     #[serde(rename = "icrc2")]
     pub icrc_2: bool,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
 pub struct UpgradeArgs {
-    pub change_archive_options: Option<ChangeArchiveOptions>,
-    pub token_symbol: Option<String>,
-    pub transfer_fee: Option<candid::Nat>,
-    pub metadata: Option<StdVec<(String, MetadataValue)>>,
-    pub accounts_overflow_trim_quantity: Option<u64>,
-    pub change_fee_collector: Option<ChangeFeeCollector>,
-    pub max_memo_length: Option<u16>,
-    pub token_name: Option<String>,
+    #[serde(rename = "icrc1_minting_account")]
+    pub icrc_1_minting_account: Option<Account>,
     pub feature_flags: Option<FeatureFlags>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
+pub struct Tokens {
+    #[serde(rename = "e8s")]
+    pub e_8_s: u64,
+}
+pub type TextAccountIdentifier = String;
+#[derive(CandidType, Deserialize)]
+pub struct Duration {
+    pub secs: u64,
+    pub nanos: u32,
+}
+#[derive(CandidType, Deserialize)]
 pub struct ArchiveOptions {
     pub num_blocks_to_archive: u64,
     pub max_transactions_per_response: Option<u64>,
     pub trigger_threshold: u64,
-    pub more_controller_ids: Option<StdVec<Principal>>,
+    pub more_controller_ids: Option<Vec<Principal>>,
     pub max_message_size_bytes: Option<u64>,
     pub cycles_for_archive_creation: Option<u64>,
     pub node_max_memory_size_bytes: Option<u64>,
     pub controller_id: Principal,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
 pub struct InitArgs {
-    pub decimals: Option<u8>,
-    pub token_symbol: String,
-    pub transfer_fee: candid::Nat,
-    pub metadata: StdVec<(String, MetadataValue)>,
-    pub minting_account: Account,
-    pub initial_balances: StdVec<(Account, candid::Nat)>,
-    pub maximum_number_of_accounts: Option<u64>,
-    pub accounts_overflow_trim_quantity: Option<u64>,
-    pub fee_collector_account: Option<Account>,
-    pub archive_options: ArchiveOptions,
-    pub max_memo_length: Option<u16>,
-    pub token_name: String,
+    pub send_whitelist: Vec<Principal>,
+    pub token_symbol: Option<String>,
+    pub transfer_fee: Option<Tokens>,
+    pub minting_account: TextAccountIdentifier,
+    pub transaction_window: Option<Duration>,
+    pub max_message_size_bytes: Option<u64>,
+    #[serde(rename = "icrc1_minting_account")]
+    pub icrc_1_minting_account: Option<Account>,
+    pub archive_options: Option<ArchiveOptions>,
+    pub initial_values: Vec<(TextAccountIdentifier, Tokens)>,
+    pub token_name: Option<String>,
     pub feature_flags: Option<FeatureFlags>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum LedgerArgument {
+#[derive(CandidType, Deserialize)]
+pub enum LedgerCanisterPayload {
     Upgrade(Option<UpgradeArgs>),
     Init(InitArgs),
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ArchiveInfo {
-    pub block_range_end: candid::Nat,
+pub type AccountIdentifier = serde_bytes::ByteBuf;
+#[derive(CandidType, Deserialize)]
+pub struct AccountBalanceArgs {
+    pub account: AccountIdentifier,
+}
+#[derive(CandidType, Deserialize)]
+pub struct AccountBalanceArgsDfx {
+    pub account: TextAccountIdentifier,
+}
+#[derive(CandidType, Deserialize)]
+pub struct Archive {
     pub canister_id: Principal,
-    pub block_range_start: candid::Nat,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct GetBlocksRequest {
-    pub start: candid::Nat,
-    pub length: candid::Nat,
+#[derive(CandidType, Deserialize)]
+pub struct Archives {
+    pub archives: Vec<Archive>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum VecItem {
-    Int(candid::Int),
-    Map(StdVec<(String, Box<Value>)>),
-    Nat(candid::Nat),
-    Nat64(u64),
-    Blob(serde_bytes::ByteBuf),
-    Text(String),
-    Array(Box<Vec>),
+#[derive(CandidType, Deserialize)]
+pub struct DecimalsRet {
+    pub decimals: u32,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Vec(pub StdVec<VecItem>);
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum Value {
-    Int(candid::Int),
-    Map(StdVec<(String, Box<Value>)>),
-    Nat(candid::Nat),
-    Nat64(u64),
-    Blob(serde_bytes::ByteBuf),
-    Text(String),
-    Array(Box<Vec>),
+#[derive(CandidType, Deserialize)]
+pub struct GetAllowancesArgs {
+    pub prev_spender_id: Option<TextAccountIdentifier>,
+    pub from_account_id: TextAccountIdentifier,
+    pub take: Option<u64>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct BlockRange {
-    pub blocks: StdVec<Box<Value>>,
-}
-candid::define_function!(pub ArchivedRangeCallback : (GetBlocksRequest) -> (
-    BlockRange,
-  ) query);
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ArchivedRange {
-    pub callback: ArchivedRangeCallback,
-    pub start: candid::Nat,
-    pub length: candid::Nat,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct GetBlocksResponse {
-    pub certificate: Option<serde_bytes::ByteBuf>,
-    pub first_index: candid::Nat,
-    pub blocks: StdVec<Box<Value>>,
-    pub chain_length: u64,
-    pub archived_blocks: StdVec<ArchivedRange>,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct DataCertificate {
-    pub certificate: Option<serde_bytes::ByteBuf>,
-    pub hash_tree: serde_bytes::ByteBuf,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct HolderListMetadata {
-    pub total: u64,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct HolderData {
-    pub account: Account,
-    pub amount: candid::Nat,
-    pub percentage: f64,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct HolderListResp {
-    pub metadata: HolderListMetadata,
-    pub data: StdVec<HolderData>,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Burn {
-    pub from: Account,
-    pub memo: Option<serde_bytes::ByteBuf>,
-    pub created_at_time: Option<u64>,
-    pub amount: candid::Nat,
-    pub spender: Option<Account>,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Mint {
-    pub to: Account,
-    pub memo: Option<serde_bytes::ByteBuf>,
-    pub created_at_time: Option<u64>,
-    pub amount: candid::Nat,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Approve {
-    pub fee: Option<candid::Nat>,
-    pub from: Account,
-    pub memo: Option<serde_bytes::ByteBuf>,
-    pub created_at_time: Option<u64>,
-    pub amount: candid::Nat,
-    pub expected_allowance: Option<candid::Nat>,
+#[derive(CandidType, Deserialize)]
+pub struct AllowancesItem {
+    pub from_account_id: TextAccountIdentifier,
+    pub to_spender_id: TextAccountIdentifier,
+    pub allowance: Tokens,
     pub expires_at: Option<u64>,
-    pub spender: Account,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Transfer {
-    pub to: Account,
-    pub fee: Option<candid::Nat>,
-    pub from: Account,
-    pub memo: Option<serde_bytes::ByteBuf>,
-    pub created_at_time: Option<u64>,
-    pub amount: candid::Nat,
-    pub spender: Option<Account>,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Transaction {
-    pub burn: Option<Burn>,
-    pub kind: String,
-    pub mint: Option<Mint>,
-    pub approve: Option<Approve>,
-    pub timestamp: u64,
-    pub transfer: Option<Transfer>,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct TransactionRange {
-    pub transactions: StdVec<Transaction>,
-}
-candid::define_function!(pub ArchivedRange1Callback : (GetBlocksRequest) -> (
-    TransactionRange,
-  ) query);
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ArchivedRange1 {
-    pub callback: ArchivedRange1Callback,
-    pub start: candid::Nat,
-    pub length: candid::Nat,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct GetTransactionsResponse {
-    pub first_index: candid::Nat,
-    pub log_length: candid::Nat,
-    pub transactions: StdVec<Transaction>,
-    pub archived_transactions: StdVec<ArchivedRange1>,
-}
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct StandardRecord {
+pub type Allowances = Vec<AllowancesItem>;
+#[derive(CandidType, Deserialize)]
+pub struct Icrc10SupportedStandardsRetItem {
     pub url: String,
     pub name: String,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+pub type Icrc1Tokens = candid::Nat;
+#[derive(CandidType, Deserialize)]
+pub enum Value {
+    Int(candid::Int),
+    Nat(candid::Nat),
+    Blob(serde_bytes::ByteBuf),
+    Text(String),
+}
+#[derive(CandidType, Deserialize)]
+pub struct Icrc1SupportedStandardsRetItem {
+    pub url: String,
+    pub name: String,
+}
+pub type Icrc1Timestamp = u64;
+#[derive(CandidType, Deserialize)]
 pub struct TransferArg {
     pub to: Account,
-    pub fee: Option<candid::Nat>,
+    pub fee: Option<Icrc1Tokens>,
     pub memo: Option<serde_bytes::ByteBuf>,
-    pub from_subaccount: Option<serde_bytes::ByteBuf>,
-    pub created_at_time: Option<u64>,
-    pub amount: candid::Nat,
+    pub from_subaccount: Option<SubAccount>,
+    pub created_at_time: Option<Icrc1Timestamp>,
+    pub amount: Icrc1Tokens,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum TransferError {
+pub type Icrc1BlockIndex = candid::Nat;
+#[derive(CandidType, Deserialize)]
+pub enum Icrc1TransferError {
     GenericError {
         message: String,
         error_code: candid::Nat,
     },
     TemporarilyUnavailable,
     BadBurn {
-        min_burn_amount: candid::Nat,
+        min_burn_amount: Icrc1Tokens,
     },
     Duplicate {
-        duplicate_of: candid::Nat,
+        duplicate_of: Icrc1BlockIndex,
     },
     BadFee {
-        expected_fee: candid::Nat,
+        expected_fee: Icrc1Tokens,
     },
     CreatedInFuture {
         ledger_time: u64,
     },
     TooOld,
     InsufficientFunds {
-        balance: candid::Nat,
+        balance: Icrc1Tokens,
     },
 }
-
-impl fmt::Display for TransferError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TransferError::GenericError {
-                message,
-                error_code,
-            } => {
-                write!(f, "GenericError: {}, ErrorCode: {}", message, error_code)
-            }
-            TransferError::TemporarilyUnavailable => {
-                write!(f, "TemporarilyUnavailable")
-            }
-            TransferError::BadBurn { min_burn_amount } => {
-                write!(f, "BadBurn: MinBurnAmount: {}", min_burn_amount)
-            }
-            TransferError::Duplicate { duplicate_of } => {
-                write!(f, "Duplicate: DuplicateOf: {}", duplicate_of)
-            }
-            TransferError::BadFee { expected_fee } => {
-                write!(f, "BadFee: ExpectedFee: {}", expected_fee)
-            }
-            TransferError::CreatedInFuture { ledger_time } => {
-                write!(f, "CreatedInFuture: LedgerTime: {}", ledger_time)
-            }
-            TransferError::TooOld => {
-                write!(f, "TooOld")
-            }
-            TransferError::InsufficientFunds { balance } => {
-                write!(f, "InsufficientFunds: Balance: {}", balance)
-            }
-        }
-    }
-}
-
-// You might also want to implement From<TransferError> for String
-impl From<TransferError> for String {
-    fn from(error: TransferError) -> Self {
-        error.to_string()
-    }
-}
-pub type Result_ = std::result::Result<candid::Nat, TransferError>;
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ConsentMessageMetadata {
+pub type Icrc1TransferResult = std::result::Result<Icrc1BlockIndex, Icrc1TransferError>;
+#[derive(CandidType, Deserialize)]
+pub struct Icrc21ConsentMessageMetadata {
     pub utc_offset_minutes: Option<i16>,
     pub language: String,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum DisplayMessageType {
+#[derive(CandidType, Deserialize)]
+pub enum Icrc21ConsentMessageSpecDeviceSpecInner {
     GenericDisplay,
     LineDisplay {
         characters_per_line: u16,
         lines_per_page: u16,
     },
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ConsentMessageSpec {
-    pub metadata: ConsentMessageMetadata,
-    pub device_spec: Option<DisplayMessageType>,
+#[derive(CandidType, Deserialize)]
+pub struct Icrc21ConsentMessageSpec {
+    pub metadata: Icrc21ConsentMessageMetadata,
+    pub device_spec: Option<Icrc21ConsentMessageSpecDeviceSpecInner>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ConsentMessageRequest {
+#[derive(CandidType, Deserialize)]
+pub struct Icrc21ConsentMessageRequest {
     pub arg: serde_bytes::ByteBuf,
     pub method: String,
-    pub user_preferences: ConsentMessageSpec,
+    pub user_preferences: Icrc21ConsentMessageSpec,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct LineDisplayPage {
-    pub lines: StdVec<String>,
+#[derive(CandidType, Deserialize)]
+pub struct Icrc21ConsentMessageLineDisplayMessagePagesItem {
+    pub lines: Vec<String>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum ConsentMessage {
-    LineDisplayMessage { pages: StdVec<LineDisplayPage> },
+#[derive(CandidType, Deserialize)]
+pub enum Icrc21ConsentMessage {
+    LineDisplayMessage {
+        pages: Vec<Icrc21ConsentMessageLineDisplayMessagePagesItem>,
+    },
     GenericDisplayMessage(String),
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ConsentInfo {
-    pub metadata: ConsentMessageMetadata,
-    pub consent_message: ConsentMessage,
+#[derive(CandidType, Deserialize)]
+pub struct Icrc21ConsentInfo {
+    pub metadata: Icrc21ConsentMessageMetadata,
+    pub consent_message: Icrc21ConsentMessage,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ErrorInfo {
+#[derive(CandidType, Deserialize)]
+pub struct Icrc21ErrorInfo {
     pub description: String,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
 pub enum Icrc21Error {
     GenericError {
         description: String,
         error_code: candid::Nat,
     },
-    InsufficientPayment(ErrorInfo),
-    UnsupportedCanisterCall(ErrorInfo),
-    ConsentMessageUnavailable(ErrorInfo),
+    InsufficientPayment(Icrc21ErrorInfo),
+    UnsupportedCanisterCall(Icrc21ErrorInfo),
+    ConsentMessageUnavailable(Icrc21ErrorInfo),
 }
-pub type Result1 = std::result::Result<ConsentInfo, Icrc21Error>;
-#[derive(CandidType, Deserialize, Clone, Debug)]
+pub type Icrc21ConsentMessageResponse = std::result::Result<Icrc21ConsentInfo, Icrc21Error>;
+#[derive(CandidType, Deserialize)]
 pub struct AllowanceArgs {
     pub account: Account,
     pub spender: Account,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
 pub struct Allowance {
-    pub allowance: candid::Nat,
-    pub expires_at: Option<u64>,
+    pub allowance: Icrc1Tokens,
+    pub expires_at: Option<Icrc1Timestamp>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
 pub struct ApproveArgs {
-    pub fee: Option<candid::Nat>,
+    pub fee: Option<Icrc1Tokens>,
     pub memo: Option<serde_bytes::ByteBuf>,
-    pub from_subaccount: Option<serde_bytes::ByteBuf>,
-    pub created_at_time: Option<u64>,
-    pub amount: candid::Nat,
-    pub expected_allowance: Option<candid::Nat>,
-    pub expires_at: Option<u64>,
+    pub from_subaccount: Option<SubAccount>,
+    pub created_at_time: Option<Icrc1Timestamp>,
+    pub amount: Icrc1Tokens,
+    pub expected_allowance: Option<Icrc1Tokens>,
+    pub expires_at: Option<Icrc1Timestamp>,
     pub spender: Account,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
 pub enum ApproveError {
     GenericError {
         message: String,
@@ -388,13 +236,13 @@ pub enum ApproveError {
     },
     TemporarilyUnavailable,
     Duplicate {
-        duplicate_of: candid::Nat,
+        duplicate_of: Icrc1BlockIndex,
     },
     BadFee {
-        expected_fee: candid::Nat,
+        expected_fee: Icrc1Tokens,
     },
     AllowanceChanged {
-        current_allowance: candid::Nat,
+        current_allowance: Icrc1Tokens,
     },
     CreatedInFuture {
         ledger_time: u64,
@@ -404,21 +252,21 @@ pub enum ApproveError {
         ledger_time: u64,
     },
     InsufficientFunds {
-        balance: candid::Nat,
+        balance: Icrc1Tokens,
     },
 }
-pub type Result2 = std::result::Result<candid::Nat, ApproveError>;
-#[derive(CandidType, Deserialize, Clone, Debug)]
+pub type ApproveResult = std::result::Result<Icrc1BlockIndex, ApproveError>;
+#[derive(CandidType, Deserialize)]
 pub struct TransferFromArgs {
     pub to: Account,
-    pub fee: Option<candid::Nat>,
-    pub spender_subaccount: Option<serde_bytes::ByteBuf>,
+    pub fee: Option<Icrc1Tokens>,
+    pub spender_subaccount: Option<SubAccount>,
     pub from: Account,
     pub memo: Option<serde_bytes::ByteBuf>,
-    pub created_at_time: Option<u64>,
-    pub amount: candid::Nat,
+    pub created_at_time: Option<Icrc1Timestamp>,
+    pub amount: Icrc1Tokens,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize)]
 pub enum TransferFromError {
     GenericError {
         message: String,
@@ -426,123 +274,213 @@ pub enum TransferFromError {
     },
     TemporarilyUnavailable,
     InsufficientAllowance {
-        allowance: candid::Nat,
+        allowance: Icrc1Tokens,
     },
     BadBurn {
-        min_burn_amount: candid::Nat,
+        min_burn_amount: Icrc1Tokens,
     },
     Duplicate {
-        duplicate_of: candid::Nat,
+        duplicate_of: Icrc1BlockIndex,
     },
     BadFee {
-        expected_fee: candid::Nat,
+        expected_fee: Icrc1Tokens,
     },
     CreatedInFuture {
-        ledger_time: u64,
+        ledger_time: Icrc1Timestamp,
     },
     TooOld,
     InsufficientFunds {
-        balance: candid::Nat,
+        balance: Icrc1Tokens,
     },
 }
-pub type Result3 = std::result::Result<candid::Nat, TransferFromError>;
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct GetArchivesArgs {
-    pub from: Option<Principal>,
+pub type TransferFromResult = std::result::Result<Icrc1BlockIndex, TransferFromError>;
+#[derive(CandidType, Deserialize)]
+pub struct NameRet {
+    pub name: String,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Icrc3ArchiveInfo {
-    pub end: candid::Nat,
-    pub canister_id: Principal,
-    pub start: candid::Nat,
+pub type BlockIndex = u64;
+#[derive(CandidType, Deserialize)]
+pub struct GetBlocksArgs {
+    pub start: BlockIndex,
+    pub length: u64,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub enum Icrc3Value {
-    Int(candid::Int),
-    Map(StdVec<(String, Box<Icrc3Value>)>),
-    Nat(candid::Nat),
-    Blob(serde_bytes::ByteBuf),
-    Text(String),
-    Array(StdVec<Box<Icrc3Value>>),
+pub type Memo = u64;
+#[derive(CandidType, Deserialize)]
+pub struct TimeStamp {
+    pub timestamp_nanos: u64,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct BlockWithId {
-    pub id: candid::Nat,
-    pub block: Box<Icrc3Value>,
+#[derive(CandidType, Deserialize)]
+pub enum Operation {
+    Approve {
+        fee: Tokens,
+        from: AccountIdentifier,
+        #[serde(rename = "allowance_e8s")]
+        allowance_e_8_s: candid::Int,
+        allowance: Tokens,
+        expected_allowance: Option<Tokens>,
+        expires_at: Option<TimeStamp>,
+        spender: AccountIdentifier,
+    },
+    Burn {
+        from: AccountIdentifier,
+        amount: Tokens,
+        spender: Option<AccountIdentifier>,
+    },
+    Mint {
+        to: AccountIdentifier,
+        amount: Tokens,
+    },
+    Transfer {
+        to: AccountIdentifier,
+        fee: Tokens,
+        from: AccountIdentifier,
+        amount: Tokens,
+        spender: Option<serde_bytes::ByteBuf>,
+    },
 }
-candid::define_function!(pub ArchivedBlocksCallback : (
-    StdVec<GetBlocksRequest>,
-  ) -> (GetBlocksResult) query);
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct ArchivedBlocks {
-    pub args: StdVec<GetBlocksRequest>,
-    pub callback: ArchivedBlocksCallback,
+#[derive(CandidType, Deserialize)]
+pub struct Transaction {
+    pub memo: Memo,
+    #[serde(rename = "icrc1_memo")]
+    pub icrc_1_memo: Option<serde_bytes::ByteBuf>,
+    pub operation: Option<Operation>,
+    pub created_at_time: TimeStamp,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct GetBlocksResult {
-    pub log_length: candid::Nat,
-    pub blocks: StdVec<BlockWithId>,
-    pub archived_blocks: StdVec<ArchivedBlocks>,
+#[derive(CandidType, Deserialize)]
+pub struct Block {
+    pub transaction: Transaction,
+    pub timestamp: TimeStamp,
+    pub parent_hash: Option<serde_bytes::ByteBuf>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct Icrc3DataCertificate {
-    pub certificate: serde_bytes::ByteBuf,
-    pub hash_tree: serde_bytes::ByteBuf,
+#[derive(CandidType, Deserialize)]
+pub struct BlockRange {
+    pub blocks: Vec<Block>,
 }
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct SupportedBlockType {
-    pub url: String,
-    pub block_type: String,
+#[derive(CandidType, Deserialize)]
+pub enum QueryArchiveError {
+    BadFirstBlockIndex {
+        requested_index: BlockIndex,
+        first_valid_index: BlockIndex,
+    },
+    Other {
+        error_message: String,
+        error_code: u64,
+    },
+}
+pub type QueryArchiveResult = std::result::Result<BlockRange, QueryArchiveError>;
+candid::define_function!(pub QueryArchiveFn : (GetBlocksArgs) -> (
+    QueryArchiveResult,
+  ) query);
+#[derive(CandidType, Deserialize)]
+pub struct ArchivedBlocksRange {
+    pub callback: QueryArchiveFn,
+    pub start: BlockIndex,
+    pub length: u64,
+}
+#[derive(CandidType, Deserialize)]
+pub struct QueryBlocksResponse {
+    pub certificate: Option<serde_bytes::ByteBuf>,
+    pub blocks: Vec<Block>,
+    pub chain_length: u64,
+    pub first_block_index: BlockIndex,
+    pub archived_blocks: Vec<ArchivedBlocksRange>,
+}
+candid::define_function!(pub ArchivedEncodedBlocksRangeCallback : (
+    GetBlocksArgs,
+  ) -> (
+    std::result::Result<Vec<serde_bytes::ByteBuf>, QueryArchiveError>,
+  ) query);
+#[derive(CandidType, Deserialize)]
+pub struct ArchivedEncodedBlocksRange {
+    pub callback: ArchivedEncodedBlocksRangeCallback,
+    pub start: u64,
+    pub length: u64,
+}
+#[derive(CandidType, Deserialize)]
+pub struct QueryEncodedBlocksResponse {
+    pub certificate: Option<serde_bytes::ByteBuf>,
+    pub blocks: Vec<serde_bytes::ByteBuf>,
+    pub chain_length: u64,
+    pub first_block_index: u64,
+    pub archived_blocks: Vec<ArchivedEncodedBlocksRange>,
+}
+#[derive(CandidType, Deserialize)]
+pub struct SendArgs {
+    pub to: TextAccountIdentifier,
+    pub fee: Tokens,
+    pub memo: Memo,
+    pub from_subaccount: Option<SubAccount>,
+    pub created_at_time: Option<TimeStamp>,
+    pub amount: Tokens,
+}
+#[derive(CandidType, Deserialize)]
+pub struct SymbolRet {
+    pub symbol: String,
+}
+#[derive(CandidType, Deserialize)]
+pub struct TransferArgs {
+    pub to: AccountIdentifier,
+    pub fee: Tokens,
+    pub memo: Memo,
+    pub from_subaccount: Option<SubAccount>,
+    pub created_at_time: Option<TimeStamp>,
+    pub amount: Tokens,
+}
+#[derive(CandidType, Deserialize)]
+pub enum TransferError {
+    TxTooOld { allowed_window_nanos: u64 },
+    BadFee { expected_fee: Tokens },
+    TxDuplicate { duplicate_of: BlockIndex },
+    TxCreatedInFuture,
+    InsufficientFunds { balance: Tokens },
+}
+pub type TransferResult = std::result::Result<BlockIndex, TransferError>;
+#[derive(CandidType, Deserialize)]
+pub struct TransferFeeArg {}
+#[derive(CandidType, Deserialize)]
+pub struct TransferFee {
+    pub transfer_fee: Tokens,
 }
 
 pub struct Service(pub Principal);
-
 impl Service {
-    pub fn new(canister_id: Principal) -> Self {
-        Self(canister_id)
+    pub fn new(principal: Principal) -> Self {
+        Service(principal)
     }
 
-    pub fn get_canister_id(&self) -> &Principal {
-        &self.0
+    pub async fn account_balance(&self, arg0: &AccountBalanceArgs) -> Result<(Tokens,)> {
+        ic_cdk::call(self.0, "account_balance", (arg0,)).await
     }
-
-    pub async fn archives(&self) -> Result<(StdVec<ArchiveInfo>,)> {
+    pub async fn account_balance_dfx(&self, arg0: &AccountBalanceArgsDfx) -> Result<(Tokens,)> {
+        ic_cdk::call(self.0, "account_balance_dfx", (arg0,)).await
+    }
+    pub async fn account_identifier(&self, arg0: &Account) -> Result<(AccountIdentifier,)> {
+        ic_cdk::call(self.0, "account_identifier", (arg0,)).await
+    }
+    pub async fn archives(&self) -> Result<(Archives,)> {
         ic_cdk::call(self.0, "archives", ()).await
     }
-    pub async fn get_blocks(&self, arg0: &GetBlocksRequest) -> Result<(GetBlocksResponse,)> {
-        ic_cdk::call(self.0, "get_blocks", (arg0,)).await
+    pub async fn decimals(&self) -> Result<(DecimalsRet,)> {
+        ic_cdk::call(self.0, "decimals", ()).await
     }
-    pub async fn get_data_certificate(&self) -> Result<(DataCertificate,)> {
-        ic_cdk::call(self.0, "get_data_certificate", ()).await
+    pub async fn get_allowances(&self, arg0: &GetAllowancesArgs) -> Result<(Allowances,)> {
+        ic_cdk::call(self.0, "get_allowances", (arg0,)).await
     }
-    pub async fn get_top(&self, arg0: &u32) -> Result<(HolderListResp,)> {
-        ic_cdk::call(self.0, "get_top", (arg0,)).await
-    }
-    pub async fn get_top_100_holder(&self) -> Result<(HolderListResp,)> {
-        ic_cdk::call(self.0, "get_top_100_holder", ()).await
-    }
-    pub async fn get_total_holder(&self) -> Result<(u64,)> {
-        ic_cdk::call(self.0, "get_total_holder", ()).await
-    }
-    pub async fn get_transactions(
+    pub async fn icrc_10_supported_standards(
         &self,
-        arg0: &GetBlocksRequest,
-    ) -> Result<(GetTransactionsResponse,)> {
-        ic_cdk::call(self.0, "get_transactions", (arg0,)).await
-    }
-    pub async fn icrc_10_supported_standards(&self) -> Result<(StdVec<StandardRecord>,)> {
+    ) -> Result<(Vec<Icrc10SupportedStandardsRetItem>,)> {
         ic_cdk::call(self.0, "icrc10_supported_standards", ()).await
     }
-    pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<(candid::Nat,)> {
+    pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<(Icrc1Tokens,)> {
         ic_cdk::call(self.0, "icrc1_balance_of", (arg0,)).await
     }
     pub async fn icrc_1_decimals(&self) -> Result<(u8,)> {
         ic_cdk::call(self.0, "icrc1_decimals", ()).await
     }
-    pub async fn icrc_1_fee(&self) -> Result<(candid::Nat,)> {
+    pub async fn icrc_1_fee(&self) -> Result<(Icrc1Tokens,)> {
         ic_cdk::call(self.0, "icrc1_fee", ()).await
     }
-    pub async fn icrc_1_metadata(&self) -> Result<(StdVec<(String, MetadataValue)>,)> {
+    pub async fn icrc_1_metadata(&self) -> Result<(Vec<(String, Value)>,)> {
         ic_cdk::call(self.0, "icrc1_metadata", ()).await
     }
     pub async fn icrc_1_minting_account(&self) -> Result<(Option<Account>,)> {
@@ -551,49 +489,63 @@ impl Service {
     pub async fn icrc_1_name(&self) -> Result<(String,)> {
         ic_cdk::call(self.0, "icrc1_name", ()).await
     }
-    pub async fn icrc_1_supported_standards(&self) -> Result<(StdVec<StandardRecord>,)> {
+    pub async fn icrc_1_supported_standards(
+        &self,
+    ) -> Result<(Vec<Icrc1SupportedStandardsRetItem>,)> {
         ic_cdk::call(self.0, "icrc1_supported_standards", ()).await
     }
     pub async fn icrc_1_symbol(&self) -> Result<(String,)> {
         ic_cdk::call(self.0, "icrc1_symbol", ()).await
     }
-    pub async fn icrc_1_total_supply(&self) -> Result<(candid::Nat,)> {
+    pub async fn icrc_1_total_supply(&self) -> Result<(Icrc1Tokens,)> {
         ic_cdk::call(self.0, "icrc1_total_supply", ()).await
     }
-    pub async fn icrc_1_transfer(&self, arg0: &TransferArg) -> Result<(Result_,)> {
+    pub async fn icrc_1_transfer(&self, arg0: &TransferArg) -> Result<(Icrc1TransferResult,)> {
         ic_cdk::call(self.0, "icrc1_transfer", (arg0,)).await
     }
     pub async fn icrc_21_canister_call_consent_message(
         &self,
-        arg0: &ConsentMessageRequest,
-    ) -> Result<(Result1,)> {
+        arg0: &Icrc21ConsentMessageRequest,
+    ) -> Result<(Icrc21ConsentMessageResponse,)> {
         ic_cdk::call(self.0, "icrc21_canister_call_consent_message", (arg0,)).await
     }
     pub async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<(Allowance,)> {
         ic_cdk::call(self.0, "icrc2_allowance", (arg0,)).await
     }
-    pub async fn icrc_2_approve(&self, arg0: &ApproveArgs) -> Result<(Result2,)> {
+    pub async fn icrc_2_approve(&self, arg0: &ApproveArgs) -> Result<(ApproveResult,)> {
         ic_cdk::call(self.0, "icrc2_approve", (arg0,)).await
     }
-    pub async fn icrc_2_transfer_from(&self, arg0: &TransferFromArgs) -> Result<(Result3,)> {
+    pub async fn icrc_2_transfer_from(
+        &self,
+        arg0: &TransferFromArgs,
+    ) -> Result<(TransferFromResult,)> {
         ic_cdk::call(self.0, "icrc2_transfer_from", (arg0,)).await
     }
-    pub async fn icrc_3_get_archives(
+    pub async fn is_ledger_ready(&self) -> Result<(bool,)> {
+        ic_cdk::call(self.0, "is_ledger_ready", ()).await
+    }
+    pub async fn name(&self) -> Result<(NameRet,)> {
+        ic_cdk::call(self.0, "name", ()).await
+    }
+    pub async fn query_blocks(&self, arg0: &GetBlocksArgs) -> Result<(QueryBlocksResponse,)> {
+        ic_cdk::call(self.0, "query_blocks", (arg0,)).await
+    }
+    pub async fn query_encoded_blocks(
         &self,
-        arg0: &GetArchivesArgs,
-    ) -> Result<(StdVec<Icrc3ArchiveInfo>,)> {
-        ic_cdk::call(self.0, "icrc3_get_archives", (arg0,)).await
+        arg0: &GetBlocksArgs,
+    ) -> Result<(QueryEncodedBlocksResponse,)> {
+        ic_cdk::call(self.0, "query_encoded_blocks", (arg0,)).await
     }
-    pub async fn icrc_3_get_blocks(
-        &self,
-        arg0: &StdVec<GetBlocksRequest>,
-    ) -> Result<(GetBlocksResult,)> {
-        ic_cdk::call(self.0, "icrc3_get_blocks", (arg0,)).await
+    pub async fn send_dfx(&self, arg0: &SendArgs) -> Result<(BlockIndex,)> {
+        ic_cdk::call(self.0, "send_dfx", (arg0,)).await
     }
-    pub async fn icrc_3_get_tip_certificate(&self) -> Result<(Option<Icrc3DataCertificate>,)> {
-        ic_cdk::call(self.0, "icrc3_get_tip_certificate", ()).await
+    pub async fn symbol(&self) -> Result<(SymbolRet,)> {
+        ic_cdk::call(self.0, "symbol", ()).await
     }
-    pub async fn icrc_3_supported_block_types(&self) -> Result<(StdVec<SupportedBlockType>,)> {
-        ic_cdk::call(self.0, "icrc3_supported_block_types", ()).await
+    pub async fn transfer(&self, arg0: &TransferArgs) -> Result<(TransferResult,)> {
+        ic_cdk::call(self.0, "transfer", (arg0,)).await
+    }
+    pub async fn transfer_fee(&self, arg0: &TransferFeeArg) -> Result<(TransferFee,)> {
+        ic_cdk::call(self.0, "transfer_fee", (arg0,)).await
     }
 }
