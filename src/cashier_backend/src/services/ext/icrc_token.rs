@@ -5,34 +5,34 @@ use candid::{self, CandidType, Deserialize, Principal};
 use ic_cdk::api::call::CallResult as Result;
 
 pub type SubAccount = serde_bytes::ByteBuf;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Account {
     pub owner: Principal,
     pub subaccount: Option<SubAccount>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct FeatureFlags {
     #[serde(rename = "icrc2")]
     pub icrc_2: bool,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct UpgradeArgs {
     #[serde(rename = "icrc1_minting_account")]
     pub icrc_1_minting_account: Option<Account>,
     pub feature_flags: Option<FeatureFlags>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Tokens {
     #[serde(rename = "e8s")]
     pub e_8_s: u64,
 }
 pub type TextAccountIdentifier = String;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Duration {
     pub secs: u64,
     pub nanos: u32,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct ArchiveOptions {
     pub num_blocks_to_archive: u64,
     pub max_transactions_per_response: Option<u64>,
@@ -43,7 +43,7 @@ pub struct ArchiveOptions {
     pub node_max_memory_size_bytes: Option<u64>,
     pub controller_id: Principal,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct InitArgs {
     pub send_whitelist: Vec<Principal>,
     pub token_symbol: Option<String>,
@@ -58,39 +58,39 @@ pub struct InitArgs {
     pub token_name: Option<String>,
     pub feature_flags: Option<FeatureFlags>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum LedgerCanisterPayload {
     Upgrade(Option<UpgradeArgs>),
     Init(InitArgs),
 }
 pub type AccountIdentifier = serde_bytes::ByteBuf;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct AccountBalanceArgs {
     pub account: AccountIdentifier,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct AccountBalanceArgsDfx {
     pub account: TextAccountIdentifier,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Archive {
     pub canister_id: Principal,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Archives {
     pub archives: Vec<Archive>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct DecimalsRet {
     pub decimals: u32,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct GetAllowancesArgs {
     pub prev_spender_id: Option<TextAccountIdentifier>,
     pub from_account_id: TextAccountIdentifier,
     pub take: Option<u64>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct AllowancesItem {
     pub from_account_id: TextAccountIdentifier,
     pub to_spender_id: TextAccountIdentifier,
@@ -98,26 +98,26 @@ pub struct AllowancesItem {
     pub expires_at: Option<u64>,
 }
 pub type Allowances = Vec<AllowancesItem>;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc10SupportedStandardsRetItem {
     pub url: String,
     pub name: String,
 }
 pub type Icrc1Tokens = candid::Nat;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Value {
     Int(candid::Int),
     Nat(candid::Nat),
     Blob(serde_bytes::ByteBuf),
     Text(String),
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc1SupportedStandardsRetItem {
     pub url: String,
     pub name: String,
 }
 pub type Icrc1Timestamp = u64;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct TransferArg {
     pub to: Account,
     pub fee: Option<Icrc1Tokens>,
@@ -127,7 +127,7 @@ pub struct TransferArg {
     pub amount: Icrc1Tokens,
 }
 pub type Icrc1BlockIndex = candid::Nat;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Icrc1TransferError {
     GenericError {
         message: String,
@@ -152,12 +152,12 @@ pub enum Icrc1TransferError {
     },
 }
 pub type Icrc1TransferResult = std::result::Result<Icrc1BlockIndex, Icrc1TransferError>;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc21ConsentMessageMetadata {
     pub utc_offset_minutes: Option<i16>,
     pub language: String,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Icrc21ConsentMessageSpecDeviceSpecInner {
     GenericDisplay,
     LineDisplay {
@@ -165,38 +165,38 @@ pub enum Icrc21ConsentMessageSpecDeviceSpecInner {
         lines_per_page: u16,
     },
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc21ConsentMessageSpec {
     pub metadata: Icrc21ConsentMessageMetadata,
     pub device_spec: Option<Icrc21ConsentMessageSpecDeviceSpecInner>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc21ConsentMessageRequest {
     pub arg: serde_bytes::ByteBuf,
     pub method: String,
     pub user_preferences: Icrc21ConsentMessageSpec,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc21ConsentMessageLineDisplayMessagePagesItem {
     pub lines: Vec<String>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Icrc21ConsentMessage {
     LineDisplayMessage {
         pages: Vec<Icrc21ConsentMessageLineDisplayMessagePagesItem>,
     },
     GenericDisplayMessage(String),
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc21ConsentInfo {
     pub metadata: Icrc21ConsentMessageMetadata,
     pub consent_message: Icrc21ConsentMessage,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc21ErrorInfo {
     pub description: String,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Icrc21Error {
     GenericError {
         description: String,
@@ -207,17 +207,17 @@ pub enum Icrc21Error {
     ConsentMessageUnavailable(Icrc21ErrorInfo),
 }
 pub type Icrc21ConsentMessageResponse = std::result::Result<Icrc21ConsentInfo, Icrc21Error>;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct AllowanceArgs {
     pub account: Account,
     pub spender: Account,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Allowance {
     pub allowance: Icrc1Tokens,
     pub expires_at: Option<Icrc1Timestamp>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct ApproveArgs {
     pub fee: Option<Icrc1Tokens>,
     pub memo: Option<serde_bytes::ByteBuf>,
@@ -228,7 +228,7 @@ pub struct ApproveArgs {
     pub expires_at: Option<Icrc1Timestamp>,
     pub spender: Account,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum ApproveError {
     GenericError {
         message: String,
@@ -256,7 +256,7 @@ pub enum ApproveError {
     },
 }
 pub type ApproveResult = std::result::Result<Icrc1BlockIndex, ApproveError>;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct TransferFromArgs {
     pub to: Account,
     pub fee: Option<Icrc1Tokens>,
@@ -266,7 +266,7 @@ pub struct TransferFromArgs {
     pub created_at_time: Option<Icrc1Timestamp>,
     pub amount: Icrc1Tokens,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum TransferFromError {
     GenericError {
         message: String,
@@ -294,22 +294,22 @@ pub enum TransferFromError {
     },
 }
 pub type TransferFromResult = std::result::Result<Icrc1BlockIndex, TransferFromError>;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct NameRet {
     pub name: String,
 }
 pub type BlockIndex = u64;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct GetBlocksArgs {
     pub start: BlockIndex,
     pub length: u64,
 }
 pub type Memo = u64;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct TimeStamp {
     pub timestamp_nanos: u64,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Operation {
     Approve {
         fee: Tokens,
@@ -338,7 +338,7 @@ pub enum Operation {
         spender: Option<serde_bytes::ByteBuf>,
     },
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Transaction {
     pub memo: Memo,
     #[serde(rename = "icrc1_memo")]
@@ -346,17 +346,17 @@ pub struct Transaction {
     pub operation: Option<Operation>,
     pub created_at_time: TimeStamp,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Block {
     pub transaction: Transaction,
     pub timestamp: TimeStamp,
     pub parent_hash: Option<serde_bytes::ByteBuf>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct BlockRange {
     pub blocks: Vec<Block>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum QueryArchiveError {
     BadFirstBlockIndex {
         requested_index: BlockIndex,
@@ -371,13 +371,13 @@ pub type QueryArchiveResult = std::result::Result<BlockRange, QueryArchiveError>
 candid::define_function!(pub QueryArchiveFn : (GetBlocksArgs) -> (
     QueryArchiveResult,
   ) query);
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct ArchivedBlocksRange {
     pub callback: QueryArchiveFn,
     pub start: BlockIndex,
     pub length: u64,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct QueryBlocksResponse {
     pub certificate: Option<serde_bytes::ByteBuf>,
     pub blocks: Vec<Block>,
@@ -390,13 +390,13 @@ candid::define_function!(pub ArchivedEncodedBlocksRangeCallback : (
   ) -> (
     std::result::Result<Vec<serde_bytes::ByteBuf>, QueryArchiveError>,
   ) query);
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct ArchivedEncodedBlocksRange {
     pub callback: ArchivedEncodedBlocksRangeCallback,
     pub start: u64,
     pub length: u64,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct QueryEncodedBlocksResponse {
     pub certificate: Option<serde_bytes::ByteBuf>,
     pub blocks: Vec<serde_bytes::ByteBuf>,
@@ -404,7 +404,7 @@ pub struct QueryEncodedBlocksResponse {
     pub first_block_index: u64,
     pub archived_blocks: Vec<ArchivedEncodedBlocksRange>,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct SendArgs {
     pub to: TextAccountIdentifier,
     pub fee: Tokens,
@@ -413,11 +413,11 @@ pub struct SendArgs {
     pub created_at_time: Option<TimeStamp>,
     pub amount: Tokens,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct SymbolRet {
     pub symbol: String,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct TransferArgs {
     pub to: AccountIdentifier,
     pub fee: Tokens,
@@ -426,7 +426,7 @@ pub struct TransferArgs {
     pub created_at_time: Option<TimeStamp>,
     pub amount: Tokens,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum TransferError {
     TxTooOld { allowed_window_nanos: u64 },
     BadFee { expected_fee: Tokens },
@@ -435,9 +435,9 @@ pub enum TransferError {
     InsufficientFunds { balance: Tokens },
 }
 pub type TransferResult = std::result::Result<BlockIndex, TransferError>;
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct TransferFeeArg {}
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct TransferFee {
     pub transfer_fee: Tokens,
 }
@@ -446,6 +446,10 @@ pub struct Service(pub Principal);
 impl Service {
     pub fn new(principal: Principal) -> Self {
         Service(principal)
+    }
+
+    pub fn get_canister_id(&self) -> Principal {
+        self.0
     }
 
     pub async fn account_balance(&self, arg0: &AccountBalanceArgs) -> Result<(Tokens,)> {
