@@ -60,6 +60,7 @@ export function useTokens() {
         setIsSyncPreferences(true);
         await updateTokenEnableState.mutateAsync({ tokenId, enable });
         await tokenListQuery.refetch();
+        await tokenBalancesQuery.refetch();
         setIsSyncPreferences(false);
     };
 

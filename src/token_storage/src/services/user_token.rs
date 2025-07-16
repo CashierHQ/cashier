@@ -236,4 +236,17 @@ impl UserTokenService {
     pub fn reset_cached_balances(&self, user_id: &str) {
         self.balance_cache_repository.reset_balances(user_id);
     }
+
+    pub fn delete_all_tokens(&self, user_id: &str) -> Result<(), String> {
+        // Ensure user has a token list initialized
+        self.ensure_token_list_initialized(user_id)?;
+
+        // Clear the user's token list
+        self.token_repository.delete_all_tokens(user_id)?;
+
+        // Reset cached balances
+        self.balance_cache_repository.reset_balances(user_id);
+
+        Ok(())
+    }
 }

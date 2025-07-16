@@ -5,11 +5,14 @@ use candid::Principal;
 use ic_cdk::{query, update};
 
 use crate::{
+    api::admin::types::RegistryStats,
     constant::default_tokens::get_default_tokens,
     repository::token_registry::TokenRegistryRepository,
-    services::token_registry::TokenRegistryService,
+    services::{token_registry::TokenRegistryService, user_token::UserTokenService},
     types::{TokenDto, TokenRegistryMetadata},
 };
+
+pub mod types;
 
 #[allow(deprecated)]
 fn ensure_is_admin() -> Result<(), String> {
@@ -76,4 +79,17 @@ pub fn initialize_registry() -> Result<(), String> {
     registry.add_bulk_tokens(&get_default_tokens())?;
 
     Ok(())
+}
+
+#[query]
+pub fn get_stats() -> Result<RegistryStats, String> {
+    ensure_is_admin().unwrap_or_else(|err| {
+        ic_cdk::trap(&format!("Admin check failed: {}", err));
+    });
+
+    let service = TokenRegistryService::new();
+    let list_tokens = service.list_tokens();
+    let total_tokens = list_tokens.len();
+
+    Ok(RegistryStats { total_tokens })
 }

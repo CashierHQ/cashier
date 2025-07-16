@@ -53,7 +53,9 @@ impl UserTokenList {
     ) -> Result<(), String> {
         self.enable_list.clear();
         for token in registry_tokens {
-            self.enable_list.insert(token.id.clone());
+            if token.enabled_by_default {
+                self.enable_list.insert(token.id.clone());
+            }
         }
         self.version = version;
         Ok(())

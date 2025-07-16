@@ -4,8 +4,10 @@ type Chain = variant { IC };
 type ChainTokenDetails = variant {
   IC : record { fee : nat; ledger_id : principal; index_id : opt principal };
 };
+type RegistryStats = record { total_tokens : nat64 };
 type Result = variant { Ok; Err : text };
-type Result_1 = variant { Ok : TokenListResponse; Err : text };
+type Result_1 = variant { Ok : RegistryStats; Err : text };
+type Result_2 = variant { Ok : TokenListResponse; Err : text };
 type TokenDto = record {
   id : text;
   decimals : nat8;
@@ -32,11 +34,13 @@ type UserPreference = record {
 service : () -> {
   add_token : (AddTokenInput) -> (Result);
   add_token_batch : (AddTokensInput) -> (Result);
+  delete_all_tokens : (text) -> (Result);
   get_registry_metadata : () -> (TokenRegistryMetadata) query;
   get_registry_tokens : () -> (vec TokenDto) query;
   get_registry_version : () -> (nat64) query;
+  get_stats : () -> (Result_1) query;
   initialize_registry : () -> (Result);
-  list_tokens : () -> (Result_1) query;
+  list_tokens : () -> (Result_2) query;
   sync_token_list : () -> (Result);
   update_token_balance : (vec UpdateTokenBalanceInput) -> (Result);
   update_token_enable : (UpdateTokenInput) -> (Result);

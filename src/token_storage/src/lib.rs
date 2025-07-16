@@ -9,6 +9,7 @@ pub mod repository;
 pub mod services;
 pub mod types;
 // pub mod types_1;
+use crate::api::admin::types::*;
 use crate::api::token_v2::types::*;
 use crate::types::*;
 
