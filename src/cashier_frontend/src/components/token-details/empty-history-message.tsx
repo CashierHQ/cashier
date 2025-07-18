@@ -8,12 +8,14 @@ export function EmptyHistoryMessage() {
     const { t } = useTranslation();
 
     return (
-        <>
-            <p className="font-medium mt-9">{t("history.list.noData")}</p>
-            <div className="text-sm font-medium">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="font-medium text-gray-600 mb-2">{t("history.list.noData")}</p>
+            <div className="text-sm font-medium text-gray-500">
                 <span>{t("history.list.cannotFind")}</span>{" "}
-                <Link to="#">{t("history.list.checkExplorer")}</Link>
+                <Link to="#" className="text-green hover:underline">
+                    {t("history.list.checkExplorer")}
+                </Link>
             </div>
-        </>
+        </div>
     );
 }

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { ICP_TOKEN_ADDRESS, TEST_ICP_TOKEN_ADDRESS } from "@/services/fee.constants";
 import CachedImage from "@/components/ui/cached-image";
+import { ICP_LOGO } from "@/const";
 
 type AssetAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
     src?: string | undefined;
@@ -47,7 +48,6 @@ type AssetAvatarV2Props = React.ComponentPropsWithoutRef<typeof Avatar> & {
 export const AssetAvatarV2 = React.forwardRef<React.ElementRef<typeof Avatar>, AssetAvatarV2Props>(
     ({ className, ...props }, ref) => {
         const { token } = props;
-        const icpToken = "/icpLogo.png";
 
         if (!token) {
             return (
@@ -60,7 +60,7 @@ export const AssetAvatarV2 = React.forwardRef<React.ElementRef<typeof Avatar>, A
         let logoSrc = "";
 
         if (token.address === ICP_TOKEN_ADDRESS || token.address === TEST_ICP_TOKEN_ADDRESS) {
-            logoSrc = icpToken;
+            logoSrc = ICP_LOGO;
         } else if (token.logoFallback) {
             logoSrc = token.logoFallback;
         } else {

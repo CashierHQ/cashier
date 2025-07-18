@@ -14,15 +14,17 @@ export function TransactionHistoryList({ items }: TransactionHistoryListProps) {
     const groupedRecords = groupTransactionsByDate(items);
 
     return (
-        <History.Root>
-            {groupedRecords.map(({ date, transactions }) => (
-                <React.Fragment key={date}>
-                    <History.Timestamp date={new Date(date)} />
-                    {transactions.map((tx) => (
-                        <History.Item key={tx.id} record={tx} />
-                    ))}
-                </React.Fragment>
-            ))}
-        </History.Root>
+        <div className="w-full">
+            <History.Root>
+                {groupedRecords.map(({ date, transactions }) => (
+                    <React.Fragment key={date}>
+                        <History.Timestamp date={new Date(date)} />
+                        {transactions.map((tx) => (
+                            <History.Item key={tx.id} record={tx} />
+                        ))}
+                    </React.Fragment>
+                ))}
+            </History.Root>
+        </div>
     );
 }
