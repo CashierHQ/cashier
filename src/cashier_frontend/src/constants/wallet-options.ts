@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+import { ICP_LOGO } from "@/const";
 import { IdentityKitTransportType, InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 
 // Wallet options enum
@@ -53,7 +54,7 @@ export const getWalletIcon = (walletOption: WALLET_OPTIONS): string | React.Reac
         case WALLET_OPTIONS.GOOGLE:
             return "/googleIcon.png";
         case WALLET_OPTIONS.INTERNET_IDENTITY:
-            return "/icpLogo.png";
+            return ICP_LOGO;
         case WALLET_OPTIONS.OTHER:
             return "";
         default:

@@ -51,41 +51,51 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
     const CopyIcon = hasCopiedAddress ? CopyCheck : Copy;
 
     return (
-        <div className="flex flex-col mt-3 items-center">
-            <p className="text-[32px] font-semibold">
-                {token.amount ? convertDecimalBigIntToNumber(token.amount, token.decimals) : 0}{" "}
-                {token.name}
-            </p>
-            <p className="text-xs text-grey font-semibold">${token.usdEquivalent}</p>
+        <div className="flex flex-col items-center px-4">
+            <div className="text-center mb-4">
+                <p className="text-[32px] font-semibold leading-tight">
+                    {token.amount ? convertDecimalBigIntToNumber(token.amount, token.decimals) : 0}{" "}
+                    {token.name}
+                </p>
+                <p className="text-xs text-grey font-semibold">${token.usdEquivalent}</p>
+            </div>
 
-            <div className="mt-4">
+            <div className="mb-5">
                 <SendReceive onReceive={handleNavigateReceive} onSend={handleNavigateSend} />
             </div>
 
-            <div className="mt-5 w-full">
-                <p className="text-green font-medium">
+            <div className="w-full bg-gray-50 rounded-lg p-4">
+                <p className="text-green font-medium mb-3">
                     {t("history.hero.about")} {token.symbol}
                 </p>
 
-                <div className="flex justify-between gap-2">
-                    <p className="font-medium">{t("history.hero.tokenName")}</p>
-                    <p className="text-sm text-grey">{token.name}</p>
-                </div>
-
-                <div className="flex justify-between gap-2">
-                    <p className="font-medium">{t("history.hero.chain")}</p>
-                    <p className="text-sm text-grey">{mapChainToPrettyName(token.chain)}</p>
-                </div>
-
-                <div className="flex justify-between gap-2">
-                    <div className="flex justify-between gap-2.5">
-                        <p className="font-medium">{t("history.hero.contract")}</p>
-                        <button onClick={copyAddress}>
-                            <CopyIcon className="stroke-green" size={16} />
-                        </button>
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <p className="font-medium text-sm">{t("history.hero.tokenName")}</p>
+                        <p className="text-sm text-grey text-right">{token.name}</p>
                     </div>
 
-                    <p className="text-sm text-grey">{token.address}</p>
+                    <div className="flex justify-between items-center">
+                        <p className="font-medium text-sm">{t("history.hero.chain")}</p>
+                        <p className="text-sm text-grey text-right">
+                            {mapChainToPrettyName(token.chain)}
+                        </p>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{t("history.hero.contract")}</p>
+                            <button
+                                onClick={copyAddress}
+                                className="hover:opacity-70 transition-opacity"
+                            >
+                                <CopyIcon className="stroke-green" size={16} />
+                            </button>
+                        </div>
+                        <p className="text-sm text-grey text-right max-w-[200px] truncate">
+                            {token.address}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
