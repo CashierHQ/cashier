@@ -15,7 +15,7 @@ import { IdleTimeoutProvider } from "@/contexts/ilde-timeout-context";
 import { BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID } from "./const";
 // useEffect removed - console logging now handled at build time
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { TokenComparisonProvider } from "./contexts/token-comparison-context";
+import { TokenAutoUpgradeProvider } from "./contexts/token-auto-upgrade-context";
 import { TokenDataProvider } from "./contexts/token-data-context";
 
 const targets = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
@@ -91,7 +91,7 @@ function App() {
         >
             <QueryClientProvider client={queryClient}>
                 <TokenDataProvider>
-                    <TokenComparisonProvider>
+                    <TokenAutoUpgradeProvider>
                         <ImageCacheProvider>
                             <IdleTimeoutProvider>
                                 <AppRouter />
@@ -113,7 +113,7 @@ function App() {
                             }}
                         />
                         <ReactQueryDevtools initialIsOpen={true} />
-                    </TokenComparisonProvider>
+                    </TokenAutoUpgradeProvider>
                 </TokenDataProvider>
             </QueryClientProvider>
         </IdentityKitProvider>

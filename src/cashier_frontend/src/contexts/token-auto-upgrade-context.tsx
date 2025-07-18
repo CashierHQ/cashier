@@ -100,7 +100,7 @@ interface TokenComparisonProviderProps {
     children: ReactNode;
 }
 
-export const TokenComparisonProvider: React.FC<TokenComparisonProviderProps> = ({ children }) => {
+export const TokenAutoUpgradeProvider: React.FC<TokenComparisonProviderProps> = ({ children }) => {
     const identity = useIdentity();
     const tokenStore = useTokensV2();
     const lastComparisonResultRef = useRef<TokenComparisonReport | null>(null);
