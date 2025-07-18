@@ -108,11 +108,9 @@ export const TokenComparisonProvider: React.FC<TokenComparisonProviderProps> = (
     const getRegistryTokens = async (): Promise<TokenModel[]> => {
         try {
             if (!identity) {
-                console.log("⚠️ No identity available for registry token fetch");
                 return [];
             }
 
-            console.log("🔍 Getting registry tokens from backend...");
             const tokenStorageService = new TokenStorageService(identity);
             const tokens = await tokenStorageService.getRegistryTokens();
 
@@ -127,18 +125,14 @@ export const TokenComparisonProvider: React.FC<TokenComparisonProviderProps> = (
 
     const updateTokensInRegistry = async (tokensToUpdate: string[]): Promise<void> => {
         if (!identity) {
-            console.warn("⚠️ No identity available for token update");
             return;
         }
 
         try {
-            console.log("🔄 Updating tokens in registry:", tokensToUpdate);
             const tokenStorageService = new TokenStorageService(identity);
 
             // Call backend to update tokens
             await tokenStorageService.updateTokenRegistryBatch(tokensToUpdate);
-
-            console.log("✅ Tokens updated successfully");
         } catch (error) {
             console.error("❌ Error updating tokens in registry:", error);
         }

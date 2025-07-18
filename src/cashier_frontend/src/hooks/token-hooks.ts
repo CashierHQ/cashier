@@ -52,10 +52,11 @@ const TIME_CONSTANTS = {
 
 // Centralized query keys for consistent caching
 export const TOKEN_QUERY_KEYS = {
-    all: ["tokens"] as const,
-    metadata: () => [...TOKEN_QUERY_KEYS.all, "metadata"] as const,
-    balances: (principalId?: string) => [...TOKEN_QUERY_KEYS.all, "balances", principalId] as const,
-    prices: () => [...TOKEN_QUERY_KEYS.all, "prices"] as const,
+    all: (principalId?: string) => ["tokens", principalId] as const,
+    metadata: () => [...TOKEN_QUERY_KEYS.all(), "metadata"] as const,
+    balances: (principalId?: string) =>
+        [...TOKEN_QUERY_KEYS.all(principalId), "balances", principalId] as const,
+    prices: () => ["tokens", "prices"] as const,
 };
 
 /**
@@ -72,8 +73,10 @@ export function chainToString(chain: Chain): string {
 
 export function useTokenListQuery() {
     const identity = useIdentity();
+    const principalId = identity?.getPrincipal().toString();
+
     return useQuery({
-        queryKey: TOKEN_QUERY_KEYS.all,
+        queryKey: TOKEN_QUERY_KEYS.all(principalId),
         queryFn: async () => {
             const tokenService = new TokenStorageService(identity);
             let tokens: TokenDto[] = [];
@@ -112,6 +115,7 @@ export function useTokenListQuery() {
                 perference: perference,
             };
         },
+        enabled: !!identity, // Only run query when identity exists
         staleTime: TIME_CONSTANTS.FIVE_MINUTES,
         // Improved refetching behavior
         refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
@@ -131,7 +135,7 @@ export function useSyncTokenList(identity: Identity | undefined) {
         onSuccess: () => {
             // Properly invalidate token queries
             queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.all, // Invalidate all token-related queries
+                queryKey: ["tokens"], // Invalidate all token-related queries
             });
         },
     });
@@ -301,7 +305,7 @@ export function useAddTokenMutation(identity: Identity | undefined) {
         onSuccess: () => {
             // Properly invalidate token queries
             queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.all, // Invalidate all token-related queries
+                queryKey: ["tokens"], // Invalidate all token-related queries
             });
         },
     });
@@ -328,7 +332,7 @@ export function useMultipleTokenMutation(identity: Identity | undefined) {
         onSuccess: () => {
             // Properly invalidate token queries
             queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.all, // Invalidate all token-related queries
+                queryKey: ["tokens"], // Invalidate all token-related queries
             });
         },
     });
@@ -352,7 +356,7 @@ export function useUpdateTokenEnableMutation(identity: Identity | undefined) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.all,
+                queryKey: ["tokens"],
             });
         },
     });

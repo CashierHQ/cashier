@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useTokenStore } from "@/stores/tokenStore";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokenData } from "@/contexts/token-data-context";
+import { useIdentity } from "@nfid/identitykit/react";
 
 // Main hook that components should use - now much simpler!
 export function useTokensV2() {
@@ -24,22 +25,34 @@ export function useTokensV2() {
         setSearchQuery,
     } = useTokenStore();
 
+    const identity = useIdentity();
+
     // Get enriched data and operations from provider
     const { rawTokenList, ...operations } = useTokenData();
+
+    // Create a stable key for memoization that accounts for identity changes
+    const memoKey = useMemo(() => {
+        return {
+            identityKey: identity ? identity.getPrincipal().toString() : "anonymous",
+            rawTokenListLength: rawTokenList?.length || 0,
+            rawTokenListHash:
+                rawTokenList?.map((t) => `${t.address}-${t.enabled}-${t.amount}`).join(",") || "",
+        };
+    }, [identity, rawTokenList]);
 
     // Data computation methods (memoized for performance)
     const getToken = useMemo(() => {
         return (tokenAddress: string): FungibleToken | undefined => {
             return rawTokenList.find((token) => token.address === tokenAddress);
         };
-    }, [rawTokenList]);
+    }, [rawTokenList, memoKey.identityKey]);
 
     const getTokenPrice = useMemo(() => {
         return (tokenAddress: string): number | undefined => {
             const token = rawTokenList.find((token) => token.address === tokenAddress);
             return token?.usdConversionRate;
         };
-    }, [rawTokenList]);
+    }, [rawTokenList, memoKey.identityKey]);
 
     const createTokenMap = useMemo(() => {
         return (): Record<string, FungibleToken> => {
@@ -51,10 +64,17 @@ export function useTokensV2() {
                 {} as Record<string, FungibleToken>,
             );
         };
-    }, [rawTokenList]);
+    }, [rawTokenList, memoKey.identityKey]);
 
     // Memoized sorted tokens computation - enabled tokens first (by amount), then disabled tokens
     const sortedTokens = useMemo((): FungibleToken[] => {
+        console.log(
+            "🔄 SORTED TOKENS MEMO RECALCULATING - Identity:",
+            memoKey.identityKey,
+            "rawTokenList length:",
+            rawTokenList?.length,
+        );
+
         if (!rawTokenList || rawTokenList.length === 0) {
             return [];
         }
@@ -77,10 +97,17 @@ export function useTokensV2() {
 
         // Combine: enabled tokens first, then disabled tokens
         return [...enabledTokens, ...disabledTokens];
-    }, [rawTokenList]);
+    }, [rawTokenList, memoKey.identityKey, memoKey.rawTokenListHash]);
 
     // Memoized display tokens computation
     const displayTokens = useMemo((): FungibleToken[] => {
+        console.log(
+            "🔄 DISPLAY TOKENS MEMO RECALCULATING - Identity:",
+            memoKey.identityKey,
+            "rawTokenList length:",
+            rawTokenList?.length,
+        );
+
         if (!rawTokenList || rawTokenList.length === 0) {
             return [];
         }
@@ -109,11 +136,11 @@ export function useTokensV2() {
         });
 
         return filtered;
-    }, [rawTokenList, filters]);
+    }, [rawTokenList, filters, memoKey.identityKey, memoKey.rawTokenListHash]);
 
     const searchTokens = useMemo(() => {
         return (query: string): FungibleToken[] => {
-            const tokensToSearch = displayTokens;
+            const tokensToSearch = sortedTokens;
 
             if (!query.trim()) return tokensToSearch;
 
@@ -125,7 +152,7 @@ export function useTokensV2() {
                 );
             });
         };
-    }, [displayTokens]);
+    }, [sortedTokens]);
 
     // Return clean API
     return {
