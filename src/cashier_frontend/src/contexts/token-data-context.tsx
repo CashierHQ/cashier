@@ -280,7 +280,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
             console.log("Identity changed, refetching token list");
             tokenListQuery.refetch();
         }
-    }, [identity, tokenListQuery]);
+    }, [identity]);
 
     // Context value
     const contextValue: TokenContextValue = {
