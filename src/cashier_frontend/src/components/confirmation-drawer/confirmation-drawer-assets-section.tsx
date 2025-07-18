@@ -6,9 +6,9 @@ import { useTranslation } from "react-i18next";
 import { TransactionItem } from "@/components/transaction/transaction-item";
 import { IntentModel, FeeModel } from "@/services/types/intent.service.types";
 import { ACTION_TYPE, TASK } from "@/services/types/enum";
-import { useTokens } from "@/hooks/useTokens";
 import { FeeHelpers } from "@/services/fee.service";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 type ConfirmationPopupAssetsSectionProps = {
     actionType: ACTION_TYPE;
@@ -52,7 +52,7 @@ export const ConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionPr
     intents,
 }) => {
     const { t } = useTranslation();
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
     const [feesMap, setFeesMap] = useState<Map<string, FeeModel[]>>(new Map());
     const [sortedIntents, setSortedIntents] = useState<IntentModel[]>([]);
 

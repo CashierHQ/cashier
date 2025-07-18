@@ -68,7 +68,7 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     if token_registry_service.get_token(&input.token_id).is_none() {
         // Token doesn't exist in registry, register it first
         token_registry_service
-            .register_token(&input.token_id, None)
+            .update_token_metadata(&input.token_id)
             .await?;
     }
 
@@ -92,7 +92,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
         if token_registry_service.get_token(token_id).is_none() {
             // Token doesn't exist in registry, register it first
             // Don't fail if registration fails - continue processing
-            if let Err(_) = token_registry_service.register_token(token_id, None).await {
+            if let Err(_) = token_registry_service.update_token_metadata(token_id).await {
                 // Log the error but continue processing
                 // In the future, we might want to collect these errors and return them
                 ic_cdk::println!(
@@ -118,7 +118,7 @@ pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
 
     // Re-register the token to update its metadata from the ledger
     token_registry_service
-        .register_token(&input.token_id, None)
+        .register_new_token(&input.token_id, None)
         .await?;
 
     Ok(())
@@ -138,7 +138,7 @@ pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), St
     // Re-register all tokens to update their metadata from the ledger
     for token_id in &input.token_ids {
         token_registry_service
-            .register_token(token_id, None)
+            .register_new_token(token_id, None)
             .await?;
     }
 
@@ -211,7 +211,7 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                     {
                         if seen_token_ids.insert(registry_token.id.clone()) {
                             let mut token_dto = TokenDto::from(registry_token.clone());
-                            token_dto.enabled = true;
+                            token_dto.enabled = true; // Mark as enabled
                             filtered_tokens.push(token_dto);
                         }
                     }
@@ -219,10 +219,9 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 
                 // Then, add all remaining registry tokens with enabled = false
                 for registry_token in &registry_tokens {
-                    if !list.enable_list.contains(&registry_token.id) {
+                    if !seen_token_ids.contains(&registry_token.id) {
                         if seen_token_ids.insert(registry_token.id.clone()) {
-                            let mut token_dto = TokenDto::from(registry_token.clone());
-                            token_dto.enabled = false;
+                            let token_dto = TokenDto::from(registry_token.clone());
                             filtered_tokens.push(token_dto);
                         }
                     }

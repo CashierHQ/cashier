@@ -10,6 +10,7 @@ import {
     TokenListResponse,
     UpdateTokenBalanceInput,
     UpdateTokenInput,
+    TokenDto,
 } from "../../../../declarations/token_storage/token_storage.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
@@ -21,11 +22,16 @@ import { IC_HOST, TOKEN_STORAGE_CANISTER_ID } from "@/const";
  */
 class TokenStorageService {
     private actor: _SERVICE;
+    private anonActor: _SERVICE;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         const agent = HttpAgent.createSync({ identity, host: IC_HOST });
         this.actor = Actor.createActor(idlFactory, {
             agent,
+            canisterId: TOKEN_STORAGE_CANISTER_ID,
+        });
+        this.anonActor = Actor.createActor(idlFactory, {
+            agent: HttpAgent.createSync({ host: IC_HOST }),
             canisterId: TOKEN_STORAGE_CANISTER_ID,
         });
     }
@@ -41,6 +47,14 @@ class TokenStorageService {
         const res = parseResultResponse(await this.actor.add_token_batch(input));
         return res;
     }
+
+    async updateTokenRegistryBatch(ids: string[]): Promise<null> {
+        const res = parseResultResponse(
+            await this.actor.update_token_registry_batch({ token_ids: ids }),
+        );
+        return res;
+    }
+
     async updateTokenEnable(input: UpdateTokenInput): Promise<null> {
         const res = parseResultResponse(await this.actor.update_token_enable(input));
         return res;
@@ -71,6 +85,17 @@ class TokenStorageService {
         // Only parse if the response has a format that parseResultResponse can handle
         if (response !== undefined) {
             parseResultResponse(response);
+        }
+    }
+
+    // Add method to get registry tokens (admin endpoint)
+    async getRegistryTokens(): Promise<TokenDto[]> {
+        try {
+            const response = parseResultResponse(await this.anonActor.list_tokens());
+            return response.tokens;
+        } catch (error) {
+            console.error("Error fetching registry tokens:", error);
+            throw error;
         }
     }
 }

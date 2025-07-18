@@ -20,6 +20,15 @@ pub enum ChainTokenDetails {
     // Add more variants for other chains as needed
 }
 
+impl ChainTokenDetails {
+    pub fn index_id(&self) -> Option<IndexId> {
+        match self {
+            ChainTokenDetails::IC { index_id, .. } => *index_id,
+            // Handle other chains if needed
+        }
+    }
+}
+
 // Central registry token definition
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]

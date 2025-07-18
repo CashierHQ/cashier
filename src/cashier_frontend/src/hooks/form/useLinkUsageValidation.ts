@@ -3,19 +3,19 @@
 
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useTokens } from "@/hooks/useTokens";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { ValidationResult, ValidationError, FormAsset } from "@/types/validation.types";
 import { ValidationService } from "@/services/validation.service";
 import { ErrorCode } from "@/types/error.enum";
 import { LINK_TYPE } from "@/services/types/enum";
+import { useTokensV2 } from "../token/useTokensV2";
 
 /**
  * Hook for validating asset info and fees for link usage
  */
 export const useLinkUsageValidation = () => {
     const { t } = useTranslation();
-    const { createTokenMap } = useTokens();
+    const { createTokenMap } = useTokensV2();
 
     /**
      * Validates if the user has sufficient balance for link usage including any fees

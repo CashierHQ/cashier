@@ -10,10 +10,10 @@ import { mapChainToLogo, mapChainToPrettyName } from "@/utils/map/chain.map";
 import { Label } from "../ui/label";
 import { IconInput } from "../icon-input";
 import { AddTokenInput } from "../../../../declarations/token_storage/token_storage.did";
-import { useTokens } from "@/hooks/useTokens";
 import { useState } from "react";
 import { Spinner } from "../ui/spinner";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface ImportTokenReviewProps {
     token: {
@@ -30,7 +30,7 @@ interface ImportTokenReviewProps {
 
 export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
-    const { addToken, isImporting } = useTokens();
+    const { addToken, isImporting } = useTokensV2();
     const [importError, setImportError] = useState<string | null>(null);
     const { navigateToPanel } = useWalletContext();
 

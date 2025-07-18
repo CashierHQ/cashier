@@ -4,10 +4,14 @@ type Chain = variant { IC };
 type ChainTokenDetails = variant {
   IC : record { fee : nat; ledger_id : principal; index_id : opt principal };
 };
-type RegistryStats = record { total_tokens : nat64 };
+type RegistryStats = record {
+  total_enabled_default : nat64;
+  total_tokens : nat64;
+};
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : RegistryStats; Err : text };
-type Result_2 = variant { Ok : TokenListResponse; Err : text };
+type Result_2 = variant { Ok : UserTokens; Err : text };
+type Result_3 = variant { Ok : TokenListResponse; Err : text };
 type TokenDto = record {
   id : text;
   decimals : nat8;
@@ -31,17 +35,23 @@ type UserPreference = record {
   selected_chain : vec Chain;
   hide_unknown_token : bool;
 };
+type UserTokens = record {
+  registry_tokens : nat64;
+  version : nat64;
+  enabled : nat64;
+};
 service : () -> {
   add_token : (AddTokenInput) -> (Result);
   add_token_batch : (AddTokensInput) -> (Result);
-  delete_all_tokens : (text) -> (Result);
   get_registry_metadata : () -> (TokenRegistryMetadata) query;
-  get_registry_tokens : () -> (vec TokenDto) query;
+  get_registry_tokens : (bool) -> (vec TokenDto) query;
   get_registry_version : () -> (nat64) query;
   get_stats : () -> (Result_1) query;
+  get_user_tokens : (text) -> (Result_2) query;
   initialize_registry : () -> (Result);
-  list_tokens : () -> (Result_2) query;
+  list_tokens : () -> (Result_3) query;
   sync_token_list : () -> (Result);
+  test_update_token_registry : (text) -> (Result);
   update_token_balance : (vec UpdateTokenBalanceInput) -> (Result);
   update_token_enable : (UpdateTokenInput) -> (Result);
   update_token_registry : (AddTokenInput) -> (Result);

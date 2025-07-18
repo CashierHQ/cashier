@@ -95,18 +95,13 @@ impl TokenRegistryRepository {
         })
     }
 
-    pub fn update_token(
-        &self,
-        token_id: &TokenId,
-        update_fn: impl FnOnce(&mut RegistryToken),
-    ) -> Result<(), String> {
+    pub fn update_token(&self, token: &RegistryToken) -> Result<(), String> {
         TOKEN_REGISTRY_STORE.with_borrow_mut(|store| {
-            if let Some(mut token) = store.get(token_id) {
-                update_fn(&mut token);
-                store.insert(token_id.clone(), token);
+            if store.contains_key(&token.id) {
+                store.insert(token.id.clone(), token.clone());
                 Ok(())
             } else {
-                Err(format!("Token with ID {} not found", token_id))
+                Err(format!("Token with ID {} not found", token.id))
             }
         })
     }

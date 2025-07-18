@@ -5,7 +5,7 @@ use candid::Principal;
 use ic_cdk::{query, update};
 
 use crate::{
-    api::admin::types::RegistryStats,
+    api::admin::types::{RegistryStats, UserTokens},
     constant::default_tokens::get_default_tokens,
     repository::token_registry::TokenRegistryRepository,
     services::{token_registry::TokenRegistryService, user_token::UserTokenService},
@@ -53,16 +53,22 @@ pub fn get_registry_metadata() -> TokenRegistryMetadata {
 }
 
 #[query]
-pub fn get_registry_tokens() -> Vec<TokenDto> {
+pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(&format!("Admin check failed: {}", err));
     });
     let service = TokenRegistryService::new();
-    service
+    let list: Vec<TokenDto> = service
         .list_tokens()
         .iter()
         .map(|token| TokenDto::from(token.clone()))
-        .collect()
+        .collect();
+
+    if only_enable {
+        list.into_iter().filter(|token| token.enabled).collect()
+    } else {
+        list
+    }
 }
 
 #[update]
@@ -90,6 +96,30 @@ pub fn get_stats() -> Result<RegistryStats, String> {
     let service = TokenRegistryService::new();
     let list_tokens = service.list_tokens();
     let total_tokens = list_tokens.len();
+    let total_enabled_default = list_tokens.iter().filter(|t| t.enabled_by_default).count();
 
-    Ok(RegistryStats { total_tokens })
+    Ok(RegistryStats {
+        total_tokens,
+        total_enabled_default,
+    })
+}
+
+#[query]
+pub fn get_user_tokens(wallet: String) -> Result<UserTokens, String> {
+    let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;
+    let token_registry_service = TokenRegistryService::new();
+    let user_token_service = UserTokenService::new();
+
+    // Check if user's token list exists
+    let user_token_list = user_token_service
+        .get_token_list(&caller.to_string())
+        .unwrap_or_default();
+
+    let registry_tokens = token_registry_service.list_tokens();
+
+    Ok(UserTokens {
+        enabled: user_token_list.enable_list.len(),
+        registry_tokens: registry_tokens.len(),
+        version: user_token_list.version,
+    })
 }

@@ -6,7 +6,7 @@ import { AssetAvatar, AssetAvatarV2 } from "../ui/asset-avatar";
 import Switch from "../ui/switch";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { mapChainToLogo } from "@/utils/map/chain.map";
-import { useTokens } from "@/hooks/useTokens";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export interface ManageTokensTokenItemProps {
     token: FungibleToken;
@@ -23,7 +23,7 @@ export function ManageTokensTokenItem({ token }: ManageTokensTokenItemProps) {
         setIsVisible(token.enabled ?? true);
     }, [token.enabled]);
 
-    const { toggleTokenEnable } = useTokens();
+    const { toggleTokenEnable } = useTokensV2();
 
     const handleToggle = async (e: React.MouseEvent) => {
         // Stop propagation to prevent the article onClick from firing

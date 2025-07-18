@@ -20,9 +20,9 @@ import { useTranslation } from "react-i18next";
 import AssetButton from "@/components/asset-button";
 import AssetDrawer from "@/components/asset-drawer";
 import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
-import { useTokens } from "@/hooks/useTokens";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Label } from "@/components/ui/label";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface SwapPanelProps {
     tokenId?: string;
@@ -37,8 +37,7 @@ const SwapPanel: React.FC<SwapPanelProps> = ({ tokenId, onBack }) => {
     const { t } = useTranslation();
 
     // Token data
-    const { getDisplayTokens } = useTokens();
-    const userTokens = getDisplayTokens();
+    const { displayTokens, getToken } = useTokensV2();
 
     // State for drawer and selections
     const [showFromAssetDrawer, setShowFromAssetDrawer] = useState(false);
@@ -58,14 +57,14 @@ const SwapPanel: React.FC<SwapPanelProps> = ({ tokenId, onBack }) => {
 
     // Set default tokens when userTokens are loaded
     useEffect(() => {
-        if (userTokens && userTokens.length > 0 && !selectedFromToken && !selectedToToken) {
+        if (displayTokens && displayTokens.length > 0 && !selectedFromToken && !selectedToToken) {
             // If tokenId is provided, use it for the "from" token
             if (tokenId) {
-                const token = userTokens.find((t) => t.address === tokenId);
+                const token = displayTokens.find((t) => t.address === tokenId);
                 if (token) {
                     setSelectedFromToken(token);
                     // Set ckUSDC as default "to" token if available
-                    const ckUsdc = userTokens.find((t) => t.address === CKUSDC_ADDRESS);
+                    const ckUsdc = displayTokens.find((t) => t.address === CKUSDC_ADDRESS);
                     if (ckUsdc && ckUsdc.address !== tokenId) {
                         setSelectedToToken(ckUsdc);
                     }
@@ -74,28 +73,28 @@ const SwapPanel: React.FC<SwapPanelProps> = ({ tokenId, onBack }) => {
             }
 
             // Otherwise set ICP as default "from" token
-            const icpToken = userTokens.find((t) => t.address === ICP_ADDRESS);
+            const icpToken = displayTokens.find((t) => t.address === ICP_ADDRESS);
             if (icpToken) {
                 setSelectedFromToken(icpToken);
-            } else if (userTokens.length > 0) {
+            } else if (displayTokens.length > 0) {
                 // Fallback to first available token
-                setSelectedFromToken(userTokens[0]);
+                setSelectedFromToken(displayTokens[0]);
             }
 
             // Set ckUSDC as default "to" token
-            const ckUsdcToken = userTokens.find((t) => t.address === CKUSDC_ADDRESS);
+            const ckUsdcToken = displayTokens.find((t) => t.address === CKUSDC_ADDRESS);
             if (ckUsdcToken) {
                 setSelectedToToken(ckUsdcToken);
-            } else if (userTokens.length > 1) {
+            } else if (displayTokens.length > 1) {
                 // Fallback to second available token
-                setSelectedToToken(userTokens[1]);
+                setSelectedToToken(displayTokens[1]);
             }
         }
-    }, [userTokens, tokenId, selectedFromToken, selectedToToken]);
+    }, [displayTokens, tokenId, selectedFromToken, selectedToToken]);
 
     // Handle token selection
     const handleFromTokenSelect = (address: string) => {
-        const token = userTokens.find((t) => t.address === address);
+        const token = getToken(address);
         if (token) {
             setSelectedFromToken(token);
             setShowFromAssetDrawer(false);
@@ -106,7 +105,7 @@ const SwapPanel: React.FC<SwapPanelProps> = ({ tokenId, onBack }) => {
     };
 
     const handleToTokenSelect = (address: string) => {
-        const token = userTokens.find((t) => t.address === address);
+        const token = getToken(address);
         if (token) {
             setSelectedToToken(token);
             setShowToAssetDrawer(false);
@@ -288,7 +287,7 @@ const SwapPanel: React.FC<SwapPanelProps> = ({ tokenId, onBack }) => {
                 open={showFromAssetDrawer}
                 handleClose={() => setShowFromAssetDrawer(false)}
                 handleChange={handleFromTokenSelect}
-                assetList={userTokens}
+                assetList={displayTokens}
                 showSearch
             />
 
@@ -297,7 +296,7 @@ const SwapPanel: React.FC<SwapPanelProps> = ({ tokenId, onBack }) => {
                 open={showToAssetDrawer}
                 handleClose={() => setShowToAssetDrawer(false)}
                 handleChange={handleToTokenSelect}
-                assetList={userTokens}
+                assetList={displayTokens}
                 showSearch
             />
         </div>

@@ -7,4 +7,12 @@ use serde::{Deserialize, Serialize};
 #[derive(CandidType, Clone, Debug, Serialize, Deserialize)]
 pub struct RegistryStats {
     pub total_tokens: usize,
+    pub total_enabled_default: usize,
+}
+
+#[derive(CandidType, Clone, Debug, Serialize, Deserialize)]
+pub struct UserTokens {
+    pub enabled: usize,
+    pub registry_tokens: usize,
+    pub version: u64,
 }

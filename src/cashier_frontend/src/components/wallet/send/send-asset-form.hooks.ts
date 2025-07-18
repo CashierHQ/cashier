@@ -8,8 +8,7 @@ import { useCallback, useEffect } from "react";
 import * as z from "zod";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { Principal } from "@dfinity/principal";
-import { useTokens } from "@/hooks/useTokens";
-import { useTokenStore } from "@/stores/tokenStore";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 const isValidWalletAddress = (address: string): { valid: boolean; message: string } => {
     // Empty string handling
@@ -90,7 +89,7 @@ export function useWalletSendAssetForm(
         mode: "onChange", // Enable validation on change
     });
 
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
 
     const tokenAddress = form.watch("address");
     const token = getToken(tokenAddress);
@@ -127,7 +126,7 @@ export function useWalletSendAssetForm(
 
 export function useWalletSendAssetFormActions(form: UseFormReturn<WalletSendAssetFormSchema>) {
     const tokenAddress = form.watch("address");
-    const { getTokenPrice } = useTokenStore();
+    const { getTokenPrice } = useTokensV2();
     const tokenUsdPrice = getTokenPrice(tokenAddress);
 
     const setTokenAmount = useCallback(

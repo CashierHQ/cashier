@@ -3,7 +3,6 @@
 
 import { IconInput } from "@/components/icon-input";
 import ConfirmDialog from "@/components/confirm-dialog";
-import useTokenMetadata from "@/hooks/tokenUtilsHooks";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { transformShortAddress } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
@@ -14,7 +13,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import { Copy } from "lucide-react";
-import { useTokens } from "@/hooks/useTokens";
 import AssetButton from "@/components/asset-button";
 import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
 import AssetDrawer from "@/components/asset-drawer";
@@ -22,6 +20,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useWalletContext } from "@/contexts/wallet-context";
 import { toast } from "sonner";
 import { ICP_ADDRESS } from "@/const";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
     const { t } = useTranslation();
@@ -67,9 +66,9 @@ interface ReceivePanelProps {
     onBack: () => void;
 }
 
+// eslint-disable-next-line react/prop-types
 const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
     const { t } = useTranslation();
-    const { metadata } = useTokenMetadata(tokenId);
     const { user } = useAuth();
     const { open, options, showDialog, hideDialog } = useConfirmDialog();
     const [accountId, setAccountId] = useState<string>("");
@@ -79,21 +78,20 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
     const [showAssetDrawer, setShowAssetDrawer] = useState(false);
     const { navigateToPanel } = useWalletContext();
 
-    const { getDisplayTokens } = useTokens();
-    const tokenList = getDisplayTokens();
+    const { displayTokens, getToken } = useTokensV2();
 
     const selectedToken = useMemo(() => {
         // If no token list, return undefined
-        if (!tokenList) return undefined;
+        if (!displayTokens) return undefined;
 
         // If tokenId is provided, find that token or create a placeholder
         if (tokenId) {
-            return tokenList.find((token) => token.address === tokenId);
+            return getToken(tokenId);
         }
 
         // If no tokenId provided, default to ICP
-        return tokenList.find((token) => token.address === ICP_ADDRESS);
-    }, [tokenList, tokenId, metadata]);
+        return getToken(ICP_ADDRESS);
+    }, [displayTokens, tokenId]);
 
     const handleTokenSelect = (token: FungibleToken) => {
         setCurrentSelectedToken(token);
@@ -199,12 +197,12 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
                     open={showAssetDrawer}
                     handleClose={() => setShowAssetDrawer(false)}
                     handleChange={(address) => {
-                        const token = tokenList?.find((t) => t.address === address);
+                        const token = displayTokens?.find((t) => t.address === address);
                         if (token) {
                             handleTokenSelect(token);
                         }
                     }}
-                    assetList={tokenList || []}
+                    assetList={displayTokens || []}
                     showSearch={true}
                 />
             </div>
