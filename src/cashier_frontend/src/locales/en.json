@@ -239,6 +239,11 @@
         },
         "loading": {
             "fetchMetdata": "Fetching metadata"
+        },
+        "import": {
+            "error": {
+                "token_already_existed": "Token \"{{tokenName}} ({{tokenSymbol}})\" is already in your wallet"
+            }
         }
     },
     "review": {

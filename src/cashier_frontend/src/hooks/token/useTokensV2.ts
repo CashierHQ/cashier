@@ -28,7 +28,8 @@ export function useTokensV2() {
     const identity = useIdentity();
 
     // Get enriched data and operations from provider
-    const { rawTokenList, ...operations } = useTokenData();
+    const { rawTokenList, isLoadingMetadata, isMetadataEnriched, initialTokenHash, ...operations } =
+        useTokenData();
 
     // Create a stable key for memoization that accounts for identity changes
     const memoKey = useMemo(() => {
@@ -68,13 +69,6 @@ export function useTokensV2() {
 
     // Memoized sorted tokens computation - enabled tokens first (by amount), then disabled tokens
     const sortedTokens = useMemo((): FungibleToken[] => {
-        console.log(
-            "🔄 SORTED TOKENS MEMO RECALCULATING - Identity:",
-            memoKey.identityKey,
-            "rawTokenList length:",
-            rawTokenList?.length,
-        );
-
         if (!rawTokenList || rawTokenList.length === 0) {
             return [];
         }
@@ -101,13 +95,6 @@ export function useTokensV2() {
 
     // Memoized display tokens computation
     const displayTokens = useMemo((): FungibleToken[] => {
-        console.log(
-            "🔄 DISPLAY TOKENS MEMO RECALCULATING - Identity:",
-            memoKey.identityKey,
-            "rawTokenList length:",
-            rawTokenList?.length,
-        );
-
         if (!rawTokenList || rawTokenList.length === 0) {
             return [];
         }
@@ -167,10 +154,15 @@ export function useTokensV2() {
         isLoading,
         isLoadingBalances,
         isLoadingPrices,
+        isLoadingMetadata,
+        isMetadataEnriched,
         isSyncPreferences,
         isImporting,
         error,
         hasBalances,
+
+        // Initial hash for comparison
+        initialTokenHash,
 
         // Data methods
         getToken,
@@ -185,5 +177,7 @@ export function useTokensV2() {
         setFilters,
         setError,
         setSearchQuery,
+
+        addToken: operations.addToken,
     };
 }

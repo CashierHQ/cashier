@@ -76,6 +76,11 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
                     </div>
 
                     <div className="flex justify-between items-center">
+                        <p className="font-medium text-sm">Fee</p>
+                        <p className="text-sm text-grey text-right">{token.fee?.toString()}</p>
+                    </div>
+
+                    <div className="flex justify-between items-center">
                         <p className="font-medium text-sm">{t("history.hero.chain")}</p>
                         <p className="text-sm text-grey text-right">
                             {mapChainToPrettyName(token.chain)}

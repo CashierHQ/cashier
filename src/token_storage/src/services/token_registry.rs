@@ -60,7 +60,7 @@ impl TokenRegistryService {
     pub async fn register_new_token(
         &self,
         input: &TokenId,
-        index_id: Option<IndexId>,
+        index_id: &Option<IndexId>,
     ) -> Result<TokenId, String> {
         // Expect input format: "CHAIN:token_id"
         let mut parts = input.splitn(2, ':');
@@ -110,7 +110,7 @@ impl TokenRegistryService {
                     chain,
                     details: ChainTokenDetails::IC {
                         ledger_id: principal,
-                        index_id: index_id,
+                        index_id: *index_id,
                         fee: fee.0,
                     },
                     enabled_by_default: false,

@@ -6,7 +6,8 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { FungibleToken, TokenModel } from "@/types/fungible-token.speculative";
 import TokenStorageService from "@/services/backend/tokenStorage.service";
 import { mapTokenDtoToTokenModel } from "@/types/token-store.type";
-import { useTokensV2 } from "@/hooks/token/useTokensV2";
+
+import { useTokenData } from "./token-data-context";
 
 // Token comparison types
 interface TokenComparisonReport {
@@ -64,6 +65,9 @@ const compareTokens = (
         }
     });
 
+    console.log("registryMap length:", registryMap.size);
+    console.log("frontendMap length:", frontendMap.size);
+
     // Check for differences in common tokens
     const differentTokens: string[] = [];
     registryTokens.forEach((registryToken) => {
@@ -74,6 +78,17 @@ const compareTokens = (
             const hasFeeDiff = registryToken.fee !== frontendToken.fee;
             const hasNameDiff = registryToken.name !== frontendToken.name;
             const hasSymbolDiff = registryToken.symbol !== frontendToken.symbol;
+
+            if (registryToken.address == "wxani-naaaa-aaaab-qadgq-cai") {
+                console.log("Comparing wxani token:", {
+                    registryToken,
+                    frontendToken,
+                    hasDecimalsDiff,
+                    hasFeeDiff,
+                    hasNameDiff,
+                    hasSymbolDiff,
+                });
+            }
 
             if (hasDecimalsDiff || hasFeeDiff || hasNameDiff || hasSymbolDiff) {
                 differentTokens.push(registryToken.id);
@@ -102,7 +117,8 @@ interface TokenComparisonProviderProps {
 
 export const TokenAutoUpgradeProvider: React.FC<TokenComparisonProviderProps> = ({ children }) => {
     const identity = useIdentity();
-    const tokenStore = useTokensV2();
+    const { rawTokenList, isLoadingMetadata, isMetadataEnriched, initialTokenHash } =
+        useTokenData();
     const lastComparisonResultRef = useRef<TokenComparisonReport | null>(null);
     const lastTokensHashRef = useRef<string>("");
 
@@ -143,8 +159,10 @@ export const TokenAutoUpgradeProvider: React.FC<TokenComparisonProviderProps> = 
     // Method to perform token comparison
     const performComparison = async (): Promise<void> => {
         try {
-            // Get current frontend tokens from the store
-            const frontendTokens = tokenStore.rawTokenList;
+            // Get current frontend tokens from the enriched token list (not the store)
+            const frontendTokens = rawTokenList;
+
+            console.log("Frontend tokens from rawTokenList:", frontendTokens.length);
 
             // Get registry tokens from backend
             const registryTokens = await getRegistryTokens();
@@ -178,8 +196,12 @@ export const TokenAutoUpgradeProvider: React.FC<TokenComparisonProviderProps> = 
                 );
             }
 
-            console.log("tokensToUpdate", comparison.tokensToUpdate);
+            if (comparison.tokensToUpdate.length === 0) {
+                console.log("✅ No tokens need updating in registry");
+                return;
+            }
 
+            console.log("tokensToUpdate", comparison.tokensToUpdate);
             updateTokensInRegistry(comparison.tokensToUpdate);
 
             // Optionally call backend to update tokens
@@ -192,7 +214,10 @@ export const TokenAutoUpgradeProvider: React.FC<TokenComparisonProviderProps> = 
     // Create a simple hash of token list to detect changes
     const getTokenListHash = (tokens: FungibleToken[]): string => {
         return tokens
-            .map((t) => `${t.id}-${t.symbol}-${t.name}-${t.decimals}-${t.enabled}`)
+            .map(
+                (t) =>
+                    `${t.id}-${t.symbol}-${t.name}-${t.decimals}-${t.enabled}-${t.fee || "no-fee"}-${t.logoFallback || "no-logo"}`,
+            )
             .join("|");
     };
 
@@ -203,20 +228,61 @@ export const TokenAutoUpgradeProvider: React.FC<TokenComparisonProviderProps> = 
             return;
         }
 
-        if (tokenStore.rawTokenList.length === 0) {
+        if (rawTokenList.length === 0) {
             console.log("⏸️ Skipping token comparison - no tokens loaded");
             return;
         }
 
-        const currentHash = getTokenListHash(tokenStore.rawTokenList);
+        // Wait for metadata to be fully loaded and enriched before running comparison
+        if (isLoadingMetadata || !isMetadataEnriched) {
+            console.log("⏸️ Skipping token comparison - metadata still loading or not enriched", {
+                isLoadingMetadata: isLoadingMetadata,
+                isMetadataEnriched: isMetadataEnriched,
+                currentHashRef: lastTokensHashRef.current,
+                initialTokenHash: initialTokenHash,
+            });
+            return;
+        }
 
-        // Only run comparison if tokens have changed (deep comparison via hash)
-        if (currentHash !== lastTokensHashRef.current) {
-            console.log("🔄 Token data changed, triggering comparison...");
+        // Calculate current hash
+        const currentHash = getTokenListHash(rawTokenList);
+        console.log("🔍 Current token hash:", currentHash);
+        console.log("🔍 Last token hash:", lastTokensHashRef.current);
+        console.log("🔍 Initial token hash:", initialTokenHash);
+
+        // Use initialTokenHash as the baseline if we haven't set a comparison hash yet
+        // This ensures we compare against the very first token state, not enriched state
+        if (lastTokensHashRef.current === "" && initialTokenHash) {
+            console.log("🆕 Using initial token hash as baseline for comparison");
+            lastTokensHashRef.current = initialTokenHash;
+
+            // Check if current tokens (with metadata) differ from initial tokens
+            const hasChanged = currentHash !== initialTokenHash;
+            if (hasChanged) {
+                console.log("🔄 Triggering comparison - tokens changed from initial state...");
+                performComparison();
+            } else {
+                console.log("✅ Tokens unchanged from initial state - no comparison needed");
+            }
+            return;
+        }
+
+        // Run comparison if tokens have changed after initial setup
+        const hasTokensChanged = currentHash !== lastTokensHashRef.current;
+
+        if (hasTokensChanged) {
+            console.log("🔄 Triggering comparison due to token changes...", {
+                hasTokensChanged,
+                metadataEnriched: isMetadataEnriched,
+                oldHash: lastTokensHashRef.current,
+                newHash: currentHash,
+            });
             lastTokensHashRef.current = currentHash;
             performComparison();
+        } else {
+            console.log("✅ No comparison needed - tokens unchanged");
         }
-    }, [identity, tokenStore.rawTokenList]);
+    }, [identity, rawTokenList, isLoadingMetadata, isMetadataEnriched, initialTokenHash]);
 
     // Method to manually trigger comparison
     const triggerManualComparison = async (): Promise<void> => {

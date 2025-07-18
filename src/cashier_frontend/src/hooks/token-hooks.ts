@@ -133,16 +133,17 @@ export function useSyncTokenList(identity: Identity | undefined) {
             await tokenService.syncTokenList();
         },
         onSuccess: () => {
-            // Properly invalidate token queries
+            // Properly invalidate token queries using centralized key
+            const principalId = identity?.getPrincipal().toString();
             queryClient.invalidateQueries({
-                queryKey: ["tokens"], // Invalidate all token-related queries
+                queryKey: TOKEN_QUERY_KEYS.all(principalId),
             });
         },
     });
 }
 
 export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
-    const { metadataMap: workerMetadataMap, fetchMetadata } = useTokenMetadataWorker({
+    const { fetchMetadata } = useTokenMetadataWorker({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onProgress: (processed: any, total: any) => {
             console.log(`Metadata fetching progress: ${processed}/${total}`);
@@ -155,11 +156,14 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
             if (!tokens || tokens.length === 0) return {};
 
             try {
-                // Use the worker to fetch metadata
-                await fetchMetadata(tokens);
-
-                // The result will be available in workerMetadataMap after the worker completes
-                return workerMetadataMap;
+                // Use the worker to fetch metadata - now returns a Promise
+                const metadataMap = await fetchMetadata(tokens);
+                console.log(
+                    "[useTokenMetadataQuery] Worker completed with metadata:",
+                    Object.keys(metadataMap).length,
+                    "entries",
+                );
+                return metadataMap;
             } catch (error) {
                 console.error("Error using token metadata worker:", error);
 
@@ -179,6 +183,8 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
                                     fee: metadata.fee,
                                     logo: metadata.icon,
                                     decimals: metadata.decimals,
+                                    name: metadata.name,
+                                    symbol: metadata.symbol,
                                 };
                             }
                             return { tokenId: token.address, metadata };
@@ -291,29 +297,34 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
     });
 }
 // Add token mutation
-export function useAddTokenMutation(identity: Identity | undefined) {
+export function useAddTokenMutation() {
     const queryClient = useQueryClient();
+    const identity = useIdentity();
 
     return useMutation({
         mutationFn: async (input: AddTokenInput) => {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
-            await tokenService.addToken(input);
+            console.log("[addToken] Adding token with input 2:", input);
+            const res = await tokenService.addToken(input);
+            console.log("Token added:", res);
             return true;
         },
         onSuccess: () => {
-            // Properly invalidate token queries
+            // Properly invalidate token queries using centralized key
+            const principalId = identity?.getPrincipal().toString();
             queryClient.invalidateQueries({
-                queryKey: ["tokens"], // Invalidate all token-related queries
+                queryKey: TOKEN_QUERY_KEYS.all(principalId),
             });
         },
     });
 }
 
 // add mutliple tokens mutation
-export function useMultipleTokenMutation(identity: Identity | undefined) {
+export function useMultipleTokenMutation() {
     const queryClient = useQueryClient();
+    const identity = useIdentity();
 
     return useMutation({
         mutationFn: async (input: AddTokensInput) => {
@@ -330,17 +341,19 @@ export function useMultipleTokenMutation(identity: Identity | undefined) {
             }
         },
         onSuccess: () => {
-            // Properly invalidate token queries
+            // Properly invalidate token queries using centralized key
+            const principalId = identity?.getPrincipal().toString();
             queryClient.invalidateQueries({
-                queryKey: ["tokens"], // Invalidate all token-related queries
+                queryKey: TOKEN_QUERY_KEYS.all(principalId),
             });
         },
     });
 }
 
 // Improved hook for toggling token visibility
-export function useUpdateTokenEnableMutation(identity: Identity | undefined) {
+export function useUpdateTokenEnableMutation() {
     const queryClient = useQueryClient();
+    const identity = useIdentity();
 
     return useMutation({
         mutationFn: async ({ tokenId, enable }: { tokenId: string; enable: boolean }) => {
@@ -355,8 +368,10 @@ export function useUpdateTokenEnableMutation(identity: Identity | undefined) {
             return { tokenId, hidden: enable };
         },
         onSuccess: () => {
+            // Properly invalidate token queries using centralized key
+            const principalId = identity?.getPrincipal().toString();
             queryClient.invalidateQueries({
-                queryKey: ["tokens"],
+                queryKey: TOKEN_QUERY_KEYS.all(principalId),
             });
         },
     });

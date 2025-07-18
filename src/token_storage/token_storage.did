@@ -1,4 +1,4 @@
-type AddTokenInput = record { token_id : text };
+type AddTokenInput = record { token_id : text; index_id : opt text };
 type AddTokensInput = record { token_ids : vec text };
 type Chain = variant { IC };
 type ChainTokenDetails = variant {
@@ -51,7 +51,6 @@ service : () -> {
   initialize_registry : () -> (Result);
   list_tokens : () -> (Result_3) query;
   sync_token_list : () -> (Result);
-  test_update_token_registry : (text) -> (Result);
   update_token_balance : (vec UpdateTokenBalanceInput) -> (Result);
   update_token_enable : (UpdateTokenInput) -> (Result);
   update_token_registry : (AddTokenInput) -> (Result);
