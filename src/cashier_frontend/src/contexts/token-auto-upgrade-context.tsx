@@ -20,7 +20,7 @@ interface TokenComparisonReport {
     };
 }
 
-interface TokenComparisonContextType {
+interface TokenAutoUpgradeContextType {
     compareTokens: (
         registryTokens: FungibleToken[],
         frontendTokens: FungibleToken[],
@@ -29,7 +29,7 @@ interface TokenComparisonContextType {
     lastComparisonResult: TokenComparisonReport | null;
 }
 
-const TokenComparisonContext = createContext<TokenComparisonContextType | undefined>(undefined);
+const TokenAutoUpgradeContext = createContext<TokenAutoUpgradeContextType | undefined>(undefined);
 
 // Simple method to compare registry tokens vs frontend tokens
 const compareTokens = (
@@ -72,8 +72,10 @@ const compareTokens = (
             // Compare key fields that might be different
             const hasDecimalsDiff = registryToken.decimals !== frontendToken.decimals;
             const hasFeeDiff = registryToken.fee !== frontendToken.fee;
+            const hasNameDiff = registryToken.name !== frontendToken.name;
+            const hasSymbolDiff = registryToken.symbol !== frontendToken.symbol;
 
-            if (hasDecimalsDiff || hasFeeDiff) {
+            if (hasDecimalsDiff || hasFeeDiff || hasNameDiff || hasSymbolDiff) {
                 differentTokens.push(registryToken.id);
             }
         }
@@ -176,6 +178,8 @@ export const TokenComparisonProvider: React.FC<TokenComparisonProviderProps> = (
                 );
             }
 
+            console.log("tokensToUpdate", comparison.tokensToUpdate);
+
             updateTokensInRegistry(comparison.tokensToUpdate);
 
             // Optionally call backend to update tokens
@@ -199,10 +203,15 @@ export const TokenComparisonProvider: React.FC<TokenComparisonProviderProps> = (
             return;
         }
 
+        if (tokenStore.rawTokenList.length === 0) {
+            console.log("⏸️ Skipping token comparison - no tokens loaded");
+            return;
+        }
+
         const currentHash = getTokenListHash(tokenStore.rawTokenList);
 
-        // Only run comparison if tokens have changed
-        if (currentHash !== lastTokensHashRef.current && tokenStore.rawTokenList.length > 0) {
+        // Only run comparison if tokens have changed (deep comparison via hash)
+        if (currentHash !== lastTokensHashRef.current) {
             console.log("🔄 Token data changed, triggering comparison...");
             lastTokensHashRef.current = currentHash;
             performComparison();
@@ -215,15 +224,15 @@ export const TokenComparisonProvider: React.FC<TokenComparisonProviderProps> = (
         await performComparison();
     };
 
-    const contextValue: TokenComparisonContextType = {
+    const contextValue: TokenAutoUpgradeContextType = {
         compareTokens,
         triggerManualComparison,
         lastComparisonResult: lastComparisonResultRef.current,
     };
 
     return (
-        <TokenComparisonContext.Provider value={contextValue}>
+        <TokenAutoUpgradeContext.Provider value={contextValue}>
             {children}
-        </TokenComparisonContext.Provider>
+        </TokenAutoUpgradeContext.Provider>
     );
 };
