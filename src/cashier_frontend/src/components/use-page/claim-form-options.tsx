@@ -237,11 +237,15 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     };
 
     const renderInputWallet = () => {
+        // Don't show input wallet if user is already connected via identity
         if (identity) {
-            return <></>;
+            return null;
         }
 
-        if (disabledInput) return <></>;
+        // Don't show if input is disabled
+        if (disabledInput) {
+            return null;
+        }
 
         return (
             <FormField
@@ -321,53 +325,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
                 <h2 className="text-[16px] font-medium mb-2">{secondTitle}</h2>
 
                 <div className="flex flex-col gap-2">
-                    {/* Show wallet status if we're on choose-wallet page */}
-                    {(identity || walletAddress) && onOpenWalletModal ? (
-                        <div className="cursor-pointer" onClick={onOpenWalletModal}>
-                            {identity ? (
-                                <CustomConnectedWalletButton
-                                    connectedAccount={user?.principal.toString()}
-                                    postfixText="Connected"
-                                    postfixIcon={
-                                        getWalletIcon(
-                                            signer?.id === "GoogleSigner"
-                                                ? WALLET_OPTIONS.GOOGLE
-                                                : signer?.id === "InternetIdentity"
-                                                  ? WALLET_OPTIONS.INTERNET_IDENTITY
-                                                  : WALLET_OPTIONS.OTHER,
-                                        ) as JSX.Element
-                                    }
-                                    handleConnect={onOpenWalletModal}
-                                    disabled={false}
-                                />
-                            ) : walletAddress ? (
-                                <CustomConnectedWalletButton
-                                    connectedAccount={walletAddress}
-                                    postfixText="Connected"
-                                    postfixIcon={
-                                        <img
-                                            src={getWalletIcon(WALLET_OPTIONS.OTHER) as string}
-                                            alt="Wallet"
-                                            className="w-6 h-6 mr-2"
-                                        />
-                                    }
-                                    handleConnect={onOpenWalletModal}
-                                    disabled={false}
-                                />
-                            ) : null}
-                        </div>
-                    ) : (
-                        <>
-                            {/* Show wallet options only on main page */}
-                            {/* {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)} */}
-                            {renderWalletButton(
-                                WALLET_OPTIONS.INTERNET_IDENTITY,
-                                "Internet Identity",
-                            )}
-                            {/* {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets", undefined, true)} */}
-                            {/* {renderInputWallet()} */}
-                        </>
-                    )}
+                    {renderWalletButton(WALLET_OPTIONS.INTERNET_IDENTITY, "Internet Identity")}
                 </div>
             </div>
 
