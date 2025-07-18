@@ -10,12 +10,10 @@ import { mapChainToLogo, mapChainToPrettyName } from "@/utils/map/chain.map";
 import { Label } from "../ui/label";
 import { IconInput } from "../icon-input";
 import { AddTokenInput } from "../../../../declarations/token_storage/token_storage.did";
-import { Principal } from "@dfinity/principal";
-import { toNullable } from "@dfinity/utils";
-import { useTokens } from "@/hooks/useTokens";
 import { useState } from "react";
 import { Spinner } from "../ui/spinner";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface ImportTokenReviewProps {
     token: {
@@ -32,7 +30,7 @@ interface ImportTokenReviewProps {
 
 export function ImportTokenReview({ token }: ImportTokenReviewProps) {
     const { t } = useTranslation();
-    const { addToken, isImporting } = useTokens();
+    const { addToken, isImporting } = useTokensV2();
     const [importError, setImportError] = useState<string | null>(null);
     const { navigateToPanel } = useWalletContext();
 
@@ -43,18 +41,6 @@ export function ImportTokenReview({ token }: ImportTokenReviewProps) {
             const id = `${token.chain}:${token.address}`;
             const addTokenInput: AddTokenInput = {
                 token_id: id,
-                token_data: toNullable({
-                    // Fix the structure to match AddTokenItem
-                    address: token.address,
-                    chain: token.chain,
-                    decimals: token.decimals,
-                    name: token.name,
-                    symbol: token.symbol,
-                    // Only include optional fields if they exist
-                    index_id: token.index_id ? [Principal.fromText(token.index_id)] : [],
-                    ledger_id: [Principal.fromText(token.address)],
-                    fee: token.fee ? [BigInt(token.fee)] : [],
-                }),
             };
 
             await addToken(addTokenInput);

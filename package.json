@@ -4,7 +4,7 @@
         "npm": ">=7.0.0"
     },
     "name": "cashier",
-    "license": "GPL-3.0-or-later",
+    "license": "MIT",
     "scripts": {
         "prebuild": "make generate-ci",
         "build": "npm run build --workspaces --if-present",

@@ -12,11 +12,11 @@ import { ChevronRight } from "lucide-react";
 import { FeeBreakdownDrawer } from "./fee-breakdown-drawer";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "../ui/avatar";
-import { useTokens } from "@/hooks/useTokens";
 import { useTranslation } from "react-i18next";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 type ConfirmationPopupFeesSectionProps = {
     intents: IntentModel[];
@@ -50,7 +50,7 @@ export const ConfirmationPopupFeesSection: FC<ConfirmationPopupFeesSectionProps>
 }) => {
     const { t } = useTranslation();
     const { feeAmount } = useIntentMetadata(intents?.[0], actionType);
-    const { getTokenPrice, isLoading, getToken } = useTokens();
+    const { getTokenPrice, isLoading, getToken } = useTokensV2();
 
     const [totalCashierFee, setTotalCashierFee] = useState<number>();
     const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);

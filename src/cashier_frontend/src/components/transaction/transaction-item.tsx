@@ -10,11 +10,11 @@ import { convert } from "@/utils/helpers/convert";
 import { Avatar } from "@radix-ui/react-avatar";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
-import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useState } from "react";
 import { FeeHelpers } from "@/services/fee.service";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface TransactionItemProps {
     actionType: ACTION_TYPE;
@@ -33,7 +33,7 @@ export const TransactionItem = memo(function TransactionItem({
     const { assetAmount, assetSymbol, title: intentTitle } = useIntentMetadata(intent, actionType);
     const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(assetAmount);
 
-    const { getToken, getTokenPrice } = useTokens();
+    const { getToken, getTokenPrice } = useTokensV2();
     const token = getToken(intent.asset.address);
     const tokenUsdPrice = getTokenPrice(intent.asset.address);
 

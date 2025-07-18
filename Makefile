@@ -95,9 +95,6 @@ frontend-setup:
 	make generate-ci
 	# dfx stop
 
-
-#
-
 extract-candid:
 	candid-extractor "target/wasm32-unknown-unknown/release/cashier_backend.wasm" > "src/cashier_backend/cashier_backend.did"
 	candid-extractor "target/wasm32-unknown-unknown/release/token_storage.wasm" > "src/token_storage/token_storage.did"

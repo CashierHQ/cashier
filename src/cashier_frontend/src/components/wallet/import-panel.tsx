@@ -8,13 +8,14 @@ import { ImportTokenFormData } from "@/hooks/import-token.hooks";
 import { ImportTokenReview } from "@/components/import-token/review";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { Spinner } from "@/components/ui/spinner";
-import { useTokens } from "@/hooks/useTokens";
 import { ChevronLeft } from "lucide-react";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface ImportPanelProps {
     onBack: () => void;
 }
 
+// eslint-disable-next-line react/prop-types
 const ImportPanel: React.FC<ImportPanelProps> = ({ onBack }) => {
     const { t } = useTranslation();
     const [importData, setImportData] = useState<ImportTokenFormData>();
@@ -28,8 +29,6 @@ const ImportPanel: React.FC<ImportPanelProps> = ({ onBack }) => {
     }>();
     const [isImporting, setIsImporting] = useState(false);
     const [importError, setImportError] = useState<string | null>(null);
-
-    const { updateToken } = useTokens();
 
     function goBack() {
         if (tokenMetadata) {
@@ -70,7 +69,6 @@ const ImportPanel: React.FC<ImportPanelProps> = ({ onBack }) => {
             );
         } finally {
             setIsImporting(false);
-            updateToken();
         }
     };
 

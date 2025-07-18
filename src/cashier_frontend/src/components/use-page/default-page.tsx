@@ -7,7 +7,7 @@ import {
     getHeaderInfoForLink,
     getTitleForLink,
 } from "@/components/page/linkCardPage";
-import { useTokens } from "@/hooks/useTokens";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { FC, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -28,7 +28,7 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
     isLoggedIn = false,
     isCompletePage = false,
 }) => {
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
     const { t } = useTranslation();
 
     const linkHeaderInfo = getHeaderInfoForLink(linkData);

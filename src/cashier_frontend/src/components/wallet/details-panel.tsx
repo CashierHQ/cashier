@@ -6,28 +6,27 @@ import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { TokenDetailsHero } from "@/components/token-details/hero";
 import { TransactionHistory } from "@/components/token-details/transaction-history";
 import { MOCK_TX_DATA } from "@/constants/mock-data"; // Still using mock transaction data
-import { useTokens } from "@/hooks/useTokens";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface DetailsPanelProps {
     tokenId?: string;
     onBack: () => void;
 }
 
+// eslint-disable-next-line react/prop-types
 const DetailsPanel: React.FC<DetailsPanelProps> = ({ tokenId, onBack }) => {
-    // Use the useTokens hook to get consistent token data
-    const { isLoadingBalances, getDisplayTokens } = useTokens();
-    const userTokens = getDisplayTokens();
+    const { isLoadingBalances, displayTokens } = useTokensV2();
 
     // Find the selected token from the list
     const selectedToken = useMemo(() => {
-        if (!tokenId || !userTokens?.length) {
+        if (!tokenId || !displayTokens?.length) {
             return undefined;
         }
 
-        return userTokens.find((token) => token.address === tokenId);
-    }, [tokenId, userTokens, isLoadingBalances]);
+        return displayTokens.find((token) => token.address === tokenId);
+    }, [tokenId, displayTokens, isLoadingBalances]);
 
     // Show loading state while token data is being fetched
     if (isLoadingBalances && !selectedToken) {

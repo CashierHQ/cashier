@@ -20,7 +20,6 @@ import { useSignerStore } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
 import { ACTION_TYPE } from "@/services/types/enum";
-import { useTokens } from "@/hooks/useTokens";
 import TokenItem from "./token-item";
 import WalletConnectDialog from "@/components/wallet-connect-dialog";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
@@ -35,6 +34,7 @@ import { FaCheck } from "react-icons/fa";
 import { ClipboardIcon } from "lucide-react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { UseSchema } from "@/pages/[id]/choose-wallet";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface ClaimFormOptionsProps {
     form: UseFormReturn<z.infer<typeof UseSchema>>;
@@ -62,7 +62,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     const link = linkDetailQuery.data?.link;
     const isLoading = linkDetailQuery.isLoading;
 
-    const { updateTokenInit } = useTokens();
+    const { updateTokenInit } = useTokensV2();
 
     const isGoogleLogin = signer?.id === "GoogleSigner";
 

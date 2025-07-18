@@ -12,9 +12,8 @@ import {
     assetNumberToAmount,
 } from "./link-details-form";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { useTokens } from "@/hooks/useTokens";
-import { useTokenStore } from "@/stores/tokenStore";
 import { LINK_INTENT_ASSET_LABEL, CHAIN } from "@/services/types/enum";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 // Combined type for the form that includes both core data and UI fields
 export type TipLinkAssetFormSchema = LinkDetailsFormSchema;
@@ -30,7 +29,7 @@ export function useAddAssetForm(
         mode: "onChange",
     });
 
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
 
     // Function to validate a specific asset
     const validateSingleAsset = useCallback(
@@ -87,8 +86,7 @@ export function useFormActions(
     assetIndex: number = 0,
 ) {
     const tokenAddress = form.watch(`assets.${assetIndex}.tokenAddress`);
-    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
-    const { getToken } = useTokens();
+    const { getToken, getTokenPrice } = useTokensV2();
     const tokenUsdPrice = getTokenPrice(tokenAddress);
     const token = getToken(tokenAddress);
     const decimals = token?.decimals || 8;

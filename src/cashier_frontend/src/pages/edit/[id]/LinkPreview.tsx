@@ -12,7 +12,6 @@ import { getTokenImage, safeParseJSON } from "@/utils";
 import { Label } from "@/components/ui/label";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
-import { useTokens } from "@/hooks/useTokens";
 import { ACTION_TYPE, CHAIN, LINK_TYPE, getLinkTypeString } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
@@ -29,6 +28,7 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { UseQueryResult } from "@tanstack/react-query";
 import { useCreateConfirmation } from "@/hooks/tx-cart/useCreateConfirmation";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export interface LinkPreviewProps {
     onInvalidActon?: () => void;
@@ -69,7 +69,7 @@ function LinkPreview({
 
     const { createAction, createNewLink } = useLinkMutations();
 
-    const { getToken, getTokenPrice, rawTokenList, createTokenMap } = useTokens();
+    const { getToken, getTokenPrice, rawTokenList, createTokenMap } = useTokensV2();
     const [showInfo, setShowInfo] = useState(false);
     const [showAssetInfo, setShowAssetInfo] = useState(false);
     const [showConfirmation, setShowConfirmation] = useState(false);

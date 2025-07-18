@@ -32,19 +32,6 @@ impl TokenRepository {
         })
     }
 
-    pub fn add_disable_token(&self, user_id: &str, token_id: &TokenId) -> Result<(), String> {
-        USER_TOKEN_STORE.with_borrow_mut(|store| {
-            let mut user_token_list = store
-                .get(&user_id.to_string())
-                .ok_or_else(|| "user token list is not init".to_string())?;
-
-            user_token_list.disable_list.insert(token_id.to_string());
-
-            store.insert(user_id.to_string(), user_token_list.clone());
-            Ok(())
-        })
-    }
-
     pub fn add_bulk_tokens(&self, user_id: &str, token_ids: &[TokenId]) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
@@ -61,12 +48,6 @@ impl TokenRepository {
         })
     }
 
-    pub fn reset_token_list(&self, user_id: &str) {
-        USER_TOKEN_STORE.with_borrow_mut(|store| {
-            store.insert(user_id.to_string(), UserTokenList::default());
-        });
-    }
-
     pub fn list_tokens(&self, user_id: &str) -> Result<UserTokenList, std::string::String> {
         USER_TOKEN_STORE.with_borrow(|store| {
             store
@@ -75,23 +56,21 @@ impl TokenRepository {
         })
     }
 
-    pub fn swap_token_enable(
+    pub fn update_token(
         &self,
         user_id: &str,
-        is_enable: bool,
         token_id: &TokenId,
+        is_enable: &bool,
     ) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id.to_string())
                 .ok_or_else(|| "user token list is not init".to_string())?;
 
-            if is_enable {
-                user_token_list.disable_list.remove(&token_id.to_string());
+            if *is_enable {
                 user_token_list.enable_list.insert(token_id.to_string());
             } else {
                 user_token_list.enable_list.remove(&token_id.to_string());
-                user_token_list.disable_list.insert(token_id.to_string());
             }
 
             store.insert(user_id.to_string(), user_token_list.clone());
@@ -108,6 +87,13 @@ impl TokenRepository {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             // Insert the updated token list
             store.insert(user_id.to_string(), token_list.clone());
+            Ok(())
+        })
+    }
+
+    pub fn delete_all_tokens(&self, user_id: &str) -> Result<(), String> {
+        USER_TOKEN_STORE.with_borrow_mut(|store| {
+            store.remove(&user_id.to_string());
             Ok(())
         })
     }

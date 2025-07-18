@@ -10,11 +10,11 @@ import {
     SendTipForm,
     SendTokenBasketForm,
 } from "@/components/link-details/forms";
-import { useTokens } from "@/hooks/useTokens";
 // Import our custom hook for form initialization
 import { useLinkFormInitialization } from "@/hooks/useLinkFormInitialization";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export interface LinkDetailsProps {
     link?: LinkDetailModel;
@@ -23,7 +23,7 @@ export interface LinkDetailsProps {
 
 export default function LinkDetails({ link, isUpdating }: LinkDetailsProps) {
     const { setButtonState, getUserInput } = useLinkCreationFormStore();
-    const { getDisplayTokens } = useTokens();
+    const { displayTokens } = useTokensV2();
     const { renderSkeleton } = useSkeletonLoading();
 
     // When this component mounts, we'll receive the button state from the form
@@ -34,14 +34,11 @@ export default function LinkDetails({ link, isUpdating }: LinkDetailsProps) {
             isDisabled: true,
         });
     }, []);
-    // Get tokens data
-    const allAvailableTokens = getDisplayTokens();
-
     // Get current input from store
     const currentInput = link?.id ? getUserInput(link.id) : undefined;
 
     // Initialize form values using our custom hook
-    const initialFormValues = useLinkFormInitialization(currentInput, allAvailableTokens, link);
+    const initialFormValues = useLinkFormInitialization(currentInput, displayTokens, link);
 
     if (!link) {
         return renderSkeleton();

@@ -7,7 +7,7 @@ import { Spinner } from "../ui/spinner";
 import { Asset } from "../ui/asset";
 import { useTranslation } from "react-i18next";
 import { useFeeMetadata } from "@/hooks/useFeeMetadata";
-import { useTokens } from "@/hooks/useTokens";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 type LinkPreviewCashierFeeItemProps = {
     feeModel: FeeModel;
@@ -17,7 +17,7 @@ export const LinkPreviewCashierFeeItem: FC<LinkPreviewCashierFeeItemProps> = ({ 
     const { t } = useTranslation();
     const { isLoadingMetadata, assetAmount, assetSrc } = useFeeMetadata(feeModel);
 
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
     const token = getToken(feeModel.address);
 
     return (

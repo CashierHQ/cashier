@@ -6,13 +6,13 @@ import { AssetAvatar, AssetAvatarV2 } from "../ui/asset-avatar";
 import Switch from "../ui/switch";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { mapChainToLogo } from "@/utils/map/chain.map";
-import { useTokens } from "@/hooks/useTokens";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
-export interface ManageTokensTokenProps {
+export interface ManageTokensTokenItemProps {
     token: FungibleToken;
 }
 
-export function ManageTokensToken({ token }: ManageTokensTokenProps) {
+export function ManageTokensTokenItem({ token }: ManageTokensTokenItemProps) {
     // const { toggleTokenEnabled, isTogglingToken } = useTokenStore(identity);
 
     // Use token's enabled status from the API instead of local state
@@ -23,7 +23,7 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
         setIsVisible(token.enabled ?? true);
     }, [token.enabled]);
 
-    const { toggleTokenVisibility } = useTokens();
+    const { toggleTokenEnable } = useTokensV2();
 
     const handleToggle = async (e: React.MouseEvent) => {
         // Stop propagation to prevent the article onClick from firing
@@ -31,9 +31,7 @@ export function ManageTokensToken({ token }: ManageTokensTokenProps) {
 
         // Toggle the visibility state locally for immediate feedback
         const newVisibility = !isVisible;
-        console.log("Toggling token visibility:", token.id, newVisibility);
-        await toggleTokenVisibility(token.id, newVisibility);
-        setIsVisible(newVisibility);
+        await toggleTokenEnable(token.id, newVisibility);
     };
 
     return (

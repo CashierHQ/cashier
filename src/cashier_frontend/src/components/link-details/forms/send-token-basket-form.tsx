@@ -7,7 +7,6 @@ import AssetDrawer from "@/components/asset-drawer";
 import { useTranslation } from "react-i18next";
 import { AssetFormSkeleton } from "../asset-form-skeleton";
 import { useAddAssetForm } from "../add-asset-hooks";
-import { useTokens } from "@/hooks/useTokens";
 import {
     useLinkCreationFormStore,
     UserInputAsset,
@@ -32,6 +31,7 @@ import {
 } from "../form-handlers";
 import { useSendTokenBasketFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface SendTokenBasketFormProps {
     initialValues?: {
@@ -71,8 +71,7 @@ export const SendTokenBasketForm = ({
     const { submitTokenBasketForm } = useSendTokenBasketFormHandler(link);
 
     // Get tokens data
-    const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
-    const allAvailableTokens = getDisplayTokens();
+    const { isLoading: isLoadingTokens, getTokenPrice, displayTokens } = useTokensV2();
 
     useEffect(() => {
         if (!link) {
@@ -92,7 +91,7 @@ export const SendTokenBasketForm = ({
         initialValues = getInitialFormValues(currentInput);
     }
 
-    const form = useAddAssetForm(allAvailableTokens || [], initialValues);
+    const form = useAddAssetForm(displayTokens || [], initialValues);
 
     const {
         getValues,
@@ -161,10 +160,10 @@ export const SendTokenBasketForm = ({
 
     // Initialize form with first asset if none exists
     useEffect(() => {
-        if (allAvailableTokens?.length > 0 && link && assetFields.fields.length === 0) {
+        if (displayTokens?.length > 0 && link && assetFields.fields.length === 0) {
             initializeFirstAsset();
         }
-    }, [allAvailableTokens, link]);
+    }, [displayTokens, link]);
 
     useEffect(() => {
         console.log("errors ", errors);
@@ -173,7 +172,7 @@ export const SendTokenBasketForm = ({
     // Filtered list of available tokens for the asset drawer
     const availableTokensForDrawer = useMemo(() => {
         return getAvailableTokensForDrawer();
-    }, [allAvailableTokens, selectedAssetAddresses, editingAssetIndex, getValues]);
+    }, [displayTokens, selectedAssetAddresses, editingAssetIndex, getValues]);
 
     // Event handlers using centralized handlers
     const handleAssetSelect = createAssetSelectHandler(setEditingAssetIndex, setShowAssetDrawer);
@@ -294,7 +293,7 @@ export const SendTokenBasketForm = ({
             return;
         }
 
-        if (!allAvailableTokens?.length || !link || !link.linkType) return;
+        if (!displayTokens?.length || !link || !link.linkType) return;
 
         // Check if link already has assets we can use instead of default values
         if (link.asset_info && link.asset_info.length > 0) {
@@ -321,7 +320,7 @@ export const SendTokenBasketForm = ({
         }
 
         // If no existing assets, create a default one
-        const firstToken = allAvailableTokens[0];
+        const firstToken = displayTokens[0];
         const label = getAssetLabelForLinkType(link.linkType, firstToken.address);
 
         assetFields.append({
@@ -349,38 +348,31 @@ export const SendTokenBasketForm = ({
     }
 
     function getAvailableTokensForDrawer() {
-        if (!allAvailableTokens) return [];
+        if (!displayTokens) return [];
 
         if (editingAssetIndex >= 0) {
             const currentAsset = getValues(`assets.${editingAssetIndex}`);
             const currentTokenAddress = currentAsset?.tokenAddress;
 
-            return allAvailableTokens.filter((token) => {
+            return displayTokens.filter((token) => {
                 if (token.address === currentTokenAddress) return true;
                 return !selectedAssetAddresses.includes(token.address);
             });
         }
 
-        return allAvailableTokens.filter(
-            (token) => !selectedAssetAddresses.includes(token.address),
-        );
+        return displayTokens.filter((token) => !selectedAssetAddresses.includes(token.address));
     }
 
     function getNextAvailableToken(): FungibleToken | undefined {
-        if (!allAvailableTokens || allAvailableTokens.length === 0) return undefined;
+        if (!displayTokens || displayTokens.length === 0) return undefined;
 
         return (
-            allAvailableTokens.find((token) => !selectedAssetAddresses.includes(token.address)) ||
-            allAvailableTokens[0]
+            displayTokens.find((token) => !selectedAssetAddresses.includes(token.address)) ||
+            displayTokens[0]
         ); // Fallback to first token if all are selected
     }
 
-    if (
-        isLoadingTokens ||
-        !allAvailableTokens ||
-        allAvailableTokens.length === 0 ||
-        !initialValues
-    ) {
+    if (isLoadingTokens || !displayTokens || displayTokens.length === 0 || !initialValues) {
         return <AssetFormSkeleton />;
     }
 
@@ -406,7 +398,7 @@ export const SendTokenBasketForm = ({
                                 fieldId={field.id}
                                 index={index}
                                 form={form}
-                                availableAssets={allAvailableTokens}
+                                availableAssets={displayTokens}
                                 onAssetSelect={handleAssetSelect}
                                 onRemoveAsset={handleRemoveAsset}
                                 showRemoveButton={true}
@@ -424,7 +416,7 @@ export const SendTokenBasketForm = ({
                     <button
                         className="light-borders flex items-center justify-center gap-2 flex-col py-8 mb-4 w-full"
                         onClick={handleAddAsset}
-                        disabled={selectedAssetAddresses.length >= allAvailableTokens.length}
+                        disabled={selectedAssetAddresses.length >= displayTokens.length}
                     >
                         <div className="bg-[#35A18B] rounded-full h-[44px] w-[44px] aspect-square flex items-center justify-center">
                             <Plus size={24} color={"white"} />

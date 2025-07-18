@@ -188,7 +188,7 @@ impl IcrcService {
                 Err(error) => Err(CanisterError::CanisterCallError {
                     method: "icrc1_transfer".to_string(),
                     canister_id: token_service.get_canister_id().to_string(),
-                    message: error.to_string(),
+                    message: format!("{:?}", error),
                 }),
             },
 

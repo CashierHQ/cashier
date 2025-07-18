@@ -10,12 +10,12 @@ import { Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TipLinkAssetFormSchema, useFormActions } from "./add-asset-hooks";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { useTokens } from "@/hooks/useTokens";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { CHAIN, LINK_INTENT_ASSET_LABEL, LINK_TYPE } from "@/services/types/enum";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { FeeHelpers } from "@/services/fee.service";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 
@@ -53,7 +53,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
 
     const { t } = useTranslation();
     const { getValues, watch } = form;
-    const { getToken, getTokenPrice } = useTokens();
+    const { getToken, getTokenPrice } = useTokensV2();
     const { updateUserInput, getUserInput } = useLinkCreationFormStore();
 
     // Get current asset data

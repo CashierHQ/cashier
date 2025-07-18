@@ -5,7 +5,7 @@ import { FC } from "react";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import { transformShortAddress } from "@/utils";
 import { SendAssetInfo } from "@/services/types/wallet.types";
-import { useTokens } from "@/hooks/useTokens";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 type ConfirmationPopupAssetsSectionProps = {
     sendAssetInfo: SendAssetInfo;
@@ -17,7 +17,7 @@ type ConfirmationPopupAssetsSectionProps = {
 export const SendAssetConfirmationPopupAssetsSection: FC<ConfirmationPopupAssetsSectionProps> = ({
     sendAssetInfo,
 }) => {
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
     const token = getToken(sendAssetInfo.asset.address);
     return (
         <section id="confirmation-popup-section-send" className="my-3">

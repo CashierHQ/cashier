@@ -5,7 +5,6 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useLinkCreationFormStore, UserInputItem } from "@/stores/linkCreationFormStore";
-import { useTokens } from "@/hooks/useTokens";
 import { useMultiStepFormContext } from "@/contexts/multistep-form-context";
 import { stateToStepIndex } from "@/pages/edit/[id]";
 import { formatAssetsForSubmission } from "@/components/link-details/form-handlers";
@@ -20,6 +19,7 @@ import { ValidationResult, FormAsset } from "@/types/validation.types";
 import { ErrorCode } from "@/types/error.enum";
 import { useErrorHandler } from "@/services/error-handler.service";
 import { useLinkMutations } from "../useLinkMutations";
+import { useTokensV2 } from "../token/useTokensV2";
 
 // Types for different submission contexts
 export interface BaseSubmissionContext {
@@ -59,7 +59,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
     const { callLinkStateMachine, createNewLink } = useLinkMutations();
 
     const { updateUserInput, getUserInput, addUserInput } = useLinkCreationFormStore();
-    const { getTokenPrice, createTokenMap } = useTokens();
+    const { getTokenPrice, createTokenMap } = useTokensV2();
     const { setStep } = useMultiStepFormContext();
     const errorHandler = useErrorHandler();
 
