@@ -10,10 +10,10 @@ import { DefaultPage } from "@/components/use-page/default-page";
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
-import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export default function CompletePage() {
     const { linkId } = useParams();
@@ -21,7 +21,7 @@ export default function CompletePage() {
     const { renderSkeleton } = useSkeletonLoading();
 
     const identity = useIdentity();
-    const { updateTokenInit } = useTokens();
+    const { updateTokenInit } = useTokensV2();
     const { handleStateBasedNavigation, goToChooseWallet } = useLinkUseNavigation(linkId);
 
     // Data fetching hooks

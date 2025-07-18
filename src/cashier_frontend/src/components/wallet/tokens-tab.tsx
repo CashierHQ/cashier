@@ -4,22 +4,12 @@
 import { WalletToken } from "./token-card";
 import { useTranslation } from "react-i18next";
 import { useWalletContext } from "@/contexts/wallet-context";
-import { useTokens } from "@/hooks/useTokens";
-import { useTokenStore } from "@/stores/tokenStore";
-import { useMemo } from "react";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export function WalletTokensTab() {
     const { t } = useTranslation();
     const { navigateToPanel } = useWalletContext();
-    const tokenStore = useTokens();
-    // Subscribe to rawTokenList and filters changes from the token store
-    const { rawTokenList, filters } = useTokenStore();
-
-    // Use useMemo to calculate and cache displayTokens based on dependencies
-    const displayTokens = useMemo(() => {
-        return tokenStore.getDisplayTokens();
-    }, [tokenStore, rawTokenList, filters]);
-
+    const { displayTokens } = useTokensV2();
     const handleManageClick = (e: React.MouseEvent) => {
         e.preventDefault();
         navigateToPanel("manage");

@@ -38,15 +38,16 @@ export function useTokenMetadataWorker(options: UseTokenMetadataWorkerOptions = 
     // Setup worker on mount
     useEffect(() => {
         // Create worker instance
-        const worker = new Worker(new URL("../workers/token-metadata.worker.ts", import.meta.url), {
-            type: "module",
-        });
+        const worker = new Worker(
+            new URL("../../workers/token-metadata.worker.ts", import.meta.url),
+            {
+                type: "module",
+            },
+        );
 
         // Set up message handler
         worker.onmessage = (event) => {
             const { type, payload } = event.data;
-
-            console.log("[Worker Message]", type, typeof payload);
 
             switch (type) {
                 case "ready":

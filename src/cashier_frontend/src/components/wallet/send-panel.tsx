@@ -22,7 +22,6 @@ import AssetButton from "@/components/asset-button";
 import { SelectedAssetButtonInfo } from "@/components/link-details/selected-asset-button-info";
 
 // Hooks
-import { useTokens } from "@/hooks/useTokens";
 import {
     useWalletSendAssetForm,
     useWalletSendAssetFormActions,
@@ -36,6 +35,7 @@ import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { CHAIN } from "@/services/types/enum";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 const USD_AMOUNT_PRESETS = [1, 2, 5];
 interface SendPanelProps {
@@ -61,8 +61,7 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
     const { navigateToPanel } = useWalletContext();
 
     // Token data from global store
-    const { getDisplayTokens } = useTokens();
-    const userTokens = getDisplayTokens();
+    const { displayTokens } = useTokensV2();
 
     // Transaction state from store
     const { setSendAssetInfo, openConfirmation, resetSendAsset } = useSendAssetStore();
@@ -75,21 +74,21 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
      */
     const selectedToken = useMemo(() => {
         // Skip if no token list available
-        if (!userTokens?.length) {
+        if (!displayTokens?.length) {
             return undefined;
         }
 
         // Find token by tokenId if provided
         if (tokenId) {
-            return userTokens.find((token) => token.address === tokenId);
+            return displayTokens.find((token) => token.address === tokenId);
         }
 
         // If no tokenId provided, default to ICP
-        return userTokens.find((token) => token.address === ICP_ADDRESS);
-    }, [userTokens, tokenId]);
+        return displayTokens.find((token) => token.address === ICP_ADDRESS);
+    }, [displayTokens, tokenId]);
 
     // Init form with default values
-    const form = useWalletSendAssetForm(userTokens, {
+    const form = useWalletSendAssetForm(displayTokens, {
         address: selectedToken?.address ?? "",
         amount: BigInt(0),
         assetNumber: 0,
@@ -502,12 +501,12 @@ const SendPanel: React.FC<SendPanelProps> = ({ tokenId, onBack }) => {
                 open={showAssetDrawer}
                 handleClose={() => setShowAssetDrawer(false)}
                 handleChange={(address) => {
-                    const token = userTokens?.find((t) => t.address === address);
+                    const token = displayTokens?.find((t) => t.address === address);
                     if (token) {
                         handleTokenSelect(token);
                     }
                 }}
-                assetList={userTokens || []}
+                assetList={displayTokens || []}
                 showSearch={true}
             />
         </div>

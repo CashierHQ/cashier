@@ -41,7 +41,6 @@ thread_local! {
             )
         );
 
-
     // Store user preferences
     pub static USER_PREFERENCE_STORE: RefCell<StableBTreeMap<String, UserPreference, Memory>> =
         RefCell::new(

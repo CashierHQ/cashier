@@ -3,12 +3,12 @@
 
 import React from "react";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { useTokenStore } from "@/stores/tokenStore";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { Avatar } from "@radix-ui/react-avatar";
 import { formatDollarAmount, formatNumber } from "@/utils/helpers/currency";
 import { FeeHelpers } from "@/services/fee.service";
 import { cn } from "@/lib/utils";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface TokenItemProps {
     link: LinkDetailModel;
@@ -32,7 +32,7 @@ const TokenItemSkeleton = () => {
 };
 
 const TokenItem: React.FC<TokenItemProps> = ({ link, asset, isLoading = false }) => {
-    const { getToken, getTokenPrice } = useTokenStore();
+    const { getToken, getTokenPrice } = useTokensV2();
     const token = getToken(asset.address);
 
     if (isLoading) {

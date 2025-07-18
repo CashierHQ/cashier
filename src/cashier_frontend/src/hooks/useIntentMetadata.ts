@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import { ACTION_TYPE, TASK } from "@/services/types/enum";
 import { useTranslation } from "react-i18next";
-import { useTokens } from "@/hooks/useTokens";
+import { useTokensV2 } from "./token/useTokensV2";
 
 const getIntentTitle = (
     intent: IntentModel,
@@ -37,10 +37,10 @@ const getIntentTitle = (
 
 // TODO: handle for anonymous user
 export const useIntentMetadata = (intent: IntentModel, actionType: ACTION_TYPE) => {
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
     const { t } = useTranslation();
 
-    // Get token data directly from useTokens
+    // Get token data directly from
     const token = getToken(intent.asset.address);
 
     const feeToken = getToken(intent.asset.address);

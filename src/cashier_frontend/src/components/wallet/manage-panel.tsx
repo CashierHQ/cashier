@@ -6,11 +6,11 @@ import { Search as SearchIcon, RefreshCw, Plus, ChevronLeft } from "lucide-react
 import { ManageTokensList } from "@/components/manage-tokens/token-list";
 import { ManageTokensMissingTokenMessage } from "@/components/manage-tokens/missing-token-message";
 import { useTranslation } from "react-i18next";
-import { useTokens } from "@/hooks/useTokens";
 import { Spinner } from "@/components/ui/spinner";
 import { IconInput } from "@/components/icon-input";
 import { Search } from "lucide-react";
 import { useWalletContext } from "@/contexts/wallet-context";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface ManagePanelProps {
     onBack: () => void;
@@ -21,40 +21,29 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
     const { t } = useTranslation();
     const { navigateToPanel } = useWalletContext();
 
-    const { rawTokenList, isLoading, updateTokenExplorer, isSyncPreferences, updateTokenBalance } =
-        useTokens();
+    const {
+        rawTokenList,
+        isLoading,
+        updateTokenExplorer,
+        isSyncPreferences,
+        updateTokenBalance,
+        sortedTokens,
+        searchTokens,
+        searchQuery,
+        setSearchQuery,
+    } = useTokensV2();
 
-    const [searchQuery, setSearchQuery] = useState<string>("");
     const [isExplorerLoading, setIsExplorerLoading] = useState<boolean>(false);
 
     // For infinite scrolling
     const [displayLimit, setDisplayLimit] = useState<number>(30); // Initial load of 30 tokens
     const loaderRef = useRef<HTMLDivElement>(null);
 
-    // Get filtered tokens based on search query - with stable references
-    const filteredTokens = useMemo(() => {
-        console.log("Getting display tokens with search", searchQuery);
-
-        if (!rawTokenList || rawTokenList.length === 0) {
-            return [];
-        }
-
-        if (!searchQuery.trim()) {
-            return rawTokenList;
-        }
-
-        const lcQuery = searchQuery.toLowerCase().trim();
-        return rawTokenList.filter(
-            (token) =>
-                token.name.toLowerCase().includes(lcQuery) ||
-                token.symbol.toLowerCase().includes(lcQuery),
-        );
-    }, [rawTokenList, searchQuery]); // <-- Removed unnecessary dependencies
-
-    // Get the tokens to display based on display limit - with identity function for stable references
+    // Get the tokens to display based on display limit and search query
     const displayedTokens = useMemo(() => {
-        return filteredTokens.slice(0, displayLimit);
-    }, [filteredTokens, displayLimit]);
+        const tokensToDisplay = searchQuery ? searchTokens(searchQuery) : sortedTokens;
+        return tokensToDisplay.slice(0, displayLimit);
+    }, [sortedTokens, searchQuery, searchTokens, displayLimit]);
 
     // Custom animation style
     const halfSpinStyle = {
@@ -91,8 +80,12 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
                     // When the loader comes into view, increase the display limit
                     setDisplayLimit((prev) => {
                         const newLimit = prev + 20; // Load 20 more items
+                        // Use the appropriate token list based on search query
+                        const currentTokenList = searchQuery
+                            ? searchTokens(searchQuery)
+                            : sortedTokens;
                         // Don't exceed the total number of items
-                        return Math.min(newLimit, filteredTokens.length);
+                        return Math.min(newLimit, currentTokenList.length);
                     });
                 }
             },
@@ -108,7 +101,7 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
                 observer.unobserve(loaderRef.current);
             }
         };
-    }, [filteredTokens]);
+    }, [sortedTokens, searchQuery, searchTokens]);
 
     // Clear search
     const handleClearSearch = () => {
@@ -136,8 +129,9 @@ const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
     }, [searchQuery]);
 
     const isNoTokens = rawTokenList.length === 0;
-    const noSearchResults = !isNoTokens && searchQuery && filteredTokens.length === 0;
-    const hasMoreTokens = displayLimit < filteredTokens.length;
+    const currentTokenList = searchQuery ? searchTokens(searchQuery) : sortedTokens;
+    const noSearchResults = !isNoTokens && searchQuery && currentTokenList.length === 0;
+    const hasMoreTokens = displayLimit < currentTokenList.length;
 
     const handleImportToken = (e: React.MouseEvent) => {
         e.preventDefault();
