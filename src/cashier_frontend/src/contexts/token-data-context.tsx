@@ -11,7 +11,6 @@ import {
     useTokenMetadataQuery,
     useTokenPricesQuery,
     useTokenListQuery,
-    useSyncTokenList,
     useMultipleTokenMutation,
 } from "../hooks/token-hooks";
 import { ICExplorerService, IcExplorerTokenDetail } from "@/services/icExplorer.service";
@@ -40,6 +39,7 @@ const TokenContext = createContext<TokenContextValue | null>(null);
 export function TokenDataProvider({ children }: { children: ReactNode }) {
     const identity = useIdentity();
     const enrichedTokensRef = useRef<FungibleToken[]>([]);
+    const previousIdentityRef = useRef<typeof identity>(identity);
 
     // Get Zustand store actions
     const {
@@ -60,7 +60,6 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     const tokenPricesQuery = useTokenPricesQuery();
 
     // Mutations - only created once at the provider level
-    const syncTokenListMutation = useSyncTokenList(identity);
     const addTokenMutation = useAddTokenMutation(identity);
     const addMultipleTokenMutation = useMultipleTokenMutation(identity);
     const updateTokenEnableState = useUpdateTokenEnableMutation(identity);
@@ -154,7 +153,10 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
 
     // Combined enrichment effect that handles all data stages
     useEffect(() => {
-        console.log("Token list query data updated:", tokenListQuery.data);
+        console.log(
+            "🔄 ENRICHMENT EFFECT RUNNING - Token list query data updated:",
+            tokenListQuery.data,
+        );
         if (!tokenListQuery.data) return;
 
         let currentTokens = [...tokenListQuery.data.tokens];
@@ -240,6 +242,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
 
     // Loading state effects
     useEffect(() => {
+        console.log("🔄 BALANCE LOADING EFFECT RUNNING");
         const isLoadingBalancesState =
             tokenBalancesQuery.isLoading || tokenBalancesQuery.isFetching;
         console.log("Is loading balances state:", isLoadingBalancesState);
@@ -247,12 +250,14 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     }, [tokenBalancesQuery.isLoading, tokenBalancesQuery.isFetching, setIsLoadingBalances]);
 
     useEffect(() => {
+        console.log("🔄 PRICE LOADING EFFECT RUNNING");
         const isLoadingPricesState = tokenPricesQuery.isLoading || tokenPricesQuery.isFetching;
         console.log("Is loading prices state:", isLoadingPricesState);
         setIsLoadingPrices(isLoadingPricesState);
     }, [tokenPricesQuery.isLoading, tokenPricesQuery.isFetching, setIsLoadingPrices]);
 
     useEffect(() => {
+        console.log("🔄 TOKEN LIST LOADING EFFECT RUNNING");
         console.log("Token list query fetching state:", tokenListQuery.isFetching);
         if (tokenListQuery.isFetching && !tokenListQuery.data) {
             setIsLoading(true);
@@ -272,13 +277,16 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
             );
             setFilters(tokenListQuery.data.perference);
         }
-    }, [setIsLoading, tokenListQuery.isFetching]);
+    }, [setIsLoading, tokenListQuery.isFetching, tokenListQuery.data, setFilters]);
 
     // Refetch token list when identity changes
     useEffect(() => {
-        if (identity) {
-            console.log("Identity changed, refetching token list");
-            tokenListQuery.refetch();
+        console.log("🔄 IDENTITY EFFECT RUNNING");
+        // Identity changes are now handled automatically by React Query
+        // through the query key that includes the principal ID
+        if (identity !== previousIdentityRef.current) {
+            console.log("Identity changed - React Query will handle refetch automatically");
+            previousIdentityRef.current = identity;
         }
     }, [identity]);
 
