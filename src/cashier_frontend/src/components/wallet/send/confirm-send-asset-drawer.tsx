@@ -12,9 +12,9 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { TransactionStatus } from "@/services/types/wallet.types";
 import { TokenUtilService } from "@/services/tokenUtils.service";
-import { useTokens } from "@/hooks/useTokens";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export interface SendAssetConfirmationDrawerProps {
     onSuccessfulTransaction?: () => void;
@@ -41,7 +41,7 @@ export const SendAssetConfirmationDrawer: FC<SendAssetConfirmationDrawerProps> =
     const [isUsd, setIsUsd] = useState(false);
     const [buttonText, setButtonText] = useState(t("transaction.confirm_popup.confirm_button"));
     const [isDisabled, setIsDisabled] = useState(false);
-    const { updateTokenBalance } = useTokens();
+    const { updateTokenBalance } = useTokensV2();
 
     const onClickSubmit = async () => {
         // If transaction was successful, close the drawer

@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { X } from "lucide-react";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
-import { useTokens } from "@/hooks/useTokens";
 import { formatDollarAmount } from "@/utils/helpers/currency";
 import { FeeHelpers } from "@/services/fee.service";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 // Helper method to calculate the display amount for fees
 const calculateFeeDisplayAmount = (
@@ -44,7 +44,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
     totalFees,
     feesBreakdown,
 }) => {
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
     return (
         <Drawer
             open={open}

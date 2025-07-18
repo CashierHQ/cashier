@@ -23,12 +23,17 @@
             "type": "custom",
             "candid": "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did",
             "wasm": "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz",
-            "specified_id": "ryjl3-tyaaa-aaaaa-aaaba-cai",
             "remote": {
                 "id": {
                     "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
                 }
             }
+        },
+        "icrc1_ledger_canister": {
+            "type": "custom",
+            "candid": "https://raw.githubusercontent.com/dfinity/ic/3564b37939f037ba4d051ada88251c13954597d2/rs/ledger_suite/icrc1/ledger/ledger.did",
+            "wasm": "https://download.dfinity.systems/ic/3564b37939f037ba4d051ada88251c13954597d2/canisters/ic-icrc1-ledger.wasm.gz",
+            "specified_id": "ixmla-qqaaa-aaaad-aazda-cai"
         }
     },
     "defaults": {

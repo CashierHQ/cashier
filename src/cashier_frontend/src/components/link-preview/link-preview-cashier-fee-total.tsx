@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { Spinner } from "../ui/spinner";
 import { FC } from "react";
 import { useTokenStore } from "@/stores/tokenStore";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 type LinkPreviewCashierFeeTotalProps = {
     intents: FeeModel[];
@@ -49,7 +50,7 @@ const FeeDisplay: FC<{
 export const LinkPreviewCashierFeeTotal: FC<LinkPreviewCashierFeeTotalProps> = ({ intents }) => {
     const { t } = useTranslation();
     const totalCashierFee = useFeeTotal(intents);
-    const getTokenPrice = useTokenStore((state) => state.getTokenPrice);
+    const { getTokenPrice } = useTokensV2();
     const tokenUsdPrice = getTokenPrice(intents[0].address);
     const isLoading = useTokenStore((state) => state.isLoading || state.isLoadingBalances);
 

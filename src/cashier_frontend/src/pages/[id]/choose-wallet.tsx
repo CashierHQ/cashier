@@ -16,7 +16,6 @@ import { useTranslation } from "react-i18next";
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
-import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { toast } from "sonner";
 import { useIdentity } from "@nfid/identitykit/react";
@@ -30,13 +29,14 @@ import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { useUseConfirmation } from "@/hooks/tx-cart/useUseConfirmation";
 import { WalletSelectionModal } from "@/components/wallet-selection-modal";
 import { UseSchema } from "@/components/use-page/claim-form-options";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export default function ChooseWalletPage() {
     const { linkId } = useParams();
     const identity = useIdentity();
     const { t } = useTranslation();
     const { renderSkeleton } = useSkeletonLoading();
-    const { updateTokenInit } = useTokens();
+    const { updateTokenInit } = useTokensV2();
     const { goToComplete, handleStateBasedNavigation, goToLinkDefault } =
         useLinkUseNavigation(linkId);
     const { validateAssetAndFees } = useLinkUsageValidation();

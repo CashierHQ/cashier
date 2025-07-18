@@ -11,12 +11,12 @@ import { DefaultPage } from "@/components/use-page/default-page";
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
-import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { WalletSelectionModal } from "@/components/wallet-selection-modal";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export default function ClaimPage() {
     const { linkId } = useParams();
@@ -24,7 +24,7 @@ export default function ClaimPage() {
     const { renderSkeleton } = useSkeletonLoading();
 
     const identity = useIdentity();
-    const { updateTokenInit } = useTokens();
+    const { updateTokenInit } = useTokensV2();
     const { goToChooseWallet, handleStateBasedNavigation } = useLinkUseNavigation(linkId);
 
     // State for wallet selection modal
