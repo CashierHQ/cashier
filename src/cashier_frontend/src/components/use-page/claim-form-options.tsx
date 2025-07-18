@@ -34,19 +34,28 @@ import { IoMdClose } from "react-icons/io";
 import { FaCheck } from "react-icons/fa";
 import { ClipboardIcon } from "lucide-react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
-import { UseSchema } from "@/pages/[id]/choose-wallet";
+
+export const UseSchema = z.object({
+    token: z.string().min(5),
+    amount: z.coerce.number().min(1),
+    address: z.string().optional(),
+});
 
 interface ClaimFormOptionsProps {
     form: UseFormReturn<z.infer<typeof UseSchema>>;
     formData?: LinkDetailModel;
     setDisabled: (disabled: boolean) => void;
     disabledInput?: boolean;
+    walletAddress?: string;
+    onOpenWalletModal?: () => void;
 }
 
 const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     form,
     setDisabled,
     disabledInput,
+    walletAddress,
+    onOpenWalletModal,
 }) => {
     const { t } = useTranslation();
     const { user, disconnect } = useAuth();
@@ -312,10 +321,53 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
                 <h2 className="text-[16px] font-medium mb-2">{secondTitle}</h2>
 
                 <div className="flex flex-col gap-2">
-                    {/* {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)} */}
-                    {renderWalletButton(WALLET_OPTIONS.INTERNET_IDENTITY, "Internet Identity")}
-                    {/* {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets", undefined, true)} */}
-                    {/* {renderInputWallet()} */}
+                    {/* Show wallet status if we're on choose-wallet page */}
+                    {(identity || walletAddress) && onOpenWalletModal ? (
+                        <div className="cursor-pointer" onClick={onOpenWalletModal}>
+                            {identity ? (
+                                <CustomConnectedWalletButton
+                                    connectedAccount={user?.principal.toString()}
+                                    postfixText="Connected"
+                                    postfixIcon={
+                                        getWalletIcon(
+                                            signer?.id === "GoogleSigner"
+                                                ? WALLET_OPTIONS.GOOGLE
+                                                : signer?.id === "InternetIdentity"
+                                                  ? WALLET_OPTIONS.INTERNET_IDENTITY
+                                                  : WALLET_OPTIONS.OTHER,
+                                        ) as JSX.Element
+                                    }
+                                    handleConnect={onOpenWalletModal}
+                                    disabled={false}
+                                />
+                            ) : walletAddress ? (
+                                <CustomConnectedWalletButton
+                                    connectedAccount={walletAddress}
+                                    postfixText="Connected"
+                                    postfixIcon={
+                                        <img
+                                            src={getWalletIcon(WALLET_OPTIONS.OTHER) as string}
+                                            alt="Wallet"
+                                            className="w-6 h-6 mr-2"
+                                        />
+                                    }
+                                    handleConnect={onOpenWalletModal}
+                                    disabled={false}
+                                />
+                            ) : null}
+                        </div>
+                    ) : (
+                        <>
+                            {/* Show wallet options only on main page */}
+                            {/* {renderWalletButton(WALLET_OPTIONS.GOOGLE, "Google login", undefined, true)} */}
+                            {renderWalletButton(
+                                WALLET_OPTIONS.INTERNET_IDENTITY,
+                                "Internet Identity",
+                            )}
+                            {/* {renderWalletButton(WALLET_OPTIONS.OTHER, "Other wallets", undefined, true)} */}
+                            {/* {renderInputWallet()} */}
+                        </>
+                    )}
                 </div>
             </div>
 

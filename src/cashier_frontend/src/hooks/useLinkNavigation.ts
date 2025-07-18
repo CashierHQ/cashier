@@ -11,7 +11,7 @@ import { LinkGetUserStateOutputModel } from "@/services/types/link.service.types
  *
  * This hook centralizes all navigation logic related to link flows:
  * - Default view: /{linkId} - The initial link view
- * - Choose wallet view: /{linkId}/choose-wallet - Where users select a wallet
+ * - Choose wallet view: /{linkId}/choose-wallet - Where users select/confirm wallet
  * - Complete view: /{linkId}/complete - Shown after successful link usage
  *
  * Using this hook ensures consistent navigation behavior across components

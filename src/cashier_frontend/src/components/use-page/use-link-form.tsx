@@ -8,7 +8,7 @@ import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import ClaimFormOptions from "./claim-form-options";
 import UseActionButton from "./use-action-button";
-import { UseSchema } from "@/pages/[id]/choose-wallet";
+import { UseSchema } from "./claim-form-options";
 
 interface UsePageFormProps {
     form: UseFormReturn<z.infer<typeof UseSchema>>;
@@ -18,6 +18,8 @@ interface UsePageFormProps {
     isDisabled: boolean;
     setDisabled: (disabled: boolean) => void;
     buttonText: string;
+    walletAddress?: string;
+    onOpenWalletModal?: () => void;
 }
 
 const UseLinkForm: React.FC<UsePageFormProps> = ({
@@ -27,6 +29,8 @@ const UseLinkForm: React.FC<UsePageFormProps> = ({
     isDisabled,
     setDisabled,
     buttonText,
+    walletAddress,
+    onOpenWalletModal,
 }) => {
     const handleSubmit = () => {
         // Disable the button immediately on submission
@@ -38,7 +42,13 @@ const UseLinkForm: React.FC<UsePageFormProps> = ({
         <div className="w-full flex flex-col flex-grow relative">
             <Form {...form}>
                 <form className="w-full flex flex-col gap-3 h-full">
-                    <ClaimFormOptions form={form} formData={formData} setDisabled={setDisabled} />
+                    <ClaimFormOptions
+                        form={form}
+                        formData={formData}
+                        setDisabled={setDisabled}
+                        walletAddress={walletAddress}
+                        onOpenWalletModal={onOpenWalletModal}
+                    />
                     <UseActionButton
                         isDisabled={isDisabled}
                         buttonText={buttonText}

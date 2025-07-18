@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
@@ -16,6 +16,7 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
+import { WalletSelectionModal } from "@/components/wallet-selection-modal";
 
 export default function ClaimPage() {
     const { linkId } = useParams();
@@ -25,6 +26,10 @@ export default function ClaimPage() {
     const identity = useIdentity();
     const { updateTokenInit } = useTokens();
     const { goToChooseWallet, handleStateBasedNavigation } = useLinkUseNavigation(linkId);
+
+    // State for wallet selection modal
+    const [showWalletModal, setShowWalletModal] = useState(false);
+    const [selectedWalletAddress, setSelectedWalletAddress] = useState<string>("");
 
     // Data fetching hooks
     const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
@@ -63,14 +68,30 @@ export default function ClaimPage() {
 
     const handleClickClaim = useMemo(
         () => () => {
-            goToChooseWallet();
+            if (identity) {
+                // User is authenticated, go directly to choose-wallet page
+                goToChooseWallet();
+            } else {
+                // User is not authenticated, show wallet selection modal
+                setShowWalletModal(true);
+            }
         },
-        [goToChooseWallet],
+        [identity, goToChooseWallet],
     );
 
-    const isCompletePage = useMemo(() => {
-        return location.pathname.endsWith("/complete");
-    }, [location.pathname]);
+    const handleWalletConnected = (address?: string) => {
+        setShowWalletModal(false);
+        if (address || identity) {
+            // Store the selected wallet address if provided
+            if (address) {
+                setSelectedWalletAddress(address);
+                // Store in sessionStorage to pass to choose-wallet page
+                sessionStorage.setItem(`wallet-address-${linkId}`, address);
+            }
+            // Navigate to choose-wallet page after wallet selection
+            goToChooseWallet();
+        }
+    };
 
     // Early return for inactive links
     if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
@@ -83,15 +104,23 @@ export default function ClaimPage() {
                 {isLoadingLinkData && !linkData ? (
                     renderSkeleton()
                 ) : (
-                    <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
-                        <DefaultPage
-                            linkData={linkData}
-                            onClickClaim={handleClickClaim}
-                            isUserStateLoading={isUserStateLoading}
-                            isLoggedIn={!!identity}
-                            isCompletePage={false}
+                    <>
+                        <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
+                            <DefaultPage
+                                linkData={linkData}
+                                onClickClaim={handleClickClaim}
+                                isUserStateLoading={isUserStateLoading}
+                                isLoggedIn={!!identity}
+                                isCompletePage={false}
+                            />
+                        </div>
+
+                        <WalletSelectionModal
+                            open={showWalletModal}
+                            onOpenChange={setShowWalletModal}
+                            onWalletConnected={handleWalletConnected}
                         />
-                    </div>
+                    </>
                 )}
             </SheetWrapper>
         </MainAppLayout>
