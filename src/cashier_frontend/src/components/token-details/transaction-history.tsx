@@ -13,12 +13,15 @@ export function TransactionHistory({ items }: TransactionHistory) {
     const isEmptyHistory = items && items.length === 0;
 
     return (
-        <div className="flex flex-col items-center gap-2">
-            {isEmptyHistory ? (
-                <EmptyHistoryMessage />
-            ) : (
-                <TransactionHistoryList items={items ?? []} />
-            )}
+        <div className="px-4">
+            <h3 className="text-lg font-semibold mb-4">Transaction History</h3>
+            <div className="w-full">
+                {isEmptyHistory ? (
+                    <EmptyHistoryMessage />
+                ) : (
+                    <TransactionHistoryList items={items ?? []} />
+                )}
+            </div>
         </div>
     );
 }
