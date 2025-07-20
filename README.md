@@ -144,7 +144,7 @@ make setup-test
 make build-icp-ledger
 
 # generate ts file for interacting with test code in typescript
-make g
+make generate
 ```
 
 For integration tests, run:

@@ -12,7 +12,7 @@ gzip -c target/wasm32-unknown-unknown/release/cashier_backend.wasm > artifacts/c
 # Download token canister wasm file if it doesn't exist
 if [ ! -f "artifacts/token_canister.wasm.gz" ]; then
     echo "Downloading token_canister.wasm.gz..."
-    curl -o artifacts/token_canister.wasm.gz https://download.dfinity.systems/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/canisters/ledger-canister.wasm.gz
+    curl -o artifacts/token_canister.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz
 else
     echo "token_canister.wasm.gz already exists, skipping download."
 fi
@@ -20,7 +20,7 @@ fi
 # Download token did file if it doesn't exist
 if [ ! -f "artifacts/token.did" ]; then
     echo "Downloading token.did..."
-    curl -o artifacts/token.did https://raw.githubusercontent.com/dfinity/ic/d4c3bb26c207e020c49f3aafe11bd77e6a75e85d/rs/rosetta-api/icp_ledger/ledger.did
+    curl -o artifacts/token.did https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did
 else
     echo "token.did already exists, skipping download."
 fi
