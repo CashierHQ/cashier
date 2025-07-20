@@ -62,17 +62,26 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     // Validate token ID format
     validate_token_id(&input.token_id)?;
 
+    // Handle optional index_id - only parse if provided and not empty
+    let index_pid = match &input.index_id {
+        Some(index_str) if !index_str.is_empty() => Some(
+            Principal::from_text(index_str).map_err(|_| "Invalid index ID format".to_string())?,
+        ),
+        _ => None, // If not provided or empty, use None
+    };
+
     let token_registry_service = TokenRegistryService::new();
 
     // Check if token exists in registry, if not, add it
     if token_registry_service.get_token(&input.token_id).is_none() {
         // Token doesn't exist in registry, register it first
         token_registry_service
-            .update_token_metadata(&input.token_id)
+            .register_new_token(&input.token_id, &index_pid)
             .await?;
     }
 
     let service = UserTokenService::new();
+    ic_cdk::println!("Adding token {} for user {}", input.token_id, user_id);
     service.add_token(&user_id, &input.token_id)
 }
 
@@ -92,7 +101,10 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
         if token_registry_service.get_token(token_id).is_none() {
             // Token doesn't exist in registry, register it first
             // Don't fail if registration fails - continue processing
-            if let Err(_) = token_registry_service.update_token_metadata(token_id).await {
+            if let Err(_) = token_registry_service
+                .register_new_token(token_id, &None)
+                .await
+            {
                 // Log the error but continue processing
                 // In the future, we might want to collect these errors and return them
                 ic_cdk::println!(
@@ -104,6 +116,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
     }
 
     let user_token_service = UserTokenService::new();
+    ic_cdk::println!("Adding tokens {:?} for user {}", input.token_ids, user_id);
     user_token_service.add_tokens(&user_id, &input.token_ids)
 }
 
@@ -118,7 +131,7 @@ pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
 
     // Re-register the token to update its metadata from the ledger
     token_registry_service
-        .register_new_token(&input.token_id, None)
+        .update_token_metadata(&input.token_id)
         .await?;
 
     Ok(())
@@ -138,7 +151,7 @@ pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), St
     // Re-register all tokens to update their metadata from the ledger
     for token_id in &input.token_ids {
         token_registry_service
-            .register_new_token(token_id, None)
+            .update_token_metadata(token_id)
             .await?;
     }
 
@@ -182,6 +195,9 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 
     let user_preferences = user_preference_service.get_preferences(&caller.to_string());
 
+    // Get user's cached balances for enriching token data
+    let user_balances = user_token_service.get_all_user_balances(&caller.to_string());
+
     // Check if user's token list exists
     match user_token_service.get_token_list(&caller.to_string()) {
         Ok(list) => {
@@ -194,7 +210,12 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                     tokens: token_registry_service
                         .list_tokens()
                         .iter()
-                        .map(|registry_token| TokenDto::from(registry_token.clone()))
+                        .map(|registry_token| {
+                            let mut token_dto = TokenDto::from(registry_token.clone());
+                            // Enrich with balance if available
+                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                            token_dto
+                        })
                         .collect(),
                     need_update_version: true,
                     perference: Some(user_preferences),
@@ -212,6 +233,8 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                         if seen_token_ids.insert(registry_token.id.clone()) {
                             let mut token_dto = TokenDto::from(registry_token.clone());
                             token_dto.enabled = true; // Mark as enabled
+                                                      // Enrich with balance if available
+                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
                             filtered_tokens.push(token_dto);
                         }
                     }
@@ -221,7 +244,9 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                 for registry_token in &registry_tokens {
                     if !seen_token_ids.contains(&registry_token.id) {
                         if seen_token_ids.insert(registry_token.id.clone()) {
-                            let token_dto = TokenDto::from(registry_token.clone());
+                            let mut token_dto = TokenDto::from(registry_token.clone());
+                            // Enrich with balance if available
+                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
                             filtered_tokens.push(token_dto);
                         }
                     }
@@ -240,7 +265,12 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                 tokens: token_registry_service
                     .list_tokens()
                     .iter()
-                    .map(|registry_token| TokenDto::from(registry_token.clone()))
+                    .map(|registry_token| {
+                        let mut token_dto = TokenDto::from(registry_token.clone());
+                        // Enrich with balance if available
+                        token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                        token_dto
+                    })
                     .collect(),
                 need_update_version: true,
                 perference: Some(user_preferences),

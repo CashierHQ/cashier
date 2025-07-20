@@ -6,9 +6,13 @@ use ic_cdk::{query, update};
 
 use crate::{
     api::admin::types::{RegistryStats, UserTokens},
+    api::token_v2::types::TokenListResponse,
     constant::default_tokens::get_default_tokens,
     repository::token_registry::TokenRegistryRepository,
-    services::{token_registry::TokenRegistryService, user_token::UserTokenService},
+    services::{
+        token_registry::TokenRegistryService, user_preference::UserPreferenceService,
+        user_token::UserTokenService,
+    },
     types::{TokenDto, TokenRegistryMetadata},
 };
 
@@ -122,4 +126,80 @@ pub fn get_user_tokens(wallet: String) -> Result<UserTokens, String> {
         registry_tokens: registry_tokens.len(),
         version: user_token_list.version,
     })
+}
+
+#[query]
+pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String> {
+    let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;
+    let token_registry_service = TokenRegistryService::new();
+    let user_preference_service = UserPreferenceService::new();
+    let user_token_service = UserTokenService::new();
+    let registry_metadata = token_registry_service.get_metadata();
+
+    let user_preferences = user_preference_service.get_preferences(&caller.to_string());
+
+    match user_token_service.get_token_list(&caller.to_string()) {
+        Ok(list) => {
+            let need_update_version = list.version < registry_metadata.version;
+
+            if list.enable_list.is_empty() {
+                return Ok(TokenListResponse {
+                    tokens: token_registry_service
+                        .list_tokens()
+                        .iter()
+                        .map(|registry_token| TokenDto::from(registry_token.clone()))
+                        .collect(),
+                    need_update_version: true,
+                    perference: Some(user_preferences),
+                });
+            } else {
+                let registry_tokens = token_registry_service.list_tokens();
+                let mut filtered_tokens = Vec::new();
+                let mut seen_token_ids = std::collections::HashSet::new();
+
+                for token_id in &list.enable_list {
+                    if let Some(registry_token) = registry_tokens.iter().find(|t| &t.id == token_id)
+                    {
+                        if seen_token_ids.insert(registry_token.id.clone()) {
+                            let mut token_dto = TokenDto::from(registry_token.clone());
+                            token_dto.enabled = true;
+                            filtered_tokens.push(token_dto);
+                        }
+                    }
+                }
+
+                return Ok(TokenListResponse {
+                    tokens: filtered_tokens,
+                    need_update_version,
+                    perference: Some(user_preferences),
+                });
+            }
+        }
+        Err(_) => {
+            return Ok(TokenListResponse {
+                tokens: token_registry_service
+                    .list_tokens()
+                    .iter()
+                    .map(|registry_token| TokenDto::from(registry_token.clone()))
+                    .collect(),
+                need_update_version: true,
+                perference: Some(user_preferences),
+            });
+        }
+    }
+}
+
+#[query]
+pub fn get_user_balance(wallet: String) -> Result<std::collections::HashMap<String, u128>, String> {
+    ensure_is_admin().unwrap_or_else(|err| {
+        ic_cdk::trap(&format!("Admin check failed: {}", err));
+    });
+
+    let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;
+    let user_token_service = UserTokenService::new();
+
+    // Retrieve all balances for the user
+    let balances = user_token_service.get_all_user_balances(&caller.to_string());
+
+    Ok(balances)
 }

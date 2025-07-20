@@ -6,6 +6,7 @@ use crate::types::{IndexId, LedgerId, TokenDto, TokenId, UserPreference};
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
 pub struct AddTokenInput {
     pub token_id: String,
+    pub index_id: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]

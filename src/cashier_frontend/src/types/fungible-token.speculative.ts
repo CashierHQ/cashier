@@ -24,6 +24,8 @@ export interface TokenMetadata {
     fee?: bigint;
     logo?: string;
     decimals?: number;
+    name?: string;
+    symbol?: string;
 }
 
 export interface TokenBalance {

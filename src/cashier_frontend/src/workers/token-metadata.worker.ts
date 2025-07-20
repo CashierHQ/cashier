@@ -45,10 +45,16 @@ ctx.addEventListener("message", async (event: MessageEvent<FetchMetadataMessage>
                         return null;
                     }
 
+                    if (token.address == "wxani-naaaa-aaaab-qadgq-cai") {
+                        console.log("fee", metadata.fee);
+                    }
+
                     return {
                         fee: metadata.fee !== undefined ? Number(metadata.fee) : undefined,
                         logo: metadata.icon,
                         decimals: metadata.decimals,
+                        symbol: metadata.symbol,
+                        name: metadata.name,
                     };
                 });
 

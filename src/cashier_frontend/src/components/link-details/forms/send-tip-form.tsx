@@ -203,6 +203,8 @@ export const SendTipForm = ({
                 return;
             }
 
+            console.log("Submitting tip form with assets:", formAssets);
+
             // Use centralized submission handler (hooks now handle toast errors)
             await submitTipForm(link.id, formAssets, maxActionNumber);
         } catch (error) {

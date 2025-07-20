@@ -64,7 +64,7 @@ export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
         id: token.id,
         address: tokenId,
         chain: mapStringToFrontendChain(token.chain),
-        name: token.symbol?.toString() || "Unknown Token",
+        name: token.name?.toString() || "Unknown Token",
         symbol: token.symbol?.toString() || "???",
         logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
         decimals: token.decimals || 8,

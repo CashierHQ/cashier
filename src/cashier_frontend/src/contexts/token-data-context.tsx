@@ -1,7 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import React, { createContext, useContext, useEffect, ReactNode, useRef } from "react";
+import React, {
+    createContext,
+    useContext,
+    useEffect,
+    ReactNode,
+    useRef,
+    useState,
+    useCallback,
+} from "react";
 import { useIdentity } from "@nfid/identitykit/react";
 import { useTokenStore } from "@/stores/tokenStore";
 import {
@@ -14,16 +22,29 @@ import {
     useMultipleTokenMutation,
 } from "../hooks/token-hooks";
 import { ICExplorerService, IcExplorerTokenDetail } from "@/services/icExplorer.service";
-import { FungibleToken } from "@/types/fungible-token.speculative";
+import { FungibleToken, TokenBalanceMap } from "@/types/fungible-token.speculative";
+import TokenStorageService from "@/services/backend/tokenStorage.service";
 import {
     AddTokenInput,
     AddTokensInput,
 } from "../../../declarations/token_storage/token_storage.did";
+import {
+    BALANCE_CACHE_LAST_CACHE_TIME_KEY,
+    BALANCE_CACHE_LAST_CACHED_BALANCES_KEY,
+    BALANCE_CACHE_THRESHOLD_MS,
+} from "@/const";
 
 // Context for enriched token data and operations
 interface TokenContextValue {
     // Enriched token data
     rawTokenList: FungibleToken[];
+
+    // Loading states
+    isLoadingMetadata: boolean;
+    isMetadataEnriched: boolean; // NEW: Flag to track if metadata enrichment is complete
+
+    // Initial hash for comparison purposes
+    initialTokenHash: string; // NEW: Hash of the very first token list loaded
 
     // Backend operations
     addToken: (input: AddTokenInput) => Promise<void>;
@@ -31,6 +52,11 @@ interface TokenContextValue {
     updateTokenInit: () => Promise<void>;
     updateTokenExplorer: () => Promise<void>;
     updateTokenBalance: () => Promise<void>;
+
+    // Simplified auto-upgrade functionality
+    hasMetadataChanges: boolean;
+    changedTokenIds: string[];
+    triggerManualComparison: () => Promise<void>;
 }
 
 const TokenContext = createContext<TokenContextValue | null>(null);
@@ -38,8 +64,22 @@ const TokenContext = createContext<TokenContextValue | null>(null);
 // Provider component that manages all React Query hooks and data enrichment
 export function TokenDataProvider({ children }: { children: ReactNode }) {
     const identity = useIdentity();
-    const enrichedTokensRef = useRef<FungibleToken[]>([]);
+    const [enrichedTokens, setEnrichedTokens] = useState<FungibleToken[]>([]);
+    const [isMetadataEnriched, setIsMetadataEnriched] = useState<boolean>(false);
+    const [initialTokenHash, setInitialTokenHash] = useState<string>("");
     const previousIdentityRef = useRef<typeof identity>(identity);
+
+    // Simplified auto-upgrade state
+    const [hasMetadataChanges, setHasMetadataChanges] = useState<boolean>(false);
+    const [changedTokenIds, setChangedTokenIds] = useState<string[]>([]); // Helper function to create token hash
+    const createTokenHash = (tokens: FungibleToken[]): string => {
+        return tokens
+            .map(
+                (t) =>
+                    `${t.id}-${t.symbol}-${t.name}-${t.decimals}-${t.enabled}-${t.fee || "no-fee"}-${t.logoFallback || "no-logo"}`,
+            )
+            .join("|");
+    };
 
     // Get Zustand store actions
     const {
@@ -60,16 +100,15 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     const tokenPricesQuery = useTokenPricesQuery();
 
     // Mutations - only created once at the provider level
-    const addTokenMutation = useAddTokenMutation(identity);
-    const addMultipleTokenMutation = useMultipleTokenMutation(identity);
-    const updateTokenEnableState = useUpdateTokenEnableMutation(identity);
+    const addTokenMutation = useAddTokenMutation();
+    const addMultipleTokenMutation = useMultipleTokenMutation();
+    const updateTokenEnableState = useUpdateTokenEnableMutation();
 
     // Backend operations - created once and shared
     const addToken = async (input: AddTokenInput) => {
         setIsImporting(true);
         try {
             await addTokenMutation.mutateAsync(input);
-            await tokenListQuery.refetch();
         } catch (error) {
             setError(error as Error);
         } finally {
@@ -101,7 +140,6 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     const updateTokenExplorer = async () => {
         const explorerService = new ICExplorerService();
         if (!identity) {
-            console.error("No identity found");
             return;
         }
 
@@ -114,16 +152,13 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
         ): Promise<IcExplorerTokenDetail[]> => {
             try {
                 const result = await explorerService.getListToken();
-                console.log(`Successfully retrieved token list with ${result.length} items`);
                 return result;
-            } catch (error) {
+            } catch {
                 if (retries < MAX_RETRIES) {
                     const delay = RETRY_DELAY * Math.pow(2, retries);
-                    console.log(`Attempt ${retries + 1} failed, retrying in ${delay}ms...`);
                     await new Promise((resolve) => setTimeout(resolve, delay));
                     return getTokenListWithRetry(retries + 1);
                 } else {
-                    console.error(`Failed to get token list after ${MAX_RETRIES} attempts:`, error);
                     return [];
                 }
             }
@@ -138,7 +173,6 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
                 await tokenListQuery.refetch();
             }
         } catch (error) {
-            console.error("Error updating token explorer:", error);
             setError(error as Error);
         }
     };
@@ -151,25 +185,145 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    // Combined enrichment effect that handles all data stages
+    const updateTokensInRegistry = async (tokensToUpdate: string[]): Promise<void> => {
+        if (!identity) {
+            return;
+        }
+
+        try {
+            const tokenStorageService = new TokenStorageService(identity);
+            await tokenStorageService.updateTokenRegistryBatch(tokensToUpdate);
+        } catch (error) {
+            console.error("❌ Error updating tokens in registry:", error);
+        }
+    };
+
+    // Token balance caching logic (moved from TokenCacheService)
+    const cacheTokenBalances = async (balanceMap: TokenBalanceMap, userWallet: string) => {
+        if (!identity) return;
+
+        const currentTime = Date.now();
+        const cacheKey = `${BALANCE_CACHE_LAST_CACHE_TIME_KEY}_${userWallet}`;
+        const cacheTimeKey = `${BALANCE_CACHE_LAST_CACHED_BALANCES_KEY}_${userWallet}`;
+
+        const lastCacheTimeString = localStorage.getItem(cacheTimeKey);
+        const lastCacheTime = lastCacheTimeString ? parseInt(lastCacheTimeString, 10) : 0;
+
+        // Get the last cached balances
+        const lastCachedBalancesString = localStorage.getItem(cacheKey);
+        const lastCachedBalances: TokenBalanceMap = lastCachedBalancesString
+            ? JSON.parse(lastCachedBalancesString, (key, value) => {
+                  // Convert string back to bigint during parsing
+                  if (key === "amount" && typeof value === "string") {
+                      return BigInt(value);
+                  }
+                  return value;
+              })
+            : {};
+
+        // Check if any balances have changed
+        const balancesChanged = Object.keys(balanceMap).some((tokenId) => {
+            const currentAmount = balanceMap[tokenId]?.amount;
+            const lastAmount = lastCachedBalances[tokenId]?.amount;
+
+            // If either amount is missing (undefined), consider it changed
+            if (currentAmount === undefined || lastAmount === undefined) {
+                return true;
+            }
+            // Compare as strings since bigint can't be directly compared with ===
+            return currentAmount.toString() !== lastAmount.toString();
+        });
+
+        const timeThresholdMet = currentTime - lastCacheTime > BALANCE_CACHE_THRESHOLD_MS;
+
+        // Cache if either balances changed OR time threshold met
+        if (balancesChanged || timeThresholdMet) {
+            try {
+                const balancesToCache = Object.entries(balanceMap)
+                    .filter(([, balance]) => balance.amount !== undefined)
+                    .map(([tokenId, balance]) => ({
+                        tokenId,
+                        balance: balance.amount!,
+                    }));
+
+                if (balancesToCache.length > 0) {
+                    // Save the current time
+                    localStorage.setItem(cacheTimeKey, currentTime.toString());
+
+                    // Save the current balances with special handling for bigint
+                    const balanceMapJson = JSON.stringify(balanceMap, (key, value) => {
+                        // Convert bigint to string for JSON serialization
+                        if (typeof value === "bigint") {
+                            return value.toString();
+                        }
+                        return value;
+                    });
+
+                    localStorage.setItem(cacheKey, balanceMapJson);
+
+                    if (balancesChanged) {
+                        const tokenStorageService = new TokenStorageService(identity);
+                        await tokenStorageService.updateTokenBalances(balancesToCache);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to cache balances:", error);
+                // Continue even if caching fails
+            }
+        }
+    };
+
+    // Method to manually trigger comparison (simplified)
+    const updateAllTokenData = useCallback(async () => {
+        await Promise.all([
+            tokenMetadataQuery.refetch(),
+            tokenBalancesQuery.refetch(),
+            tokenPricesQuery.refetch(),
+        ]);
+        try {
+            if (hasMetadataChanges && changedTokenIds.length > 0) {
+                setHasMetadataChanges(false);
+                setChangedTokenIds([]);
+            }
+        } catch (error) {
+            console.error("❌ Error during manual token update:", error);
+        }
+    }, [
+        tokenMetadataQuery,
+        tokenBalancesQuery,
+        tokenPricesQuery,
+        hasMetadataChanges,
+        changedTokenIds.length,
+    ]);
+
+    // 1. Set initial token hash when first tokens are loaded
     useEffect(() => {
-        console.log(
-            "🔄 ENRICHMENT EFFECT RUNNING - Token list query data updated:",
-            tokenListQuery.data,
-        );
-        if (!tokenListQuery.data) return;
+        if (!tokenListQuery.data?.tokens || initialTokenHash !== "") return;
+
+        const tokens = tokenListQuery.data.tokens;
+        if (tokens.length > 0) {
+            const firstHash = createTokenHash(tokens);
+            setInitialTokenHash(firstHash);
+        }
+    }, [tokenListQuery.data?.tokens, initialTokenHash, createTokenHash]);
+
+    // 2. Update metadata enriched flag
+    useEffect(() => {
+        const isCurrentlyEnriched =
+            !!tokenMetadataQuery.data &&
+            !tokenMetadataQuery.isLoading &&
+            !tokenMetadataQuery.isFetching;
+        setIsMetadataEnriched(isCurrentlyEnriched);
+    }, [tokenMetadataQuery.data, tokenMetadataQuery.isLoading, tokenMetadataQuery.isFetching]);
+
+    // 3. Main token enrichment effect - combines all data sources
+    useEffect(() => {
+        if (!tokenListQuery.data?.tokens) return;
 
         let currentTokens = [...tokenListQuery.data.tokens];
 
-        // 1. Enrich with balances if available
+        // Enrich with balances if available
         if (tokenBalancesQuery.data) {
-            console.log("Token balances query data:", tokenBalancesQuery.data);
-            console.log("Current tokens length:", currentTokens.length);
-            console.log(
-                "Current tokens enable length:",
-                currentTokens.filter((t) => t.enabled).length,
-            );
-
             const balanceMap: Record<string, bigint | undefined> = {};
             tokenBalancesQuery.data.forEach((balance) => {
                 if (balance.address && balance.amount !== undefined) {
@@ -179,86 +333,148 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
 
             currentTokens = currentTokens.map((token) => {
                 const amount = balanceMap[token.address];
-                if (amount !== undefined) {
-                    return { ...token, amount };
-                }
-                return token;
+                return amount !== undefined ? { ...token, amount } : token;
             });
         }
 
-        // 2. Enrich with metadata if available
+        // Enrich with metadata if available
         if (tokenMetadataQuery.data) {
-            console.log("Token metadata query data:", tokenMetadataQuery.data);
+            const changedTokens: string[] = [];
+            let hasAnyChanges = false;
+
             currentTokens = currentTokens.map((token) => {
                 const metadata = tokenMetadataQuery.data[token.address];
-                if (metadata?.fee !== undefined) {
-                    return {
-                        ...token,
-                        fee: metadata.fee,
-                        logoFallback: metadata.logo,
-                    };
+                if (!metadata) return token;
+
+                const enrichedToken = { ...token };
+                let tokenHasChanges = false;
+
+                // Be careful with name and symbol - only update if metadata has better values
+                if (metadata.name && metadata.name !== token.name) {
+                    enrichedToken.name = metadata.name;
+                    tokenHasChanges = true;
                 }
-                return token;
+
+                if (metadata.symbol && metadata.symbol !== token.symbol) {
+                    enrichedToken.symbol = metadata.symbol;
+                    tokenHasChanges = true;
+                }
+
+                // Track if this token has changes
+                if (tokenHasChanges) {
+                    changedTokens.push(token.id);
+                    hasAnyChanges = true;
+                }
+
+                return enrichedToken;
             });
+
+            // Update global change tracking
+            if (hasAnyChanges) {
+                setHasMetadataChanges(true);
+                setChangedTokenIds(changedTokens);
+            }
         }
 
-        // 3. Enrich with prices if available
+        // Enrich with prices if available
         if (tokenPricesQuery.data) {
-            console.log("Token prices query data:", tokenPricesQuery.data);
             currentTokens = currentTokens.map((token) => {
                 const price = tokenPricesQuery.data[token.address];
-                if (price) {
-                    const enrichedToken = {
-                        ...token,
-                        usdConversionRate: price,
-                    };
+                if (!price) return token;
 
-                    if (token.amount) {
-                        const amountInNumber = Number(token.amount) / Math.pow(10, token.decimals);
-                        enrichedToken.usdEquivalent = price * amountInNumber;
-                    } else {
-                        enrichedToken.usdEquivalent = 0;
-                    }
+                const enrichedToken = {
+                    ...token,
+                    usdConversionRate: price,
+                };
 
-                    return enrichedToken;
+                if (token.amount) {
+                    const amountInNumber = Number(token.amount) / Math.pow(10, token.decimals);
+                    enrichedToken.usdEquivalent = price * amountInNumber;
+                } else {
+                    enrichedToken.usdEquivalent = 0;
                 }
-                return token;
+
+                return enrichedToken;
             });
         }
 
-        // Update the enriched tokens ref
-        enrichedTokensRef.current = currentTokens;
-
-        // Update hasBalances in the store
-        const hasBalances = currentTokens.some((token) => token.amount && token.amount > BigInt(0));
-        setHasBalances(hasBalances);
+        // Update the enriched tokens state
+        setEnrichedTokens(currentTokens);
     }, [
-        tokenListQuery.data,
+        tokenListQuery.data?.tokens,
         tokenBalancesQuery.data,
         tokenMetadataQuery.data,
         tokenPricesQuery.data,
-        setHasBalances,
+        enrichedTokens.length,
     ]);
+
+    // 4. Update hasBalances flag when enriched tokens change
+    useEffect(() => {
+        const hasBalances = enrichedTokens.some(
+            (token) => token.amount && token.amount > BigInt(0),
+        );
+        setHasBalances(hasBalances);
+    }, [enrichedTokens, setHasBalances]);
+
+    // 5. Cache token balances when balance data changes
+    useEffect(() => {
+        if (!identity || !tokenBalancesQuery.data) return;
+
+        const balanceMap: TokenBalanceMap = {};
+        tokenBalancesQuery.data.forEach((balance) => {
+            if (balance.address && balance.amount !== undefined) {
+                const id = `${balance.chain}:${balance.address}`;
+                balanceMap[id] = { amount: balance.amount };
+            }
+        });
+
+        if (Object.keys(balanceMap).length > 0) {
+            cacheTokenBalances(balanceMap, identity.getPrincipal().toString());
+        }
+    }, [tokenBalancesQuery.data, identity, cacheTokenBalances]);
+
+    // 6. Auto-upgrade effect - Simplified approach using metadata change flags
+    useEffect(() => {
+        if (!identity) {
+            return;
+        }
+
+        if (!hasMetadataChanges || changedTokenIds.length === 0) {
+            return;
+        }
+
+        if (!isMetadataEnriched) {
+            return;
+        }
+
+        const updateChangedTokens = async () => {
+            try {
+                await updateTokensInRegistry(changedTokenIds);
+
+                // Reset the flags after successful update
+                setHasMetadataChanges(false);
+                setChangedTokenIds([]);
+            } catch (error) {
+                console.error("❌ Failed to update tokens in registry:", error);
+            }
+        };
+
+        updateChangedTokens();
+    }, [identity, hasMetadataChanges, changedTokenIds, isMetadataEnriched]);
 
     // Loading state effects
     useEffect(() => {
-        console.log("🔄 BALANCE LOADING EFFECT RUNNING");
         const isLoadingBalancesState =
             tokenBalancesQuery.isLoading || tokenBalancesQuery.isFetching;
-        console.log("Is loading balances state:", isLoadingBalancesState);
         setIsLoadingBalances(isLoadingBalancesState);
     }, [tokenBalancesQuery.isLoading, tokenBalancesQuery.isFetching, setIsLoadingBalances]);
 
     useEffect(() => {
-        console.log("🔄 PRICE LOADING EFFECT RUNNING");
         const isLoadingPricesState = tokenPricesQuery.isLoading || tokenPricesQuery.isFetching;
-        console.log("Is loading prices state:", isLoadingPricesState);
         setIsLoadingPrices(isLoadingPricesState);
     }, [tokenPricesQuery.isLoading, tokenPricesQuery.isFetching, setIsLoadingPrices]);
 
     useEffect(() => {
-        console.log("🔄 TOKEN LIST LOADING EFFECT RUNNING");
-        console.log("Token list query fetching state:", tokenListQuery.isFetching);
         if (tokenListQuery.isFetching && !tokenListQuery.data) {
             setIsLoading(true);
         } else {
@@ -271,33 +487,33 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
         // }
 
         if (tokenListQuery.data?.perference) {
-            console.log(
-                "Setting filters from token list query preferences:",
-                tokenListQuery.data.perference,
-            );
             setFilters(tokenListQuery.data.perference);
         }
     }, [setIsLoading, tokenListQuery.isFetching, tokenListQuery.data, setFilters]);
 
     // Refetch token list when identity changes
     useEffect(() => {
-        console.log("🔄 IDENTITY EFFECT RUNNING");
         // Identity changes are now handled automatically by React Query
         // through the query key that includes the principal ID
         if (identity !== previousIdentityRef.current) {
-            console.log("Identity changed - React Query will handle refetch automatically");
             previousIdentityRef.current = identity;
         }
     }, [identity]);
 
     // Context value
     const contextValue: TokenContextValue = {
-        rawTokenList: enrichedTokensRef.current,
+        rawTokenList: enrichedTokens,
+        isLoadingMetadata: tokenMetadataQuery.isLoading || tokenMetadataQuery.isFetching,
+        isMetadataEnriched,
+        initialTokenHash,
         addToken,
         toggleTokenEnable,
         updateTokenInit,
         updateTokenExplorer,
         updateTokenBalance,
+        hasMetadataChanges,
+        changedTokenIds,
+        triggerManualComparison: updateAllTokenData,
     };
 
     return <TokenContext.Provider value={contextValue}>{children}</TokenContext.Provider>;

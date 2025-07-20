@@ -15,7 +15,6 @@ import { IdleTimeoutProvider } from "@/contexts/ilde-timeout-context";
 import { BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID } from "./const";
 // useEffect removed - console logging now handled at build time
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { TokenComparisonProvider } from "./contexts/token-comparison-context";
 import { TokenDataProvider } from "./contexts/token-data-context";
 
 const targets = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
@@ -91,29 +90,27 @@ function App() {
         >
             <QueryClientProvider client={queryClient}>
                 <TokenDataProvider>
-                    <TokenComparisonProvider>
-                        <ImageCacheProvider>
-                            <IdleTimeoutProvider>
-                                <AppRouter />
-                            </IdleTimeoutProvider>
-                        </ImageCacheProvider>
-                        <Toaster
-                            position="top-center"
-                            expand={true}
-                            richColors={true}
-                            toastOptions={{
-                                classNames: {
-                                    toast: "toast",
-                                    title: "title",
-                                    description: "description",
-                                    actionButton: "action-button",
-                                    cancelButton: "cancel-button",
-                                    closeButton: "close-button",
-                                },
-                            }}
-                        />
-                        <ReactQueryDevtools initialIsOpen={true} />
-                    </TokenComparisonProvider>
+                    <ImageCacheProvider>
+                        <IdleTimeoutProvider>
+                            <AppRouter />
+                        </IdleTimeoutProvider>
+                    </ImageCacheProvider>
+                    <Toaster
+                        position="top-center"
+                        expand={true}
+                        richColors={true}
+                        toastOptions={{
+                            classNames: {
+                                toast: "toast",
+                                title: "title",
+                                description: "description",
+                                actionButton: "action-button",
+                                cancelButton: "cancel-button",
+                                closeButton: "close-button",
+                            },
+                        }}
+                    />
+                    <ReactQueryDevtools initialIsOpen={true} />
                 </TokenDataProvider>
             </QueryClientProvider>
         </IdentityKitProvider>

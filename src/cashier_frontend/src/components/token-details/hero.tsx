@@ -1,16 +1,16 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useTranslation } from "react-i18next";
 import { SendReceive } from "../ui/send-receive";
-import { Copy, CopyCheck } from "lucide-react";
+import { Copy } from "lucide-react";
 import { mapChainToPrettyName } from "@/utils/map/chain.map";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { useState } from "react";
 import { convertDecimalBigIntToNumber } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import { useWalletContext } from "@/contexts/wallet-context";
 import { toast } from "sonner";
+import copy from "copy-to-clipboard";
+import { useTranslation } from "react-i18next";
 
 interface TokenDetailsHeroProps {
     token: FungibleToken;
@@ -40,15 +40,15 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
         }
     };
 
-    const [hasCopiedAddress, setHasCopiedAddress] = useState<boolean>(false);
-
-    const copyAddress = () => {
-        navigator.clipboard.writeText(token.address);
-        setHasCopiedAddress(true);
-        toast.success(t("common.sucess.copied_address"));
+    const handleCopy = (e: React.SyntheticEvent) => {
+        try {
+            e.stopPropagation();
+            copy(token.address);
+            toast.success(t("common.success.copied_address"));
+        } catch (err) {
+            console.log("🚀 ~ handleCopyLink ~ err:", err);
+        }
     };
-
-    const CopyIcon = hasCopiedAddress ? CopyCheck : Copy;
 
     return (
         <div className="flex flex-col items-center px-4">
@@ -86,10 +86,10 @@ export function TokenDetailsHero({ token }: TokenDetailsHeroProps) {
                         <div className="flex items-center gap-2">
                             <p className="font-medium text-sm">{t("history.hero.contract")}</p>
                             <button
-                                onClick={copyAddress}
+                                onClick={handleCopy}
                                 className="hover:opacity-70 transition-opacity"
                             >
-                                <CopyIcon className="stroke-green" size={16} />
+                                <Copy className="stroke-green" size={16} />
                             </button>
                         </div>
                         <p className="text-sm text-grey text-right max-w-[200px] truncate">
