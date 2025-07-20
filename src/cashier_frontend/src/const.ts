@@ -8,3 +8,8 @@ export const IC_HOST = "https://icp0.io";
 export const IC_EXPLORER_IMAGES_PATH = "https://api.icexplorer.io/images/";
 export const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const ICP_LOGO = "./icpLogo.png";
+
+// Token balance caching constants
+export const BALANCE_CACHE_LAST_CACHE_TIME_KEY = "lastTokenBalanceCacheTime";
+export const BALANCE_CACHE_LAST_CACHED_BALANCES_KEY = "lastCachedTokenBalances";
+export const BALANCE_CACHE_THRESHOLD_MS = 1 * 30 * 1000; // 30 seconds in milliseconds
