@@ -20,10 +20,10 @@ import {
 } from "../../../declarations/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
-import TokenCacheService from "@/services/backend/tokenCache.service";
 import { mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
 import { fromNullable } from "@dfinity/utils";
 import { useTokenMetadataWorker } from "./token/useTokenMetadataWorker";
+import { CHAIN } from "@/services/types/enum";
 
 /**
  * Response from tokenListQuery with combined token list data
@@ -230,70 +230,70 @@ export function useTokenPricesQuery() {
     });
 }
 
+// Worker for fetching token balances
+export function useTokenBalancesWorker({
+    onProgress,
+}: {
+    onProgress?: (processed: number, total: number) => void;
+}) {
+    const fetchBalances = async (tokens: FungibleToken[], identity: Identity) => {
+        const tokenUtilService = new TokenUtilService(identity);
+        const balanceMap: TokenBalanceMap = {};
+
+        const tasks = tokens.map(async (token, index) => {
+            try {
+                const balance = await tokenUtilService.balanceOf(token.address);
+                balanceMap[token.address] = { amount: balance };
+
+                if (onProgress) {
+                    onProgress(index + 1, tokens.length);
+                }
+            } catch (error) {
+                console.error(`Error fetching balance for ${token.address}:`, error);
+            }
+        });
+
+        await Promise.allSettled(tasks);
+
+        return balanceMap;
+    };
+
+    return { fetchBalances };
+}
+
 // Hook 2: Fetch token balances
 export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
     const identity = useIdentity();
+    const { fetchBalances } = useTokenBalancesWorker({
+        onProgress: (processed, total) => {
+            console.log(`Balance fetching progress: ${processed}/${total}`);
+        },
+    });
 
     return useQuery({
         queryKey: TOKEN_QUERY_KEYS.balances(identity?.getPrincipal().toString()),
         queryFn: async () => {
-            if (!identity) {
+            if (!identity || !tokens) {
                 return [];
             }
 
-            if (!tokens) {
-                return [];
-            }
+            const enableToken = tokens.filter((token) => token.enabled);
 
-            const tokenUtilService = new TokenUtilService(identity);
+            const balanceMap = await fetchBalances(enableToken, identity);
 
-            // Create a balance map to track results
-            const balanceMap: TokenBalanceMap = {};
-
-            const enableTokens = tokens.filter((token) => token.enabled);
-
-            // Fetch balances in parallel
-            const tokenPromises = enableTokens.map(async (token) => {
-                try {
-                    const balance = await tokenUtilService.balanceOf(token.address);
-
-                    // Update the balance map
-
-                    const id = `${token.chain}:${token.address}`;
-
-                    balanceMap[id] = { amount: balance };
-
-                    return {
-                        id: id,
-                        address: token.address,
-                        amount: balance,
-                    };
-                } catch (error) {
-                    console.error("Error fetching balance for ${token.address}:", error);
-                    return {
-                        id: token.id,
-                        address: token.address,
-                        amount: 0n,
-                    };
-                }
-            });
-
-            const tokensWithBalances = await Promise.all(tokenPromises);
-
-            // Store the balance map in local storage and backend if changed or time threshold met
-            new TokenCacheService(identity).cacheTokenBalances(
-                balanceMap,
-                identity.getPrincipal().toString(),
-            );
-
-            return tokensWithBalances;
+            // Return the balances as an array
+            return Object.entries(balanceMap).map(([address, balance]) => ({
+                address,
+                amount: balance.amount,
+                chain: CHAIN.IC,
+            }));
         },
         enabled: !!identity && !!tokens,
         staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
         refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
-        retry: 3, // Retry failed requests up to 3 times
+        retry: 3,
         retryDelay: (attemptIndex) =>
-            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY), // Exponential backoff
+            Math.min(1000 * 2 ** attemptIndex, TIME_CONSTANTS.MAX_RETRY_DELAY),
     });
 }
 // Add token mutation

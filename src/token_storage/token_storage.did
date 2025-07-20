@@ -10,8 +10,9 @@ type RegistryStats = record {
 };
 type Result = variant { Ok; Err : text };
 type Result_1 = variant { Ok : RegistryStats; Err : text };
-type Result_2 = variant { Ok : UserTokens; Err : text };
-type Result_3 = variant { Ok : TokenListResponse; Err : text };
+type Result_2 = variant { Ok : vec record { text; nat }; Err : text };
+type Result_3 = variant { Ok : UserTokens; Err : text };
+type Result_4 = variant { Ok : TokenListResponse; Err : text };
 type TokenDto = record {
   id : text;
   decimals : nat8;
@@ -47,9 +48,11 @@ service : () -> {
   get_registry_tokens : (bool) -> (vec TokenDto) query;
   get_registry_version : () -> (nat64) query;
   get_stats : () -> (Result_1) query;
-  get_user_tokens : (text) -> (Result_2) query;
+  get_user_balance : (text) -> (Result_2) query;
+  get_user_tokens : (text) -> (Result_3) query;
   initialize_registry : () -> (Result);
-  list_tokens : () -> (Result_3) query;
+  list_tokens : () -> (Result_4) query;
+  list_tokens_by_wallet : (text) -> (Result_4) query;
   sync_token_list : () -> (Result);
   update_token_balance : (vec UpdateTokenBalanceInput) -> (Result);
   update_token_enable : (UpdateTokenInput) -> (Result);

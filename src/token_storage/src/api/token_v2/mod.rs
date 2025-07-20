@@ -195,6 +195,9 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 
     let user_preferences = user_preference_service.get_preferences(&caller.to_string());
 
+    // Get user's cached balances for enriching token data
+    let user_balances = user_token_service.get_all_user_balances(&caller.to_string());
+
     // Check if user's token list exists
     match user_token_service.get_token_list(&caller.to_string()) {
         Ok(list) => {
@@ -207,7 +210,12 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                     tokens: token_registry_service
                         .list_tokens()
                         .iter()
-                        .map(|registry_token| TokenDto::from(registry_token.clone()))
+                        .map(|registry_token| {
+                            let mut token_dto = TokenDto::from(registry_token.clone());
+                            // Enrich with balance if available
+                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                            token_dto
+                        })
                         .collect(),
                     need_update_version: true,
                     perference: Some(user_preferences),
@@ -225,6 +233,8 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                         if seen_token_ids.insert(registry_token.id.clone()) {
                             let mut token_dto = TokenDto::from(registry_token.clone());
                             token_dto.enabled = true; // Mark as enabled
+                                                      // Enrich with balance if available
+                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
                             filtered_tokens.push(token_dto);
                         }
                     }
@@ -234,7 +244,9 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                 for registry_token in &registry_tokens {
                     if !seen_token_ids.contains(&registry_token.id) {
                         if seen_token_ids.insert(registry_token.id.clone()) {
-                            let token_dto = TokenDto::from(registry_token.clone());
+                            let mut token_dto = TokenDto::from(registry_token.clone());
+                            // Enrich with balance if available
+                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
                             filtered_tokens.push(token_dto);
                         }
                     }
@@ -253,7 +265,12 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                 tokens: token_registry_service
                     .list_tokens()
                     .iter()
-                    .map(|registry_token| TokenDto::from(registry_token.clone()))
+                    .map(|registry_token| {
+                        let mut token_dto = TokenDto::from(registry_token.clone());
+                        // Enrich with balance if available
+                        token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                        token_dto
+                    })
                     .collect(),
                 need_update_version: true,
                 perference: Some(user_preferences),

@@ -249,4 +249,12 @@ impl UserTokenService {
 
         Ok(())
     }
+
+    /// Get all balances for a user
+    pub fn get_all_user_balances(&self, user_id: &str) -> std::collections::HashMap<TokenId, u128> {
+        self.balance_cache_repository
+            .get_all_balances(user_id)
+            .into_iter()
+            .collect()
+    }
 }
