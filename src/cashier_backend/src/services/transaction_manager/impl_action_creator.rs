@@ -4,7 +4,6 @@
 use cashier_types::{link_action::v1::LinkAction, transaction::v2::Transaction};
 use std::collections::HashMap;
 
-use crate::services::transaction_manager::traits::TransactionAssembler;
 use crate::{
     core::action::types::ActionDto,
     services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator},
@@ -30,7 +29,8 @@ impl<E: IcEnvironment + Clone> ActionCreator<E> for TransactionManagerService<E>
         for intent in temp_action.intents.iter() {
             let chain = intent.chain.clone();
             // assemble txs
-            let txs = self.assemble_txs(&chain, intent)?;
+            
+            let txs = self.intent_adapter.intent_to_transactions(&chain, intent)?;
             intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
 
             // store tx ids in hashmap
