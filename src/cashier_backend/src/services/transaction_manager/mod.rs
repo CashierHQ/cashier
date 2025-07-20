@@ -3,7 +3,6 @@
 
 pub mod service;
 pub mod traits;
-pub mod validate;
 
 // Trait implementations
 pub mod impl_action_creator;

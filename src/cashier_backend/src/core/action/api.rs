@@ -8,7 +8,7 @@ use crate::core::guard::is_not_anonymous;
 use crate::info;
 use crate::services::request_lock::RequestLockService;
 use crate::services::transaction_manager::service::TransactionManagerService;
-use crate::services::transaction_manager::traits::TransactionExecutor;
+use crate::services::transaction_manager::traits::{TransactionExecutor, TransactionValidator};
 use crate::utils::runtime::{IcEnvironment, RealIcEnvironment};
 use crate::{
     core::CanisterError,
@@ -22,13 +22,12 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     let caller = msg_caller();
     let ic_env = RealIcEnvironment::new();
 
-    let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
     let transaction_manager: TransactionManagerService<RealIcEnvironment> =
         TransactionManagerService::get_instance();
     let request_lock_service = RequestLockService::get_instance();
 
-    let is_creator = validate_service
-        .is_action_creator(&caller.to_text(), &input.action_id)
+    let is_creator = transaction_manager
+        .is_action_creator(&caller, &input.action_id)
         .map_err(|e| {
             CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
         })?;
