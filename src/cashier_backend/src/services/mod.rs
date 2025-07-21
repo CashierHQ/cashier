@@ -6,6 +6,7 @@ pub mod adapter;
 pub mod ext;
 pub mod link;
 pub mod request_lock;
+pub mod tracking_processing_tx;
 pub mod transaction;
 pub mod transaction_manager;
 pub mod user;
