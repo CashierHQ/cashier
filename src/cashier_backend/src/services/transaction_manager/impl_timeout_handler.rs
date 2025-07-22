@@ -47,6 +47,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
         let mut tx = self.transaction_service.get_tx_by_id(&tx_id)?;
 
         if tx.state == TransactionState::Success || tx.state == TransactionState::Fail {
+            self.remove_record_in_processing_transaction(&tx_id);
             return Ok(());
         }
         let start_ts = tx.start_ts.ok_or_else(|| {
@@ -57,22 +58,38 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
         let tx_timeout = get_tx_timeout_nano_seconds();
 
         if current_ts - start_ts >= tx_timeout {
-            let state = self.manual_check_status(&tx, vec![]).await?;
+            let state = self.manual_check_status(&tx, vec![]).await;
 
             let _ = self.transaction_service.update_tx_state(&mut tx, &state);
 
-            self.action_service.roll_up_state(&tx.id).map_err(|e| {
+            let result = self.action_service.roll_up_state(&tx.id).map_err(|e| {
                 CanisterError::HandleLogicError(format!(
                     "Failed to roll up state for action: {}",
                     e
                 ))
-            })?;
+            });
 
-            Ok(())
+            self.remove_record_in_processing_transaction(&tx_id);
+
+            match result {
+                Ok(_) => Ok(()),
+                Err(e) => {
+                    error!("Failed to roll up state for action: {}", e);
+                    Err(e)
+                }
+            }
         } else {
             Err(CanisterError::ValidationErrors(
                 "Transaction is not timeout".to_string(),
             ))
+        }
+    }
+}
+
+impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
+    fn remove_record_in_processing_transaction(&self, tx_id: &str) {
+        if self.processing_transaction_repository.exists(tx_id) {
+            self.processing_transaction_repository.delete(tx_id);
         }
     }
 }

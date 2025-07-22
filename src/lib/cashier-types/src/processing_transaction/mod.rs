@@ -4,6 +4,8 @@
 use candid::CandidType;
 use cashier_macros::storable;
 
+use crate::transaction::v2::Transaction;
+
 #[derive(Debug, Clone, PartialEq, Eq, CandidType)]
 #[storable]
 pub struct ProcessingTransaction {
@@ -15,9 +17,6 @@ pub struct ProcessingTransaction {
 
     /// When the transaction will timeout (nanoseconds since epoch)
     pub timeout_at: u64,
-
-    /// Creation timestamp for this tracking record
-    pub created_at: u64,
 }
 
 impl ProcessingTransaction {
@@ -26,7 +25,6 @@ impl ProcessingTransaction {
             transaction_id,
             start_time,
             timeout_at: start_time + ttl_nanoseconds,
-            created_at: start_time,
         }
     }
 
@@ -39,7 +37,7 @@ impl ProcessingTransaction {
     pub fn is_due_for_check(&self, current_time: u64, check_interval_ns: u64) -> bool {
         // Simple interval check based on creation time
         // This ensures we check periodically without tracking last check time
-        (current_time - self.created_at) % check_interval_ns < check_interval_ns / 2
+        (current_time - self.start_time) % check_interval_ns < check_interval_ns / 2
     }
 
     /// Calculate remaining time until timeout
@@ -48,6 +46,14 @@ impl ProcessingTransaction {
             None
         } else {
             Some(self.timeout_at - current_time)
+        }
+    }
+
+    pub fn from_tx_with_timeout(tx: &Transaction, timeout_threshold: u64) -> Self {
+        Self {
+            transaction_id: tx.id.clone(),
+            start_time: tx.created_at,
+            timeout_at: tx.created_at + timeout_threshold,
         }
     }
 }
