@@ -5,7 +5,6 @@
 
 import { WalletTabs } from "@/components/wallet/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTokens } from "@/hooks/useTokens";
 import { useEffect, useMemo, useCallback } from "react";
 import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SendReceive } from "../ui/send-receive";
@@ -21,6 +20,7 @@ import SwapPanel from "./swap-panel";
 import { formatNumber } from "@/utils/helpers/currency";
 import React from "react";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface WalletPanelProps {
     onClose: () => void;
@@ -89,34 +89,20 @@ const MainWalletPanel: React.FC<{
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const WalletPanel: React.FC<WalletPanelProps> = ({ onClose }) => {
-    const { isLoading, getDisplayTokens, rawTokenList } = useTokens();
+    const { isLoading, displayTokens, rawTokenList } = useTokensV2();
     const { activePanel, panelParams, navigateToPanel } = useWalletContext();
-
-    // Use useMemo for filteredTokens instead of useState + useEffect
-    const filteredTokens = useMemo(() => {
-        // Make sure we have tokens to work with
-        if (!rawTokenList || rawTokenList.length === 0) {
-            console.log("WalletPanel: No tokens in rawTokenList");
-            return [];
-        }
-
-        // Get tokens that should be displayed based on filters
-        const displayTokens = getDisplayTokens();
-        return displayTokens;
-    }, [rawTokenList, getDisplayTokens]);
 
     // Calculate the total USD equivalent from the tokens
     const totalUsdEquivalent = useMemo(() => {
-        if (!filteredTokens || filteredTokens.length === 0) return 0;
+        if (!displayTokens || displayTokens.length === 0) return 0;
 
-        const total = filteredTokens.reduce((total, token) => {
+        const total = displayTokens.reduce((total, token) => {
             return total + (token.usdEquivalent || 0);
         }, 0);
 
         const formattedTotal = Number(total.toFixed(2));
         return formattedTotal;
-    }, [filteredTokens]);
-
+    }, [displayTokens]);
     const navigateReceivePage = useCallback(() => {
         navigateToPanel("receive");
     }, [navigateToPanel]);

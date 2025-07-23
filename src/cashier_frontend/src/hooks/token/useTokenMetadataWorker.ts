@@ -38,15 +38,16 @@ export function useTokenMetadataWorker(options: UseTokenMetadataWorkerOptions = 
     // Setup worker on mount
     useEffect(() => {
         // Create worker instance
-        const worker = new Worker(new URL("../workers/token-metadata.worker.ts", import.meta.url), {
-            type: "module",
-        });
+        const worker = new Worker(
+            new URL("../../workers/token-metadata.worker.ts", import.meta.url),
+            {
+                type: "module",
+            },
+        );
 
         // Set up message handler
         worker.onmessage = (event) => {
             const { type, payload } = event.data;
-
-            console.log("[Worker Message]", type, typeof payload);
 
             switch (type) {
                 case "ready":
@@ -118,7 +119,7 @@ export function useTokenMetadataWorker(options: UseTokenMetadataWorkerOptions = 
     /**
      * Function to fetch metadata for tokens
      */
-    const fetchMetadata = async (tokens: FungibleToken[]) => {
+    const fetchMetadata = async (tokens: FungibleToken[]): Promise<TokenMetadataMap> => {
         if (!workerRef.current) {
             throw new Error("Worker not initialized");
         }
@@ -133,18 +134,47 @@ export function useTokenMetadataWorker(options: UseTokenMetadataWorkerOptions = 
         // Reset state
         setState({ isLoading: true, error: null, metadataMap: {} });
 
-        try {
-            workerRef.current.postMessage({
-                type: "fetchMetadata",
-                payload: {
-                    tokens,
-                    batchSize,
-                },
-            });
-        } catch (error) {
-            console.error("[Main] Error sending message to worker:", error);
-            setState({ isLoading: false, error: error as Error, metadataMap: {} });
-        }
+        // Return a Promise that resolves when the worker completes
+        return new Promise((resolve, reject) => {
+            if (!workerRef.current) {
+                reject(new Error("Worker not initialized"));
+                return;
+            }
+
+            // Set up one-time message handler for this request
+            const handleMessage = (event: MessageEvent) => {
+                const { type, payload } = event.data;
+
+                if (type === "complete") {
+                    // Remove the handler
+                    workerRef.current?.removeEventListener("message", handleMessage);
+                    resolve(payload.metadataMap || {});
+                } else if (type === "error") {
+                    // Remove the handler
+                    workerRef.current?.removeEventListener("message", handleMessage);
+                    reject(new Error(payload.message));
+                }
+            };
+
+            // Add the one-time handler
+            workerRef.current.addEventListener("message", handleMessage);
+
+            try {
+                workerRef.current.postMessage({
+                    type: "fetchMetadata",
+                    payload: {
+                        tokens,
+                        batchSize,
+                    },
+                });
+            } catch (error) {
+                // Remove the handler
+                workerRef.current?.removeEventListener("message", handleMessage);
+                console.error("[Main] Error sending message to worker:", error);
+                setState({ isLoading: false, error: error as Error, metadataMap: {} });
+                reject(error);
+            }
+        });
     };
 
     return {

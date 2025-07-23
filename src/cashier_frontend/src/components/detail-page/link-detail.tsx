@@ -5,7 +5,6 @@ import React from "react";
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
-import { useTokens } from "@/hooks/useTokens";
 import { StateBadge } from "../link-item";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { getLinkTypeString, LINK_TYPE } from "@/services/types/enum";
@@ -13,6 +12,7 @@ import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatNumber } from "@/utils/helpers/currency";
 import { useLinkAssetBalance, type BalanceItem } from "@/hooks/useLinkAssetBalance";
 import { Skeleton } from "../ui/skeleton";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface LinkDetailProps {
     link: LinkDetailModel;
@@ -21,7 +21,7 @@ interface LinkDetailProps {
 
 export const LinkDetail: React.FC<LinkDetailProps> = ({ link, onShareClick }) => {
     const { t } = useTranslation();
-    const { getToken } = useTokens();
+    const { getToken } = useTokensV2();
     const { balances, loading, error } = useLinkAssetBalance(link);
 
     const renderBalancesSkeleton = (): JSX.Element => {

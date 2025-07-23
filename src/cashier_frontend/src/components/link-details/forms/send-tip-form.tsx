@@ -7,7 +7,6 @@ import AssetDrawer from "@/components/asset-drawer";
 import { useTranslation } from "react-i18next";
 import { AssetFormSkeleton } from "../asset-form-skeleton";
 import { useAddAssetForm } from "../add-asset-hooks";
-import { useTokens } from "@/hooks/useTokens";
 import {
     useLinkCreationFormStore,
     UserInputAsset,
@@ -30,6 +29,7 @@ import {
 import { useSendTipFormHandler } from "@/hooks/form/usePageSubmissionHandlers";
 import { toast } from "sonner";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 interface SendTipFormProps {
     initialValues?: {
@@ -66,8 +66,7 @@ export const SendTipForm = ({
     const [maxActionNumber] = useState<number>(1);
 
     // Get tokens data
-    const { isLoading: isLoadingTokens, getTokenPrice, getDisplayTokens } = useTokens();
-    const allAvailableTokens = getDisplayTokens();
+    const { isLoading: isLoadingTokens, getTokenPrice, displayTokens } = useTokensV2();
 
     // Use centralized submission handler
     const { submitTipForm } = useSendTipFormHandler(link);
@@ -90,7 +89,7 @@ export const SendTipForm = ({
         initialValues = getInitialFormValues(currentInput);
     }
 
-    const form = useAddAssetForm(allAvailableTokens || [], initialValues);
+    const form = useAddAssetForm(displayTokens || [], initialValues);
 
     const {
         getValues,
@@ -159,10 +158,10 @@ export const SendTipForm = ({
 
     // Initialize form with first asset if none exists
     useEffect(() => {
-        if (allAvailableTokens?.length > 0 && link && assetFields.fields.length === 0) {
+        if (displayTokens?.length > 0 && link && assetFields.fields.length === 0) {
             initializeFirstAsset();
         }
-    }, [allAvailableTokens, link]);
+    }, [displayTokens, link]);
 
     useEffect(() => {
         console.log("errors ", errors);
@@ -171,7 +170,7 @@ export const SendTipForm = ({
     // Filtered list of available tokens for the asset drawer
     const availableTokensForDrawer = useMemo(() => {
         return getAvailableTokensForDrawer();
-    }, [allAvailableTokens, selectedAssetAddresses, editingAssetIndex, getValues]);
+    }, [displayTokens, selectedAssetAddresses, editingAssetIndex, getValues]);
 
     // Event handlers using centralized handlers
     const handleAssetSelect = createAssetSelectHandler(setEditingAssetIndex, setShowAssetDrawer);
@@ -203,6 +202,8 @@ export const SendTipForm = ({
                 toast.error(t("common.error"), { description: t("error.asset.no_assets_found") });
                 return;
             }
+
+            console.log("Submitting tip form with assets:", formAssets);
 
             // Use centralized submission handler (hooks now handle toast errors)
             await submitTipForm(link.id, formAssets, maxActionNumber);
@@ -268,7 +269,7 @@ export const SendTipForm = ({
             return;
         }
 
-        if (!allAvailableTokens?.length || !link || !link.linkType) return;
+        if (!displayTokens?.length || !link || !link.linkType) return;
 
         // Check if link already has assets we can use instead of default values
         if (link.asset_info && link.asset_info.length > 0) {
@@ -295,7 +296,7 @@ export const SendTipForm = ({
         }
 
         // If no existing assets, create a default one
-        const firstToken = allAvailableTokens[0];
+        const firstToken = displayTokens[0];
         const label = getAssetLabelForLinkType(link.linkType, firstToken.address);
 
         assetFields.append({
@@ -323,29 +324,22 @@ export const SendTipForm = ({
     }
 
     function getAvailableTokensForDrawer() {
-        if (!allAvailableTokens) return [];
+        if (!displayTokens) return [];
 
         if (editingAssetIndex >= 0) {
             const currentAsset = getValues(`assets.${editingAssetIndex}`);
             const currentTokenAddress = currentAsset?.tokenAddress;
 
-            return allAvailableTokens.filter((token) => {
+            return displayTokens.filter((token) => {
                 if (token.address === currentTokenAddress) return true;
                 return !selectedAssetAddresses.includes(token.address);
             });
         }
 
-        return allAvailableTokens.filter(
-            (token) => !selectedAssetAddresses.includes(token.address),
-        );
+        return displayTokens.filter((token) => !selectedAssetAddresses.includes(token.address));
     }
 
-    if (
-        isLoadingTokens ||
-        !allAvailableTokens ||
-        allAvailableTokens.length === 0 ||
-        !initialValues
-    ) {
+    if (isLoadingTokens || !displayTokens || displayTokens.length === 0 || !initialValues) {
         return <AssetFormSkeleton />;
     }
 
@@ -371,7 +365,7 @@ export const SendTipForm = ({
                                 fieldId={field.id}
                                 index={index}
                                 form={form}
-                                availableAssets={allAvailableTokens}
+                                availableAssets={displayTokens}
                                 onAssetSelect={handleAssetSelect}
                                 onRemoveAsset={handleRemoveAsset}
                                 showRemoveButton={false}

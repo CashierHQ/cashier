@@ -4,12 +4,11 @@
 import { FeeModel } from "@/services/types/intent.service.types";
 import { useEffect, useState } from "react";
 import { IntentHelperService } from "@/services/fee.service";
-import { useTokens } from "./useTokens";
+import { useTokensV2 } from "./token/useTokensV2";
 
 export const useFeeMetadata = (feeModel: FeeModel) => {
-    const { getToken, isLoadingBalances } = useTokens();
+    const { getToken, isLoadingBalances } = useTokensV2();
 
-    // Get token data directly from useTokens
     const token = getToken(feeModel.address);
     const feeToken = getToken(feeModel.address);
 

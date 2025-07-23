@@ -11,6 +11,5 @@ pub mod impl_action_updater;
 pub mod impl_batch_executor;
 pub mod impl_dependency_analyzer;
 pub mod impl_timeout_handler;
-pub mod impl_transaction_assembler;
 pub mod impl_transaction_executor;
 pub mod impl_transaction_validator;

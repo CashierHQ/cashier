@@ -1,34 +1,26 @@
-// Copyright (c) 2025 Cashier Protocol Labs
-// Licensed under the MIT License (see LICENSE file in the project root)
-
-type AddTokenInput = record { token_id : text; token_data : opt AddTokenItem };
-type AddTokenItem = record {
-  fee : opt nat;
-  decimals : nat8;
-  chain : text;
-  name : text;
-  ledger_id : opt principal;
-  index_id : opt principal;
-  symbol : text;
-};
-type AddTokensInput = record {
-  tokens_disable : vec record { text; opt AddTokenItem };
-  tokens_enable : vec record { text; opt AddTokenItem };
-};
+type AddTokenInput = record { token_id : text; index_id : opt text };
+type AddTokensInput = record { token_ids : vec text };
 type Chain = variant { IC };
-type Result = variant { Ok : TokenListResponse; Err : text };
-type Result_1 = variant { Ok : vec record { text; nat }; Err : text };
-type Result_2 = variant { Ok; Err : text };
+type ChainTokenDetails = variant {
+  IC : record { fee : nat; ledger_id : principal; index_id : opt principal };
+};
+type RegistryStats = record {
+  total_enabled_default : nat64;
+  total_tokens : nat64;
+};
+type Result = variant { Ok; Err : text };
+type Result_1 = variant { Ok : RegistryStats; Err : text };
+type Result_2 = variant { Ok : vec record { text; nat }; Err : text };
+type Result_3 = variant { Ok : UserTokens; Err : text };
+type Result_4 = variant { Ok : TokenListResponse; Err : text };
 type TokenDto = record {
   id : text;
-  fee : opt nat;
   decimals : nat8;
   balance : opt nat;
   chain : text;
   name : text;
   enabled : bool;
-  icrc_ledger_id : opt principal;
-  icrc_index_id : opt principal;
+  details : ChainTokenDetails;
   symbol : text;
 };
 type TokenListResponse = record {
@@ -38,25 +30,32 @@ type TokenListResponse = record {
 };
 type TokenRegistryMetadata = record { last_updated : nat64; version : nat64 };
 type UpdateTokenBalanceInput = record { balance : nat; token_id : text };
-type UpdateTokenStatusInput = record { token_id : text; is_enabled : bool };
+type UpdateTokenInput = record { token_id : text; is_enabled : bool };
 type UserPreference = record {
   hide_zero_balance : bool;
   selected_chain : vec Chain;
   hide_unknown_token : bool;
 };
+type UserTokens = record {
+  registry_tokens : nat64;
+  version : nat64;
+  enabled : nat64;
+};
 service : () -> {
   add_token : (AddTokenInput) -> (Result);
-  add_tokens : (AddTokensInput) -> (Result);
-  get_balance_cache : (text) -> (Result_1) query;
+  add_token_batch : (AddTokensInput) -> (Result);
   get_registry_metadata : () -> (TokenRegistryMetadata) query;
-  get_registry_tokens : () -> (vec TokenDto) query;
+  get_registry_tokens : (bool) -> (vec TokenDto) query;
   get_registry_version : () -> (nat64) query;
-  initialize_registry : () -> (Result_2);
-  list_tokens : () -> (Result) query;
-  list_user_tokens : (text) -> (Result) query;
-  reset_cache : (text) -> (Result_2);
-  reset_user_tokens : (text) -> (Result_2);
-  sync_token_list : () -> (Result_2);
-  update_token_balance : (vec UpdateTokenBalanceInput) -> (Result_2);
-  update_token_status : (UpdateTokenStatusInput) -> (Result);
+  get_stats : () -> (Result_1) query;
+  get_user_balance : (text) -> (Result_2) query;
+  get_user_tokens : (text) -> (Result_3) query;
+  initialize_registry : () -> (Result);
+  list_tokens : () -> (Result_4) query;
+  list_tokens_by_wallet : (text) -> (Result_4) query;
+  sync_token_list : () -> (Result);
+  update_token_balance : (vec UpdateTokenBalanceInput) -> (Result);
+  update_token_enable : (UpdateTokenInput) -> (Result);
+  update_token_registry : (AddTokenInput) -> (Result);
+  update_token_registry_batch : (AddTokensInput) -> (Result);
 }

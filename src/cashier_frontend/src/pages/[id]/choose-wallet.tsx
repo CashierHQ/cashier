@@ -16,7 +16,6 @@ import { useTranslation } from "react-i18next";
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
-import { useTokens } from "@/hooks/useTokens";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { toast } from "sonner";
 import { useIdentity } from "@nfid/identitykit/react";
@@ -28,19 +27,16 @@ import UseLinkForm from "@/components/use-page/use-link-form";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { useUseConfirmation } from "@/hooks/tx-cart/useUseConfirmation";
-
-export const UseSchema = z.object({
-    token: z.string().min(5),
-    amount: z.coerce.number().min(1),
-    address: z.string().optional(),
-});
+import { WalletSelectionModal } from "@/components/wallet-selection-modal";
+import { UseSchema } from "@/components/use-page/claim-form-options";
+import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export default function ChooseWalletPage() {
     const { linkId } = useParams();
     const identity = useIdentity();
     const { t } = useTranslation();
     const { renderSkeleton } = useSkeletonLoading();
-    const { updateTokenInit } = useTokens();
+    const { updateTokenInit } = useTokensV2();
     const { goToComplete, handleStateBasedNavigation, goToLinkDefault } =
         useLinkUseNavigation(linkId);
     const { validateAssetAndFees } = useLinkUsageValidation();
@@ -72,55 +68,27 @@ export default function ChooseWalletPage() {
 
     const queryAction = linkUserState?.action;
 
-    // ===== INTERNAL ACTION STATE MANAGEMENT =====
-    // The action from the query hook is read-only and managed by React Query's cache.
-    // When we call mutations like processAction or updateAction, the results don't
-    // automatically update the query cache. This internal action state allows us to
-    // track action updates independently of the query cache.
-
     // Internal action state that can be updated independently
     const [internalAction, setInternalAction] = useState<ActionModel | undefined>(queryAction);
+    const [showWalletModal, setShowWalletModal] = useState(false);
 
-    // Debug logging to track action selection
-    useEffect(() => {
-        console.log("Action State Debug:", {
-            hasInternalAction: !!internalAction,
-            hasQueryAction: !!queryAction,
-            currentActionId: internalAction?.id,
-            currentActionState: internalAction?.state,
-        });
-    }, [internalAction, queryAction, internalAction]);
+    // Get wallet address from sessionStorage if available
+    const storedWalletAddress = sessionStorage.getItem(`wallet-address-${linkId}`) || "";
+    const [walletAddress, setWalletAddress] = useState<string>(storedWalletAddress);
 
     // Sync internal action with query action when query action changes
-    // This ensures we get the initial action from the query
     useEffect(() => {
         if (queryAction && !internalAction) {
             setInternalAction(queryAction);
         }
     }, [queryAction, internalAction]);
 
-    // Cleanup effect to stop polling when component unmounts or conditions change
-    useEffect(() => {
-        return () => {
-            // Stop polling when component unmounts
-            console.log("Component unmounting - stopping action polling");
-        };
-    }, []);
-
-    // Stop polling if link or action becomes unavailable
-    useEffect(() => {
-        if (!link || !internalAction) {
-            console.log("Link or action unavailable - stopping action polling");
-        }
-    }, [link, internalAction]);
-
-    // ===== END INTERNAL ACTION STATE MANAGEMENT =====
-
     // Local state
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [manuallyClosedDrawer, setManuallyClosedDrawer] = useState(false);
-    const [anonymousWalletAddress, setAnonymousWalletAddress] = useState<string>("");
+    const [anonymousWalletAddress, setAnonymousWalletAddress] =
+        useState<string>(storedWalletAddress);
 
     // Use confirmation hook for all confirmation-related methods
     const { handleSuccessContinue, handleConfirmTransaction, onActionResult, onCashierError } =
@@ -207,13 +175,16 @@ export default function ChooseWalletPage() {
     /**
      * Initiates the process of using a link
      */
-    const initiateUseLinkAction = async (anonymousWalletAddress?: string) => {
+    const initiateUseLinkAction = async (providedWalletAddress?: string) => {
         // Don't proceed if initial data is still loading
         if (isUserStateLoading || !link) {
             return;
         }
 
-        if (!identity) {
+        // Use provided address or the one already stored
+        const addressToUse = providedWalletAddress || anonymousWalletAddress;
+
+        if (!identity && !addressToUse) {
             toast.error(t("link_detail.error.use_without_login_or_wallet"));
             return;
         }
@@ -242,25 +213,25 @@ export default function ChooseWalletPage() {
                     await refetchLinkUserStateFn();
                     setShowConfirmation(true);
                 }
-            } else if (anonymousWalletAddress) {
+            } else if (addressToUse) {
                 // Anonymous user flow
                 const anonymousLinkUserState = await fetchLinkUserState(
                     {
                         action_type: ACTION_TYPE.USE_LINK,
                         link_id: linkId ?? "",
-                        anonymous_wallet_address: anonymousWalletAddress,
+                        anonymous_wallet_address: addressToUse,
                     },
                     identity,
                 );
 
                 if (!anonymousLinkUserState.link_user_state) {
-                    await handleCreateActionAnonymous(anonymousWalletAddress);
-                    setAnonymousWalletAddress(anonymousWalletAddress);
+                    await handleCreateActionAnonymous(addressToUse);
+                    setAnonymousWalletAddress(addressToUse);
                     await fetchLinkUserState(
                         {
                             action_type: ACTION_TYPE.USE_LINK,
                             link_id: linkId ?? "",
-                            anonymous_wallet_address: anonymousWalletAddress,
+                            anonymous_wallet_address: addressToUse,
                         },
                         identity,
                     );
@@ -268,7 +239,7 @@ export default function ChooseWalletPage() {
                 } else if (anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE) {
                     goToComplete();
                 } else {
-                    setAnonymousWalletAddress(anonymousWalletAddress);
+                    setAnonymousWalletAddress(addressToUse);
                     await refetchLinkUserStateFn();
                     setShowConfirmation(true);
                 }
@@ -285,6 +256,26 @@ export default function ChooseWalletPage() {
                 disabled: false,
             });
         }
+    };
+
+    const handleOpenWalletModal = () => {
+        setShowWalletModal(true);
+    };
+
+    const handleWalletConnected = (address?: string) => {
+        if (address && address.length > 0) {
+            setWalletAddress(address);
+            setAnonymousWalletAddress(address);
+            // Update sessionStorage
+            sessionStorage.setItem(`wallet-address-${linkId}`, address);
+        } else if (address === "") {
+            // Handle disconnection
+            setWalletAddress("");
+            setAnonymousWalletAddress("");
+            // Clear sessionStorage
+            sessionStorage.removeItem(`wallet-address-${linkId}`);
+        }
+        setShowWalletModal(false);
     };
 
     const memoizedOnBack = useMemo(
@@ -324,8 +315,17 @@ export default function ChooseWalletPage() {
                                 buttonText={
                                     useLinkButton.text || t("confirmation_drawer.confirm_button")
                                 }
+                                walletAddress={walletAddress}
+                                onOpenWalletModal={handleOpenWalletModal}
                             />
                         </div>
+
+                        <WalletSelectionModal
+                            open={showWalletModal}
+                            onOpenChange={setShowWalletModal}
+                            onWalletConnected={handleWalletConnected}
+                            allowChangeWallet={true}
+                        />
 
                         <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 

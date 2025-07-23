@@ -21,7 +21,7 @@
 3. Generate declarations folders:
 
     ```bash
-    make g
+    make generate
     ```
 
     This step is crucial as it generates the necessary declaration files in the local environment before running the application.

@@ -131,6 +131,7 @@
         "clear": "Clear",
         "loading": "Loading",
         "copied": "Copied successfully",
+        "cancel": "Cancel",
         "success": {
             "copied_address": "Address copied to clipboard",
             "copied_account_id": "Account ID copied to clipboard"
@@ -238,6 +239,11 @@
         },
         "loading": {
             "fetchMetdata": "Fetching metadata"
+        },
+        "import": {
+            "error": {
+                "token_already_existed": "Token \"{{tokenName}} ({{tokenSymbol}})\" is already in your wallet"
+            }
         }
     },
     "review": {
@@ -446,6 +452,14 @@
         "form": {
             "form_validation_failed": "Form validation failed. Please check your inputs."
         }
+    },
+    "claim": {
+        "addressPlaceholder": "Enter your wallet address",
+        "choose_wallet_title": "Choose your wallet",
+        "choose_wallet_description": "Connect your wallet or enter your wallet address to claim this link.",
+        "wallet_options": "Wallet Options",
+        "manual_address": "Or enter wallet address",
+        "use_address": "Use this address"
     },
     "claim_page": {
         "SendTip": {

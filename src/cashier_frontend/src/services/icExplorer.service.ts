@@ -4,7 +4,6 @@
 import icExplorerAxiosClient from "@/axios/axiosClient";
 import { Principal } from "@dfinity/principal";
 import { toNullable } from "@dfinity/utils";
-import { AddTokenItem } from "../../../declarations/token_storage/token_storage.did";
 
 export const IC_EXPLORER_IMAGES_PATH = "https://api.icexplorer.io/images/";
 
@@ -116,32 +115,6 @@ export function mapTokenListItemToAddTokenInput(token: TokenListItem): {
         index_id: [],
 
         fee: toNullable(0n),
-    };
-}
-
-export function mapTokenListItemToAddTokenItem(token: IcExplorerTokenDetail): AddTokenItem {
-    return {
-        fee: token.fee
-            ? (() => {
-                  try {
-                      // Parse the fee string to handle decimal values
-                      // Remove decimal part if present, as BigInt can't handle decimals
-                      const feeValue = token.fee.includes(".")
-                          ? token.fee.substring(0, token.fee.indexOf("."))
-                          : token.fee;
-                      return toNullable(BigInt(feeValue));
-                  } catch (error) {
-                      console.error("Error converting fee to BigInt:", error);
-                      return toNullable(0n);
-                  }
-              })()
-            : toNullable(0n),
-        decimals: token.tokenDecimal,
-        chain: "IC",
-        name: token.name,
-        ledger_id: toNullable(Principal.fromText(token.ledgerId)),
-        index_id: [],
-        symbol: token.symbol,
     };
 }
 
