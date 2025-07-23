@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::services::transaction_manager::traits::TransactionValidator;
+use crate::{info, services::transaction_manager::traits::TransactionValidator};
 use async_trait::async_trait;
 use cashier_types::transaction::v2::TransactionState;
 use std::time::Duration;
@@ -80,8 +80,59 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
             }
         } else {
             Err(CanisterError::ValidationErrors(
-                "Transaction is not timeout".to_string(),
+               format!(
+                    "Transaction {} has not timed out yet. Current time: {}, start time: {}, timeout: {}",
+                    tx_id, current_ts, start_ts, tx_timeout
+                )
             ))
+        }
+    }
+
+    fn restart_processing_transactions(&self) -> () {
+        let processing_transactions = self.processing_transaction_repository.get_all();
+        info!(
+            "Restarting processing transactions: {}",
+            processing_transactions.len()
+        );
+        let current_time = ic_cdk::api::time();
+
+        info!(
+            "Restarting processing transactions: {}",
+            processing_transactions.len()
+        );
+
+        for processing_tx in processing_transactions {
+            // Calculate remaining duration until timeout
+            let remaining_duration_ns = processing_tx.timeout_at.saturating_sub(current_time);
+            info!(
+                "Scheduling timeout task for transaction {} in {} nanoseconds",
+                processing_tx.transaction_id, remaining_duration_ns
+            );
+
+            // add bufffer time for avoiding calling anither canister in tx_timeout_task
+            // doc: https://internetcomputer.org/docs/references/execution-errors#calling-a-system-api-from-the-wrong-mode
+            let duration = Duration::from_nanos(remaining_duration_ns) + Duration::from_secs(2);
+
+            // Spawn timeout task with calculated duration
+            let tx_id = processing_tx.transaction_id.clone();
+            let _time_id = self.ic_env.set_timer(duration, move || {
+                let ic_env_in_future = RealIcEnvironment::new();
+
+                ic_env_in_future.spawn(async move {
+                    // Create a new instance of your service with the cloned dependencies
+                    let service: TransactionManagerService<RealIcEnvironment> =
+                        TransactionManagerService::get_instance();
+
+                    // Now use the new service instance
+                    let res = service.tx_timeout_task(tx_id).await;
+                    match res {
+                        Ok(_) => {}
+                        Err(e) => {
+                            error!("Transaction timeout task executed with error: {}", e);
+                        }
+                    }
+                });
+            });
         }
     }
 }

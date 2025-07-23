@@ -14,7 +14,7 @@ import {
     LinkDto,
     ActionDto,
     CreateLinkInput,
-} from "../../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../declarations/cashier_backend/cashier_backend.did";
 import TokenUtilServiceFixture from "../fixtures/token-utils-fixture";
 
 describe("Process Action Request Lock", () => {

@@ -12,10 +12,10 @@ pub struct ProcessingTransaction {
     /// The transaction ID being tracked
     pub transaction_id: String,
 
-    /// When the transaction started processing (nanoseconds since epoch)
+    /// When the transaction started processing in nanoseconds
     pub start_time: u64,
 
-    /// When the transaction will timeout (nanoseconds since epoch)
+    /// When the transaction will timeout in nanoseconds
     pub timeout_at: u64,
 }
 

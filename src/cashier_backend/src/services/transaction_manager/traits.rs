@@ -64,6 +64,7 @@ pub trait DependencyAnalyzer {
 pub trait TimeoutHandler<E: IcEnvironment + Clone> {
     fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String>;
     async fn tx_timeout_task(&self, tx_id: String) -> Result<(), CanisterError>;
+    fn restart_processing_transactions(&self) -> ();
 }
 
 // ---------- 7. High-level action updater ----------
