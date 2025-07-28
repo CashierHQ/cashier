@@ -3,6 +3,7 @@
 
 use std::cell::RefCell;
 
+use cashier_types::processing_transaction::ProcessingTransaction;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
@@ -192,7 +193,7 @@ thread_local! {
 
     pub static PROCESSING_TRANSACTION_STORE: RefCell<StableBTreeMap<
         String,
-        cashier_types::processing_transaction::ProcessingTransaction,
+        ProcessingTransaction,
         Memory
     >> = RefCell::new(
         StableBTreeMap::init(
