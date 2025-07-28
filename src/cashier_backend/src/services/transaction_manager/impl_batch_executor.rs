@@ -45,7 +45,7 @@ impl<E: IcEnvironment + Clone> BatchExecutor<E> for TransactionManagerService<E>
         &self,
         txs: Vec<Transaction>,
         all_txs: Vec<Transaction>,
-    ) -> Vec<(String, Result<TransactionState, CanisterError>)> {
+    ) -> Vec<(String, TransactionState)> {
         use futures::future;
         let futures_vec = txs
             .iter()

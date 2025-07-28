@@ -1,7 +1,12 @@
+#!/usr/bin/env bash
+# This script sets up the local environment for testing the cashier backend and ICP ledger canister.
+export TX_TIMEOUT=20
 dfx identity use default
+
 dfx deploy cashier_backend --network local
 export DEFAULT_ACCOUNT_ID=$(dfx ledger account-id)
 export MINTER_ACCOUNT_ID=$(dfx ledger account-id)
+
 
 echo "=== SETUP ICP LEDGER LOCAL ==="
 dfx deploy icp_ledger_canister --argument "

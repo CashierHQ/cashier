@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::services::transaction_manager::traits::ActionUpdater;
+use crate::{info, services::transaction_manager::traits::ActionUpdater};
 use async_trait::async_trait;
 use cashier_types::{
     intent::v2::IntentTask,
@@ -137,7 +137,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
         &self,
         tx: &Icrc2TransferFrom,
     ) -> Result<(), CanisterError> {
-        let args: TransferFromArgs =
+        let mut args: TransferFromArgs =
             TransferFromArgs::try_from(tx.clone()).map_err(CanisterError::HandleLogicError)?;
 
         // get asset
@@ -168,6 +168,10 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                 match protocol {
                     // right now only for fee transfer
                     IcTransaction::Icrc2TransferFrom(tx) => {
+                        info!(
+                            "[execute_transaction] Executing ICRC2 transfer from: {:?}",
+                            tx
+                        );
                         self.execute_icrc2_transfer_from(tx).await
                     }
                     IcTransaction::Icrc1Transfer(tx) => self.execute_icrc1_transfer(tx).await,

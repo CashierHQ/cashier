@@ -3,6 +3,7 @@
 
 use std::cell::RefCell;
 
+use cashier_types::processing_transaction::ProcessingTransaction;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
@@ -31,13 +32,15 @@ pub mod intent_transaction;
 // pub mod intent_v2;
 pub mod link;
 pub mod link_action;
-pub mod request_lock;
 pub mod transaction;
 // pub mod transaction_v2;
 pub mod user;
 pub mod user_action;
 pub mod user_link;
 pub mod user_wallet;
+
+pub mod processing_transaction;
+pub mod request_lock;
 
 const UPGRADES: MemoryId = MemoryId::new(0);
 
@@ -52,6 +55,9 @@ const ACTION_INTENT_MEMORY_ID: MemoryId = MemoryId::new(8);
 const INTENT_MEMORY_ID: MemoryId = MemoryId::new(9);
 const INTENT_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(10);
 const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(11);
+
+// processing transactions, for canister upgrading
+const PROCESSING_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(12);
 
 const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(25);
 
@@ -185,6 +191,16 @@ thread_local! {
         )
     );
 
+    pub static PROCESSING_TRANSACTION_STORE: RefCell<StableBTreeMap<
+        String,
+        ProcessingTransaction,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(PROCESSING_TRANSACTION_MEMORY_ID)),
+        )
+    );
+
     pub static REQUEST_LOCK_STORE: RefCell<StableBTreeMap<
         RequestLockKey,
         RequestLock,
@@ -253,6 +269,12 @@ pub fn load() {
     TRANSACTION_STORE.with(|t| {
         *t.borrow_mut() =
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)));
+    });
+
+    PROCESSING_TRANSACTION_STORE.with(|t| {
+        *t.borrow_mut() = StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(PROCESSING_TRANSACTION_MEMORY_ID)),
+        );
     });
 
     REQUEST_LOCK_STORE.with(|t| {

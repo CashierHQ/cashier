@@ -245,7 +245,7 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
             amount,
             fee: None,
             memo,
-            created_at_time: value.ts,
+            created_at_time: None,
         })
     }
 }

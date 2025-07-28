@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::services::transaction_manager::traits::TransactionValidator;
+use crate::{info, services::transaction_manager::traits::TransactionValidator};
 use async_trait::async_trait;
 use cashier_types::transaction::v2::TransactionState;
 use std::time::Duration;
@@ -47,6 +47,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
         let mut tx = self.transaction_service.get_tx_by_id(&tx_id)?;
 
         if tx.state == TransactionState::Success || tx.state == TransactionState::Fail {
+            self.remove_record_in_processing_transaction(&tx_id);
             return Ok(());
         }
         let start_ts = tx.start_ts.ok_or_else(|| {
@@ -57,22 +58,124 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
         let tx_timeout = get_tx_timeout_nano_seconds();
 
         if current_ts - start_ts >= tx_timeout {
-            let state = self.manual_check_status(&tx, vec![]).await?;
+            let state = self.manual_check_status(&tx, vec![]).await;
 
             let _ = self.transaction_service.update_tx_state(&mut tx, &state);
 
-            self.action_service.roll_up_state(&tx.id).map_err(|e| {
+            let result = self.action_service.roll_up_state(&tx.id).map_err(|e| {
                 CanisterError::HandleLogicError(format!(
                     "Failed to roll up state for action: {}",
                     e
                 ))
-            })?;
+            });
 
-            Ok(())
+            self.remove_record_in_processing_transaction(&tx_id);
+
+            match result {
+                Ok(_) => Ok(()),
+                Err(e) => {
+                    error!("Failed to roll up state for action: {}", e);
+                    // Respawn timeout task for retry in case of error
+                    let retry_tx_id = tx_id.clone();
+                    let _ = self
+                        .spawn_tx_timeout_task(retry_tx_id)
+                        .map_err(|spawn_err| {
+                            error!(
+                                "Failed to respawn timeout task for transaction {}: {}",
+                                tx_id, spawn_err
+                            );
+                        });
+                    Err(e)
+                }
+            }
         } else {
-            Err(CanisterError::ValidationErrors(
-                "Transaction is not timeout".to_string(),
-            ))
+            // Transaction hasn't timed out yet, reschedule the timeout task
+            let remaining_time_ns = tx_timeout - (current_ts - start_ts);
+            let retry_duration = Duration::from_nanos(remaining_time_ns) + Duration::from_secs(2); // Add buffer
+
+            info!(
+                "Transaction {} has not timed out yet. Rescheduling timeout task in {} nanoseconds",
+                tx_id, remaining_time_ns
+            );
+
+            let retry_tx_id = tx_id.clone();
+            let _time_id = self.ic_env.set_timer(retry_duration, move || {
+                let ic_env_in_future = RealIcEnvironment::new();
+
+                ic_env_in_future.spawn(async move {
+                    let service: TransactionManagerService<RealIcEnvironment> =
+                        TransactionManagerService::get_instance();
+
+                    let res = service.tx_timeout_task(retry_tx_id).await;
+                    match res {
+                        Ok(_) => {}
+                        Err(e) => {
+                            error!(
+                                "Rescheduled transaction timeout task executed with error: {}",
+                                e
+                            );
+                        }
+                    }
+                });
+            });
+
+            Ok(()) // Return Ok since we've successfully rescheduled the task
+        }
+    }
+
+    fn restart_processing_transactions(&self) -> () {
+        let processing_transactions = self.processing_transaction_repository.get_all();
+        info!(
+            "Restarting processing transactions: {}",
+            processing_transactions.len()
+        );
+        let current_time = ic_cdk::api::time();
+
+        info!(
+            "Restarting processing transactions: {}",
+            processing_transactions.len()
+        );
+
+        for processing_tx in processing_transactions {
+            // Calculate remaining duration until timeout
+            let remaining_duration_ns = processing_tx.timeout_at.saturating_sub(current_time);
+            info!(
+                "Scheduling timeout task for transaction {} in {} nanoseconds",
+                processing_tx.transaction_id, remaining_duration_ns
+            );
+
+            // add bufffer time for avoiding calling anither canister in tx_timeout_task
+            // doc: https://internetcomputer.org/docs/references/execution-errors#calling-a-system-api-from-the-wrong-mode
+            let duration = Duration::from_nanos(remaining_duration_ns) + Duration::from_secs(2);
+
+            // Spawn timeout task with calculated duration
+            let tx_id = processing_tx.transaction_id.clone();
+            let _time_id = self.ic_env.set_timer(duration, move || {
+                let ic_env_in_future = RealIcEnvironment::new();
+
+                ic_env_in_future.spawn(async move {
+                    // Create a new instance of your service with the cloned dependencies
+                    let service: TransactionManagerService<RealIcEnvironment> =
+                        TransactionManagerService::get_instance();
+
+                    // Now use the new service instance
+                    let res = service.tx_timeout_task(tx_id).await;
+                    match res {
+                        Ok(_) => {}
+                        Err(e) => {
+                            error!("Transaction timeout task executed with error: {}", e);
+                        }
+                    }
+                });
+            });
+        }
+    }
+}
+
+impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
+    fn remove_record_in_processing_transaction(&self, tx_id: &str) {
+        if self.processing_transaction_repository.exists(tx_id) {
+            self.processing_transaction_repository.delete(tx_id);
         }
     }
 }

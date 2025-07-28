@@ -148,17 +148,6 @@ class LinkService {
 
     async processAction(input: ProcessActionInputModel): Promise<ActionModel> {
         const inputModel: ProcessActionInput = {
-            action_id: input.actionId ?? "",
-            link_id: input.linkId,
-            action_type: input.actionType,
-        };
-        const response = parseResultResponse(await this.actor.process_action(inputModel));
-        const action = mapActionModel(response);
-        return action;
-    }
-
-    async processActionV2(input: ProcessActionInputModel): Promise<ActionModel> {
-        const inputModel: ProcessActionInput = {
             action_id: input.actionId,
             link_id: input.linkId,
             action_type: input.actionType,

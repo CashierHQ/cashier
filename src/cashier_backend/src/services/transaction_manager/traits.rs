@@ -8,10 +8,8 @@
 
 use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::{
-    transaction::v2::{
-        Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Transaction, TransactionState,
-    },
+use cashier_types::transaction::v2::{
+    Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Transaction, TransactionState,
 };
 use icrc_ledger_types::icrc1::account::Account;
 
@@ -51,7 +49,7 @@ pub trait TransactionValidator<E: IcEnvironment + Clone> {
         &self,
         tx: &Transaction,
         all_txs: Vec<Transaction>,
-    ) -> Result<TransactionState, CanisterError>;
+    ) -> TransactionState;
     fn is_action_creator(&self, caller: &Principal, action_id: &str) -> Result<bool, String>;
 }
 
@@ -66,6 +64,7 @@ pub trait DependencyAnalyzer {
 pub trait TimeoutHandler<E: IcEnvironment + Clone> {
     fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String>;
     async fn tx_timeout_task(&self, tx_id: String) -> Result<(), CanisterError>;
+    fn restart_processing_transactions(&self) -> ();
 }
 
 // ---------- 7. High-level action updater ----------
@@ -100,5 +99,5 @@ pub trait BatchExecutor<E: IcEnvironment + Clone> {
         &self,
         txs: Vec<Transaction>,
         all_txs: Vec<Transaction>,
-    ) -> Vec<(String, Result<TransactionState, CanisterError>)>;
+    ) -> Vec<(String, TransactionState)>;
 }

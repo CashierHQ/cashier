@@ -13,7 +13,7 @@ import {
     LinkDto,
     ActionDto,
     CreateLinkInput,
-} from "../../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../declarations/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
 
 describe("Create Link Action", () => {

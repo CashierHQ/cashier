@@ -91,17 +91,16 @@ export default function ChooseWalletPage() {
         useState<string>(storedWalletAddress);
 
     // Use confirmation hook for all confirmation-related methods
-    const { handleSuccessContinue, handleConfirmTransaction, onActionResult, onCashierError } =
-        useUseConfirmation({
-            linkId: linkId ?? "",
-            link: link!,
-            internalAction,
-            setInternalAction,
-            anonymousWalletAddress,
-            identity,
-            refetchLinkUserStateFn,
-            linkDetailQuery,
-        });
+    const { handleSuccessContinue, handleConfirmTransaction, onCashierError } = useUseConfirmation({
+        linkId: linkId ?? "",
+        link: link!,
+        internalAction,
+        setInternalAction,
+        anonymousWalletAddress,
+        identity,
+        refetchLinkUserStateFn,
+        linkDetailQuery,
+    });
 
     // Button state
     const [useLinkButton, setUseLinkButton] = useState<{
@@ -338,7 +337,6 @@ export default function ChooseWalletPage() {
                                 setManuallyClosedDrawer(true);
                             }}
                             onInfoClick={() => setShowInfo(true)}
-                            onActionResult={onActionResult}
                             onCashierError={onCashierError}
                             handleSuccessContinue={handleSuccessContinue}
                             handleConfirmTransaction={handleConfirmTransaction}
