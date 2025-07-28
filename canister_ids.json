@@ -2,7 +2,8 @@
     "cashier_backend": {
         "ic": "eyuy4-gqaaa-aaaam-aekrq-cai",
         "staging": "jjio5-5aaaa-aaaam-adhaq-cai",
-        "dev": "edrez-4iaaa-aaaam-aekta-cai"
+        "dev": "edrez-4iaaa-aaaam-aekta-cai",
+        "local": "jjio5-5aaaa-aaaam-adhaq-cai"
     },
     "cashier_frontend": {
         "ic": "jg57n-xyaaa-aaaam-admqq-cai",

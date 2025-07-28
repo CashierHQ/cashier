@@ -3,7 +3,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { HttpAgent, Identity, Actor } from "@dfinity/agent";
-import { idlFactory } from "../../../../declarations/cashier_backend/cashier_backend.did";
+import { idlFactory } from "../../../declarations/cashier_backend/cashier_backend.did";
 
 interface CreateActorOptions {
     agent?: HttpAgent;

@@ -33,8 +33,6 @@ interface ConfirmationDrawerV2Props {
     onInfoClick?: () => void;
 
     /** Called after the action result is received, to update UI or state */
-    onActionResult?: (action: ActionModel) => void;
-
     /** Called when an error occurs during the transaction process */
     onCashierError?: (error: Error) => void;
 
@@ -57,7 +55,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
     open,
     action,
     onClose = () => {},
-    // onActionResult = () => {},
     onCashierError = () => {},
     handleSuccessContinue: onSuccessContinue = async () => {},
     handleConfirmTransaction,

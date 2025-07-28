@@ -10,6 +10,7 @@ pub mod intent_transaction;
 pub mod keys;
 pub mod link;
 pub mod link_action;
+pub mod processing_transaction;
 pub mod request_lock;
 pub mod transaction;
 pub mod user;

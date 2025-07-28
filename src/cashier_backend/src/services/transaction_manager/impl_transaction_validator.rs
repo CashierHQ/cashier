@@ -81,45 +81,39 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
     async fn manual_check_status(
         &self,
         transaction: &Transaction,
-        // This is temporary, will be removed when the fee change to icrc1
         txs: Vec<Transaction>,
-    ) -> Result<TransactionState, CanisterError> {
-        // If the transaction is created, it means it never ran, so no need to check status
+    ) -> TransactionState {
+        // If the transaction is not in Processing state, return its current state
         if transaction.state != TransactionState::Processing {
-            return Ok(transaction.state.clone());
+            return transaction.state.clone();
         }
 
-        // if timeout check the condition
+        // Check the protocol type
         match &transaction.protocol {
             // Check balance for Icrc1Transfer
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer_info)) => {
                 let is_valid = self.validate_balance_transfer(icrc1_transfer_info).await;
 
-                match is_valid {
-                    Ok(valid) => {
-                        if valid {
-                            Ok(TransactionState::Success)
-                        } else {
-                            warn!(
-                                "[manual_check_status] Icrc1Transfer failed: Insufficient balance for transfer {:?}",
-                                transaction
-                            );
-                            Ok(TransactionState::Fail)
-                        }
-                    }
-                    Err(_) => {
+                if let Ok(valid) = is_valid {
+                    if valid {
+                        TransactionState::Success
+                    } else {
                         warn!(
-                            "[manual_check_status] Icrc1Transfer failed: Error validating balance for transfer {:?}",
+                            "[manual_check_status] Icrc1Transfer failed: Insufficient balance for transfer {:?}",
                             transaction
                         );
-                        Ok(TransactionState::Fail)
+                        TransactionState::Fail
                     }
+                } else {
+                    warn!(
+                        "[manual_check_status] Icrc1Transfer failed: Error validating balance for transfer {:?}",
+                        transaction
+                    );
+                    TransactionState::Fail
                 }
             }
             // Check allowance for Icrc2Approve
             Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve_info)) => {
-                // THIS IS A HACK to check if the transfer from is success
-                // if the transfer from is success then the approve is success
                 let txs_depended = txs
                     .iter()
                     .filter(|tx| {
@@ -138,38 +132,35 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
                     })
                     .collect::<Vec<_>>();
 
-                // if the transfer from is success then return success
                 if !txs_depended.is_empty() {
                     let is_all_success = txs_depended
                         .iter()
                         .all(|tx| tx.state == TransactionState::Success);
                     if is_all_success {
-                        return Ok(TransactionState::Success);
+                        return TransactionState::Success;
                     }
                 }
 
                 let is_valid = self.validate_allowance(icrc2_approve_info).await;
 
-                match is_valid {
-                    Ok(valid) => {
-                        if valid {
-                            Ok(TransactionState::Success)
-                        } else {
-                            warn!(
-                                "[manual_check_status] Icrc2Approve failed: Insufficient allowance for transfer {:?}",
-                                transaction
-                            );
-                            Ok(TransactionState::Fail)
-                        }
+                if let Ok(valid) = is_valid {
+                    if valid {
+                        TransactionState::Success
+                    } else {
+                        warn!(
+                            "[manual_check_status] Icrc2Approve failed: Insufficient allowance for transfer {:?}",
+                            transaction
+                        );
+                        TransactionState::Fail
                     }
-                    Err(_) => Ok(TransactionState::Fail),
+                } else {
+                    TransactionState::Fail
                 }
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => {
-                // if this being called it mean the tx is timeout -> fail
                 warn!("[manual_check_status] Icrc2TransferFrom failed: Transaction timed out");
-                Ok(TransactionState::Fail)
-            } // _ => return Err("Invalid protocol".to_string()),
+                TransactionState::Fail
+            }
         }
     }
 

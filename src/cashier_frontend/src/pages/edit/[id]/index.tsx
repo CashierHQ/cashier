@@ -179,6 +179,7 @@ export default function LinkPage() {
 
     const showActionResultToast = (action: ActionModel) => {
         if (action.state === ACTION_STATE.FAIL) {
+            console.log("debug action failed", action);
             toast.error(t("transaction.confirm_popup.transaction_failed"), {
                 description: t("transaction.confirm_popup.transaction_failed_message"),
             });

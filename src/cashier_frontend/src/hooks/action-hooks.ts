@@ -55,7 +55,7 @@ export function useProcessAction() {
                 throw new Error("Action ID is required for processing");
             }
             const linkService = new LinkService(identity);
-            return linkService.processActionV2({
+            return linkService.processAction({
                 linkId: params.linkId,
                 actionType: params.actionType,
                 actionId: params.actionId,

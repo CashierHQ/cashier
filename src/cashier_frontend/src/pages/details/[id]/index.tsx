@@ -56,7 +56,7 @@ export default function DetailPage() {
     };
 
     // Use withdrawal confirmation hook
-    const { handleSuccessContinue, handleConfirmTransaction, onActionResult, onCashierError } =
+    const { handleSuccessContinue, handleConfirmTransaction, onCashierError } =
         useWithdrawConfirmation({
             linkId: linkId ?? "",
             link: link!,
@@ -281,7 +281,6 @@ export default function DetailPage() {
                 action={currentAction}
                 onClose={() => setShowConfirmationDrawer(false)}
                 onInfoClick={() => {}}
-                onActionResult={onActionResult}
                 onCashierError={onCashierError}
                 handleSuccessContinue={handleSuccessContinue}
                 handleConfirmTransaction={handleConfirmTransaction}

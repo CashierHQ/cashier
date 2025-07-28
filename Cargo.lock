@@ -173,6 +173,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "cashier-macros",
+ "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
  "serde",

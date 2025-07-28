@@ -2,7 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    repositories::{action::ActionRepository, user_wallet::UserWalletRepository},
+    repositories::{
+        action::ActionRepository, processing_transaction::ProcessingTransactionRepository,
+        user_wallet::UserWalletRepository,
+    },
     services::{
         action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService,
     },
@@ -17,6 +20,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     pub intent_adapter: IntentAdapterImpl<E>,
     pub user_wallet_repository: UserWalletRepository,
     pub action_repository: ActionRepository,
+    pub processing_transaction_repository: ProcessingTransactionRepository,
 }
 
 impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
@@ -28,6 +32,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
         intent_adapter: IntentAdapterImpl<E>,
         user_wallet_repository: UserWalletRepository,
         action_repository: ActionRepository,
+        processing_transaction_repository: ProcessingTransactionRepository,
     ) -> Self {
         Self {
             transaction_service,
@@ -37,6 +42,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             intent_adapter,
             user_wallet_repository,
             action_repository,
+            processing_transaction_repository,
         }
     }
 
@@ -49,6 +55,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
             IntentAdapterImpl::new(),
             UserWalletRepository::new(),
             ActionRepository::new(),
+            ProcessingTransactionRepository::new(),
         )
     }
 }

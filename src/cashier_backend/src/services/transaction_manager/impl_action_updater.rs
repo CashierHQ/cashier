@@ -1,10 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::constant::get_tx_timeout_nano_seconds;
 use crate::services::transaction_manager::traits::BatchExecutor;
 use crate::services::transaction_manager::traits::DependencyAnalyzer;
 use crate::services::transaction_manager::traits::TimeoutHandler;
 use async_trait::async_trait;
+use cashier_types::processing_transaction::ProcessingTransaction;
 use cashier_types::transaction::v2::{Transaction, TransactionState};
 use icrc_ledger_types::icrc1::account::Account;
 
@@ -58,19 +60,13 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
             .await;
         let mut errors = vec![];
 
-        for (tx_id, result) in check_results {
-            match result {
-                Ok(new_state) => {
-                    // Find the tx in txs by id (must be mutable)
-                    if let Some(tx) = txs.iter_mut().find(|t| t.id == tx_id) {
-                        if tx.state != new_state {
-                            if let Err(e) = self.update_tx_state(tx, &new_state) {
-                                errors.push(e);
-                            }
-                        }
+        for (tx_id, new_state) in check_results {
+            if let Some(tx) = txs.iter_mut().find(|t| t.id == tx_id) {
+                if tx.state != new_state {
+                    if let Err(e) = self.update_tx_state(tx, &new_state) {
+                        errors.push(e);
                     }
                 }
-                Err(e) => errors.push(e),
             }
         }
 
@@ -170,6 +166,12 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
                     .map_err(|e| {
                         CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
                     })?;
+
+                let processing_tx =
+                    ProcessingTransaction::from_tx_with_timeout(tx, get_tx_timeout_nano_seconds());
+
+                self.processing_transaction_repository
+                    .create(tx.id.clone(), processing_tx);
             }
 
             // Canister tx are executed here directly and tx status is updated to 'success' or 'fail' right away
@@ -186,6 +188,12 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
                     .map_err(|e| {
                         CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
                     })?;
+
+                let processing_tx =
+                    ProcessingTransaction::from_tx_with_timeout(tx, get_tx_timeout_nano_seconds());
+
+                self.processing_transaction_repository
+                    .create(tx.id.clone(), processing_tx);
             }
 
             // Second loop: execute the transactions
