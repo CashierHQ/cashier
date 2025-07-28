@@ -15,9 +15,7 @@ fn init() {
 }
 
 #[pre_upgrade]
-fn pre_upgrade() {
-    info!("test pre_upgrade");
-}
+fn pre_upgrade() {}
 
 #[post_upgrade]
 fn post_upgrade() {

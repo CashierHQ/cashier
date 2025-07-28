@@ -117,13 +117,14 @@ function LinkPreview({
         }
     }, [queryAction, internalAction]);
 
-    // Notify parent when current action changes (now handled in updateInternalAction)
-    // This effect is kept for cases where currentAction changes through other means
-    useEffect(() => {
-        if (currentAction && onActionResult && currentAction !== internalAction) {
-            onActionResult(currentAction);
-        }
-    }, [currentAction, onActionResult, internalAction]);
+    // // Notify parent when current action changes (now handled in updateInternalAction)
+    // // This effect is kept for cases where currentAction changes through other means
+    // useEffect(() => {
+    //     if (currentAction && onActionResult && currentAction !== internalAction) {
+    //         console.log("125 ~ LinkPreview ~ currentAction changed:", currentAction);
+    //         onActionResult(currentAction);
+    //     }
+    // }, [currentAction, onActionResult, internalAction]);
 
     // ===== END INTERNAL ACTION STATE MANAGEMENT =====
 
@@ -614,7 +615,6 @@ function LinkPreview({
                     setShowConfirmation(false);
                 }}
                 onInfoClick={() => setShowInfo(true)}
-                onActionResult={onActionResult}
                 onCashierError={onCashierError}
                 handleSuccessContinue={handleSuccessContinue}
                 handleConfirmTransaction={handleConfirmTransaction}

@@ -75,16 +75,51 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
                 Ok(_) => Ok(()),
                 Err(e) => {
                     error!("Failed to roll up state for action: {}", e);
+                    // Respawn timeout task for retry in case of error
+                    let retry_tx_id = tx_id.clone();
+                    let _ = self
+                        .spawn_tx_timeout_task(retry_tx_id)
+                        .map_err(|spawn_err| {
+                            error!(
+                                "Failed to respawn timeout task for transaction {}: {}",
+                                tx_id, spawn_err
+                            );
+                        });
                     Err(e)
                 }
             }
         } else {
-            Err(CanisterError::ValidationErrors(
-               format!(
-                    "Transaction {} has not timed out yet. Current time: {}, start time: {}, timeout: {}",
-                    tx_id, current_ts, start_ts, tx_timeout
-                )
-            ))
+            // Transaction hasn't timed out yet, reschedule the timeout task
+            let remaining_time_ns = tx_timeout - (current_ts - start_ts);
+            let retry_duration = Duration::from_nanos(remaining_time_ns) + Duration::from_secs(2); // Add buffer
+
+            info!(
+                "Transaction {} has not timed out yet. Rescheduling timeout task in {} nanoseconds",
+                tx_id, remaining_time_ns
+            );
+
+            let retry_tx_id = tx_id.clone();
+            let _time_id = self.ic_env.set_timer(retry_duration, move || {
+                let ic_env_in_future = RealIcEnvironment::new();
+
+                ic_env_in_future.spawn(async move {
+                    let service: TransactionManagerService<RealIcEnvironment> =
+                        TransactionManagerService::get_instance();
+
+                    let res = service.tx_timeout_task(retry_tx_id).await;
+                    match res {
+                        Ok(_) => {}
+                        Err(e) => {
+                            error!(
+                                "Rescheduled transaction timeout task executed with error: {}",
+                                e
+                            );
+                        }
+                    }
+                });
+            });
+
+            Ok(()) // Return Ok since we've successfully rescheduled the task
         }
     }
 
