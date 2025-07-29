@@ -5,7 +5,7 @@ pub mod action;
 pub mod adapter;
 pub mod ext;
 pub mod link;
-pub mod rate_limiter;
+pub mod rate_limit;
 pub mod request_lock;
 pub mod transaction;
 pub mod transaction_manager;

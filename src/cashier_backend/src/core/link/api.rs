@@ -22,7 +22,7 @@ use crate::{
             service::LinkService,
             traits::{ActionFlow, LinkStateMachine},
         },
-        rate_limiter::RateLimitService,
+        rate_limit::RateLimitService,
     },
     types::{api::PaginateInput, error::CanisterError},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
