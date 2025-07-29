@@ -22,6 +22,7 @@ use crate::{
             service::LinkService,
             traits::{ActionFlow, LinkStateMachine},
         },
+        rate_limiter::RateLimitService,
     },
     types::{api::PaginateInput, error::CanisterError},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
@@ -271,6 +272,7 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 pub struct LinkApi<E: IcEnvironment + Clone> {
     link_service: LinkService<E>,
     action_service: ActionService,
+    rate_limiter_service: RateLimitService<E>,
     ic_env: E,
 }
 
@@ -280,10 +282,12 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// This method initializes all the dependent services needed for link operations
     /// including link management, user management, transaction processing, and validation.
     pub fn get_instance() -> Self {
+        let ic_env = E::new();
         Self {
             link_service: LinkService::get_instance(),
             action_service: ActionService::get_instance(),
-            ic_env: E::new(),
+            rate_limiter_service: RateLimitService::get_instance(),
+            ic_env,
         }
     }
 
@@ -300,10 +304,16 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `ic_env` - Internet Computer environment interface
     /// * `validate_service` - Service for validation operations
     /// * `request_lock_service` - Service for request locking operations
-    pub fn new(link_service: LinkService<E>, action_service: ActionService, ic_env: E) -> Self {
+    pub fn new(
+        link_service: LinkService<E>,
+        action_service: ActionService,
+        rate_limiter_service: RateLimitService<E>,
+        ic_env: E,
+    ) -> Self {
         Self {
             link_service,
             action_service,
+            rate_limiter_service,
             ic_env,
         }
     }
@@ -389,6 +399,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     pub async fn create_link(&self, input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
         let creator = self.ic_env.caller();
 
+        // Apply rate limiting
+        self.rate_limiter_service
+            .try_process_api(&creator.to_text(), "create_link")?;
+
         match self
             .link_service
             .create_link(creator.to_text(), input)
@@ -446,6 +460,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     ) -> Result<ActionDto, CanisterError> {
         let caller = self.ic_env.caller();
 
+        // Apply rate limiting
+        self.rate_limiter_service
+            .try_process_api(&caller.to_text(), "process_action")?;
+
         self.link_service.process_action(&input, &caller).await
     }
 
@@ -466,6 +484,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         input: CreateActionInput,
     ) -> Result<ActionDto, CanisterError> {
         let caller = self.ic_env.caller();
+
+        // Apply rate limiting
+        self.rate_limiter_service
+            .try_process_api(&caller.to_text(), "create_action")?;
+
         self.link_service.create_action(&input, &caller).await
     }
 
@@ -557,6 +580,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         input: UpdateActionInput,
     ) -> Result<ActionDto, CanisterError> {
         let caller = self.ic_env.caller();
+
+        // Apply rate limiting
+        self.rate_limiter_service
+            .try_process_api(&caller.to_text(), "update_action")?;
+
         self.link_service.update_action(&input, &caller).await
     }
 
