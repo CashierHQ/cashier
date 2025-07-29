@@ -2,8 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 use cashier_types::processing_transaction::ProcessingTransaction;
+use cashier_types::rate_limit::RateLimitEntry;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
@@ -40,6 +42,7 @@ pub mod user_link;
 pub mod user_wallet;
 
 pub mod processing_transaction;
+pub mod rate_limit;
 pub mod request_lock;
 
 const UPGRADES: MemoryId = MemoryId::new(0);
@@ -208,6 +211,12 @@ thread_local! {
     >> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
     );
+
+    // HEAP MEMORY
+    pub static RATE_LIMIT_STORE: RefCell<HashMap<String, RateLimitEntry>> = RefCell::new(
+        HashMap::new()
+    );
+
 }
 
 pub fn get_upgrade_memory() -> Memory {
