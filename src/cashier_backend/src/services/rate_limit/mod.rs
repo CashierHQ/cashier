@@ -53,7 +53,7 @@ impl<T: IcEnvironment> RateLimitService<T> {
     /// - Current time: 10:13, Window: 10 minutes -> Returns: 10:10
     /// - Current time: 10:13, Window: 1 hour -> Returns: 10:00  
     /// - Current time: 10:13, Window: 1 day -> Returns: 00:00 (start of day)
-    fn get_time_window_start(time_ns: u64, window: TimeWindow) -> u64 {
+    fn get_time_window_start(&self, time_ns: u64, window: TimeWindow) -> u64 {
         // Convert nanoseconds to seconds
         let time_seconds = time_ns / 1_000_000_000;
         let window_seconds = window.to_seconds();
@@ -118,7 +118,7 @@ impl<T: IcEnvironment> RateLimitService<T> {
         }
 
         let time_nano_sec = self.ic_env.time();
-        let time_window_start = Self::get_time_window_start(time_nano_sec, window);
+        let time_window_start = self.get_time_window_start(time_nano_sec, window);
 
         let key = RateLimitKey {
             identifier: RateLimitIdentifier::UserPrincipal(user_principal.to_string()),
@@ -176,6 +176,15 @@ impl<T: IcEnvironment> RateLimitService<T> {
         }
 
         Ok(())
+    }
+
+    // === Maintenance Methods ===
+
+    /// Clean up expired rate limit entries to prevent memory buildup
+    /// Removes all entries where the current time has passed the end_time
+    pub fn clean_old_time_windows(&self) -> Vec<(String, RateLimitEntry)> {
+        let current_time_ns = self.ic_env.time();
+        self.rate_limit_repository.cleanup_expired(current_time_ns)
     }
 }
 

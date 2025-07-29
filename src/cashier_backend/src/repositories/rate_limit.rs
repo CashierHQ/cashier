@@ -76,43 +76,14 @@ impl RateLimitRepository {
         RATE_LIMIT_STORE.with_borrow(|store| store.len())
     }
 
-    /// Get all entries for a specific time window
-    pub fn get_entries_by_time_window(&self, time_window: u64) -> Vec<(String, RateLimitEntry)> {
-        let prefix = format!("WINDOW#{}", time_window);
-        self.scan_with_prefix(&prefix)
-    }
-
-    /// Get all entries for a specific method across all time windows
-    pub fn get_entries_by_method(&self, method: &str) -> Vec<(String, RateLimitEntry)> {
-        RATE_LIMIT_STORE.with_borrow(|store| {
-            store
-                .iter()
-                .filter(|(key, _)| key.contains(&format!("METHOD#{}", method)))
-                .map(|(key, entry)| (key.clone(), entry.clone()))
-                .collect()
-        })
-    }
-
-    /// Get all entries for a specific user across all time windows and methods
-    pub fn get_entries_by_user(&self, user_principal: &str) -> Vec<(String, RateLimitEntry)> {
-        let user_suffix = format!("USER#{}", user_principal);
-        RATE_LIMIT_STORE.with_borrow(|store| {
-            store
-                .iter()
-                .filter(|(key, _)| key.ends_with(&user_suffix))
-                .map(|(key, entry)| (key.clone(), entry.clone()))
-                .collect()
-        })
-    }
-
-    /// Delete all entries for a specific time window (useful for cleanup)
-    pub fn delete_entries_by_time_window(&self, time_window: u64) -> Vec<(String, RateLimitEntry)> {
-        let prefix = format!("WINDOW#{}", time_window);
+    /// Clean up expired rate limit entries
+    /// Removes all entries where the end_time is less than or equal to the cutoff_time_ns
+    pub fn cleanup_expired(&self, cutoff_time_ns: u64) -> Vec<(String, RateLimitEntry)> {
         let keys_to_delete: Vec<String> = RATE_LIMIT_STORE.with_borrow(|store| {
             store
-                .keys()
-                .filter(|key| key.starts_with(&prefix))
-                .cloned()
+                .iter()
+                .filter(|(_, entry)| entry.end_time <= cutoff_time_ns)
+                .map(|(key, _)| key.clone())
                 .collect()
         });
 

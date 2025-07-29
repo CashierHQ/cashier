@@ -5,19 +5,23 @@ use crate::services::rate_limit::{RateLimitService, TimeWindow};
 
 #[cfg(test)]
 mod tests {
+    use crate::utils::runtime::test_utils::MockIcEnvironment;
+
     use super::*;
+
+    fn create_test_service() -> RateLimitService<MockIcEnvironment> {
+        let mock_env = MockIcEnvironment::new();
+        RateLimitService::new(mock_env)
+    }
 
     #[test]
     fn test_get_time_window_start_10_minutes() {
         // Test with 10-minute windows
+        let service = create_test_service();
 
         // Test case 1: 1753768505000000000 nanoseconds (around 2025-07-29 10:08:25 UTC)
         let input_time_ns = 1753768505000000000u64;
-        let result =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                input_time_ns,
-                TimeWindow::Minutes(10),
-            );
+        let result = service.get_time_window_start(input_time_ns, TimeWindow::Minutes(10));
 
         // Calculate expected result:
         // 1. Convert to seconds: 1753768505000000000 / 1_000_000_000 = 1753768505
@@ -42,14 +46,11 @@ mod tests {
     #[test]
     fn test_get_time_window_start_1_hour() {
         // Test with 1-hour windows
+        let service = create_test_service();
 
         // Using the same timestamp: 1753768505000000000 ns
         let input_time_ns = 1753768505000000000u64;
-        let result =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                input_time_ns,
-                TimeWindow::Hours(1),
-            );
+        let result = service.get_time_window_start(input_time_ns, TimeWindow::Hours(1));
 
         // Calculate expected result for 1-hour window:
         // 1. Convert to seconds: 1753768505
@@ -63,14 +64,11 @@ mod tests {
     #[test]
     fn test_get_time_window_start_1_day() {
         // Test with 1-day windows
+        let service = create_test_service();
 
         // Using the same timestamp: 1753768505000000000 ns
         let input_time_ns = 1753768505000000000u64;
-        let result =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                input_time_ns,
-                TimeWindow::Days(1),
-            );
+        let result = service.get_time_window_start(input_time_ns, TimeWindow::Days(1));
 
         // Calculate expected result for 1-day window:
         // 1. Convert to seconds: 1753768505
@@ -84,111 +82,72 @@ mod tests {
     #[test]
     fn test_get_time_window_start_boundary_cases() {
         // Test at exact boundaries for different window types
+        let service = create_test_service();
 
         // 10-minute window boundaries
         let ten_minutes_ns = 600 * 1_000_000_000u64; // Exactly 10 minutes since epoch
-        let result_10min =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                ten_minutes_ns,
-                TimeWindow::Minutes(10),
-            );
+        let result_10min = service.get_time_window_start(ten_minutes_ns, TimeWindow::Minutes(10));
         assert_eq!(result_10min, 600 * 1_000_000_000u64); // Should be exactly 10 minutes
 
         let twenty_minutes_ns = 1200 * 1_000_000_000u64; // Exactly 20 minutes since epoch
         let result_20min =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                twenty_minutes_ns,
-                TimeWindow::Minutes(10),
-            );
+            service.get_time_window_start(twenty_minutes_ns, TimeWindow::Minutes(10));
         assert_eq!(result_20min, 1200 * 1_000_000_000u64); // Should be exactly 20 minutes
 
         // Just before 10-minute boundary
         let just_before_10min_ns = (600 * 1_000_000_000u64) - 1;
         let result_before =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                just_before_10min_ns,
-                TimeWindow::Minutes(10),
-            );
+            service.get_time_window_start(just_before_10min_ns, TimeWindow::Minutes(10));
         assert_eq!(result_before, 0); // Should round down to epoch
 
         // 1-hour window boundaries
         let one_hour_ns = 3600 * 1_000_000_000u64; // Exactly 1 hour since epoch
-        let result_1hour =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                one_hour_ns,
-                TimeWindow::Hours(1),
-            );
+        let result_1hour = service.get_time_window_start(one_hour_ns, TimeWindow::Hours(1));
         assert_eq!(result_1hour, 3600 * 1_000_000_000u64);
 
         // 1-day window boundaries
         let one_day_ns = 86400 * 1_000_000_000u64; // Exactly 1 day since epoch
-        let result_1day =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                one_day_ns,
-                TimeWindow::Days(1),
-            );
+        let result_1day = service.get_time_window_start(one_day_ns, TimeWindow::Days(1));
         assert_eq!(result_1day, 86400 * 1_000_000_000u64);
     }
 
     #[test]
     fn test_get_time_window_start_epoch() {
         // Test at Unix epoch (time 0) for all window types
+        let service = create_test_service();
         let epoch_ns = 0u64;
 
-        let result_minutes =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                epoch_ns,
-                TimeWindow::Minutes(10),
-            );
+        let result_minutes = service.get_time_window_start(epoch_ns, TimeWindow::Minutes(10));
         assert_eq!(result_minutes, 0);
 
-        let result_hours =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                epoch_ns,
-                TimeWindow::Hours(1),
-            );
+        let result_hours = service.get_time_window_start(epoch_ns, TimeWindow::Hours(1));
         assert_eq!(result_hours, 0);
 
-        let result_days =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                epoch_ns,
-                TimeWindow::Days(1),
-            );
+        let result_days = service.get_time_window_start(epoch_ns, TimeWindow::Days(1));
         assert_eq!(result_days, 0);
     }
 
     #[test]
     fn test_get_time_window_start_custom_windows() {
         // Test with custom window sizes
+        let service = create_test_service();
         let input_time_ns = 7265000000000u64; // 2 hours, 1 minute, 5 seconds in nanoseconds
 
         // 30-minute window
-        let result_30min =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                input_time_ns,
-                TimeWindow::Minutes(30),
-            );
+        let result_30min = service.get_time_window_start(input_time_ns, TimeWindow::Minutes(30));
         // 7265 seconds / 1800 (30 minutes) = 4.036... -> 4 intervals
         // 4 * 1800 * 1_000_000_000 = 7200000000000
         assert_eq!(result_30min, 7200000000000u64);
 
         // 6-hour window
-        let result_6hour =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                input_time_ns,
-                TimeWindow::Hours(6),
-            );
+        let result_6hour = service.get_time_window_start(input_time_ns, TimeWindow::Hours(6));
         // 7265 seconds / 21600 (6 hours) = 0.336... -> 0 intervals
         // 0 * 21600 * 1_000_000_000 = 0
         assert_eq!(result_6hour, 0u64);
 
         // 2-day window
         let large_time_ns = 259200000000000u64; // 3 days in nanoseconds
-        let result_2day =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                large_time_ns,
-                TimeWindow::Days(2),
-            );
+        let result_2day = service.get_time_window_start(large_time_ns, TimeWindow::Days(2));
         // 259200 seconds / 172800 (2 days) = 1.5 -> 1 interval
         // 1 * 172800 * 1_000_000_000 = 172800000000000
         assert_eq!(result_2day, 172800000000000u64);
@@ -197,27 +156,16 @@ mod tests {
     #[test]
     fn test_get_time_window_start_real_world_scenarios() {
         // Test with realistic scenarios that demonstrate the "fixed window" behavior
+        let service = create_test_service();
 
         // Scenario 1: Two requests within the same 10-minute window and one in a different window
         let time_05_53 = 1753768380000000000u64; // 05:53:00
         let time_05_57 = 1753768620000000000u64; // 05:57:00
         let time_06_04 = 1753769040000000000u64; // 06:04:00
 
-        let window_start_1 =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                time_05_53,
-                TimeWindow::Minutes(10),
-            );
-        let window_start_2 =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                time_05_57,
-                TimeWindow::Minutes(10),
-            );
-        let window_start_3 =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                time_06_04,
-                TimeWindow::Minutes(10),
-            );
+        let window_start_1 = service.get_time_window_start(time_05_53, TimeWindow::Minutes(10));
+        let window_start_2 = service.get_time_window_start(time_05_57, TimeWindow::Minutes(10));
+        let window_start_3 = service.get_time_window_start(time_06_04, TimeWindow::Minutes(10));
 
         // Both should map to the same window start (10:10)
         assert_eq!(window_start_1, window_start_2);
@@ -227,16 +175,8 @@ mod tests {
         let time_10_30 = 1753769400000000000u64; // Simulating 10:30
         let time_11_30 = 1753772400000000000u64; // Simulating 11:30 (1 hour later)
 
-        let hour_window_1 =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                time_10_30,
-                TimeWindow::Hours(1),
-            );
-        let hour_window_2 =
-            RateLimitService::<crate::utils::runtime::RealIcEnvironment>::get_time_window_start(
-                time_11_30,
-                TimeWindow::Hours(1),
-            );
+        let hour_window_1 = service.get_time_window_start(time_10_30, TimeWindow::Hours(1));
+        let hour_window_2 = service.get_time_window_start(time_11_30, TimeWindow::Hours(1));
 
         // These should map to different hour windows
         assert_ne!(hour_window_1, hour_window_2);
