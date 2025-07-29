@@ -11,6 +11,7 @@ pub mod keys;
 pub mod link;
 pub mod link_action;
 pub mod processing_transaction;
+pub mod rate_limit;
 pub mod request_lock;
 pub mod transaction;
 pub mod user;

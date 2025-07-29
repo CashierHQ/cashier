@@ -4,6 +4,8 @@
 use cashier_macros::storable;
 use std::fmt;
 
+use crate::rate_limit::RateLimitIdentifier;
+
 pub type UserKey = String;
 
 pub type UserWalletKey = String;
@@ -184,6 +186,29 @@ impl RequestLockKey {
             user_principal: user_principal.into(),
             action_id: action_id.into(),
             transaction_id: transaction_id.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RateLimitKey {
+    pub identifier: RateLimitIdentifier,
+    pub method: String,
+    pub time_windows: u64,
+}
+
+impl RateLimitKey {
+    pub fn to_str(&self) -> String {
+        match &self.identifier {
+            RateLimitIdentifier::UserPrincipal(user) => {
+                format!(
+                    "WINDOW#{}#METHOD#{}#USER#{}",
+                    self.time_windows, self.method, user
+                )
+            }
+            RateLimitIdentifier::AnyUser => {
+                format!("WINDOW#{}#METHOD#{}", self.time_windows, self.method)
+            }
         }
     }
 }
