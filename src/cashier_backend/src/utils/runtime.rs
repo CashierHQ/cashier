@@ -62,6 +62,7 @@ impl IcEnvironment for RealIcEnvironment {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 pub mod test_utils {
     use super::*;
 
