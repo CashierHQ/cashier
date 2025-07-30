@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::repositories::rate_limit::RateLimitRepository;
 use crate::services::link::traits::LinkValidation;
 use candid::Principal;
 use ic_cdk::{query, update};
@@ -272,7 +273,7 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 pub struct LinkApi<E: IcEnvironment + Clone> {
     link_service: LinkService<E>,
     action_service: ActionService,
-    rate_limiter_service: RateLimitService<E>,
+    rate_limiter_service: RateLimitService<E, RateLimitRepository>,
     ic_env: E,
 }
 
@@ -307,7 +308,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     pub fn new(
         link_service: LinkService<E>,
         action_service: ActionService,
-        rate_limiter_service: RateLimitService<E>,
+        rate_limiter_service: RateLimitService<E, RateLimitRepository>,
         ic_env: E,
     ) -> Self {
         Self {

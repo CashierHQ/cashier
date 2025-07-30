@@ -191,6 +191,7 @@ impl RequestLockKey {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable]
 pub struct RateLimitKey {
     pub identifier: RateLimitIdentifier,
     pub method: String,

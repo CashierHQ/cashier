@@ -1,9 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::time::Duration;
+
 use cashier_types::keys::RateLimitKey;
 use cashier_types::rate_limit::{RateLimitEntry, RateLimitIdentifier};
 
+use crate::info;
+use crate::repositories::rate_limit::RateLimitRepositoryTrait;
 use crate::{
     repositories::rate_limit::RateLimitRepository, types::error::CanisterError,
     utils::runtime::IcEnvironment,
@@ -28,22 +32,24 @@ impl TimeWindow {
 }
 
 #[derive(Clone)]
-pub struct RateLimitService<T: IcEnvironment> {
-    rate_limit_repository: RateLimitRepository,
+pub struct RateLimitService<T: IcEnvironment, R: RateLimitRepositoryTrait> {
+    rate_limit_repository: R,
     #[allow(dead_code)]
     ic_env: T,
 }
 
-impl<T: IcEnvironment> RateLimitService<T> {
-    pub fn new(ic_env: T) -> Self {
+impl<T: IcEnvironment, R: RateLimitRepositoryTrait> RateLimitService<T, R> {
+    pub fn new(ic_env: T, rate_limit_repository: R) -> Self {
         Self {
-            rate_limit_repository: RateLimitRepository::new(),
+            rate_limit_repository,
             ic_env,
         }
     }
 
     pub fn get_instance() -> Self {
-        Self::new(T::new())
+        let ic_env = T::new();
+        let rate_limit_repository = R::new();
+        Self::new(ic_env, rate_limit_repository)
     }
 
     /// Get a time window start timestamp for the given time and window duration
@@ -178,13 +184,23 @@ impl<T: IcEnvironment> RateLimitService<T> {
         Ok(())
     }
 
-    // === Maintenance Methods ===
+    pub fn set_timer_interval_for_cleaning_expried_record(&self, duration: &Duration) {
+        self.ic_env.set_timer_interval(*duration, move || {
+            let rate_limit_repository = RateLimitRepository::new(); // Create a new instance of RateLimitRepository
+            let ic_env = T::new();
+            let current_time_ns: u64 = ic_env.time(); // Explicit type annotation for time
+            let expired_entries: Vec<(String, RateLimitEntry)> =
+                rate_limit_repository.cleanup_expired(current_time_ns); // Explicit type annotation for cleanup result
 
-    /// Clean up expired rate limit entries to prevent memory buildup
-    /// Removes all entries where the current time has passed the end_time
-    pub fn clean_old_time_windows(&self) -> Vec<(String, RateLimitEntry)> {
-        let current_time_ns = self.ic_env.time();
-        self.rate_limit_repository.cleanup_expired(current_time_ns)
+            if !expired_entries.is_empty() {
+                info!(
+                    "Cleaned up expired rate limit entries: {:?}",
+                    expired_entries
+                );
+            } else {
+                info!("No expired rate limit entries to clean up at this time.");
+            }
+        });
     }
 }
 

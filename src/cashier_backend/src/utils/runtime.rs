@@ -15,6 +15,7 @@ pub trait IcEnvironment {
     where
         F: Future<Output = ()> + 'static;
     fn set_timer(&self, delay: Duration, f: impl FnOnce() + 'static) -> TimerId;
+    fn set_timer_interval(&self, interval: Duration, func: impl FnMut() + 'static) -> TimerId;
     // Add other IC-specific methods as needed
 }
 
@@ -52,6 +53,10 @@ impl IcEnvironment for RealIcEnvironment {
 
     fn set_timer(&self, delay: Duration, f: impl FnOnce() + 'static) -> TimerId {
         ic_cdk_timers::set_timer(delay, f)
+    }
+
+    fn set_timer_interval(&self, interval: Duration, func: impl FnMut() + 'static) -> TimerId {
+        ic_cdk_timers::set_timer_interval(interval, func)
     }
     // Implement other methods
 }
@@ -131,6 +136,15 @@ pub mod test_utils {
         }
 
         fn set_timer(&self, _delay: Duration, _f: impl FnOnce() + 'static) -> TimerId {
+            // Return a dummy timer ID for testing
+            TimerId::default()
+        }
+
+        fn set_timer_interval(
+            &self,
+            _interval: Duration,
+            _func: impl FnMut() + 'static,
+        ) -> TimerId {
             // Return a dummy timer ID for testing
             TimerId::default()
         }

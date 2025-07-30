@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use std::cell::RefCell;
-use std::collections::HashMap;
 
 use cashier_types::processing_transaction::ProcessingTransaction;
 use cashier_types::rate_limit::RateLimitEntry;
@@ -63,6 +62,7 @@ const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(11);
 const PROCESSING_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(12);
 
 const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(25);
+const RATE_LIMIT_MEMORY_ID: MemoryId = MemoryId::new(26);
 
 // Unused Memory IDs but it used before, due to canister doesn't support shrink allocated memory
 const _UNUSED_MEMORY_ID_12: MemoryId = MemoryId::new(12);
@@ -212,10 +212,18 @@ thread_local! {
         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
     );
 
-    // HEAP MEMORY
-    pub static RATE_LIMIT_STORE: RefCell<HashMap<String, RateLimitEntry>> = RefCell::new(
-        HashMap::new()
+    pub static RATE_LIMIT_STORE: RefCell<StableBTreeMap<
+        String,
+        RateLimitEntry,
+        Memory
+    >> = RefCell::new(
+        StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(RATE_LIMIT_MEMORY_ID))),
     );
+
+    // HEAP MEMORY
+    // pub static RATE_LIMIT_STORE: RefCell<HashMap<String, RateLimitEntry>> = RefCell::new(
+    //     HashMap::new()
+    // );
 
 }
 
@@ -289,5 +297,10 @@ pub fn load() {
     REQUEST_LOCK_STORE.with(|t| {
         *t.borrow_mut() =
             StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID)));
+    });
+
+    RATE_LIMIT_STORE.with(|t| {
+        *t.borrow_mut() =
+            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(RATE_LIMIT_MEMORY_ID)));
     });
 }
