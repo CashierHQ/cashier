@@ -13,7 +13,7 @@ on:
       - "**/README.md"
 
 env:
-  rust-version: stable
+  RUSTC: stable
 
 
 concurrency:
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@${{ env.rust-version }}
+        uses: dtolnay/rust-toolchain@$RUSTC
         with:
           components: clippy, rustfmt
 
