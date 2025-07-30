@@ -17,12 +17,12 @@ pub enum CanisterError {
 
 impl From<CandidDecodeFailed> for CanisterError {
     fn from(err: CandidDecodeFailed) -> Self {
-        CanisterError::CandidDecodeFailed(format!("Candid decode failed: {}", err))
+        CanisterError::CandidDecodeFailed(format!("Candid decode failed: {err}"))
     }
 }
 
 impl From<CallFailed> for CanisterError {
     fn from(err: CallFailed) -> Self {
-        CanisterError::UnboundedError(format!("Call failed: {}", err))
+        CanisterError::UnboundedError(format!("Call failed: {err}"))
     }
 }

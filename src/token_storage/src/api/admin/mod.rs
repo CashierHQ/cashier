@@ -39,7 +39,7 @@ fn ensure_is_admin() -> Result<(), String> {
 #[query]
 pub fn get_registry_version() -> u64 {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
     let service = TokenRegistryService::new();
     service.get_metadata().version
@@ -50,7 +50,7 @@ pub fn get_registry_version() -> u64 {
 #[query]
 pub fn get_registry_metadata() -> TokenRegistryMetadata {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
     let service = TokenRegistryService::new();
     service.get_metadata()
@@ -59,7 +59,7 @@ pub fn get_registry_metadata() -> TokenRegistryMetadata {
 #[query]
 pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
     let service = TokenRegistryService::new();
     let list: Vec<TokenDto> = service
@@ -78,7 +78,7 @@ pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
 #[update]
 pub fn initialize_registry() -> Result<(), String> {
     ensure_is_admin().unwrap_or_else(|err| {
-        eprintln!("Admin check failed: {}", err); // Log the error
+        eprintln!("Admin check failed: {err}"); // Log the error
                                                   // Return unit type `()` to satisfy `unwrap_or_else`
     });
 
@@ -94,7 +94,7 @@ pub fn initialize_registry() -> Result<(), String> {
 #[query]
 pub fn get_stats() -> Result<RegistryStats, String> {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
     let service = TokenRegistryService::new();
@@ -190,7 +190,7 @@ pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String
 #[query]
 pub fn get_user_balance(wallet: String) -> Result<std::collections::HashMap<String, u128>, String> {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
     let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;

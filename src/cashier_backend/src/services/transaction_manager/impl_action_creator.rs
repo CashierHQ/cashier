@@ -51,8 +51,7 @@ impl<E: IcEnvironment + Clone> ActionCreator<E> for TransactionManagerService<E>
                         .get(dependency_id)
                         .ok_or_else(|| {
                             CanisterError::InvalidDataError(format!(
-                                "Dependency ID {} not found",
-                                dependency_id
+                                "Dependency ID {dependency_id} not found"
                             ))
                         })
                         .cloned()

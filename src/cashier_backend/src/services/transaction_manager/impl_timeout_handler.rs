@@ -64,8 +64,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
 
             let result = self.action_service.roll_up_state(&tx.id).map_err(|e| {
                 CanisterError::HandleLogicError(format!(
-                    "Failed to roll up state for action: {}",
-                    e
+                    "Failed to roll up state for action: {e}"
                 ))
             });
 
@@ -123,7 +122,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
         }
     }
 
-    fn restart_processing_transactions(&self) -> () {
+    fn restart_processing_transactions(&self) {
         let processing_transactions = self.processing_transaction_repository.get_all();
         info!(
             "Restarting processing transactions: {}",

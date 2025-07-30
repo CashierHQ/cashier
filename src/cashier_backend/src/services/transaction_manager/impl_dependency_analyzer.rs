@@ -42,12 +42,12 @@ impl<E: IcEnvironment + Clone> DependencyAnalyzer for TransactionManagerService<
             .action_service
             .get_action_by_tx_id(&transaction.id)
             .map_err(|e| {
-                CanisterError::NotFound(format!("Error getting action by tx id: {}", e))
+                CanisterError::NotFound(format!("Error getting action by tx id: {e}"))
             })?;
 
         let txs_in_group = action
             .get_txs_of_tx_group(&transaction.id)
-            .map_err(|e| CanisterError::NotFound(format!("Error getting txs in group: {}", e)))?;
+            .map_err(|e| CanisterError::NotFound(format!("Error getting txs in group: {e}")))?;
 
         let other_txs_in_group: Vec<&String> = txs_in_group
             .iter()
@@ -61,7 +61,7 @@ impl<E: IcEnvironment + Clone> DependencyAnalyzer for TransactionManagerService<
                 .iter()
                 .map(|id| {
                     let tx_in_group = self.transaction_service.get_tx_by_id(id).map_err(|e| {
-                        CanisterError::NotFound(format!("Error getting tx in group: {}", e))
+                        CanisterError::NotFound(format!("Error getting tx in group: {e}"))
                     })?;
 
                     self.is_all_depdendency_success(&tx_in_group, true)
@@ -90,7 +90,7 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
                     .transaction_service
                     .batch_get(dependencies)
                     .map_err(|e| {
-                        CanisterError::NotFound(format!("Error getting dependencies: {}", e))
+                        CanisterError::NotFound(format!("Error getting dependencies: {e}"))
                     })?;
 
                 let txs_to_check: Vec<&Transaction> = if is_skip_check_in_group {

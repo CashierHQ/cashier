@@ -78,7 +78,7 @@ impl TokenRegistryService {
         // Parse chain
         let chain = match Chain::from_str(chain_str) {
             Ok(c) => c,
-            Err(_) => return Err(format!("Unsupported chain type: {}", chain_str)),
+            Err(_) => return Err(format!("Unsupported chain type: {chain_str}")),
         };
 
         match chain {
@@ -100,7 +100,7 @@ impl TokenRegistryService {
                     icrc_service.icrc_1_decimals(),
                     icrc_service.icrc_1_symbol()
                 )
-                .map_err(|e| format!("Failed to fetch ICRC token info: {:?}", e))?;
+                .map_err(|e| format!("Failed to fetch ICRC token info: {e:?}"))?;
 
                 let registry_token = RegistryToken {
                     id: input.clone(),
@@ -141,13 +141,13 @@ impl TokenRegistryService {
         // Parse chain
         let chain = match Chain::from_str(chain_str) {
             Ok(c) => c,
-            Err(_) => return Err(format!("Unsupported chain type: {}", chain_str)),
+            Err(_) => return Err(format!("Unsupported chain type: {chain_str}")),
         };
 
         let current_record = self.get_token(input);
 
         let Some(mut current_record) = current_record else {
-            return Err(format!("Token with id '{}' not found in registry", input));
+            return Err(format!("Token with id '{input}' not found in registry"));
         };
 
         match chain {
@@ -169,7 +169,7 @@ impl TokenRegistryService {
                     icrc_service.icrc_1_decimals(),
                     icrc_service.icrc_1_symbol()
                 )
-                .map_err(|e| format!("Failed to fetch ICRC token info: {:?}", e))?;
+                .map_err(|e| format!("Failed to fetch ICRC token info: {e:?}"))?;
 
                 current_record.symbol = symbol;
                 current_record.name = name;

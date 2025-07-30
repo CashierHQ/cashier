@@ -45,7 +45,7 @@ pub struct RegistryToken {
 impl RegistryToken {
     pub fn generate_id(chain: &Chain, ledger_id: &str) -> Result<TokenId, String> {
         match (chain, ledger_id) {
-            (Chain::IC, id) => Ok(format!("IC:{}", id)),
+            (Chain::IC, id) => Ok(format!("IC:{id}")),
         }
     }
 }

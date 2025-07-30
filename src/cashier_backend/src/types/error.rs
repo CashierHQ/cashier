@@ -83,11 +83,11 @@ pub enum CanisterError {
 
 impl CanisterError {
     pub fn not_found(resource: &str, id: &str) -> Self {
-        Self::NotFound(format!("{} with id {} not found", resource, id))
+        Self::NotFound(format!("{resource} with id {id} not found"))
     }
 
     pub fn already_exists(resource: &str, id: &str) -> Self {
-        Self::AlreadyExists(format!("{} with id {} already exists", resource, id))
+        Self::AlreadyExists(format!("{resource} with id {id} already exists"))
     }
 
     pub fn invalid_input(message: &str) -> Self {
@@ -114,12 +114,12 @@ impl From<&str> for CanisterError {
 
 impl From<CandidDecodeFailed> for CanisterError {
     fn from(err: CandidDecodeFailed) -> Self {
-        CanisterError::CandidDecodeFailed(format!("Candid decode failed: {}", err))
+        CanisterError::CandidDecodeFailed(format!("Candid decode failed: {err}"))
     }
 }
 
 impl From<CallFailed> for CanisterError {
     fn from(err: CallFailed) -> Self {
-        CanisterError::UnboundedError(format!("Call failed: {}", err.to_string()))
+        CanisterError::UnboundedError(format!("Call failed: {err}"))
     }
 }

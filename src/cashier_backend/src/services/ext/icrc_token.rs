@@ -1,8 +1,7 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
-#![allow(dead_code, unused_imports)]
 use candid::{self, CandidType, Deserialize, Principal};
-use ic_cdk::call::{Call, CandidDecodeFailed, RejectCode};
+use ic_cdk::call::{Call, CandidDecodeFailed};
 
 use crate::types::error::CanisterError;
 
@@ -60,11 +59,7 @@ pub struct InitArgs {
     pub token_name: Option<String>,
     pub feature_flags: Option<FeatureFlags>,
 }
-#[derive(CandidType, Deserialize, Debug)]
-pub enum LedgerCanisterPayload {
-    Upgrade(Option<UpgradeArgs>),
-    Init(InitArgs),
-}
+
 pub type AccountIdentifier = serde_bytes::ByteBuf;
 #[derive(CandidType, Deserialize, Debug)]
 pub struct AccountBalanceArgs {
@@ -421,18 +416,18 @@ impl Service {
         let res = Call::unbounded_wait(self.0, "icrc1_balance_of")
             .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?;
+            .map_err(CanisterError::from)?;
         let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
 
-        parsed_res.map_err(|e| CanisterError::from(e))
+        parsed_res.map_err(CanisterError::from)
     }
 
     pub async fn icrc_1_fee(&self) -> Result<Icrc1Tokens, CanisterError> {
         let res = Call::unbounded_wait(self.0, "icrc1_fee")
             .await
-            .map_err(|e| CanisterError::from(e))?;
+            .map_err(CanisterError::from)?;
         let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
-        parsed_res.map_err(|e| CanisterError::from(e))
+        parsed_res.map_err(CanisterError::from)
     }
     pub async fn icrc_1_transfer(
         &self,
@@ -441,27 +436,27 @@ impl Service {
         let res = Call::unbounded_wait(self.0, "icrc1_transfer")
             .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?;
+            .map_err(CanisterError::from)?;
         let parsed_res: Result<Icrc1TransferResult, CandidDecodeFailed> = res.candid();
-        parsed_res.map_err(|e| CanisterError::from(e))
+        parsed_res.map_err(CanisterError::from)
     }
     pub async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<Allowance, CanisterError> {
         let res = Call::unbounded_wait(self.0, "icrc2_allowance")
             .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?;
+            .map_err(CanisterError::from)?;
         let parsed_res: Result<Allowance, CandidDecodeFailed> = res.candid();
 
-        parsed_res.map_err(|e| CanisterError::from(e))
+        parsed_res.map_err(CanisterError::from)
     }
     pub async fn icrc_2_approve(&self, arg0: &ApproveArgs) -> Result<ApproveResult, CanisterError> {
         let res = Call::unbounded_wait(self.0, "icrc2_approve")
             .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?;
+            .map_err(CanisterError::from)?;
         let parsed_res: Result<ApproveResult, CandidDecodeFailed> = res.candid();
 
-        parsed_res.map_err(|e| CanisterError::from(e))
+        parsed_res.map_err(CanisterError::from)
     }
     pub async fn icrc_2_transfer_from(
         &self,
@@ -470,8 +465,8 @@ impl Service {
         let res = Call::unbounded_wait(self.0, "icrc2_transfer_from")
             .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?;
+            .map_err(CanisterError::from)?;
         let parsed_res: Result<TransferFromResult, CandidDecodeFailed> = res.candid();
-        parsed_res.map_err(|e| CanisterError::from(e))
+        parsed_res.map_err(CanisterError::from)
     }
 }

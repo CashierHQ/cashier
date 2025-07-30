@@ -151,7 +151,7 @@ impl IcrcService {
             Err(error) => Err(CanisterError::CanisterCallError {
                 method: "icrc1_transfer".to_string(),
                 canister_id: token_service.get_canister_id().to_string(),
-                message: format!("{:?}", error),
+                message: format!("{error:?}"),
             }),
         }
     }
@@ -164,31 +164,31 @@ impl fmt::Display for TransferFromError {
                 message,
                 error_code,
             } => {
-                write!(f, "GenericError: {}, ErrorCode: {}", message, error_code)
+                write!(f, "GenericError: {message}, ErrorCode: {error_code}")
             }
             TransferFromError::TemporarilyUnavailable => {
                 write!(f, "TemporarilyUnavailable")
             }
             TransferFromError::InsufficientAllowance { allowance } => {
-                write!(f, "InsufficientAllowance: Allowance: {}", allowance)
+                write!(f, "InsufficientAllowance: Allowance: {allowance}")
             }
             TransferFromError::BadBurn { min_burn_amount } => {
-                write!(f, "BadBurn: MinBurnAmount: {}", min_burn_amount)
+                write!(f, "BadBurn: MinBurnAmount: {min_burn_amount}")
             }
             TransferFromError::Duplicate { duplicate_of } => {
-                write!(f, "Duplicate: DuplicateOf: {}", duplicate_of)
+                write!(f, "Duplicate: DuplicateOf: {duplicate_of}")
             }
             TransferFromError::BadFee { expected_fee } => {
-                write!(f, "BadFee: ExpectedFee: {}", expected_fee)
+                write!(f, "BadFee: ExpectedFee: {expected_fee}")
             }
             TransferFromError::CreatedInFuture { ledger_time } => {
-                write!(f, "CreatedInFuture: LedgerTime: {}", ledger_time)
+                write!(f, "CreatedInFuture: LedgerTime: {ledger_time}")
             }
             TransferFromError::TooOld => {
                 write!(f, "TooOld")
             }
             TransferFromError::InsufficientFunds { balance } => {
-                write!(f, "InsufficientFunds: Balance: {}", balance)
+                write!(f, "InsufficientFunds: Balance: {balance}")
             }
         }
     }

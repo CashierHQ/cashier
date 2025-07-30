@@ -49,8 +49,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                         self.update_tx_state(tx, &TransactionState::Success)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
-                                    "Error updating tx state: {}",
-                                    e
+                                    "Error updating tx state: {e}"
                                 ))
                             })?;
 
@@ -67,8 +66,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                                     )
                                     .map_err(|e| {
                                         CanisterError::HandleLogicError(format!(
-                                            "Error updating tx state: {}",
-                                            e
+                                            "Error updating tx state: {e}"
                                         ))
                                     })?;
                                 } else {
@@ -98,13 +96,11 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                         self.update_tx_state(tx, &TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
-                                    "Error updating tx state: {}",
-                                    e
+                                    "Error updating tx state: {e}"
                                 ))
                             })?;
                         return Err(CanisterError::HandleLogicError(format!(
-                            "Error executing tx: {}",
-                            e
+                            "Error executing tx: {e}"
                         )));
                     }
                 };

@@ -41,7 +41,7 @@ fn validate_token_id(token_id: &str) -> Result<(), String> {
                     }
                 }
                 _ => {
-                    return Err(format!("Unsupported chain type: {}", chain));
+                    return Err(format!("Unsupported chain type: {chain}"));
                 }
             }
         }

@@ -54,15 +54,14 @@ impl ActionData {
                         .intents
                         .iter()
                         .find(|intent| intent.id == *intent_id)
-                        .ok_or_else(|| format!("Intent with id {} not found", intent_id))?;
+                        .ok_or_else(|| format!("Intent with id {intent_id} not found"))?;
                     return Ok((intent.clone(), txs.clone()));
                 }
             }
         }
 
         Err(format!(
-            "Transaction with id {} not found in intent_txs",
-            tx_id
+            "Transaction with id {tx_id} not found in intent_txs"
         ))
     }
     pub fn get_tx(&self, tx_id: &str) -> Result<&Transaction, String> {
@@ -75,8 +74,7 @@ impl ActionData {
         }
 
         Err(format!(
-            "Transaction with id {} not found in intent_txs",
-            tx_id
+            "Transaction with id {tx_id} not found in intent_txs"
         ))
     }
 
@@ -85,12 +83,11 @@ impl ActionData {
 
         let group_key = id_index
             .get(tx_id)
-            .ok_or_else(|| format!("Transaction with id {} not found in intent_txs", tx_id))?;
+            .ok_or_else(|| format!("Transaction with id {tx_id} not found in intent_txs"))?;
 
         group_index.get(group_key).cloned().ok_or_else(|| {
             format!(
-                "Group key {:?} not found in intent_txs for transaction {}",
-                group_key, tx_id
+                "Group key {group_key:?} not found in intent_txs for transaction {tx_id}"
             )
         })
     }

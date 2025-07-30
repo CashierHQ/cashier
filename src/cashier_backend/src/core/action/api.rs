@@ -30,7 +30,7 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     let is_creator = validate_service
         .is_action_creator(&caller.to_text(), &input.action_id)
         .map_err(|e| {
-            CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
+            CanisterError::ValidationErrors(format!("Failed to validate action: {e}"))
         })?;
 
     if !is_creator {
