@@ -23,20 +23,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-  #     - name: Install Rust toolchain
-  #       uses: dtolnay/rust-toolchain@stable
-  #       with:
-  #         components: clippy, rustfmt
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
 
-  #     - name: Install Just command runner
-  #       uses: extractions/setup-just@v1
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
 
-  #     - name: Configure Rust Cache
-  #       uses: Swatinem/rust-cache@v2
-  #       if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
-  #       with:
-  #         shared-key: ${{ github.repository }}
-  #         save-if: ${{ github.ref_type != 'tag' }}
+      - name: Configure Rust Cache
+        uses: swatinem/rust-cache@v2
+        if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
+        with:
+          shared-key: ${{ github.repository }}
+          save-if: ${{ github.ref_type != 'tag' }}
 
   #     - name: Setup environment
   #       run: |
