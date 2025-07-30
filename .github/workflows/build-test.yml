@@ -95,7 +95,7 @@ jobs:
 
       - name: Test
         run: |
-          just test_all
+          just test
 
   build-test-i686:
     name: Test for the i686 architecture
@@ -129,5 +129,5 @@ jobs:
 
       - name: Test - 32 bits
         run: |
-          just test_i686
+          just test_unit_i686
 
