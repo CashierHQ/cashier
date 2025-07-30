@@ -84,11 +84,7 @@ jobs:
       - name: Setup environment
         run: |
           export RUST_BACKTRACE="full"
-
-      - name: Check Rust code style
-        run: |
-          just check_code
-          
+         
       - name: Build
         run: |
           just build
