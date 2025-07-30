@@ -1,0 +1,14 @@
+[package]
+name = "integration_tests"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+license-file = "../../../LICENSE"
+
+
+[dev-dependencies]
+candid = {workspace = true}
+ic-cdk = {workspace = true}
+ic_mple_pocket_ic = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }

@@ -248,15 +248,12 @@ dependencies = [
  "ic-stable-structures",
  "icrc-ledger-types",
  "itertools 0.13.0",
- "proc-macro2",
- "quote",
  "rand 0.8.5",
  "rm",
  "serde",
  "serde_bytes",
  "serde_cbor",
  "serde_json",
- "syn 2.0.96",
  "thiserror 2.0.11",
  "tokio",
  "uuid",
@@ -1087,6 +1084,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0242819d153cba4b4b05a5a8f2a7e9bbf97b6055b2a002b395c96b5ff3c0222"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "integration_tests"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "ic_mple_pocket_ic",
+ "serde",
+ "tokio",
 ]
 
 [[package]]
