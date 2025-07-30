@@ -91,7 +91,7 @@ jobs:
          
       - name: Build
         run: |
-          just build_canisters
+          just build
 
       - name: Test
         run: |
