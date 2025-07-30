@@ -4,7 +4,7 @@ import "./just/code_check.just"
 import "./just/test.just"
 
 export RUST_BACKTRACE := "full"
-ARTIFACT_DIR := env("ARTIFACT_DIR", "./target/artifact")
+ARTIFACTS_DIR := env("ARTIFACTS_DIR", "./target/artifacts")
 
 
 # Lists all the available commands

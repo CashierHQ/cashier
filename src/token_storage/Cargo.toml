@@ -18,3 +18,7 @@ serde_json = {workspace = true}
 cashier-macros = { path = "../lib/cashier-macros" }
 serde_bytes = { workspace = true }
 futures = "0.3.31"
+
+[dev-dependencies]
+ic_mple_pocket_ic = "0.7"
+tokio = { workspace = true }

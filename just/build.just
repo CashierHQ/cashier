@@ -21,24 +21,24 @@ build_canisters: pre_build
 # Download third party artifacts
 [group('build')]
 download_artifacts:
-  curl -o {{ARTIFACT_DIR}}/ledger-suite-icp.did https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did
-  curl -o {{ARTIFACT_DIR}}/ledger-suite-icp.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz
-  curl -o {{ARTIFACT_DIR}}/ledger-suite-icrc.did https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ledger.did
-  curl -o {{ARTIFACT_DIR}}/ledger-suite-icrc.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz
+  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icp.did https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did
+  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icp.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz
+  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icrc.did https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ledger.did
+  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icrc.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz
 
 
 [private]
 pre_build: 
-  mkdir -p "{{ARTIFACT_DIR}}"
+  mkdir -p "{{ARTIFACTS_DIR}}"
 
 
 # Builds a canister with the given name and features, generates did file then shrinks and gzips the wasm file.
-# The output wasm file is saved in the ARTIFACT_DIR directory.
+# The output wasm file is saved in the ARTIFACTS_DIR directory.
 [private]
 build_canister canister_name features output_wasm:
   echo "Building {{canister_name}} Canister with features: {{features}}"
   cargo build --target wasm32-unknown-unknown --release --package "{{canister_name}}" --features "{{features}}"
-  ic-wasm "target/wasm32-unknown-unknown/release/{{canister_name}}.wasm" -o "{{ARTIFACT_DIR}}/{{output_wasm}}.wasm" shrink --keep-name-section
-  candid-extractor "{{ARTIFACT_DIR}}/{{output_wasm}}.wasm" > "{{ARTIFACT_DIR}}/{{output_wasm}}.did"
-  gzip -k "{{ARTIFACT_DIR}}/{{output_wasm}}.wasm" --force
+  ic-wasm "target/wasm32-unknown-unknown/release/{{canister_name}}.wasm" -o "{{ARTIFACTS_DIR}}/{{output_wasm}}.wasm" shrink --keep-name-section
+  candid-extractor "{{ARTIFACTS_DIR}}/{{output_wasm}}.wasm" > "{{ARTIFACTS_DIR}}/{{output_wasm}}.did"
+  gzip -k "{{ARTIFACTS_DIR}}/{{output_wasm}}.wasm" --force
 
