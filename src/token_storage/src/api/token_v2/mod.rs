@@ -101,9 +101,10 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
         if token_registry_service.get_token(token_id).is_none() {
             // Token doesn't exist in registry, register it first
             // Don't fail if registration fails - continue processing
-            if let Err(_) = token_registry_service
+            if token_registry_service
                 .register_new_token(token_id, &None)
                 .await
+                .is_err()
             {
                 // Log the error but continue processing
                 // In the future, we might want to collect these errors and return them
@@ -206,7 +207,7 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 
             // Case 2: If token list is empty, return registry tokens
             if list.enable_list.is_empty() {
-                return Ok(TokenListResponse {
+                Ok(TokenListResponse {
                     tokens: token_registry_service
                         .list_tokens()
                         .iter()
@@ -219,7 +220,7 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                         .collect(),
                     need_update_version: true,
                     perference: Some(user_preferences),
-                });
+                })
             } else {
                 // Case 3: User has enabled tokens - create tokens with proper enabled state
                 let registry_tokens = token_registry_service.list_tokens();
@@ -242,26 +243,26 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 
                 // Then, add all remaining registry tokens with enabled = false
                 for registry_token in &registry_tokens {
-                    if !seen_token_ids.contains(&registry_token.id) {
-                        if seen_token_ids.insert(registry_token.id.clone()) {
-                            let mut token_dto = TokenDto::from(registry_token.clone());
-                            // Enrich with balance if available
-                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
-                            filtered_tokens.push(token_dto);
-                        }
+                    if !seen_token_ids.contains(&registry_token.id)
+                        && seen_token_ids.insert(registry_token.id.clone())
+                    {
+                        let mut token_dto = TokenDto::from(registry_token.clone());
+                        // Enrich with balance if available
+                        token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                        filtered_tokens.push(token_dto);
                     }
                 }
 
-                return Ok(TokenListResponse {
+                Ok(TokenListResponse {
                     tokens: filtered_tokens,
                     need_update_version,
                     perference: Some(user_preferences),
-                });
+                })
             }
         }
         Err(_) => {
             // Case 4: Token list doesn't exist or error occurred - return registry tokens with need_update = true
-            return Ok(TokenListResponse {
+            Ok(TokenListResponse {
                 tokens: token_registry_service
                     .list_tokens()
                     .iter()
@@ -274,7 +275,7 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                     .collect(),
                 need_update_version: true,
                 perference: Some(user_preferences),
-            });
+            })
         }
     }
 }

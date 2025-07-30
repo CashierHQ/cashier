@@ -104,14 +104,14 @@ impl TokenRegistryService {
 
                 let registry_token = RegistryToken {
                     id: input.clone(),
-                    symbol: symbol.0,
-                    name: name.0,
-                    decimals: decimals.0,
+                    symbol,
+                    name,
+                    decimals,
                     chain,
                     details: ChainTokenDetails::IC {
                         ledger_id: principal,
                         index_id: *index_id,
-                        fee: fee.0,
+                        fee,
                     },
                     enabled_by_default: false,
                 };
@@ -146,11 +146,9 @@ impl TokenRegistryService {
 
         let current_record = self.get_token(input);
 
-        if current_record.is_none() {
+        let Some(mut current_record) = current_record else {
             return Err(format!("Token with id '{}' not found in registry", input));
-        }
-
-        let mut current_record = current_record.unwrap();
+        };
 
         match chain {
             Chain::IC => {
@@ -173,13 +171,13 @@ impl TokenRegistryService {
                 )
                 .map_err(|e| format!("Failed to fetch ICRC token info: {:?}", e))?;
 
-                current_record.symbol = symbol.0;
-                current_record.name = name.0;
-                current_record.decimals = decimals.0;
+                current_record.symbol = symbol;
+                current_record.name = name;
+                current_record.decimals = decimals;
                 current_record.details = ChainTokenDetails::IC {
                     ledger_id: principal,
                     index_id: current_record.details.index_id(),
-                    fee: fee.0,
+                    fee,
                 };
                 self.registry_repository.register_token(&current_record)
             } // _ => Err(format!(

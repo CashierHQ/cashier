@@ -28,11 +28,11 @@ impl UserPreferenceService {
     }
 
     /// Set user preferences
-    pub fn set_preferences(&self, user_id: String, preferences: UserPreference) {
-        if self.repository.has_preferences(&user_id) {
-            self.repository.update(&user_id, preferences);
+    pub fn set_preferences(&self, user_id: &str, preferences: UserPreference) {
+        if self.repository.has_preferences(user_id) {
+            self.repository.update(user_id, preferences);
         } else {
-            self.repository.add(&user_id, preferences);
+            self.repository.add(user_id, preferences);
         }
     }
 
