@@ -52,19 +52,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-  #     - name: Install Rust toolchain
-  #       uses: dtolnay/rust-toolchainstable
-  #       with:
-  #         components: clippy, rustfmt
-  #         targets: wasm32-unknown-unknown
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+          targets: wasm32-unknown-unknown
 
-  #     - name: Install Just command runner
-  #       uses: extractions/setup-just@v1
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
 
-  #     - name: Install ic-wasm
-  #       run: |
-  #         wget https://github.com/dfinity/ic-wasm/releases/download/0.9.3/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
-  #         chmod +x /usr/local/bin/ic-wasm
+      - name: Install ic-wasm
+        run: |
+          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.3/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
+          chmod +x /usr/local/bin/ic-wasm
 
   #     - name: Install candid-extractor
   #       run: |
