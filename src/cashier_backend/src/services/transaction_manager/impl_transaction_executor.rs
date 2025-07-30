@@ -137,7 +137,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
         &self,
         tx: &Icrc2TransferFrom,
     ) -> Result<(), CanisterError> {
-        let mut args: TransferFromArgs =
+        let args: TransferFromArgs =
             TransferFromArgs::try_from(tx.clone()).map_err(CanisterError::HandleLogicError)?;
 
         // get asset

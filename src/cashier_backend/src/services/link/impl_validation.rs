@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use candid::Nat;
 use candid::Principal;
 use cashier_types::action::v1::ActionState;
 use cashier_types::asset_info::AssetInfo;
@@ -137,7 +138,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                         )
                         .await?;
 
-                    if link_balance == 0 {
+                    if link_balance == Nat::from(0u64) {
                         return Err(CanisterError::ValidationErrors(
                             "Not enough asset".to_string(),
                         ));
@@ -183,7 +184,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                         )
                         .await?;
 
-                    if link_balance == 0 {
+                    if link_balance == Nat::from(0u64) {
                         return Err(CanisterError::ValidationErrors(
                             "Not enough asset".to_string(),
                         ));
@@ -438,7 +439,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
 
             let balance = self.icrc_service.balance_of(token_pid, account).await?;
 
-            if balance > 0 {
+            if balance > Nat::from(0u64) {
                 return Ok(true);
             }
         }
