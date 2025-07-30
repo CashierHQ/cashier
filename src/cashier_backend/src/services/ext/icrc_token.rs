@@ -2,7 +2,7 @@
 // You may want to manually adjust some of the types.
 #![allow(dead_code, unused_imports)]
 use candid::{self, CandidType, Deserialize, Principal};
-use ic_cdk::call::{Call, CandidDecodeFailed};
+use ic_cdk::call::{Call, CandidDecodeFailed, RejectCode};
 
 use crate::types::error::CanisterError;
 
@@ -418,59 +418,60 @@ impl Service {
     }
 
     pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<Icrc1Tokens, CanisterError> {
-        Call::unbounded_wait(self.0, "icrc1_balance_of")
-            .with_arg((arg0,))
+        let res = Call::unbounded_wait(self.0, "icrc1_balance_of")
+            .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?
-            .candid()?
+            .map_err(|e| CanisterError::from(e))?;
+        let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
+
+        parsed_res.map_err(|e| CanisterError::from(e))
     }
 
-    pub async fn icrc_1_decimals(&self) -> Result<u8, CanisterError> {
-        Call::unbounded_wait(self.0, "icrc1_decimals")
-            .with_arg(())
-            .await
-            .map_err(|e| CanisterError::from(e))?
-            .candid()?
-    }
     pub async fn icrc_1_fee(&self) -> Result<Icrc1Tokens, CanisterError> {
-        Call::unbounded_wait(self.0, "icrc1_fee")
-            .with_arg(())
+        let res = Call::unbounded_wait(self.0, "icrc1_fee")
             .await
-            .map_err(|e| CanisterError::from(e))?
-            .candid()?
+            .map_err(|e| CanisterError::from(e))?;
+        let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(|e| CanisterError::from(e))
     }
     pub async fn icrc_1_transfer(
         &self,
         arg0: &TransferArg,
     ) -> Result<Icrc1TransferResult, CanisterError> {
-        Call::unbounded_wait(self.0, "icrc1_transfer")
-            .with_arg((arg0,))
+        let res = Call::unbounded_wait(self.0, "icrc1_transfer")
+            .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?
-            .candid()?
+            .map_err(|e| CanisterError::from(e))?;
+        let parsed_res: Result<Icrc1TransferResult, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(|e| CanisterError::from(e))
     }
     pub async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<Allowance, CanisterError> {
-        Call::unbounded_wait(self.0, "icrc2_allowance")
-            .with_arg((arg0,))
+        let res = Call::unbounded_wait(self.0, "icrc2_allowance")
+            .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?
-            .candid()?
+            .map_err(|e| CanisterError::from(e))?;
+        let parsed_res: Result<Allowance, CandidDecodeFailed> = res.candid();
+
+        parsed_res.map_err(|e| CanisterError::from(e))
     }
     pub async fn icrc_2_approve(&self, arg0: &ApproveArgs) -> Result<ApproveResult, CanisterError> {
-        Call::unbounded_wait(self.0, "icrc2_approve")
-            .with_arg((arg0,))
+        let res = Call::unbounded_wait(self.0, "icrc2_approve")
+            .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?
-            .candid()?
+            .map_err(|e| CanisterError::from(e))?;
+        let parsed_res: Result<ApproveResult, CandidDecodeFailed> = res.candid();
+
+        parsed_res.map_err(|e| CanisterError::from(e))
     }
     pub async fn icrc_2_transfer_from(
         &self,
         arg0: &TransferFromArgs,
     ) -> Result<TransferFromResult, CanisterError> {
-        Call::unbounded_wait(self.0, "icrc2_transfer_from")
-            .with_arg((arg0,))
+        let res = Call::unbounded_wait(self.0, "icrc2_transfer_from")
+            .with_arg(arg0)
             .await
-            .map_err(|e| CanisterError::from(e))?
-            .candid()?
+            .map_err(|e| CanisterError::from(e))?;
+        let parsed_res: Result<TransferFromResult, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(|e| CanisterError::from(e))
     }
 }
