@@ -391,7 +391,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                 return false;
             };
 
-            if amount_per_link_use_action != 1 {
+            if amount_per_link_use_action == 0 {
                 return false;
             }
 
@@ -456,7 +456,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                 return false;
             };
 
-            if amount_per_link_use_action != 1 {
+            if amount_per_link_use_action == 1 {
                 return false;
             }
 
