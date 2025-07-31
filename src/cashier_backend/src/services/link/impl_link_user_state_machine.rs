@@ -31,11 +31,9 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
             .link_action_repository
             .get_by_prefix(link_id, action_type, user_id);
 
-        if action_list.is_empty() {
+        let Some(mut link_action) = action_list.first().cloned() else {
             return Err(CanisterError::NotFound("Link action not found".to_string()));
-        }
-
-        let mut link_action = action_list[0].clone();
+        };
 
         // Validate current state
         let current_user_state = link_action
@@ -78,8 +76,7 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         // Any other transition is invalid
         else {
             return Err(CanisterError::HandleLogicError(format!(
-                "current state {:#?} is not allowed to transition: {:#?}",
-                current_user_state, goto
+                "current state {current_user_state:#?} is not allowed to transition: {goto:#?}"
             )));
         }
 
@@ -121,12 +118,12 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         }
 
         let temp_user_id = if *caller != Principal::anonymous() {
-            self.user_service.get_user_id_by_wallet(&caller)
+            self.user_service.get_user_id_by_wallet(caller)
         } else {
             input
                 .anonymous_wallet_address
                 .as_ref()
-                .map(|addr| format!("ANON#{}", addr))
+                .map(|addr| format!("ANON#{addr}"))
         };
         // Check if temp_user_id is None and return error
         let temp_user_id = temp_user_id
@@ -160,7 +157,7 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         let action = self
             .action_service
             .get_action_data(&action_id)
-            .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
+            .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {e}")))?;
 
         Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
@@ -201,14 +198,14 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
             input
                 .anonymous_wallet_address
                 .as_ref()
-                .map(|addr| format!("ANON#{}", addr))
+                .map(|addr| format!("ANON#{addr}"))
         };
         // Check if temp_user_id is None and return error
         let temp_user_id = temp_user_id
             .ok_or_else(|| CanisterError::ValidationErrors("User ID is required".to_string()))?;
 
         let goto = UserStateMachineGoto::from_str(&input.goto)
-            .map_err(|e| CanisterError::ValidationErrors(format!("Invalid goto: {}", e)))?;
+            .map_err(|e| CanisterError::ValidationErrors(format!("Invalid goto: {e}")))?;
 
         let link_action = self.handle_user_link_state_machine(
             &input.link_id,
@@ -234,7 +231,7 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         let action = self
             .action_service
             .get_action_data(&link_action.action_id)
-            .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {}", e)))?;
+            .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get action: {e}")))?;
 
         Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),

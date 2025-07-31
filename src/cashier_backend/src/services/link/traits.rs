@@ -192,10 +192,5 @@ pub trait LinkValidation {
     fn is_link_exist(&self, link_id: &str) -> bool;
 
     async fn check_link_asset_left(&self, link: &Link) -> Result<bool, CanisterError>;
-    fn validate_add_asset_with_link_type(
-        &self,
-        link: &Link,
-        asset_infos: &[AssetInfo],
-        link_use_action_max_count: &u64,
-    ) -> bool;
+    fn validate_add_asset_with_link_type(&self, link: &Link, asset_infos: &[AssetInfo]) -> bool;
 }

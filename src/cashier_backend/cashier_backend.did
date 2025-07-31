@@ -20,13 +20,8 @@ type CanisterError = variant {
   BatchError : vec CanisterError;
   InvalidInput : text;
   HandleLogicError : text;
-  CanisterCallRejectError : record {
-    method : text;
-    code : RejectionCode;
-    canister_id : text;
-    message : text;
-  };
   ParsePrincipalError : text;
+  CandidDecodeFailed : text;
   UnknownError : text;
   InsufficientBalance : record { available : nat64; required : nat64 };
   NotFound : text;
@@ -41,6 +36,7 @@ type CanisterError = variant {
     canister_id : text;
     message : text;
   };
+  UnboundedError : text;
   CallCanisterFailed : text;
 };
 type CreateActionAnonymousInput = record {
@@ -188,15 +184,6 @@ type ProcessActionInput = record {
   action_id : text;
   link_id : text;
   action_type : text;
-};
-type RejectionCode = variant {
-  NoError;
-  CanisterError;
-  SysTransient;
-  DestinationInvalid;
-  Unknown;
-  SysFatal;
-  CanisterReject;
 };
 type Result = variant { Ok : ActionDto; Err : CanisterError };
 type Result_1 = variant { Ok : LinkDto; Err : CanisterError };

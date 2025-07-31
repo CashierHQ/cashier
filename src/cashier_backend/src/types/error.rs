@@ -1,10 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::fmt;
-
 use candid::CandidType;
-use ic_cdk::api::call::RejectionCode;
+use ic_cdk::call::{CallFailed, CandidDecodeFailed};
 use serde::Deserialize;
 use thiserror::Error;
 
@@ -33,17 +31,6 @@ pub enum CanisterError {
 
     #[error("Insufficient balance: available {available}, required {required}")]
     InsufficientBalance { available: u64, required: u64 },
-
-    // External service errors
-    #[error(
-        "Failed to call method {method} on canister {canister_id}: Reject code {code}, {message}"
-    )]
-    CanisterCallRejectError {
-        method: String,
-        canister_id: String,
-        code: DisplayRejectionCode,
-        message: String,
-    },
 
     #[error("Failed to call method {method} on canister {canister_id}: {message}")]
     CanisterCallError {
@@ -86,15 +73,21 @@ pub enum CanisterError {
 
     #[error("Multi errors: {0:?}")]
     BatchError(Vec<CanisterError>),
+
+    #[error("Candid decode failed: {0}")]
+    CandidDecodeFailed(String),
+
+    #[error("Call failed: {0}")]
+    UnboundedError(String),
 }
 
 impl CanisterError {
     pub fn not_found(resource: &str, id: &str) -> Self {
-        Self::NotFound(format!("{} with id {} not found", resource, id))
+        Self::NotFound(format!("{resource} with id {id} not found"))
     }
 
     pub fn already_exists(resource: &str, id: &str) -> Self {
-        Self::AlreadyExists(format!("{} with id {} already exists", resource, id))
+        Self::AlreadyExists(format!("{resource} with id {id} already exists"))
     }
 
     pub fn invalid_input(message: &str) -> Self {
@@ -119,11 +112,14 @@ impl From<&str> for CanisterError {
     }
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize, Error)]
-pub struct DisplayRejectionCode(pub RejectionCode);
+impl From<CandidDecodeFailed> for CanisterError {
+    fn from(err: CandidDecodeFailed) -> Self {
+        CanisterError::CandidDecodeFailed(format!("Candid decode failed: {err}"))
+    }
+}
 
-impl fmt::Display for DisplayRejectionCode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.0)
+impl From<CallFailed> for CanisterError {
+    fn from(err: CallFailed) -> Self {
+        CanisterError::UnboundedError(format!("Call failed: {err}"))
     }
 }

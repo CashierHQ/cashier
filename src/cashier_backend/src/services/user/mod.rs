@@ -49,10 +49,7 @@ pub fn get() -> Option<UserDto> {
     let user_wallet_repository = repositories::user_wallet::UserWalletRepository::new();
     let caller = msg_caller();
 
-    let user_wallet = match user_wallet_repository.get(&caller.to_string()) {
-        Some(user_id) => user_id,
-        None => return None,
-    };
+    let user_wallet = user_wallet_repository.get(&caller.to_string())?;
 
     let user = user_repository.get(&user_wallet.user_id);
 

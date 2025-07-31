@@ -31,7 +31,7 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
         caller: &Principal,
     ) -> Result<ActionDto, CanisterError> {
         // input validate
-        let user_id = self.user_service.get_user_id_by_wallet(&caller);
+        let user_id = self.user_service.get_user_id_by_wallet(caller);
 
         let action_type = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
@@ -88,7 +88,7 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
 
             // Assemble intents
             let intents = self
-                .assemble_intents(&temp_action.link_id, &temp_action.r#type, &caller, &fee_map)
+                .assemble_intents(&temp_action.link_id, &temp_action.r#type, caller, &fee_map)
                 .await?;
 
             temp_action.intents = intents;
@@ -174,9 +174,9 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
     ) -> Result<ActionDto, CanisterError> {
         let is_creator = self
             .tx_manager_service
-            .is_action_creator(&caller, &input.action_id)
+            .is_action_creator(caller, &input.action_id)
             .map_err(|e| {
-                CanisterError::ValidationErrors(format!("Failed to validate action: {}", e))
+                CanisterError::ValidationErrors(format!("Failed to validate action: {e}"))
             })?;
 
         if !is_creator {
@@ -207,7 +207,7 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
                 .update_action(args)
                 .await
                 .map_err(|e| {
-                    CanisterError::HandleLogicError(format!("Failed to update action: {}", e))
+                    CanisterError::HandleLogicError(format!("Failed to update action: {e}"))
                 })
         }
         .await;

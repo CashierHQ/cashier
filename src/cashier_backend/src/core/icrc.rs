@@ -51,21 +51,14 @@ fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
 }
 
 #[update]
+// This method is canister exposed method there for we cannot pass by value
+#[allow(clippy::needless_pass_by_value)]
 fn icrc21_canister_call_consent_message(
     consent_msg_request: Icrc21ConsentMessageRequest,
 ) -> Result<Icrc21ConsentInfo, Icrc21Error> {
     let method = consent_msg_request.method.as_str();
-    // let supported_methods = [""];
-    // if !supported_methods.contains(&method) {
-    //     return Err(UnsupportedCanisterCall(Icrc21ErrorInfo {
-    //         description: format!(
-    //             "The method '{}' is not supported",
-    //             consent_msg_request.method
-    //         ),
-    //     }));
-    // }
 
-    let consent_message = format!("You are call this method {}", method);
+    let consent_message = format!("You are call this method {method}");
 
     let metadata = Icrc21ConsentMessageMetadata {
         language: "en".to_string(),
@@ -96,7 +89,7 @@ fn icrc21_canister_call_consent_message(
 }
 
 fn consent_msg_text_md(msg: &str) -> String {
-    format!("\n {}", msg)
+    format!("\n {msg}")
 }
 
 fn consent_msg_text_pages(

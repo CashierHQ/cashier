@@ -3,7 +3,6 @@ name = "cashier-types"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-license-file = "../../../LICENSE"
 
 [dependencies]
 cashier-macros = { path = "../cashier-macros" }

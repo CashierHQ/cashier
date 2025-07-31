@@ -111,7 +111,7 @@ impl TokenRegistryRepository {
             if store.remove(token_id).is_some() {
                 Ok(())
             } else {
-                Err(format!("Token with ID {} not found", token_id))
+                Err(format!("Token with ID {token_id} not found"))
             }
         })
     }

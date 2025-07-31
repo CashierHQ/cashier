@@ -95,70 +95,70 @@ pub fn get_stores_count_report() -> String {
     USER_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• User Store: {}\n", count));
+        report.push_str(&format!("• User Store: {count}\n"));
     });
 
     USER_WALLET_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• User Wallet Store: {}\n", count));
+        report.push_str(&format!("• User Wallet Store: {count}\n"));
     });
 
     USER_LINK_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• User Link Store: {}\n", count));
+        report.push_str(&format!("• User Link Store: {count}\n"));
     });
 
     USER_ACTION_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• User Action Store: {}\n", count));
+        report.push_str(&format!("• User Action Store: {count}\n"));
     });
 
     LINK_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• Link Store: {}\n", count));
+        report.push_str(&format!("• Link Store: {count}\n"));
     });
 
     LINK_ACTION_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• Link Action Store: {}\n", count));
+        report.push_str(&format!("• Link Action Store: {count}\n"));
     });
 
     ACTION_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• Action Store: {}\n", count));
+        report.push_str(&format!("• Action Store: {count}\n"));
     });
 
     ACTION_INTENT_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• Action Intent Store: {}\n", count));
+        report.push_str(&format!("• Action Intent Store: {count}\n"));
     });
 
     INTENT_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• Intent Store (v2): {}\n", count));
+        report.push_str(&format!("• Intent Store (v2): {count}\n"));
     });
 
     INTENT_TRANSACTION_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• Intent Transaction Store: {}\n", count));
+        report.push_str(&format!("• Intent Transaction Store: {count}\n"));
     });
 
     TRANSACTION_STORE.with_borrow(|store| {
         let count = store.len();
         normal_total += count;
-        report.push_str(&format!("• Transaction Store (v2): {}\n", count));
+        report.push_str(&format!("• Transaction Store (v2): {count}\n"));
     });
 
-    report.push_str(&format!("\n**Normal Stores Total: {}**\n", normal_total));
+    report.push_str(&format!("\n**Normal Stores Total: {normal_total}**\n"));
 
     // Versioned stores section (all removed)
     report.push_str("\n🗑️ **Versioned Stores (Removed)**\n");
@@ -172,10 +172,9 @@ pub fn get_stores_count_report() -> String {
     // Summary
     report.push_str("\n🎯 **Summary**\n");
     report.push_str("=============\n");
-    report.push_str(&format!("• Normal stores: {}\n", normal_total));
+    report.push_str(&format!("• Normal stores: {normal_total}\n"));
     report.push_str(&format!(
-        "• Versioned stores: {} (removed)\n",
-        versioned_total
+        "• Versioned stores: {versioned_total} (removed)\n"
     ));
     report.push_str(&format!(
         "• **Grand Total: {}**\n",
@@ -199,7 +198,7 @@ pub fn get_compact_stores_report() -> String {
     USER_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• User: {}\n", count));
+            report.push_str(&format!("• User: {count}\n"));
             has_data = true;
         }
     });
@@ -207,7 +206,7 @@ pub fn get_compact_stores_report() -> String {
     USER_WALLET_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• User Wallet: {}\n", count));
+            report.push_str(&format!("• User Wallet: {count}\n"));
             has_data = true;
         }
     });
@@ -215,7 +214,7 @@ pub fn get_compact_stores_report() -> String {
     USER_LINK_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• User Link: {}\n", count));
+            report.push_str(&format!("• User Link: {count}\n"));
             has_data = true;
         }
     });
@@ -223,7 +222,7 @@ pub fn get_compact_stores_report() -> String {
     USER_ACTION_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• User Action: {}\n", count));
+            report.push_str(&format!("• User Action: {count}\n"));
             has_data = true;
         }
     });
@@ -231,7 +230,7 @@ pub fn get_compact_stores_report() -> String {
     LINK_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• Link: {}\n", count));
+            report.push_str(&format!("• Link: {count}\n"));
             has_data = true;
         }
     });
@@ -239,7 +238,7 @@ pub fn get_compact_stores_report() -> String {
     LINK_ACTION_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• Link Action: {}\n", count));
+            report.push_str(&format!("• Link Action: {count}\n"));
             has_data = true;
         }
     });
@@ -247,7 +246,7 @@ pub fn get_compact_stores_report() -> String {
     ACTION_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• Action: {}\n", count));
+            report.push_str(&format!("• Action: {count}\n"));
             has_data = true;
         }
     });
@@ -255,7 +254,7 @@ pub fn get_compact_stores_report() -> String {
     ACTION_INTENT_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• Action Intent: {}\n", count));
+            report.push_str(&format!("• Action Intent: {count}\n"));
             has_data = true;
         }
     });
@@ -263,7 +262,7 @@ pub fn get_compact_stores_report() -> String {
     INTENT_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• Intent (v2): {}\n", count));
+            report.push_str(&format!("• Intent (v2): {count}\n"));
             has_data = true;
         }
     });
@@ -271,7 +270,7 @@ pub fn get_compact_stores_report() -> String {
     INTENT_TRANSACTION_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• Intent Transaction: {}\n", count));
+            report.push_str(&format!("• Intent Transaction: {count}\n"));
             has_data = true;
         }
     });
@@ -279,7 +278,7 @@ pub fn get_compact_stores_report() -> String {
     TRANSACTION_STORE.with_borrow(|store| {
         let count = store.len();
         if count > 0 {
-            report.push_str(&format!("• Transaction (v2): {}\n", count));
+            report.push_str(&format!("• Transaction (v2): {count}\n"));
             has_data = true;
         }
     });

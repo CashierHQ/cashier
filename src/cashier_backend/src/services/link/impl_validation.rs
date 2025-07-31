@@ -117,12 +117,18 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                     let asset = link.asset_info.clone().ok_or_else(|| {
                         CanisterError::HandleLogicError("Asset info not found".to_string())
                     })?;
-                    let asset_address_text = asset[0].address.clone();
+
+                    let Some(asset) = asset.first() else {
+                        return Err(CanisterError::HandleLogicError(
+                            "Asset info is empty".to_string(),
+                        ));
+                    };
+
+                    let asset_address_text = asset.address.clone();
                     let asset_address =
                         Principal::from_text(asset_address_text.as_str()).map_err(|e| {
                             CanisterError::HandleLogicError(format!(
-                                "Error converting token address to principal: {:?}",
-                                e
+                                "Error converting token address to principal: {e:?}"
                             ))
                         })?;
 
@@ -137,7 +143,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                         )
                         .await?;
 
-                    if link_balance == 0 {
+                    if link_balance == 0u64 {
                         return Err(CanisterError::ValidationErrors(
                             "Not enough asset".to_string(),
                         ));
@@ -163,12 +169,18 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                     let asset = link.asset_info.clone().ok_or_else(|| {
                         CanisterError::HandleLogicError("Asset info not found".to_string())
                     })?;
-                    let asset_address_text = asset[0].address.clone();
+
+                    let Some(asset) = asset.first() else {
+                        return Err(CanisterError::HandleLogicError(
+                            "Asset info is empty".to_string(),
+                        ));
+                    };
+
+                    let asset_address_text = asset.address.clone();
                     let asset_address =
                         Principal::from_text(asset_address_text.as_str()).map_err(|e| {
                             CanisterError::HandleLogicError(format!(
-                                "Error converting token address to principal: {:?}",
-                                e
+                                "Error converting token address to principal: {e:?}"
                             ))
                         })?;
 
@@ -183,7 +195,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                         )
                         .await?;
 
-                    if link_balance == 0 {
+                    if link_balance == 0u64 {
                         return Err(CanisterError::ValidationErrors(
                             "Not enough asset".to_string(),
                         ));
@@ -317,8 +329,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
         for asset in asset_info {
             let token_pid = Principal::from_text(asset.address.as_str()).map_err(|e| {
                 CanisterError::HandleLogicError(format!(
-                    "Error converting token address to principal: {:?}",
-                    e
+                    "Error converting token address to principal: {e:?}"
                 ))
             })?;
 
@@ -359,49 +370,97 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
 
     // if the link and asset info meet the requirement return true
     // else return false
-    fn validate_add_asset_with_link_type(
-        &self,
-        link: &Link,
-        asset_infos: &[AssetInfo],
-        link_use_action_max_count: &u64,
-    ) -> bool {
+    fn validate_add_asset_with_link_type(&self, link: &Link, asset_infos: &[AssetInfo]) -> bool {
         if link.link_type == Some(LinkType::SendTip) {
             // Send tip only use one time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
-            asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0
-                && *link_use_action_max_count == 1
+
+            if asset_infos.is_empty() {
+                return false;
+            }
+
+            if asset_infos.len() > 1 {
+                // Send tip can only have one asset
+                return false;
+            }
+
+            let Some(amount_per_link_use_action) =
+                asset_infos.first().map(|a| a.amount_per_link_use_action)
+            else {
+                return false;
+            };
+
+            if amount_per_link_use_action == 0 {
+                return false;
+            }
+
+            true
         } else if link.link_type == Some(LinkType::SendAirdrop) {
             // Send airdrop use multiple time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count >= 1
 
-            return asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0
-                && *link_use_action_max_count >= 1;
+            if asset_infos.is_empty() {
+                return false;
+            }
+
+            if asset_infos.len() > 1 {
+                // Airdrop can only have one asset
+                return false;
+            }
+
+            let Some(amount_per_link_use_action) =
+                asset_infos.first().map(|a| a.amount_per_link_use_action)
+            else {
+                return false;
+            };
+
+            if amount_per_link_use_action == 0 {
+                return false;
+            }
+
+            return true;
         } else if link.link_type == Some(LinkType::SendTokenBasket) {
             // Send token basket use one time with multiple asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
-            if !asset_infos.is_empty() {
-                for asset in asset_infos.iter() {
-                    if asset.amount_per_link_use_action == 0 && *link_use_action_max_count != 1 {
-                        return false;
-                    }
-                }
 
-                return true;
-            } else {
+            if asset_infos.is_empty() {
                 return false;
             }
+
+            // Token basket can have multiple assets
+            for asset in asset_infos.iter() {
+                if asset.amount_per_link_use_action == 0 {
+                    return false;
+                }
+            }
+            return true;
         } else if link.link_type == Some(LinkType::ReceivePayment) {
             // Receive payment use one time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
-            return asset_infos.len() == 1
-                && asset_infos[0].amount_per_link_use_action > 0
-                && *link_use_action_max_count == 1;
+            if asset_infos.is_empty() {
+                return false;
+            }
+
+            if asset_infos.len() > 1 {
+                // Receive payment can only have one asset
+                return false;
+            }
+
+            let Some(amount_per_link_use_action) =
+                asset_infos.first().map(|a| a.amount_per_link_use_action)
+            else {
+                return false;
+            };
+
+            if amount_per_link_use_action == 1 {
+                return false;
+            }
+
+            return true;
         } else {
             // link type is not supported
             return false;
@@ -426,8 +485,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
         for asset in asset_info.iter() {
             let token_pid = Principal::from_text(asset.address.as_str()).map_err(|e| {
                 CanisterError::HandleLogicError(format!(
-                    "Error converting token address to principal: {:?}",
-                    e
+                    "Error converting token address to principal: {e:?}"
                 ))
             })?;
 
@@ -438,7 +496,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
 
             let balance = self.icrc_service.balance_of(token_pid, account).await?;
 
-            if balance > 0 {
+            if balance > 0u64 {
                 return Ok(true);
             }
         }

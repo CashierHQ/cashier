@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use super::MacroDefinition;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -225,7 +224,7 @@ impl std::str::FromStr for SerializerFormat {
         match s {
             "candid" => Ok(Self::Candid),
             "cbor" => Ok(Self::Cbor),
-            _ => Err(format!("Unknown serializer format \"{}\"", s)),
+            _ => Err(format!("Unknown serializer format \"{s}\"")),
         }
     }
 }

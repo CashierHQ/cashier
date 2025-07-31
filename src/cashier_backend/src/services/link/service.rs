@@ -45,6 +45,7 @@ pub struct LinkService<E: IcEnvironment + Clone> {
     pub tx_manager_service: TransactionManagerService<E>,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment + Clone> LinkService<E> {
     pub fn new(
         link_repository: repositories::link::LinkRepository,
@@ -115,7 +116,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         options: Option<GetLinkOptions>,
         caller: &Principal,
     ) -> Result<(Link, Option<Action>), String> {
-        let user_id = self.user_service.get_user_id_by_wallet(&caller);
+        let user_id = self.user_service.get_user_id_by_wallet(caller);
 
         // Allow both anonymous callers and non-anonymous callers without user IDs to proceed
 
@@ -193,7 +194,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             return Ok(None);
         }
 
-        Ok(Some(link_action[0].clone()))
+        Ok(link_action.first().cloned())
     }
 
     pub fn get_link_action(
@@ -271,10 +272,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         let user_id = user_wallet.user_id;
 
-        let links = match self.get_links_by_user_id(&user_id, pagination) {
-            Ok(link_users) => link_users,
-            Err(e) => return Err(e),
-        };
+        let links = self.get_links_by_user_id(&user_id, pagination)?;
 
         Ok(links)
     }
@@ -333,8 +331,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             );
 
             return Err(CanisterError::HandleLogicError(format!(
-                "Failed to update link properties: {}",
-                err
+                "Failed to update link properties: {err}"
             )));
         }
 

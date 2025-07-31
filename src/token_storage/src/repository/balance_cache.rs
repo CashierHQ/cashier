@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 // File: src/token_storage/src/repository/balance_cache.rs
 use super::BALANCE_CACHE_STORE;
 use crate::types::{Candid, TokenBalance, TokenId};
@@ -73,11 +72,7 @@ impl BalanceCacheRepository {
         BALANCE_CACHE_STORE.with_borrow(|store| {
             store
                 .get(&user_id.to_string())
-                .and_then(|Candid(balances)| {
-                    balances
-                        .get(token_id)
-                        .map(|balance| balance.balance)
-                })
+                .and_then(|Candid(balances)| balances.get(token_id).map(|balance| balance.balance))
         })
     }
 

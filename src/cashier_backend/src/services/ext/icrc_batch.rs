@@ -5,12 +5,11 @@ use crate::{services::ext::icrc_token::Service, types::error::CanisterError};
 use candid::{Nat, Principal};
 use cashier_types::common::{Asset, Chain};
 use futures::future::{self, BoxFuture};
-use ic_cdk::api::call::CallResult;
 use std::collections::HashMap;
 use std::str::FromStr;
 
 // Define a type alias for the boxed future that returns Principal and CallResult
-type GetFeeTaskResponse = BoxFuture<'static, (Principal, CallResult<(candid::Nat,)>)>;
+type GetFeeTaskResponse = BoxFuture<'static, (Principal, Result<candid::Nat, CanisterError>)>;
 
 /// Service for retrieving token fees in batch operations
 pub struct IcrcBatchService;
@@ -104,17 +103,16 @@ impl IcrcBatchService {
         // Process results
         for (principal, result) in results {
             match result {
-                Ok((fee,)) => {
+                Ok(fee) => {
                     // If call succeeds, convert fee to Nat and add to the HashMap
                     let fee_n = fee;
                     fee_map.insert(principal.to_text(), fee_n);
                 }
-                Err((reject_code, reject_msg)) => {
+                Err(errr) => {
                     return Err(CanisterError::CallCanisterFailed(format!(
-                        "Failed to get fee for asset {}: {:?} - {}",
+                        "Failed to get fee for asset {}: {:?}",
                         principal.to_text(),
-                        reject_code,
-                        reject_msg
+                        errr,
                     )));
                 }
             }

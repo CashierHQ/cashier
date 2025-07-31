@@ -39,7 +39,7 @@ fn ensure_is_admin() -> Result<(), String> {
 #[query]
 pub fn get_registry_version() -> u64 {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(&format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
     let service = TokenRegistryService::new();
     service.get_metadata().version
@@ -50,7 +50,7 @@ pub fn get_registry_version() -> u64 {
 #[query]
 pub fn get_registry_metadata() -> TokenRegistryMetadata {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(&format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
     let service = TokenRegistryService::new();
     service.get_metadata()
@@ -59,7 +59,7 @@ pub fn get_registry_metadata() -> TokenRegistryMetadata {
 #[query]
 pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(&format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
     let service = TokenRegistryService::new();
     let list: Vec<TokenDto> = service
@@ -78,8 +78,8 @@ pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
 #[update]
 pub fn initialize_registry() -> Result<(), String> {
     ensure_is_admin().unwrap_or_else(|err| {
-        eprintln!("Admin check failed: {}", err); // Log the error
-                                                  // Return unit type `()` to satisfy `unwrap_or_else`
+        eprintln!("Admin check failed: {err}"); // Log the error
+                                                // Return unit type `()` to satisfy `unwrap_or_else`
     });
 
     // Admin check should be implemented here
@@ -94,7 +94,7 @@ pub fn initialize_registry() -> Result<(), String> {
 #[query]
 pub fn get_stats() -> Result<RegistryStats, String> {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(&format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
     let service = TokenRegistryService::new();
@@ -143,7 +143,7 @@ pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String
             let need_update_version = list.version < registry_metadata.version;
 
             if list.enable_list.is_empty() {
-                return Ok(TokenListResponse {
+                Ok(TokenListResponse {
                     tokens: token_registry_service
                         .list_tokens()
                         .iter()
@@ -151,7 +151,7 @@ pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String
                         .collect(),
                     need_update_version: true,
                     perference: Some(user_preferences),
-                });
+                })
             } else {
                 let registry_tokens = token_registry_service.list_tokens();
                 let mut filtered_tokens = Vec::new();
@@ -168,31 +168,29 @@ pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String
                     }
                 }
 
-                return Ok(TokenListResponse {
+                Ok(TokenListResponse {
                     tokens: filtered_tokens,
                     need_update_version,
                     perference: Some(user_preferences),
-                });
+                })
             }
         }
-        Err(_) => {
-            return Ok(TokenListResponse {
-                tokens: token_registry_service
-                    .list_tokens()
-                    .iter()
-                    .map(|registry_token| TokenDto::from(registry_token.clone()))
-                    .collect(),
-                need_update_version: true,
-                perference: Some(user_preferences),
-            });
-        }
+        Err(_) => Ok(TokenListResponse {
+            tokens: token_registry_service
+                .list_tokens()
+                .iter()
+                .map(|registry_token| TokenDto::from(registry_token.clone()))
+                .collect(),
+            need_update_version: true,
+            perference: Some(user_preferences),
+        }),
     }
 }
 
 #[query]
 pub fn get_user_balance(wallet: String) -> Result<std::collections::HashMap<String, u128>, String> {
     ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(&format!("Admin check failed: {}", err));
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
     let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;

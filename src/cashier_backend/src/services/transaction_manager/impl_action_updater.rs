@@ -156,15 +156,12 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
             // and tx status is 'processing' until client updates tx manager with response of ICRC-112
             for tx in eligible_wallet_txs.iter_mut() {
                 self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
-                    CanisterError::HandleLogicError(format!(
-                        "Error spawning tx timeout task: {}",
-                        e
-                    ))
+                    CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {e}"))
                 })?;
 
                 self.update_tx_state(tx, &TransactionState::Processing)
                     .map_err(|e| {
-                        CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                        CanisterError::HandleLogicError(format!("Error updating tx state: {e}"))
                     })?;
 
                 let processing_tx =
@@ -178,15 +175,12 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
             // First loop: update the transactions to processing state
             for tx in eligible_canister_txs.iter_mut() {
                 self.spawn_tx_timeout_task(tx.id.clone()).map_err(|e| {
-                    CanisterError::HandleLogicError(format!(
-                        "Error spawning tx timeout task: {}",
-                        e
-                    ))
+                    CanisterError::HandleLogicError(format!("Error spawning tx timeout task: {e}"))
                 })?;
 
                 self.update_tx_state(tx, &TransactionState::Processing)
                     .map_err(|e| {
-                        CanisterError::HandleLogicError(format!("Error updating tx state: {}", e))
+                        CanisterError::HandleLogicError(format!("Error updating tx state: {e}"))
                     })?;
 
                 let processing_tx =
@@ -204,7 +198,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
         let action_data: ActionData = self
             .action_service
             .get_action_data(&args.action_id)
-            .map_err(|e| CanisterError::InvalidDataError(format!("Error getting action: {}", e)))?;
+            .map_err(|e| CanisterError::InvalidDataError(format!("Error getting action: {e}")))?;
 
         let action_dto = ActionDto::build(&action_data, request);
 
@@ -221,7 +215,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
         self.transaction_service.update_tx_state(tx, state)?;
         // roll up
         let roll_up_resp = self.action_service.roll_up_state(&tx.id).map_err(|e| {
-            CanisterError::HandleLogicError(format!("Failed to roll up state for action: {}", e))
+            CanisterError::HandleLogicError(format!("Failed to roll up state for action: {e}"))
         })?;
 
         // Pass the action state info to link_handle_tx_update
@@ -241,7 +235,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
         caller: &Account,
         action_id: &str,
         link_id: &str,
-        txs: &Vec<Transaction>,
+        txs: &[Transaction],
     ) -> Result<Option<Icrc112Requests>, CanisterError> {
         let mut tx_execute_from_user_wallet = vec![];
 
