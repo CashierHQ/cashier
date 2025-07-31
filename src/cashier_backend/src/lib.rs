@@ -23,6 +23,7 @@
 #![warn(clippy::redundant_allocation)]
 #![warn(clippy::rc_buffer)]
 
+mod build_data;
 pub mod constant;
 pub mod core;
 pub mod domains;

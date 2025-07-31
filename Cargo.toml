@@ -1,10 +1,13 @@
 [workspace]
 members = [
     "src/cashier_backend",
-    "src/lib/cashier-macros",
-    "src/token_storage",
-    "src/lib/cashier-types",
+    "src/cashier_backend_client",
     "src/integration_tests",
+    "src/lib/cashier-common",
+    "src/lib/cashier-macros",
+    "src/lib/cashier-types",
+    "src/token_storage",
+    "src/token_storage_client",
 ]
 resolver = "2"
 
@@ -14,9 +17,12 @@ license = "MIT"
 version = "0.1.0"
 
 [workspace.dependencies]
+anyhow = "1.0"
 async-trait = "0.1"
 base64 = "0.22"
 candid = "0.10"
+cashier_backend_client = { path = "src/cashier_backend_client" }
+cashier-common = { path = "src/lib/cashier-common" }
 cashier-macros = { path = "src/lib/cashier-macros" }
 cashier-types = { path = "src/lib/cashier-types" }
 futures = { version = "0.3", default-features = false }
@@ -25,6 +31,7 @@ ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-icrc-tx = "0.1"
 ic-stable-structures = "0.6"
+ic_mple_client = "0.7"
 ic_mple_pocket_ic = "0.7"
 icrc-ledger-types = "0.1"
 itertools = "0.14"
@@ -38,6 +45,12 @@ serde_cbor = "0.11"
 serde_json = "1.0"
 syn = "2.0"
 thiserror = "2.0"
+token_storage_client = { path = "src/token_storage_client" }
 tokio = { version = "1", features = ["rt", "macros"] }
 # Use fixed uuid version to avoid getrandom incompatibility. To be fixed.
 uuid = { version = "=1.12.1", features = ["v4"] }
+vergen-gitcl = { version = "1", default-features = false, features = [
+    "build",
+    "cargo",
+    "rustc",
+] }
