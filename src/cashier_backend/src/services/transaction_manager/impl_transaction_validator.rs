@@ -56,9 +56,7 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
         let spender_account = icrc2_transfer_from_info
             .spender
             .get_account()
-            .map_err(|e| {
-                CanisterError::ParseAccountError(format!("Error parsing spender: {e}"))
-            })?;
+            .map_err(|e| CanisterError::ParseAccountError(format!("Error parsing spender: {e}")))?;
 
         let allowance_amount = icrc2_transfer_from_info.amount.clone();
 

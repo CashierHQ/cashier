@@ -63,9 +63,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
             let _ = self.transaction_service.update_tx_state(&mut tx, &state);
 
             let result = self.action_service.roll_up_state(&tx.id).map_err(|e| {
-                CanisterError::HandleLogicError(format!(
-                    "Failed to roll up state for action: {e}"
-                ))
+                CanisterError::HandleLogicError(format!("Failed to roll up state for action: {e}"))
             });
 
             self.remove_record_in_processing_transaction(&tx_id);

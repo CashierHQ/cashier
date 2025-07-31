@@ -79,7 +79,7 @@ pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
 pub fn initialize_registry() -> Result<(), String> {
     ensure_is_admin().unwrap_or_else(|err| {
         eprintln!("Admin check failed: {err}"); // Log the error
-                                                  // Return unit type `()` to satisfy `unwrap_or_else`
+                                                // Return unit type `()` to satisfy `unwrap_or_else`
     });
 
     // Admin check should be implemented here

@@ -41,9 +41,7 @@ impl<E: IcEnvironment + Clone> DependencyAnalyzer for TransactionManagerService<
         let action = self
             .action_service
             .get_action_by_tx_id(&transaction.id)
-            .map_err(|e| {
-                CanisterError::NotFound(format!("Error getting action by tx id: {e}"))
-            })?;
+            .map_err(|e| CanisterError::NotFound(format!("Error getting action by tx id: {e}")))?;
 
         let txs_in_group = action
             .get_txs_of_tx_group(&transaction.id)

@@ -86,9 +86,7 @@ impl ActionData {
             .ok_or_else(|| format!("Transaction with id {tx_id} not found in intent_txs"))?;
 
         group_index.get(group_key).cloned().ok_or_else(|| {
-            format!(
-                "Group key {group_key:?} not found in intent_txs for transaction {tx_id}"
-            )
+            format!("Group key {group_key:?} not found in intent_txs for transaction {tx_id}")
         })
     }
 

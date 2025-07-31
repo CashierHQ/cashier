@@ -29,7 +29,7 @@ impl<E: IcEnvironment + Clone> ActionCreator<E> for TransactionManagerService<E>
         for intent in temp_action.intents.iter() {
             let chain = intent.chain.clone();
             // assemble txs
-            
+
             let txs = self.intent_adapter.intent_to_transactions(&chain, intent)?;
             intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
 

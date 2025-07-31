@@ -125,10 +125,7 @@ impl fmt::Display for RequestLockKey {
                 link_id,
                 action_id,
             } => {
-                write!(
-                    f,
-                    "USER#{user_principal}#LINK#{link_id}#ACTION#{action_id}"
-                )
+                write!(f, "USER#{user_principal}#LINK#{link_id}#ACTION#{action_id}")
             }
             RequestLockKey::UserLink {
                 user_principal,

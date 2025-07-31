@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 #[derive(Clone, Copy)]
 // If you change this, make sure to update the fee in the frontend as well
 // src/cashier_frontend/src/services/fee.constants.ts
