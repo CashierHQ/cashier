@@ -18,7 +18,8 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 getrandom = { version = "0.2", features = ["custom"] }
 rand = { version = "0.8.5", features = ["getrandom"]}
-uuid = {version = "1.10.0", features = [ "v4" ]}
+# Use fixed uuid version to avoid getrandom incompatibility. To be fixed.
+uuid = {version = "=1.12.1", features = [ "v4" ]}
 proc-macro2 = "1.0.86"
 quote = "1.0.37"
 syn = "2.0.77"
