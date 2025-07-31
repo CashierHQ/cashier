@@ -83,7 +83,7 @@ pub trait ActionUpdater<E: IcEnvironment + Clone> {
         caller: &Account,
         action_id: &str,
         link_id: &str,
-        txs: &Vec<Transaction>,
+        txs: &[Transaction],
     ) -> Result<Option<Icrc112Requests>, CanisterError>;
 }
 

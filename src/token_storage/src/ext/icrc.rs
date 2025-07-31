@@ -1,8 +1,9 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
-#![allow(dead_code, unused_imports)]
 use candid::{self, CandidType, Deserialize, Principal};
-use ic_cdk::api::call::CallResult as Result;
+use ic_cdk::call::{Call, CandidDecodeFailed};
+
+use crate::types::error::CanisterError;
 
 pub type SubAccount = serde_bytes::ByteBuf;
 #[derive(CandidType, Deserialize)]
@@ -58,11 +59,7 @@ pub struct InitArgs {
     pub token_name: Option<String>,
     pub feature_flags: Option<FeatureFlags>,
 }
-#[derive(CandidType, Deserialize)]
-pub enum LedgerCanisterPayload {
-    Upgrade(Option<UpgradeArgs>),
-    Init(InitArgs),
-}
+
 pub type AccountIdentifier = serde_bytes::ByteBuf;
 #[derive(CandidType, Deserialize)]
 pub struct AccountBalanceArgs {
@@ -448,104 +445,239 @@ impl Service {
         Service(principal)
     }
 
-    pub async fn account_balance(&self, arg0: &AccountBalanceArgs) -> Result<(Tokens,)> {
-        ic_cdk::call(self.0, "account_balance", (arg0,)).await
+    pub async fn decimals(&self) -> Result<DecimalsRet, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "decimals")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<DecimalsRet, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn account_balance_dfx(&self, arg0: &AccountBalanceArgsDfx) -> Result<(Tokens,)> {
-        ic_cdk::call(self.0, "account_balance_dfx", (arg0,)).await
+
+    pub async fn get_allowances(
+        &self,
+        arg0: &GetAllowancesArgs,
+    ) -> Result<Allowances, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "get_allowances")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Allowances, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn account_identifier(&self, arg0: &Account) -> Result<(AccountIdentifier,)> {
-        ic_cdk::call(self.0, "account_identifier", (arg0,)).await
-    }
-    pub async fn archives(&self) -> Result<(Archives,)> {
-        ic_cdk::call(self.0, "archives", ()).await
-    }
-    pub async fn decimals(&self) -> Result<(DecimalsRet,)> {
-        ic_cdk::call(self.0, "decimals", ()).await
-    }
-    pub async fn get_allowances(&self, arg0: &GetAllowancesArgs) -> Result<(Allowances,)> {
-        ic_cdk::call(self.0, "get_allowances", (arg0,)).await
-    }
+
     pub async fn icrc_10_supported_standards(
         &self,
-    ) -> Result<(Vec<Icrc10SupportedStandardsRetItem>,)> {
-        ic_cdk::call(self.0, "icrc10_supported_standards", ()).await
+    ) -> Result<Vec<Icrc10SupportedStandardsRetItem>, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc10_supported_standards")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Vec<Icrc10SupportedStandardsRetItem>, CandidDecodeFailed> =
+            res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<(Icrc1Tokens,)> {
-        ic_cdk::call(self.0, "icrc1_balance_of", (arg0,)).await
+
+    pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<Icrc1Tokens, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_balance_of")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_decimals(&self) -> Result<(u8,)> {
-        ic_cdk::call(self.0, "icrc1_decimals", ()).await
+
+    pub async fn icrc_1_decimals(&self) -> Result<u8, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_decimals")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<u8, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_fee(&self) -> Result<(Icrc1Tokens,)> {
-        ic_cdk::call(self.0, "icrc1_fee", ()).await
+
+    pub async fn icrc_1_fee(&self) -> Result<Icrc1Tokens, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_fee")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_metadata(&self) -> Result<(Vec<(String, Value)>,)> {
-        ic_cdk::call(self.0, "icrc1_metadata", ()).await
+
+    pub async fn icrc_1_metadata(&self) -> Result<Vec<(String, Value)>, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_metadata")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Vec<(String, Value)>, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_minting_account(&self) -> Result<(Option<Account>,)> {
-        ic_cdk::call(self.0, "icrc1_minting_account", ()).await
+
+    pub async fn icrc_1_minting_account(&self) -> Result<Option<Account>, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_minting_account")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Option<Account>, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_name(&self) -> Result<(String,)> {
-        ic_cdk::call(self.0, "icrc1_name", ()).await
+
+    pub async fn icrc_1_name(&self) -> Result<String, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_name")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<String, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
+
     pub async fn icrc_1_supported_standards(
         &self,
-    ) -> Result<(Vec<Icrc1SupportedStandardsRetItem>,)> {
-        ic_cdk::call(self.0, "icrc1_supported_standards", ()).await
+    ) -> Result<Vec<Icrc1SupportedStandardsRetItem>, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_supported_standards")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Vec<Icrc1SupportedStandardsRetItem>, CandidDecodeFailed> =
+            res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_symbol(&self) -> Result<(String,)> {
-        ic_cdk::call(self.0, "icrc1_symbol", ()).await
+
+    pub async fn icrc_1_symbol(&self) -> Result<String, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_symbol")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<String, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_total_supply(&self) -> Result<(Icrc1Tokens,)> {
-        ic_cdk::call(self.0, "icrc1_total_supply", ()).await
+
+    pub async fn icrc_1_total_supply(&self) -> Result<Icrc1Tokens, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_total_supply")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_1_transfer(&self, arg0: &TransferArg) -> Result<(Icrc1TransferResult,)> {
-        ic_cdk::call(self.0, "icrc1_transfer", (arg0,)).await
+
+    pub async fn icrc_1_transfer(
+        &self,
+        arg0: &TransferArg,
+    ) -> Result<Icrc1TransferResult, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc1_transfer")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Icrc1TransferResult, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
+
     pub async fn icrc_21_canister_call_consent_message(
         &self,
         arg0: &Icrc21ConsentMessageRequest,
-    ) -> Result<(Icrc21ConsentMessageResponse,)> {
-        ic_cdk::call(self.0, "icrc21_canister_call_consent_message", (arg0,)).await
+    ) -> Result<Icrc21ConsentMessageResponse, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc21_canister_call_consent_message")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Icrc21ConsentMessageResponse, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<(Allowance,)> {
-        ic_cdk::call(self.0, "icrc2_allowance", (arg0,)).await
+
+    pub async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<Allowance, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc2_allowance")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Allowance, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_2_approve(&self, arg0: &ApproveArgs) -> Result<(ApproveResult,)> {
-        ic_cdk::call(self.0, "icrc2_approve", (arg0,)).await
+
+    pub async fn icrc_2_approve(&self, arg0: &ApproveArgs) -> Result<ApproveResult, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc2_approve")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<ApproveResult, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
+
     pub async fn icrc_2_transfer_from(
         &self,
         arg0: &TransferFromArgs,
-    ) -> Result<(TransferFromResult,)> {
-        ic_cdk::call(self.0, "icrc2_transfer_from", (arg0,)).await
+    ) -> Result<TransferFromResult, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "icrc2_transfer_from")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<TransferFromResult, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn is_ledger_ready(&self) -> Result<(bool,)> {
-        ic_cdk::call(self.0, "is_ledger_ready", ()).await
+
+    pub async fn is_ledger_ready(&self) -> Result<bool, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "is_ledger_ready")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<bool, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn name(&self) -> Result<(NameRet,)> {
-        ic_cdk::call(self.0, "name", ()).await
+
+    pub async fn name(&self) -> Result<NameRet, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "name")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<NameRet, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn query_blocks(&self, arg0: &GetBlocksArgs) -> Result<(QueryBlocksResponse,)> {
-        ic_cdk::call(self.0, "query_blocks", (arg0,)).await
+
+    pub async fn query_blocks(
+        &self,
+        arg0: &GetBlocksArgs,
+    ) -> Result<QueryBlocksResponse, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "query_blocks")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<QueryBlocksResponse, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
+
     pub async fn query_encoded_blocks(
         &self,
         arg0: &GetBlocksArgs,
-    ) -> Result<(QueryEncodedBlocksResponse,)> {
-        ic_cdk::call(self.0, "query_encoded_blocks", (arg0,)).await
+    ) -> Result<QueryEncodedBlocksResponse, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "query_encoded_blocks")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<QueryEncodedBlocksResponse, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn send_dfx(&self, arg0: &SendArgs) -> Result<(BlockIndex,)> {
-        ic_cdk::call(self.0, "send_dfx", (arg0,)).await
+
+    pub async fn send_dfx(&self, arg0: &SendArgs) -> Result<BlockIndex, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "send_dfx")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<BlockIndex, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn symbol(&self) -> Result<(SymbolRet,)> {
-        ic_cdk::call(self.0, "symbol", ()).await
+
+    pub async fn symbol(&self) -> Result<SymbolRet, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "symbol")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<SymbolRet, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn transfer(&self, arg0: &TransferArgs) -> Result<(TransferResult,)> {
-        ic_cdk::call(self.0, "transfer", (arg0,)).await
+
+    pub async fn transfer(&self, arg0: &TransferArgs) -> Result<TransferResult, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "transfer")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<TransferResult, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
-    pub async fn transfer_fee(&self, arg0: &TransferFeeArg) -> Result<(TransferFee,)> {
-        ic_cdk::call(self.0, "transfer_fee", (arg0,)).await
+
+    pub async fn transfer_fee(&self, arg0: &TransferFeeArg) -> Result<TransferFee, CanisterError> {
+        let res = Call::unbounded_wait(self.0, "transfer_fee")
+            .with_arg(arg0)
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<TransferFee, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
     }
 }

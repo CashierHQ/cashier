@@ -65,7 +65,7 @@ impl UserTokenService {
 
                 // Only include balance for enabled tokens
                 let balance = if is_enabled {
-                    balances.get(&registry_token.id).cloned()
+                    balances.get(&registry_token.id).copied()
                 } else {
                     None // Disabled tokens have no balance
                 };

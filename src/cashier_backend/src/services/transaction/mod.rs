@@ -64,8 +64,7 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
         self.transaction_repository
             .get(tx_id)
             .ok_or(CanisterError::NotFound(format!(
-                "Transaction not found: {}",
-                tx_id
+                "Transaction not found: {tx_id}"
             )))
     }
 
@@ -180,11 +179,12 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
 
         // handle the case when there is only one transaction
         if transactions.len() == 1 {
-            let tx = &transactions[0];
-            let icrc_112_request =
-                self.convert_tx_to_icrc_112_request(action_id, link_id, tx, &canister_id)?;
+            if let Some(tx) = transactions.first() {
+                let icrc_112_request =
+                    self.convert_tx_to_icrc_112_request(action_id, link_id, tx, &canister_id)?;
 
-            return Ok(Some(vec![vec![icrc_112_request]]));
+                return Ok(Some(vec![vec![icrc_112_request]]));
+            }
         }
 
         // For consistency, use topological sort regardless of number of transactions

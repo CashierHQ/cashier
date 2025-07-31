@@ -49,8 +49,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                         self.update_tx_state(tx, &TransactionState::Success)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
-                                    "Error updating tx state: {}",
-                                    e
+                                    "Error updating tx state: {e}"
                                 ))
                             })?;
 
@@ -67,8 +66,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                                     )
                                     .map_err(|e| {
                                         CanisterError::HandleLogicError(format!(
-                                            "Error updating tx state: {}",
-                                            e
+                                            "Error updating tx state: {e}"
                                         ))
                                     })?;
                                 } else {
@@ -98,13 +96,11 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                         self.update_tx_state(tx, &TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
-                                    "Error updating tx state: {}",
-                                    e
+                                    "Error updating tx state: {e}"
                                 ))
                             })?;
                         return Err(CanisterError::HandleLogicError(format!(
-                            "Error executing tx: {}",
-                            e
+                            "Error executing tx: {e}"
                         )));
                     }
                 };
@@ -137,7 +133,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
         &self,
         tx: &Icrc2TransferFrom,
     ) -> Result<(), CanisterError> {
-        let mut args: TransferFromArgs =
+        let args: TransferFromArgs =
             TransferFromArgs::try_from(tx.clone()).map_err(CanisterError::HandleLogicError)?;
 
         // get asset
