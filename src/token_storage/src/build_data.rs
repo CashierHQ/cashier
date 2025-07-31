@@ -1,6 +1,5 @@
 use cashier_common::build_data::BuildData;
 
-
 // E.g.: x86_64-unknown-linux-gnu
 const CARGO_TARGET_TRIPLE: &str = env!("VERGEN_CARGO_TARGET_TRIPLE");
 // E.g.: default
@@ -71,6 +70,6 @@ mod tests {
         assert!(!build_data.git_sha.is_empty());
         assert!(!build_data.git_commit_timestamp.is_empty());
 
-        println!("build data: {:?}", build_data)
+        println!("build data: {build_data:?}")
     }
 }

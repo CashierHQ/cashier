@@ -53,26 +53,27 @@ pub struct PocketIcTestContext {
 }
 
 impl PocketIcTestContext {
-
     /// Creates a new `PocketIcClient` from the `PocketIc` client of this context, bound to the given
     /// `canister` and `caller`.
-    pub fn new_client(
-        &self,
-        canister: Principal,
-        caller: Principal,
-    ) -> PocketIcClient {
+    pub fn new_client(&self, canister: Principal, caller: Principal) -> PocketIcClient {
         PocketIcClient::from_client(self.client.clone(), canister, caller)
     }
 
     /// Creates a new `CashierBackendClient` from the `PocketIc` client of this context,
     /// bound to the `cashier_backend_principal` and the given `caller`.
-    pub fn new_cashier_backend_client(&self, caller: Principal) -> CashierBackendClient<PocketIcClient> {
+    pub fn new_cashier_backend_client(
+        &self,
+        caller: Principal,
+    ) -> CashierBackendClient<PocketIcClient> {
         CashierBackendClient::new(self.new_client(self.cashier_backend_principal, caller))
     }
 
     /// Creates a new `TokenStorageClient` from the `PocketIc` client of this context,
     /// bound to the `token_storage_principal` and the given `caller`.
-    pub fn new_token_storage_client(&self, caller: Principal) -> TokenStorageClient<PocketIcClient> {
+    pub fn new_token_storage_client(
+        &self,
+        caller: Principal,
+    ) -> TokenStorageClient<PocketIcClient> {
         TokenStorageClient::new(self.new_client(self.token_storage_principal, caller))
     }
 

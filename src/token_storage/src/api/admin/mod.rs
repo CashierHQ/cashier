@@ -6,10 +6,18 @@ use cashier_common::build_data::BuildData;
 use ic_cdk::{query, update};
 
 use crate::{
-    api::{admin::types::{RegistryStats, UserTokens}, token_v2::types::TokenListResponse}, build_data::canister_build_data, constant::default_tokens::get_default_tokens, repository::token_registry::TokenRegistryRepository, services::{
+    api::{
+        admin::types::{RegistryStats, UserTokens},
+        token_v2::types::TokenListResponse,
+    },
+    build_data::canister_build_data,
+    constant::default_tokens::get_default_tokens,
+    repository::token_registry::TokenRegistryRepository,
+    services::{
         token_registry::TokenRegistryService, user_preference::UserPreferenceService,
         user_token::UserTokenService,
-    }, types::{TokenDto, TokenRegistryMetadata}
+    },
+    types::{TokenDto, TokenRegistryMetadata},
 };
 
 pub mod types;

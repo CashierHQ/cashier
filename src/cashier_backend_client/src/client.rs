@@ -12,7 +12,6 @@ where
 }
 
 impl<C: CanisterClient> CashierBackendClient<C> {
-    
     /// Create a new CashierBackendClient.
     ///
     /// # Arguments
@@ -25,5 +24,4 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     pub async fn get_canister_build_data(&self) -> CanisterClientResult<BuildData> {
         self.client.query("get_canister_build_data", ()).await
     }
-
 }
