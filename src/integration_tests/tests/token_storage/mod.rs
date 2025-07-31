@@ -16,8 +16,11 @@ async fn should_deploy_the_token_storage_canister() {
 #[tokio::test]
 async fn test_canister_build_data() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        let evm_client = ctx.new_token_storage_client(Principal::anonymous());
-        let build_data = evm_client.get_canister_build_data().await.unwrap();
+        let token_storage_client = ctx.new_token_storage_client(Principal::anonymous());
+        let build_data = token_storage_client
+            .get_canister_build_data()
+            .await
+            .unwrap();
         assert!(build_data.pkg_name.contains("token_storage"));
 
         Ok(())
