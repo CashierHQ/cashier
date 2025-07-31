@@ -3,7 +3,7 @@
 
 use candid::Principal;
 use cashier_common::build_data::BuildData;
-use ic_cdk::{query, update};
+use ic_cdk::{api::msg_caller, query, update};
 
 use crate::{
     api::{
@@ -22,9 +22,8 @@ use crate::{
 
 pub mod types;
 
-#[allow(deprecated)]
 fn ensure_is_admin() -> Result<(), String> {
-    let caller = ic_cdk::caller();
+    let caller = msg_caller();
 
     if caller
         == Principal::from_text("rvc37-afcl7-ag74c-jyr6z-zoprx-finqf-px5k5-dqpaa-jgmzy-jgmht-dqe")
