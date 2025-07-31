@@ -1,38 +1,42 @@
-use std::{fs::File, io::Read, path::PathBuf, sync::{Arc, OnceLock}, time::Duration};
+use std::{
+    fs::File,
+    io::Read,
+    path::PathBuf,
+    sync::{Arc, OnceLock},
+    time::Duration,
+};
 
 use candid::{utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
 use ic_cdk::management_canister::CanisterId;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
 
-
 #[tokio::test]
 async fn should_deploy_the_canister() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        Ok(())
-    }).await.unwrap();
+    with_pocket_ic_context::<_, ()>(async move |ctx| Ok(()))
+        .await
+        .unwrap();
 }
-
-
 
 pub async fn with_pocket_ic_context<F, E>(f: F) -> Result<(), E>
 where
     F: AsyncFnOnce(&PocketIcTestContext) -> Result<(), E>,
 {
     let client = Arc::new(get_pocket_ic_client().await.build_async().await);
-    let token_storage_principal = deploy_canister(&client, None, get_token_storage_canister_bytecode(), &()).await;
-
+    let token_storage_principal =
+        deploy_canister(&client, None, get_token_storage_canister_bytecode(), &()).await;
 
     let result = f(&PocketIcTestContext {
         client: client.clone(),
         token_storage_principal,
-    }).await;
+    })
+    .await;
 
-        if let Ok(client) = Arc::try_unwrap(client) {
-            client.drop().await
-        }
+    if let Ok(client) = Arc::try_unwrap(client) {
+        client.drop().await
+    }
 
-        result
+    result
 }
 
 #[derive(Clone)]
@@ -42,8 +46,6 @@ pub struct PocketIcTestContext {
 }
 
 impl PocketIcTestContext {
-
-    
     /// Advances the time of the local IC to the given duration.
     ///
     /// `tick` is called after advancing the time, to ensure that the time change is visible to the
@@ -90,7 +92,7 @@ impl PocketIcTestContext {
         sender: Option<Principal>,
         wasm: Vec<u8>,
         args: impl ArgumentEncoder + Send,
-    )  {
+    ) {
         let args = candid::encode_args(args).unwrap();
         self.client.add_cycles(canister_id, u128::MAX).await;
 
@@ -135,19 +137,22 @@ impl PocketIcTestContext {
             .await
             .unwrap();
     }
-
 }
 
-
-
-async fn deploy_canister<T: CandidType>(client: &PocketIc, sender: Option<Principal>, bytecode: Vec<u8>, args: &T) -> Principal {
+async fn deploy_canister<T: CandidType>(
+    client: &PocketIc,
+    sender: Option<Principal>,
+    bytecode: Vec<u8>,
+    args: &T,
+) -> Principal {
     let args = encode(args);
     let canister = client.create_canister().await;
     client.add_cycles(canister, u128::MAX).await;
-    client.install_canister(canister, bytecode, args, sender).await;
+    client
+        .install_canister(canister, bytecode, args, sender)
+        .await;
     canister
 }
-
 
 pub fn get_token_storage_canister_bytecode() -> Vec<u8> {
     static CANISTER_BYTECODE: OnceLock<Vec<u8>> = OnceLock::new();
