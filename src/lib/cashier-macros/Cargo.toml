@@ -1,9 +1,9 @@
 [package]
 name = "cashier-macros"
-version = "0.1.0"
-edition = "2021"
-include = ['src', 'Cargo.toml']
-license = "MIT"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
 
 [dependencies]
 proc-macro2 = { workspace = true }
