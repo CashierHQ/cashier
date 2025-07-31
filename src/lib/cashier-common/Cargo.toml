@@ -1,0 +1,9 @@
+[package]
+name = "cashier-common"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+serde = { workspace = true }

@@ -7,9 +7,12 @@ use std::{
 };
 
 use candid::{utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
+use cashier_backend_client::client::CashierBackendClient;
 use ic_cdk::management_canister::CanisterId;
+use ic_mple_client::PocketIcClient;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
+use token_storage_client::client::TokenStorageClient;
 
 /// Executes the provided asynchronous function within a `PocketIcTestContext` environment.
 ///
@@ -50,6 +53,29 @@ pub struct PocketIcTestContext {
 }
 
 impl PocketIcTestContext {
+
+    /// Creates a new `PocketIcClient` from the `PocketIc` client of this context, bound to the given
+    /// `canister` and `caller`.
+    pub fn new_client(
+        &self,
+        canister: Principal,
+        caller: Principal,
+    ) -> PocketIcClient {
+        PocketIcClient::from_client(self.client.clone(), canister, caller)
+    }
+
+    /// Creates a new `CashierBackendClient` from the `PocketIc` client of this context,
+    /// bound to the `cashier_backend_principal` and the given `caller`.
+    pub fn new_cashier_backend_client(&self, caller: Principal) -> CashierBackendClient<PocketIcClient> {
+        CashierBackendClient::new(self.new_client(self.cashier_backend_principal, caller))
+    }
+
+    /// Creates a new `TokenStorageClient` from the `PocketIc` client of this context,
+    /// bound to the `token_storage_principal` and the given `caller`.
+    pub fn new_token_storage_client(&self, caller: Principal) -> TokenStorageClient<PocketIcClient> {
+        TokenStorageClient::new(self.new_client(self.token_storage_principal, caller))
+    }
+
     /// Advances the time of the local IC to the given duration.
     ///
     /// `tick` is called after advancing the time, to ensure that the time change is visible to the

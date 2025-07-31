@@ -2,18 +2,14 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
+use cashier_common::build_data::BuildData;
 use ic_cdk::{query, update};
 
 use crate::{
-    api::admin::types::{RegistryStats, UserTokens},
-    api::token_v2::types::TokenListResponse,
-    constant::default_tokens::get_default_tokens,
-    repository::token_registry::TokenRegistryRepository,
-    services::{
+    api::{admin::types::{RegistryStats, UserTokens}, token_v2::types::TokenListResponse}, build_data::canister_build_data, constant::default_tokens::get_default_tokens, repository::token_registry::TokenRegistryRepository, services::{
         token_registry::TokenRegistryService, user_preference::UserPreferenceService,
         user_token::UserTokenService,
-    },
-    types::{TokenDto, TokenRegistryMetadata},
+    }, types::{TokenDto, TokenRegistryMetadata}
 };
 
 pub mod types;
@@ -32,6 +28,12 @@ fn ensure_is_admin() -> Result<(), String> {
     // Placeholder for admin check logic
     // This should verify if the caller is an admin
     Ok(())
+}
+
+/// Returns the build data of the canister.
+#[query]
+fn get_canister_build_data() -> BuildData {
+    canister_build_data()
 }
 
 /// Gets the current version of the token registry

@@ -1,0 +1,10 @@
+[package]
+name = "token_storage_client"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+cashier-common = { workspace = true }
+ic_mple_client = { workspace = true }
+
