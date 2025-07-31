@@ -8,7 +8,8 @@ license = "MIT"
 [dependencies]
 proc-macro2 = "1.0.93"
 quote = "1.0.38"
-syn = "2.0.96"
+syn = { version = "2.0.96", features = ["full"] }
 
 [lib]
 proc-macro = true
+ic-stable-structures = {workspace = true}
