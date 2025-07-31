@@ -51,6 +51,7 @@ fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
 }
 
 #[update]
+// This method is canister exposed method there for we cannot pass by value
 #[allow(clippy::needless_pass_by_value)]
 fn icrc21_canister_call_consent_message(
     consent_msg_request: Icrc21ConsentMessageRequest,
