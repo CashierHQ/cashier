@@ -17,6 +17,7 @@ serde_json = {workspace = true}
 cashier-macros = { path = "../lib/cashier-macros" }
 serde_bytes = { workspace = true }
 futures = { workspace = true, features = ["async-await"]}
+thiserror = { workspace = true }
 
 [dev-dependencies]
 ic_mple_pocket_ic = { workspace = true }
