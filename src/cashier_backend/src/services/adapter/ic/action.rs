@@ -190,8 +190,7 @@ impl<E: IcEnvironment + Clone> ActionAdapter for IcActionAdapter<E> {
                 Ok(fee_intent)
             }
             _ => Err(format!(
-                "Unsupported combination: {:?}, {:?}",
-                link_type, action_type
+                "Unsupported combination: {link_type:?}, {action_type:?}"
             )),
         }
     }

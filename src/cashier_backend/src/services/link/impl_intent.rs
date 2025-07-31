@@ -131,8 +131,7 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                         address: Account {
                             owner: Principal::from_str(FEE_TREASURY_ADDRESS).map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
-                                    "Error converting fee treasury address to principal: {:?}",
-                                    e
+                                    "Error converting fee treasury address to principal: {e:?}"
                                 ))
                             })?,
                             subaccount: None,
@@ -240,8 +239,7 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                         .balance_of(
                             Principal::from_text(asset_info.address.clone()).map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
-                                    "Error converting token address to principal: {:?}",
-                                    e
+                                    "Error converting token address to principal: {e:?}"
                                 ))
                             })?,
                             Account {
@@ -258,7 +256,7 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                     })?;
                     let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
-                    if link_balance == 0 {
+                    if link_balance == 0u64 {
                         return Err(CanisterError::ValidationErrors(
                             "Not enough asset in link".to_string(),
                         ));
@@ -288,7 +286,9 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                         chain: Chain::IC,
                     };
 
-                    (amount, None, None, asset, from_wallet, to_wallet, None)
+                    let amount_64 = convert_nat_to_u64(&amount)?;
+
+                    (amount_64, None, None, asset, from_wallet, to_wallet, None)
                 }
 
                 _ => {

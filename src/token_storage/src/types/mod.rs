@@ -4,6 +4,7 @@
 pub mod chain;
 pub mod common;
 pub mod dto;
+pub mod error;
 pub mod token;
 pub mod user;
 

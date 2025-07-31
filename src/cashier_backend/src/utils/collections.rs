@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use std::collections::HashMap;
 
 pub fn flatten_hashmap_values<K, V: Clone>(map: &HashMap<K, Vec<V>>) -> Vec<V> {

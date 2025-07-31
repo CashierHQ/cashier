@@ -76,8 +76,7 @@ impl RequestLockService {
         // Check if lock already exists
         if self.request_lock_repository.exists(key) {
             return Err(CanisterError::ValidationErrors(format!(
-                "Request lock already exists for key: {:?}",
-                key
+                "Request lock already exists for key: {key:?}"
             )));
         }
         let request_lock = RequestLock::new(key.to_owned(), timestamp);

@@ -17,7 +17,7 @@ impl FromStr for Chain {
     fn from_str(chain: &str) -> Result<Self, Self::Err> {
         match chain {
             "IC" => Ok(Chain::IC),
-            _ => Err(format!("Unsupported chain: {}", chain)),
+            _ => Err(format!("Unsupported chain: {chain}")),
         }
     }
 }

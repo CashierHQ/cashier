@@ -15,8 +15,8 @@ use crate::{
     core::link::types::{CreateLinkInput, LinkDetailUpdateInput, LinkStateMachineGoto},
     error,
     services::link::{
-        traits::{LinkStateMachine, LinkValidation},
         service::LinkService,
+        traits::{LinkStateMachine, LinkValidation},
     },
     types::error::CanisterError,
     utils::runtime::IcEnvironment,
@@ -299,7 +299,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
         let mut link = self.get_link_by_id(link_id)?;
 
         let link_state_goto =
-            LinkStateMachineGoto::from_string(&go_to).map_err(CanisterError::ValidationErrors)?;
+            LinkStateMachineGoto::from_string(go_to).map_err(CanisterError::ValidationErrors)?;
 
         // if params is None, all params are None
         // some goto not required params like Back
@@ -375,11 +375,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
 
             // ====== Continue Go to =====
             if link_state_goto == LinkStateMachineGoto::Continue {
-                if !self.validate_add_asset_with_link_type(
-                    &link,
-                    &asset_info,
-                    &link_use_action_max_count,
-                ) {
+                if !self.validate_add_asset_with_link_type(&link, &asset_info) {
                     return Err(CanisterError::ValidationErrors(
                         "Link type add asset validate failed".to_string(),
                     ));
@@ -572,13 +568,11 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
             &link.creator,
         );
 
-        if link_creation_action.is_empty() {
+        let Some(link_creation_action) = link_creation_action.first() else {
             return Ok(None);
-        }
+        };
 
-        let create_action = self
-            .action_repository
-            .get(&link_creation_action[0].action_id);
+        let create_action = self.action_repository.get(&link_creation_action.action_id);
 
         Ok(create_action)
     }
@@ -594,9 +588,11 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
             return Ok(None);
         }
 
-        let withdraw_action = self
-            .action_repository
-            .get(&link_withdraw_action[0].action_id);
+        let Some(withdraw_action) = link_withdraw_action.first() else {
+            return Ok(None);
+        };
+
+        let withdraw_action = self.action_repository.get(&withdraw_action.action_id);
 
         Ok(withdraw_action)
     }

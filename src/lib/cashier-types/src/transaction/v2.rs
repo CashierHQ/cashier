@@ -175,12 +175,12 @@ impl TryFrom<Icrc1Transfer> for TransferArg {
         let from = value
             .from
             .get_account()
-            .map_err(|e| format!("Failed to parse from account: {}", e))?;
+            .map_err(|e| format!("Failed to parse from account: {e}"))?;
 
         let to = value
             .to
             .get_account()
-            .map_err(|e| format!("Failed to parse to account: {}", e))?;
+            .map_err(|e| format!("Failed to parse to account: {e}"))?;
 
         let amount = value.amount;
         let memo = value.memo;
@@ -223,17 +223,17 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
         let spender_account = value
             .spender
             .get_account()
-            .map_err(|e| format!("Failed to parse spender account: {}", e))?;
+            .map_err(|e| format!("Failed to parse spender account: {e}"))?;
 
         let from = value
             .from
             .get_account()
-            .map_err(|e| format!("Failed to parse from account: {}", e))?;
+            .map_err(|e| format!("Failed to parse from account: {e}"))?;
 
         let to = value
             .to
             .get_account()
-            .map_err(|e| format!("Failed to parse to account: {}", e))?;
+            .map_err(|e| format!("Failed to parse to account: {e}"))?;
 
         let amount = value.amount;
         let memo = value.memo;

@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 include = ['src', 'Cargo.toml']
 license = "MIT"
-license-file = "../../../LICENSE"
 
 [dependencies]
 proc-macro2 = { workspace = true }
@@ -13,4 +12,3 @@ syn = { workspace = true }
 
 [lib]
 proc-macro = true
-ic-stable-structures = {workspace = true}

@@ -14,7 +14,7 @@ use crate::{
         Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg as ExtTransferArg,
         TransferFromArgs as ExtTransferFromArgs, TransferFromError,
     },
-    types::error::{CanisterError, DisplayRejectionCode},
+    types::error::CanisterError,
 };
 
 #[derive(Clone)]
@@ -31,27 +31,17 @@ impl IcrcService {
         Self {}
     }
 
-    pub async fn fee(&self, token_pid: Principal) -> Result<u64, CanisterError> {
+    pub async fn fee(&self, token_pid: Principal) -> Result<Nat, CanisterError> {
         let token_service = Service::new(token_pid);
 
-        let res = token_service.icrc_1_fee().await;
-
-        match res {
-            Ok((fee,)) => Ok(*fee.0.to_u64_digits().first().unwrap_or(&0)),
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
-                method: "icrc1_fee".to_string(),
-                canister_id: token_service.get_canister_id().to_string(),
-                code: DisplayRejectionCode(code),
-                message: error,
-            }),
-        }
+        token_service.icrc_1_fee().await
     }
 
     pub async fn balance_of(
         &self,
         token_pid: Principal,
         account: Account,
-    ) -> Result<u64, CanisterError> {
+    ) -> Result<Nat, CanisterError> {
         let token_service = Service::new(token_pid);
 
         let account: ExtAccount = ExtAccount {
@@ -59,17 +49,7 @@ impl IcrcService {
             subaccount: account.subaccount.map(|sub| ByteBuf::from(sub.to_vec())),
         };
 
-        let res = token_service.icrc_1_balance_of(&account).await;
-
-        match res {
-            Ok((balance,)) => Ok(*balance.0.to_u64_digits().first().unwrap_or(&0)),
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
-                method: "icrc1_balance_of".to_string(),
-                canister_id: token_service.get_canister_id().to_string(),
-                code: DisplayRejectionCode(code),
-                message: error,
-            }),
-        }
+        token_service.icrc_1_balance_of(&account).await
     }
 
     pub async fn allowance(
@@ -96,17 +76,9 @@ impl IcrcService {
             },
         };
 
-        let res = token_service.icrc_2_allowance(&arg).await;
+        let res = token_service.icrc_2_allowance(&arg).await?;
 
-        match res {
-            Ok((allowance,)) => Ok(allowance),
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
-                method: "icrc2_allowance".to_string(),
-                canister_id: token_service.get_canister_id().to_string(),
-                code: DisplayRejectionCode(code),
-                message: error,
-            }),
-        }
+        Ok(res)
     }
 
     pub async fn transfer_from(
@@ -135,27 +107,19 @@ impl IcrcService {
             memo,
             created_at_time: arg.created_at_time,
         };
-        let res = token_service.icrc_2_transfer_from(&arg).await;
+        let res = token_service.icrc_2_transfer_from(&arg).await?;
 
         match res {
-            Ok((call_res,)) => match call_res {
-                Ok(_block_id) => Ok(_block_id),
-                Err(error) => match error {
-                    // likely a duplicate transfer, return the original transfer id
-                    TransferFromError::Duplicate { duplicate_of } => Ok(duplicate_of),
-                    _ => Err(CanisterError::CanisterCallError {
-                        method: "icrc2_transfer_from".to_string(),
-                        canister_id: token_service.get_canister_id().to_string(),
-                        message: error.to_string(),
-                    }),
-                },
+            Ok(_block_id) => Ok(_block_id),
+            Err(error) => match error {
+                // likely a duplicate transfer, return the original transfer id
+                TransferFromError::Duplicate { duplicate_of } => Ok(duplicate_of),
+                _ => Err(CanisterError::CanisterCallError {
+                    method: "icrc2_transfer_from".to_string(),
+                    canister_id: token_service.get_canister_id().to_string(),
+                    message: error.to_string(),
+                }),
             },
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
-                method: "icrc2_transfer_from".to_string(),
-                canister_id: token_service.get_canister_id().to_string(),
-                code: DisplayRejectionCode(code),
-                message: error,
-            }),
         }
     }
 
@@ -180,23 +144,14 @@ impl IcrcService {
             created_at_time: arg.created_at_time,
         };
 
-        let res = token_service.icrc_1_transfer(&transfer_arg).await;
+        let res = token_service.icrc_1_transfer(&transfer_arg).await?;
 
         match res {
-            Ok((call_res,)) => match call_res {
-                Ok(_block_id) => Ok(_block_id),
-                Err(error) => Err(CanisterError::CanisterCallError {
-                    method: "icrc1_transfer".to_string(),
-                    canister_id: token_service.get_canister_id().to_string(),
-                    message: format!("{:?}", error),
-                }),
-            },
-
-            Err((code, error)) => Err(CanisterError::CanisterCallRejectError {
+            Ok(_block_id) => Ok(_block_id),
+            Err(error) => Err(CanisterError::CanisterCallError {
                 method: "icrc1_transfer".to_string(),
                 canister_id: token_service.get_canister_id().to_string(),
-                code: DisplayRejectionCode(code),
-                message: error,
+                message: format!("{error:?}"),
             }),
         }
     }
@@ -209,31 +164,31 @@ impl fmt::Display for TransferFromError {
                 message,
                 error_code,
             } => {
-                write!(f, "GenericError: {}, ErrorCode: {}", message, error_code)
+                write!(f, "GenericError: {message}, ErrorCode: {error_code}")
             }
             TransferFromError::TemporarilyUnavailable => {
                 write!(f, "TemporarilyUnavailable")
             }
             TransferFromError::InsufficientAllowance { allowance } => {
-                write!(f, "InsufficientAllowance: Allowance: {}", allowance)
+                write!(f, "InsufficientAllowance: Allowance: {allowance}")
             }
             TransferFromError::BadBurn { min_burn_amount } => {
-                write!(f, "BadBurn: MinBurnAmount: {}", min_burn_amount)
+                write!(f, "BadBurn: MinBurnAmount: {min_burn_amount}")
             }
             TransferFromError::Duplicate { duplicate_of } => {
-                write!(f, "Duplicate: DuplicateOf: {}", duplicate_of)
+                write!(f, "Duplicate: DuplicateOf: {duplicate_of}")
             }
             TransferFromError::BadFee { expected_fee } => {
-                write!(f, "BadFee: ExpectedFee: {}", expected_fee)
+                write!(f, "BadFee: ExpectedFee: {expected_fee}")
             }
             TransferFromError::CreatedInFuture { ledger_time } => {
-                write!(f, "CreatedInFuture: LedgerTime: {}", ledger_time)
+                write!(f, "CreatedInFuture: LedgerTime: {ledger_time}")
             }
             TransferFromError::TooOld => {
                 write!(f, "TooOld")
             }
             TransferFromError::InsufficientFunds { balance } => {
-                write!(f, "InsufficientFunds: Balance: {}", balance)
+                write!(f, "InsufficientFunds: Balance: {balance}")
             }
         }
     }

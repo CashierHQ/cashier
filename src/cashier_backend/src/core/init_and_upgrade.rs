@@ -5,7 +5,7 @@ use ic_cdk::{init, post_upgrade, pre_upgrade};
 
 use crate::services::transaction_manager::traits::TimeoutHandler;
 use crate::{
-    info, repositories,
+    repositories,
     services::transaction_manager::service::TransactionManagerService,
     utils::{random::init_ic_rand, runtime::RealIcEnvironment},
 };
