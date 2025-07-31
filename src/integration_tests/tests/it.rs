@@ -14,9 +14,13 @@ use serde::Deserialize;
 /// Tests that the canisters can be deployed.
 #[tokio::test]
 async fn should_deploy_the_canisters() {
-    with_pocket_ic_context::<_, ()>(async move |_ctx| Ok(()))
-        .await
-        .unwrap();
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        assert_ne!(ctx.token_storage_principal, Principal::anonymous());
+        assert_ne!(ctx.cashier_backend_principal, Principal::anonymous());
+        Ok(())
+    })
+    .await
+    .unwrap();
 }
 
 /// Executes the provided asynchronous function within a `PocketIcTestContext` environment.
@@ -32,9 +36,13 @@ where
     let token_storage_principal =
         deploy_canister(&client, None, get_token_storage_canister_bytecode(), &()).await;
 
+    let cashier_backend_principal =
+        deploy_canister(&client, None, get_cashier_backend_canister_bytecode(), &()).await;
+
     let result = f(&PocketIcTestContext {
         client: client.clone(),
         token_storage_principal,
+        cashier_backend_principal,
     })
     .await;
 
@@ -50,6 +58,7 @@ where
 pub struct PocketIcTestContext {
     pub client: Arc<PocketIc>,
     pub token_storage_principal: Principal,
+    pub cashier_backend_principal: Principal,
 }
 
 impl PocketIcTestContext {
@@ -189,6 +198,19 @@ pub fn get_token_storage_canister_bytecode() -> Vec<u8> {
     static CANISTER_BYTECODE: OnceLock<Vec<u8>> = OnceLock::new();
     CANISTER_BYTECODE
         .get_or_init(|| load_canister_bytecode("token_storage.wasm"))
+        .to_owned()
+}
+
+/// Retrieves the bytecode for the cashier_backend canister.
+///
+/// This function uses a `OnceLock` to ensure that the bytecode is loaded only once.
+/// The bytecode is loaded from the "token_storage.wasm" file located in the target artifacts directory.
+///
+/// Returns a `Vec<u8>` containing the bytecode of the cashier_backend canister.
+pub fn get_cashier_backend_canister_bytecode() -> Vec<u8> {
+    static CANISTER_BYTECODE: OnceLock<Vec<u8>> = OnceLock::new();
+    CANISTER_BYTECODE
+        .get_or_init(|| load_canister_bytecode("cashier_backend.wasm"))
         .to_owned()
 }
 
