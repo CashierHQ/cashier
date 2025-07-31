@@ -9,6 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = { workspace = true }
+cashier-common = { workspace = true }
 cashier-macros = { workspace = true }
 futures = { workspace = true, features = ["async-await"] }
 ic-cdk = { workspace = true }
@@ -22,3 +23,7 @@ thiserror = { workspace = true }
 [dev-dependencies]
 ic_mple_pocket_ic = { workspace = true }
 tokio = { workspace = true }
+
+[build-dependencies]
+anyhow = { workspace = true }
+vergen-gitcl = { workspace = true }

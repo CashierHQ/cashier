@@ -12,3 +12,20 @@ async fn should_deploy_the_token_storage_canister() {
     .await
     .unwrap();
 }
+
+/// Tests that the `get_canister_build_data` method of the token storage canister works.
+#[tokio::test]
+async fn test_canister_build_data() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        let token_storage_client = ctx.new_token_storage_client(Principal::anonymous());
+        let build_data = token_storage_client
+            .get_canister_build_data()
+            .await
+            .unwrap();
+        assert!(build_data.pkg_name.contains("token_storage"));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
