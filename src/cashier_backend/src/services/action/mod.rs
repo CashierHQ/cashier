@@ -71,7 +71,7 @@ impl ActionService {
             .get(action_id)
             .ok_or_else(|| "action not found".to_string())?;
 
-        let all_intents = self.action_intent_repository.get_by_action_id(&action_id);
+        let all_intents = self.action_intent_repository.get_by_action_id(action_id);
 
         let intents: Vec<Intent> = all_intents
             .iter()
@@ -152,7 +152,7 @@ impl ActionService {
     pub fn roll_up_state(&self, tx_id: &str) -> Result<RollUpStateResp, String> {
         let action_data = self
             .get_action_by_tx_id(tx_id)
-            .map_err(|e| format!("get_action_by_tx_id failed: {}", e))?;
+            .map_err(|e| format!("get_action_by_tx_id failed: {e}"))?;
 
         let previous_state = action_data.action.state.clone();
 

@@ -23,6 +23,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone> {
     pub processing_transaction_repository: ProcessingTransactionRepository,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
     pub fn new(
         transaction_service: TransactionService<E>,

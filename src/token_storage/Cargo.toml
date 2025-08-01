@@ -1,20 +1,29 @@
 [package]
 name = "token_storage"
-version = "0.1.0"
-edition = "2021"
-license = "MIT"
-license-file = "../../../LICENSE"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-candid = {workspace = true}
-ic-cdk = {workspace = true}
-ic-stable-structures = {workspace = true}
-serde = { workspace = true, features = ['derive'] }
-serde_cbor = { workspace = true }
-serde_json = {workspace = true}
-cashier-macros = { path = "../lib/cashier-macros" }
+candid = { workspace = true }
+cashier-common = { workspace = true }
+cashier-macros = { workspace = true }
+futures = { workspace = true, features = ["async-await"] }
+ic-cdk = { workspace = true }
+ic-stable-structures = { workspace = true }
+serde = { workspace = true }
 serde_bytes = { workspace = true }
-futures = "0.3.31"
+serde_cbor = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+ic_mple_pocket_ic = { workspace = true }
+tokio = { workspace = true }
+
+[build-dependencies]
+anyhow = { workspace = true }
+vergen-gitcl = { workspace = true }

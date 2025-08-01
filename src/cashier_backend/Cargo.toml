@@ -1,47 +1,43 @@
 [package]
 name = "cashier_backend"
-version = "0.1.0"
-edition = "2021"
-license = "MIT"
-license-file = "../../LICENSE"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 crate-type = ["cdylib"]
 
+
 [dependencies]
-candid = {workspace = true}
-ic-cdk = {workspace = true}
-ic-stable-structures = {workspace = true}
-serde = { workspace = true, features = ['derive'] }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+candid = { workspace = true }
+cashier-common = { workspace = true }
+cashier-types = { workspace = true }
+futures = { workspace = true }
+getrandom = { workspace = true, features = ["custom"] }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-icrc-tx = { workspace = true }
+ic-stable-structures = { workspace = true }
+icrc-ledger-types = { workspace = true }
+itertools = { workspace = true }
+rand = { workspace = true, features = ["getrandom"] }
+rm = { workspace = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
 serde_cbor = { workspace = true }
-serde_json = {workspace = true}
-getrandom = {workspace = true, features = ["custom"]}
-rand = {workspace = true, features = ["getrandom"]}
-ic-cdk-timers = {workspace = true}
-uuid = {workspace = true, features = ["v4"]}
-proc-macro2 = {workspace = true}
-quote = {workspace = true}
-syn = {workspace = true}
-serde_bytes = {workspace = true}
-itertools = {workspace = true}
-icrc-ledger-types = {workspace = true}
-base64 = {workspace = true}
-rm = {workspace = true}
-ic-icrc-tx = {workspace = true}
-cashier-types = { path = "../lib/cashier-types" }
-thiserror = "2.0.11"
-futures = "0.3.31"
-async-trait = "0.1.86"
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
 
 
 [dev-dependencies]
-async-trait = "0.1.86"
-tokio =  {version = "1.43.0", features = ["full"]}
-
-# [features]
-# test = ["faux"]
+tokio = { workspace = true }
 
 
-
+[build-dependencies]
+anyhow = { workspace = true }
+vergen-gitcl = { workspace = true }

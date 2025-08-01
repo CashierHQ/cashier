@@ -20,6 +20,8 @@ use crate::types::{
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
+pub type BalanceCache = Candid<HashMap<String, TokenBalance>>;
+
 const _UPGRADES: MemoryId = MemoryId::new(0);
 const TOKEN_MEMORY_ID: MemoryId = MemoryId::new(1);
 const USER_PREFERENCE_MEMORY_ID: MemoryId = MemoryId::new(2);
@@ -67,7 +69,7 @@ thread_local! {
        );
 
     // Balance cache for users
-    pub static BALANCE_CACHE_STORE: RefCell<StableBTreeMap<String, Candid<HashMap<String, TokenBalance>>, Memory>> =
+    pub static BALANCE_CACHE_STORE: RefCell<StableBTreeMap<String, BalanceCache, Memory>> =
         RefCell::new(
             StableBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(BALANCE_CACHE_MEMORY_ID)),
@@ -100,6 +102,6 @@ pub fn load() {
             MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_METADATA_ID)),
             TokenRegistryMetadata::default(),
         )
-        .expect("config cell initialization should succeed");
+        .expect("Failed to initialize TOKEN_REGISTRY_METADATA_STORE");
     });
 }

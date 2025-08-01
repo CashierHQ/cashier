@@ -1,0 +1,16 @@
+[package]
+name = "integration_tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+
+[dev-dependencies]
+candid = { workspace = true }
+cashier_backend_client = { workspace = true }
+ic-cdk = { workspace = true }
+ic_mple_client = { workspace = true, features = ["pocket-ic"]}
+ic_mple_pocket_ic = { workspace = true }
+serde = { workspace = true }
+token_storage_client = { workspace = true }
+tokio = { workspace = true }

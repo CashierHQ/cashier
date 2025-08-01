@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -21,11 +20,16 @@ pub type Icrc112Requests = SequenceRequest;
 
 pub trait Icrc112RequestsExt {
     fn len(&self) -> usize;
+    fn is_empty(&self) -> bool;
 }
 
 impl Icrc112RequestsExt for Icrc112Requests {
     fn len(&self) -> usize {
         self.iter().fold(0, |acc, x| acc + x.len())
+    }
+
+    fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 

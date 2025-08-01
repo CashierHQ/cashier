@@ -10,6 +10,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use std::str::FromStr;
 
 use crate::{
+    error,
     services::transaction_manager::{
         service::TransactionManagerService, traits::TransactionValidator,
     },
@@ -55,9 +56,7 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
         let spender_account = icrc2_transfer_from_info
             .spender
             .get_account()
-            .map_err(|e| {
-                CanisterError::ParseAccountError(format!("Error parsing spender: {}", e))
-            })?;
+            .map_err(|e| CanisterError::ParseAccountError(format!("Error parsing spender: {e}")))?;
 
         let allowance_amount = icrc2_transfer_from_info.amount.clone();
 
@@ -94,22 +93,27 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer_info)) => {
                 let is_valid = self.validate_balance_transfer(icrc1_transfer_info).await;
 
-                if let Ok(valid) = is_valid {
-                    if valid {
-                        TransactionState::Success
-                    } else {
-                        warn!(
-                            "[manual_check_status] Icrc1Transfer failed: Insufficient balance for transfer {:?}",
+                match is_valid {
+                    Ok(valid) => {
+                        if valid {
+                            TransactionState::Success
+                        } else {
+                            warn!(
+                                "[manual_check_status] Icrc1Transfer failed: Insufficient balance for transfer {:?}",
+                                transaction
+                            );
+                            TransactionState::Fail
+                        }
+                    }
+                    Err(e) => {
+                        error!("[manual_check_status] Icrc1Transfer error: {}", e);
+                        error!(
+                            "[manual_check_status] Icrc1Transfer error tx: {:?}",
                             transaction
                         );
+
                         TransactionState::Fail
                     }
-                } else {
-                    warn!(
-                        "[manual_check_status] Icrc1Transfer failed: Error validating balance for transfer {:?}",
-                        transaction
-                    );
-                    TransactionState::Fail
                 }
             }
             // Check allowance for Icrc2Approve

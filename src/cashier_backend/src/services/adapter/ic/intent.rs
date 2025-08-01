@@ -21,13 +21,13 @@ pub struct IcIntentAdapter<E: IcEnvironment + Clone> {
     pub ic_env: E,
 }
 
-impl<'a, E: IcEnvironment + Clone> Default for IcIntentAdapter<E> {
+impl<E: IcEnvironment + Clone> Default for IcIntentAdapter<E> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a, E: IcEnvironment + Clone> IcIntentAdapter<E> {
+impl<E: IcEnvironment + Clone> IcIntentAdapter<E> {
     pub fn new() -> Self {
         Self { ic_env: E::new() }
     }
