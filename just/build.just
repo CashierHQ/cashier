@@ -18,14 +18,30 @@ build_canisters: pre_build
   just build_canister "token_storage" "" "token_storage"
 
 
+# Builds the test canister
+[group('build')]
+build_frontend:
+  
+
+
 # Download third party artifacts
 [group('build')]
 download_artifacts: pre_build
-  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icp.did https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did
-  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icp.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz
-  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icrc.did https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ledger.did
-  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icrc.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz
+  just download_if_not_exists {{ARTIFACTS_DIR}}/ledger-suite-icp.did "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/ledger-suite-icp.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/ledger-suite-icrc.did "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ledger.did"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/ledger-suite-icrc.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity.did "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity.wasm.gz "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
 
+
+[private]
+download_if_not_exists file url:
+  #!/usr/bin/env bash
+  set -e
+  if ! [ -f {{file}} ]; then
+    curl -L -o {{file}} {{url}}
+  fi
 
 [private]
 pre_build: 

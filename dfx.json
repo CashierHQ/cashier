@@ -1,28 +1,27 @@
 {
     "canisters": {
         "cashier_backend": {
-            "candid": "src/cashier_backend/cashier_backend.did",
-            "package": "cashier_backend",
-            "type": "rust",
-            "specified_id": "jjio5-5aaaa-aaaam-adhaq-cai",
-            "gzip": true
+            "type": "custom",
+            "candid": "./target/artifacts/cashier_backend.did",
+            "wasm": "./target/artifacts/cashier_backend.wasm.gz"
         },
         "token_storage": {
-            "candid": "src/token_storage/token_storage.did",
-            "package": "token_storage",
-            "type": "rust",
-            "gzip": true
+            "type": "custom",
+            "candid": "./target/artifacts/token_storage.did",
+            "wasm": "./target/artifacts/token_storage.wasm.gz"
         },
         "cashier_frontend": {
-            "source": ["src/cashier_frontend/dist"],
+            "source": [
+                "../src/cashier_frontend/dist"
+            ],
             "type": "assets",
             "workspace": "cashier_frontend",
-            "build": "bash scripts/build_frontend.sh"
+            "build": ""
         },
         "icp_ledger_canister": {
             "type": "custom",
-            "candid": "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did",
-            "wasm": "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz",
+            "candid": "./target/artifacts/ledger-suite-icp.did",
+            "wasm": "./target/artifacts/ledger-suite-icp.wasm.gz",
             "specified_id": "ryjl3-tyaaa-aaaaa-aaaba-cai",
             "remote": {
                 "id": {
@@ -32,9 +31,25 @@
         },
         "icrc1_ledger_canister": {
             "type": "custom",
-            "candid": "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ledger.did",
-            "wasm": "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz",
-            "specified_id": "ixmla-qqaaa-aaaad-aazda-cai"
+            "candid": "./target/artifacts/ledger-suite-icrc.did",
+            "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+            "specified_id": "ixmla-qqaaa-aaaad-aazda-cai",
+            "remote": {
+                "id": {
+                    "ic": "ixmla-qqaaa-aaaad-aazda-cai"
+                }
+            }
+        },
+        "internet_identity": {
+            "type": "custom",
+            "candid": "./target/artifacts/internet_identity.did",
+            "wasm": "./target/artifacts/internet_identity.wasm.gz",
+            "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
+            "remote": {
+                "id": {
+                    "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+                }
+            }
         }
     },
     "defaults": {
@@ -46,15 +61,21 @@
     "networks": {
         "ic": {
             "type": "persistent",
-            "providers": ["https://icp0.io"]
+            "providers": [
+                "https://icp0.io"
+            ]
         },
         "staging": {
             "type": "persistent",
-            "providers": ["https://icp0.io"]
+            "providers": [
+                "https://icp0.io"
+            ]
         },
         "dev": {
             "type": "persistent",
-            "providers": ["https://icp0.io"]
+            "providers": [
+                "https://icp0.io"
+            ]
         },
         "local": {
             "bind": "127.0.0.1:4943",
