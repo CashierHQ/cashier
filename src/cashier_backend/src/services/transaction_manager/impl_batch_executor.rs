@@ -4,12 +4,12 @@
 use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::services::transaction_manager::traits::TransactionValidator;
 use async_trait::async_trait;
+use cashier_types::error::CanisterError;
 use cashier_types::repository::transaction::v2::Transaction;
 use cashier_types::repository::transaction::v2::TransactionState;
 
 use crate::{
     services::transaction_manager::{service::TransactionManagerService, traits::BatchExecutor},
-    types::error::CanisterError,
     utils::runtime::IcEnvironment,
 };
 

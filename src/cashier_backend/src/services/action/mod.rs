@@ -1,8 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::domains::action::ActionDomainLogic;
 use crate::repositories;
-use crate::{domains::action::ActionDomainLogic, types::error::CanisterError};
+use cashier_types::error::CanisterError;
 use cashier_types::service::action::RollUpStateResp;
 use cashier_types::{
     repository::{

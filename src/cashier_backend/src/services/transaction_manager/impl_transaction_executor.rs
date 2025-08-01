@@ -3,11 +3,14 @@
 
 use crate::{info, services::transaction_manager::traits::ActionUpdater};
 use async_trait::async_trait;
-use cashier_types::repository::{
-    intent::v2::IntentTask,
-    transaction::v2::{
-        FromCallType, IcTransaction, Icrc1Transfer, Icrc2TransferFrom, Transaction,
-        TransactionState,
+use cashier_types::{
+    error::CanisterError,
+    repository::{
+        intent::v2::IntentTask,
+        transaction::v2::{
+            FromCallType, IcTransaction, Icrc1Transfer, Icrc2TransferFrom, Transaction,
+            TransactionState,
+        },
     },
 };
 use icrc_ledger_types::{icrc1::transfer::TransferArg, icrc2::transfer_from::TransferFromArgs};
@@ -17,7 +20,6 @@ use crate::{
     services::transaction_manager::{
         service::TransactionManagerService, traits::TransactionExecutor,
     },
-    types::error::CanisterError,
     utils::runtime::IcEnvironment,
 };
 

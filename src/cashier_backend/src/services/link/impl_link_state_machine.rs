@@ -7,6 +7,7 @@ use cashier_types::{
         CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput,
         LinkStateMachineGoto,
     },
+    error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
         asset_info::AssetInfo,
@@ -23,7 +24,6 @@ use crate::{
         service::LinkService,
         traits::{LinkStateMachine, LinkValidation},
     },
-    types::error::CanisterError,
     utils::runtime::IcEnvironment,
 };
 

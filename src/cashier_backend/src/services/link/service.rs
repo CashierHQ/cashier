@@ -1,9 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::services::link::traits::LinkStateMachine;
 use candid::Principal;
 use cashier_types::{
     dto::link::{GetLinkOptions, UpdateLinkInput},
+    error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
         link::v1::Link,
@@ -13,7 +15,6 @@ use cashier_types::{
 };
 use std::str::FromStr;
 
-use crate::services::link::traits::LinkStateMachine;
 use crate::services::link::traits::LinkValidation;
 use crate::{
     error,
@@ -25,7 +26,6 @@ use crate::{
         action::ActionService, ext::icrc_batch::IcrcBatchService, request_lock::RequestLockService,
         transaction_manager::service::TransactionManagerService, user::v2::UserService,
     },
-    types::error::CanisterError,
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
 
