@@ -2,17 +2,15 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::repositories;
-use crate::types::transaction_manager::RollUpStateResp;
-use crate::{
-    domains::action::ActionDomainLogic,
-    types::{error::CanisterError, transaction_manager::ActionData},
-};
-use cashier_types::action::v1::Action;
-use cashier_types::link_action::v1::LinkAction;
-use cashier_types::user_action::v1::UserAction;
+use crate::{domains::action::ActionDomainLogic, types::error::CanisterError};
+use cashier_types::service::action::RollUpStateResp;
 use cashier_types::{
-    action_intent::v1::ActionIntent, intent::v2::Intent, intent_transaction::v1::IntentTransaction,
-    transaction::v2::Transaction,
+    repository::{
+        action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent,
+        intent_transaction::v1::IntentTransaction, link_action::v1::LinkAction,
+        transaction::v2::Transaction, user_action::v1::UserAction,
+    },
+    service::action::ActionData,
 };
 
 use std::collections::HashMap;

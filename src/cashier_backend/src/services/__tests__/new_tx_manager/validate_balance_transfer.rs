@@ -1,9 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 use candid::Principal;
-use cashier_types::{Asset, Chain, Icrc1Transfer, Wallet};
+use cashier_types::repository::{Asset, Chain, Icrc1Transfer, Wallet};
 use faux::when;
 use icrc_ledger_types::icrc1::account::Account;
 

@@ -2,15 +2,20 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::action::v1::{ActionState, ActionType};
-use cashier_types::link_action::v1::LinkUserState;
 use uuid::Uuid;
 
-use crate::core::action::types::{
-    ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
-    ProcessActionInput,
+use cashier_types::{
+    dto::action::{
+        ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
+        ProcessActionInput, UpdateActionInput,
+    },
+    repository::{
+        action::v1::{ActionState, ActionType},
+        link_action::v1::LinkUserState,
+    },
+    service::tx_manager::UpdateActionArgs,
 };
-use crate::core::link::types::UpdateActionInput;
+
 use crate::services::link::service::LinkService;
 use crate::services::link::traits::ActionFlow;
 use crate::services::link::traits::IntentAssembler;
@@ -20,7 +25,6 @@ use crate::services::transaction_manager::traits::ActionUpdater;
 use crate::services::transaction_manager::traits::TransactionValidator;
 use crate::types::error::CanisterError;
 use crate::types::temp_action::TemporaryAction;
-use crate::types::transaction_manager::UpdateActionArgs;
 use crate::utils::runtime::IcEnvironment;
 
 #[async_trait(?Send)]

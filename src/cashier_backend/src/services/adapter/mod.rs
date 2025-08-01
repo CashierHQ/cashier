@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use cashier_types::{
+use cashier_types::repository::{
     action::v1::ActionType,
     common::Chain,
     intent::v2::Intent,

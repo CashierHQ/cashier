@@ -8,17 +8,17 @@
 
 use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::transaction::v2::{
-    Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Transaction, TransactionState,
+use cashier_types::{
+    dto::action::{ActionDto, Icrc112Requests},
+    repository::transaction::v2::{
+        Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Transaction, TransactionState,
+    },
+    service::tx_manager::UpdateActionArgs,
 };
 use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
-    core::action::types::ActionDto,
-    types::{
-        error::CanisterError, icrc_112_transaction::Icrc112Requests, temp_action::TemporaryAction,
-        transaction_manager::UpdateActionArgs,
-    },
+    types::{error::CanisterError, temp_action::TemporaryAction},
     utils::runtime::IcEnvironment,
 };
 

@@ -54,11 +54,3 @@ pub struct ErrorDetail {
     pub code: i32,
     pub message: String,
 }
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub enum IcrcXResponseItem {
-    Success(SuccessResponse),
-    Error(ErrorResponse),
-}
-
-pub type IcrcxResponses = Vec<Vec<IcrcXResponseItem>>;

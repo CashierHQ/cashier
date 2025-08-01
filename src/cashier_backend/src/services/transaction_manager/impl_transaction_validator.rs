@@ -3,7 +3,7 @@
 
 use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::transaction::v2::{
+use cashier_types::repository::transaction::v2::{
     IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
 };
 use icrc_ledger_types::icrc1::account::Account;
