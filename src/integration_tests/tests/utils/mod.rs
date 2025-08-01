@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::Read,
     path::PathBuf,
@@ -13,6 +14,8 @@ use ic_mple_client::PocketIcClient;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
+
+pub mod identity;
 
 /// Executes the provided asynchronous function within a `PocketIcTestContext` environment.
 ///
@@ -30,10 +33,24 @@ where
     let cashier_backend_principal =
         deploy_canister(&client, None, get_cashier_backend_canister_bytecode(), &()).await;
 
+    // let icp_ledger_principal =
+    //     deploy_canister(&client, None, get_icp_ledger_canister_bytecode(), &()).await;
+
+    // let mut token_map = HashMap::new();
+
+    // for i in 1..=10 {
+    //     let icrc_ledger_principal =
+    //         deploy_canister(&client, None, get_icrc_ledger_canister_bytecode(), &()).await;
+
+    //     token_map.insert(format!("token_{i}"), icrc_ledger_principal);
+    // }
+
     let result = f(&PocketIcTestContext {
         client: client.clone(),
         token_storage_principal,
         cashier_backend_principal,
+        // icp_ledger_principal,
+        // icrc_token_map: token_map,
     })
     .await;
 
@@ -50,6 +67,8 @@ pub struct PocketIcTestContext {
     pub client: Arc<PocketIc>,
     pub token_storage_principal: Principal,
     pub cashier_backend_principal: Principal,
+    // pub icp_ledger_principal: Principal,
+    // pub icrc_token_map: HashMap<String, Principal>,
 }
 
 impl PocketIcTestContext {
@@ -226,6 +245,32 @@ pub fn get_cashier_backend_canister_bytecode() -> Vec<u8> {
     static CANISTER_BYTECODE: OnceLock<Vec<u8>> = OnceLock::new();
     CANISTER_BYTECODE
         .get_or_init(|| load_canister_bytecode("cashier_backend.wasm"))
+        .to_owned()
+}
+
+/// Retrieves the bytecode for the ICP ledger canister.
+///
+/// This function uses a `OnceLock` to ensure that the bytecode is loaded only once.
+/// The bytecode is loaded from the "ledger-suite-icp.wasm.gz" file located in the target artifacts directory.
+///
+/// Returns a `Vec<u8>` containing the bytecode of the cashier_backend canister.
+pub fn get_icp_ledger_canister_bytecode() -> Vec<u8> {
+    static CANISTER_BYTECODE: OnceLock<Vec<u8>> = OnceLock::new();
+    CANISTER_BYTECODE
+        .get_or_init(|| load_canister_bytecode("ledger-suite-icp.wasm.gz"))
+        .to_owned()
+}
+
+/// Retrieves the bytecode for the ICRC ledger canister.
+///
+/// This function uses a `OnceLock` to ensure that the bytecode is loaded only once.
+/// The bytecode is loaded from the "ledger-suite-icrc.wasm.gz" file located in the target artifacts directory.
+///
+/// Returns a `Vec<u8>` containing the bytecode of the cashier_backend canister.
+pub fn get_icrc_ledger_canister_bytecode() -> Vec<u8> {
+    static CANISTER_BYTECODE: OnceLock<Vec<u8>> = OnceLock::new();
+    CANISTER_BYTECODE
+        .get_or_init(|| load_canister_bytecode("ledger-suite-icrc.wasm.gz"))
         .to_owned()
 }
 
