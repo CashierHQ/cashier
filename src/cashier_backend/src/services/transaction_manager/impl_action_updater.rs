@@ -6,6 +6,7 @@ use crate::services::transaction_manager::traits::{
     BatchExecutor, DependencyAnalyzer, TimeoutHandler,
 };
 use async_trait::async_trait;
+use cashier_types::error::CanisterError;
 use cashier_types::{
     dto::action::{ActionDto, Icrc112Requests},
     repository::{
@@ -22,7 +23,6 @@ use crate::{
         link::service::LinkService,
         transaction_manager::{service::TransactionManagerService, traits::ActionUpdater},
     },
-    types::error::CanisterError,
     utils::{self, helper::to_subaccount, runtime::IcEnvironment},
 };
 

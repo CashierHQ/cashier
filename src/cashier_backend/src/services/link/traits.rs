@@ -14,6 +14,7 @@ use cashier_types::dto::link::{
     CreateLinkInput, LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput,
     LinkUpdateUserStateInput, UserStateMachineGoto,
 };
+use cashier_types::error::CanisterError;
 use cashier_types::repository::action::v1::Action;
 use cashier_types::repository::action::v1::ActionType;
 use cashier_types::repository::asset_info::AssetInfo;
@@ -24,7 +25,6 @@ use cashier_types::repository::link_action::v1::LinkAction;
 
 use std::collections::HashMap;
 
-use crate::types::error::CanisterError;
 use candid::Nat;
 
 // ---------- 1. Link lifecycle ----------

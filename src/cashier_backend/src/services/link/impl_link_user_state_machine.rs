@@ -1,6 +1,5 @@
 use crate::{
     services::link::{service::LinkService, traits::LinkUserStateMachine},
-    types::error::CanisterError,
     utils::runtime::IcEnvironment,
 };
 use std::str::FromStr;
@@ -14,6 +13,7 @@ use cashier_types::{
             UserStateMachineGoto,
         },
     },
+    error::CanisterError,
     repository::{
         action::v1::{ActionState, ActionType},
         link_action::v1::{LinkAction, LinkUserState},

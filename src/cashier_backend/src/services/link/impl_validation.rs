@@ -4,14 +4,16 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::services::link::service::LinkService;
 use crate::services::link::traits::LinkValidation;
-use crate::types::error::CanisterError;
 use crate::utils::helper::to_subaccount;
 use crate::utils::runtime::IcEnvironment;
 
-use cashier_types::repository::{
-    action::v1::{Action, ActionState, ActionType},
-    asset_info::AssetInfo,
-    link::v1::{Link, LinkState, LinkType},
+use cashier_types::{
+    error::CanisterError,
+    repository::{
+        action::v1::{Action, ActionState, ActionType},
+        asset_info::AssetInfo,
+        link::v1::{Link, LinkState, LinkType},
+    },
 };
 
 #[async_trait(?Send)]

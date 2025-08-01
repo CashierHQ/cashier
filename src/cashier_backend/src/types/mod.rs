@@ -5,7 +5,7 @@
 // pub mod api;
 // pub mod common;
 // pub mod config;
-pub mod error;
+// pub mod error;
 // pub mod icrc;
 // pub mod icrc_112_transaction;
 // pub mod temp_action;

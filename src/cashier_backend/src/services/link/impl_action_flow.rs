@@ -11,13 +11,13 @@ use crate::services::{
     },
     transaction_manager::traits::{ActionCreator, ActionUpdater, TransactionValidator},
 };
-use crate::types::error::CanisterError;
 use crate::utils::runtime::IcEnvironment;
 use cashier_types::{
     dto::action::{
         ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
         ProcessActionInput, UpdateActionInput,
     },
+    error::CanisterError,
     repository::{
         action::v1::{ActionState, ActionType},
         link_action::v1::LinkUserState,

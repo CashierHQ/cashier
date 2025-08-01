@@ -5,14 +5,16 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::{
     repositories::transaction::TransactionRepository,
-    types::error::CanisterError,
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 use base64::Engine;
 use candid::{Encode, Principal};
-use cashier_types::dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput};
 use cashier_types::repository::transaction::v2::{
     IcTransaction, Protocol, Transaction, TransactionState,
+};
+use cashier_types::{
+    dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput},
+    error::CanisterError,
 };
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},

@@ -4,6 +4,7 @@
 use std::marker::PhantomData;
 
 use cashier_types::{
+    error::CanisterError,
     repository::{
         action::v1::ActionType,
         common::Chain,
@@ -15,7 +16,7 @@ use cashier_types::{
 };
 use ic::{action::IcActionAdapter, intent::IcIntentAdapter};
 
-use crate::{types::error::CanisterError, utils::runtime::IcEnvironment};
+use crate::utils::runtime::IcEnvironment;
 
 pub mod ic;
 

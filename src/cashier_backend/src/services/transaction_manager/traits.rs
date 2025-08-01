@@ -10,6 +10,7 @@ use async_trait::async_trait;
 use candid::Principal;
 use cashier_types::{
     dto::action::{ActionDto, Icrc112Requests},
+    error::CanisterError,
     repository::transaction::v2::{
         Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Transaction, TransactionState,
     },
@@ -17,7 +18,7 @@ use cashier_types::{
 };
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::{types::error::CanisterError, utils::runtime::IcEnvironment};
+use crate::utils::runtime::IcEnvironment;
 
 // ---------- 2. Action creation ----------
 /// Persists a TemporaryAction (and its transactions) into storage.
