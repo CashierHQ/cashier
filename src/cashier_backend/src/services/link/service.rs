@@ -9,6 +9,7 @@ use cashier_types::{
         link::v1::Link,
         link_action::v1::LinkAction,
     },
+    service::link::{PaginateInput, PaginateResult},
 };
 use std::str::FromStr;
 
@@ -24,10 +25,7 @@ use crate::{
         action::ActionService, ext::icrc_batch::IcrcBatchService, request_lock::RequestLockService,
         transaction_manager::service::TransactionManagerService, user::v2::UserService,
     },
-    types::{
-        api::{PaginateInput, PaginateResult},
-        error::CanisterError,
-    },
+    types::error::CanisterError,
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
 

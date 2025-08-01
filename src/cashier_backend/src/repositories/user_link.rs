@@ -2,8 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::USER_LINK_STORE;
-use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
-use cashier_types::repository::{keys::UserLinkKey, user_link::v1::UserLink};
+use cashier_types::{
+    repository::{keys::UserLinkKey, user_link::v1::UserLink},
+    service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
+};
 
 #[derive(Clone)]
 
