@@ -3,7 +3,7 @@
 
 use crate::{info, services::transaction_manager::traits::TransactionValidator};
 use async_trait::async_trait;
-use cashier_types::transaction::v2::TransactionState;
+use cashier_types::repository::transaction::v2::TransactionState;
 use std::time::Duration;
 
 use crate::{

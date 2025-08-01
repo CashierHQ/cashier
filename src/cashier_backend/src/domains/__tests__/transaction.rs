@@ -6,7 +6,7 @@
 mod tests {
     use crate::domains::transaction::TransactionDomainLogic;
     use candid::Principal;
-    use cashier_types::{
+    use cashier_types::repository::{
         Asset, Chain, FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom,
         Protocol, Transaction, TransactionState, Wallet,
     };

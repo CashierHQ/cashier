@@ -2,4 +2,3 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 pub mod api;
-pub mod types;

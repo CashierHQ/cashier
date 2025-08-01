@@ -8,11 +8,14 @@ use candid::{CandidType, Nat};
 use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
 
-use crate::repository::{
-    action::v1::Action,
-    common::{Asset, Wallet},
-    intent::v2::{Intent, IntentType},
-    transaction::v2::{IcTransaction, Protocol, Transaction},
+use crate::{
+    repository::{
+        action::v1::Action,
+        common::{Asset, Wallet},
+        intent::v2::{Intent, IntentType},
+        transaction::v2::{IcTransaction, Protocol, Transaction},
+    },
+    service::action::ActionData,
 };
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -392,9 +395,9 @@ pub type SequenceRequest = Vec<ParallelRequests>;
 
 pub type Icrc112Requests = SequenceRequest;
 
-#[derive(Debug, Clone)]
-pub struct ActionData {
-    pub action: Action,
-    pub intents: Vec<Intent>,
-    pub intent_txs: HashMap<String, Vec<Transaction>>,
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct UpdateActionInput {
+    pub link_id: String,
+    pub action_id: String,
+    pub external: bool,
 }

@@ -3,15 +3,18 @@
 
 use candid::Principal;
 use cashier_types::{
-    action::v1::{Action, ActionState, ActionType},
-    link::v1::Link,
-    link_action::v1::LinkAction,
+    dto::link::{GetLinkOptions, UpdateLinkInput},
+    repository::{
+        action::v1::{Action, ActionState, ActionType},
+        link::v1::Link,
+        link_action::v1::LinkAction,
+    },
 };
 use std::str::FromStr;
 
 use crate::services::link::traits::LinkStateMachine;
+use crate::services::link::traits::LinkValidation;
 use crate::{
-    core::link::types::GetLinkOptions,
     error,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
@@ -27,7 +30,6 @@ use crate::{
     },
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
-use crate::{core::link::types::UpdateLinkInput, services::link::traits::LinkValidation};
 
 pub struct LinkService<E: IcEnvironment + Clone> {
     // LinkService fields go here

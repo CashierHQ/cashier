@@ -3,7 +3,7 @@
 
 use crate::{info, services::transaction_manager::traits::ActionUpdater};
 use async_trait::async_trait;
-use cashier_types::{
+use cashier_types::repository::{
     intent::v2::IntentTask,
     transaction::v2::{
         FromCallType, IcTransaction, Icrc1Transfer, Icrc2TransferFrom, Transaction,

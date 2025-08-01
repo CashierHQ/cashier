@@ -3,7 +3,7 @@
 
 use super::USER_LINK_STORE;
 use crate::types::api::{PaginateInput, PaginateResult, PaginateResultMetadata};
-use cashier_types::{keys::UserLinkKey, user_link::v1::UserLink};
+use cashier_types::repository::{keys::UserLinkKey, user_link::v1::UserLink};
 
 #[derive(Clone)]
 

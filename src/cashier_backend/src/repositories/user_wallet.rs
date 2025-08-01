@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::USER_WALLET_STORE;
-use cashier_types::{keys::UserWalletKey, user_wallet::v1::UserWallet};
+use cashier_types::repository::{keys::UserWalletKey, user_wallet::v1::UserWallet};
 
 #[derive(Clone)]
 

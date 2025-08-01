@@ -3,16 +3,21 @@ use std::str::FromStr;
 use async_trait::async_trait;
 
 use cashier_types::{
-    action::v1::{Action, ActionState, ActionType},
-    asset_info::AssetInfo,
-    link::v1::{Link, LinkState, LinkType, Template},
-    link_action::v1::LinkAction,
-    user_link::v1::UserLink,
+    dto::link::{
+        CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput,
+        LinkStateMachineGoto,
+    },
+    repository::{
+        action::v1::{Action, ActionState, ActionType},
+        asset_info::AssetInfo,
+        link::v1::{Link, LinkState, LinkType, Template},
+        link_action::v1::LinkAction,
+        user_link::v1::UserLink,
+    },
 };
 use uuid::Uuid;
 
 use crate::{
-    core::link::types::{CreateLinkInput, LinkDetailUpdateInput, LinkStateMachineGoto},
     error,
     services::link::{
         service::LinkService,
@@ -88,10 +93,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                     }
                 }
                 "link_type" => {
-                    let link_link_type_str = link
-                        .link_type
-                        .as_ref()
-                        .map(cashier_types::link::v1::LinkType::to_string);
+                    let link_link_type_str = link.link_type.as_ref().map(LinkType::to_string);
 
                     if params.link_type.is_none() {
                         return false;
@@ -101,10 +103,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                     }
                 }
                 "template" => {
-                    let link_template_str = link
-                        .template
-                        .as_ref()
-                        .map(cashier_types::link::v1::Template::to_string);
+                    let link_template_str = link.template.as_ref().map(Template::to_string);
                     if params.template.is_none() {
                         return false;
                     }
@@ -556,7 +555,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
             link_use_action_max_count,
             asset_info_input
                 .iter()
-                .map(crate::core::link::types::LinkDetailUpdateAssetInfoInput::to_model)
+                .map(LinkDetailUpdateAssetInfoInput::to_model)
                 .collect(),
         ))
     }

@@ -2,19 +2,21 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::services::link::traits::LinkValidation;
+use crate::types::api::PaginateResult;
 use candid::Principal;
+use cashier_types::dto::action::{
+    ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
+    ProcessActionInput, UpdateActionInput,
+};
+use cashier_types::dto::link::{
+    CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, LinkGetUserStateInput,
+    LinkGetUserStateOutput, LinkUpdateUserStateInput, UpdateLinkInput,
+};
 use ic_cdk::{query, update};
 
 use crate::services::link::traits::LinkUserStateMachine;
 use crate::{
-    core::{
-        action::types::{
-            ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
-            ProcessActionInput,
-        },
-        guard::is_not_anonymous,
-        GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
-    },
+    core::guard::is_not_anonymous,
     error,
     services::{
         action::ActionService,
@@ -25,11 +27,6 @@ use crate::{
     },
     types::{api::PaginateInput, error::CanisterError},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
-};
-
-use super::types::{
-    CreateLinkInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
-    UpdateActionInput,
 };
 
 /// Retrieves a paginated list of links created by the authenticated caller.

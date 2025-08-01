@@ -3,7 +3,7 @@
 
 
 mod tests {
-    use cashier_types::{Action, ActionState, LinkAction, LinkUserState};
+    use cashier_types::repository::{Action, ActionState, LinkAction, LinkUserState};
     use faux::when;
     use uuid::Uuid;
 

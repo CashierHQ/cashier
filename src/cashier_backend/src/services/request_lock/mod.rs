@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_types::{keys::RequestLockKey, request_lock::RequestLock};
+use cashier_types::repository::{keys::RequestLockKey, request_lock::RequestLock};
 
 use crate::{repositories::request_lock::RequestLockRepository, types::error::CanisterError};
 
