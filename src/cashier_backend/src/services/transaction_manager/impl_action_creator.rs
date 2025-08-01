@@ -4,12 +4,13 @@
 use cashier_types::{
     dto::action::ActionDto,
     repository::{link_action::v1::LinkAction, transaction::v2::Transaction},
+    service::link::TemporaryAction,
 };
 use std::collections::HashMap;
 
 use crate::{
     services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator},
-    types::{error::CanisterError, temp_action::TemporaryAction},
+    types::error::CanisterError,
     utils::runtime::IcEnvironment,
 };
 
