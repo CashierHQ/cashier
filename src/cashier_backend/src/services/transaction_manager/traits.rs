@@ -13,14 +13,11 @@ use cashier_types::{
     repository::transaction::v2::{
         Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Transaction, TransactionState,
     },
-    service::tx_manager::UpdateActionArgs,
+    service::{link::TemporaryAction, tx_manager::UpdateActionArgs},
 };
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::{
-    types::{error::CanisterError, temp_action::TemporaryAction},
-    utils::runtime::IcEnvironment,
-};
+use crate::{types::error::CanisterError, utils::runtime::IcEnvironment};
 
 // ---------- 2. Action creation ----------
 /// Persists a TemporaryAction (and its transactions) into storage.

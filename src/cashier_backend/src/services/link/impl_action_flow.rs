@@ -4,6 +4,15 @@ use async_trait::async_trait;
 use candid::Principal;
 use uuid::Uuid;
 
+use crate::services::{
+    link::{
+        service::LinkService,
+        traits::{ActionFlow, IntentAssembler, LinkValidation},
+    },
+    transaction_manager::traits::{ActionCreator, ActionUpdater, TransactionValidator},
+};
+use crate::types::error::CanisterError;
+use crate::utils::runtime::IcEnvironment;
 use cashier_types::{
     dto::action::{
         ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
@@ -13,19 +22,8 @@ use cashier_types::{
         action::v1::{ActionState, ActionType},
         link_action::v1::LinkUserState,
     },
-    service::tx_manager::UpdateActionArgs,
+    service::{link::TemporaryAction, tx_manager::UpdateActionArgs},
 };
-
-use crate::services::link::service::LinkService;
-use crate::services::link::traits::ActionFlow;
-use crate::services::link::traits::IntentAssembler;
-use crate::services::link::traits::LinkValidation;
-use crate::services::transaction_manager::traits::ActionCreator;
-use crate::services::transaction_manager::traits::ActionUpdater;
-use crate::services::transaction_manager::traits::TransactionValidator;
-use crate::types::error::CanisterError;
-use crate::types::temp_action::TemporaryAction;
-use crate::utils::runtime::IcEnvironment;
 
 #[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
