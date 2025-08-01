@@ -3,7 +3,6 @@
 
 use crate::types::api::*;
 use crate::types::error::*;
-use crate::types::icrc::*;
 use cashier_common::build_data::BuildData;
 
 pub mod action;
@@ -18,6 +17,7 @@ pub mod user;
 // #[cfg(test)]
 // pub mod __tests__;
 
+use cashier_common::icrc::*;
 use cashier_types::dto::action::*;
 use cashier_types::dto::link::*;
 use cashier_types::dto::user::*;
