@@ -20,9 +20,38 @@ build_canisters: pre_build
 
 # Builds the test canister
 [group('build')]
-build_frontend:
-  
+build_frontend network="": generate_frontend_ts
+  #!/usr/bin/env bash
+  set -e
 
+  # Navigate to frontend directory
+  cd "./src/cashier_frontend" || exit
+
+  npm install
+
+  if [ "{{network}}" == "ic" ]; then
+    echo "Building for production..."
+    npm run build:prod
+  elif [ "{{network}}" == "staging" ]; then
+    echo "Building for staging..."
+    npm run build:staging
+  elif [ "{{network}}" == "dev" ]; then
+    echo "Building for dev..."
+    npm run build:dev
+  else
+    echo "Building for local development..."
+    npm run build:local
+  fi
+
+  echo "Frontend build completed for $NETWORK environment"
+
+
+# Generates the ts files for the canister services 
+[group('build')]
+generate_frontend_ts:
+  dfx generate cashier_backend
+  dfx generate token_storage
+  dfx generate icp_ledger_canister
 
 # Download third party artifacts
 [group('build')]
