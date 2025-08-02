@@ -2,25 +2,26 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::constant::get_tx_timeout_nano_seconds;
-use crate::services::transaction_manager::traits::BatchExecutor;
-use crate::services::transaction_manager::traits::DependencyAnalyzer;
-use crate::services::transaction_manager::traits::TimeoutHandler;
+use crate::services::transaction_manager::traits::{
+    BatchExecutor, DependencyAnalyzer, TimeoutHandler,
+};
 use async_trait::async_trait;
-use cashier_types::processing_transaction::ProcessingTransaction;
-use cashier_types::transaction::v2::{Transaction, TransactionState};
+use cashier_types::error::CanisterError;
+use cashier_types::{
+    dto::action::{ActionDto, Icrc112Requests},
+    repository::{
+        processing_transaction::ProcessingTransaction,
+        transaction::v2::{Transaction, TransactionState},
+    },
+    service::{action::ActionData, tx_manager::UpdateActionArgs},
+};
 use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
-    core::action::types::ActionDto,
     info,
     services::{
         link::service::LinkService,
         transaction_manager::{service::TransactionManagerService, traits::ActionUpdater},
-    },
-    types::{
-        error::CanisterError,
-        icrc_112_transaction::Icrc112Requests,
-        transaction_manager::{ActionData, UpdateActionArgs},
     },
     utils::{self, helper::to_subaccount, runtime::IcEnvironment},
 };

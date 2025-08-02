@@ -4,15 +4,19 @@
 use std::collections::HashMap;
 
 use candid::{CandidType, Nat};
-use cashier_types::{
-    action::v1::Action,
-    intent::v2::{Intent, IntentType},
-    transaction::v2::{IcTransaction, Protocol, Transaction},
-};
+
 use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
 
-use crate::types::{icrc_112_transaction::Icrc112Requests, transaction_manager::ActionData};
+use crate::{
+    repository::{
+        action::v1::Action,
+        common::{Asset, Wallet},
+        intent::v2::{Intent, IntentType},
+        transaction::v2::{IcTransaction, Protocol, Transaction},
+    },
+    service::action::ActionData,
+};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
@@ -209,8 +213,8 @@ impl ActionDto {
     }
 }
 
-impl From<cashier_types::common::Wallet> for WalletDto {
-    fn from(wallet: cashier_types::common::Wallet) -> Self {
+impl From<Wallet> for WalletDto {
+    fn from(wallet: Wallet) -> Self {
         Self {
             address: wallet.address,
             chain: wallet.chain.to_string(),
@@ -218,8 +222,8 @@ impl From<cashier_types::common::Wallet> for WalletDto {
     }
 }
 
-impl From<cashier_types::common::Asset> for AssetDto {
-    fn from(asset: cashier_types::common::Asset) -> Self {
+impl From<Asset> for AssetDto {
+    fn from(asset: Asset) -> Self {
         Self {
             address: asset.address,
             chain: asset.chain.to_string(),
@@ -375,4 +379,25 @@ impl From<Transaction> for TransactionDto {
             protocol_metadata,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct Icrc112Request {
+    pub canister_id: String,
+    pub method: String,
+    pub arg: String,
+    pub nonce: Option<String>,
+}
+
+pub type ParallelRequests = Vec<Icrc112Request>;
+
+pub type SequenceRequest = Vec<ParallelRequests>;
+
+pub type Icrc112Requests = SequenceRequest;
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct UpdateActionInput {
+    pub link_id: String,
+    pub action_id: String,
+    pub external: bool,
 }

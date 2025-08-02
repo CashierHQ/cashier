@@ -2,17 +2,19 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_types::{
-    intent::v2::{Intent, IntentTask, IntentType, TransferData, TransferFromData},
-    transaction::v2::{
-        FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
-        Transaction, TransactionState,
+    error::CanisterError,
+    repository::{
+        intent::v2::{Intent, IntentTask, IntentType, TransferData, TransferFromData},
+        transaction::v2::{
+            FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
+            Transaction, TransactionState,
+        },
     },
 };
 use uuid::Uuid;
 
 use crate::{
     services::adapter::IntentAdapter,
-    types::error::CanisterError,
     utils::{helper::to_memo, runtime::IcEnvironment},
 };
 

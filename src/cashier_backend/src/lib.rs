@@ -30,5 +30,4 @@ pub mod domains;
 pub mod migration;
 pub mod repositories;
 pub mod services;
-pub mod types;
 pub mod utils;

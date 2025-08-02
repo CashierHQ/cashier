@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::{intent_transaction::v1::IntentTransaction, keys::IntentTransactionKey};
+use cashier_types::repository::{intent_transaction::v1::IntentTransaction, keys::IntentTransactionKey};
 
 use super::INTENT_TRANSACTION_STORE;
 

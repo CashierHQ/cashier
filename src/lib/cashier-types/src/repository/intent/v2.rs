@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
-use crate::common::{Asset, Chain, Wallet};
+use crate::repository::common::{Asset, Chain, Wallet};
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 #[storable]

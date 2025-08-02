@@ -14,3 +14,5 @@ icrc-ledger-types = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
 serde_cbor = { workspace = true }
 serde_json = { workspace = true }
+ic-cdk = { workspace = true }
+thiserror = { workspace = true }

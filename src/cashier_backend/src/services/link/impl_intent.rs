@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use candid::{Nat, Principal};
+use cashier_types::error::CanisterError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -14,13 +15,15 @@ use crate::domains::fee::Fee;
 use crate::error;
 use crate::services::link::service::LinkService;
 use crate::services::link::traits::IntentAssembler;
-use crate::types::error::CanisterError;
 use crate::utils::helper::{convert_nat_to_u64, to_subaccount};
 use crate::utils::runtime::IcEnvironment;
-use cashier_types::action::v1::ActionType;
-use cashier_types::common::{Asset, Chain, Wallet};
-use cashier_types::intent::v2::{Intent, IntentState, IntentTask, IntentType};
-use cashier_types::link::v1::{Link, LinkType};
+
+use cashier_types::repository::{
+    action::v1::ActionType,
+    common::{Asset, Chain, Wallet},
+    intent::v2::{Intent, IntentState, IntentTask, IntentType},
+    link::v1::{Link, LinkType},
+};
 
 #[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {

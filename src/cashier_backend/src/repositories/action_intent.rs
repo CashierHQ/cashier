@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
+use cashier_types::repository::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
 
 use super::ACTION_INTENT_STORE;
 

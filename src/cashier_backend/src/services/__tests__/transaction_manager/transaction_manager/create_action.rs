@@ -1,12 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 mod tests {
     use std::collections::HashMap;
 
     use candid::Principal;
-    use cashier_types::{
+    use cashier_types::repository::{
         ActionState, ActionType, Asset, Chain, IntentState, IntentTask, IntentType,
         TransactionState, TransferData, TransferFromData, Wallet,
     };
@@ -570,7 +569,7 @@ mod tests {
 
         let temp_action = TemporaryAction {
             id: action_id.clone(),
-            r#type: ActionType::Use ,
+            r#type: ActionType::Use,
             state: ActionState::Created,
             creator: creator.clone(),
             link_id: link_id.clone(),
