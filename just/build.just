@@ -11,14 +11,14 @@ clean:
 build: download_artifacts build_canisters
 
 
-# Builds the test canister
+# Builds the canisters
 [group('build')]
 build_canisters: pre_build
   just build_canister "cashier_backend" "" "cashier_backend"
   just build_canister "token_storage" "" "token_storage"
 
 
-# Builds the test canister
+# Builds the frontend
 [group('build')]
 build_frontend network="": generate_frontend_ts
   #!/usr/bin/env bash
