@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use cashier_types::dto::link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput};
 
-use crate::utils::{identity::get_user_principal, with_pocket_ic_context};
+use crate::utils::{principal::get_user_principal, with_pocket_ic_context};
 
 #[tokio::test]
 async fn should_create_link_success() {
@@ -11,14 +11,13 @@ async fn should_create_link_success() {
         let cashier_backend_client = ctx.new_cashier_backend_client(caller);
 
         // call twice for `raw_rand`` work or else `raw_rand``` api will return error
+        // more info https://forum.dfinity.org/t/pocket-ic-support-for-management-canister-calls-and-timers/25676/2
         ctx.advance_time(Duration::from_secs(1)).await;
         ctx.advance_time(Duration::from_secs(1)).await;
 
         let _ = cashier_backend_client.create_user().await;
 
         ctx.advance_time(Duration::from_secs(1)).await;
-
-        let _ = cashier_backend_client.get_user().await.unwrap();
 
         let input = CreateLinkInput {
             title: "Test Link".to_string(),

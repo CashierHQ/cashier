@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     fs::File,
     io::Read,
     path::PathBuf,
@@ -15,7 +14,7 @@ use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
 
-pub mod identity;
+pub mod principal;
 
 /// Executes the provided asynchronous function within a `PocketIcTestContext` environment.
 ///
