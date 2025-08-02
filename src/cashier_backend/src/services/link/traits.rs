@@ -5,25 +5,27 @@
 
 use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::asset_info::AssetInfo;
-use std::collections::HashMap;
-
-use crate::core::action::types::{
-    ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
-    ProcessActionInput,
-};
-use crate::core::link::types::{
-    LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
+use cashier_types::dto::action::ActionDto;
+use cashier_types::dto::action::{
+    CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput, ProcessActionInput,
     UpdateActionInput,
 };
-use crate::types::error::CanisterError;
+use cashier_types::dto::link::{
+    CreateLinkInput, LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput,
+    LinkUpdateUserStateInput, UserStateMachineGoto,
+};
+use cashier_types::error::CanisterError;
+use cashier_types::repository::action::v1::Action;
+use cashier_types::repository::action::v1::ActionType;
+use cashier_types::repository::asset_info::AssetInfo;
+use cashier_types::repository::common::Asset;
+use cashier_types::repository::intent::v2::{Intent, IntentTask};
+use cashier_types::repository::link::v1::{Link, LinkType, Template};
+use cashier_types::repository::link_action::v1::LinkAction;
+
+use std::collections::HashMap;
+
 use candid::Nat;
-use cashier_types::action::v1::ActionType;
-use cashier_types::common::Asset;
-use cashier_types::intent::v2::Intent;
-use cashier_types::intent::v2::IntentTask;
-use cashier_types::link::v1::Link;
-use cashier_types::link_action::v1::LinkAction;
 
 // ---------- 1. Link lifecycle ----------
 #[async_trait(?Send)]
@@ -31,7 +33,7 @@ pub trait LinkStateMachine {
     async fn create_link(
         &self,
         caller: String,
-        input: crate::core::link::types::CreateLinkInput,
+        input: CreateLinkInput,
     ) -> Result<Link, CanisterError>;
     async fn handle_link_state_transition(
         &self,
@@ -51,28 +53,16 @@ pub trait LinkStateMachine {
     fn prefetch_template(
         &self,
         params: &LinkDetailUpdateInput,
-    ) -> Result<
-        (
-            cashier_types::link::v1::Template,
-            cashier_types::link::v1::LinkType,
-        ),
-        CanisterError,
-    >;
+    ) -> Result<(Template, LinkType), CanisterError>;
 
     fn prefetch_params_add_asset(
         &self,
         params: &LinkDetailUpdateInput,
-    ) -> Result<(u64, Vec<cashier_types::asset_info::AssetInfo>), CanisterError>;
+    ) -> Result<(u64, Vec<AssetInfo>), CanisterError>;
 
-    fn prefetch_create_action(
-        &self,
-        link: &Link,
-    ) -> Result<Option<cashier_types::action::v1::Action>, CanisterError>;
+    fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError>;
 
-    fn prefetch_withdraw_action(
-        &self,
-        link: &Link,
-    ) -> Result<Option<cashier_types::action::v1::Action>, CanisterError>;
+    fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError>;
 }
 
 pub trait LinkUserStateMachine {
@@ -81,7 +71,7 @@ pub trait LinkUserStateMachine {
         link_id: &str,
         action_type: &str,
         user_id: &str,
-        goto: &crate::core::link::types::UserStateMachineGoto,
+        goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError>;
 
     fn link_get_user_state(
@@ -171,13 +161,13 @@ pub trait LinkValidation {
 
     fn link_validate_user_update_action(
         &self,
-        action: &cashier_types::action::v1::Action,
+        action: &Action,
         user_id: &str,
     ) -> Result<(), CanisterError>;
 
     async fn link_validate_user_update_action_async(
         &self,
-        action: &cashier_types::action::v1::Action,
+        action: &Action,
         user_id: &str,
         caller: &Principal,
     ) -> Result<(), CanisterError>;

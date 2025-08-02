@@ -1,17 +1,22 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::services::link::traits::LinkStateMachine;
 use candid::Principal;
 use cashier_types::{
-    action::v1::{Action, ActionState, ActionType},
-    link::v1::Link,
-    link_action::v1::LinkAction,
+    dto::link::{GetLinkOptions, UpdateLinkInput},
+    error::CanisterError,
+    repository::{
+        action::v1::{Action, ActionState, ActionType},
+        link::v1::Link,
+        link_action::v1::LinkAction,
+    },
+    service::link::{PaginateInput, PaginateResult},
 };
 use std::str::FromStr;
 
-use crate::services::link::traits::LinkStateMachine;
+use crate::services::link::traits::LinkValidation;
 use crate::{
-    core::link::types::GetLinkOptions,
     error,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
@@ -21,13 +26,8 @@ use crate::{
         action::ActionService, ext::icrc_batch::IcrcBatchService, request_lock::RequestLockService,
         transaction_manager::service::TransactionManagerService, user::v2::UserService,
     },
-    types::{
-        api::{PaginateInput, PaginateResult},
-        error::CanisterError,
-    },
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
-use crate::{core::link::types::UpdateLinkInput, services::link::traits::LinkValidation};
 
 pub struct LinkService<E: IcEnvironment + Clone> {
     // LinkService fields go here

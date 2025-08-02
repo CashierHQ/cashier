@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::USER_ACTION_STORE;
-use cashier_types::{keys::UserActionKey, user_action::v1::UserAction};
+use cashier_types::repository::{keys::UserActionKey, user_action::v1::UserAction};
 
 #[derive(Clone)]
 

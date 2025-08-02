@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Nat;
-use cashier_types::{
+use cashier_types::repository::{
     action::v1::ActionType,
     common::{Asset, Chain, Wallet},
     intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData, TransferFromData},

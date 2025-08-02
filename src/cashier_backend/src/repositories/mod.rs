@@ -3,26 +3,18 @@
 
 use std::cell::RefCell;
 
-use cashier_types::processing_transaction::ProcessingTransaction;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
 // Import v2 types directly
-use cashier_types::intent::v2::Intent as IntentV2;
-use cashier_types::transaction::v2::Transaction as TransactionV2;
 
-// Import all necessary types with proper module paths
-use cashier_types::action::v1::Action;
-use cashier_types::action_intent::v1::ActionIntent;
-use cashier_types::intent_transaction::v1::IntentTransaction;
-use cashier_types::keys::*;
-use cashier_types::link::v1::Link;
-use cashier_types::link_action::v1::LinkAction;
-use cashier_types::request_lock::RequestLock;
-use cashier_types::user::v1::User;
-use cashier_types::user_action::v1::UserAction;
-use cashier_types::user_link::v1::UserLink;
-use cashier_types::user_wallet::v1::UserWallet;
+use cashier_types::repository::{
+    action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent as IntentV2,
+    intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
+    link_action::v1::LinkAction, processing_transaction::ProcessingTransaction,
+    request_lock::RequestLock, transaction::v2::Transaction as TransactionV2, user::v1::User,
+    user_action::v1::UserAction, user_link::v1::UserLink, user_wallet::v1::UserWallet,
+};
 
 pub mod action;
 pub mod action_intent;

@@ -1,14 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 pub mod create_action;
 
 mod tests {
     use std::collections::HashMap;
 
     use candid::Principal;
-    use cashier_types::{
+    use cashier_types::repository::{
         ActionState, Asset, Chain, IntentState, IntentTask, IntentType, TransactionState,
         TransferData, Wallet,
     };
