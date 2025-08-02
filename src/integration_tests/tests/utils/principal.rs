@@ -20,8 +20,7 @@ pub fn get_user_principal(user: &str) -> Principal {
         Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
     );
 
-    users
+    *users
         .get(user)
-        .expect(&format!("User {} not found", user))
-        .clone()
+        .unwrap_or_else(|| panic!("User {user} not found"))
 }
