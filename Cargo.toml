@@ -54,4 +54,3 @@ vergen-gitcl = { version = "1", default-features = false, features = [
     "cargo",
     "rustc",
 ] }
-ic-agent = "0.41.0"

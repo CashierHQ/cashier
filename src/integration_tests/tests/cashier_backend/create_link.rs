@@ -1,18 +1,14 @@
 use std::time::Duration;
 
-use ic_agent::Identity;
-use token_storage_client::cashier_common::link_types::{
-    CreateLinkInput, LinkDetailUpdateAssetInfoInput,
-};
+use cashier_types::dto::link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput};
 
-use crate::utils::{identity::create_random_identity, with_pocket_ic_context};
+use crate::utils::{identity::get_user_principal, with_pocket_ic_context};
 
 #[tokio::test]
 async fn should_create_link_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        let caller = create_random_identity();
-        let pid = caller.sender().unwrap();
-        let cashier_backend_client = ctx.new_cashier_backend_client(pid);
+        let caller = get_user_principal("user1");
+        let cashier_backend_client = ctx.new_cashier_backend_client(caller);
 
         // call twice for `raw_rand`` work or else `raw_rand``` api will return error
         ctx.advance_time(Duration::from_secs(1)).await;
