@@ -19,7 +19,10 @@ concurrency:
 
 
 jobs:
-  jobs_setup:
+  code-check:
+    name: Checks the code style
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +31,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-          targets: wasm32-unknown-unknown i686-unknown-linux-gnu
 
       - name: Install Just command runner
         uses: extractions/setup-just@v1
@@ -40,34 +42,6 @@ jobs:
           shared-key: ${{ github.repository }}
           save-if: ${{ github.ref_type != 'tag' }}
 
-      - name: Install dfx
-        uses: dfinity/setup-dfx@main
-        with: 
-          dfx-version: "0.28.0"
-
-      - name: Install ic-wasm
-        run: |
-          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.3/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
-          chmod +x /usr/local/bin/ic-wasm
-
-      - name: Install candid-extractor
-        run: |
-          wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
-          tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
-          chmod +x /usr/local/bin/candid-extractor
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-            node-version: "22"
-  
-  code-check:
-    name: Checks the code style
-    needs: jobs_setup
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
       - name: Setup environment
         run: |
           export RUST_BACKTRACE="full"
@@ -108,6 +82,11 @@ jobs:
           wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
           tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
           chmod +x /usr/local/bin/candid-extractor
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+            node-version: "22.x"
 
       - name: Configure Rust Cache
         uses: Swatinem/rust-cache@v2
