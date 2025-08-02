@@ -1,8 +1,10 @@
-use cashier_common::{
-    build_data::BuildData,
+use cashier_common::build_data::BuildData;
+use cashier_types::{
+    dto::{
+        link::{CreateLinkInput, LinkDto},
+        user::UserDto,
+    },
     error::CanisterError,
-    link_types::{CreateLinkInput, LinkDto},
-    user_types::UserDto,
 };
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 

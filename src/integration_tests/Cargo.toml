@@ -14,5 +14,4 @@ ic_mple_pocket_ic = { workspace = true }
 serde = { workspace = true }
 token_storage_client = { workspace = true }
 tokio = { workspace = true }
-ic-agent = { workspace = true }
-rand = { workspace = true }
+cashier-types = { workspace = true }

@@ -1,14 +1,27 @@
-use ic_agent::identity::BasicIdentity;
-use rand::{rngs::StdRng, RngCore, SeedableRng};
+use candid::Principal;
+use std::collections::HashMap;
 
-pub fn generate_random_private_key() -> [u8; 32] {
-    let mut rng = StdRng::from_entropy();
-    let mut private_key = [0u8; 32];
-    rng.fill_bytes(&mut private_key);
-    private_key
-}
+pub fn get_user_principal(user: &str) -> Principal {
+    let mut users = HashMap::new();
 
-pub fn create_random_identity() -> BasicIdentity {
-    let private_key = generate_random_private_key();
-    BasicIdentity::from_raw_key(&private_key)
+    users.insert(
+        "user1".to_string(),
+        Principal::from_text("e2mhv-sqkf2-drink-rt5cf-k5dfg-qpg74-yn7ep-aumfi-6uqpd-hyaxx-xqe")
+            .unwrap(),
+    );
+
+    users.insert(
+        "user2".to_string(),
+        Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap(),
+    );
+
+    users.insert(
+        "user3".to_string(),
+        Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
+    );
+
+    users
+        .get(user)
+        .expect(&format!("User {} not found", user))
+        .clone()
 }
