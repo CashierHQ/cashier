@@ -5,10 +5,10 @@
     "license": "MIT",
     "type": "module",
     "scripts": {
-        "setup": "npm i && dfx canister create cashier_backend && dfx generate cashier_backend",
-        "start": "vite --port 3000 --host --mode dev",
+        "start": "vite --port 3000 --host --mode local_dev",
+        "start:dev": "vite --port 3000 --host --mode dev",
         "build": "tsc && vite build",
-        "build:local": "tsc && vite build --mode local",
+        "build:local_dev": "tsc && vite build --mode local_dev",
         "build:dev": "tsc && vite build --mode dev",
         "build:staging": "tsc && vite build --mode staging",
         "build:prod": "tsc && vite build --mode production",

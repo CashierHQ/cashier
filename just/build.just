@@ -20,30 +20,15 @@ build_canisters: pre_build
 
 # Builds the frontend
 [group('build')]
-build_frontend network="": generate_frontend_ts
+build_frontend mode="local_dev": generate_frontend_ts
   #!/usr/bin/env bash
   set -e
 
   # Navigate to frontend directory
   cd "./src/cashier_frontend" || exit
-
   npm install
+  npm run build:{{mode}}
 
-  if [ "{{network}}" == "ic" ]; then
-    echo "Building for production..."
-    npm run build:prod
-  elif [ "{{network}}" == "staging" ]; then
-    echo "Building for staging..."
-    npm run build:staging
-  elif [ "{{network}}" == "dev" ]; then
-    echo "Building for dev..."
-    npm run build:dev
-  else
-    echo "Building for local development..."
-    npm run build:local
-  fi
-
-  echo "Frontend build completed for $NETWORK environment"
 
 
 # Generates the ts files for the canister services 

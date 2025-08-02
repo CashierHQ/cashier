@@ -12,7 +12,7 @@
         },
         "cashier_frontend": {
             "source": [
-                "../src/cashier_frontend/dist"
+                "./src/cashier_frontend/dist"
             ],
             "type": "assets",
             "workspace": "cashier_frontend",
