@@ -49,9 +49,18 @@ build_frontend network="": generate_frontend_ts
 # Generates the ts files for the canister services 
 [group('build')]
 generate_frontend_ts:
-  dfx generate cashier_backend
-  dfx generate token_storage
-  dfx generate icp_ledger_canister
+  just generate_frontend_ts_for_canister cashier_backend
+  just generate_frontend_ts_for_canister token_storage
+  just generate_frontend_ts_for_canister icp_ledger_canister
+
+[private]
+generate_frontend_ts_for_canister canister:
+  # Files are generated into ./src/declarations
+  dfx generate {{canister}}
+  rm src/declarations/{{canister}}/{{canister}}.did
+  rm src/declarations/{{canister}}/index.d.ts
+  rm src/declarations/{{canister}}/index.js
+
 
 # Download third party artifacts
 [group('build')]
