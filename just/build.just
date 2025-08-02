@@ -21,10 +21,10 @@ build_canisters: pre_build
 # Download third party artifacts
 [group('build')]
 download_artifacts: pre_build
-  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icp.did https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did
-  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icp.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz
-  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icrc.did https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ledger.did
-  curl -o {{ARTIFACTS_DIR}}/ledger-suite-icrc.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz
+  curl -L -o {{ARTIFACTS_DIR}}/ledger-suite-icp.did https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger.did
+  curl -L -o {{ARTIFACTS_DIR}}/ledger-suite-icp.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz
+  curl -L -o {{ARTIFACTS_DIR}}/ledger-suite-icrc.did https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ledger.did
+  curl -L -o {{ARTIFACTS_DIR}}/ledger-suite-icrc.wasm.gz https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz
 
 
 [private]
