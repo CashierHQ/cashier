@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::Read,
     path::PathBuf,
@@ -8,13 +9,17 @@ use std::{
 
 use candid::{utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
 use cashier_backend_client::client::CashierBackendClient;
-use ic_cdk::management_canister::CanisterId;
+use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
 
+use crate::utils::token_icp::LedgerCanisterPayload;
+
 pub mod principal;
+pub mod token_icp;
+pub mod token_icrc;
 
 /// Executes the provided asynchronous function within a `PocketIcTestContext` environment.
 ///
@@ -32,24 +37,16 @@ where
     let cashier_backend_principal =
         deploy_canister(&client, None, get_cashier_backend_canister_bytecode(), &()).await;
 
-    // let icp_ledger_principal =
-    //     deploy_canister(&client, None, get_icp_ledger_canister_bytecode(), &()).await;
-
-    // let mut token_map = HashMap::new();
-
-    // for i in 1..=10 {
-    //     let icrc_ledger_principal =
-    //         deploy_canister(&client, None, get_icrc_ledger_canister_bytecode(), &()).await;
-
-    //     token_map.insert(format!("token_{i}"), icrc_ledger_principal);
-    // }
+    // Deploy ICP and ICRC ledger canisters
+    let icp_ledger_principal = token_icp::deploy_icp_ledger_canister(&client).await;
+    let icrc_token_map = token_icrc::deploy_icrc_ledger_canisters(&client).await;
 
     let result = f(&PocketIcTestContext {
         client: client.clone(),
         token_storage_principal,
         cashier_backend_principal,
-        // icp_ledger_principal,
-        // icrc_token_map: token_map,
+        icp_ledger_principal,
+        icrc_token_map,
     })
     .await;
 
@@ -66,8 +63,8 @@ pub struct PocketIcTestContext {
     pub client: Arc<PocketIc>,
     pub token_storage_principal: Principal,
     pub cashier_backend_principal: Principal,
-    // pub icp_ledger_principal: Principal,
-    // pub icrc_token_map: HashMap<String, Principal>,
+    pub icp_ledger_principal: Principal,
+    pub icrc_token_map: HashMap<String, Principal>,
 }
 
 impl PocketIcTestContext {
@@ -93,6 +90,48 @@ impl PocketIcTestContext {
         caller: Principal,
     ) -> TokenStorageClient<PocketIcClient> {
         TokenStorageClient::new(self.new_client(self.token_storage_principal, caller))
+    }
+
+    /// Creates a new ICP ledger client for the given caller
+    pub fn new_icp_ledger_client(&self, caller: Principal) -> PocketIcClient {
+        token_icp::new_icp_ledger_client(self, self.icp_ledger_principal, caller)
+    }
+
+    /// Creates a new ICRC ledger client for the given token and caller
+    pub fn new_icrc_ledger_client(
+        &self,
+        token_name: &str,
+        caller: Principal,
+    ) -> Option<PocketIcClient> {
+        let token_principal = self.get_icrc_token_principal(token_name)?;
+        Some(token_icrc::new_icrc_ledger_client(
+            self,
+            token_principal,
+            caller,
+        ))
+    }
+
+    /// Creates ICRC ledger clients for all tokens with the given caller
+    pub fn new_all_icrc_ledger_clients(
+        &self,
+        caller: Principal,
+    ) -> HashMap<String, PocketIcClient> {
+        token_icrc::new_all_icrc_ledger_clients(self, &self.icrc_token_map, caller)
+    }
+
+    /// Gets the ICP ledger principal
+    pub fn icp_ledger_principal(&self) -> Principal {
+        self.icp_ledger_principal
+    }
+
+    /// Gets an ICRC token principal by name
+    pub fn get_icrc_token_principal(&self, token_name: &str) -> Option<Principal> {
+        self.icrc_token_map.get(token_name).copied()
+    }
+
+    /// Gets all ICRC token names
+    pub fn get_icrc_token_names(&self) -> Vec<String> {
+        self.icrc_token_map.keys().cloned().collect()
     }
 
     /// Advances the time of the local IC to the given duration.
@@ -221,6 +260,44 @@ async fn deploy_canister<T: CandidType>(
     canister
 }
 
+async fn deploy_canister_with_settings<T: CandidType>(
+    client: &PocketIc,
+    sender: Option<Principal>,
+    settings: Option<CanisterSettings>,
+    bytecode: Vec<u8>,
+    args: &T,
+) -> Principal {
+    let args = encode(args);
+    let canister = client.create_canister_with_settings(sender, settings).await;
+    client.add_cycles(canister, u128::MAX).await;
+    client
+        .install_canister(canister, bytecode, args, sender)
+        .await;
+    canister
+}
+
+async fn deploy_canister_with_id<T: CandidType>(
+    client: &PocketIc,
+    sender: Option<Principal>,
+    settings: Option<CanisterSettings>,
+    canister_id: CanisterId,
+    bytecode: Vec<u8>,
+    args: &T,
+) -> Principal {
+    let args = encode(args);
+    let decoded = decode::<LedgerCanisterPayload>(&args);
+    println!("decoded: {:?}", decoded);
+    let canister = client
+        .create_canister_with_id(sender, settings, canister_id)
+        .await
+        .unwrap_or_else(|_| panic!("Failed to create canister with id {canister_id}"));
+    client.add_cycles(canister, u128::MAX).await;
+    client
+        .install_canister(canister, bytecode, args, sender)
+        .await;
+    canister
+}
+
 /// Retrieves the bytecode for the token storage canister.
 ///
 /// This function uses a `OnceLock` to ensure that the bytecode is loaded only once.
@@ -246,7 +323,6 @@ pub fn get_cashier_backend_canister_bytecode() -> Vec<u8> {
         .get_or_init(|| load_canister_bytecode("cashier_backend.wasm"))
         .to_owned()
 }
-
 /// Retrieves the bytecode for the ICP ledger canister.
 ///
 /// This function uses a `OnceLock` to ensure that the bytecode is loaded only once.
