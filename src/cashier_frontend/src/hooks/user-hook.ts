@@ -7,8 +7,10 @@ import { SERVICE_CALL_ERROR } from "@/constants/serviceErrorMessage";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queryKeys";
 import UserService from "@/services/user.service";
+import { IC_INTERNET_IDENTITY_PROVIDER } from "@/const";
 
 export const useConnectToWallet = () => {
+
     const { user, connect } = useAuth();
     const identity = useIdentity();
 
@@ -47,6 +49,8 @@ export const useConnectToWallet = () => {
     }, [identity, appUser, loadUserError]);
 
     const connectToWallet = (signerIdOrUrl?: string) => {
+        signerIdOrUrl = IC_INTERNET_IDENTITY_PROVIDER + "/#authorize";
+        console.log("connectToWallet hook called" + signerIdOrUrl);
         connect(signerIdOrUrl);
     };
 
