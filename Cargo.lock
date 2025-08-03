@@ -935,6 +935,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-ledger-types"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "feb52826a353b583012628af6da762b52672350686c3275234febfadeca965ea"
+dependencies = [
+ "candid",
+ "crc32fast",
+ "hex",
+ "ic-cdk",
+ "serde",
+ "serde_bytes",
+ "sha2",
+]
+
+[[package]]
 name = "ic-management-canister-types"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1193,9 +1208,12 @@ dependencies = [
  "cashier-types",
  "cashier_backend_client",
  "ic-cdk",
+ "ic-ledger-types",
  "ic_mple_client",
  "ic_mple_pocket_ic",
+ "icrc-ledger-types",
  "serde",
+ "serde_bytes",
  "token_storage_client",
  "tokio",
 ]

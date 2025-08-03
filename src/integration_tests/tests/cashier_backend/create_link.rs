@@ -1,31 +1,40 @@
 use std::time::Duration;
 
-use cashier_types::dto::link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput};
+use cashier_backend_client::client::CashierBackendClient;
+use cashier_types::dto::{
+    action::CreateActionInput,
+    link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto},
+    user::UserDto,
+};
+use ic_mple_client::PocketIcClient;
 
-use crate::utils::{principal::get_user_principal, with_pocket_ic_context};
+use crate::utils::{principal::get_user_principal, with_pocket_ic_context, PocketIcTestContext};
 
-#[tokio::test]
-async fn should_create_link_success() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        let caller = get_user_principal("user1");
-        let cashier_backend_client = ctx.new_cashier_backend_client(caller);
+struct CreateLinkTestContext {
+    link: LinkDto,
+    user: UserDto,
+    cashier_backend_client: CashierBackendClient<PocketIcClient>,
+}
 
-        // call twice for `raw_rand`` work or else `raw_rand``` api will return error
-        // more info https://forum.dfinity.org/t/pocket-ic-support-for-management-canister-calls-and-timers/25676/2
-        ctx.advance_time(Duration::from_secs(1)).await;
-        ctx.advance_time(Duration::from_secs(1)).await;
+async fn setup_test(ctx: &PocketIcTestContext) -> CreateLinkTestContext {
+    let caller = get_user_principal("user1");
+    let cashier_backend_client = ctx.new_cashier_backend_client(caller);
 
-        let _ = cashier_backend_client.create_user().await;
+    // call twice for `raw_rand`` work or else `raw_rand``` api will return error
+    // more info https://forum.dfinity.org/t/pocket-ic-support-for-management-canister-calls-and-timers/25676/2
+    ctx.advance_time(Duration::from_secs(1)).await;
+    ctx.advance_time(Duration::from_secs(1)).await;
 
-        ctx.advance_time(Duration::from_secs(1)).await;
+    let user = cashier_backend_client.create_user().await.unwrap().unwrap();
 
-        let input = CreateLinkInput {
+    let link = cashier_backend_client
+        .create_link(CreateLinkInput {
             title: "Test Link".to_string(),
             link_use_action_max_count: 10,
             asset_info: vec![LinkDetailUpdateAssetInfoInput {
                 address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
                 chain: "IC".to_string(),
-                label: "ICP".to_string(),
+                label: "SEND_TIP_ASSET".to_string(),
                 amount_per_link_use_action: 1000000, // 0.001 ICP in e8s
             }],
             template: "Central".to_string(),
@@ -33,10 +42,22 @@ async fn should_create_link_success() {
             nft_image: None,
             link_image_url: None,
             description: Some("Test link for integration testing".to_string()),
-        };
+        })
+        .await
+        .unwrap()
+        .unwrap();
 
-        let res = cashier_backend_client.create_link(input).await.unwrap();
-        let link = res.unwrap();
+    CreateLinkTestContext {
+        link,
+        user,
+        cashier_backend_client,
+    }
+}
+
+#[tokio::test]
+async fn should_create_link_success() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        let CreateLinkTestContext { link, .. } = setup_test(ctx).await;
 
         assert_eq!(link.link_type, Some("SendTip".to_string()));
         assert_eq!(link.template, Some("Central".to_string()));
@@ -53,6 +74,36 @@ async fn should_create_link_success() {
         );
         assert_eq!(link.link_use_action_max_count, 10);
         assert_eq!(link.title, Some("Test Link".to_string()));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn should_create_action_success() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        let CreateLinkTestContext {
+            link,
+            user,
+            cashier_backend_client,
+        } = setup_test(ctx).await;
+
+        let res = cashier_backend_client
+            .create_action(CreateActionInput {
+                link_id: link.id,
+                action_type: "CreateLink".to_string(),
+            })
+            .await
+            .unwrap();
+
+        let action = res.unwrap();
+
+        assert_eq!(action.r#type, "CreateLink".to_string());
+        assert_eq!(action.state, "Action_state_created".to_string());
+        assert_eq!(action.creator, user.id);
+        assert_eq!(action.intents.len(), 2);
 
         Ok(())
     })
