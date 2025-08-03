@@ -12,12 +12,20 @@ pub fn get_user_principal(user: &str) -> Principal {
 
     users.insert(
         "user2".to_string(),
-        Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap(),
+        Principal::from_text("jyznm-uzarf-c7y6z-4cqm2-3axfc-obzsq-7fxmh-r7r6s-vck5w-t3w3q-yqe")
+            .unwrap(),
     );
 
     users.insert(
         "user3".to_string(),
-        Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
+        Principal::from_text("gskgi-bpzev-2tv7d-ikfmc-akbym-vqphk-k62po-gr5gn-bedmt-ahsco-lqe")
+            .unwrap(),
+    );
+
+    users.insert(
+        "token_deployer".to_string(),
+        Principal::from_text("nqla3-ljk3n-sknde-kphey-dlq2i-j3hnx-a3p2b-upf4f-yhdns-f4wjr-5qe")
+            .unwrap(),
     );
 
     *users
