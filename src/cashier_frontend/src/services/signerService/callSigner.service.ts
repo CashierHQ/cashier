@@ -8,7 +8,7 @@ import { Signer } from "./signer";
 import { ClientTransport } from "./transport";
 import { JsonRequest, JsonResponse } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
-import { IC_HOST } from "@/const";
+import { IC_HOST, IC_INTERNET_IDENTITY_PROVIDER } from "@/const";
 
 class CallSignerService {
     private agent: HttpAgent;
@@ -21,6 +21,7 @@ class CallSignerService {
         const transport = await ClientTransport.create({
             agent: this.agent,
             authClientLoginOptions: {
+                identityProvider: IC_INTERNET_IDENTITY_PROVIDER,
                 maxTimeToLive: BigInt(8) * BigInt(3_600_000_000_000),
             },
         });
