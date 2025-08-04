@@ -58,6 +58,11 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
+            - name: Install Rust toolchain
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                targets: wasm32-unknown-unknown
+
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
@@ -68,6 +73,9 @@ jobs:
 
             - name: Confirm successful installation
               run: dfx --version
+
+            - name: Install Just command runner
+              uses: extractions/setup-just@v1
 
             - name: Create private key file
               run: |
@@ -116,5 +124,5 @@ jobs:
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
 
-                  make generate-ci
+                  just build
                   dfx deploy cashier_frontend --network ${NETWORK}

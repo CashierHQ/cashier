@@ -10,13 +10,10 @@
         "build": "npm run build --workspaces --if-present",
         "start": "npm start --workspaces --if-present",
         "start-tunnel": "lt -s cashier --port 3000",
-        "build:backend": "make build-backend && dfx generate cashier_backend",
-        "build:artifact": "bash scripts/compress_build_wasm.sh",
         "test": "make test",
         "test:integration": "make test-integration",
         "test:request-lock": "make test-request-lock",
         "test:integration-backend": "npx jest -- src/test/picjs-tests",
-        "prepare": "npx husky",
         "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
         "lint": "eslint src/cashier_frontend --config eslint.config.js"
     },

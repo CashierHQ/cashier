@@ -41,7 +41,6 @@ const Header: React.FC<HeaderProps> = () => {
 
     const handleWalletSelection = (walletId: string) => {
         setIsWalletDialogOpen(false);
-
         if (walletId === "InternetIdentity") {
             connectToWallet(InternetIdentity.id);
         }
