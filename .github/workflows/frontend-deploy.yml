@@ -120,5 +120,4 @@ jobs:
                   cat src/cashier_frontend/${ENV_FILE}
 
                   just build
-                  make generate-ci
                   dfx deploy cashier_frontend --network ${NETWORK}
