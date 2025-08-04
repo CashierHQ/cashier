@@ -1204,6 +1204,7 @@ dependencies = [
 name = "integration_tests"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "candid",
  "cashier-types",
  "cashier_backend_client",

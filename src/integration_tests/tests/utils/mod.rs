@@ -15,6 +15,7 @@ use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
 
+pub mod icrc_112;
 pub mod principal;
 pub mod token_icp;
 pub mod token_icrc;
@@ -109,7 +110,7 @@ impl PocketIcTestContext {
         ))
     }
 
-    /// Creates ICRC ledger clients for all tokens with the given caller
+    /// Creates ICRC ledger clies for all tokens with the given caller
     pub fn new_all_icrc_ledger_clients(
         &self,
         caller: Principal,

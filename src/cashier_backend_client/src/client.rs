@@ -1,7 +1,7 @@
 use cashier_common::build_data::BuildData;
 use cashier_types::{
     dto::{
-        action::{ActionDto, CreateActionInput, ProcessActionInput},
+        action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{CreateLinkInput, LinkDto},
         user::UserDto,
     },
@@ -60,5 +60,12 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         input: ProcessActionInput,
     ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
         self.client.update("process_action", ((input),)).await
+    }
+
+    pub async fn update_action(
+        &self,
+        input: UpdateActionInput,
+    ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
+        self.client.update("update_action", ((input),)).await
     }
 }

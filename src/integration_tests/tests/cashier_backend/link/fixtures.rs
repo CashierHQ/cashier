@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_types::dto::{
-    action::{ActionDto, CreateActionInput, ProcessActionInput},
+    action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
     link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto},
     user::UserDto,
 };
@@ -124,11 +124,26 @@ impl CreateLinkTestFixture {
         self
     }
 
-    pub fn get_action(&self) -> &ActionDto {
-        self.action.as_ref().expect("Action not created yet")
+    pub async fn update_action(&mut self) -> &mut Self {
+        let link_id = self.link.id.clone();
+        let action_id = self.action.as_ref().unwrap().id.clone();
+
+        let updated_action = self
+            .cashier_backend_client
+            .update_action(UpdateActionInput {
+                action_id,
+                link_id,
+                external: true,
+            })
+            .await
+            .unwrap()
+            .unwrap();
+
+        self.action = Some(updated_action);
+        self
     }
 
-    pub fn get_action_mut(&mut self) -> &mut ActionDto {
-        self.action.as_mut().expect("Action not created yet")
+    pub fn get_action(&self) -> &ActionDto {
+        self.action.as_ref().expect("Action not created yet")
     }
 }
