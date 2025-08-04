@@ -12,11 +12,11 @@ import crypto from "crypto";
 
 export default defineConfig(({ command, mode }) => {
     // Determine which .env file to use based on mode
-    // Supports: .env.local, .env.staging, .env.production
-    const envFile = `.env.${mode}`;
+    // Supports: .env.dev, .env.staging, .env.production
+    const envFile = `../../.env.${mode}`;
     const envPath = resolve(__dirname, envFile);
 
-    // Load the environment variables from the determined .env file
+    // Load the environment variables from the root .env file
     dotenv.config({ path: envPath });
 
     // Generate build information
@@ -31,7 +31,7 @@ export default defineConfig(({ command, mode }) => {
         .digest("hex")
         .substring(0, 8);
 
-    console.log(`Building for ${mode} environment using ${envFile}`);
+    console.log(`Building for ${mode} environment using root ${envFile} file`);
     console.log(`Build version: ${version}, Build hash: ${buildHash}`);
 
     return {
