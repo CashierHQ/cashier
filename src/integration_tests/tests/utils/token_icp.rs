@@ -5,7 +5,7 @@ use crate::utils::{
     deploy_canister_with_id, load_canister_bytecode, principal::get_user_principal,
 };
 use candid::{CandidType, Deserialize, Principal};
-use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 use std::vec;
@@ -61,6 +61,8 @@ pub struct InitArgs {
     pub feature_flags: Option<FeatureFlags>,
 }
 #[derive(CandidType, Deserialize, Debug)]
+// ignore because this is enum defined by icp ledger
+#[allow(clippy::large_enum_variant)]
 pub enum LedgerCanisterPayload {
     Init(InitArgs),
     Upgrade(Option<UpgradeArgs>),

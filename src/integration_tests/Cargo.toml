@@ -18,3 +18,4 @@ cashier-types = { workspace = true }
 serde_bytes = { workspace = true }
 icrc-ledger-types = { workspace = true }
 ic-ledger-types = { workspace = true }
+base64 = { workspace = true }

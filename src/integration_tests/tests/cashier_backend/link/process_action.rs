@@ -1,5 +1,7 @@
 use super::fixtures::CreateLinkTestFixture;
-use crate::utils::{principal::get_user_principal, with_pocket_ic_context};
+use crate::utils::{
+    icrc_112::execute_icrc112_request, principal::get_user_principal, with_pocket_ic_context,
+};
 
 #[tokio::test]
 async fn should_process_action_success() {
@@ -22,6 +24,8 @@ async fn should_process_action_success() {
 
         let processeing_action = fixture.get_action();
 
+        assert!(processeing_action.icrc_112_requests.is_some());
+
         assert_eq!(processeing_action.id, original_action.id);
         assert_eq!(processeing_action.r#type, "CreateLink".to_string());
         assert_eq!(
@@ -34,6 +38,27 @@ async fn should_process_action_success() {
             .intents
             .iter()
             .all(|intent| { intent.state == "Intent_state_processing" }));
+
+        let icrc_112_requests = processeing_action.icrc_112_requests.as_ref().unwrap();
+
+        let execution_result = execute_icrc112_request(icrc_112_requests, caller, ctx).await;
+
+        assert!(
+            execution_result.is_ok(),
+            "ICRC112 execution failed: {:?}",
+            execution_result.err()
+        );
+
+        fixture.update_action().await;
+
+        let updated_action = fixture.get_action();
+
+        assert_eq!(updated_action.state, "Action_state_success".to_string());
+        assert_eq!(updated_action.intents.len(), 2);
+        assert!(updated_action
+            .intents
+            .iter()
+            .all(|intent| { intent.state == "Intent_state_success" }));
 
         Ok(())
     })

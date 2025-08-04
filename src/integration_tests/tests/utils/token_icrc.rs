@@ -5,8 +5,7 @@ use ic_mple_client::PocketIcClient;
 use serde::Deserialize;
 
 use crate::utils::{
-    deploy_canister, deploy_canister_with_settings, load_canister_bytecode,
-    principal::get_user_principal,
+    deploy_canister_with_settings, load_canister_bytecode, principal::get_user_principal,
 };
 
 use super::PocketIcTestContext;
