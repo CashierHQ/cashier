@@ -2,14 +2,15 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_types::{
-    action::v1::{Action, ActionState, ActionType},
-    action_intent::v1::ActionIntent,
-    intent::v2::{Intent, IntentState, IntentTask},
-    link::v1::{Link, LinkState},
-    transaction::v2::{Transaction, TransactionState},
+    error::CanisterError,
+    repository::{
+        action::v1::{Action, ActionState, ActionType},
+        action_intent::v1::ActionIntent,
+        intent::v2::{Intent, IntentState, IntentTask},
+        link::v1::{Link, LinkState},
+        transaction::v2::{Transaction, TransactionState},
+    },
 };
-
-use crate::types::error::CanisterError;
 
 #[derive(Clone)]
 pub struct ActionDomainLogic {}

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::{collections::HashMap, str::FromStr};
 
-use crate::asset_info::AssetInfo;
+use crate::repository::asset_info::AssetInfo;
 
 #[derive(Debug, Clone)]
 #[storable]

@@ -6,7 +6,7 @@
 mod tests {
     use crate::domains::action::ActionDomainLogic;
     use crate::types::error::CanisterError;
-    use cashier_types::{
+    use cashier_types::repository::{
         Action, ActionState, ActionType, Asset, Icrc1Transfer, Intent, IntentState, Link,
         LinkState, Transaction, TransactionState, Wallet,
     };

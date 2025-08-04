@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 pub mod get_action_by_tx_id;
 pub mod roll_up_state;
 
@@ -9,7 +8,7 @@ pub mod roll_up_state;
 mod tests {
     use std::collections::HashMap;
 
-    use cashier_types::{
+    use cashier_types::repository::{
         Action, ActionIntent, ActionState, Intent, IntentState, IntentTransaction, Transaction,
         TransactionState,
     };

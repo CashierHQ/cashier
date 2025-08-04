@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 // #[cfg(test)]
 // pub mod transaction_manager;
 
@@ -16,7 +15,7 @@ pub mod tests {
 
     use std::{collections::HashMap, future::Future, time::Duration};
 
-    use cashier_types::{
+    use cashier_types::repository::{
         Action, ActionIntent, ActionState, ActionType, Asset, AssetInfo, Chain, FromCallType,
         IcTransactionV2, Icrc1TransferV2, Icrc2ApproveV2, Intent, IntentState, IntentTask,
         IntentTransaction, IntentType, Link, LinkState, LinkType, ProtocolV2, TransactionState,

@@ -2,11 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Nat;
+use cashier_types::error::CanisterError;
 use icrc_ledger_types::icrc1::{account::Subaccount, transfer::Memo};
 use serde_bytes::ByteBuf;
 use uuid::Uuid;
-
-use crate::types::error::CanisterError;
 
 /// Converts a string UUID to a 32-byte Subaccount format
 ///

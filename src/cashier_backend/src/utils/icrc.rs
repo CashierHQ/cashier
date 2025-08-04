@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
+use cashier_types::error::CanisterError;
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::transfer_from::TransferFromArgs,
@@ -9,12 +10,9 @@ use icrc_ledger_types::{
 use serde_bytes::ByteBuf;
 use std::fmt;
 
-use crate::{
-    services::ext::icrc_token::{
-        Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg as ExtTransferArg,
-        TransferFromArgs as ExtTransferFromArgs, TransferFromError,
-    },
-    types::error::CanisterError,
+use crate::services::ext::icrc_token::{
+    Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg as ExtTransferArg,
+    TransferFromArgs as ExtTransferFromArgs, TransferFromError,
 };
 
 #[derive(Clone)]

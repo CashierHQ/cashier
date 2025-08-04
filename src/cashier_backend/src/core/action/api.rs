@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use cashier_types::dto::action::TriggerTransactionInput;
 use ic_cdk::api::msg_caller;
 use ic_cdk::update;
 
@@ -14,8 +15,6 @@ use crate::{
     core::CanisterError,
     services::{self},
 };
-
-use super::types::TriggerTransactionInput;
 
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {

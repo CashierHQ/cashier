@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::intent::v2::Intent;
+use cashier_types::repository::intent::v2::Intent;
 
 use crate::repositories::INTENT_STORE;
 

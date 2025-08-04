@@ -4,7 +4,7 @@
 
 mod tests {
     use candid::Principal;
-    use cashier_types::{Action, ActionState, ActionType, LinkAction, LinkUserState};
+    use cashier_types::repository::{Action, ActionState, ActionType, LinkAction, LinkUserState};
     use faux::when;
     use uuid::Uuid;
 

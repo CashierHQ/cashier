@@ -3,7 +3,7 @@
 
 
 use candid::Principal;
-use cashier_types::{Action, ActionState, ActionType, Chain, Link, LinkState, LinkType};
+use cashier_types::repository::{Action, ActionState, ActionType, Chain, Link, LinkState, LinkType};
 use faux::when;
 use uuid::Uuid;
 

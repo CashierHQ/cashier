@@ -1,13 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
     use candid::Principal;
-    use cashier_types::{FromCallType, TransactionState, Wallet};
+    use cashier_types::repository::{FromCallType, TransactionState, Wallet};
     use faux::when;
     use icrc_ledger_types::icrc1::account::Account;
     use uuid::Uuid;

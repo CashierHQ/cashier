@@ -1,9 +1,6 @@
-// Copyright (c) 2025 Cashier Protocol Labs
-// Licensed under the MIT License (see LICENSE file in the project root)
-
 use std::collections::HashMap;
 
-use cashier_types::{
+use crate::repository::{
     action::v1::{Action, ActionState, ActionType},
     intent::v2::Intent,
     transaction::v2::Transaction,
@@ -14,32 +11,6 @@ pub struct ActionData {
     pub action: Action,
     pub intents: Vec<Intent>,
     pub intent_txs: HashMap<String, Vec<Transaction>>,
-}
-
-pub struct RollUpStateResp {
-    pub previous_state: ActionState,
-    pub current_state: ActionState,
-    pub action: Action,
-    pub link_id: String,
-    pub action_type: ActionType,
-    pub action_id: String,
-    pub intents: Vec<Intent>,
-    pub intent_txs: HashMap<String, Vec<Transaction>>,
-}
-
-impl From<(ActionData, ActionState)> for RollUpStateResp {
-    fn from((data, previous_state): (ActionData, ActionState)) -> Self {
-        Self {
-            previous_state,
-            current_state: data.action.state.clone(),
-            action: data.action.clone(),
-            link_id: data.action.link_id.clone(),
-            action_type: data.action.r#type.clone(),
-            action_id: data.action.id.clone(),
-            intents: data.intents.clone(),
-            intent_txs: data.intent_txs,
-        }
-    }
 }
 
 impl ActionData {
@@ -109,10 +80,28 @@ impl ActionData {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct UpdateActionArgs {
-    pub action_id: String,
+pub struct RollUpStateResp {
+    pub previous_state: ActionState,
+    pub current_state: ActionState,
+    pub action: Action,
     pub link_id: String,
-    // using for marking the method called outside of icrc-112
-    pub execute_wallet_tx: bool,
+    pub action_type: ActionType,
+    pub action_id: String,
+    pub intents: Vec<Intent>,
+    pub intent_txs: HashMap<String, Vec<Transaction>>,
+}
+
+impl From<(ActionData, ActionState)> for RollUpStateResp {
+    fn from((data, previous_state): (ActionData, ActionState)) -> Self {
+        Self {
+            previous_state,
+            current_state: data.action.state.clone(),
+            action: data.action.clone(),
+            link_id: data.action.link_id.clone(),
+            action_type: data.action.r#type.clone(),
+            action_id: data.action.id.clone(),
+            intents: data.intents.clone(),
+            intent_txs: data.intent_txs,
+        }
+    }
 }
