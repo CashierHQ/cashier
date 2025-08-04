@@ -16,7 +16,7 @@ import {
     UpdateActionInput,
 } from "../../../../declarations/cashier_backend/cashier_backend.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
-import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
+import { BACKEND_CANISTER_ID, IC_HOST, IS_LOCAL } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import {
     LinkGetUserStateInputModel,
@@ -87,6 +87,15 @@ class LinkService {
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         const agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        if (IS_LOCAL) {
+            agent.fetchRootKey().catch((err: Error) => {
+                console.warn(
+                    "Unable to fetch root key. Check to ensure that your local replica is running",
+                );
+                console.error(err);
+            });
+
+        }
         this.actor = Actor.createActor(idlFactory, {
             agent,
             canisterId: BACKEND_CANISTER_ID,
@@ -109,11 +118,11 @@ class LinkService {
         };
         responseModel.data = response.data
             ? response.data.map((link: LinkDto) => {
-                  return {
-                      link: mapPartialDtoToLinkDetailModel(link),
-                      action_create: undefined,
-                  };
-              })
+                return {
+                    link: mapPartialDtoToLinkDetailModel(link),
+                    action_create: undefined,
+                };
+            })
             : [];
         return responseModel;
     }
@@ -124,10 +133,10 @@ class LinkService {
                 linkId,
                 actionType
                     ? [
-                          {
-                              action_type: actionType,
-                          },
-                      ]
+                        {
+                            action_type: actionType,
+                        },
+                    ]
                     : [],
             ),
         );

@@ -10,6 +10,8 @@ export const IC_INTERNET_IDENTITY_PROVIDER = import.meta.env.VITE_IC_INTERNET_ID
 export const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const ICP_LOGO = "./icpLogo.png";
 
+export const IS_LOCAL = import.meta.env.MODE === "local_dev";
+
 // Token balance caching constants
 export const BALANCE_CACHE_LAST_CACHE_TIME_KEY = "lastTokenBalanceCacheTime";
 export const BALANCE_CACHE_LAST_CACHED_BALANCES_KEY = "lastCachedTokenBalances";

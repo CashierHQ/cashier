@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
+import { BACKEND_CANISTER_ID, IC_HOST, IS_LOCAL } from "@/const";
 import { Agent, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
@@ -14,6 +14,15 @@ class CanisterUtilsService {
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         this.agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        if (IS_LOCAL) {
+            this.agent.fetchRootKey().catch((err: Error) => {
+                console.warn(
+                    "Unable to fetch root key. Check to ensure that your local replica is running",
+                );
+                console.error(err);
+            });
+
+        }
     }
 
     async checkAccountBalance(canisterId: string, identity?: string) {
