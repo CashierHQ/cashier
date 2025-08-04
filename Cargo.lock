@@ -247,6 +247,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "serde",
+ "serde_bytes",
 ]
 
 [[package]]
@@ -264,12 +265,14 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "cashier-macros",
+ "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
  "serde",
  "serde_cbor",
  "serde_json",
+ "thiserror 2.0.12",
 ]
 
 [[package]]

@@ -1,9 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{services::ext::icrc_token::Service, types::error::CanisterError};
+use crate::services::ext::icrc_token::Service;
 use candid::{Nat, Principal};
-use cashier_types::common::{Asset, Chain};
+use cashier_types::error::CanisterError;
+use cashier_types::repository::common::{Asset, Chain};
 use futures::future::{self, BoxFuture};
 use std::collections::HashMap;
 use std::str::FromStr;

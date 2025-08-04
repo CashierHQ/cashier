@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::common::Chain;
+use crate::repository::common::Chain;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AssetInfo {

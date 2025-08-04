@@ -3,7 +3,7 @@
 
 
 use candid::Principal;
-use cashier_types::{
+use cashier_types::repository::{
     ActionState, ActionType, Asset, Chain, FromCallType, IcTransaction, Icrc1Transfer,
     Icrc2Approve, Icrc2TransferFrom, IntentState, IntentTask, IntentType, Protocol, Transaction,
     TransactionState, TransferData, TransferFromData, Wallet,

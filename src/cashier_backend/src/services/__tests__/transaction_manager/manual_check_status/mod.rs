@@ -1,11 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 #[cfg(test)]
 mod tests {
     use candid::Nat;
-    use cashier_types::{FromCallType, TransactionState};
+    use cashier_types::repository::{FromCallType, TransactionState};
     use faux::when;
     use ic_cdk::api::call::RejectionCode;
     use ic_cdk_timers::TimerId;

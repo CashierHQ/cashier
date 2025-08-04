@@ -3,7 +3,7 @@
 
 
 use candid::{Nat, Principal};
-use cashier_types::{Asset, Chain, Icrc1Transfer, Icrc2Approve, Wallet};
+use cashier_types::repository::{Asset, Chain, Icrc1Transfer, Icrc2Approve, Wallet};
 use faux::when;
 use icrc_ledger_types::icrc1::account::Account;
 
