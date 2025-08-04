@@ -77,6 +77,22 @@ dfx_local_info:
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
   echo "internet_identity url: http://$internet_identity_id.raw.localhost:$dfx_webserver_port"
 
+[group('dfx')]
+dfx_local_airdrop target_principal:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx canister call icp_ledger_canister icrc1_transfer "(record { 
+        to = record { 
+            owner = principal \"{{target_principal}}\";
+            subaccount = null;
+        };
+        memo = null; 
+        created_at_time = null;
+        from_subaccount = null;
+        amount = 10000000000;
+        fee = null
+    })" 
 
 [private]
 dfx_prepare_env: 
