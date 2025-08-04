@@ -4,6 +4,9 @@
 [confirm("Are you sure you want to clean the build artifacts?")]
 clean:
   cargo clean
+  rm -rf ./src/cashier_frontend/node_modules
+  rm -rf ./src/cashier_frontend/dist
+  rm -rf ./node_modules
 
 
 # Builds and download all artifacts
