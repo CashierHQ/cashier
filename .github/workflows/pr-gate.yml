@@ -54,6 +54,9 @@ jobs:
               id: changed-files
               uses: tj-actions/changed-files@v44
 
+            - name: Install Just command runner
+              uses: extractions/setup-just@v1
+
             # Backend: Run cargo clippy if backend or token_storage changed
             - name: Run cargo clippy (backend)
               if: steps.changed-files.outputs.any_changed == 'true' && (contains(steps.changed-files.outputs.all_changed_files, 'src/cashier_backend/') || contains(steps.changed-files.outputs.all_changed_files, 'src/token_storage/'))
@@ -93,6 +96,7 @@ jobs:
 
                   # Build the project
                   rustup target add wasm32-unknown-unknown
+                  just build
                   dfx generate cashier_backend 
                   dfx generate token_storage
                   make generate-ci
