@@ -15,8 +15,7 @@
                 "./src/cashier_frontend/dist"
             ],
             "type": "assets",
-            "workspace": "cashier_frontend",
-            "build": ""
+            "workspace": "cashier_frontend"
         },
         "icp_ledger_canister": {
             "type": "custom",
