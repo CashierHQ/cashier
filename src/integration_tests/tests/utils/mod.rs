@@ -15,8 +15,6 @@ use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
 
-use crate::utils::token_icp::LedgerCanisterPayload;
-
 pub mod principal;
 pub mod token_icp;
 pub mod token_icrc;
@@ -285,8 +283,6 @@ async fn deploy_canister_with_id<T: CandidType>(
     args: &T,
 ) -> Principal {
     let args = encode(args);
-    let decoded = decode::<LedgerCanisterPayload>(&args);
-    println!("decoded: {:?}", decoded);
     let canister = client
         .create_canister_with_id(sender, settings, canister_id)
         .await

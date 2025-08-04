@@ -8,7 +8,6 @@ async fn should_process_action_success() {
         let cashier_backend_client = ctx.new_cashier_backend_client(caller);
         let mut fixture = CreateLinkTestFixture::new(cashier_backend_client);
 
-        // Setup environment, create link, and create action
         fixture
             .setup_environment(ctx)
             .await
@@ -17,26 +16,24 @@ async fn should_process_action_success() {
             .create_action()
             .await;
 
-        // Store the original action state for comparison
         let original_action = fixture.get_action().clone();
 
-        // Process the action
         fixture.process_action().await;
 
-        let processed_action = fixture.get_action();
+        let processeing_action = fixture.get_action();
 
-        // Verify action was processed successfully
-        assert_eq!(processed_action.r#type, "CreateLink".to_string());
+        assert_eq!(processeing_action.id, original_action.id);
+        assert_eq!(processeing_action.r#type, "CreateLink".to_string());
         assert_eq!(
-            processed_action.state,
+            processeing_action.state,
             "Action_state_processing".to_string()
         );
-        assert_eq!(processed_action.creator, fixture.user.id);
-        assert_eq!(processed_action.intents.len(), 2);
-        for intent in &processed_action.intents {
-            assert_eq!(intent.state, "Intent_state_processing".to_string());
-        }
-        assert_eq!(processed_action.id, original_action.id);
+        assert_eq!(processeing_action.creator, fixture.user.id);
+        assert_eq!(processeing_action.intents.len(), 2);
+        assert!(processeing_action
+            .intents
+            .iter()
+            .all(|intent| { intent.state == "Intent_state_processing" }));
 
         Ok(())
     })
