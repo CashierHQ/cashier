@@ -26,8 +26,15 @@ class TokenStorageService {
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
         const agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        const anonAgent = HttpAgent.createSync({ host: IC_HOST });
         if (IS_LOCAL) {
             agent.fetchRootKey().catch((err: Error) => {
+                console.warn(
+                    "Unable to fetch root key. Check to ensure that your local replica is running",
+                );
+                console.error(err);
+            });
+            anonAgent.fetchRootKey().catch((err: Error) => {
                 console.warn(
                     "Unable to fetch root key. Check to ensure that your local replica is running",
                 );
@@ -40,7 +47,7 @@ class TokenStorageService {
             canisterId: TOKEN_STORAGE_CANISTER_ID,
         });
         this.anonActor = Actor.createActor(idlFactory, {
-            agent: HttpAgent.createSync({ host: IC_HOST }),
+            agent: anonAgent,
             canisterId: TOKEN_STORAGE_CANISTER_ID,
         });
     }

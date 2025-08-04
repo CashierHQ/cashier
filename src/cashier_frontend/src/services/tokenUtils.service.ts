@@ -29,8 +29,20 @@ export class TokenUtilService {
         this.identity = identity;
     }
     public static async getTokenMetadata(tokenAddres: string) {
+        const httpAgent = HttpAgent.createSync({ host: IC_HOST });
+
+        if (IS_LOCAL) {
+            httpAgent.fetchRootKey().catch((err: Error) => {
+                console.warn(
+                    "Unable to fetch root key. Check to ensure that your local replica is running",
+                );
+                console.error(err);
+            });
+
+        }
+
         const { metadata } = IcrcLedgerCanister.create({
-            agent: defaultAgent(),
+            agent: httpAgent,
             canisterId: Principal.fromText(tokenAddres ?? ""),
         });
         const data = await metadata({});
