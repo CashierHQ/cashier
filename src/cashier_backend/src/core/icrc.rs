@@ -3,9 +3,8 @@
 
 use ic_cdk::{query, update};
 use itertools::Itertools;
-use Icrc21DeviceSpec::GenericDisplay;
 
-use crate::types::icrc::{
+use cashier_common::icrc::{
     Icrc21ConsentInfo, Icrc21ConsentMessage, Icrc21ConsentMessageMetadata,
     Icrc21ConsentMessageRequest, Icrc21DeviceSpec, Icrc21Error, Icrc21LineDisplayPage,
     Icrc21SupportedStandard, Icrc28TrustedOriginsResponse,
@@ -79,7 +78,7 @@ fn icrc21_canister_call_consent_message(
                 ),
             },
         }),
-        Some(GenericDisplay) | None => Ok(Icrc21ConsentInfo {
+        Some(Icrc21DeviceSpec::GenericDisplay) | None => Ok(Icrc21ConsentInfo {
             metadata,
             consent_message: Icrc21ConsentMessage::GenericDisplayMessage(consent_msg_text_md(
                 &consent_message,

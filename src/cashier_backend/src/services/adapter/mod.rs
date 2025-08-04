@@ -4,18 +4,19 @@
 use std::marker::PhantomData;
 
 use cashier_types::{
-    action::v1::ActionType,
-    common::Chain,
-    intent::v2::Intent,
-    link::v1::{Link, LinkType},
-    transaction::v2::Transaction,
+    error::CanisterError,
+    repository::{
+        action::v1::ActionType,
+        common::Chain,
+        intent::v2::Intent,
+        link::v1::{Link, LinkType},
+        transaction::v2::Transaction,
+    },
+    service::link::TemporaryAction,
 };
 use ic::{action::IcActionAdapter, intent::IcIntentAdapter};
 
-use crate::{
-    types::{error::CanisterError, temp_action::TemporaryAction},
-    utils::runtime::IcEnvironment,
-};
+use crate::utils::runtime::IcEnvironment;
 
 pub mod ic;
 

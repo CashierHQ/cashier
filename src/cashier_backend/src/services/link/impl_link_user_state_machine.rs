@@ -1,21 +1,23 @@
 use crate::{
-    core::{
-        action::types::ActionDto,
-        link::types::{
-            LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
-            UserStateMachineGoto,
-        },
-    },
     services::link::{service::LinkService, traits::LinkUserStateMachine},
-    types::error::CanisterError,
     utils::runtime::IcEnvironment,
 };
 use std::str::FromStr;
 
 use candid::Principal;
 use cashier_types::{
-    action::v1::{ActionState, ActionType},
-    link_action::v1::{LinkAction, LinkUserState},
+    dto::{
+        action::ActionDto,
+        link::{
+            LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
+            UserStateMachineGoto,
+        },
+    },
+    error::CanisterError,
+    repository::{
+        action::v1::{ActionState, ActionType},
+        link_action::v1::{LinkAction, LinkUserState},
+    },
 };
 
 impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
