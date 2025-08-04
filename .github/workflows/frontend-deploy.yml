@@ -69,6 +69,9 @@ jobs:
             - name: Confirm successful installation
               run: dfx --version
 
+            - name: Install Just command runner
+              uses: extractions/setup-just@v1
+
             - name: Create private key file
               run: |
                   echo "${{ secrets.DEPLOYER }}" > private_key.pem
@@ -116,5 +119,6 @@ jobs:
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
 
+                  just build
                   make generate-ci
                   dfx deploy cashier_frontend --network ${NETWORK}
