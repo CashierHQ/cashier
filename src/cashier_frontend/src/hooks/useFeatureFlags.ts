@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { FEATURE_FLAGS } from "@/config/feature-flags";
+import { FEATURE_FLAGS } from "@/const";
 
 /**
  * Hook to access feature flags throughout the application
