@@ -8,7 +8,7 @@ clean:
 
 # Builds and download all artifacts
 [group('build')]
-build: download_artifacts build_canisters
+build: download_artifacts build_canisters build_frontend
 
 
 # Builds the canisters
@@ -28,7 +28,6 @@ build_frontend mode="local_dev": generate_frontend_ts
   cd "./src/cashier_frontend" || exit
   npm install
   npm run build:{{mode}}
-
 
 
 # Generates the ts files for the canister services 
