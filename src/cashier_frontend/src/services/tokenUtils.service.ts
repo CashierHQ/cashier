@@ -1,25 +1,25 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { IC_HOST } from "@/const";
 import { FungibleToken } from "@/types/fungible-token.speculative";
-import { Agent, HttpAgent, Identity } from "@dfinity/agent";
+import { getAgent } from "@/utils/agent";
+import { Agent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { IcrcLedgerCanister, mapTokenMetadata } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
-import { defaultAgent, Token, TokenAmountV2 } from "@dfinity/utils";
+import { Token, TokenAmountV2 } from "@dfinity/utils";
 
 export class TokenUtilService {
     private agent: Agent;
     private identity: Identity | undefined;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        this.agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        this.agent = getAgent(identity);
         this.identity = identity;
     }
     public static async getTokenMetadata(tokenAddres: string) {
         const { metadata } = IcrcLedgerCanister.create({
-            agent: defaultAgent(),
+            agent: getAgent(),
             canisterId: Principal.fromText(tokenAddres ?? ""),
         });
         const data = await metadata({});

@@ -31,5 +31,5 @@ export const FEATURE_FLAGS = {
      */
     ENABLE_SWAP: import.meta.env.VITE_FEATURE_FLAGS_ENABLE_SWAP === "true" || false,
 
-    // Add more feature flags here as needed
+    ENABLE_LOCAL_IDENTITY_PROVIDER: import.meta.env.VITE_FEATURE_FLAGS_ENABLE_LOCAL_IDENTITY_PROVIDER === "true" || false,
 };
