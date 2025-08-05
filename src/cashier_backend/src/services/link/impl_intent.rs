@@ -415,7 +415,10 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
         Ok(assets)
     }
 
-    // Helper methods to create common intent types
+}
+
+// --- helper method implementations ---
+impl<E: IcEnvironment + Clone> LinkService<E> {
     fn create_basic_intent(&self, task: IntentTask, label: String) -> Intent {
         let ts = self.ic_env.time();
         let mut intent = Intent::default();
@@ -429,7 +432,6 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
         intent
     }
 
-    // Helper methods to create common intent types
     fn create_fee_intent(&self) -> Intent {
         let ts = self.ic_env.time();
         let mut intent = Intent::default();
@@ -443,7 +445,7 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
         intent
     }
 
-    fn look_up_intent(
+        fn look_up_intent(
         &self,
         link: &Link,
         action_type: &ActionType,
@@ -580,33 +582,5 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
 
         Ok(Some(intents))
     }
-}
 
-// --- helper method implementations ---
-impl<E: IcEnvironment + Clone> LinkService<E> {
-    fn create_basic_intent(&self, task: IntentTask, label: String) -> Intent {
-        let ts = self.ic_env.time();
-        let mut intent = Intent::default();
-        let transfer_data = IntentType::default_transfer();
-        intent.r#type = transfer_data;
-        intent.task = task;
-        intent.id = Uuid::new_v4().to_string();
-        intent.state = IntentState::Created;
-        intent.created_at = ts;
-        intent.label = label;
-        intent
-    }
-
-    fn create_fee_intent(&self) -> Intent {
-        let ts = self.ic_env.time();
-        let mut intent = Intent::default();
-        let transfer_fee_data = IntentType::default_transfer_from();
-        intent.r#type = transfer_fee_data;
-        intent.task = IntentTask::TransferWalletToTreasury;
-        intent.id = Uuid::new_v4().to_string();
-        intent.state = IntentState::Created;
-        intent.created_at = ts;
-        intent.label = INTENT_LABEL_LINK_CREATION_FEE.to_string();
-        intent
-    }
 }

@@ -20,13 +20,6 @@ impl IntentRepository {
         Self {}
     }
 
-    pub fn create(&self, intent: Intent) {
-        INTENT_STORE.with_borrow_mut(|store| {
-            let id = intent.id.clone();
-            store.insert(id, intent);
-        });
-    }
-
     pub fn batch_create(&self, intents: Vec<Intent>) {
         INTENT_STORE.with_borrow_mut(|store| {
             for intent in intents {
@@ -53,16 +46,4 @@ impl IntentRepository {
         INTENT_STORE.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 
-    pub fn update(&self, intent: Intent) {
-        INTENT_STORE.with_borrow_mut(|store| {
-            let id = intent.id.clone();
-            store.insert(id, intent);
-        });
-    }
-
-    pub fn delete(&self, id: &str) {
-        INTENT_STORE.with_borrow_mut(|store| {
-            store.remove(&id.to_string());
-        });
-    }
 }
