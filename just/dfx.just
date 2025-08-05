@@ -82,6 +82,7 @@ dfx_local_info:
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
   echo "internet_identity url: http://$internet_identity_id.raw.localhost:$dfx_webserver_port"
 
+# Airdrop tokens to the target principal
 [group('dfx')]
 dfx_local_airdrop target_principal:
   #!/usr/bin/env bash
