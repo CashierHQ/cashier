@@ -8,22 +8,14 @@ import { Signer } from "./signer";
 import { ClientTransport } from "./transport";
 import { JsonRequest, JsonResponse } from "@slide-computer/signer";
 import type { JsonObject } from "@dfinity/candid";
-import { IC_HOST, IC_INTERNET_IDENTITY_PROVIDER, IS_LOCAL } from "@/const";
+import { IC_INTERNET_IDENTITY_PROVIDER } from "@/const";
+import { getAgent } from "@/utils/agent";
 
 class CallSignerService {
     private agent: HttpAgent;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        this.agent = HttpAgent.createSync({ identity, host: IC_HOST });
-        if (IS_LOCAL) {
-            this.agent.fetchRootKey().catch((err: Error) => {
-                console.warn(
-                    "Unable to fetch root key. Check to ensure that your local replica is running",
-                );
-                console.error(err);
-            });
-
-        }
+        this.agent = getAgent(identity);
     }
 
     async execute(input: Icrc112Requests): Promise<Icrc112Response> {

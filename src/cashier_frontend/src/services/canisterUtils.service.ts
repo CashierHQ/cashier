@@ -1,8 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { BACKEND_CANISTER_ID, IC_HOST, IS_LOCAL } from "@/const";
-import { Agent, HttpAgent, Identity } from "@dfinity/agent";
+import { BACKEND_CANISTER_ID } from "@/const";
+import { getAgent } from "@/utils/agent";
+import { Agent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
@@ -13,30 +14,7 @@ class CanisterUtilsService {
     private agent: Agent;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        this.agent = HttpAgent.createSync({ identity, host: IC_HOST });
-        if (IS_LOCAL) {
-            this.agent.fetchRootKey().catch((err: Error) => {
-                console.warn(
-                    "Unable to fetch root key. Check to ensure that your local replica is running",
-                );
-                console.error(err);
-            });
-
-        }
-    }
-
-    async checkAccountBalance(canisterId: string, identity?: string) {
-        const ledgerCanister = IcrcLedgerCanister.create({
-            agent: this.agent,
-            canisterId: Principal.fromText(canisterId),
-        });
-        if (identity) {
-            const data = await ledgerCanister.balance({
-                owner: Principal.fromText(identity),
-            });
-            return data;
-        }
-        return null;
+        this.agent = getAgent(identity);
     }
 
     async checkAccountBalanceWithSubAccount(linkId: string, tokenAddress: string) {

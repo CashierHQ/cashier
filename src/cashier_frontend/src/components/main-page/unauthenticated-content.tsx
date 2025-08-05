@@ -4,11 +4,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import WalletConnectDialog from "@/components/wallet-connect-dialog";
-import { InternetIdentity } from "@nfid/identitykit";
 import { useTranslation } from "react-i18next";
 import { Feather, Lock, Zap, ChevronDown, ChevronUp } from "lucide-react";
-import { LocalInternetIdentity } from "@/constants/wallet-options";
-import { IS_LOCAL } from "@/const";
 
 interface UnauthenticatedContentProps {
     headerWalletOptions: Array<{
@@ -65,9 +62,7 @@ export const UnauthenticatedContent = ({
         ...option,
         onClick: () => {
             setIsWalletDialogOpen(false);
-            if (option.id === InternetIdentity.id) connectToWallet(InternetIdentity.id);
-            if (option.id === LocalInternetIdentity.id && IS_LOCAL)
-                connectToWallet(LocalInternetIdentity.id);
+            connectToWallet(option.id);
         },
     }));
 

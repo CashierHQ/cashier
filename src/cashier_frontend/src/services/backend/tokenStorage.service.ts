@@ -11,9 +11,10 @@ import {
     UpdateTokenBalanceInput,
     UpdateTokenInput,
 } from "../../../../declarations/token_storage/token_storage.did";
-import { Actor, HttpAgent, Identity } from "@dfinity/agent";
+import { Actor, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { IC_HOST, IS_LOCAL, TOKEN_STORAGE_CANISTER_ID } from "@/const";
+import { TOKEN_STORAGE_CANISTER_ID } from "@/const";
+import { getAgent } from "@/utils/agent";
 
 /**
  * Service for interacting with the token storage canister
@@ -23,17 +24,7 @@ class TokenStorageService {
     private actor: _SERVICE;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        const agent = HttpAgent.createSync({ identity, host: IC_HOST });
-        if (IS_LOCAL) {
-            agent.fetchRootKey().catch((err: Error) => {
-                console.warn(
-                    "Unable to fetch root key. Check to ensure that your local replica is running",
-                );
-                console.error(err);
-            });
-
-
-        }
+        const agent = getAgent(identity);
         this.actor = Actor.createActor(idlFactory, {
             agent,
             canisterId: TOKEN_STORAGE_CANISTER_ID,

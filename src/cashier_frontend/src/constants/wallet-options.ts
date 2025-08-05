@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { IC_INTERNET_IDENTITY_PROVIDER, ICP_LOGO, IS_LOCAL } from "@/const";
+import { FEATURE_FLAGS, IC_INTERNET_IDENTITY_PROVIDER, ICP_LOGO } from "@/const";
 import { IdentityKitTransportType, InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 
 // Wallet options enum
@@ -47,7 +47,8 @@ export const walletDialogConfigOptions = [
 ];
 
 // Internet Identity wallet option for the header
-export const headerWalletOptions = IS_LOCAL ? [
+export const headerWalletOptions = FEATURE_FLAGS
+    .ENABLE_LOCAL_IDENTITY_PROVIDER ? [
     {
         id: "LocalInternetIdentity",
         name: "Internet Identity",
@@ -78,7 +79,10 @@ export const getWalletIcon = (walletOption: WALLET_OPTIONS): string | React.Reac
 };
 
 // Default wallet signers
-export const defaultSigners = IS_LOCAL ? [LocalInternetIdentity] : [InternetIdentity];
+export const defaultSigners = FEATURE_FLAGS
+    .ENABLE_LOCAL_IDENTITY_PROVIDER ? [LocalInternetIdentity] : [InternetIdentity];
 
 // All available wallet signers
-export const allWalletSigners = [NFIDW, Stoic, GoogleSigner, InternetIdentity, LocalInternetIdentity];
+export const allWalletSigners = [NFIDW, Stoic, GoogleSigner, InternetIdentity].concat(
+    FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? [LocalInternetIdentity] : [],
+);
