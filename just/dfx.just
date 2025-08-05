@@ -78,6 +78,12 @@ dfx_local_info:
   echo "internet_identity url: http://$internet_identity_id.raw.localhost:$dfx_webserver_port"
 
 
+# Tails the local dfx logs
+[group('dfx')]
+dfx_local_logs_tail args="":
+  tail -f "{{DFX_LOGFILE}}" {{args}}
+
+
 [private]
 dfx_prepare_env: 
   dfx identity new --storage-mode=plaintext --force cashier_local_dev
