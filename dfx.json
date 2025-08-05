@@ -11,9 +11,7 @@
             "wasm": "./target/artifacts/token_storage.wasm.gz"
         },
         "cashier_frontend": {
-            "source": [
-                "./src/cashier_frontend/dist"
-            ],
+            "source": ["./src/cashier_frontend/dist"],
             "type": "assets",
             "workspace": "cashier_frontend"
         },
@@ -28,14 +26,47 @@
                 }
             }
         },
-        "icrc1_ledger_canister": {
+        "ckBTC": {
             "type": "custom",
             "candid": "./target/artifacts/ledger-suite-icrc.did",
             "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
-            "specified_id": "ixmla-qqaaa-aaaad-aazda-cai",
+            "specified_id": "mxzaz-hqaaa-aaaar-qaada-cai",
             "remote": {
                 "id": {
-                    "ic": "ixmla-qqaaa-aaaad-aazda-cai"
+                    "ic": "mxzaz-hqaaa-aaaar-qaada-cai"
+                }
+            }
+        },
+        "ckETH": {
+            "type": "custom",
+            "candid": "./target/artifacts/ledger-suite-icrc.did",
+            "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+            "specified_id": "ss2fx-dyaaa-aaaar-qacoq-cai",
+            "remote": {
+                "id": {
+                    "ic": "ss2fx-dyaaa-aaaar-qacoq-cai"
+                }
+            }
+        },
+        "ckUSDC": {
+            "type": "custom",
+            "candid": "./target/artifacts/ledger-suite-icrc.did",
+            "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+            "specified_id": "xevnm-gaaaa-aaaar-qafnq-cai",
+            "remote": {
+                "id": {
+                    "ic": "xevnm-gaaaa-aaaar-qafnq-cai"
+                }
+            }
+        },
+        "DOGE": {
+            "type": "custom",
+            "candid": "./target/artifacts/ledger-suite-icrc.did",
+            "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+            "specified_id": "x5qut-viaaa-aaaar-qajda-cai",
+            "remote": {
+                "id": {
+                    "ic": "x5qut-viaaa-aaaar-qajda-cai"
                 }
             }
         },
@@ -60,21 +91,15 @@
     "networks": {
         "ic": {
             "type": "persistent",
-            "providers": [
-                "https://icp0.io"
-            ]
+            "providers": ["https://icp0.io"]
         },
         "staging": {
             "type": "persistent",
-            "providers": [
-                "https://icp0.io"
-            ]
+            "providers": ["https://icp0.io"]
         },
         "dev": {
             "type": "persistent",
-            "providers": [
-                "https://icp0.io"
-            ]
+            "providers": ["https://icp0.io"]
         },
         "local": {
             "bind": "127.0.0.1:4943",
