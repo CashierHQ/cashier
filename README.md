@@ -27,6 +27,9 @@ Technically, Cashier is all about flexibly configuring and executing different t
 -   [Rust](https://www.rust-lang.org/tools/install)
 -   [DFX](https://internetcomputer.org/docs/building-apps/getting-started/install)
 -   [NodeJS](https://nodejs.org/en)
+-   [Just](https://just.systems/man/en/)
+-   [ic-wasm](https://github.com/dfinity/ic-wasm)
+-   [candid-extractor](https://github.com/dfinity/candid-extractor)
 
 ### Installation
 
@@ -35,28 +38,28 @@ Technically, Cashier is all about flexibly configuring and executing different t
 ```bash
 # Install all dependencies
 npm install
-
-# Run local development server
-npm start
 ```
 
 **Backend:**
 
 ```bash
-# Build backend canister
-make build-backend
-
-# Build token storage canister
-make build-token-storage
+just build
 ```
 
-## 🏗️ Deployment Guide
+### Local running
 
-See [DEPLOYMENT.md](./docs/DEPLOYMENT.md)
+```bash
+# deploy backend
+just dfx_local_deploy
+# run frontend
+npm start
+# after login, airdrop token for testing
+just dfx_local_airdrop <principal id>
+```
 
 ## 📱 Usage
 
-Using Cashier is easy. Start by going to [cashierapp.io](https://cashierapp.io) and log in with Internet Identity. We will support more login options going forward.
+Using Cashier is easy. Start by going to [cashierapp.io](https://cashierapp.io) or localhost and log in with Internet Identity. We will support more login options going forward.
 
 **Create a transaction in 3 easy steps:**
 
@@ -99,7 +102,7 @@ And share the link for others to use.
 For backend unit tests, go to `src/cashier_backend` and run:
 
 ```bash
-cargo test
+just test
 ```
 
 ## Code Quality (Clippy)
@@ -107,96 +110,8 @@ cargo test
 The project uses Clippy for Rust code linting across all crates. Run Clippy checks with:
 
 ```bash
-# Run Clippy on all crates
-bash scripts/clippy.sh
-
-# Apply automatic fixes
-bash scripts/clippy.sh --fix
-
-# List all crates that will be checked
-bash scripts/clippy.sh --list
-
-# Get help
-bash scripts/clippy.sh --help
+just check_code
 ```
-
-**Crates checked**:
-
--   `src/cashier_backend` - Main backend canister
--   `src/token_storage` - Token storage canister
--   `src/lib/cashier-types` - Shared type definitions
--   `src/lib/cashier-macros` - Procedural macros
-
-The Clippy configuration (`.clippy.toml`) is tuned for IC canister development with appropriate thresholds for complexity, function length, and other metrics.
-
-## Integration Tests
-
-Setup
-
-```bash
-# install nodejs packages
-npm i
-
-# build backend wasm and move to artifacts
-make setup-test
-
-# download and build icp ledger - for get wasm and generate ts file next step
-make build-icp-ledger
-
-# generate ts file for interacting with test code in typescript
-make generate
-```
-
-For integration tests, run:
-
-```bash
-npm run test:integration-backend
-```
-
-## Local Re-entrancy Protection Tests
-
-The project includes comprehensive local tests that verify re-entrancy protection mechanisms for critical API endpoints. These tests ensure that concurrent calls are properly handled through request locking.
-
-### Setup
-
-Start dfx local:
-
-```bash
-dfx start --clean
-```
-
-Deploy canisters:
-
-```bash
-bash src/test/scripts/setup.sh
-```
-
-### Running Local Tests
-
-```bash
-# Run all local tests
-npm test src/test/local-tests
-
-# Run specific test files
-npm test src/test/local-tests/src/request_lock/create_action.spec.ts
-npm test src/test/local-tests/src/request_lock/process_action.spec.ts
-```
-
-### Test Coverage
-
-**`create_action.spec.ts`**:
-
--   Tests concurrent `create_action` calls with request locking
--   Prevents duplicate actions from being created simultaneously
-
-**`process_action.spec.ts`**:
-
--   Tests basic and concurrent `process_action` calls
--   Tests complete ICRC-112 flow with parallel operations
--   Tests concurrent `trigger_transaction` and `update_action` calls
--   Includes multi-identity testing (creator + claimer scenarios)
-
-For detailed information about the local tests, see [`src/test/local-tests/README.md`](src/test/local-tests/README.md).
 
 # Roadmap
 
