@@ -16,9 +16,9 @@ use cashier_types::{
     service::{action::ActionData, tx_manager::UpdateActionArgs},
 };
 use icrc_ledger_types::icrc1::account::Account;
+use log::info;
 
 use crate::{
-    info,
     services::{
         link::service::LinkService,
         transaction_manager::{service::TransactionManagerService, traits::ActionUpdater},

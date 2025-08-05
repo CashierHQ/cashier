@@ -33,6 +33,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
+name = "arc-swap"
+version = "1.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
+
+[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -291,8 +297,10 @@ dependencies = [
  "ic-cdk-timers",
  "ic-icrc-tx",
  "ic-stable-structures",
+ "ic_mple_log",
  "icrc-ledger-types",
  "itertools 0.14.0",
+ "log",
  "rand 0.8.5",
  "rm",
  "serde",
@@ -506,6 +514,16 @@ name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
+
+[[package]]
+name = "env_filter"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "186e05a59d4c50738528153b83b0b0194d3a29507dfec16eccd4b342903397d0"
+dependencies = [
+ "log",
+ "regex",
+]
 
 [[package]]
 name = "equivalent"
@@ -782,6 +800,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87"
 
 [[package]]
+name = "humantime"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b112acc8b3adf4b107a8ec20977da0273a8c386765a3ec0229bd500a1443f9f"
+
+[[package]]
 name = "hyper"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -988,6 +1012,19 @@ dependencies = [
  "pocket-ic",
  "serde",
  "thiserror 2.0.12",
+]
+
+[[package]]
+name = "ic_mple_log"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33bc88eb7fa868e50d33de47fd7885b94f06341aaf61cf6e7e3ee5c15931f968"
+dependencies = [
+ "arc-swap",
+ "env_filter",
+ "humantime",
+ "ic-cdk",
+ "log",
 ]
 
 [[package]]
@@ -2411,7 +2448,9 @@ dependencies = [
  "futures",
  "ic-cdk",
  "ic-stable-structures",
+ "ic_mple_log",
  "ic_mple_pocket_ic",
+ "log",
  "serde",
  "serde_bytes",
  "serde_cbor",

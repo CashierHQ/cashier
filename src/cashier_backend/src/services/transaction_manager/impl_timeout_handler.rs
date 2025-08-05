@@ -1,14 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{info, services::transaction_manager::traits::TransactionValidator};
+use crate::{services::transaction_manager::traits::TransactionValidator};
 use async_trait::async_trait;
 use cashier_types::{error::CanisterError, repository::transaction::v2::TransactionState};
+use log::{error, info};
 use std::time::Duration;
 
 use crate::{
     constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
-    error,
     services::transaction_manager::{service::TransactionManagerService, traits::TimeoutHandler},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
