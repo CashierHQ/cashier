@@ -104,6 +104,12 @@ dfx_local_airdrop target_principal:
   just dfx_local_airdrop_token {{target_principal}} x5qut-viaaa-aaaar-qajda-cai 10000000000
 
 
+# Tails the local dfx logs
+[group('dfx')]
+dfx_local_logs_tail args="":
+  tail -f "{{DFX_LOGFILE}}" {{args}}
+
+
 [private]
 dfx_prepare_env: 
   dfx identity new --storage-mode=plaintext --force cashier_local_dev
