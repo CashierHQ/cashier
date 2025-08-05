@@ -40,13 +40,4 @@ where
         self.0
     }
 
-    /// Returns a reference to the inner value
-    pub fn inner(&self) -> &T {
-        &self.0
-    }
-
-    /// Returns a mutable reference to the inner value
-    pub fn inner_mut(&mut self) -> &mut T {
-        &mut self.0
-    }
 }

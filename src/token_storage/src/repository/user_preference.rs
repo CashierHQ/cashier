@@ -18,12 +18,6 @@ impl UserPreferenceRepository {
         Self {}
     }
 
-    pub fn add(&self, id: &str, user_preference: UserPreference) {
-        USER_PREFERENCE_STORE.with_borrow_mut(|store| {
-            store.insert(id.to_string(), user_preference);
-        });
-    }
-
     pub fn get(&self, id: &str) -> UserPreference {
         USER_PREFERENCE_STORE
             .with_borrow(|store| store.get(&id.to_string()))
@@ -36,18 +30,4 @@ impl UserPreferenceRepository {
         });
     }
 
-    pub fn delete(&self, id: &str) -> bool {
-        USER_PREFERENCE_STORE.with_borrow_mut(|store| store.remove(&id.to_string()).is_some())
-    }
-
-    pub fn has_preferences(&self, id: &str) -> bool {
-        USER_PREFERENCE_STORE.with_borrow(|store| store.contains_key(&id.to_string()))
-    }
-
-    // Reset to default preferences
-    pub fn reset(&self, id: &str) {
-        USER_PREFERENCE_STORE.with_borrow_mut(|store| {
-            store.insert(id.to_string(), UserPreference::default());
-        });
-    }
 }

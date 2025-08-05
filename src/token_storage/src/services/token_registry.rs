@@ -13,9 +13,6 @@ use crate::{
     types::{ChainTokenDetails, RegistryToken, TokenId, TokenRegistryMetadata},
 };
 
-pub struct RegistrerTokenOptions {
-    pub index_id: Option<IndexId>,
-}
 
 pub struct TokenRegistryService {
     registry_repository: TokenRegistryRepository,
@@ -41,10 +38,6 @@ impl TokenRegistryService {
         self.metadata_repository.get()
     }
 
-    /// Increase the registry version number
-    pub fn increase_version(&self) -> u64 {
-        self.metadata_repository.increase_version()
-    }
 
     /// Get a token from the registry by ID
     pub fn get_token(&self, token_id: &TokenId) -> Option<RegistryToken> {
@@ -187,7 +180,4 @@ impl TokenRegistryService {
         }
     }
 
-    pub fn replace_token(&self, new_token: &RegistryToken) -> Result<(), String> {
-        self.registry_repository.update_token(new_token)
-    }
 }

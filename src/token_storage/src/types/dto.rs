@@ -17,22 +17,6 @@ pub struct TokenDto {
     pub details: ChainTokenDetails, // Use the enum for chain-specific details
 }
 
-impl TokenDto {
-    pub fn get_address_from_id(&self) -> String {
-        if let Some(pos) = self.id.find(':') {
-            self.id[pos + 1..].to_string()
-        } else {
-            self.id.clone()
-        }
-    }
-
-    /// Set user-specific data for this token
-    pub fn with_user_data(mut self, enabled: bool, balance: Option<u128>) -> Self {
-        self.enabled = enabled;
-        self.balance = balance;
-        self
-    }
-}
 
 // Conversion from RegistryToken to TokenDto
 use super::token::RegistryToken;
