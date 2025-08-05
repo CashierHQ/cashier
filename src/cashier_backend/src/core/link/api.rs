@@ -15,10 +15,10 @@ use cashier_types::dto::link::{
 use cashier_types::error::CanisterError;
 use cashier_types::service::link::{PaginateInput, PaginateResult};
 use ic_cdk::{query, update};
+use log::{debug, info, error};
 
 use crate::services::link::traits::LinkUserStateMachine;
 use crate::{
-    error,
     services::{
         action::ActionService,
         link::{
@@ -42,6 +42,7 @@ use crate::{
 /// * `Err(String)` - Error message if retrieval fails
 #[query(guard = "is_not_anonymous")]
 async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
+    debug!("[get_links] input: {input:?}");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.get_links(input)
 }
@@ -61,6 +62,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDt
 /// * `Err(String)` - Error message if link not found or access denied
 #[query]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
+    debug!("[get_link] id: {id}, options: {options:?}");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.get_link(&id, options)
 }
@@ -78,6 +80,7 @@ async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLink
 /// * `Err(CanisterError)` - Error if link creation fails
 #[update(guard = "is_not_anonymous")]
 async fn create_link(input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
+    info!("[create_link] called");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.create_link(input).await
 }
@@ -95,6 +98,7 @@ async fn create_link(input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
 /// * `Err(CanisterError)` - Error if update fails or unauthorized
 #[update(guard = "is_not_anonymous")]
 async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
+    info!("[update_link] called");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.update_link(input).await
 }
@@ -113,6 +117,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
 /// * `Err(CanisterError)` - Error if processing fails or action not found
 #[update(guard = "is_not_anonymous")]
 pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
+    info!("[process_action] called");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.process_action(input).await
 }
@@ -131,6 +136,7 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
 /// * `Err(CanisterError)` - Error if creation fails or action already exists
 #[update(guard = "is_not_anonymous")]
 pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
+    info!("[create_action] called");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.create_action(input).await
 }
@@ -151,6 +157,7 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
 pub async fn process_action_anonymous(
     input: ProcessActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
+    info!("[process_action_anonymous] called");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.process_action_anonymous(input).await
 }
@@ -171,6 +178,7 @@ pub async fn process_action_anonymous(
 pub async fn create_action_anonymous(
     input: CreateActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
+    info!("[create_action_anonymous] called");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.create_action_anonymous(input).await
 }
@@ -192,6 +200,7 @@ pub async fn create_action_anonymous(
 pub async fn link_get_user_state(
     input: LinkGetUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+    info!("[link_get_user_state] called");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.link_get_user_state(&input)
 }
@@ -213,6 +222,7 @@ pub async fn link_get_user_state(
 pub async fn link_update_user_state(
     input: LinkUpdateUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+    info!("[link_update_user_state] called");
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     api.link_update_user_state(&input)
 }
@@ -231,6 +241,7 @@ pub async fn link_update_user_state(
 /// * `Err(CanisterError)` - Error if update fails, unauthorized, or action not found
 #[update(guard = "is_not_anonymous")]
 pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
+    info!("[update_action] called");
     let start = ic_cdk::api::time();
     let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
     let res = api.update_action(input).await;

@@ -16,10 +16,10 @@ use cashier_types::{
         user_link::v1::UserLink,
     },
 };
+use log::error;
 use uuid::Uuid;
 
 use crate::{
-    error,
     services::link::{
         service::LinkService,
         traits::{LinkStateMachine, LinkValidation},
