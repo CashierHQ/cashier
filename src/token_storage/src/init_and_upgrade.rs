@@ -3,10 +3,21 @@
 
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 
-use crate::repository::load;
+use crate::{
+    constant::default_tokens::get_default_tokens,
+    repository::{load, token_registry::TokenRegistryRepository},
+};
 
 #[init]
-fn init() {}
+fn init() {
+    let registry = TokenRegistryRepository::new();
+    match registry.add_bulk_tokens(&get_default_tokens()) {
+        Ok(_) => {}
+        Err(e) => {
+            eprintln!("Error adding default tokens: {e}");
+        }
+    }
+}
 
 #[pre_upgrade]
 fn pre_upgrade() {}

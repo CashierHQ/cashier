@@ -4,7 +4,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import WalletConnectDialog from "@/components/wallet-connect-dialog";
-import { InternetIdentity } from "@nfid/identitykit";
 import { useTranslation } from "react-i18next";
 import { Feather, Lock, Zap, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -63,7 +62,7 @@ export const UnauthenticatedContent = ({
         ...option,
         onClick: () => {
             setIsWalletDialogOpen(false);
-            if (option.id === InternetIdentity.id) connectToWallet(InternetIdentity.id);
+            connectToWallet(option.id);
         },
     }));
 
