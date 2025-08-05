@@ -20,18 +20,15 @@ pub mod action;
 pub mod action_intent;
 pub mod intent;
 pub mod intent_transaction;
-// pub mod intent_v2;
 pub mod link;
 pub mod link_action;
+pub mod processing_transaction;
+pub mod request_lock;
 pub mod transaction;
-// pub mod transaction_v2;
 pub mod user;
 pub mod user_action;
 pub mod user_link;
 pub mod user_wallet;
-
-pub mod processing_transaction;
-pub mod request_lock;
 
 
 const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
