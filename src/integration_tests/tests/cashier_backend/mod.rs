@@ -2,7 +2,7 @@ use candid::Principal;
 
 use crate::utils::with_pocket_ic_context;
 
-pub mod create_link;
+pub mod link;
 
 /// Tests that the cashier backend canister can be deployed.
 #[tokio::test]

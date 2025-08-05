@@ -1,14 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::{user::v1::User, user_wallet::v1::UserWallet};
+use cashier_types::{
+    dto::user::UserDto,
+    repository::{user::v1::User, user_wallet::v1::UserWallet},
+};
 use ic_cdk::api::msg_caller;
 use uuid::Uuid;
 
-use crate::{
-    core::user::types::UserDto,
-    repositories::{self},
-};
+use crate::repositories::{self};
 
 pub mod v2;
 

@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-
 #[cfg(test)]
 mod tests {
     use crate::services::{
@@ -15,7 +14,7 @@ mod tests {
         transaction_manager::{action::ActionService, validate::ValidateService},
     };
 
-    use cashier_types::{ActionState, IntentState};
+    use cashier_types::repository::{ActionState, IntentState};
     use faux::when;
 
     #[test]

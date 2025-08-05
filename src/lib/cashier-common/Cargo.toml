@@ -7,7 +7,4 @@ version.workspace = true
 [dependencies]
 candid = { workspace = true }
 serde = { workspace = true }
-cashier-types = { workspace = true }
-icrc-ledger-types  = { workspace = true }
-ic-cdk = { workspace = true }
-thiserror = { workspace = true }
+serde_bytes = { workspace = true }

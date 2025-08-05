@@ -25,7 +25,8 @@ dist/
 
 # environment variables
 .env
-.env.*
+.env.local
+# .env.*
 artifacts
 
 # AI

@@ -16,7 +16,7 @@ mod tests {
     use std::str::FromStr;
 
     use candid::Principal;
-    use cashier_types::{Action, ActionState, ActionType};
+    use cashier_types::repository::{Action, ActionState, ActionType};
     use faux::when;
     use uuid::Uuid;
 

@@ -5,7 +5,7 @@ use std::fmt;
 use std::{collections::HashMap, str::FromStr};
 
 use candid::{CandidType, Principal};
-use cashier_types::{
+use cashier_types::repository::{
     asset_info::AssetInfo,
     common::Chain,
     intent::v2::{Intent, IntentType},

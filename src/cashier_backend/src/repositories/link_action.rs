@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::LINK_ACTION_STORE;
-use cashier_types::{keys::LinkActionKey, link_action::v1::LinkAction};
+use cashier_types::repository::{keys::LinkActionKey, link_action::v1::LinkAction};
 
 #[derive(Clone)]
 

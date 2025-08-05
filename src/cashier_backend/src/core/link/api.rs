@@ -1,21 +1,24 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::core::guard::is_not_anonymous;
 use crate::repositories::rate_limit::RateLimitRepository;
 use crate::services::link::traits::LinkValidation;
 use candid::Principal;
+use cashier_types::dto::action::{
+    ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
+    ProcessActionInput, UpdateActionInput,
+};
+use cashier_types::dto::link::{
+    CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, LinkGetUserStateInput,
+    LinkGetUserStateOutput, LinkUpdateUserStateInput, UpdateLinkInput,
+};
+use cashier_types::error::CanisterError;
+use cashier_types::service::link::{PaginateInput, PaginateResult};
 use ic_cdk::{query, update};
 
 use crate::services::link::traits::LinkUserStateMachine;
 use crate::{
-    core::{
-        action::types::{
-            ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
-            ProcessActionInput,
-        },
-        guard::is_not_anonymous,
-        GetLinkOptions, GetLinkResp, LinkDto, PaginateResult, UpdateLinkInput,
-    },
     error,
     services::{
         action::ActionService,
@@ -25,13 +28,7 @@ use crate::{
         },
         rate_limit::RateLimitService,
     },
-    types::{api::PaginateInput, error::CanisterError},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
-};
-
-use super::types::{
-    CreateLinkInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkUpdateUserStateInput,
-    UpdateActionInput,
 };
 
 /// Retrieves a paginated list of links created by the authenticated caller.
