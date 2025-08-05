@@ -15,8 +15,8 @@ import {
     ProcessActionInput,
     UpdateActionInput,
 } from "../../../../declarations/cashier_backend/cashier_backend.did";
-import { Actor, HttpAgent, Identity } from "@dfinity/agent";
-import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
+import { Actor, Identity } from "@dfinity/agent";
+import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import {
     LinkGetUserStateInputModel,
@@ -34,6 +34,7 @@ import { mapActionModel } from "../types/mapper/action.service.mapper";
 import { FeeModel } from "../types/intent.service.types";
 import { FEE_TYPE } from "../types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
+import { getAgent } from "@/utils/agent";
 
 export interface ResponseLinksModel {
     data: LinkModel[];
@@ -86,7 +87,7 @@ class LinkService {
     private actor: _SERVICE;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        const agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        const agent = getAgent(identity);
         this.actor = Actor.createActor(idlFactory, {
             agent,
             canisterId: BACKEND_CANISTER_ID,
@@ -109,11 +110,11 @@ class LinkService {
         };
         responseModel.data = response.data
             ? response.data.map((link: LinkDto) => {
-                  return {
-                      link: mapPartialDtoToLinkDetailModel(link),
-                      action_create: undefined,
-                  };
-              })
+                return {
+                    link: mapPartialDtoToLinkDetailModel(link),
+                    action_create: undefined,
+                };
+            })
             : [];
         return responseModel;
     }
@@ -124,10 +125,10 @@ class LinkService {
                 linkId,
                 actionType
                     ? [
-                          {
-                              action_type: actionType,
-                          },
-                      ]
+                        {
+                            action_type: actionType,
+                        },
+                    ]
                     : [],
             ),
         );

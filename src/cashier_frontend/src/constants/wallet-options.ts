@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { ICP_LOGO } from "@/const";
+import { FEATURE_FLAGS, IC_INTERNET_IDENTITY_PROVIDER, ICP_LOGO } from "@/const";
 import { IdentityKitTransportType, InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
 
 // Wallet options enum
@@ -21,32 +21,48 @@ export const GoogleSigner = {
     icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAALlSURBVHgBtVbPSxRRHP++N7Noq7IDaRhFjYRUELSChtChkRK8tUsYSAetox1cT0ES6SE6efAfaJUO/ZLcjqHbjhcRFZwOESHU1CEjoZ10WXXmzbzeU3cd15ndrfQDu/v2+33v8/nO9/ve+w6CIkhHFImsZnochK8goGFmkrmdjQ2KkM6GKgLhTd3UrOrHgfyJs32AnBgFJEFp6IAD0WOTM1pJgXR7tVfqInApwKZ5R7FT5AIvEgiuUZj5+cC6dVr2rFICSSOyraomkkDoxh7B56wJ58O+lUNG7tTMvK5fIA4rbHZeii4CuRXXhZs3JEmdJLwEui/bm6mu/5JnoAlcXNE5Lb9A1Cz9ExAA8VdNCW8dOFaXI8PqfM/DkvQc4WnFpC03PeRjcKqtsPLdK5BIBy+/tb0QSKaDl1kwCHAmFp12PFBVTA91QGL4piAH+KhQUm5+ZMFsPoHP9QY5mVCEK10Z8nHwvbZhk6bZbl819CPJhJLwyrwsOwSiSem+6cI+YXE1kN0TSYfAW0cAKKQDyAfeNNzn6AmSzyhSAq5hgVnkcoQuh2gMA5bW9c+NQTl4/nLrHaa2Ax9RQh4CPlP9XydpXJkhHrhn3WvFIWCEXU4wPMRmmMdJ5fTGtyMC6Wf1zfkDkRmJEsV23Ac9DdNem9J+O4TmhGH0ZXM5ozXdoc4Gc6Z+d7ED8N6ySIet6LRGSYT82l7Me0Bqc/Rbw6O7pE46GXpflIB7B7XBQaejVfro7oIkQx08Vez94pxx+wF8am6sLKOHhSAqnYdkNDMJc11fjvKvRCtvPhND0WUqRsDrqaxbfMui2HCfVKyCU0uP03R0Qk+PQ/MXmF2gRrr1g1PG9k9XEeAWqK5fq8z8/VzkdH/Q9n87RBUtEDCUc7XQMzQzr6eppkd9hXjH5h/DoGsrZob85vqKEXCxZ1vLsXuE7G0QjnwDHn8mZiw2P8OjJVlCYi60XhNJ1kuKmlMxvtGrfXyDI3RJXwL/AHlfXPdns6LXAAAAAElFTkSuQmCC",
 };
 
+export const LocalInternetIdentity = {
+    id: "LocalInternetIdentity",
+    providerUrl: IC_INTERNET_IDENTITY_PROVIDER,
+    transportType: IdentityKitTransportType.INTERNET_IDENTITY,
+    label: "Local Internet Identity",
+    icon: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI0LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCAzNTguOCAxNzkuOCIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgMzU4LjggMTc5Ljg7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPHN0eWxlIHR5cGU9InRleHQvY3NzIj4KCS5zdDB7ZmlsbDp1cmwoI1NWR0lEXzFfKTt9Cgkuc3Qxe2ZpbGw6dXJsKCNTVkdJRF8yXyk7fQoJLnN0MntmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtmaWxsOiMyOUFCRTI7fQo8L3N0eWxlPgo8bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjIyNC43ODUzIiB5MT0iMjU3Ljc1MzYiIHgyPSIzNDguMDY2MyIgeTI9IjEzMy40NTgxIiBncmFkaWVudFRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIC0xIDAgMjcyKSI+Cgk8c3RvcCAgb2Zmc2V0PSIwLjIxIiBzdHlsZT0ic3RvcC1jb2xvcjojRjE1QTI0Ii8+Cgk8c3RvcCAgb2Zmc2V0PSIwLjY4NDEiIHN0eWxlPSJzdG9wLWNvbG9yOiNGQkIwM0IiLz4KPC9saW5lYXJHcmFkaWVudD4KPHBhdGggY2xhc3M9InN0MCIgZD0iTTI3MS42LDBjLTIwLDAtNDEuOSwxMC45LTY1LDMyLjRjLTEwLjksMTAuMS0yMC41LDIxLjEtMjcuNSwyOS44YzAsMCwxMS4yLDEyLjksMjMuNSwyNi44CgljNi43LTguNCwxNi4yLTE5LjgsMjcuMy0zMC4xYzIwLjUtMTkuMiwzMy45LTIzLjEsNDEuNi0yMy4xYzI4LjgsMCw1Mi4yLDI0LjIsNTIuMiw1NC4xYzAsMjkuNi0yMy40LDUzLjgtNTIuMiw1NC4xCgljLTEuNCwwLTMtMC4yLTUtMC42YzguNCwzLjksMTcuNSw2LjcsMjYsNi43YzUyLjgsMCw2My4yLTM2LjUsNjMuOC0zOS4xYzEuNS02LjcsMi40LTEzLjcsMi40LTIwLjlDMzU4LjYsNDAuNCwzMTkuNiwwLDI3MS42LDB6Ii8+CjxsaW5lYXJHcmFkaWVudCBpZD0iU1ZHSURfMl8iIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMTMzLjk0NjEiIHkxPSIxMDYuNDI2MiIgeDI9IjEwLjY2NTMiIHkyPSIyMzAuNzIxNSIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxIDAgMCAtMSAwIDI3MikiPgoJPHN0b3AgIG9mZnNldD0iMC4yMSIgc3R5bGU9InN0b3AtY29sb3I6I0VEMUU3OSIvPgoJPHN0b3AgIG9mZnNldD0iMC44OTI5IiBzdHlsZT0ic3RvcC1jb2xvcjojNTIyNzg1Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik04Ny4xLDE3OS44YzIwLDAsNDEuOS0xMC45LDY1LTMyLjRjMTAuOS0xMC4xLDIwLjUtMjEuMSwyNy41LTI5LjhjMCwwLTExLjItMTIuOS0yMy41LTI2LjgKCWMtNi43LDguNC0xNi4yLDE5LjgtMjcuMywzMC4xYy0yMC41LDE5LTM0LDIzLjEtNDEuNiwyMy4xYy0yOC44LDAtNTIuMi0yNC4yLTUyLjItNTQuMWMwLTI5LjYsMjMuNC01My44LDUyLjItNTQuMQoJYzEuNCwwLDMsMC4yLDUsMC42Yy04LjQtMy45LTE3LjUtNi43LTI2LTYuN0MxMy40LDI5LjYsMyw2Ni4xLDIuNCw2OC44QzAuOSw3NS41LDAsODIuNSwwLDg5LjdDMCwxMzkuNCwzOSwxNzkuOCw4Ny4xLDE3OS44eiIvPgo8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMTI3LjMsNTkuN2MtNS44LTUuNi0zNC0yOC41LTYxLTI5LjNDMTguMSwyOS4yLDQsNjQuMiwyLjcsNjguN0MxMiwyOS41LDQ2LjQsMC4yLDg3LjIsMAoJYzMzLjMsMCw2NywzMi43LDkxLjksNjIuMmMwLDAsMC4xLTAuMSwwLjEtMC4xYzAsMCwxMS4yLDEyLjksMjMuNSwyNi44YzAsMCwxNCwxNi41LDI4LjgsMzFjNS44LDUuNiwzMy45LDI4LjIsNjAuOSwyOQoJYzQ5LjUsMS40LDYzLjItMzUuNiw2My45LTM4LjRjLTkuMSwzOS41LTQzLjYsNjguOS04NC42LDY5LjFjLTMzLjMsMC02Ny0zMi43LTkyLTYyLjJjMCwwLjEtMC4xLDAuMS0wLjEsMC4yCgljMCwwLTExLjItMTIuOS0yMy41LTI2LjhDMTU2LjIsOTAuOCwxNDIuMiw3NC4yLDEyNy4zLDU5Ljd6IE0yLjcsNjkuMWMwLTAuMSwwLTAuMiwwLjEtMC4zQzIuNyw2OC45LDIuNyw2OSwyLjcsNjkuMXoiLz4KPC9zdmc+Cg==",
+};
+
 // Wallet option configurations used in different parts of the app
 export const walletDialogConfigOptions = [
     {
         id: "nfid",
         name: "NFID Wallet",
         icon: NFIDW.icon!,
-        onClick: () => {}, // This will be set by the component
+        onClick: () => { }, // This will be set by the component
     },
     {
         id: "stoic",
         name: "Stoic",
         icon: Stoic.icon!,
-        onClick: () => {}, // This will be set by the component
+        onClick: () => { }, // This will be set by the component
     },
     // Uncomment when Plug wallet support is added
 ];
 
 // Internet Identity wallet option for the header
-export const headerWalletOptions = [
+export const headerWalletOptions = FEATURE_FLAGS
+    .ENABLE_LOCAL_IDENTITY_PROVIDER ? [
+    {
+        id: "LocalInternetIdentity",
+        name: "Internet Identity",
+        icon: "/icpLogo.png",
+        onClick: () => { },
+    },
+] : [
     {
         id: "InternetIdentity",
         name: "Internet Identity",
         icon: "/icpLogo.png",
-        onClick: () => {}, // This will be set by the component
+        onClick: () => { }, // This will be set by the component
     },
-];
+]
 
 // Function to get wallet icon (string or React component)
 export const getWalletIcon = (walletOption: WALLET_OPTIONS): string | React.ReactNode => {
@@ -63,7 +79,10 @@ export const getWalletIcon = (walletOption: WALLET_OPTIONS): string | React.Reac
 };
 
 // Default wallet signers
-export const defaultSigners = [InternetIdentity];
+export const defaultSigners = FEATURE_FLAGS
+    .ENABLE_LOCAL_IDENTITY_PROVIDER ? [LocalInternetIdentity] : [InternetIdentity];
 
 // All available wallet signers
-export const allWalletSigners = [NFIDW, Stoic, GoogleSigner, InternetIdentity];
+export const allWalletSigners = [NFIDW, Stoic, GoogleSigner, InternetIdentity].concat(
+    FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? [LocalInternetIdentity] : [],
+);
