@@ -12,4 +12,3 @@ pub fn is_not_anonymous() -> Result<(), String> {
     }
     Ok(())
 }
-

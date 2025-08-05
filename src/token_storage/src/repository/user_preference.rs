@@ -29,5 +29,4 @@ impl UserPreferenceRepository {
             store.insert(id.to_string(), user_preference);
         });
     }
-
 }

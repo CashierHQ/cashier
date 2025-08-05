@@ -130,7 +130,6 @@ pub trait IntentAssembler {
         link_id: &str,
         action_type: &ActionType,
     ) -> Result<Vec<Asset>, CanisterError>;
-
 }
 
 // ---------- 4. Validation helpers ----------
@@ -152,6 +151,6 @@ pub trait LinkValidation {
     fn is_link_creator(&self, caller: &str, link_id: &str) -> bool;
 
     async fn check_link_asset_left(&self, link: &Link) -> Result<bool, CanisterError>;
-    
+
     fn validate_add_asset_with_link_type(&self, link: &Link, asset_infos: &[AssetInfo]) -> bool;
 }

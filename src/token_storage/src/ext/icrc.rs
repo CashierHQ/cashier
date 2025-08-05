@@ -478,5 +478,4 @@ impl Service {
         let parsed_res: Result<String, CandidDecodeFailed> = res.candid();
         parsed_res.map_err(CanisterError::from)
     }
-
 }

@@ -42,7 +42,6 @@ pub struct RegistryToken {
     pub enabled_by_default: bool, // Indicates if the token is enabled by default
 }
 
-
 // User's token preference
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]

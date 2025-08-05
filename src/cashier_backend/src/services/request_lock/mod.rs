@@ -95,5 +95,4 @@ impl RequestLockService {
         self.request_lock_repository.delete(key);
         Ok(())
     }
-
 }

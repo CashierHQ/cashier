@@ -17,7 +17,6 @@ pub struct TokenDto {
     pub details: ChainTokenDetails, // Use the enum for chain-specific details
 }
 
-
 // Conversion from RegistryToken to TokenDto
 use super::token::RegistryToken;
 impl From<RegistryToken> for TokenDto {

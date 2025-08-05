@@ -37,7 +37,6 @@ impl TransactionRepository {
         });
     }
 
-
     pub fn batch_get(&self, ids: Vec<TransactionKey>) -> Vec<Transaction> {
         TRANSACTION_STORE
             .with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
@@ -46,5 +45,4 @@ impl TransactionRepository {
     pub fn get(&self, id: &TransactionKey) -> Option<Transaction> {
         TRANSACTION_STORE.with_borrow(|store| store.get(id))
     }
-
 }

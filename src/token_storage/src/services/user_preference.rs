@@ -26,5 +26,4 @@ impl UserPreferenceService {
     pub fn get_preferences(&self, user_id: &str) -> UserPreference {
         self.repository.get(user_id)
     }
-
 }

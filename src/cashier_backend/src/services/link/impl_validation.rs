@@ -276,5 +276,4 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
 
         Ok(false)
     }
-
 }

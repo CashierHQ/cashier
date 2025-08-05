@@ -46,7 +46,6 @@ pub struct LinkService<E: IcEnvironment + Clone> {
 
 #[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment + Clone> LinkService<E> {
-
     pub fn get_instance() -> Self {
         Self {
             link_repository: repositories::link::LinkRepository::new(),
@@ -307,5 +306,4 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         Ok(())
     }
-
 }

@@ -45,5 +45,4 @@ impl IntentRepository {
     pub fn batch_get(&self, ids: Vec<String>) -> Vec<Intent> {
         INTENT_STORE.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
-
 }

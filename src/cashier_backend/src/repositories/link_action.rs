@@ -69,5 +69,4 @@ impl LinkActionRepository {
             link_actions
         })
     }
-
 }

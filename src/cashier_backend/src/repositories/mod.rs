@@ -30,7 +30,6 @@ pub mod user_action;
 pub mod user_link;
 pub mod user_wallet;
 
-
 const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
 const USER_WALLET_MEMORY_ID: MemoryId = MemoryId::new(2);
 const USER_LINK_MEMORY_ID: MemoryId = MemoryId::new(3);

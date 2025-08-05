@@ -5,18 +5,13 @@ use std::marker::PhantomData;
 
 use cashier_types::{
     error::CanisterError,
-    repository::{
-        common::Chain,
-        intent::v2::Intent,
-        transaction::v2::Transaction,
-    },
+    repository::{common::Chain, intent::v2::Intent, transaction::v2::Transaction},
 };
-use ic::{intent::IcIntentAdapter};
+use ic::intent::IcIntentAdapter;
 
 use crate::utils::runtime::IcEnvironment;
 
 pub mod ic;
-
 
 /// Specialization for converting intents to transactions
 pub trait IntentAdapter {
@@ -40,7 +35,6 @@ impl<E: IcEnvironment + Clone> ActionAdapterImpl<E> {
             _phantom: PhantomData,
         }
     }
-
 }
 
 pub struct IntentAdapterImpl<E: IcEnvironment + Clone> {

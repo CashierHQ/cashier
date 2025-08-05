@@ -414,7 +414,6 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
 
         Ok(assets)
     }
-
 }
 
 // --- helper method implementations ---
@@ -445,7 +444,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         intent
     }
 
-        fn look_up_intent(
+    fn look_up_intent(
         &self,
         link: &Link,
         action_type: &ActionType,
@@ -582,5 +581,4 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
         Ok(Some(intents))
     }
-
 }

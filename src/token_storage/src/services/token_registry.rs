@@ -13,7 +13,6 @@ use crate::{
     types::{ChainTokenDetails, RegistryToken, TokenId, TokenRegistryMetadata},
 };
 
-
 pub struct TokenRegistryService {
     registry_repository: TokenRegistryRepository,
     metadata_repository: TokenRegistryMetadataRepository,
@@ -37,7 +36,6 @@ impl TokenRegistryService {
     pub fn get_metadata(&self) -> TokenRegistryMetadata {
         self.metadata_repository.get()
     }
-
 
     /// Get a token from the registry by ID
     pub fn get_token(&self, token_id: &TokenId) -> Option<RegistryToken> {
@@ -179,5 +177,4 @@ impl TokenRegistryService {
               // )),
         }
     }
-
 }

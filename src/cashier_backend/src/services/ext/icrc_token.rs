@@ -448,7 +448,7 @@ impl Service {
 
         parsed_res.map_err(CanisterError::from)
     }
-    
+
     pub async fn icrc_2_transfer_from(
         &self,
         arg0: &TransferFromArgs,

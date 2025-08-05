@@ -57,5 +57,4 @@ impl BalanceCacheRepository {
                 .unwrap_or_default()
         })
     }
-
 }
