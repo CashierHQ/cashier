@@ -3,25 +3,25 @@
 
 import { fileURLToPath, URL } from "url";
 import react from "@vitejs/plugin-react";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import environment from "vite-plugin-environment";
 import dotenv from "dotenv";
 import tailwindcss from "tailwindcss";
 import path, { resolve } from "path";
 import crypto from "crypto";
+import packageJson from "./package.json";
 
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
     // Determine which .env file to use based on mode
     // Supports: .env.local, .env.staging, .env.production
     const envFile = `.env.${mode}`;
-    const envPath = resolve(__dirname, envFile);
+    const envPath = resolve(import.meta.dirname, envFile);
 
     // Load the environment variables from the determined .env file
     dotenv.config({ path: envPath });
 
     // Generate build information
     const timestamp = new Date().toISOString();
-    const packageJson = require("./package.json");
     const version = packageJson.version;
 
     // Generate a build hash based on timestamp
