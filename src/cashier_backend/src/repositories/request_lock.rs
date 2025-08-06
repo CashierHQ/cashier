@@ -24,10 +24,6 @@ impl RequestLockRepository {
         });
     }
 
-    pub fn get(&self, key: &RequestLockKey) -> Option<RequestLock> {
-        REQUEST_LOCK_STORE.with_borrow(|store| store.get(key))
-    }
-
     pub fn delete(&self, key: &RequestLockKey) {
         REQUEST_LOCK_STORE.with_borrow_mut(|store| {
             store.remove(key);

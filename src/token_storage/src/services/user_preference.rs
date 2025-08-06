@@ -26,23 +26,4 @@ impl UserPreferenceService {
     pub fn get_preferences(&self, user_id: &str) -> UserPreference {
         self.repository.get(user_id)
     }
-
-    /// Set user preferences
-    pub fn set_preferences(&self, user_id: &str, preferences: UserPreference) {
-        if self.repository.has_preferences(user_id) {
-            self.repository.update(user_id, preferences);
-        } else {
-            self.repository.add(user_id, preferences);
-        }
-    }
-
-    /// Reset user preferences to default
-    pub fn reset_preferences(&self, user_id: &str) {
-        self.repository.reset(user_id);
-    }
-
-    /// Check if user has preferences
-    pub fn has_preferences(&self, user_id: &str) -> bool {
-        self.repository.has_preferences(user_id)
-    }
 }
