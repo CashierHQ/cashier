@@ -20,7 +20,7 @@ cd "$(dirname "$0")/../src/cashier_frontend" || exit
 if [ "$NETWORK" == "ic" ]; then
   # Production build
   echo "Building for production..."
-  npm run build:prod
+  npm run build:production
 elif [ "$NETWORK" == "staging" ]; then
   # Staging build
   echo "Building for staging..."
