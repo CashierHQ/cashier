@@ -29,7 +29,6 @@ impl LinkTestContext {
         }
     }
 
-    // 
     pub async fn setup(&mut self, ctx: &PocketIcTestContext, caller: &Principal) -> &mut Self {
         // Initialize the cashier backend client with the provided caller
         self.cashier_backend_client = Some(ctx.new_cashier_backend_client(*caller));
