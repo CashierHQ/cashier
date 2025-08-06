@@ -8,7 +8,7 @@ import { ChevronLeft, Link, Wifi, X } from "lucide-react";
 import { IoIosClose } from "react-icons/io";
 import { useTranslation } from "react-i18next";
 
-export type InformationOnAssetDrawerProps = {
+type InformationOnAssetDrawerProps = {
     open?: boolean;
     onClose?: () => void;
 };

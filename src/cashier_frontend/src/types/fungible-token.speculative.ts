@@ -20,7 +20,7 @@ export type TokenModel = {
     amount?: bigint;
 };
 
-export interface TokenMetadata {
+interface TokenMetadata {
     fee?: bigint;
     logo?: string;
     decimals?: number;
@@ -28,20 +28,20 @@ export interface TokenMetadata {
     symbol?: string;
 }
 
-export interface TokenBalance {
+interface TokenBalance {
     amount?: bigint;
 }
 
-export interface TokenPrice {
+interface TokenPrice {
     usdEquivalent?: number;
     usdConversionRate?: number;
 }
 
 export type TokenMetadataMap = Record<string, TokenMetadata>;
 export type TokenBalanceMap = Record<string, TokenBalance>;
-export type TokenPriceMap = Record<string, number>;
+type TokenPriceMap = Record<string, number>;
 
-export const mapTokenModelToFungibleToken = (
+const mapTokenModelToFungibleToken = (
     token: TokenModel,
     fee: bigint | undefined = undefined,
     usdEquivalent: number | undefined = undefined,

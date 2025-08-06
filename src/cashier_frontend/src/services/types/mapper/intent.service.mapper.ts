@@ -42,7 +42,7 @@ export const mapIntentDtoToIntentModel = (dto: IntentDto): IntentModel => {
     };
 };
 
-export const toCanisterCallRequest = (tx: TransactionModel) => {
+const toCanisterCallRequest = (tx: TransactionModel) => {
     return {
         canisterId: tx.canister_id,
         method: tx.method,

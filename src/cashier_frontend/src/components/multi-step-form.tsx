@@ -36,7 +36,7 @@ interface MultiStepFormHeaderProps {
     backButtonDisabled?: boolean;
 }
 
-export function MultiStepFormHeader({
+function MultiStepFormHeader({
     onClickBack = () => {},
     showIndicator = true,
     showHeader = true,
@@ -115,7 +115,7 @@ interface MultiStepFormItemsProps {
     disableAnimations?: boolean;
 }
 
-export function MultiStepFormItems({
+function MultiStepFormItems({
     children,
     disableAnimations = false,
 }: MultiStepFormItemsProps) {
@@ -160,7 +160,7 @@ interface MultiStepFormFooterProps {
     showFixedButton?: boolean;
 }
 
-export function MultiStepFormFooter({ showFixedButton = true }: MultiStepFormFooterProps) {
+function MultiStepFormFooter({ showFixedButton = true }: MultiStepFormFooterProps) {
     const { buttonState } = useLinkCreationFormStore();
 
     if (!showFixedButton) return null;
@@ -185,7 +185,7 @@ interface MultiStepFormItemProps {
     children: ReactNode;
 }
 
-export function MultiStepFormItem({ children }: MultiStepFormItemProps) {
+function MultiStepFormItem({ children }: MultiStepFormItemProps) {
     return <div className="flex flex-col flex-1">{children}</div>;
 }
 

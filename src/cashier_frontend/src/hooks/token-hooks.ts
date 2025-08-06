@@ -28,7 +28,7 @@ import { CHAIN } from "@/services/types/enum";
 /**
  * Response from tokenListQuery with combined token list data
  */
-export interface TokenListResponse {
+interface TokenListResponse {
     tokens: FungibleToken[];
     needUpdateVersion: boolean;
     perference: TokenFilters;
@@ -51,7 +51,7 @@ const TIME_CONSTANTS = {
 };
 
 // Centralized query keys for consistent caching
-export const TOKEN_QUERY_KEYS = {
+const TOKEN_QUERY_KEYS = {
     all: (principalId?: string) => ["tokens", principalId] as const,
     metadata: () => [...TOKEN_QUERY_KEYS.all(), "metadata"] as const,
     balances: (principalId?: string) =>
@@ -65,7 +65,7 @@ export const TOKEN_QUERY_KEYS = {
  * @param chain - The Chain object (e.g. { 'IC': null })
  * @returns The string representation of the chain (e.g. "IC")
  */
-export function chainToString(chain: Chain): string {
+function chainToString(chain: Chain): string {
     // Get the first key of the object, which represents the chain name
     const chainKey = Object.keys(chain)[0];
     return chainKey || "";
@@ -125,7 +125,7 @@ export function useTokenListQuery() {
     });
 }
 
-export function useSyncTokenList(identity: Identity | undefined) {
+function useSyncTokenList(identity: Identity | undefined) {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async () => {
@@ -231,7 +231,7 @@ export function useTokenPricesQuery() {
 }
 
 // Worker for fetching token balances
-export function useTokenBalancesWorker({
+function useTokenBalancesWorker({
     onProgress,
 }: {
     onProgress?: (processed: number, total: number) => void;

@@ -18,7 +18,7 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
  * Hook for handling form submissions in link detail forms
  * (SendTipForm, SendAirdropForm, SendTokenBasketForm, ReceivePaymentForm)
  */
-export const useFormSubmissionHandler = (link: LinkDetailModel) => {
+const useFormSubmissionHandler = (link: LinkDetailModel) => {
     const { handleFormSubmission } = useSubmissionHandler(link);
 
     const submitForm = useCallback(

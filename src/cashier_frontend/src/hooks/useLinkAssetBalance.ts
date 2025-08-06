@@ -10,7 +10,7 @@ import { parse as uuidParse } from "uuid";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-export const linkIdToSubaccount = (id: string) => {
+const linkIdToSubaccount = (id: string) => {
     const uuidBytes = uuidParse(id);
     // DO NOT CHANGE THE ORDER OF THE BYTES
     const subaccount = new Uint8Array(32);
@@ -23,7 +23,7 @@ export type BalanceItem = {
     balance: bigint;
 };
 
-export type UseLinkAssetBalanceReturn = {
+type UseLinkAssetBalanceReturn = {
     balances: BalanceItem[];
     loading: boolean;
     error: string | null;
@@ -31,7 +31,7 @@ export type UseLinkAssetBalanceReturn = {
 };
 
 // Query keys for link asset balances
-export const LINK_ASSET_BALANCE_QUERY_KEYS = {
+const LINK_ASSET_BALANCE_QUERY_KEYS = {
     all: ["linkAssetBalance"] as const,
     balances: (linkId: string) =>
         [...LINK_ASSET_BALANCE_QUERY_KEYS.all, "balances", linkId] as const,

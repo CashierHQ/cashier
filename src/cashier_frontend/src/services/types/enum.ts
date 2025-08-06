@@ -2,8 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 export enum TEMPLATE {
-    LEFT = "Left",
-    RIGHT = "Right",
     CENTRAL = "Central",
 }
 
@@ -47,7 +45,7 @@ export enum INTENT_TYPE {
     TRANSFER = "Transfer",
 }
 
-export enum LINK_ASSET_TYPE {
+enum LINK_ASSET_TYPE {
     CASHIER_FEE = "CashierFee",
     ASSET_ADDED = "Asset",
 }
@@ -240,7 +238,5 @@ export const getAssetLabelForLinkType = (linkType: string, address: string) => {
 };
 
 export enum LINK_USER_STATE {
-    NO_STATE = "No_state",
-    CHOOSE_WALLET = "User_state_choose_wallet",
     COMPLETE = "User_state_completed_link",
 }

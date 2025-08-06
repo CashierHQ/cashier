@@ -4,7 +4,7 @@
 import type { JsonValue } from "@dfinity/candid";
 import { Channel, JsonError, JsonRequest, JsonResponse, Transport } from "@slide-computer/signer";
 
-export class SignerError extends Error {
+class SignerError extends Error {
     public code: number;
     public data?: JsonValue;
 
@@ -23,7 +23,7 @@ const wrapTransportError = (error: unknown) =>
         message: error instanceof Error ? error.message : "Network error",
     });
 
-export interface SignerOptions<T extends Transport> {
+interface SignerOptions<T extends Transport> {
     /**
      * The transport used to send and receive messages
      */

@@ -6,7 +6,7 @@ import { LINK_INTENT_ASSET_LABEL, CHAIN } from "@/services/types/enum";
 import { AssetSelectItem } from "../asset-select";
 
 // Define a single asset schema
-export const assetSchema = z.object({
+const assetSchema = z.object({
     tokenAddress: z.string().min(1, { message: "Asset is required" }),
     amount: z.bigint(),
     label: z.union([z.nativeEnum(LINK_INTENT_ASSET_LABEL), z.string()]).optional(),
@@ -20,7 +20,7 @@ export const linkDetailsFormSchema = z.object({
 });
 
 // For backward compatibility with existing code
-export interface LinkDetailsFormUI {
+interface LinkDetailsFormUI {
     // These fields will be deprecated in favor of assets array
     tokenAddress?: string;
     amount?: bigint;
@@ -28,7 +28,7 @@ export interface LinkDetailsFormUI {
     chain?: CHAIN;
 }
 
-export type Asset = z.infer<typeof assetSchema>;
+type Asset = z.infer<typeof assetSchema>;
 export type LinkDetailsFormSchema = z.infer<typeof linkDetailsFormSchema>;
 
 /**

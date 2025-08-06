@@ -16,7 +16,7 @@ export interface TokenFilters {
 }
 
 // Helper function to map backend Chain to frontend Chain
-export const mapBackendChainToFrontend = (chain: BackendChain): Chain => {
+const mapBackendChainToFrontend = (chain: BackendChain): Chain => {
     if ("IC" in chain) {
         return Chain.IC;
     }
@@ -24,7 +24,7 @@ export const mapBackendChainToFrontend = (chain: BackendChain): Chain => {
     throw new Error(`Unsupported backend chain: ${JSON.stringify(chain)}`);
 };
 
-export const mapStringToFrontendChain = (chain: string): Chain => {
+const mapStringToFrontendChain = (chain: string): Chain => {
     switch (chain) {
         case "IC":
             return Chain.IC;
@@ -33,7 +33,7 @@ export const mapStringToFrontendChain = (chain: string): Chain => {
     }
 };
 
-export const mapChainToString = (chain: Chain): string => {
+const mapChainToString = (chain: Chain): string => {
     switch (chain) {
         case Chain.IC:
             return "IC";
@@ -42,7 +42,7 @@ export const mapChainToString = (chain: Chain): string => {
     }
 };
 
-export const mapStringToBackendChain = (chain: string): BackendChain => {
+const mapStringToBackendChain = (chain: string): BackendChain => {
     switch (chain) {
         case "IC":
             return { IC: null };

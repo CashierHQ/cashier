@@ -18,7 +18,7 @@ interface SignerState {
     reset: () => void;
 }
 
-export { WALLET_OPTIONS, GoogleSigner }; // Re-export for backward compatibility
+; // Re-export for backward compatibility
 
 export const useSignerStore = create<SignerState>((set) => ({
     signers: allWalletSigners,

@@ -18,7 +18,7 @@ export const mapIntentsStateToStatus = (state: INTENT_STATE | undefined): STATUS
     }
 };
 
-export const mapTransactionStateToStatus = (
+const mapTransactionStateToStatus = (
     state: TRANSACTION_STATE | undefined,
 ): STATUS | undefined => {
     switch (state) {

@@ -11,7 +11,7 @@ export const safeParseJSON = (arg: Record<string, unknown | undefined>): string 
     );
 };
 
-export type Response<T, E> =
+type Response<T, E> =
     | {
           ok: T;
       }
@@ -47,7 +47,7 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
     throw new Error("Invalid response");
 };
 
-export const resizeImage = (file: Blob): Promise<Blob> => {
+const resizeImage = (file: Blob): Promise<Blob> => {
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -76,7 +76,7 @@ export const resizeImage = (file: Blob): Promise<Blob> => {
     });
 };
 
-export const fileToBase64 = (file: Blob) => {
+const fileToBase64 = (file: Blob) => {
     return new Promise<string>((resolve, reject) => {
         const fileReader = new FileReader();
         fileReader.readAsDataURL(file);

@@ -390,10 +390,10 @@ export class FeeService {
 }
 
 // Export a singleton instance for easy use across the app
-export const feeService = new FeeService();
+const feeService = new FeeService();
 
 // Backward compatibility exports
-export const IntentHelperService = {
+const IntentHelperService = {
     getNetworkFee: (intent: IntentModel) => feeService.getNetworkFee(intent),
     getNetworkFeeMap: (intents: IntentModel[]) => feeService.getNetworkFeeMap(intents),
     calculateTotal: (intents: IntentModel[]) => feeService.calculateIntentsTotal(intents),

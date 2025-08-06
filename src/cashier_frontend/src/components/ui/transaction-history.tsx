@@ -10,7 +10,7 @@ import { MoveDownLeft, MoveUpRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TransactionRecord } from "@/types/transaction-record.speculative";
 
-export const TransactionHistory = forwardRef<HTMLUListElement, HTMLProps<HTMLUListElement>>(
+const TransactionHistory = forwardRef<HTMLUListElement, HTMLProps<HTMLUListElement>>(
     ({ className, ...props }, ref) => {
         return (
             <ul ref={ref} className={cn("flex flex-col gap-4 w-full py-4", className)} {...props} />
@@ -19,7 +19,7 @@ export const TransactionHistory = forwardRef<HTMLUListElement, HTMLProps<HTMLULi
 );
 TransactionHistory.displayName = "TransactionHistory";
 
-export interface TransactionHistoryItemBaseProps {
+interface TransactionHistoryItemBaseProps {
     icon?: ReactNode;
     text?: string;
     subtext?: string;
@@ -27,7 +27,7 @@ export interface TransactionHistoryItemBaseProps {
     usdEquivalent?: string;
 }
 
-export const TransactionHistoryItemBase = ({
+const TransactionHistoryItemBase = ({
     icon,
     text,
     subtext,
@@ -85,22 +85,22 @@ export function TransactionHistoryItemReceive({ record }: { record: TransactionR
     );
 }
 
-export interface TransactionHistoryItemProps extends ComponentProps<"li"> {
+interface TransactionHistoryItemProps extends ComponentProps<"li"> {
     record: TransactionRecord;
 }
 
-export const TransactionHistoryItem = ({ record, ...props }: TransactionHistoryItemProps) => {
+const TransactionHistoryItem = ({ record, ...props }: TransactionHistoryItemProps) => {
     const C = mapTransactionTypeToTransactionItemComponent(record.type);
 
     return <C record={record} />;
 };
 TransactionHistoryItem.displayName = "TransactionHistoryItem";
 
-export interface TransactionHistoryTimestampProps extends Omit<ComponentProps<"p">, "children"> {
+interface TransactionHistoryTimestampProps extends Omit<ComponentProps<"p">, "children"> {
     date: Date;
 }
 
-export const TransactionHistoryTimestamp = forwardRef<
+const TransactionHistoryTimestamp = forwardRef<
     HTMLParagraphElement,
     TransactionHistoryTimestampProps
 >(({ date, className, ...props }, ref) => {

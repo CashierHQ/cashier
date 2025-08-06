@@ -54,7 +54,7 @@ export function StateBadge({ state }: { state: string | undefined }) {
 }
 
 // Function to return formatted claim status text
-export function getClaimStatus(
+function getClaimStatus(
     useActionCounter: bigint | number,
     maxActionNumber: bigint | number,
 ): string {

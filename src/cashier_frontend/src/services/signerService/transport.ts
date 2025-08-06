@@ -16,7 +16,7 @@ export class AuthClientTransportError extends Error {
 
 type AuthClientCreateOptions = Parameters<typeof AuthClient.create>[0];
 
-export interface AuthClientTransportOptions {
+interface AuthClientTransportOptions {
     /**
      * Options used to create AuthClient instance
      */

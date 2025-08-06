@@ -28,7 +28,7 @@ export interface FormAsset {
     chain?: CHAIN;
 }
 
-export interface FlowResult<T = unknown> {
+interface FlowResult<T = unknown> {
     success: boolean;
     data?: T;
     error?: Error;

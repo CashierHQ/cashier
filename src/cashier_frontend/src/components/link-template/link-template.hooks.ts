@@ -8,16 +8,16 @@ import { DefaultValues, useForm, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { CarouselApi } from "../ui/carousel";
 
-export const linkTemplateSchema = z.object({
+const linkTemplateSchema = z.object({
     title: z
         .string()
         .min(5, "Link name must be at least 5 characters")
         .max(50, "Link name must be at most 50 characters"),
     linkType: z.string(),
 });
-export type LinkTemplateSchema = z.infer<typeof linkTemplateSchema>;
+type LinkTemplateSchema = z.infer<typeof linkTemplateSchema>;
 
-export function useLinkTemplateForm(defaultValues?: DefaultValues<LinkTemplateSchema>) {
+function useLinkTemplateForm(defaultValues?: DefaultValues<LinkTemplateSchema>) {
     const form = useForm<LinkTemplateSchema>({
         resolver: zodResolver(linkTemplateSchema),
         defaultValues: {
@@ -51,7 +51,7 @@ export function useCarousel() {
 
 const TEMPLATE_ORDER = [LINK_TYPE.SEND_TIP, LINK_TYPE.SEND_AIRDROP, LINK_TYPE.SEND_TOKEN_BASKET];
 
-export function useBindFormAndCarousel(
+function useBindFormAndCarousel(
     form: UseFormReturn<LinkTemplateSchema>,
     carousel: ReturnType<typeof useCarousel>,
     onChange: (data: { linkType: LINK_TYPE }) => void,
