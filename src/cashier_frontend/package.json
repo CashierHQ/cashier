@@ -11,7 +11,7 @@
         "build:local_dev": "tsc && vite build --mode local_dev",
         "build:dev": "tsc && vite build --mode dev",
         "build:staging": "tsc && vite build --mode staging",
-        "build:prod": "tsc && vite build --mode production",
+        "build:production": "tsc && vite build --mode production",
         "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
         "format:ci": "prettier --check \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
         "test": "jest",
