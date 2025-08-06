@@ -1,4 +1,4 @@
-use super::context::LinkTestContext;
+use super::fixture::LinkTestFixture;
 use crate::utils::principal::get_user_principal;
 use crate::utils::with_pocket_ic_context;
 
@@ -6,11 +6,12 @@ use crate::utils::with_pocket_ic_context;
 async fn should_create_link_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         let caller = get_user_principal("user1");
-        let mut context = LinkTestContext::new();
+        let fixture = LinkTestFixture::new(ctx, &caller).await;
 
-        context.setup(ctx, &caller).await.create_tip_link(ctx).await;
+        fixture.setup_user().await;
 
-        let link = context.link.as_ref().unwrap();
+        let link = fixture.create_tip_link(ctx).await;
+
         assert_eq!(link.link_type, Some("SendTip".to_string()));
         assert_eq!(link.template, Some("Central".to_string()));
         assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
@@ -38,15 +39,12 @@ async fn should_create_link_success() {
 async fn should_create_token_basket_link_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         let caller = get_user_principal("user1");
-        let mut context = LinkTestContext::new();
+        let fixture = LinkTestFixture::new(ctx, &caller).await;
 
-        context
-            .setup(ctx, &caller)
-            .await
-            .create_token_basket_link(ctx)
-            .await;
+        fixture.setup_user().await;
 
-        let link = context.link.as_ref().unwrap();
+        let link = fixture.create_token_basket_link(ctx).await;
+
         assert_eq!(link.link_type, Some("SendTokenBasket".to_string()));
         assert_eq!(link.template, Some("Central".to_string()));
         assert_eq!(link.asset_info.as_ref().unwrap().len(), 3);

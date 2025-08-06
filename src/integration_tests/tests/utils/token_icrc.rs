@@ -51,6 +51,16 @@ impl<C: CanisterClient> IcrcLedgerClient<C> {
 
         res
     }
+
+    pub async fn balance_of(
+        &self,
+        account: &Account,
+    ) -> Result<Nat, ic_mple_client::CanisterClientError> {
+        let balance: Result<Nat, ic_mple_client::CanisterClientError> =
+            self.client.query("icrc1_balance_of", (account,)).await;
+
+        balance
+    }
 }
 
 /// Deploys a single ICRC ledger canister with the specified parameters

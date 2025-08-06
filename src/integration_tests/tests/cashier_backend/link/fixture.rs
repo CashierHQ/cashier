@@ -12,65 +12,48 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::utils::{principal::get_user_principal, PocketIcTestContext};
 
-pub struct LinkTestContext {
-    pub link: Option<LinkDto>,
-    pub user: Option<UserDto>,
-    pub action: Option<ActionDto>,
+pub struct LinkTestFixture {
     pub cashier_backend_client: Option<CashierBackendClient<PocketIcClient>>,
 }
 
-impl LinkTestContext {
-    pub fn new() -> Self {
-        Self {
-            link: None,
-            user: None,
-            action: None,
-            cashier_backend_client: None,
-        }
-    }
-
-    // This function is used to setup the test context.
-    pub async fn setup(&mut self, ctx: &PocketIcTestContext, caller: &Principal) -> &mut Self {
+impl LinkTestFixture {
+    pub async fn new(ctx: &PocketIcTestContext, caller: &Principal) -> Self {
         // Initialize the cashier backend client with the provided caller
-        self.cashier_backend_client = Some(ctx.new_cashier_backend_client(*caller));
+        let cashier_backend_client = Some(ctx.new_cashier_backend_client(*caller));
 
         // call twice for `raw_rand`` work or else `raw_rand``` api will return error
         // more info https://forum.dfinity.org/t/pocket-ic-support-for-management-canister-calls-and-timers/25676/2
         ctx.advance_time(Duration::from_secs(1)).await;
         ctx.advance_time(Duration::from_secs(1)).await;
 
-        // Create user
-        let user = self
-            .cashier_backend_client
+        Self {
+            cashier_backend_client,
+        }
+    }
+
+    pub async fn setup_user(&self) -> UserDto {
+        self.cashier_backend_client
             .as_ref()
             .unwrap()
             .create_user()
             .await
             .unwrap()
-            .unwrap();
-
-        self.user = Some(user);
-
-        self
+            .unwrap()
     }
 
     // This is generic function to create a link.
-    pub async fn create_link(&mut self, input: CreateLinkInput) -> &mut Self {
-        let link = self
-            .cashier_backend_client
+    pub async fn create_link(&self, input: CreateLinkInput) -> LinkDto {
+        self.cashier_backend_client
             .as_ref()
             .unwrap()
             .create_link(input)
             .await
             .unwrap()
-            .unwrap();
-
-        self.link = Some(link);
-        self
+            .unwrap()
     }
 
     // Pre-defined input for creating tip link.
-    pub async fn create_tip_link(&mut self, ctx: &PocketIcTestContext) -> &mut Self {
+    pub async fn create_tip_link(&self, ctx: &PocketIcTestContext) -> LinkDto {
         let input = CreateLinkInput {
             title: "Test Link".to_string(),
             link_use_action_max_count: 1,
@@ -86,12 +69,11 @@ impl LinkTestContext {
             link_image_url: None,
             description: Some("Test link for integration testing".to_string()),
         };
-        self.create_link(input).await;
-        self
+        self.create_link(input).await
     }
 
     // Pre-defined input for creating token basket link.
-    pub async fn create_token_basket_link(&mut self, ctx: &PocketIcTestContext) -> &mut Self {
+    pub async fn create_token_basket_link(&self, ctx: &PocketIcTestContext) -> LinkDto {
         let input = CreateLinkInput {
             title: "Test Link".to_string(),
             link_use_action_max_count: 1,
@@ -121,71 +103,52 @@ impl LinkTestContext {
             link_image_url: None,
             description: Some("Test link for integration testing".to_string()),
         };
-        self.create_link(input).await;
-        self
+        self.create_link(input).await
     }
 
     // This function is used to create an action.
-    pub async fn create_action(&mut self) -> &mut Self {
-        let created_action = self
-            .cashier_backend_client
+    pub async fn create_action(&self, link_id: &str) -> ActionDto {
+        self.cashier_backend_client
             .as_ref()
             .unwrap()
             .create_action(CreateActionInput {
-                link_id: self.link.as_ref().unwrap().id.clone(),
+                link_id: link_id.to_string(),
                 action_type: "CreateLink".to_string(),
             })
             .await
             .unwrap()
-            .unwrap();
-
-        self.action = Some(created_action);
-        self
+            .unwrap()
     }
 
     // This function is used to process an action.
     // This function will update the action state to "Action_state_processing". and return icrc-112 requests if any.
-    pub async fn process_action(&mut self) -> &mut Self {
-        let link_id = self.link.as_ref().unwrap().id.clone();
-        let action_id = self.action.as_ref().unwrap().id.clone();
-
-        let processing_action = self
-            .cashier_backend_client
+    pub async fn process_action(&self, link_id: &str, action_id: &str) -> ActionDto {
+        self.cashier_backend_client
             .as_ref()
             .unwrap()
             .process_action(ProcessActionInput {
-                action_id,
+                action_id: action_id.to_string(),
                 action_type: "CreateLink".to_string(),
-                link_id,
+                link_id: link_id.to_string(),
             })
             .await
             .unwrap()
-            .unwrap();
-
-        self.action = Some(processing_action);
-        self
+            .unwrap()
     }
 
     // This function is used to update an action. Only use for after execute icrc-112 requests.
-    pub async fn update_action(&mut self) -> &mut Self {
-        let link_id = self.link.as_ref().unwrap().id.clone();
-        let action_id = self.action.as_ref().unwrap().id.clone();
-
-        let updated_action = self
-            .cashier_backend_client
+    pub async fn update_action(&self, link_id: &str, action_id: &str) -> ActionDto {
+        self.cashier_backend_client
             .as_ref()
             .unwrap()
             .update_action(UpdateActionInput {
-                action_id,
-                link_id,
+                action_id: action_id.to_string(),
+                link_id: link_id.to_string(),
                 external: true,
             })
             .await
             .unwrap()
-            .unwrap();
-
-        self.action = Some(updated_action);
-        self
+            .unwrap()
     }
 
     // This function is used to airdrop ICP to the user.
@@ -194,7 +157,7 @@ impl LinkTestContext {
         ctx: &PocketIcTestContext,
         amount: u64,
         to_user: &Principal,
-    ) -> &mut Self {
+    ) -> () {
         let caller = get_user_principal("token_deployer");
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
@@ -209,8 +172,6 @@ impl LinkTestContext {
             .transfer(user_account, amount)
             .await
             .unwrap();
-
-        self
     }
 
     // This function is used to airdrop ICRC to the user.
@@ -220,7 +181,7 @@ impl LinkTestContext {
         token_name: &str,
         amount: u64,
         to_user: &Principal,
-    ) -> &mut Self {
+    ) -> () {
         let caller = get_user_principal("token_deployer");
         let icrc_ledger_client = ctx.new_icrc_ledger_client(token_name, caller);
 
@@ -233,7 +194,5 @@ impl LinkTestContext {
             .transfer(user_account, amount)
             .await
             .unwrap();
-
-        self
     }
 }

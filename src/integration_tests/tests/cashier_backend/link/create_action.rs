@@ -1,21 +1,20 @@
-use super::context::LinkTestContext;
+use super::fixture::LinkTestFixture;
 use crate::utils::{principal::get_user_principal, with_pocket_ic_context};
 
 #[tokio::test]
 async fn should_create_action_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         let caller = get_user_principal("user1");
-        let mut context = LinkTestContext::new();
-        context.setup(ctx, &caller).await;
+        let fixture = LinkTestFixture::new(ctx, &caller).await;
 
-        context.create_tip_link(ctx).await;
-        context.create_action().await;
+        let user = fixture.setup_user().await;
 
-        let action = context.action.as_ref().unwrap();
+        let link = fixture.create_tip_link(ctx).await;
+        let action = fixture.create_action(&link.id).await;
 
         assert_eq!(action.r#type, "CreateLink".to_string());
         assert_eq!(action.state, "Action_state_created".to_string());
-        assert_eq!(action.creator, context.user.as_ref().unwrap().id);
+        assert_eq!(action.creator, user.id);
         assert_eq!(action.intents.len(), 2);
         assert!(action
             .intents
