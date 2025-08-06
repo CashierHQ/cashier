@@ -35,6 +35,11 @@ jobs:
       - name: Install Just command runner
         uses: extractions/setup-just@v1
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+            node-version: "22.x"
+
       - name: Configure Rust Cache
         uses: swatinem/rust-cache@v2
         if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
@@ -46,9 +51,12 @@ jobs:
         run: |
           export RUST_BACKTRACE="full"
 
-      - name: Check code style
+      - name: Rust - Check code style
         run: |
           just check_code
+
+      - name: Frontend - Check code style
+        run: |
           just frontend_check_code
 
   build-test:
