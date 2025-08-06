@@ -12,7 +12,7 @@ async fn should_process_action_step_by_step() {
         context
             .setup(ctx, &caller)
             .await
-            .airdrop_icp(ctx, 1000000000)
+            .airdrop_icp(ctx, 1000000000, &caller)
             .await
             .create_tip_link(ctx)
             .await
@@ -76,7 +76,7 @@ async fn should_have_correct_icrc112_order() {
         context
             .setup(ctx, &caller)
             .await
-            .airdrop_icp(ctx, 1000000000)
+            .airdrop_icp(ctx, 1000000000, &caller)
             .await
             .create_tip_link(ctx)
             .await
