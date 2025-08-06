@@ -8,6 +8,3 @@ pub mod impl_link_user_state_machine;
 pub mod impl_validation;
 pub mod service;
 pub mod traits;
-
-// #[cfg(test)]
-// pub mod __tests__;
