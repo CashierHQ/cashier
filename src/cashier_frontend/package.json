@@ -13,6 +13,7 @@
         "build:staging": "tsc && vite build --mode staging",
         "build:prod": "tsc && vite build --mode production",
         "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
+        "format:ci": "prettier --check \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
         "test": "jest",
         "clean": "rm -rf dist",
         "prelint": "npm run format && npm run clean",
