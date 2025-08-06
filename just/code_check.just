@@ -25,5 +25,6 @@ check_code:
 # Runs prettier and lint checks on the frontend code
 [group('code_check')]
 frontend_check_code:
+    cd src/cashier_frontend && npm install
     cd src/cashier_frontend && npm run format:ci
     cd src/cashier_frontend && npm run lint
