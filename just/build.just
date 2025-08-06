@@ -11,7 +11,7 @@ clean:
 
 # Builds and download all artifacts
 [group('build')]
-build: download_artifacts build_canisters build_frontend
+build: download_artifacts build_canisters generate_frontend_ts build_frontend
 
 
 # Builds the canisters
@@ -23,7 +23,7 @@ build_canisters: pre_build
 
 # Builds the frontend
 [group('build')]
-build_frontend mode="local_dev": generate_frontend_ts
+build_frontend mode="local_dev":
   #!/usr/bin/env bash
   set -e
 
