@@ -1,5 +1,5 @@
 use crate::{
-    cashier_backend::link::context::CreateLinkTestContext,
+    cashier_backend::link::context::LinkTestContext,
     utils::{principal::get_user_principal, with_pocket_ic_context},
 };
 pub mod context;
@@ -12,7 +12,7 @@ pub mod process_action;
 async fn should_setup_environment_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         let caller = get_user_principal("user1");
-        let mut context = CreateLinkTestContext::new();
+        let mut context = LinkTestContext::new();
 
         context.setup(ctx, &caller).await;
 

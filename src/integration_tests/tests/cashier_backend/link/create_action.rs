@@ -1,14 +1,14 @@
-use super::context::CreateLinkTestContext;
+use super::context::LinkTestContext;
 use crate::utils::{principal::get_user_principal, with_pocket_ic_context};
 
 #[tokio::test]
 async fn should_create_action_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         let caller = get_user_principal("user1");
-        let mut context = CreateLinkTestContext::new();
+        let mut context = LinkTestContext::new();
         context.setup(ctx, &caller).await;
 
-        context.create_link().await;
+        context.create_tip_link(ctx).await;
         context.create_action().await;
 
         let action = context.action.as_ref().unwrap();
