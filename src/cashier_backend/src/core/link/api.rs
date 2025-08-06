@@ -284,27 +284,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
     }
 
-    /// Creates a new LinkApi instance with custom service dependencies.
-    ///
-    /// This constructor is primarily used for testing and dependency injection,
-    /// allowing custom implementations of services to be provided.
-    ///
-    /// # Arguments
-    /// * `link_service` - Service for link management operations
-    /// * `user_service` - Service for user management operations  
-    /// * `tx_manager_service` - Service for transaction processing
-    /// * `action_service` - Service for action management
-    /// * `ic_env` - Internet Computer environment interface
-    /// * `validate_service` - Service for validation operations
-    /// * `request_lock_service` - Service for request locking operations
-    pub fn new(link_service: LinkService<E>, action_service: ActionService, ic_env: E) -> Self {
-        Self {
-            link_service,
-            action_service,
-            ic_env,
-        }
-    }
-
     /// Retrieves links created by the calling principal with pagination support.
     ///
     /// This method fetches all links owned by the authenticated caller and converts
