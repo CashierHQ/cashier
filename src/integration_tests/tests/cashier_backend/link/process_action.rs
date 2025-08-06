@@ -1,4 +1,4 @@
-use super::fixtures::CreateLinkTestFixture;
+use super::context::CreateLinkTestContext;
 use crate::utils::{
     icrc_112::execute_icrc112_request, principal::get_user_principal, with_pocket_ic_context,
 };
@@ -7,39 +7,40 @@ use crate::utils::{
 async fn should_process_action_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         let caller = get_user_principal("user1");
-        let cashier_backend_client = ctx.new_cashier_backend_client(caller);
-        let mut fixture = CreateLinkTestFixture::new(cashier_backend_client);
+        let mut context = CreateLinkTestContext::new();
 
-        fixture
-            .setup_environment(ctx)
+        context
+            .setup(ctx, &caller)
+            .await
+            .airdrop_icp(ctx, 1000000000)
             .await
             .create_link()
             .await
             .create_action()
             .await;
 
-        let original_action = fixture.get_action().clone();
+        let original_action = context.action.as_ref().unwrap().clone();
 
-        fixture.process_action().await;
+        context.process_action().await;
 
-        let processeing_action = fixture.get_action();
+        let processing_action = context.action.as_ref().unwrap();
 
-        assert!(processeing_action.icrc_112_requests.is_some());
+        assert!(processing_action.icrc_112_requests.is_some());
 
-        assert_eq!(processeing_action.id, original_action.id);
-        assert_eq!(processeing_action.r#type, "CreateLink".to_string());
+        assert_eq!(processing_action.id, original_action.id);
+        assert_eq!(processing_action.r#type, "CreateLink".to_string());
         assert_eq!(
-            processeing_action.state,
+            processing_action.state,
             "Action_state_processing".to_string()
         );
-        assert_eq!(processeing_action.creator, fixture.user.id);
-        assert_eq!(processeing_action.intents.len(), 2);
-        assert!(processeing_action
+        assert_eq!(processing_action.creator, context.user.as_ref().unwrap().id);
+        assert_eq!(processing_action.intents.len(), 2);
+        assert!(processing_action
             .intents
             .iter()
             .all(|intent| { intent.state == "Intent_state_processing" }));
 
-        let icrc_112_requests = processeing_action.icrc_112_requests.as_ref().unwrap();
+        let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
 
         let execution_result = execute_icrc112_request(icrc_112_requests, caller, ctx).await;
 
@@ -49,9 +50,10 @@ async fn should_process_action_success() {
             execution_result.err()
         );
 
-        fixture.update_action().await;
+        // update call after execute icrc-112
+        context.update_action().await;
 
-        let updated_action = fixture.get_action();
+        let updated_action = context.action.as_ref().unwrap();
 
         assert_eq!(updated_action.state, "Action_state_success".to_string());
         assert_eq!(updated_action.intents.len(), 2);

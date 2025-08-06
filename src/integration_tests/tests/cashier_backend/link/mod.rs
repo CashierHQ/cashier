@@ -1,8 +1,8 @@
 use crate::{
-    cashier_backend::link::fixtures::CreateLinkTestFixture,
+    cashier_backend::link::context::CreateLinkTestContext,
     utils::{principal::get_user_principal, with_pocket_ic_context},
 };
-pub mod fixtures;
+pub mod context;
 
 pub mod create_action;
 pub mod create_link;
@@ -12,13 +12,16 @@ pub mod process_action;
 async fn should_setup_environment_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         let caller = get_user_principal("user1");
-        let cashier_backend_client = ctx.new_cashier_backend_client(caller);
-        let mut fixture = CreateLinkTestFixture::new(cashier_backend_client);
+        let mut context = CreateLinkTestContext::new();
 
-        fixture.setup_environment(ctx).await;
+        context.setup(ctx, &caller).await;
 
-        assert!(!fixture.user.id.is_empty());
-        assert!(!fixture.user.wallet.is_empty());
+        context.airdrop_icp(ctx, 10000000000).await; // 0.01 ICP
+        context.airdrop_icrc(ctx, "ckBTC", 1000000).await; // 0.01 ckBTC
+
+        let user = context.user.as_ref().unwrap();
+        assert!(!user.id.is_empty());
+        assert!(!user.wallet.is_empty());
         Ok(())
     })
     .await
