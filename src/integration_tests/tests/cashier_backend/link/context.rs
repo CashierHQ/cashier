@@ -12,14 +12,14 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::utils::{principal::get_user_principal, PocketIcTestContext};
 
-pub struct CreateLinkTestContext {
+pub struct LinkTestContext {
     pub link: Option<LinkDto>,
     pub user: Option<UserDto>,
     pub action: Option<ActionDto>,
     pub cashier_backend_client: Option<CashierBackendClient<PocketIcClient>>,
 }
 
-impl CreateLinkTestContext {
+impl LinkTestContext {
     pub fn new() -> Self {
         Self {
             link: None,
@@ -29,6 +29,7 @@ impl CreateLinkTestContext {
         }
     }
 
+    // 
     pub async fn setup(&mut self, ctx: &PocketIcTestContext, caller: &Principal) -> &mut Self {
         // Initialize the cashier backend client with the provided caller
         self.cashier_backend_client = Some(ctx.new_cashier_backend_client(*caller));
@@ -53,31 +54,71 @@ impl CreateLinkTestContext {
         self
     }
 
-    pub async fn create_link(&mut self) -> &mut Self {
+    pub async fn create_link(&mut self, input: CreateLinkInput) -> &mut Self {
         let link = self
             .cashier_backend_client
             .as_ref()
             .unwrap()
-            .create_link(CreateLinkInput {
-                title: "Test Link".to_string(),
-                link_use_action_max_count: 1,
-                asset_info: vec![LinkDetailUpdateAssetInfoInput {
-                    address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
-                    chain: "IC".to_string(),
-                    label: "SEND_TIP_ASSET".to_string(),
-                    amount_per_link_use_action: 1000000, // 0.001 ICP in e8s
-                }],
-                template: "Central".to_string(),
-                link_type: "SendTip".to_string(),
-                nft_image: None,
-                link_image_url: None,
-                description: Some("Test link for integration testing".to_string()),
-            })
+            .create_link(input)
             .await
             .unwrap()
             .unwrap();
 
         self.link = Some(link);
+        self
+    }
+
+    pub async fn create_tip_link(&mut self, ctx: &PocketIcTestContext) -> &mut Self {
+        let input = CreateLinkInput {
+            title: "Test Link".to_string(),
+            link_use_action_max_count: 1,
+            asset_info: vec![LinkDetailUpdateAssetInfoInput {
+                address: ctx.icp_ledger_principal.to_string(),
+                chain: "IC".to_string(),
+                label: "SEND_TIP_ASSET".to_string(),
+                amount_per_link_use_action: 1000000, // 0.001 ICP in e8s
+            }],
+            template: "Central".to_string(),
+            link_type: "SendTip".to_string(),
+            nft_image: None,
+            link_image_url: None,
+            description: Some("Test link for integration testing".to_string()),
+        };
+        self.create_link(input).await;
+        self
+    }
+
+    pub async fn create_token_basket_link(&mut self, ctx: &PocketIcTestContext) -> &mut Self {
+        let input = CreateLinkInput {
+            title: "Test Link".to_string(),
+            link_use_action_max_count: 1,
+            asset_info: vec![
+                LinkDetailUpdateAssetInfoInput {
+                    address: ctx.icp_ledger_principal.to_string(),
+                    chain: "IC".to_string(),
+                    label: "SEND_TOKEN_BASKET_ASSET".to_string(),
+                    amount_per_link_use_action: 10000000, // 0.001 ICP in e8s
+                },
+                LinkDetailUpdateAssetInfoInput {
+                    address: ctx.icrc_token_map["ckBTC"].to_string(),
+                    chain: "IC".to_string(),
+                    label: "SEND_TOKEN_BASKET_ASSET".to_string(),
+                    amount_per_link_use_action: 1000000, // 0.001 ICP in e8s
+                },
+                LinkDetailUpdateAssetInfoInput {
+                    address: ctx.icrc_token_map["ckUSDC"].to_string(),
+                    chain: "IC".to_string(),
+                    label: "SEND_TOKEN_BASKET_ASSET".to_string(),
+                    amount_per_link_use_action: 100000000, // 0.001 ICP in e8s
+                },
+            ],
+            template: "Central".to_string(),
+            link_type: "SendTokenBasket".to_string(),
+            nft_image: None,
+            link_image_url: None,
+            description: Some("Test link for integration testing".to_string()),
+        };
+        self.create_link(input).await;
         self
     }
 
