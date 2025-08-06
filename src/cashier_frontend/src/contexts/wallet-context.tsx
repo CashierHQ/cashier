@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
 // Define panel types
-export type WalletPanelType =
+type WalletPanelType =
     | "wallet"
     | "send"
     | "receive"
@@ -14,7 +14,7 @@ export type WalletPanelType =
     | "swap";
 
 // Define panel params for navigation
-export type WalletPanelParams = {
+type WalletPanelParams = {
     tokenId?: string;
 };
 

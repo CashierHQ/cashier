@@ -114,7 +114,7 @@ export const createRemoveAssetHandler = (
  * @param options.skipCheckingBalance Whether to skip checking token balance
  * @returns Boolean indicating if assets are valid and error messages
  */
-export const validateFormAssets = (
+const validateFormAssets = (
     assets: {
         tokenAddress: string;
         amount: bigint;
@@ -195,7 +195,7 @@ export const validateFormAssets = (
  * @param includeLinkCreationFee Whether to include link creation fee
  * @returns Total fees in token's smallest unit
  */
-export const calculateTotalFees = (
+const calculateTotalFees = (
     token: FungibleToken,
     includeLinkCreationFee: boolean = true,
 ): bigint => {
@@ -214,7 +214,7 @@ export const calculateTotalFees = (
  * @param includeLinkCreationFee Whether to include link creation fee (only once per link)
  * @returns Object with total fees broken down by token or error symbol
  */
-export const calculateTotalFeesForAssets = (
+const calculateTotalFeesForAssets = (
     assets: { tokenAddress: string; amount: bigint }[],
     tokenMap: Record<string, FungibleToken>,
     maxUses: number = 1,

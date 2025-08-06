@@ -4,7 +4,7 @@
 import { IC_TRANSACTION_PROTOCAL, TRANSACTION_STATE, WALLET } from "./enum";
 import { AssetModel, WalletModel } from "./intent.service.types";
 
-export type TransactionModel = {
+type TransactionModel = {
     id: string;
     wallet: WALLET;
     protocol: IC_TRANSACTION_PROTOCAL;

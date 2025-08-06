@@ -7,7 +7,7 @@ import { Repeat2 } from "lucide-react";
 import { FC, useMemo, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-export type ConversionResult = {
+type ConversionResult = {
     tokenAmount: number;
     usdAmount: number;
     tokenFormatted: string;
@@ -114,12 +114,12 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
 };
 
 // Utility functions that can be imported elsewhere
-export const convertToUsd = (tokenAmount: number, conversionRate?: number): number => {
+const convertToUsd = (tokenAmount: number, conversionRate?: number): number => {
     if (!conversionRate || tokenAmount === 0) return 0;
     return tokenAmount * conversionRate;
 };
 
-export const convertFromUsd = (usdAmount: number, conversionRate?: number): number => {
+const convertFromUsd = (usdAmount: number, conversionRate?: number): number => {
     if (!conversionRate || usdAmount === 0) return 0;
     return usdAmount / conversionRate;
 };

@@ -41,24 +41,24 @@ export interface ResponseLinksModel {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: any;
 }
-export interface ProcessActionInputModel {
+interface ProcessActionInputModel {
     linkId: string;
     actionType: string;
     actionId: string;
 }
 
-export interface CreateLinkInputModel {
+interface CreateLinkInputModel {
     linkId: string;
     actionType: string;
 }
 
-export interface CreateActionAnonymousInputModel {
+interface CreateActionAnonymousInputModel {
     linkId: string;
     actionType: string;
     walletAddress: string;
 }
 
-export interface UpdateActionAnonymousInputModel {
+interface UpdateActionAnonymousInputModel {
     linkId: string;
     actionType: string;
     actionId: string;

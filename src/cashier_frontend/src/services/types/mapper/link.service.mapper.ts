@@ -64,7 +64,7 @@ export const mapLinkDetailModelToUpdateLinkInputModel = (
     return updateLinkInput;
 };
 
-export const mapDtoToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
+const mapDtoToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
     const result: LinkDetailModel = {
         id: link.id,
         title: fromNullable(link.title) ?? "",
@@ -170,7 +170,7 @@ export const mapLinkUserStateModel = (
     };
 };
 
-export const mapAssetInfoModelToUserInputAsset = (model: AssetInfoModel): UserInputAsset => {
+const mapAssetInfoModelToUserInputAsset = (model: AssetInfoModel): UserInputAsset => {
     if (!model.label) {
         throw new Error("Asset label is undefined");
     }
@@ -187,7 +187,7 @@ export const mapAssetInfoModelToUserInputAsset = (model: AssetInfoModel): UserIn
     };
 };
 
-export const mapLinkDetailModelToUserInputItem = (model: LinkDetailModel): UserInputItem => {
+const mapLinkDetailModelToUserInputItem = (model: LinkDetailModel): UserInputItem => {
     if (!model.state) {
         throw new Error("Link state is undefined");
     }
@@ -255,7 +255,7 @@ export const mapUserInputItemToLinkDetailModel = (
     };
 };
 
-export const mapLinkModelToCreateLinkInput = (model: LinkDetailModel): CreateLinkInput => {
+const mapLinkModelToCreateLinkInput = (model: LinkDetailModel): CreateLinkInput => {
     // Map asset_info to LinkDetailUpdateAssetInfoInput format
     const assetInfo = model.asset_info.map((asset) => ({
         address: asset.address,

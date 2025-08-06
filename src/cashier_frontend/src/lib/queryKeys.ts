@@ -9,18 +9,18 @@ import { PartialIdentity } from "@dfinity/identity";
 import { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
-export interface TokenMetadataWithCanisterId {
+interface TokenMetadataWithCanisterId {
     canisterId: string;
     metadata: IcrcTokenMetadata;
 }
 
-export const QUERY_KEYS = {
+const QUERY_KEYS = {
     USERS: "users",
     LINKS: "links",
     TOKENS: "tokens",
 };
 
-export const USER_LINK_QUERY = {
+const USER_LINK_QUERY = {
     userState: (linkId: string, action: string, pid: string) => ["userState", pid, action, linkId],
 };
 

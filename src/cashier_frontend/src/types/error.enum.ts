@@ -105,7 +105,7 @@ export interface ErrorMetadata {
 /**
  * Configuration for error codes including severity, category, and default metadata
  */
-export interface ErrorCodeConfig {
+interface ErrorCodeConfig {
     severity: ErrorSeverity;
     category: ErrorCategory;
     defaultMetadata?: ErrorMetadata;
@@ -114,7 +114,7 @@ export interface ErrorCodeConfig {
 /**
  * Mapping of error codes to their configuration
  */
-export const ERROR_CODE_CONFIG: Record<ErrorCode, ErrorCodeConfig> = {
+const ERROR_CODE_CONFIG: Record<ErrorCode, ErrorCodeConfig> = {
     // Generic errors
     [ErrorCode.UNKNOWN_ERROR]: { severity: ErrorSeverity.CRITICAL, category: ErrorCategory.SYSTEM },
     [ErrorCode.NETWORK_ERROR]: { severity: ErrorSeverity.ERROR, category: ErrorCategory.NETWORK },
@@ -325,7 +325,7 @@ export class CashierError extends Error {
 /**
  * Utility function to create a CashierError
  */
-export function createError(
+function createError(
     code: ErrorCode,
     metadata?: ErrorMetadata,
     message?: string,
@@ -343,7 +343,7 @@ export function isCashierError(error: unknown): error is CashierError {
 /**
  * Helper function to extract error code from any error
  */
-export function getErrorCode(error: unknown): ErrorCode {
+function getErrorCode(error: unknown): ErrorCode {
     if (isCashierError(error)) {
         return error.code;
     }

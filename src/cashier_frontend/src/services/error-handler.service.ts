@@ -15,19 +15,19 @@ import {
 /**
  * Interface for translation function parameters
  */
-export interface TranslationOptions {
+interface TranslationOptions {
     [key: string]: string | number | boolean | null | undefined;
 }
 
 /**
  * Type for translation function
  */
-export type TranslationFunction = (key: string, options?: TranslationOptions) => string;
+type TranslationFunction = (key: string, options?: TranslationOptions) => string;
 
 /**
  * Interface for error display options
  */
-export interface ErrorDisplayOptions {
+interface ErrorDisplayOptions {
     /** Whether to show toast notification */
     showToast?: boolean;
     /** Custom toast title */
@@ -328,7 +328,7 @@ export function useErrorHandler(): ErrorHandlerService {
  * Legacy function to maintain compatibility with existing error processing
  * @deprecated Use ErrorHandlerService instead
  */
-export const getCashierError = (error: Error): Error => {
+const getCashierError = (error: Error): Error => {
     if (error.message.includes("Insufficient balance")) {
         return new Error("Insufficient balance.");
     }
@@ -339,6 +339,6 @@ export const getCashierError = (error: Error): Error => {
  * Legacy function to maintain compatibility
  * @deprecated Use isCashierError from error.enum.ts instead
  */
-export const isCashierErrorLegacy = (error: unknown): error is Error => {
+const isCashierErrorLegacy = (error: unknown): error is Error => {
     return error instanceof Error;
 };

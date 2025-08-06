@@ -14,7 +14,7 @@ import { FormControl } from "./ui/form";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 
 export type AssetSelectItem = Pick<FungibleToken, "id" | "name" | "address" | "amount" | "logo">;
-export default function AssetSelect({
+function AssetSelect({
     assetList,
     defaultValue,
     onValueChange,

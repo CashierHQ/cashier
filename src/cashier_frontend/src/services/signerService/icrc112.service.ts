@@ -25,7 +25,7 @@ export interface ICRC112Request extends JsonObject {
     nonce: string;
 }
 
-export type ParallelRequests = Array<ICRC112Request>;
+type ParallelRequests = Array<ICRC112Request>;
 
 /**
  * Each sub array will execute in parallel and the next sub array will execute after the previous one is completed.
@@ -34,7 +34,7 @@ export type SequenceRequest = Array<ParallelRequests>;
 
 export type Icrc112Requests = SequenceRequest;
 
-export interface CallCanisterRequest {
+interface CallCanisterRequest {
     jsonrpc: string;
     method: string;
     params: {
@@ -59,12 +59,12 @@ export interface ErrorResponse {
     };
 }
 
-export interface CanisterValidation {
+interface CanisterValidation {
     canisterId: string;
     method: string;
 }
 
-export const SUPPORTED_PARSED_METHODS = [
+const SUPPORTED_PARSED_METHODS = [
     "icrc1_transfer",
     "icrc2_approve",
     "icrc2_transfer",
@@ -78,7 +78,7 @@ const STANDARDS_USING_BLOCK_ID = [
     "icrc7_transfer",
 ];
 
-export type Icrc112ResponseItem = SuccessResponse | ErrorResponse;
+type Icrc112ResponseItem = SuccessResponse | ErrorResponse;
 
 export interface Icrc112Response {
     responses: Icrc112ResponseItem[][];

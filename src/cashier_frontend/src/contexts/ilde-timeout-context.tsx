@@ -97,7 +97,7 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
     );
 }
 
-export function useIdleTimeout() {
+function useIdleTimeout() {
     const context = useContext(IdleTimeoutContext);
     if (!context) {
         throw new Error("useIdleTimeout must be used within an IdleTimeoutProvider");

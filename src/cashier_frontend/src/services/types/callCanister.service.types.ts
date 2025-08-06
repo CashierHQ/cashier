@@ -3,21 +3,21 @@
 
 import { Agent } from "@dfinity/agent";
 
-export interface RPCBase {
+interface RPCBase {
     origin: string;
     jsonrpc: string;
     id: string;
 }
-export interface RPCMessage extends RPCBase {
+interface RPCMessage extends RPCBase {
     method: string;
     params: unknown;
 }
 
-export interface RPCSuccessResponse extends RPCBase {
+interface RPCSuccessResponse extends RPCBase {
     result: unknown;
 }
 
-export interface RPCErrorResponse extends RPCBase {
+interface RPCErrorResponse extends RPCBase {
     error: {
         code: number;
         message: string;

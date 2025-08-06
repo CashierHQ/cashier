@@ -5,9 +5,9 @@ import icExplorerAxiosClient from "@/axios/axiosClient";
 import { Principal } from "@dfinity/principal";
 import { toNullable } from "@dfinity/utils";
 
-export const IC_EXPLORER_IMAGES_PATH = "https://api.icexplorer.io/images/";
+const IC_EXPLORER_IMAGES_PATH = "https://api.icexplorer.io/images/";
 
-export interface GetUserTokensRequest {
+interface GetUserTokensRequest {
     principal: string;
     isDesc: boolean;
     page: number;
@@ -15,7 +15,7 @@ export interface GetUserTokensRequest {
 }
 
 // This interface is created based on the response from the icexplorer.io API
-export interface DataSourceToken {
+interface DataSourceToken {
     accountId: string;
     amount: string;
     ledgerId: string;
@@ -34,7 +34,7 @@ export interface DataSourceToken {
  * @param token The source token data from icExplorer API
  * @returns An object with the target structure
  */
-export function mapDataSourceTokenToAddTokenInput(token: DataSourceToken): {
+function mapDataSourceTokenToAddTokenInput(token: DataSourceToken): {
     decimals: [] | [number];
     chain: string;
     name: [] | [string];
@@ -77,7 +77,7 @@ export function mapDataSourceTokenToAddTokenInput(token: DataSourceToken): {
  * @param token The source token data from icExplorer token list API
  * @returns An object with the target structure for adding to token storage
  */
-export function mapTokenListItemToAddTokenInput(token: TokenListItem): {
+function mapTokenListItemToAddTokenInput(token: TokenListItem): {
     decimals: [] | [number];
     chain: string;
     name: [] | [string];
@@ -118,7 +118,7 @@ export function mapTokenListItemToAddTokenInput(token: TokenListItem): {
     };
 }
 
-export interface UserTokensListResponse {
+interface UserTokensListResponse {
     total: string;
     list: DataSourceToken[];
     pageNum: number;
@@ -138,12 +138,12 @@ export interface UserTokensListResponse {
     navigateLastPage: number;
 }
 
-export interface GetUserTokensResponse {
+interface GetUserTokensResponse {
     statusCode: number;
     data: UserTokensListResponse;
 }
 
-export interface TokenListResponse {
+interface TokenListResponse {
     statusCode: number;
     data: {
         total: string;
@@ -166,7 +166,7 @@ export interface TokenListResponse {
     };
 }
 
-export interface TokenListItem {
+interface TokenListItem {
     ledgerId: string;
     symbol: string;
     totalSupply?: string;

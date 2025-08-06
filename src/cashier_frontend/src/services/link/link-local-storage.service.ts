@@ -625,4 +625,3 @@ class LinkLocalStorageService {
     }
 }
 
-export default LinkLocalStorageService;

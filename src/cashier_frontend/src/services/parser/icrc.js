@@ -371,7 +371,7 @@ export const idlFactory = ({ IDL }) => {
         icrc3_supported_block_types: IDL.Func([], [IDL.Vec(SupportedBlockType)], ["query"]),
     });
 };
-export const init = ({ IDL }) => {
+const init = ({ IDL }) => {
     const ChangeArchiveOptions = IDL.Record({
         num_blocks_to_archive: IDL.Opt(IDL.Nat64),
         max_transactions_per_response: IDL.Opt(IDL.Nat64),

@@ -5,7 +5,7 @@ import { IntentCreateModel } from "./intent.service.types";
 import { ActionModel } from "./action.service.types";
 import { ACTION_TYPE, CHAIN, LINK_INTENT_ASSET_LABEL } from "./enum";
 
-export enum State {
+enum State {
     New = "New",
     Inactive = "Inactive",
     Active = "Active",
@@ -14,7 +14,7 @@ export enum State {
     InactiveEnded = "InactiveEnded",
 }
 
-export enum Template {
+enum Template {
     Left = "Left",
     Right = "Right",
     Central = "Central",
@@ -52,7 +52,7 @@ export type LinkModel = {
     intent_create?: IntentCreateModel;
 };
 
-export type TipLinkModel = {
+type TipLinkModel = {
     id: string;
     title: string;
     asset: string;

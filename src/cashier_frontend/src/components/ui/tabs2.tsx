@@ -6,9 +6,9 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 
 import { cn } from "@/lib/utils";
 
-export const WalletTabs = TabsPrimitive.Root;
+const WalletTabs = TabsPrimitive.Root;
 
-export const WalletTabsList = React.forwardRef<
+const WalletTabsList = React.forwardRef<
     React.ElementRef<typeof TabsPrimitive.List>,
     React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => (
@@ -16,7 +16,7 @@ export const WalletTabsList = React.forwardRef<
 ));
 WalletTabsList.displayName = TabsPrimitive.List.displayName;
 
-export const WalletTabsTrigger = React.forwardRef<
+const WalletTabsTrigger = React.forwardRef<
     React.ElementRef<typeof TabsPrimitive.Trigger>,
     React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
 >(({ className, ...props }, ref) => (
@@ -35,7 +35,7 @@ export const WalletTabsTrigger = React.forwardRef<
 ));
 WalletTabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
-export const WalletTabsContent = React.forwardRef<
+const WalletTabsContent = React.forwardRef<
     React.ElementRef<typeof TabsPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
 >(({ className, ...props }, ref) => (

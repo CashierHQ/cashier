@@ -5,7 +5,7 @@ import { ComponentProps, forwardRef } from "react";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { cn } from "@/lib/utils";
 
-export const SwitchRoot = forwardRef<
+const SwitchRoot = forwardRef<
     HTMLButtonElement,
     ComponentProps<typeof SwitchPrimitive.Root>
 >(({ className, ...props }, ref) => {
@@ -25,7 +25,7 @@ export const SwitchRoot = forwardRef<
 });
 SwitchRoot.displayName = "SwitchRoot";
 
-export const SwitchThumb = forwardRef<
+const SwitchThumb = forwardRef<
     HTMLButtonElement,
     ComponentProps<typeof SwitchPrimitive.Thumb>
 >(({ className, ...props }, ref) => {

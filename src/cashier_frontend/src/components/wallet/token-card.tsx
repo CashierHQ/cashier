@@ -9,7 +9,7 @@ import { formatNumber } from "@/utils/helpers/currency";
 import { useWalletContext } from "@/contexts/wallet-context";
 import { useMemo } from "react";
 
-export interface WalletTokenProps {
+interface WalletTokenProps {
     token: FungibleToken;
 }
 

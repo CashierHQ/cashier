@@ -107,14 +107,14 @@ DrawerDescription.displayName = VaulDrawer.Description.displayName;
 
 export {
     Drawer,
-    DrawerPortal,
-    DrawerOverlay,
-    DrawerTrigger,
-    DrawerClose,
+    
+    
+    
+    
     DrawerContent,
     DrawerHeader,
-    DrawerFooter,
+    
     DrawerTitle,
-    DrawerDescription,
-    DrawerHandle,
+    
+    
 };
