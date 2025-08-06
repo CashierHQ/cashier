@@ -105,16 +105,4 @@ const DrawerDescription = React.forwardRef<
 ));
 DrawerDescription.displayName = VaulDrawer.Description.displayName;
 
-export {
-    Drawer,
-    
-    
-    
-    
-    DrawerContent,
-    DrawerHeader,
-    
-    DrawerTitle,
-    
-    
-};
+export { Drawer, DrawerContent, DrawerHeader, DrawerTitle };

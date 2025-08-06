@@ -16,9 +16,7 @@ interface SignerState {
     setSigners: (signers: IdentityKitSignerConfig[]) => void;
     setCurrentConnectOption: (option: WALLET_OPTIONS) => void;
     reset: () => void;
-}
-
-; // Re-export for backward compatibility
+} // Re-export for backward compatibility
 
 export const useSignerStore = create<SignerState>((set) => ({
     signers: allWalletSigners,

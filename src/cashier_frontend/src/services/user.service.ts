@@ -17,8 +17,6 @@ class UserService {
             agent,
             canisterId: BACKEND_CANISTER_ID,
         });
-
-
     }
 
     async createUser() {

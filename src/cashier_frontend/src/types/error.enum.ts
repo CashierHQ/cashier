@@ -325,11 +325,7 @@ export class CashierError extends Error {
 /**
  * Utility function to create a CashierError
  */
-function createError(
-    code: ErrorCode,
-    metadata?: ErrorMetadata,
-    message?: string,
-): CashierError {
+function createError(code: ErrorCode, metadata?: ErrorMetadata, message?: string): CashierError {
     return new CashierError(code, metadata, message);
 }
 

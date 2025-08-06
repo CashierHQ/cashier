@@ -18,9 +18,7 @@ export const mapIntentsStateToStatus = (state: INTENT_STATE | undefined): STATUS
     }
 };
 
-const mapTransactionStateToStatus = (
-    state: TRANSACTION_STATE | undefined,
-): STATUS | undefined => {
+const mapTransactionStateToStatus = (state: TRANSACTION_STATE | undefined): STATUS | undefined => {
     switch (state) {
         case TRANSACTION_STATE.SUCCESS:
             return STATUS.SUCCESS;
