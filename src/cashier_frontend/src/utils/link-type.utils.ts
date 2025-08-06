@@ -34,15 +34,6 @@ const getLinkTypeTag = (linkType?: LINK_TYPE): LinkTag | undefined => {
 };
 
 /**
- * Check if a link type is a send type
- * @param linkType The type of the link
- * @returns boolean indicating if it's a send type
- */
-const isSendLinkType = (linkType?: LINK_TYPE): boolean => {
-    return getLinkTypeTag(linkType) === "send";
-};
-
-/**
  * Check if a link type is a receive type
  * @param linkType The type of the link
  * @returns boolean indicating if it's a receive type

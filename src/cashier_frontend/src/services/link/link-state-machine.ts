@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { UserInputAsset, UserInputItem } from "@/stores/linkCreationFormStore";
 import { LINK_STATE, LINK_TYPE } from "../types/enum";
 import { LinkDto } from "../../../../declarations/cashier_backend/cashier_backend.did";

@@ -34,19 +34,6 @@ export type SequenceRequest = Array<ParallelRequests>;
 
 export type Icrc112Requests = SequenceRequest;
 
-interface CallCanisterRequest {
-    jsonrpc: string;
-    method: string;
-    params: {
-        sender: string;
-        requests: SequenceRequest;
-        validation?: {
-            canisterId: string;
-            method: string;
-        };
-    };
-}
-
 export interface SuccessResponse {
     result: CallCanisterResponse;
 }
@@ -59,19 +46,7 @@ export interface ErrorResponse {
     };
 }
 
-interface CanisterValidation {
-    canisterId: string;
-    method: string;
-}
-
 const SUPPORTED_PARSED_METHODS = [
-    "icrc1_transfer",
-    "icrc2_approve",
-    "icrc2_transfer",
-    "icrc7_transfer",
-];
-
-const STANDARDS_USING_BLOCK_ID = [
     "icrc1_transfer",
     "icrc2_approve",
     "icrc2_transfer",

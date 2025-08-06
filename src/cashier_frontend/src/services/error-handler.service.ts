@@ -323,22 +323,3 @@ export function useErrorHandler(): ErrorHandlerService {
     const { t } = useTranslation();
     return new ErrorHandlerService(t);
 }
-
-/**
- * Legacy function to maintain compatibility with existing error processing
- * @deprecated Use ErrorHandlerService instead
- */
-const getCashierError = (error: Error): Error => {
-    if (error.message.includes("Insufficient balance")) {
-        return new Error("Insufficient balance.");
-    }
-    return error;
-};
-
-/**
- * Legacy function to maintain compatibility
- * @deprecated Use isCashierError from error.enum.ts instead
- */
-const isCashierErrorLegacy = (error: unknown): error is Error => {
-    return error instanceof Error;
-};

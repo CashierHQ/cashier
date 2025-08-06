@@ -7,9 +7,6 @@ import { LuGanttChartSquare } from "react-icons/lu";
 import React from "react";
 import { CircleHelp, Link } from "lucide-react";
 
-const INCREASE = "increase";
-const DECREASE = "decrease";
-
 export const BOTTOM_MENU_ITEMS: SidebarMenuItem[] = [
     {
         title: "FAQ",

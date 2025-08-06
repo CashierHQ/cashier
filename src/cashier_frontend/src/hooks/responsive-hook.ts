@@ -23,9 +23,6 @@ interface HeaderQuery {
     ) => boolean;
 }
 
-// Combined interface for backward compatibility
-interface MediaQuery extends DeviceSizeQuery, HeaderQuery {}
-
 /**
  * Hook for detecting device size based on media queries
  */
@@ -87,18 +84,5 @@ export function useHeader(): HeaderQuery {
         showCompactHeader,
         hideHeader,
         showHeaderWithBackButtonAndWalletButton,
-    };
-}
-
-/**
- * Combined hook for backward compatibility
- */
-function useResponsive(): MediaQuery {
-    const deviceSize = useDeviceSize();
-    const header = useHeader();
-
-    return {
-        ...deviceSize,
-        ...header,
     };
 }

@@ -39,19 +39,3 @@ interface TokenPrice {
 
 export type TokenMetadataMap = Record<string, TokenMetadata>;
 export type TokenBalanceMap = Record<string, TokenBalance>;
-type TokenPriceMap = Record<string, number>;
-
-const mapTokenModelToFungibleToken = (
-    token: TokenModel,
-    fee: bigint | undefined = undefined,
-    usdEquivalent: number | undefined = undefined,
-    usdConversionRate: number | undefined = undefined,
-): FungibleToken => {
-    return {
-        ...token,
-        fee,
-        amount: token.amount,
-        usdEquivalent,
-        usdConversionRate,
-    };
-};

@@ -125,23 +125,6 @@ export function useTokenListQuery() {
     });
 }
 
-function useSyncTokenList(identity: Identity | undefined) {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async () => {
-            const tokenService = new TokenStorageService(identity);
-            await tokenService.syncTokenList();
-        },
-        onSuccess: () => {
-            // Properly invalidate token queries using centralized key
-            const principalId = identity?.getPrincipal().toString();
-            queryClient.invalidateQueries({
-                queryKey: TOKEN_QUERY_KEYS.all(principalId),
-            });
-        },
-    });
-}
-
 export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
     const { fetchMetadata } = useTokenMetadataWorker({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
