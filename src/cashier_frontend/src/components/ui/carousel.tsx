@@ -289,11 +289,4 @@ const CarouselDots = () => {
     );
 };
 
-export {
-    type CarouselApi,
-    
-    
-    
-    
-    
-};
+export { type CarouselApi };

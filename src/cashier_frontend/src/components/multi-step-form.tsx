@@ -115,10 +115,7 @@ interface MultiStepFormItemsProps {
     disableAnimations?: boolean;
 }
 
-function MultiStepFormItems({
-    children,
-    disableAnimations = false,
-}: MultiStepFormItemsProps) {
+function MultiStepFormItems({ children, disableAnimations = false }: MultiStepFormItemsProps) {
     const { step, setSteps, setStepName, direction } = useMultiStepFormContext();
 
     const stepsList = Children.toArray(children) as ReactElement<MultiStepFormItemProps>[];

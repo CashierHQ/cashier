@@ -186,4 +186,3 @@ export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
             return `/smallLogo.svg`;
     }
 };
-
