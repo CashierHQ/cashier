@@ -157,11 +157,6 @@ impl PocketIcTestContext {
         )
     }
 
-    /// Gets the ICP ledger principal
-    pub fn icp_ledger_principal(&self) -> Principal {
-        self.icp_ledger_principal
-    }
-
     /// Gets an ICRC token principal by name
     pub fn get_icrc_token_principal(&self, token_name: &str) -> Option<Principal> {
         self.icrc_token_map.get(token_name).copied()
