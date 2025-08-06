@@ -29,7 +29,7 @@ export default function ClaimPage() {
 
     // State for wallet selection modal
     const [showWalletModal, setShowWalletModal] = useState(false);
-    const [_selectedWalletAddress, setSelectedWalletAddress] = useState<string>("");
+    // const [selectedWalletAddress, setSelectedWalletAddress] = useState<string>("");
 
     // Data fetching hooks
     const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
@@ -84,7 +84,7 @@ export default function ClaimPage() {
         if (address || identity) {
             // Store the selected wallet address if provided
             if (address) {
-                setSelectedWalletAddress(address);
+                // setSelectedWalletAddress(address);
                 // Store in sessionStorage to pass to choose-wallet page
                 sessionStorage.setItem(`wallet-address-${linkId}`, address);
             }
