@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { ActionDto } from "../../../../../declarations/cashier_backend/cashier_backend.did";
+import { ActionDto } from "../../../generated/cashier_backend/cashier_backend.did";
 import { ACTION_STATE, ACTION_TYPE } from "../enum";
 import { ActionModel } from "../action.service.types";
 import { mapIntentDtoToIntentModel } from "./intent.service.mapper";

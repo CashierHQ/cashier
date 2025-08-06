@@ -17,7 +17,7 @@ import {
     Chain,
     TokenDto,
     UpdateTokenInput,
-} from "../../../declarations/token_storage/token_storage.did";
+} from "../generated/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";

@@ -6,7 +6,7 @@ import {
     // CreateLinkInput,
     type _SERVICE,
     idlFactory,
-} from "../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../../src/cashier_frontend/src/generated/cashier_backend/cashier_backend.did";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { parseResultResponse } from "../utils/parser";
