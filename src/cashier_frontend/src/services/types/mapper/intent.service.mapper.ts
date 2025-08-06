@@ -8,7 +8,6 @@ import {
     MetadataValue,
 } from "../../../../../declarations/cashier_backend/cashier_backend.did";
 import { CHAIN, INTENT_STATE, INTENT_TYPE, TASK } from "../enum";
-import { TransactionModel } from "../intent.service.types";
 import { AssetModel, IntentModel, WalletModel } from "../intent.service.types";
 
 enum METADATA_PROP_NAMES {
@@ -39,14 +38,6 @@ export const mapIntentDtoToIntentModel = (dto: IntentDto): IntentModel => {
         to: mapMetadataToWalletModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.TO),
         asset: mapMetadataToAssetModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.ASSET),
         amount: mapMetadataFromNatToAmount(dto.type_metadata, dto.type, METADATA_PROP_NAMES.AMOUNT),
-    };
-};
-
-const toCanisterCallRequest = (tx: TransactionModel) => {
-    return {
-        canisterId: tx.canister_id,
-        method: tx.method,
-        arg: tx.arg,
     };
 };
 

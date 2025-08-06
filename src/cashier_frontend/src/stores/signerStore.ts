@@ -3,12 +3,7 @@
 
 import { create } from "zustand";
 import { IdentityKitSignerConfig } from "@nfid/identitykit";
-import {
-    WALLET_OPTIONS,
-    GoogleSigner,
-    defaultSigners,
-    allWalletSigners,
-} from "@/constants/wallet-options";
+import { WALLET_OPTIONS, defaultSigners, allWalletSigners } from "@/constants/wallet-options";
 
 interface SignerState {
     signers: IdentityKitSignerConfig[];

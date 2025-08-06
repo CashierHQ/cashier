@@ -45,11 +45,6 @@ export enum INTENT_TYPE {
     TRANSFER = "Transfer",
 }
 
-enum LINK_ASSET_TYPE {
-    CASHIER_FEE = "CashierFee",
-    ASSET_ADDED = "Asset",
-}
-
 export enum FEE_TYPE {
     LINK_CREATION = "LinkCreation",
 }
@@ -221,7 +216,6 @@ export const mapStringToLabel = (label: string) => {
     }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getAssetLabelForLinkType = (linkType: string, address: string) => {
     switch (linkType) {
         case LINK_TYPE.SEND_TIP:

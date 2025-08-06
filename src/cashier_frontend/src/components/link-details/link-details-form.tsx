@@ -19,15 +19,6 @@ export const linkDetailsFormSchema = z.object({
     assets: z.array(assetSchema).min(1, { message: "At least one asset is required" }),
 });
 
-// For backward compatibility with existing code
-interface LinkDetailsFormUI {
-    // These fields will be deprecated in favor of assets array
-    tokenAddress?: string;
-    amount?: bigint;
-    label?: LINK_INTENT_ASSET_LABEL | string;
-    chain?: CHAIN;
-}
-
 type Asset = z.infer<typeof assetSchema>;
 export type LinkDetailsFormSchema = z.infer<typeof linkDetailsFormSchema>;
 

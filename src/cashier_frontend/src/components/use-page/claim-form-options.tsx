@@ -2,20 +2,16 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import React, { useEffect, useState } from "react";
-import { IoWalletOutline } from "react-icons/io5";
-import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { IconInput } from "../icon-input";
 import WalletButton from "./connect-wallet-button";
 import { useAuth, useIdentity, useSigner } from "@nfid/identitykit/react";
 import CustomConnectedWalletButton from "./connected-wallet-button";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { Principal } from "@dfinity/principal";
-import { ErrorMessageWithIcon } from "@/components/ui/error-message-with-icon";
 import { useSignerStore } from "@/stores/signerStore";
 import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
@@ -29,9 +25,6 @@ import {
     getWalletIcon,
     GoogleSigner,
 } from "@/constants/wallet-options";
-import { IoMdClose } from "react-icons/io";
-import { FaCheck } from "react-icons/fa";
-import { ClipboardIcon } from "lucide-react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
@@ -50,13 +43,7 @@ interface ClaimFormOptionsProps {
     onOpenWalletModal?: () => void;
 }
 
-const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
-    form,
-    setDisabled,
-    disabledInput,
-    walletAddress,
-    onOpenWalletModal,
-}) => {
+const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({ form, setDisabled }) => {
     const { t } = useTranslation();
     const { user, disconnect } = useAuth();
     const identity = useIdentity();
@@ -146,32 +133,6 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
         }
     };
 
-    const handlePasteClick = async (field: { onChange: (value: string) => void }) => {
-        try {
-            const text = await navigator.clipboard.readText();
-            field.onChange(text);
-            validateAddress(text);
-        } catch (err) {
-            console.error("Failed to read clipboard contents: ", err);
-        }
-    };
-
-    const validateAddress = (addressValue: string) => {
-        try {
-            if (addressValue) {
-                Principal.fromText(addressValue);
-                form.clearErrors("address");
-            } else {
-                form.clearErrors("address");
-            }
-        } catch {
-            form.setError("address", {
-                type: "manual",
-                message: "wallet-format-error",
-            });
-        }
-    };
-
     const handleWalletSelection = (walletId: string) => {
         setIsWalletDialogOpen(false);
 
@@ -232,65 +193,6 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
                 icon={typeof finalIconOrImage !== "string" ? finalIconOrImage : undefined}
                 disabled={disabled}
                 postfixText={disabled ? "Coming Soon" : undefined}
-            />
-        );
-    };
-
-    const renderInputWallet = () => {
-        // Don't show input wallet if user is already connected via identity
-        if (identity) {
-            return null;
-        }
-
-        // Don't show if input is disabled
-        if (disabledInput) {
-            return null;
-        }
-
-        return (
-            <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                    <FormItem className="mx-0">
-                        <FormControl>
-                            <IconInput
-                                isCurrencyInput={false}
-                                icon={<IoWalletOutline color="#359F89" className="mr-2 h-6 w-6" />}
-                                rightIcon={
-                                    field.value && form.formState.errors.address ? (
-                                        <IoMdClose color="red" className="mr-1 h-5 w-5" />
-                                    ) : field.value && !form.formState.errors.address ? (
-                                        <FaCheck color="#36A18B" className="mr-1 h-5 w-5" />
-                                    ) : (
-                                        <ClipboardIcon color="#359F89" className="mr-2 h-5 w-5" />
-                                    )
-                                }
-                                onRightIconClick={() => {
-                                    if (field.value) {
-                                        field.onChange("");
-                                    } else {
-                                        handlePasteClick(field);
-                                    }
-                                }}
-                                placeholder={t("claim.addressPlaceholder")}
-                                className="py-5 h-14 text-md rounded-xl placeholder:text-primary"
-                                onFocusShowIcon={true}
-                                onFocusText={true}
-                                {...field}
-                                onChange={(e) => {
-                                    field.onChange(e);
-                                    validateAddress(e.target.value);
-                                }}
-                            />
-                        </FormControl>
-                        {form.formState.errors.address?.message === "wallet-format-error" ? (
-                            <ErrorMessageWithIcon message="The wallet format is incorrect. Please make sure you are entering the correct wallet." />
-                        ) : (
-                            <FormMessage />
-                        )}
-                    </FormItem>
-                )}
             />
         );
     };

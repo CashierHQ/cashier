@@ -47,48 +47,6 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
     throw new Error("Invalid response");
 };
 
-const resizeImage = (file: Blob): Promise<Blob> => {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-                if (img.width <= 500 && img.height <= 500) return resolve(file);
-                const elem = document.createElement("canvas");
-                if (img.width > img.height) {
-                    elem.width = 500;
-                    elem.height = (500 * img.height) / img.width;
-                } else {
-                    elem.width = (500 * img.width) / img.height;
-                    elem.height = 500;
-                }
-                const ctx = elem.getContext("2d");
-                ctx?.drawImage(img, 0, 0, elem.width, elem.height);
-                ctx?.canvas.toBlob((blob) => {
-                    if (blob) {
-                        resolve(blob);
-                    }
-                });
-            };
-        };
-    });
-};
-
-const fileToBase64 = (file: Blob) => {
-    return new Promise<string>((resolve, reject) => {
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(file);
-        fileReader.onload = () => {
-            resolve(fileReader?.result as string);
-        };
-        fileReader.onerror = (error) => {
-            reject(error);
-        };
-    });
-};
-
 export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
     let result = new Date();
     try {

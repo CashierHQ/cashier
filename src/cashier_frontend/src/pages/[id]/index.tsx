@@ -29,7 +29,7 @@ export default function ClaimPage() {
 
     // State for wallet selection modal
     const [showWalletModal, setShowWalletModal] = useState(false);
-    const [selectedWalletAddress, setSelectedWalletAddress] = useState<string>("");
+    const [_selectedWalletAddress, setSelectedWalletAddress] = useState<string>("");
 
     // Data fetching hooks
     const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
