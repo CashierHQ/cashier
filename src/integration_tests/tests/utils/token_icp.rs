@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use crate::{
     types::{
-        IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferError,
+        Account, IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferError,
         Icrc1TransferResult, Tokens,
     },
     utils::{deploy_canister_with_id, load_canister_bytecode, principal::get_user_principal},
@@ -49,6 +49,16 @@ impl<C: CanisterClient> IcpLedgerClient<C> {
             .unwrap();
 
         res
+    }
+
+    pub async fn balance_of(
+        &self,
+        account: &Account,
+    ) -> Result<Nat, ic_mple_client::CanisterClientError> {
+        let balance: Result<Nat, ic_mple_client::CanisterClientError> =
+            self.client.query("icrc1_balance_of", (account,)).await;
+
+        balance
     }
 }
 
