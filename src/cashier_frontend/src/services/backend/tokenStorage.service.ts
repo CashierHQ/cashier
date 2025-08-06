@@ -10,7 +10,7 @@ import {
     TokenListResponse,
     UpdateTokenBalanceInput,
     UpdateTokenInput,
-} from "../../../../declarations/token_storage/token_storage.did";
+} from "../../generated/token_storage/token_storage.did";
 import { Actor, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { TOKEN_STORAGE_CANISTER_ID } from "@/const";

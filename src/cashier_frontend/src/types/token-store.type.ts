@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { TokenDto } from "../../../declarations/token_storage/token_storage.did";
+import { TokenDto } from "../generated/token_storage/token_storage.did";
 import { TokenModel } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
 import { IC_EXPLORER_IMAGES_PATH } from "@/const";

@@ -3,7 +3,7 @@
 
 import { UserInputAsset, UserInputItem } from "@/stores/linkCreationFormStore";
 import { LINK_STATE, LINK_TYPE } from "../types/enum";
-import { LinkDto } from "../../../../declarations/cashier_backend/cashier_backend.did";
+import { LinkDto } from "../../generated/cashier_backend/cashier_backend.did";
 import { mapPartialDtoToLinkDetailModel } from "../types/mapper/link.service.mapper";
 import { AssetInfoModel } from "../types/link.service.types";
 

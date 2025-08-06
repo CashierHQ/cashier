@@ -40,6 +40,11 @@ generate_frontend_ts:
   just generate_frontend_ts_for_canister token_storage
   just generate_frontend_ts_for_canister icp_ledger_canister
 
+
+[private]
+install_frontend_deps:
+  cd "./src/cashier_frontend" && npm install
+
 [private]
 generate_frontend_ts_for_canister canister:
   # Files are generated into ./src/declarations
@@ -47,6 +52,8 @@ generate_frontend_ts_for_canister canister:
   rm src/declarations/{{canister}}/{{canister}}.did
   rm src/declarations/{{canister}}/index.d.ts
   rm src/declarations/{{canister}}/index.js
+  cp -r src/declarations/* src/cashier_frontend/src/generated
+  rm -rf src/declarations
 
 
 # Download third party artifacts

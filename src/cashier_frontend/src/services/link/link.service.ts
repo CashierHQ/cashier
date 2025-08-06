@@ -14,7 +14,7 @@ import {
     ProcessActionAnonymousInput,
     ProcessActionInput,
     UpdateActionInput,
-} from "../../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../generated/cashier_backend/cashier_backend.did";
 import { Actor, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";

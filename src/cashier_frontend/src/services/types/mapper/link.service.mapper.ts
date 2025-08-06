@@ -8,7 +8,7 @@ import {
     LinkDto,
     LinkGetUserStateOutput,
     UpdateLinkInput,
-} from "../../../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../generated/cashier_backend/cashier_backend.did";
 import {
     AssetInfoModel,
     LinkDetailModel,

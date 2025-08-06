@@ -6,7 +6,7 @@ import {
     AssetDto,
     IntentDto,
     MetadataValue,
-} from "../../../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../generated/cashier_backend/cashier_backend.did";
 import { CHAIN, INTENT_STATE, INTENT_TYPE, TASK } from "../enum";
 import { AssetModel, IntentModel, WalletModel } from "../intent.service.types";
 
