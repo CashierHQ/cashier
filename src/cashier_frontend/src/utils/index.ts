@@ -187,5 +187,3 @@ export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
     }
 };
 
-// Export link default utilities
-export { getDefaultMaxActionNumber } from "./linkDefaults";
