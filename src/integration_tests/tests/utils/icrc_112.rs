@@ -25,11 +25,11 @@ pub async fn execute_icrc112_request(
             match request.method.as_str() {
                 "icrc2_approve" => {
                     let decoded_payload: ApproveArgs = decode(&payload);
-                    println!("decoded_payload: {:?}", decoded_payload);
+                    println!("decoded_payload: {decoded_payload:#?}");
                 }
                 "icrc1_transfer" => {
                     let decoded_payload: TransferArg = decode(&payload);
-                    println!("decoded_payload: {:?}", decoded_payload);
+                    println!("decoded_payload: {decoded_payload:#?}");
                 }
                 _ => {}
             }
@@ -38,8 +38,6 @@ pub async fn execute_icrc112_request(
                 .client
                 .update_call(canister_id, caller, &request.method, payload)
                 .await;
-
-            
 
             // Stop iteration if there's an error
             if let Err(e) = res {
