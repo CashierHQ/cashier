@@ -17,6 +17,7 @@ import {
 } from "../../../../src/cashier_frontend/src/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { Account, principalToAccountIdentifier } from "@dfinity/ledger-icp";
 import { IDL } from "@dfinity/candid";
+import { ARTIFACTS_DIR } from "../constant";
 
 const LEDGER_ID = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
@@ -29,7 +30,7 @@ export class TokenHelper {
     constructor(pic: PocketIc) {
         this.pic = pic;
         this.deployer = createIdentity("tokenDeployer");
-        this.wasm_path = resolve("artifacts", "token_canister.wasm.gz");
+        this.wasm_path = resolve(ARTIFACTS_DIR, "ledger-suite-icp.wasm.gz");
     }
 
     public getCanisterId() {
@@ -45,8 +46,6 @@ export class TokenHelper {
             token_symbol: [],
             transfer_fee: [],
             minting_account: principalToAccountIdentifier(this.deployer.getPrincipal()),
-            maximum_number_of_accounts: [],
-            accounts_overflow_trim_quantity: [],
             transaction_window: [],
             max_message_size_bytes: [],
             icrc1_minting_account: [],
