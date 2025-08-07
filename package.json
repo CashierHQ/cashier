@@ -6,9 +6,6 @@
     "name": "cashier",
     "license": "MIT",
     "scripts": {
-        "prebuild": "make generate-ci",
-        "build": "npm run build --workspaces --if-present",
-        "start": "npm start --workspaces --if-present",
         "start-tunnel": "lt -s cashier --port 3000",
         "test": "make test",
         "test:integration": "make test-integration",
