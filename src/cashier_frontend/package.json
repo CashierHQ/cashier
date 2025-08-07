@@ -16,7 +16,6 @@
         "format:ci": "prettier --check \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
         "test": "jest",
         "clean": "rm -rf dist",
-        "prelint": "npm run format && npm run clean",
         "lint": "eslint .",
         "knip": "knip"
     },
