@@ -1,6 +1,6 @@
 # Run all Rust and TypeScript tests for backend and frontend
 [group('test')]
-test_all test_name="": test test_ts_integration test_frontend
+test_all: test test_ts_integration test_frontend
 
 
 # Run unit tests
