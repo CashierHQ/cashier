@@ -21,22 +21,20 @@ mod test_token_basket_3_tokens {
 
     struct TokenBasketTestData {
         link: LinkDto,
-        original_action: ActionDto,
-        processing_action: ActionDto,
-        icrc112_execution_result: Result<(), String>,
-        updated_action: ActionDto,
+        action: ActionDto,
         caller: candid::Principal,
         user: cashier_types::dto::user::UserDto,
         user_balance_before_create_link: Nat,
         ckbtc_balance_before: Nat,
         ckusdc_balance_before: Nat,
+        fixture: LinkTestFixture,
     }
 
     // This method is used to setup the test data for the test
     // It creates a token basket link with ICP, ckBTC, and ckUSDC and returns the test data
     // this mimic the same flow in the frontend
     // backend call flow: create link -> create action -> process action -> execute icrc112 -> update action
-    async fn setup(ctx: &PocketIcTestContext) -> TokenBasketTestData {
+    async fn setup_token_basket(ctx: &PocketIcTestContext) -> TokenBasketTestData {
         let caller = TestUser::User1.get_principal();
         let mut fixture = LinkTestFixture::new(ctx, &caller).await;
 
@@ -51,7 +49,6 @@ mod test_token_basket_3_tokens {
 
         let link = fixture.create_token_basket_link(ctx).await;
         let action = fixture.create_action(&link.id).await;
-        let original_action = action.clone();
 
         let user_account = Account {
             owner: caller,
@@ -71,67 +68,58 @@ mod test_token_basket_3_tokens {
             .await
             .unwrap();
 
-        let processing_action = fixture.process_action(&link.id, &action.id).await;
-        let icrc112_execution_result = execute_icrc112_request(
-            processing_action.icrc_112_requests.as_ref().unwrap(),
-            caller,
-            ctx,
-        )
-        .await;
-        // update call after execute icrc-112
-        let updated_action = fixture.update_action(&link.id, &action.id).await;
-
         TokenBasketTestData {
             link,
-            original_action,
-            processing_action,
-            icrc112_execution_result,
-            updated_action,
+            action,
             caller,
             user,
             user_balance_before_create_link,
             ckbtc_balance_before,
             ckusdc_balance_before,
+            fixture,
         }
     }
 
     #[tokio::test]
     async fn should_active_send_token_basket_link_successfully() {
         with_pocket_ic_context::<_, ()>(async move |ctx| {
-            let test_data = setup(ctx).await;
+            // Arrange
+            let test_data = setup_token_basket(ctx).await;
 
-            // Verify action state transitions
-            assert!(test_data.original_action.icrc_112_requests.is_none());
-            assert_eq!(
-                test_data.original_action.state,
-                ActionState::Created.to_string()
-            );
+            // Act
+            let processing_action = test_data
+                .fixture
+                .process_action(&test_data.link.id, &test_data.action.id)
+                .await;
+            let icrc112_execution_result = execute_icrc112_request(
+                processing_action.icrc_112_requests.as_ref().unwrap(),
+                test_data.caller,
+                ctx,
+            )
+            .await;
+            let updated_action = test_data
+                .fixture
+                .update_action(&test_data.link.id, &test_data.action.id)
+                .await;
 
-            assert_eq!(test_data.processing_action.id, test_data.original_action.id);
-            assert_eq!(
-                test_data.processing_action.r#type,
-                ActionType::CreateLink.to_string()
-            );
-            assert_eq!(
-                test_data.processing_action.state,
-                ActionState::Processing.to_string()
-            );
-            assert_eq!(test_data.processing_action.creator, test_data.user.id);
-            assert_eq!(test_data.processing_action.intents.len(), 4);
-            assert!(test_data
-                .processing_action
+            // Assert
+            assert!(test_data.action.icrc_112_requests.is_none());
+            assert_eq!(test_data.action.state, ActionState::Created.to_string());
+
+            assert_eq!(processing_action.id, test_data.action.id);
+            assert_eq!(processing_action.r#type, ActionType::CreateLink.to_string());
+            assert_eq!(processing_action.state, ActionState::Processing.to_string());
+            assert_eq!(processing_action.creator, test_data.user.id);
+            assert_eq!(processing_action.intents.len(), 4);
+            assert!(processing_action
                 .intents
                 .iter()
                 .all(|intent| { intent.state == IntentState::Processing.to_string() }));
 
-            assert!(test_data.icrc112_execution_result.is_ok());
-            assert_eq!(
-                test_data.updated_action.state,
-                ActionState::Success.to_string()
-            );
-            assert_eq!(test_data.updated_action.intents.len(), 4);
-            assert!(test_data
-                .updated_action
+            assert!(icrc112_execution_result.is_ok());
+            assert_eq!(updated_action.state, ActionState::Success.to_string());
+            assert_eq!(updated_action.intents.len(), 4);
+            assert!(updated_action
                 .intents
                 .iter()
                 .all(|intent| { intent.state == IntentState::Success.to_string() }));
@@ -145,7 +133,8 @@ mod test_token_basket_3_tokens {
     #[tokio::test]
     async fn should_verify_token_basket_link_balances() {
         with_pocket_ic_context::<_, ()>(async move |ctx| {
-            let test_data = setup(ctx).await;
+            // Arrange
+            let test_data = setup_token_basket(ctx).await;
             let icp_ledger_client = ctx.new_icp_ledger_client(test_data.caller);
             let ckbtc_ledger_client = ctx.new_icrc_ledger_client("ckBTC", test_data.caller);
             let ckusdc_ledger_client = ctx.new_icrc_ledger_client("ckUSDC", test_data.caller);
@@ -160,6 +149,22 @@ mod test_token_basket_3_tokens {
             };
 
             let link_account = link_id_to_account(ctx, &test_data.link.id);
+
+            // Act
+            let processing_action = test_data
+                .fixture
+                .process_action(&test_data.link.id, &test_data.action.id)
+                .await;
+            let _icrc112_execution_result = execute_icrc112_request(
+                processing_action.icrc_112_requests.as_ref().unwrap(),
+                test_data.caller,
+                ctx,
+            )
+            .await;
+            let _updated_action = test_data
+                .fixture
+                .update_action(&test_data.link.id, &test_data.action.id)
+                .await;
 
             let user_balance_after_active_link =
                 icp_ledger_client.balance_of(&user_account).await.unwrap();
@@ -177,6 +182,7 @@ mod test_token_basket_3_tokens {
                 .await
                 .unwrap();
 
+            // Assert
             // Calculate expected balances for token basket
             // Token amounts from fixture: ICP=10_000_000, ckBTC=1_000_000, ckUSDC=10_000_000
             // the amount added one more ledger fee for subsidize the fee
@@ -219,18 +225,16 @@ mod test_token_basket_3_tokens {
     #[tokio::test]
     async fn should_have_correct_token_basket_icrc112_order() {
         with_pocket_ic_context::<_, ()>(async move |ctx| {
-            let test_data = setup(ctx).await;
+            // Arrange
+            let test_data = setup_token_basket(ctx).await;
 
-            let icrc_112_requests = test_data
-                .processing_action
-                .icrc_112_requests
-                .as_ref()
-                .unwrap();
+            // Act
+            let processing_action = test_data
+                .fixture
+                .process_action(&test_data.link.id, &test_data.action.id)
+                .await;
+            let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
 
-            // Token basket should have more ICRC-112 requests due to multiple tokens
-            assert_eq!(icrc_112_requests.len(), 2);
-
-            // Check that we have the expected method calls in the first group
             let mut group0_methods: Vec<String> = icrc_112_requests[0]
                 .iter()
                 .map(|r| r.method.clone())
@@ -251,6 +255,9 @@ mod test_token_basket_3_tokens {
                 .collect();
             let expected_last_group = vec!["trigger_transaction".to_string()];
 
+            // Assert
+            // Token basket should have more ICRC-112 requests due to multiple tokens
+            assert_eq!(icrc_112_requests.len(), 2);
             assert_eq!(group0_methods, expected_group0);
             assert_eq!(last_group_methods, expected_last_group);
 

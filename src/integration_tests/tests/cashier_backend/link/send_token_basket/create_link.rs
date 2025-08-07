@@ -9,13 +9,16 @@ use crate::utils::with_pocket_ic_context;
 #[tokio::test]
 async fn should_create_token_basket_link_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
         let caller = TestUser::User1.get_principal();
         let fixture = LinkTestFixture::new(ctx, &caller).await;
 
         fixture.setup_user().await;
 
+        // Act
         let link = fixture.create_token_basket_link(ctx).await;
 
+        // Assert
         assert_eq!(link.link_type, Some(LinkType::SendTokenBasket.to_string()));
         assert_eq!(link.template, Some(Template::Central.to_string()));
         assert_eq!(link.asset_info.as_ref().unwrap().len(), 3);
