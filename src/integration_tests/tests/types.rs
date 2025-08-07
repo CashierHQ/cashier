@@ -1,5 +1,6 @@
 use candid::CandidType;
 use candid::Principal;
+use icrc_ledger_types::icrc1::account::Account;
 use serde::Deserialize;
 use serde_bytes::ByteBuf;
 
@@ -30,13 +31,6 @@ pub enum Icrc1TransferError {
     },
 }
 pub type Icrc1TransferResult = std::result::Result<Icrc1BlockIndex, Icrc1TransferError>;
-
-// ICRC Ledger Types
-#[derive(CandidType, Deserialize, Debug)]
-pub struct Account {
-    pub owner: Principal,
-    pub subaccount: Option<ByteBuf>,
-}
 
 #[derive(CandidType, Deserialize)]
 pub struct IcrcFeatureFlags {

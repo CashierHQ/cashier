@@ -1,6 +1,7 @@
 use candid::Principal;
 use std::collections::HashMap;
 
+// this method returns the principal of the user based on the input
 pub fn get_user_principal(user: &str) -> Principal {
     let mut users = HashMap::new();
 
