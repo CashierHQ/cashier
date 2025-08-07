@@ -33,7 +33,7 @@ mod test_token_basket_3_tokens {
     // This method is used to setup the test data for the test
     // It creates a token basket link with ICP, ckBTC, and ckUSDC and returns the test data
     // this mimic the same flow in the frontend
-    // backend call flow: create link -> create action -> process action -> execute icrc112 -> update action
+    // backend call flow: create link -> create action
     async fn setup_token_basket(ctx: &PocketIcTestContext) -> TokenBasketTestData {
         let caller = TestUser::User1.get_principal();
         let mut fixture = LinkTestFixture::new(ctx, &caller).await;
@@ -86,7 +86,7 @@ mod test_token_basket_3_tokens {
             // Arrange
             let test_data = setup_token_basket(ctx).await;
 
-            // Act
+            // Act - backend call flow: process action -> execute icrc112 -> update action
             let processing_action = test_data
                 .fixture
                 .process_action(&test_data.link.id, &test_data.action.id)
@@ -150,7 +150,7 @@ mod test_token_basket_3_tokens {
 
             let link_account = link_id_to_account(ctx, &test_data.link.id);
 
-            // Act
+            // Act - backend call flow: process action -> execute icrc112 -> update action
             let processing_action = test_data
                 .fixture
                 .process_action(&test_data.link.id, &test_data.action.id)
