@@ -4,10 +4,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { UseFieldArrayReturn } from "react-hook-form";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { FungibleToken } from "@/types/fungible-token.speculative";
 import { CHAIN, LINK_TYPE, LINK_INTENT_ASSET_LABEL } from "@/services/types/enum";
-import { FeeHelpers } from "@/services/fee.service";
-import { ValidationService } from "@/services/validation.service";
 
 /**
  * Creates an asset select handler function for opening the asset drawer
@@ -101,132 +98,6 @@ export const createRemoveAssetHandler = (
         );
         assetFields.remove(index);
     };
-};
-
-/**
- * Validates form assets for errors - now uses unified validation system with token map
- * @param assets Form asset objects
- * @param tokenMap Map of all available tokens for O(1) lookup
- * @param t Translation function
- * @param options Optional configuration parameters
- * @param options.isAirdrop Whether this is an airdrop form
- * @param options.maxActionNumber Maximum number of actions
- * @param options.skipCheckingBalance Whether to skip checking token balance
- * @returns Boolean indicating if assets are valid and error messages
- */
-export const validateFormAssets = (
-    assets: {
-        tokenAddress: string;
-        amount: bigint;
-        label?: string | LINK_INTENT_ASSET_LABEL | undefined;
-        chain?: CHAIN | undefined;
-    }[],
-    tokenMap: Record<string, FungibleToken>,
-    t: (key: string, options?: Record<string, unknown>) => string,
-    options: {
-        isAirdrop?: boolean;
-        maxActionNumber?: number;
-        skipCheckingBalance?: boolean;
-    } = {},
-): {
-    isValid: boolean;
-    errorMessages: string[];
-} => {
-    const { isAirdrop = false, maxActionNumber = 1, skipCheckingBalance = false } = options;
-
-    // Convert assets to FormAsset format
-    const formAssets = assets.map((asset) => ({
-        tokenAddress: asset.tokenAddress,
-        amount: asset.amount,
-        chain: asset.chain || CHAIN.IC,
-        label: asset.label,
-    }));
-
-    // Use the unified validation system
-    const linkType = isAirdrop ? LINK_TYPE.SEND_AIRDROP : LINK_TYPE.SEND_TIP;
-    const result = ValidationService.validateAssetsWithFees(formAssets, tokenMap, {
-        useCase: "create",
-        linkType,
-        maxActionNumber,
-        includeLinkCreationFee: false,
-        skipBalanceCheck: skipCheckingBalance,
-    });
-
-    // Convert validation errors to error messages using translation
-    const errorMessages = result.errors.map((error) => {
-        if (error.metadata && error.message.startsWith("error.")) {
-            return t(error.message, error.metadata);
-        }
-        return error.message;
-    });
-
-    // Basic validation for required fields (amount, chain, label)
-    assets.forEach((asset, index) => {
-        const token = tokenMap[asset.tokenAddress]; // O(1) lookup
-        const tokenSymbol = token?.symbol || "Unknown";
-        // Check amount
-        if (!asset.amount || asset.amount === BigInt(0)) {
-            const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.amount_error_message")}`;
-            errorMessages.push(errorMsg);
-        }
-
-        // Check chain
-        if (!asset.chain) {
-            const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.chain_error_message")}`;
-            errorMessages.push(errorMsg);
-        }
-
-        // Check label
-        if (!asset.label) {
-            const errorMsg = `Asset #${index + 1} (${tokenSymbol}): ${t("create.label_error_message")}`;
-            errorMessages.push(errorMsg);
-        }
-    });
-
-    return {
-        isValid: result.isValid && errorMessages.length === 0,
-        errorMessages,
-    };
-};
-
-/**
- * Calculate total fees for a token including network fees and link creation fee
- * @param token The fungible token
- * @param includeLinkCreationFee Whether to include link creation fee
- * @returns Total fees in token's smallest unit
- */
-export const calculateTotalFees = (
-    token: FungibleToken,
-    includeLinkCreationFee: boolean = true,
-): bigint => {
-    const networkFees = FeeHelpers.calculateNetworkFeesInES8(token);
-    const linkCreationFee = includeLinkCreationFee
-        ? FeeHelpers.getLinkCreationFee().amount
-        : BigInt(0);
-    return networkFees + linkCreationFee;
-};
-
-/**
- * Calculate total fees for multiple assets - now uses unified validation system
- * @param assets Array of asset objects with token addresses and amounts
- * @param tokenMap HashMap of tokens for O(1) lookup
- * @param maxUses Number of uses for the link
- * @param includeLinkCreationFee Whether to include link creation fee (only once per link)
- * @returns Object with total fees broken down by token or error symbol
- */
-export const calculateTotalFeesForAssets = (
-    assets: { tokenAddress: string; amount: bigint }[],
-    tokenMap: Record<string, FungibleToken>,
-    maxUses: number = 1,
-    includeLinkCreationFee: boolean = false,
-): string | null => {
-    // Use the unified validation system from ValidationService
-    return ValidationService.calculateTotalFeesForAssets(
-        assets,
-        tokenMap,
-        maxUses,
-        includeLinkCreationFee,
-    );
 };
 
 /**

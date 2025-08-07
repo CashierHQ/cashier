@@ -7,7 +7,7 @@ import { Repeat2 } from "lucide-react";
 import { FC, useMemo, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-export type ConversionResult = {
+type ConversionResult = {
     tokenAmount: number;
     usdAmount: number;
     tokenFormatted: string;
@@ -79,19 +79,6 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
         return formatDollarAmount(conversionResult.usdAmount);
     }, [isUsd, amount, symbol, conversionResult]);
 
-    // Provide a utility function to convert between USD and token amounts
-    const convertAmount = (value: number, toUsd: boolean): number => {
-        if (!token.usdConversionRate || value === 0) return 0;
-
-        if (toUsd) {
-            // Convert token to USD
-            return value * token.usdConversionRate;
-        } else {
-            // Convert USD to token
-            return value / token.usdConversionRate;
-        }
-    };
-
     if (!canConvert) {
         return (
             <span className="text-[10px] font-light text-grey-400">
@@ -111,15 +98,4 @@ export const UsdSwitch: FC<UsdSwitchProps> = ({
             <Repeat2 className="ml-1 text-destructive" size={15} strokeWidth={2} />
         </button>
     );
-};
-
-// Utility functions that can be imported elsewhere
-export const convertToUsd = (tokenAmount: number, conversionRate?: number): number => {
-    if (!conversionRate || tokenAmount === 0) return 0;
-    return tokenAmount * conversionRate;
-};
-
-export const convertFromUsd = (usdAmount: number, conversionRate?: number): number => {
-    if (!conversionRate || usdAmount === 0) return 0;
-    return usdAmount / conversionRate;
 };

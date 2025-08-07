@@ -4,9 +4,6 @@
 import { Chain } from "@/services/types/link.service.types";
 import { TransactionType } from "@/types/transaction-type";
 import { TransactionRecord } from "@/types/transaction-record.speculative";
-import { CHAIN, FEE_TYPE } from "@/services/types/enum";
-import { FeeModel } from "@/services/types/intent.service.types";
-import { convertTokenAmountToNumber } from "@/utils";
 
 export const MOCK_TX_DATA: TransactionRecord[] = [
     {

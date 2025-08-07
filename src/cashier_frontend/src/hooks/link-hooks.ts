@@ -17,7 +17,7 @@ import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.servic
 import { Identity } from "@dfinity/agent";
 
 // Centralized query keys for consistent caching
-export const LINK_QUERY_KEYS = {
+const LINK_QUERY_KEYS = {
     all: ["links"] as const,
     list: () => [...LINK_QUERY_KEYS.all, "list"] as const,
     detail: (linkId: string | undefined, actionType?: ACTION_TYPE) =>

@@ -16,7 +16,7 @@ import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
-export interface LinkDetailsProps {
+interface LinkDetailsProps {
     link?: LinkDetailModel;
     isUpdating: boolean;
 }

@@ -211,7 +211,7 @@ export const getHeaderInfoForLink = (
     };
 };
 
-export const getHeaderTextForLink = (linkData?: LinkDetailModel): string => {
+const getHeaderTextForLink = (linkData?: LinkDetailModel): string => {
     if (!linkData) return "";
 
     switch (linkData?.linkType) {
@@ -227,7 +227,7 @@ export const getHeaderTextForLink = (linkData?: LinkDetailModel): string => {
     }
 };
 
-export const getIconForLink = (linkData?: LinkDetailModel): ReactNode => {
+const getIconForLink = (linkData?: LinkDetailModel): ReactNode => {
     if (!linkData) return null;
 
     switch (linkData?.linkType) {
@@ -252,7 +252,7 @@ export const getIconForLink = (linkData?: LinkDetailModel): ReactNode => {
     }
 };
 
-export const getHeaderColorsForLink = (linkData?: LinkDetailModel): string => {
+const getHeaderColorsForLink = (linkData?: LinkDetailModel): string => {
     if (!linkData) return "";
 
     switch (linkData?.linkType) {
@@ -269,7 +269,7 @@ export const getHeaderColorsForLink = (linkData?: LinkDetailModel): string => {
     }
 };
 
-export const getHeaderTextColorForLink = (linkData?: LinkDetailModel): string => {
+const getHeaderTextColorForLink = (linkData?: LinkDetailModel): string => {
     if (!linkData) return "";
 
     switch (linkData?.linkType) {
