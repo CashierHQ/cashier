@@ -6,16 +6,13 @@
     "name": "cashier",
     "license": "MIT",
     "scripts": {
-        "prebuild": "make generate-ci",
-        "build": "npm run build --workspaces --if-present",
-        "start": "npm start --workspaces --if-present",
         "start-tunnel": "lt -s cashier --port 3000",
         "test": "make test",
         "test:integration": "make test-integration",
         "test:request-lock": "make test-request-lock",
         "test:integration-backend": "npx jest -- src/test/picjs-tests",
-        "format": "prettier --write '**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
-        "lint": "eslint src/cashier_frontend --config eslint.config.js"
+        "format": "prettier --write '.src/test/**/*.{js,jsx,ts,tsx,css,html,md,json,rs}'",
+        "lint": "eslint .src/test --config eslint.config.js"
     },
     "lint-staged": {
         "**/*": [
@@ -23,9 +20,6 @@
         ]
     },
     "type": "module",
-    "workspaces": [
-        "src/cashier_frontend"
-    ],
     "devDependencies": {
         "@dfinity/pic": "^0.13.1",
         "@types/jest": "^29.5.14",
