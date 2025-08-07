@@ -4,12 +4,12 @@ use cashier_types::repository::{
 };
 
 use super::super::fixture::LinkTestFixture;
-use crate::utils::{principal::get_user_principal, with_pocket_ic_context};
+use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
 #[tokio::test]
 async fn should_create_send_tip_action_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        let caller = get_user_principal("user1");
+        let caller = TestUser::User1.get_principal();
         let fixture = LinkTestFixture::new(ctx, &caller).await;
 
         let user = fixture.setup_user().await;

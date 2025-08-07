@@ -5,7 +5,7 @@ use crate::{
         IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferError,
         Icrc1TransferResult, Tokens,
     },
-    utils::{deploy_canister_with_id, load_canister_bytecode, principal::get_user_principal},
+    utils::{deploy_canister_with_id, load_canister_bytecode, principal::TestUser},
 };
 use candid::{Nat, Principal};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
@@ -74,7 +74,7 @@ impl<C: CanisterClient> IcpLedgerClient<C> {
 pub async fn deploy_icp_ledger_canister(
     client: &ic_mple_pocket_ic::pocket_ic::nonblocking::PocketIc,
 ) -> Principal {
-    let token_deployer_pid = get_user_principal("token_deployer");
+    let token_deployer_pid = TestUser::TokenDeployer.get_principal();
 
     let icp_init_args = IcpInitArgs {
         minting_account: AccountIdentifier::new(&token_deployer_pid, &DEFAULT_SUBACCOUNT)

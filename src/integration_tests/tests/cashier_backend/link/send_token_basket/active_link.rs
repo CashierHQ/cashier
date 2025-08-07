@@ -10,7 +10,7 @@ use crate::{
     constant::LINK_CREATE_FEE,
     utils::{
         icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account,
-        principal::get_user_principal, with_pocket_ic_context, PocketIcTestContext,
+        principal::TestUser, with_pocket_ic_context, PocketIcTestContext,
     },
 };
 
@@ -37,7 +37,7 @@ mod test_token_basket_3_tokens {
     // this mimic the same flow in the frontend
     // backend call flow: create link -> create action -> process action -> execute icrc112 -> update action
     async fn setup(ctx: &PocketIcTestContext) -> TokenBasketTestData {
-        let caller = get_user_principal("user1");
+        let caller = TestUser::User1.get_principal();
         let mut fixture = LinkTestFixture::new(ctx, &caller).await;
 
         let user = fixture.setup_user().await;

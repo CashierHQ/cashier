@@ -3,13 +3,13 @@ use cashier_types::repository::common::Chain;
 use cashier_types::repository::link::v1::{LinkType, Template};
 
 use super::super::fixture::LinkTestFixture;
-use crate::utils::principal::get_user_principal;
+use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 
 #[tokio::test]
 async fn should_create_token_basket_link_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        let caller = get_user_principal("user1");
+        let caller = TestUser::User1.get_principal();
         let fixture = LinkTestFixture::new(ctx, &caller).await;
 
         fixture.setup_user().await;

@@ -3,7 +3,7 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
     cashier_backend::link::fixture::LinkTestFixture,
-    utils::{principal::get_user_principal, with_pocket_ic_context},
+    utils::{principal::TestUser, with_pocket_ic_context},
 };
 pub mod fixture;
 pub mod send_tip;
@@ -12,7 +12,7 @@ pub mod send_token_basket;
 #[tokio::test]
 async fn should_setup_environment_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        let caller: candid::Principal = get_user_principal("user1");
+        let caller: candid::Principal = TestUser::User1.get_principal();
         let mut fixture = LinkTestFixture::new(ctx, &caller).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
