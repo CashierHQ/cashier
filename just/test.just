@@ -1,6 +1,6 @@
 # Run all Rust and TypeScript unit and integration tests
 [group('test')]
-test_all test_name="": test test_ts_integration
+test_all: test test_ts_integration
 
 
 # Run unit tests
