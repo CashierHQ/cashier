@@ -33,6 +33,7 @@ ic-icrc-tx = "0.1"
 ic-stable-structures = "0.6"
 ic_mple_client = "0.7"
 ic_mple_pocket_ic = "0.7"
+ic-ledger-types = "0.15.0"
 icrc-ledger-types = "0.1.10"
 itertools = "0.14"
 proc-macro2 = "1.0"
@@ -54,4 +55,3 @@ vergen-gitcl = { version = "1", default-features = false, features = [
     "cargo",
     "rustc",
 ] }
-ic-ledger-types = "0.15.0"
