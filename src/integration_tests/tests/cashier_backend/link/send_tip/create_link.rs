@@ -15,7 +15,8 @@ async fn should_create_send_tip_link_success() {
 
         fixture.setup_user().await;
 
-        let link = fixture.create_tip_link(ctx, 100_000_000u64).await;
+        let tip_link_amount = 100_000_000u64;
+        let link = fixture.create_tip_link(ctx, tip_link_amount).await;
 
         assert_eq!(link.link_type, Some(LinkType::SendTip.to_string()));
         assert_eq!(link.template, Some(Template::Central.to_string()));
@@ -31,7 +32,7 @@ async fn should_create_send_tip_link_success() {
         );
         assert_eq!(
             link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
-            1000000
+            tip_link_amount
         );
         assert_eq!(link.link_use_action_max_count, 1);
         assert_eq!(link.title, Some("Test Link".to_string()));

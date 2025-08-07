@@ -89,7 +89,7 @@ impl LinkTestFixture {
                         INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         ctx.icp_ledger_principal.to_text()
                     ),
-                    amount_per_link_use_action: 10000000,
+                    amount_per_link_use_action: 10_000_000,
                 },
                 LinkDetailUpdateAssetInfoInput {
                     address: ctx.icrc_token_map["ckBTC"].to_string(),
@@ -99,7 +99,7 @@ impl LinkTestFixture {
                         INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         ctx.icrc_token_map["ckBTC"].to_text()
                     ),
-                    amount_per_link_use_action: 1000000,
+                    amount_per_link_use_action: 1_000_000,
                 },
                 LinkDetailUpdateAssetInfoInput {
                     address: ctx.icrc_token_map["ckUSDC"].to_string(),
