@@ -30,7 +30,7 @@ import { UseQueryResult } from "@tanstack/react-query";
 import { useCreateConfirmation } from "@/hooks/tx-cart/useCreateConfirmation";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
-export interface LinkPreviewProps {
+interface LinkPreviewProps {
     onInvalidActon?: () => void;
     onCashierError?: (error: Error) => void;
     onActionResult?: (action: ActionModel) => void;

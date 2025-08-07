@@ -6,7 +6,7 @@ import { UserInputItem } from "@/stores/linkCreationFormStore";
 import { v4 as uuidv4 } from "uuid";
 import { LinkDetailModel } from "../types/link.service.types";
 import { LINK_STATE, LINK_TYPE } from "../types/enum";
-import { LinkDto } from "../../../../declarations/cashier_backend/cashier_backend.did";
+import { LinkDto } from "../../generated/cashier_backend/cashier_backend.did";
 import {
     mapLinkDetailModelToLinkDto,
     mapPartialDtoToLinkDetailModel,

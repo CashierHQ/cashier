@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/transaction-history";
 import { TransactionType } from "@/types/transaction-type";
 
-export const transactionItemComponentMap = {
+const transactionItemComponentMap = {
     [TransactionType.Send]: TransactionHistoryItemSend,
     [TransactionType.Receive]: TransactionHistoryItemReceive,
 };

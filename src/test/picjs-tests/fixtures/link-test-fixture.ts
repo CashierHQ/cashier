@@ -19,7 +19,7 @@ import {
     LinkDto,
     UserDto,
     CreateLinkInput,
-} from "../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../../src/cashier_frontend/src/generated/cashier_backend/cashier_backend.did";
 import { ICP_LABEL, MultipleTokenHelper } from "../utils/multiple-token-helper";
 import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { flattenAndFindByMethod } from "../utils/icrc-112";

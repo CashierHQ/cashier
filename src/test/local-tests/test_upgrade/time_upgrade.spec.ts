@@ -14,7 +14,7 @@ import {
     ActionDto,
     CreateLinkInput,
     ProcessActionInput,
-} from "../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../../src/cashier_frontend/src/generated/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
 
 describe("Canister Upgrade During Action Processing", () => {

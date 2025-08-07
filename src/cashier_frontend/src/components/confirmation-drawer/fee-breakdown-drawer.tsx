@@ -25,7 +25,7 @@ const calculateFeeDisplayAmount = (
     return Number(feeAmount);
 };
 
-export type FeeBreakdownDrawerProps = {
+type FeeBreakdownDrawerProps = {
     open?: boolean;
     onClose?: () => void;
     totalFees: number;
