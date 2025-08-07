@@ -2,6 +2,8 @@ use candid::Principal;
 
 use crate::utils::with_pocket_ic_context;
 
+pub mod link;
+
 /// Tests that the cashier backend canister can be deployed.
 #[tokio::test]
 async fn should_deploy_the_cashier_backend_canister() {
