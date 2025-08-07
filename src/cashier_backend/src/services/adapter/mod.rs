@@ -18,25 +18,6 @@ pub trait IntentAdapter {
     fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError>;
 }
 
-pub struct ActionAdapterImpl<E: IcEnvironment + Clone> {
-    // PhantomData tells Rust that we're conceptually storing E, even though we don't
-    _phantom: PhantomData<E>,
-}
-
-impl<E: IcEnvironment + Clone> Default for ActionAdapterImpl<E> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<E: IcEnvironment + Clone> ActionAdapterImpl<E> {
-    pub fn new() -> Self {
-        Self {
-            _phantom: PhantomData,
-        }
-    }
-}
-
 pub struct IntentAdapterImpl<E: IcEnvironment + Clone> {
     // PhantomData tells Rust that we're conceptually storing E, even though we don't
     _phantom: PhantomData<E>,
