@@ -1,17 +1,14 @@
 use std::sync::OnceLock;
 
 use crate::{
-    types::{
-        IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferError,
-        Icrc1TransferResult, Tokens,
-    },
+    types::{IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferResult, Tokens},
     utils::{deploy_canister_with_id, load_canister_bytecode, principal::TestUser},
 };
 use candid::{Nat, Principal};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use ic_mple_client::CanisterClient;
-use icrc_ledger_types::icrc1::account::Account as IcrcAccount;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
+use icrc_ledger_types::icrc1::{account::Account as IcrcAccount, transfer::TransferError};
 
 #[derive(Debug, Clone)]
 pub struct IcpLedgerClient<C>
@@ -32,7 +29,7 @@ impl<C: CanisterClient> IcpLedgerClient<C> {
         &self,
         to_account: IcrcAccount,
         amount: u64,
-    ) -> Result<Nat, Icrc1TransferError> {
+    ) -> Result<Nat, TransferError> {
         let transfer_args = TransferArg {
             memo: None,
             amount: candid::Nat::from(amount),
