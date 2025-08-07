@@ -1,45 +1,14 @@
 use candid::CandidType;
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::BlockIndex;
+use icrc_ledger_types::icrc1::transfer::TransferError;
 use serde::Deserialize;
 use serde_bytes::ByteBuf;
 
-/// Type alias for ICRC1 block index, representing the position of a transaction in the ledger
-pub type Icrc1BlockIndex = candid::Nat;
-
-/// Type alias for ICRC1 token amounts, representing the quantity of tokens
-pub type Icrc1Tokens = candid::Nat;
-
-/// Error types that can occur during ICRC1 token transfers
-/// These errors are returned by the ICRC ledger when transfer operations fail
-#[derive(CandidType, Deserialize, Debug)]
-pub enum Icrc1TransferError {
-    GenericError {
-        message: String,
-        error_code: candid::Nat,
-    },
-    TemporarilyUnavailable,
-    BadBurn {
-        min_burn_amount: Icrc1Tokens,
-    },
-    Duplicate {
-        duplicate_of: Icrc1BlockIndex,
-    },
-    BadFee {
-        expected_fee: Icrc1Tokens,
-    },
-    CreatedInFuture {
-        ledger_time: u64,
-    },
-    TooOld,
-    InsufficientFunds {
-        balance: Icrc1Tokens,
-    },
-}
-
 /// Result type for ICRC1 transfer operations
 /// Returns either a block index on success or a transfer error on failure
-pub type Icrc1TransferResult = std::result::Result<Icrc1BlockIndex, Icrc1TransferError>;
+pub type Icrc1TransferResult = std::result::Result<BlockIndex, TransferError>;
 
 /// Feature flags for ICRC ledger functionality
 /// Controls which ICRC features are enabled on the ledger
