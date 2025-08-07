@@ -39,7 +39,7 @@ async fn should_create_token_basket_link_success() {
         );
         assert_eq!(
             link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
-            10000000
+            10_000_000
         );
 
         // Check ckBTC asset
@@ -61,7 +61,7 @@ async fn should_create_token_basket_link_success() {
         );
         assert_eq!(
             link.asset_info.as_ref().unwrap()[1].amount_per_link_use_action,
-            1000000
+            1_000_000
         );
 
         // Check ckUSDC asset
@@ -83,7 +83,7 @@ async fn should_create_token_basket_link_success() {
         );
         assert_eq!(
             link.asset_info.as_ref().unwrap()[2].amount_per_link_use_action,
-            100000000
+            10_000_000
         );
 
         assert_eq!(link.link_use_action_max_count, 1);
