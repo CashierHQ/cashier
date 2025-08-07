@@ -27,10 +27,3 @@ export interface FormAsset {
     label?: string | LINK_INTENT_ASSET_LABEL;
     chain?: CHAIN;
 }
-
-export interface FlowResult<T = unknown> {
-    success: boolean;
-    data?: T;
-    error?: Error;
-    validationErrors?: ValidationError[];
-}

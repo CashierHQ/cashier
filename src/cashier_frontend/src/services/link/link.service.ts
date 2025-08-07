@@ -14,7 +14,7 @@ import {
     ProcessActionAnonymousInput,
     ProcessActionInput,
     UpdateActionInput,
-} from "../../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../generated/cashier_backend/cashier_backend.did";
 import { Actor, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
@@ -41,24 +41,24 @@ export interface ResponseLinksModel {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: any;
 }
-export interface ProcessActionInputModel {
+interface ProcessActionInputModel {
     linkId: string;
     actionType: string;
     actionId: string;
 }
 
-export interface CreateLinkInputModel {
+interface CreateLinkInputModel {
     linkId: string;
     actionType: string;
 }
 
-export interface CreateActionAnonymousInputModel {
+interface CreateActionAnonymousInputModel {
     linkId: string;
     actionType: string;
     walletAddress: string;
 }
 
-export interface UpdateActionAnonymousInputModel {
+interface UpdateActionAnonymousInputModel {
     linkId: string;
     actionType: string;
     actionId: string;
@@ -110,11 +110,11 @@ class LinkService {
         };
         responseModel.data = response.data
             ? response.data.map((link: LinkDto) => {
-                return {
-                    link: mapPartialDtoToLinkDetailModel(link),
-                    action_create: undefined,
-                };
-            })
+                  return {
+                      link: mapPartialDtoToLinkDetailModel(link),
+                      action_create: undefined,
+                  };
+              })
             : [];
         return responseModel;
     }
@@ -125,10 +125,10 @@ class LinkService {
                 linkId,
                 actionType
                     ? [
-                        {
-                            action_type: actionType,
-                        },
-                    ]
+                          {
+                              action_type: actionType,
+                          },
+                      ]
                     : [],
             ),
         );

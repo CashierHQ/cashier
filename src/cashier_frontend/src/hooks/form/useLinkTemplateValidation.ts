@@ -10,7 +10,7 @@ import { UserInputItem } from "@/stores/linkCreationFormStore";
 import { ValidationResult, ValidationError } from "@/types/validation.types";
 import { ErrorCode } from "@/types/error.enum";
 
-export interface LinkTemplateValidationState {
+interface LinkTemplateValidationState {
     showNoNameError: boolean;
     showComingSoonError: boolean;
     showUnsupportedTypeError: boolean;

@@ -25,7 +25,7 @@ export interface UserInputItem {
     maxActionNumber: bigint;
 }
 
-export interface ButtonState {
+interface ButtonState {
     label: string;
     isDisabled: boolean;
     action: (() => Promise<void>) | (() => void) | null;

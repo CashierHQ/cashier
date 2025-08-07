@@ -14,7 +14,7 @@ import {
     init as ledgerInit,
     TransferArg,
     idlFactory,
-} from "../../../declarations/icp_ledger_canister/icp_ledger_canister.did";
+} from "../../../../src/cashier_frontend/src/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { Account, principalToAccountIdentifier } from "@dfinity/ledger-icp";
 import { IDL } from "@dfinity/candid";
 

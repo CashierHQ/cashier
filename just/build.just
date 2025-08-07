@@ -11,7 +11,7 @@ clean:
 
 # Builds and download all artifacts
 [group('build')]
-build: download_artifacts build_canisters build_frontend
+build: download_artifacts build_canisters generate_frontend_ts build_frontend
 
 
 # Builds the canisters
@@ -23,7 +23,7 @@ build_canisters: pre_build
 
 # Builds the frontend
 [group('build')]
-build_frontend mode="local_dev": generate_frontend_ts
+build_frontend mode="local_dev":
   #!/usr/bin/env bash
   set -e
 
@@ -40,6 +40,11 @@ generate_frontend_ts:
   just generate_frontend_ts_for_canister token_storage
   just generate_frontend_ts_for_canister icp_ledger_canister
 
+
+[private]
+install_frontend_deps:
+  cd "./src/cashier_frontend" && npm install
+
 [private]
 generate_frontend_ts_for_canister canister:
   # Files are generated into ./src/declarations
@@ -47,6 +52,8 @@ generate_frontend_ts_for_canister canister:
   rm src/declarations/{{canister}}/{{canister}}.did
   rm src/declarations/{{canister}}/index.d.ts
   rm src/declarations/{{canister}}/index.js
+  cp -r src/declarations/* src/cashier_frontend/src/generated
+  rm -rf src/declarations
 
 
 # Download third party artifacts

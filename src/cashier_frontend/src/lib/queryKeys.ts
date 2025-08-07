@@ -6,22 +6,12 @@ import { LinkGetUserStateInputModel } from "@/services/types/link.service.types"
 import UserService from "@/services/user.service";
 import { Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
-export interface TokenMetadataWithCanisterId {
-    canisterId: string;
-    metadata: IcrcTokenMetadata;
-}
-
-export const QUERY_KEYS = {
+const QUERY_KEYS = {
     USERS: "users",
     LINKS: "links",
     TOKENS: "tokens",
-};
-
-export const USER_LINK_QUERY = {
-    userState: (linkId: string, action: string, pid: string) => ["userState", pid, action, linkId],
 };
 
 export const queryKeys = createQueryKeyStore({

@@ -43,7 +43,7 @@ const isValidWalletAddress = (address: string): { valid: boolean; message: strin
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const walletSendAssetFormSchema = (assets: FungibleToken[]) => {
+const walletSendAssetFormSchema = (assets: FungibleToken[]) => {
     return z
         .object({
             address: z.string().min(1, { message: "Asset is required" }),

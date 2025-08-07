@@ -3,14 +3,14 @@
 
 import { LINK_TYPE } from "@/services/types/enum";
 
-export type LinkTag = "send" | "receive";
+type LinkTag = "send" | "receive";
 
 /**
  * Get the tag for a given link type
  * @param linkType The type of the link
  * @returns The tag categorizing the link type
  */
-export const getLinkTypeTag = (linkType?: LINK_TYPE): LinkTag | undefined => {
+const getLinkTypeTag = (linkType?: LINK_TYPE): LinkTag | undefined => {
     if (!linkType) return undefined;
 
     const sendTypes = [
@@ -31,15 +31,6 @@ export const getLinkTypeTag = (linkType?: LINK_TYPE): LinkTag | undefined => {
     }
 
     return undefined;
-};
-
-/**
- * Check if a link type is a send type
- * @param linkType The type of the link
- * @returns boolean indicating if it's a send type
- */
-export const isSendLinkType = (linkType?: LINK_TYPE): boolean => {
-    return getLinkTypeTag(linkType) === "send";
 };
 
 /**

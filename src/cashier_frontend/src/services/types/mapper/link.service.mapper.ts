@@ -8,7 +8,7 @@ import {
     LinkDto,
     LinkGetUserStateOutput,
     UpdateLinkInput,
-} from "../../../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../generated/cashier_backend/cashier_backend.did";
 import {
     AssetInfoModel,
     LinkDetailModel,
@@ -64,7 +64,7 @@ export const mapLinkDetailModelToUpdateLinkInputModel = (
     return updateLinkInput;
 };
 
-export const mapDtoToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
+const mapDtoToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
     const result: LinkDetailModel = {
         id: link.id,
         title: fromNullable(link.title) ?? "",
@@ -170,62 +170,6 @@ export const mapLinkUserStateModel = (
     };
 };
 
-export const mapAssetInfoModelToUserInputAsset = (model: AssetInfoModel): UserInputAsset => {
-    if (!model.label) {
-        throw new Error("Asset label is undefined");
-    }
-    if (!model.chain) {
-        throw new Error("Asset chain is undefined");
-    }
-    return {
-        address: model.address,
-        linkUseAmount: model.amountPerUse,
-        usdEquivalent: 0,
-        usdConversionRate: 0,
-        chain: model.chain,
-        label: model.label,
-    };
-};
-
-export const mapLinkDetailModelToUserInputItem = (model: LinkDetailModel): UserInputItem => {
-    if (!model.state) {
-        throw new Error("Link state is undefined");
-    }
-
-    if (!model.asset_info) {
-        throw new Error("Asset info is undefined");
-    }
-
-    if (!model.linkType) {
-        throw new Error("Link type is undefined");
-    }
-
-    const state = mapStringToEnum(LINK_STATE, model.state);
-    const linkType = mapStringToEnum(LINK_TYPE, model.linkType);
-    const assets = model.asset_info.map((asset) => {
-        return mapAssetInfoModelToUserInputAsset(asset);
-    });
-
-    if (!state) {
-        throw new Error("Link state is not valid");
-    }
-
-    if (!linkType) {
-        throw new Error("Link type is not valid");
-    }
-
-    return {
-        linkId: model.id,
-        state,
-        linkType,
-        title: model.title,
-        assets: assets,
-        description: model.description,
-        image: model.image,
-        maxActionNumber: model.maxActionNumber,
-    };
-};
-
 // Map from UserInputItem to LinkDetailModel
 export const mapUserInputItemToLinkDetailModel = (
     model: Partial<UserInputItem>,
@@ -252,27 +196,6 @@ export const mapUserInputItemToLinkDetailModel = (
         maxActionNumber: model.maxActionNumber || BigInt(0),
         useActionCounter: BigInt(0), // Default to 0 for new links
         create_at: new Date(), // Default to current date for new links
-    };
-};
-
-export const mapLinkModelToCreateLinkInput = (model: LinkDetailModel): CreateLinkInput => {
-    // Map asset_info to LinkDetailUpdateAssetInfoInput format
-    const assetInfo = model.asset_info.map((asset) => ({
-        address: asset.address,
-        chain: asset.chain || "IC",
-        label: asset.label || "",
-        amount_per_link_use_action: asset.amountPerUse,
-    }));
-
-    return {
-        title: model.title,
-        asset_info: assetInfo,
-        link_type: model.linkType || "",
-        description: model.description ? [model.description] : [],
-        link_image_url: model.image ? [model.image] : [],
-        template: model.template || "Central",
-        link_use_action_max_count: model.maxActionNumber,
-        nft_image: [],
     };
 };
 

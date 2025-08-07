@@ -6,7 +6,7 @@ import axios from "axios";
 /**
  * Simple service for fetching token prices from IC Explorer
  */
-export class PriceService {
+class PriceService {
     private static readonly IC_EXPLORER_API = "https://api.icexplorer.io/api";
 
     /**

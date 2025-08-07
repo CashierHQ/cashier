@@ -22,7 +22,7 @@ import { useLinkMutations } from "../useLinkMutations";
 import { useTokensV2 } from "../token/useTokensV2";
 
 // Types for different submission contexts
-export interface BaseSubmissionContext {
+interface BaseSubmissionContext {
     errorHandler?: (error: Error) => void;
 }
 
@@ -35,7 +35,7 @@ export interface FormSubmissionContext extends BaseSubmissionContext {
     isAirdrop?: boolean;
 }
 
-export interface LinkCreationContext extends BaseSubmissionContext {
+interface LinkCreationContext extends BaseSubmissionContext {
     navigate: (path: string) => void;
     showConfirmation: () => void;
     createAction?: () => Promise<void>;
