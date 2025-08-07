@@ -1,16 +1,17 @@
 use async_trait::async_trait;
 use candid::{Nat, Principal};
+use cashier_types::constant::{
+    INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
+    INTENT_LABEL_SEND_AIRDROP_ASSET, INTENT_LABEL_SEND_TIP_ASSET,
+    INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+};
 use cashier_types::error::CanisterError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
-use crate::constant::{
-    FEE_TREASURY_ADDRESS, ICP_CANISTER_ID, INTENT_LABEL_LINK_CREATION_FEE,
-    INTENT_LABEL_RECEIVE_PAYMENT_ASSET, INTENT_LABEL_SEND_AIRDROP_ASSET,
-    INTENT_LABEL_SEND_TIP_ASSET, INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-};
+use crate::constant::{FEE_TREASURY_ADDRESS, ICP_CANISTER_ID};
 use crate::domains::fee::Fee;
 use crate::error;
 use crate::services::link::service::LinkService;
