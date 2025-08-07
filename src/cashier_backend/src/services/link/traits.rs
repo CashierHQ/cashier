@@ -19,7 +19,7 @@ use cashier_types::repository::action::v1::Action;
 use cashier_types::repository::action::v1::ActionType;
 use cashier_types::repository::asset_info::AssetInfo;
 use cashier_types::repository::common::Asset;
-use cashier_types::repository::intent::v2::{Intent, IntentTask};
+use cashier_types::repository::intent::v2::Intent;
 use cashier_types::repository::link::v1::{Link, LinkType, Template};
 use cashier_types::repository::link_action::v1::LinkAction;
 
@@ -130,15 +130,6 @@ pub trait IntentAssembler {
         link_id: &str,
         action_type: &ActionType,
     ) -> Result<Vec<Asset>, CanisterError>;
-
-    // helper builders & lookup
-    fn create_basic_intent(&self, task: IntentTask, label: String) -> Intent;
-    fn create_fee_intent(&self) -> Intent;
-    fn look_up_intent(
-        &self,
-        link: &Link,
-        action_type: &ActionType,
-    ) -> Result<Option<Vec<Intent>>, CanisterError>;
 }
 
 // ---------- 4. Validation helpers ----------
@@ -151,36 +142,15 @@ pub trait LinkValidation {
         user_id: &str,
     ) -> Result<(), CanisterError>;
 
-    async fn link_validate_user_create_action_async(
-        &self,
-        link_id: &str,
-        action_type: &ActionType,
-        user_id: &str,
-        caller: &Principal,
-    ) -> Result<(), CanisterError>;
-
     fn link_validate_user_update_action(
         &self,
         action: &Action,
         user_id: &str,
     ) -> Result<(), CanisterError>;
 
-    async fn link_validate_user_update_action_async(
-        &self,
-        action: &Action,
-        user_id: &str,
-        caller: &Principal,
-    ) -> Result<(), CanisterError>;
-
-    async fn link_validate_balance_with_asset_info(
-        &self,
-        action_type: &ActionType,
-        link_id: &str,
-        caller: &Principal,
-    ) -> Result<(), CanisterError>;
     fn is_link_creator(&self, caller: &str, link_id: &str) -> bool;
-    fn is_link_exist(&self, link_id: &str) -> bool;
 
     async fn check_link_asset_left(&self, link: &Link) -> Result<bool, CanisterError>;
+
     fn validate_add_asset_with_link_type(&self, link: &Link, asset_infos: &[AssetInfo]) -> bool;
 }

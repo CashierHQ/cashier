@@ -1,15 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-pub mod api;
+mod api;
 mod build_data;
-pub mod constant;
-pub mod ext;
-pub mod init_and_upgrade;
-pub mod repository;
-pub mod services;
-pub mod types;
-// pub mod types_1;
+mod constant;
+mod ext;
+mod init_and_upgrade;
+mod repository;
+mod services;
+mod types;
 
 use crate::api::admin::types::*;
 use crate::api::token_v2::types::*;

@@ -42,14 +42,6 @@ pub struct RegistryToken {
     pub enabled_by_default: bool, // Indicates if the token is enabled by default
 }
 
-impl RegistryToken {
-    pub fn generate_id(chain: &Chain, ledger_id: &str) -> Result<TokenId, String> {
-        match (chain, ledger_id) {
-            (Chain::IC, id) => Ok(format!("IC:{id}")),
-        }
-    }
-}
-
 // User's token preference
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]

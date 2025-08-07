@@ -1,10 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::services::link::traits::LinkStateMachine;
 use candid::Principal;
 use cashier_types::{
-    dto::link::{GetLinkOptions, UpdateLinkInput},
+    dto::link::GetLinkOptions,
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
@@ -47,36 +46,6 @@ pub struct LinkService<E: IcEnvironment + Clone> {
 
 #[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment + Clone> LinkService<E> {
-    pub fn new(
-        link_repository: repositories::link::LinkRepository,
-        link_action_repository: LinkActionRepository,
-        action_repository: ActionRepository,
-        action_service: ActionService,
-        icrc_service: IcrcService,
-        user_wallet_repository: UserWalletRepository,
-        user_link_repository: repositories::user_link::UserLinkRepository,
-        request_lock_service: RequestLockService,
-        user_service: UserService,
-        icrc_batch_service: IcrcBatchService,
-        tx_manager_service: TransactionManagerService<E>,
-        ic_env: E,
-    ) -> Self {
-        Self {
-            link_repository,
-            link_action_repository,
-            action_repository,
-            action_service,
-            icrc_service,
-            user_wallet_repository,
-            user_link_repository,
-            ic_env,
-            request_lock_service,
-            user_service,
-            icrc_batch_service,
-            tx_manager_service,
-        }
-    }
-
     pub fn get_instance() -> Self {
         Self {
             link_repository: repositories::link::LinkRepository::new(),
@@ -336,42 +305,5 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
 
         Ok(())
-    }
-
-    pub async fn update_link(
-        &self,
-        caller: &Principal,
-        input: &UpdateLinkInput,
-    ) -> Result<Link, CanisterError> {
-        // Get link
-        let link = match self.get_link_by_id(&input.id) {
-            Ok(rsp) => rsp,
-            Err(e) => {
-                error!("Failed to get link: {:#?}", e);
-                return Err(e);
-            }
-        };
-
-        // Verify creator
-        if !self.is_link_creator(&caller.to_text(), &input.id) {
-            return Err(CanisterError::Unauthorized(
-                "Caller are not the creator of this link".to_string(),
-            ));
-        }
-
-        // Validate link type
-        let link_type = link.link_type;
-        if link_type.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "Link type is missing".to_string(),
-            ));
-        }
-
-        let params = input.params.clone();
-        let updated_link = self
-            .handle_link_state_transition(&input.id, &input.action, params)
-            .await?;
-
-        Ok(updated_link)
     }
 }

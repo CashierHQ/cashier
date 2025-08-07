@@ -43,10 +43,6 @@ impl LinkActionRepository {
         });
     }
 
-    pub fn get(&self, id: &LinkActionKey) -> Option<LinkAction> {
-        LINK_ACTION_STORE.with_borrow(|store| store.get(&id.to_str()))
-    }
-
     // Query by link_id, action_type, user_id, skip action_id
     pub fn get_by_prefix(
         &self,
@@ -72,11 +68,5 @@ impl LinkActionRepository {
 
             link_actions
         })
-    }
-
-    pub fn delete(&self, id: &LinkActionKey) {
-        LINK_ACTION_STORE.with_borrow_mut(|store| {
-            store.remove(&id.to_str());
-        });
     }
 }
