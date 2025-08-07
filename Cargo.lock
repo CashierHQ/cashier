@@ -1217,6 +1217,7 @@ dependencies = [
  "serde_bytes",
  "token_storage_client",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
