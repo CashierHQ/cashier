@@ -13,7 +13,7 @@ use cashier_types::{
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::utils::{principal::get_user_principal, PocketIcTestContext};
+use crate::utils::{principal::TestUser, PocketIcTestContext};
 
 pub struct LinkTestFixture {
     pub cashier_backend_client: Option<CashierBackendClient<PocketIcClient>>,
@@ -173,7 +173,7 @@ impl LinkTestFixture {
         amount: u64,
         to_user: &Principal,
     ) -> () {
-        let caller = get_user_principal("token_deployer");
+        let caller = TestUser::TokenDeployer.get_principal();
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
@@ -197,7 +197,7 @@ impl LinkTestFixture {
         amount: u64,
         to_user: &Principal,
     ) -> () {
-        let caller = get_user_principal("token_deployer");
+        let caller = TestUser::TokenDeployer.get_principal();
         let icrc_ledger_client = ctx.new_icrc_ledger_client(token_name, caller);
 
         let user_account = Account {

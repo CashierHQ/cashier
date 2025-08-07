@@ -11,7 +11,7 @@ use crate::{
     },
     utils::{
         deploy_canister_with_id, deploy_canister_with_settings, load_canister_bytecode,
-        principal::get_user_principal,
+        principal::TestUser,
     },
 };
 
@@ -81,7 +81,7 @@ pub async fn deploy_single_icrc_ledger_canister(
     fee: u64,
     id: Option<Principal>,
 ) -> Principal {
-    let token_deployer_pid = get_user_principal("token_deployer");
+    let token_deployer_pid = TestUser::TokenDeployer.get_principal();
 
     let ledger_init_input = IcrcInitArgs {
         decimals: Some(decimal),
