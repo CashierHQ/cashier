@@ -15,9 +15,13 @@ use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
 
-use crate::utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient};
+use crate::{
+    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
+    utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
+};
 
 pub mod icrc_112;
+pub mod link_id_to_account;
 pub mod principal;
 pub mod token_icp;
 pub mod token_icrc;
@@ -49,7 +53,7 @@ where
         "ckBTC".to_string(),
         8,
         10,
-        Some(Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap()),
+        Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
     )
     .await;
 
@@ -59,7 +63,7 @@ where
         "ckETH".to_string(),
         18,
         2000000000000000000,
-        Some(Principal::from_text("ss2fx-dyaaa-aaaar-qacoq-cai").unwrap()),
+        Some(Principal::from_text(CK_ETH_PRINCIPAL).unwrap()),
     )
     .await;
 
@@ -69,7 +73,7 @@ where
         "ckUSDC".to_string(),
         8,
         10000,
-        Some(Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap()),
+        Some(Principal::from_text(CK_USDC_PRINCIPAL).unwrap()),
     )
     .await;
 

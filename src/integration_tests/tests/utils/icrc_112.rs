@@ -2,9 +2,6 @@ use base64::prelude::*;
 use candid::Principal;
 
 use cashier_types::dto::action::Icrc112Request;
-use icrc_ledger_types::{icrc1::transfer::TransferArg, icrc2::approve::ApproveArgs};
-
-use crate::utils::decode;
 
 /// Executes ICRC112 requests with error handling that stops iteration on first error
 pub async fn execute_icrc112_request(
@@ -22,18 +19,6 @@ pub async fn execute_icrc112_request(
                 .decode(&request.arg)
                 .map_err(|e| format!("Invalid base64 payload: {e}"))?;
 
-            match request.method.as_str() {
-                "icrc2_approve" => {
-                    let decoded_payload: ApproveArgs = decode(&payload);
-                    println!("decoded_payload: {decoded_payload:#?}");
-                }
-                "icrc1_transfer" => {
-                    let decoded_payload: TransferArg = decode(&payload);
-                    println!("decoded_payload: {decoded_payload:#?}");
-                }
-                _ => {}
-            }
-
             let res = ctx
                 .client
                 .update_call(canister_id, caller, &request.method, payload)
@@ -43,8 +28,6 @@ pub async fn execute_icrc112_request(
             if let Err(e) = res {
                 return Err(format!("ICRC112 request failed at index {i}: {e}"));
             }
-
-            println!("success call {} {}", canister_id, request.method);
         }
     }
 

@@ -2,11 +2,11 @@ use std::sync::OnceLock;
 
 use candid::{Nat, Principal};
 use ic_mple_client::CanisterClient;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
+use icrc_ledger_types::icrc1::{account::Account as IcrcAccount, transfer::TransferArg};
 
 use crate::{
     types::{
-        Account, Icrc1TransferError, Icrc1TransferResult, IcrcArchiveOptions, IcrcInitArgs,
+        Icrc1TransferError, Icrc1TransferResult, IcrcArchiveOptions, IcrcInitArgs,
         IcrcLedgerArgument,
     },
     utils::{
@@ -29,9 +29,10 @@ impl<C: CanisterClient> IcrcLedgerClient<C> {
         Self { client }
     }
 
+    // Method to transfer ICRC tokens
     pub async fn transfer(
         &self,
-        to_account: icrc_ledger_types::icrc1::account::Account,
+        to_account: IcrcAccount,
         amount: u64,
     ) -> Result<Nat, Icrc1TransferError> {
         let transfer_args = TransferArg {
@@ -52,14 +53,22 @@ impl<C: CanisterClient> IcrcLedgerClient<C> {
         res
     }
 
+    // Method to get the balance of an ICRC account
     pub async fn balance_of(
         &self,
-        account: &Account,
+        account: &IcrcAccount,
     ) -> Result<Nat, ic_mple_client::CanisterClientError> {
         let balance: Result<Nat, ic_mple_client::CanisterClientError> =
             self.client.query("icrc1_balance_of", (account,)).await;
 
         balance
+    }
+
+    pub async fn fee(&self) -> Result<Nat, ic_mple_client::CanisterClientError> {
+        let fee: Result<Nat, ic_mple_client::CanisterClientError> =
+            self.client.query("icrc1_fee", ()).await;
+
+        fee
     }
 }
 
@@ -79,7 +88,7 @@ pub async fn deploy_single_icrc_ledger_canister(
         token_symbol: symbol,
         transfer_fee: Nat::from(fee),
         metadata: vec![],
-        minting_account: Account {
+        minting_account: IcrcAccount {
             owner: token_deployer_pid,
             subaccount: None,
         },

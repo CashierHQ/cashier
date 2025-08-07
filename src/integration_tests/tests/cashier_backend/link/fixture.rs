@@ -2,10 +2,13 @@ use std::time::Duration;
 
 use candid::Principal;
 use cashier_backend_client::client::CashierBackendClient;
-use cashier_types::dto::{
-    action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-    link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto},
-    user::UserDto,
+use cashier_types::{
+    constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+    dto::{
+        action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
+        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto},
+        user::UserDto,
+    },
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -53,7 +56,7 @@ impl LinkTestFixture {
     }
 
     // Pre-defined input for creating tip link.
-    pub async fn create_tip_link(&self, ctx: &PocketIcTestContext) -> LinkDto {
+    pub async fn create_tip_link(&self, ctx: &PocketIcTestContext, amount: u64) -> LinkDto {
         let input = CreateLinkInput {
             title: "Test Link".to_string(),
             link_use_action_max_count: 1,
@@ -61,7 +64,7 @@ impl LinkTestFixture {
                 address: ctx.icp_ledger_principal.to_string(),
                 chain: "IC".to_string(),
                 label: "SEND_TIP_ASSET".to_string(),
-                amount_per_link_use_action: 1000000, // 0.001 ICP in e8s
+                amount_per_link_use_action: amount,
             }],
             template: "Central".to_string(),
             link_type: "SendTip".to_string(),
@@ -81,20 +84,32 @@ impl LinkTestFixture {
                 LinkDetailUpdateAssetInfoInput {
                     address: ctx.icp_ledger_principal.to_string(),
                     chain: "IC".to_string(),
-                    label: "SEND_TOKEN_BASKET_ASSET".to_string(),
-                    amount_per_link_use_action: 10000000, // 0.001 ICP in e8s
+                    label: format!(
+                        "{}_{}",
+                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                        ctx.icp_ledger_principal.to_text()
+                    ),
+                    amount_per_link_use_action: 10000000,
                 },
                 LinkDetailUpdateAssetInfoInput {
                     address: ctx.icrc_token_map["ckBTC"].to_string(),
                     chain: "IC".to_string(),
-                    label: "SEND_TOKEN_BASKET_ASSET".to_string(),
-                    amount_per_link_use_action: 1000000, // 0.001 ICP in e8s
+                    label: format!(
+                        "{}_{}",
+                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                        ctx.icrc_token_map["ckBTC"].to_text()
+                    ),
+                    amount_per_link_use_action: 1000000,
                 },
                 LinkDetailUpdateAssetInfoInput {
                     address: ctx.icrc_token_map["ckUSDC"].to_string(),
                     chain: "IC".to_string(),
-                    label: "SEND_TOKEN_BASKET_ASSET".to_string(),
-                    amount_per_link_use_action: 100000000, // 0.001 ICP in e8s
+                    label: format!(
+                        "{}_{}",
+                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                        ctx.icrc_token_map["ckUSDC"].to_text()
+                    ),
+                    amount_per_link_use_action: 10_000_000,
                 },
             ],
             template: "Central".to_string(),

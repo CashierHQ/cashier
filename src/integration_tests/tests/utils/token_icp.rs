@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use crate::{
     types::{
-        Account, IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferError,
+        IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferError,
         Icrc1TransferResult, Tokens,
     },
     utils::{deploy_canister_with_id, load_canister_bytecode, principal::get_user_principal},
@@ -27,6 +27,7 @@ impl<C: CanisterClient> IcpLedgerClient<C> {
         Self { client }
     }
 
+    // Ledger ICP transfer
     pub async fn transfer(
         &self,
         to_account: IcrcAccount,
@@ -53,12 +54,19 @@ impl<C: CanisterClient> IcpLedgerClient<C> {
 
     pub async fn balance_of(
         &self,
-        account: &Account,
+        account: &IcrcAccount,
     ) -> Result<Nat, ic_mple_client::CanisterClientError> {
         let balance: Result<Nat, ic_mple_client::CanisterClientError> =
             self.client.query("icrc1_balance_of", (account,)).await;
 
         balance
+    }
+
+    pub async fn fee(&self) -> Result<Nat, ic_mple_client::CanisterClientError> {
+        let fee: Result<Nat, ic_mple_client::CanisterClientError> =
+            self.client.query("icrc1_fee", ()).await;
+
+        fee
     }
 }
 

@@ -1,15 +1,13 @@
 use candid::Nat;
+use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
     cashier_backend::link::fixture::LinkTestFixture,
-    types::Account,
     utils::{principal::get_user_principal, with_pocket_ic_context},
 };
 pub mod fixture;
-
-pub mod create_action;
-pub mod create_link;
-pub mod process_action;
+pub mod send_tip;
+pub mod send_token_basket;
 
 #[tokio::test]
 async fn should_setup_environment_success() {
