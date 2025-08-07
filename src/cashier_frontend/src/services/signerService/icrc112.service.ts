@@ -32,7 +32,7 @@ type ParallelRequests = Array<ICRC112Request>;
  */
 export type SequenceRequest = Array<ParallelRequests>;
 
-type Icrc112Requests = SequenceRequest;
+export type Icrc112Requests = SequenceRequest;
 
 interface SuccessResponse {
     result: CallCanisterResponse;
