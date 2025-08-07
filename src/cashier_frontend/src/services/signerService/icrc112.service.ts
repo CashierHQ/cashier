@@ -17,7 +17,7 @@ export type JsonICRC112Request = JsonRequest<
     }
 >;
 
-export interface ICRC112Request extends JsonObject {
+interface ICRC112Request extends JsonObject {
     canisterId: string;
     method: string;
     arg: string;
@@ -32,13 +32,13 @@ type ParallelRequests = Array<ICRC112Request>;
  */
 export type SequenceRequest = Array<ParallelRequests>;
 
-export type Icrc112Requests = SequenceRequest;
+type Icrc112Requests = SequenceRequest;
 
-export interface SuccessResponse {
+interface SuccessResponse {
     result: CallCanisterResponse;
 }
 
-export interface ErrorResponse {
+interface ErrorResponse {
     error: {
         code: number;
         message: string;
