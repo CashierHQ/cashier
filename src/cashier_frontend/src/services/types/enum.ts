@@ -2,8 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 export enum TEMPLATE {
-    LEFT = "Left",
-    RIGHT = "Right",
     CENTRAL = "Central",
 }
 
@@ -45,11 +43,6 @@ export enum ACTION_STATE {
 export enum INTENT_TYPE {
     TRANSFER_FROM = "TransferFrom",
     TRANSFER = "Transfer",
-}
-
-export enum LINK_ASSET_TYPE {
-    CASHIER_FEE = "CashierFee",
-    ASSET_ADDED = "Asset",
 }
 
 export enum FEE_TYPE {
@@ -223,7 +216,6 @@ export const mapStringToLabel = (label: string) => {
     }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getAssetLabelForLinkType = (linkType: string, address: string) => {
     switch (linkType) {
         case LINK_TYPE.SEND_TIP:
@@ -240,7 +232,5 @@ export const getAssetLabelForLinkType = (linkType: string, address: string) => {
 };
 
 export enum LINK_USER_STATE {
-    NO_STATE = "No_state",
-    CHOOSE_WALLET = "User_state_choose_wallet",
     COMPLETE = "User_state_completed_link",
 }

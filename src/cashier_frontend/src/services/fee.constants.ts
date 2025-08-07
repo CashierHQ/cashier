@@ -18,7 +18,7 @@ export const createFeeKey = (chain: string, linkType: string, feeType: string): 
 };
 
 // Default ICP asset info for fees
-export const createDefaultIcpAssetInfo = (amount: bigint): AssetInfo => ({
+const createDefaultIcpAssetInfo = (amount: bigint): AssetInfo => ({
     address: ICP_TOKEN_ADDRESS,
     chain: CHAIN.IC,
     amount,
@@ -27,7 +27,7 @@ export const createDefaultIcpAssetInfo = (amount: bigint): AssetInfo => ({
 });
 
 // Initialize the default fee table
-export const initDefaultFeeTable = (): FeeTable => {
+const initDefaultFeeTable = (): FeeTable => {
     const feeTable = new Map<string, FeeConfig>();
 
     // Add default network fees for each link type on the IC chain

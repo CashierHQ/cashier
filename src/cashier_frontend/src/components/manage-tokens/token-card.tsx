@@ -8,7 +8,7 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 import { mapChainToLogo } from "@/utils/map/chain.map";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
-export interface ManageTokensTokenItemProps {
+interface ManageTokensTokenItemProps {
     token: FungibleToken;
 }
 

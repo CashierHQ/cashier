@@ -6,7 +6,7 @@ import { groupTransactionsByDate } from "@/services/transactionHistoryService/tr
 import { TransactionRecord } from "@/types/transaction-record.speculative";
 import React from "react";
 
-export interface TransactionHistoryListProps {
+interface TransactionHistoryListProps {
     items: TransactionRecord[];
 }
 

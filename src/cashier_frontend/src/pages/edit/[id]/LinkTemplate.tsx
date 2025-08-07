@@ -17,7 +17,7 @@ import { useLinkTemplateHandler } from "@/hooks/form/usePageSubmissionHandlers";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useUpdateLinkMutation } from "@/hooks/link-hooks";
 
-export interface LinkTemplateProps {
+interface LinkTemplateProps {
     onSelectUnsupportedLinkType?: () => void;
     link: LinkDetailModel;
 }

@@ -11,7 +11,7 @@ import { useIdentity } from "@nfid/identitykit/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 // Helper to generate the query key
-export const getLinkUserStateQueryKey = (link_id: string, user_pid: string) =>
+const getLinkUserStateQueryKey = (link_id: string, user_pid: string) =>
     ["linkUserState", link_id, user_pid] as const;
 
 export function useUpdateLinkUserState() {

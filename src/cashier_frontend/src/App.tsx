@@ -20,7 +20,7 @@ import { TokenDataProvider } from "./contexts/token-data-context";
 const targets = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
 
 // nano second
-export const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
+const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
 
 // milli
 export const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes

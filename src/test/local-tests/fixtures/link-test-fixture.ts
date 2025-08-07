@@ -15,7 +15,7 @@ import {
     ActionDto,
     UpdateLinkInput,
     CreateLinkInput,
-} from "../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../../src/cashier_frontend/src/generated/cashier_backend/cashier_backend.did";
 import { Actor, HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { TokenUtilServiceFixture } from "./token-utils-fixture";

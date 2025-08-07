@@ -53,17 +53,6 @@ export function StateBadge({ state }: { state: string | undefined }) {
     return null;
 }
 
-// Function to return formatted claim status text
-export function getClaimStatus(
-    useActionCounter: bigint | number,
-    maxActionNumber: bigint | number,
-): string {
-    const counter = Number(useActionCounter);
-    const maxActions = Number(maxActionNumber);
-
-    return `Claimed ${counter} / ${maxActions} times`;
-}
-
 export default function LinkItem({ link }: { link: LinkDetailModel }) {
     const responsive = useDeviceSize();
 
