@@ -29,12 +29,6 @@ impl IcrcService {
         Self {}
     }
 
-    pub async fn fee(&self, token_pid: Principal) -> Result<Nat, CanisterError> {
-        let token_service = Service::new(token_pid);
-
-        token_service.icrc_1_fee().await
-    }
-
     pub async fn balance_of(
         &self,
         token_pid: Principal,

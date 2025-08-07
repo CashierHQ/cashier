@@ -21,10 +21,6 @@ impl ProcessingTransactionRepository {
         });
     }
 
-    pub fn get(&self, transaction_id: &str) -> Option<ProcessingTransaction> {
-        PROCESSING_TRANSACTION_STORE.with_borrow(|store| store.get(&transaction_id.to_string()))
-    }
-
     pub fn exists(&self, transaction_id: &str) -> bool {
         PROCESSING_TRANSACTION_STORE
             .with_borrow(|store| store.contains_key(&transaction_id.to_string()))
