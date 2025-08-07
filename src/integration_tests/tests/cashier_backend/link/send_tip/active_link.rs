@@ -32,7 +32,7 @@ mod test_icp_tip_link {
     // This method is used to setup the test data for the test
     // It creates a tip link with 1 ICP and returns the test data
     // this mimic the same flow in the frontend
-    // backend call flow: create link -> create action -> process action -> execute icrc112 -> update action
+    // backend call flow: create link -> create action
     async fn setup_tip_link(ctx: &PocketIcTestContext) -> TipLinkTestData {
         let caller = TestUser::User1.get_principal();
         let mut fixture = LinkTestFixture::new(ctx, &caller).await;
@@ -73,7 +73,7 @@ mod test_icp_tip_link {
             // Arrange
             let test_data = setup_tip_link(ctx).await;
 
-            // Act
+            // Act - backend call flow: process action -> execute icrc112 -> update action
             let processing_action = test_data
                 .fixture
                 .process_action(&test_data.link.id, &test_data.action.id)
@@ -132,7 +132,7 @@ mod test_icp_tip_link {
 
             let link_account = link_id_to_account(ctx, &test_data.link.id);
 
-            // Act
+            // Act - backend call flow: process action -> execute icrc112 -> update action
             let processing_action = test_data
                 .fixture
                 .process_action(&test_data.link.id, &test_data.action.id)

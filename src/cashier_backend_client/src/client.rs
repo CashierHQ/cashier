@@ -33,14 +33,17 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.query("get_canister_build_data", ()).await
     }
 
+    /// Creates a new user. User should be created before creating a link.
     pub async fn create_user(&self) -> CanisterClientResult<Result<UserDto, String>> {
         self.client.update("create_user", ()).await
     }
 
+    /// Returns the user in backend.
     pub async fn get_user(&self) -> CanisterClientResult<Result<UserDto, String>> {
         self.client.query("get_user", ()).await
     }
 
+    /// Creates a new link.
     pub async fn create_link(
         &self,
         input: CreateLinkInput,
@@ -48,6 +51,7 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.update("create_link", ((input),)).await
     }
 
+    /// Creates a new action.
     pub async fn create_action(
         &self,
         input: CreateActionInput,
@@ -55,6 +59,7 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.update("create_action", ((input),)).await
     }
 
+    /// Processes a created action.
     pub async fn process_action(
         &self,
         input: ProcessActionInput,
@@ -62,6 +67,7 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.update("process_action", ((input),)).await
     }
 
+    /// Updates a created action. This function should be called after executing icrc112.
     pub async fn update_action(
         &self,
         input: UpdateActionInput,

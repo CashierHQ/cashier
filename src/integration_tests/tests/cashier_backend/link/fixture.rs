@@ -34,6 +34,7 @@ impl LinkTestFixture {
         }
     }
 
+    /// This function is used to create a user. User should be created before creating a link.
     pub async fn setup_user(&self) -> UserDto {
         self.cashier_backend_client
             .as_ref()
