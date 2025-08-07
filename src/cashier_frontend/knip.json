@@ -1,5 +1,4 @@
 {
   "project": ["src/**"],
-  "ignore": ["src/workers/**", "src/generated/**"],
-  "ignoreBinaries": [".*"]
+  "ignore": ["src/workers/**", "src/generated/**"]
 }
