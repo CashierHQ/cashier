@@ -10,14 +10,16 @@ use crate::utils::with_pocket_ic_context;
 #[tokio::test]
 async fn should_create_send_tip_link_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
         let caller = TestUser::User1.get_principal();
         let fixture = LinkTestFixture::new(ctx, &caller).await;
-
         fixture.setup_user().await;
-
         let tip_link_amount = 100_000_000u64;
+
+        // Act
         let link = fixture.create_tip_link(ctx, tip_link_amount).await;
 
+        // Assert
         assert_eq!(link.link_type, Some(LinkType::SendTip.to_string()));
         assert_eq!(link.template, Some(Template::Central.to_string()));
         assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
