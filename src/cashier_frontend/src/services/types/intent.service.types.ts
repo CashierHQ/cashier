@@ -26,7 +26,7 @@ export type IntentModel = {
     createdAt: Date;
 };
 
-export type TransactionModel = {
+type TransactionModel = {
     id: string;
     arg: string;
     method: string;
