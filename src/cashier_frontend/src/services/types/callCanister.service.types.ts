@@ -15,15 +15,3 @@ export interface CallCanisterResponse {
     certificate: string;
     reply?: ArrayBuffer;
 }
-
-export interface CallCanisterRequest {
-    canisterId: string;
-    calledMethodName: string;
-    parameters: string;
-    agent: Agent;
-}
-
-export interface CallCanisterResponse {
-    contentMap: string;
-    certificate: string;
-}
