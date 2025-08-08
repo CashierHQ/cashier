@@ -15,3 +15,5 @@ export interface CallCanisterResponse {
     certificate: string;
     reply?: ArrayBuffer;
 }
+
+
