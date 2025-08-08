@@ -39,8 +39,8 @@ export interface ApproveArgs {
 }
 export type ApproveError =
     | {
-          GenericError: { message: string; error_code: bigint };
-      }
+        GenericError: { message: string; error_code: bigint };
+    }
     | { TemporarilyUnavailable: null }
     | { Duplicate: { duplicate_of: bigint } }
     | { BadFee: { expected_fee: bigint } }
@@ -109,8 +109,8 @@ export interface ConsentInfo {
 }
 export type ConsentMessage =
     | {
-          LineDisplayMessage: { pages: Array<LineDisplayPage> };
-      }
+        LineDisplayMessage: { pages: Array<LineDisplayPage> };
+    }
     | { GenericDisplayMessage: string };
 export interface ConsentMessageMetadata {
     utc_offset_minutes: [] | [number];
@@ -132,11 +132,11 @@ export interface DataCertificate {
 export type DisplayMessageType =
     | { GenericDisplay: null }
     | {
-          LineDisplay: {
-              characters_per_line: number;
-              lines_per_page: number;
-          };
-      };
+        LineDisplay: {
+            characters_per_line: number;
+            lines_per_page: number;
+        };
+    };
 export interface ErrorInfo {
     description: string;
 }
@@ -198,8 +198,8 @@ export type ICRC3Value =
     | { Array: Array<ICRC3Value> };
 export type Icrc21Error =
     | {
-          GenericError: { description: string; error_code: bigint };
-      }
+        GenericError: { description: string; error_code: bigint };
+    }
     | { InsufficientPayment: ErrorInfo }
     | { UnsupportedCanisterCall: ErrorInfo }
     | { ConsentMessageUnavailable: ErrorInfo };
@@ -275,8 +275,8 @@ export interface TransferArg {
 }
 export type TransferError =
     | {
-          GenericError: { message: string; error_code: bigint };
-      }
+        GenericError: { message: string; error_code: bigint };
+    }
     | { TemporarilyUnavailable: null }
     | { BadBurn: { min_burn_amount: bigint } }
     | { Duplicate: { duplicate_of: bigint } }
@@ -295,8 +295,8 @@ export interface TransferFromArgs {
 }
 export type TransferFromError =
     | {
-          GenericError: { message: string; error_code: bigint };
-      }
+        GenericError: { message: string; error_code: bigint };
+    }
     | { TemporarilyUnavailable: null }
     | { InsufficientAllowance: { allowance: bigint } }
     | { BadBurn: { min_burn_amount: bigint } }
