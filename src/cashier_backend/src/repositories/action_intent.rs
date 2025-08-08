@@ -42,13 +42,11 @@ impl ActionIntentRepository {
 
             let prefix = key.to_str();
 
-            let action_intents = store
+            store
                 .range(prefix.clone()..)
                 .filter(|(key, _)| key.starts_with(&prefix))
                 .map(|(_, action_intent)| action_intent)
-                .collect();
-
-            action_intents
+                .collect()
         })
     }
 

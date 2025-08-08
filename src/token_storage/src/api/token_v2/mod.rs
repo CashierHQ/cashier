@@ -230,14 +230,13 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                 // First, add enabled tokens from enable_list
                 for token_id in &list.enable_list {
                     if let Some(registry_token) = registry_tokens.iter().find(|t| &t.id == token_id)
+                        && seen_token_ids.insert(registry_token.id.clone())
                     {
-                        if seen_token_ids.insert(registry_token.id.clone()) {
-                            let mut token_dto = TokenDto::from(registry_token.clone());
-                            token_dto.enabled = true; // Mark as enabled
-                            // Enrich with balance if available
-                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
-                            filtered_tokens.push(token_dto);
-                        }
+                        let mut token_dto = TokenDto::from(registry_token.clone());
+                        token_dto.enabled = true; // Mark as enabled
+                        // Enrich with balance if available
+                        token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                        filtered_tokens.push(token_dto);
                     }
                 }
 
