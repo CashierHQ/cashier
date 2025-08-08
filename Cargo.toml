@@ -12,7 +12,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 version = "0.1.0"
 
@@ -30,7 +30,7 @@ getrandom = { version = "0.2", features = ["custom"] }
 ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-icrc-tx = "0.1"
-ic-stable-structures = "0.6"
+ic-stable-structures = "0.7"
 ic_mple_client = "0.7"
 ic_mple_pocket_ic = "0.7"
 ic-ledger-types = "0.15.0"
