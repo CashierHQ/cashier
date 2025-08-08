@@ -11,6 +11,7 @@ import {
     SuccessResponse,
 } from "../signerService/icrc112.service";
 import { CallCanisterResponse } from "../types/callCanister.service.types";
+import { Mock, MockInstance } from "vitest";
 
 const generateMockCallCanisterResponse = (requestNum: number): CallCanisterResponse => {
     return {
@@ -34,25 +35,26 @@ const generateMockICRC112Request = (
 };
 
 describe("ICRC-112 service", () => {
-    let mockCall: jest.Mock;
-    let mockPoll: jest.Mock;
+    let mockCall: Mock;
+    let mockPoll: Mock;
     let mockedCallCanisterService: CallCanisterService;
-    let mockedGetPrincipal: jest.Mock;
+    let mockedGetPrincipal: Mock;
     let mockedAgent: Agent;
     let service: ICRC112Service;
+    let mockParseReply: MockInstance;
 
     const nonExecuteErrorMessage = "Not processed due to batch request failure";
 
     beforeEach(() => {
-        mockCall = jest.fn();
-        mockPoll = jest.fn();
+        mockCall = vi.fn();
+        mockPoll = vi.fn();
 
         mockedCallCanisterService = {
             call: mockCall,
             poll: mockPoll,
         } as unknown as CallCanisterService;
 
-        mockedGetPrincipal = jest.fn();
+        mockedGetPrincipal = vi.fn();
         mockedAgent = {
             getPrincipal: mockedGetPrincipal,
         } as unknown as Agent;
@@ -61,15 +63,58 @@ describe("ICRC-112 service", () => {
             agent: mockedAgent,
             callCanisterService: mockedCallCanisterService,
         });
+
+        // Mock the parseReply method
+        mockParseReply = vi
+            .spyOn(
+                service as unknown as {
+                    parseReply: (method: string, reply?: ArrayBuffer) => bigint | undefined;
+                },
+                "parseReply",
+            )
+            .mockReturnValue(BigInt(123));
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
+        mockParseReply.mockRestore();
     });
 
     it("should get method success", () => {
         const result = service.getMethod();
         expect(result).toBe("icrc112_batch_call_canister");
+    });
+
+    it("should mock parseReply method correctly", async () => {
+        // Arrange
+        const mockRequest1 = generateMockICRC112Request(1, "icrc1_transfer", "success");
+        const mockRequest2 = generateMockICRC112Request(2, "icrc2_approve", "success");
+        const mockResponse1: CallCanisterResponse = {
+            contentMap: "contentMapResponse1",
+            certificate: "certificateResponse1",
+            reply: new TextEncoder().encode("replyResponse1").buffer,
+        };
+        const mockResponse2: CallCanisterResponse = {
+            contentMap: "contentMapResponse2",
+            certificate: "certificateResponse2",
+            reply: new TextEncoder().encode("replyResponse2").buffer,
+        };
+
+        // Use two rows to ensure parseReply is called (not the last row)
+        const requests: Icrc112Requests = [[mockRequest1], [mockRequest2]];
+
+        mockCall.mockResolvedValueOnce(mockResponse1).mockResolvedValueOnce(mockResponse2);
+        mockedGetPrincipal.mockReturnValue("mockedPrincipal");
+
+        // Mock parseReply to return a specific block ID
+        mockParseReply.mockReturnValue(BigInt(456));
+
+        // Act
+        const response = await service.icrc112Execute(requests);
+
+        // Assert
+        expect(mockParseReply).toHaveBeenCalledWith("icrc1_transfer", mockResponse1.reply);
+        expect(response.responses[0][0]).toHaveProperty("result");
     });
 
     it("should execute icrc112 requests return success for all response", async () => {
