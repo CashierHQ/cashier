@@ -64,14 +64,7 @@ describe("ICRC-112 service", () => {
         });
 
         // Mock the parseReply method
-        mockParseReply = jest
-            .spyOn(
-                service as unknown as {
-                    parseReply: (method: string, reply?: ArrayBuffer) => bigint | undefined;
-                },
-                "parseReply",
-            )
-            .mockReturnValue(BigInt(123));
+        mockParseReply = jest.spyOn(service as unknown as { parseReply: (method: string, reply?: ArrayBuffer) => bigint | undefined }, 'parseReply').mockReturnValue(BigInt(123));
     });
 
     afterEach(() => {
@@ -102,7 +95,9 @@ describe("ICRC-112 service", () => {
         // Use two rows to ensure parseReply is called (not the last row)
         const requests: Icrc112Requests = [[mockRequest1], [mockRequest2]];
 
-        mockCall.mockResolvedValueOnce(mockResponse1).mockResolvedValueOnce(mockResponse2);
+        mockCall
+            .mockResolvedValueOnce(mockResponse1)
+            .mockResolvedValueOnce(mockResponse2);
         mockedGetPrincipal.mockReturnValue("mockedPrincipal");
 
         // Mock parseReply to return a specific block ID
