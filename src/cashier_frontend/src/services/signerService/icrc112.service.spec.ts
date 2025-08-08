@@ -11,6 +11,7 @@ import {
     SuccessResponse,
 } from "../signerService/icrc112.service";
 import { CallCanisterResponse } from "../types/callCanister.service.types";
+import { Mock, MockInstance } from "vitest";
 
 const generateMockCallCanisterResponse = (requestNum: number): CallCanisterResponse => {
     return {
@@ -34,26 +35,26 @@ const generateMockICRC112Request = (
 };
 
 describe("ICRC-112 service", () => {
-    let mockCall: jest.Mock;
-    let mockPoll: jest.Mock;
+    let mockCall: Mock;
+    let mockPoll: Mock;
     let mockedCallCanisterService: CallCanisterService;
-    let mockedGetPrincipal: jest.Mock;
+    let mockedGetPrincipal: Mock;
     let mockedAgent: Agent;
     let service: ICRC112Service;
-    let mockParseReply: jest.SpyInstance;
+    let mockParseReply: MockInstance;
 
     const nonExecuteErrorMessage = "Not processed due to batch request failure";
 
     beforeEach(() => {
-        mockCall = jest.fn();
-        mockPoll = jest.fn();
+        mockCall = vi.fn();
+        mockPoll = vi.fn();
 
         mockedCallCanisterService = {
             call: mockCall,
             poll: mockPoll,
         } as unknown as CallCanisterService;
 
-        mockedGetPrincipal = jest.fn();
+        mockedGetPrincipal = vi.fn();
         mockedAgent = {
             getPrincipal: mockedGetPrincipal,
         } as unknown as Agent;
@@ -64,7 +65,7 @@ describe("ICRC-112 service", () => {
         });
 
         // Mock the parseReply method
-        mockParseReply = jest
+        mockParseReply = vi
             .spyOn(
                 service as unknown as {
                     parseReply: (method: string, reply?: ArrayBuffer) => bigint | undefined;
@@ -75,7 +76,7 @@ describe("ICRC-112 service", () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         mockParseReply.mockRestore();
     });
 
