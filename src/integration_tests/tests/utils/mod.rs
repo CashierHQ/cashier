@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-use candid::{utils::ArgumentEncoder, CandidType, Decode, Encode, Principal};
+use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;

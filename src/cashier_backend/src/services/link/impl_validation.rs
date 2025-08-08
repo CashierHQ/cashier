@@ -60,13 +60,13 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                 }
 
                 // For send-type links, check usage counter against max allowed
-                if let Some(_link_type) = &link.link_type {
-                    if link.link_use_action_counter >= link.link_use_action_max_count {
-                        return Err(CanisterError::ValidationErrors(format!(
-                            "Link maximum usage count reached: {}",
-                            link.link_use_action_max_count
-                        )));
-                    }
+                if let Some(_link_type) = &link.link_type
+                    && link.link_use_action_counter >= link.link_use_action_max_count
+                {
+                    return Err(CanisterError::ValidationErrors(format!(
+                        "Link maximum usage count reached: {}",
+                        link.link_use_action_max_count
+                    )));
                 }
 
                 // Synchronous validation passes
