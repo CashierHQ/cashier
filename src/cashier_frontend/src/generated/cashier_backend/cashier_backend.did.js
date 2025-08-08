@@ -72,6 +72,7 @@ export const idlFactory = ({ IDL }) => {
       'Unauthorized' : IDL.Text,
       'AlreadyExists' : IDL.Text,
       'DependencyError' : IDL.Text,
+      'CandidError' : IDL.Text,
       'AnonymousCall' : IDL.Null,
       'CanisterCallError' : IDL.Record({
         'method' : IDL.Text,
