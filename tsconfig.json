@@ -25,6 +25,6 @@
         "useUnknownInCatchVariables": true,
         "noPropertyAccessFromIndexSignature": true
     },
-    "include": ["./src/**/*.ts", "./global-setup.ts", "./global-teardown.ts", "./types.d.ts"]
+    "include": ["./src/**/*.ts", "./global-setup.ts", "./global-teardown.ts", "./types.d.ts", "src/cashier_frontend/src/services/parser/icrc.js"]
     // "references": [{ "path": "./tsconfig.node.json" }]
 }
