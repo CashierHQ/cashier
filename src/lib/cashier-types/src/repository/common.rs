@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{types::principal::PrincipalError, CandidType, Principal};
+use candid::{CandidType, Principal, types::principal::PrincipalError};
 use icrc_ledger_types::icrc1::account::{Account, ICRC1TextReprError};
 use serde::{Deserialize, Serialize};
 use std::fmt;

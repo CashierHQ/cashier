@@ -5,7 +5,7 @@ use super::MacroDefinition;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::str::FromStr;
-use syn::{parse::Parser, parse2, DeriveInput, Error, Token};
+use syn::{DeriveInput, Error, Token, parse::Parser, parse2};
 
 /// The arguments passed to the `storable` macro.
 ///

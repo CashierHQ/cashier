@@ -23,10 +23,12 @@ async fn should_create_token_basket_action_success() {
         assert_eq!(action.state, ActionState::Created.to_str());
         assert_eq!(action.creator, user.id);
         assert_eq!(action.intents.len(), 4);
-        assert!(action
-            .intents
-            .iter()
-            .all(|intent| { intent.state == IntentState::Created.to_str() }));
+        assert!(
+            action
+                .intents
+                .iter()
+                .all(|intent| { intent.state == IntentState::Created.to_str() })
+        );
         assert!(!action.id.is_empty());
 
         Ok(())

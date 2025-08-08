@@ -3,8 +3,8 @@
 
 use super::MacroDefinition;
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
-use syn::{parse::Parser, parse2, Error, Token};
+use quote::{ToTokens, quote};
+use syn::{Error, Token, parse::Parser, parse2};
 
 /// The arguments passed to the `with_middleware` macro.
 ///
