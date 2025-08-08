@@ -163,6 +163,12 @@ fn expand_candid_impl(
                 candid::Decode!(bytes.as_ref(), Self).unwrap()
             }
 
+            fn into_bytes(self) -> Vec<u8> {
+                use candid::Encode;
+
+                Encode!(&self).unwrap()
+            }
+
             #storage_bounds
         }
     };
@@ -266,6 +272,10 @@ mod tests {
                         serde_cbor::from_slice(bytes.as_ref()).unwrap()
                     }
 
+                    fn into_bytes(self) -> Vec<u8> {
+                        serde_cbor::to_vec(&self).unwrap()
+                    }
+
                     const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
                 }
             }
@@ -303,6 +313,12 @@ mod tests {
                         use candid::Decode;
 
                         candid::Decode!(bytes.as_ref(), Self).unwrap()
+                    }
+
+                    fn into_bytes(self) -> Vec<u8> {
+                        use candid::Encode;
+
+                        Encode!(&self).unwrap()
                     }
 
                     const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
