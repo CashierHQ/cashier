@@ -12,10 +12,10 @@ use cashier_backend_client::client::CashierBackendClient;
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::{CanisterClientResult, PocketIcClient};
 use ic_mple_pocket_ic::{
-    get_pocket_ic_client, get_pocket_ic_client_sync,
+    get_pocket_ic_client,
     pocket_ic::{common::rest::RawMessageId, nonblocking::PocketIc},
 };
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use token_storage_client::client::TokenStorageClient;
 
 use crate::{
@@ -109,84 +109,6 @@ where
     }
 
     result
-}
-
-/// Support for test concurrent calls
-/// Example: src/integration_tests/tests/cashier_backend/request_lock/mod.rs
-/// Follow the example in: https://github.com/dfinity/ic/blob/HEAD/packages/pocket-ic/HOWTO.md#concurrent-update-calls
-pub fn with_pocket_ic_context_sync<F, E>(f: F) -> Result<(), E>
-where
-    F: FnOnce(&PocketIcTestContextSync) -> Result<(), E>,
-{
-    let client = Arc::new(
-        get_pocket_ic_client_sync()
-            .with_nns_subnet()
-            .with_ii_subnet()
-            .with_application_subnet()
-            .build(),
-    );
-
-    let token_storage_principal =
-        deploy_canister_sync(&client, None, get_token_storage_canister_bytecode(), &());
-
-    let cashier_backend_principal =
-        deploy_canister_sync(&client, None, get_cashier_backend_canister_bytecode(), &());
-
-    // Deploy ICP and ICRC ledger canisters
-    let icp_ledger_principal = token_icp::deploy_icp_ledger_canister_sync(&client);
-
-    let ck_btc_principal = token_icrc::deploy_single_icrc_ledger_canister_sync(
-        &client,
-        "Chain Key Bitcoin".to_string(),
-        "ckBTC".to_string(),
-        8,
-        10,
-        Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
-    );
-
-    let ck_eth_principal = token_icrc::deploy_single_icrc_ledger_canister_sync(
-        &client,
-        "Chain Key Ethereum".to_string(),
-        "ckETH".to_string(),
-        18,
-        2000000000000000000,
-        Some(Principal::from_text(CK_ETH_PRINCIPAL).unwrap()),
-    );
-
-    let ck_usdc_principal = token_icrc::deploy_single_icrc_ledger_canister_sync(
-        &client,
-        "Chain Key USD Coin".to_string(),
-        "ckUSDC".to_string(),
-        8,
-        10000,
-        Some(Principal::from_text(CK_USDC_PRINCIPAL).unwrap()),
-    );
-
-    let doge_principal = token_icrc::deploy_single_icrc_ledger_canister_sync(
-        &client,
-        "Test Token".to_string(),
-        "DOGE".to_string(),
-        8,
-        10000,
-        None,
-    );
-
-    let mut icrc_token_map = HashMap::new();
-    icrc_token_map.insert("ckBTC".to_string(), ck_btc_principal);
-    icrc_token_map.insert("ckETH".to_string(), ck_eth_principal);
-    icrc_token_map.insert("ckUSDC".to_string(), ck_usdc_principal);
-    icrc_token_map.insert("DOGE".to_string(), doge_principal);
-
-    let context = PocketIcTestContextSync {
-        client: client.clone(),
-        token_storage_principal,
-        cashier_backend_principal,
-        icp_ledger_principal,
-        icrc_token_map,
-    };
-    f(&context)?;
-
-    Ok(())
 }
 
 /// A test context that provides access to a `PocketIc` client and a deployed canister.
@@ -470,54 +392,6 @@ async fn deploy_canister_with_id<T: CandidType>(
     client
         .install_canister(canister, bytecode, args, sender)
         .await;
-    canister
-}
-
-/// Deploys a canister with the given `bytecode` and `args` synchronously
-fn deploy_canister_sync<T: CandidType>(
-    client: &Arc<ic_mple_pocket_ic::pocket_ic::PocketIc>,
-    sender: Option<Principal>,
-    bytecode: Vec<u8>,
-    args: &T,
-) -> Principal {
-    let args = encode(args);
-    let client = client.as_ref();
-    let canister = client.create_canister();
-    client.add_cycles(canister, u128::MAX);
-    client.install_canister(canister, bytecode, args, sender);
-    canister
-}
-
-/// Deploys a canister with the given `bytecode` and `args` synchronously
-fn deploy_canister_with_id_sync<T: CandidType>(
-    client: &Arc<ic_mple_pocket_ic::pocket_ic::PocketIc>,
-    sender: Option<Principal>,
-    settings: Option<CanisterSettings>,
-    canister_id: CanisterId,
-    bytecode: Vec<u8>,
-    args: &T,
-) -> Principal {
-    let args = encode(args);
-    let canister = client
-        .create_canister_with_id(sender, settings, canister_id)
-        .unwrap_or_else(|_| panic!("Failed to create canister with id {canister_id}"));
-    client.add_cycles(canister, u128::MAX);
-    client.install_canister(canister, bytecode, args, sender);
-    canister
-}
-
-/// Deploys a canister with the given `bytecode` and `args` synchronously
-fn deploy_canister_with_settings_sync<T: CandidType>(
-    client: &Arc<ic_mple_pocket_ic::pocket_ic::PocketIc>,
-    sender: Option<Principal>,
-    settings: Option<CanisterSettings>,
-    bytecode: Vec<u8>,
-    args: &T,
-) -> Principal {
-    let args = encode(args);
-    let canister = client.create_canister_with_settings(sender, settings);
-    client.add_cycles(canister, u128::MAX);
-    client.install_canister(canister, bytecode, args, sender);
     canister
 }
 

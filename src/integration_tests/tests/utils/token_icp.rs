@@ -1,11 +1,8 @@
-use std::sync::{Arc, OnceLock};
+use std::sync::OnceLock;
 
 use crate::{
     types::{IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferResult, Tokens},
-    utils::{
-        deploy_canister_with_id, deploy_canister_with_id_sync, load_canister_bytecode,
-        principal::TestUser,
-    },
+    utils::{deploy_canister_with_id, load_canister_bytecode, principal::TestUser},
 };
 use candid::{Nat, Principal};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
@@ -99,39 +96,6 @@ pub async fn deploy_icp_ledger_canister(
         &(IcpLedgerCanisterPayload::Init(icp_init_args)),
     )
     .await
-}
-
-/// Deploys ICP ledger canister and returns the ICP ledger principal synchronously
-pub fn deploy_icp_ledger_canister_sync(
-    client: &Arc<ic_mple_pocket_ic::pocket_ic::PocketIc>,
-) -> Principal {
-    let token_deployer_pid = TestUser::TokenDeployer.get_principal();
-
-    let icp_init_args = IcpInitArgs {
-        minting_account: AccountIdentifier::new(&token_deployer_pid, &DEFAULT_SUBACCOUNT)
-            .to_string(),
-        initial_values: vec![],
-        send_whitelist: vec![],
-        transfer_fee: Some(Tokens { e_8_s: 10000 }),
-        token_symbol: Some("ICP".to_string()),
-        token_name: Some("ICP".to_string()),
-        feature_flags: Some(IcpFeatureFlags { icrc2: true }),
-        icrc_1_minting_account: None,
-        transaction_window: None,
-        archive_options: None,
-        max_message_size_bytes: None,
-    };
-
-    let icp_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
-
-    deploy_canister_with_id_sync(
-        client,
-        Some(token_deployer_pid),
-        None,
-        icp_canister_id,
-        get_icp_ledger_canister_bytecode(),
-        &(IcpLedgerCanisterPayload::Init(icp_init_args)),
-    )
 }
 
 /// Retrieves the bytecode for the ICP ledger canister.
