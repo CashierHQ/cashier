@@ -62,7 +62,9 @@ impl TokenRegistryService {
         let (chain_str, token_str) = match (chain_str, token_str) {
             (Some(c), Some(t)) if !c.is_empty() && !t.is_empty() => (c, t),
             _ => {
-                return Err("Invalid token id format. Expected format: 'CHAIN:token_id'".to_string());
+                return Err(
+                    "Invalid token id format. Expected format: 'CHAIN:token_id'".to_string()
+                );
             }
         };
 
@@ -125,7 +127,9 @@ impl TokenRegistryService {
         let (chain_str, token_str) = match (chain_str, token_str) {
             (Some(c), Some(t)) if !c.is_empty() && !t.is_empty() => (c, t),
             _ => {
-                return Err("Invalid token id format. Expected format: 'CHAIN:token_id'".to_string());
+                return Err(
+                    "Invalid token id format. Expected format: 'CHAIN:token_id'".to_string()
+                );
             }
         };
 

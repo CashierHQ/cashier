@@ -179,13 +179,13 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
         }
 
         // handle the case when there is only one transaction
-        if transactions.len() == 1 {
-            if let Some(tx) = transactions.first() {
-                let icrc_112_request =
-                    self.convert_tx_to_icrc_112_request(action_id, link_id, tx, &canister_id)?;
+        if transactions.len() == 1
+            && let Some(tx) = transactions.first()
+        {
+            let icrc_112_request =
+                self.convert_tx_to_icrc_112_request(action_id, link_id, tx, &canister_id)?;
 
-                return Ok(Some(vec![vec![icrc_112_request]]));
-            }
+            return Ok(Some(vec![vec![icrc_112_request]]));
         }
 
         // For consistency, use topological sort regardless of number of transactions
