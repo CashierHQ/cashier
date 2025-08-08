@@ -44,8 +44,8 @@ impl ActionIntentRepository {
 
             store
                 .range(prefix.clone()..)
-                .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, action_intent)| action_intent)
+                .filter(|entry| entry.key().starts_with(&prefix))
+                .map(|entry| entry.value())
                 .collect()
         })
     }
@@ -61,8 +61,8 @@ impl ActionIntentRepository {
 
             store
                 .range(prefix.clone()..)
-                .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, action_intent)| action_intent)
+                .filter(|entry| entry.key().starts_with(&prefix))
+                .map(|entry| entry.value())
                 .collect()
         })
     }

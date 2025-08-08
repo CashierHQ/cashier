@@ -190,6 +190,10 @@ fn expand_cbor_impl(
                 serde_cbor::from_slice(bytes.as_ref()).unwrap()
             }
 
+            fn into_bytes(self) -> Vec<u8> {
+                serde_cbor::to_vec(&self).unwrap()
+            }
+
             #storage_bounds
         }
     };
