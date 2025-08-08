@@ -234,7 +234,7 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                         if seen_token_ids.insert(registry_token.id.clone()) {
                             let mut token_dto = TokenDto::from(registry_token.clone());
                             token_dto.enabled = true; // Mark as enabled
-                                                      // Enrich with balance if available
+                            // Enrich with balance if available
                             token_dto.balance = user_balances.get(&registry_token.id).cloned();
                             filtered_tokens.push(token_dto);
                         }

@@ -3,7 +3,7 @@
 
 use crate::types::{RegistryToken, TokenId};
 
-use super::{token_registry_metadata::TokenRegistryMetadataRepository, TOKEN_REGISTRY_STORE};
+use super::{TOKEN_REGISTRY_STORE, token_registry_metadata::TokenRegistryMetadataRepository};
 
 pub struct TokenRegistryRepository {}
 

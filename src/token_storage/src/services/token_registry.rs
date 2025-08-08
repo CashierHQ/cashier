@@ -3,8 +3,8 @@ use std::str::FromStr;
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::types::common::IndexId;
 use crate::types::Chain;
+use crate::types::common::IndexId;
 use crate::{
     repository::{
         token_registry::TokenRegistryRepository,
@@ -62,7 +62,7 @@ impl TokenRegistryService {
         let (chain_str, token_str) = match (chain_str, token_str) {
             (Some(c), Some(t)) if !c.is_empty() && !t.is_empty() => (c, t),
             _ => {
-                return Err("Invalid token id format. Expected format: 'CHAIN:token_id'".to_string())
+                return Err("Invalid token id format. Expected format: 'CHAIN:token_id'".to_string());
             }
         };
 
@@ -125,7 +125,7 @@ impl TokenRegistryService {
         let (chain_str, token_str) = match (chain_str, token_str) {
             (Some(c), Some(t)) if !c.is_empty() && !t.is_empty() => (c, t),
             _ => {
-                return Err("Invalid token id format. Expected format: 'CHAIN:token_id'".to_string())
+                return Err("Invalid token id format. Expected format: 'CHAIN:token_id'".to_string());
             }
         };
 

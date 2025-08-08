@@ -2,8 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{CandidType, Principal};
-use ic_stable_structures::storable::Bound;
 use ic_stable_structures::Storable;
+use ic_stable_structures::storable::Bound;
 use serde::Deserialize;
 use std::borrow::Cow;
 
