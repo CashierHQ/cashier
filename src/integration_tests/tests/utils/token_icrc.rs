@@ -46,11 +46,9 @@ impl<C: CanisterClient> IcrcLedgerClient<C> {
 
         let res: Result<Icrc1TransferResult, ic_mple_client::CanisterClientError> =
             self.client.update("icrc1_transfer", (transfer_args,)).await;
-        let res = res
-            .map_err(|e| format!("ICRC transfer failed: {e:?}"))
-            .unwrap();
 
-        res
+        res.map_err(|e| format!("ICRC transfer failed: {e:?}"))
+            .unwrap()
     }
 
     // Method to get the balance of an ICRC account

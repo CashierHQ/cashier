@@ -22,9 +22,10 @@ check_code:
     just fmt "--check"
     just clippy "-- -D warnings"
 
+
 # Runs prettier and lint checks on the frontend code
 [group('code_check')]
-frontend_check_code:
-    cd src/cashier_frontend && npm install
-    cd src/cashier_frontend && npm run format:ci
-    cd src/cashier_frontend && npm run lint
+frontend_check_code: install_frontend_deps
+    cd {{FRONTEND_DIR}} && npm run format:ci
+    cd {{FRONTEND_DIR}} && npm run lint
+    cd {{FRONTEND_DIR}} && npm run knip

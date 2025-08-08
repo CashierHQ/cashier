@@ -5,7 +5,7 @@ use super::MacroDefinition;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::str::FromStr;
-use syn::{parse::Parser, parse2, DeriveInput, Error, Token};
+use syn::{DeriveInput, Error, Token, parse::Parser, parse2};
 
 /// The arguments passed to the `storable` macro.
 ///
@@ -163,6 +163,12 @@ fn expand_candid_impl(
                 candid::Decode!(bytes.as_ref(), Self).unwrap()
             }
 
+            fn into_bytes(self) -> Vec<u8> {
+                use candid::Encode;
+
+                Encode!(&self).unwrap()
+            }
+
             #storage_bounds
         }
     };
@@ -188,6 +194,10 @@ fn expand_cbor_impl(
 
             fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
                 serde_cbor::from_slice(bytes.as_ref()).unwrap()
+            }
+
+            fn into_bytes(self) -> Vec<u8> {
+                serde_cbor::to_vec(&self).unwrap()
             }
 
             #storage_bounds
@@ -262,6 +272,10 @@ mod tests {
                         serde_cbor::from_slice(bytes.as_ref()).unwrap()
                     }
 
+                    fn into_bytes(self) -> Vec<u8> {
+                        serde_cbor::to_vec(&self).unwrap()
+                    }
+
                     const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
                 }
             }
@@ -299,6 +313,12 @@ mod tests {
                         use candid::Decode;
 
                         candid::Decode!(bytes.as_ref(), Self).unwrap()
+                    }
+
+                    fn into_bytes(self) -> Vec<u8> {
+                        use candid::Encode;
+
+                        Encode!(&self).unwrap()
                     }
 
                     const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;

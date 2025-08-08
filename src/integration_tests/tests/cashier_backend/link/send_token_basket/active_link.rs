@@ -9,8 +9,8 @@ use super::super::fixture::LinkTestFixture;
 use crate::{
     constant::LINK_CREATE_FEE,
     utils::{
-        icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account,
-        principal::TestUser, with_pocket_ic_context, PocketIcTestContext,
+        PocketIcTestContext, icrc_112::execute_icrc112_request,
+        link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
     },
 };
 
@@ -111,18 +111,22 @@ mod test_token_basket_3_tokens {
             assert_eq!(processing_action.state, ActionState::Processing.to_string());
             assert_eq!(processing_action.creator, test_data.user.id);
             assert_eq!(processing_action.intents.len(), 4);
-            assert!(processing_action
-                .intents
-                .iter()
-                .all(|intent| { intent.state == IntentState::Processing.to_string() }));
+            assert!(
+                processing_action
+                    .intents
+                    .iter()
+                    .all(|intent| { intent.state == IntentState::Processing.to_string() })
+            );
 
             assert!(icrc112_execution_result.is_ok());
             assert_eq!(updated_action.state, ActionState::Success.to_string());
             assert_eq!(updated_action.intents.len(), 4);
-            assert!(updated_action
-                .intents
-                .iter()
-                .all(|intent| { intent.state == IntentState::Success.to_string() }));
+            assert!(
+                updated_action
+                    .intents
+                    .iter()
+                    .all(|intent| { intent.state == IntentState::Success.to_string() })
+            );
 
             Ok(())
         })
