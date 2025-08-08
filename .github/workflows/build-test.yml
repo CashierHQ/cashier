@@ -114,7 +114,7 @@ jobs:
 
       - name: Test
         run: |
-          just test
+          just test_all
 
   build-test-i686:
     name: Test for the i686 architecture

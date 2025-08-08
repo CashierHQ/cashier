@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::CandidType;
+use candid::{CandidType, Error as CandidError};
 use ic_cdk::call::{CallFailed, CandidDecodeFailed};
 use serde::Deserialize;
 use thiserror::Error;
@@ -74,6 +74,9 @@ pub enum CanisterError {
     #[error("Multi errors: {0:?}")]
     BatchError(Vec<CanisterError>),
 
+    #[error("Candid error: {0}")]
+    CandidError(String),
+
     #[error("Candid decode failed: {0}")]
     CandidDecodeFailed(String),
 
@@ -115,6 +118,12 @@ impl From<&str> for CanisterError {
 impl From<CandidDecodeFailed> for CanisterError {
     fn from(err: CandidDecodeFailed) -> Self {
         CanisterError::CandidDecodeFailed(format!("Candid decode failed: {err}"))
+    }
+}
+
+impl From<CandidError> for CanisterError {
+    fn from(err: CandidError) -> Self {
+        CanisterError::CandidError(format!("Candid error: {err}"))
     }
 }
 
