@@ -40,6 +40,7 @@ describe("ICRC-112 service", () => {
     let mockedGetPrincipal: jest.Mock;
     let mockedAgent: Agent;
     let service: ICRC112Service;
+    let mockParseReply: jest.SpyInstance;
 
     const nonExecuteErrorMessage = "Not processed due to batch request failure";
 
@@ -61,15 +62,53 @@ describe("ICRC-112 service", () => {
             agent: mockedAgent,
             callCanisterService: mockedCallCanisterService,
         });
+
+        // Mock the parseReply method
+        mockParseReply = jest.spyOn(service as unknown as { parseReply: (method: string, reply?: ArrayBuffer) => bigint | undefined }, 'parseReply').mockReturnValue(BigInt(123));
     });
 
     afterEach(() => {
         jest.clearAllMocks();
+        mockParseReply.mockRestore();
     });
 
     it("should get method success", () => {
         const result = service.getMethod();
         expect(result).toBe("icrc112_batch_call_canister");
+    });
+
+    it("should mock parseReply method correctly", async () => {
+        // Arrange
+        const mockRequest1 = generateMockICRC112Request(1, "icrc1_transfer", "success");
+        const mockRequest2 = generateMockICRC112Request(2, "icrc2_approve", "success");
+        const mockResponse1: CallCanisterResponse = {
+            contentMap: "contentMapResponse1",
+            certificate: "certificateResponse1",
+            reply: new TextEncoder().encode("replyResponse1").buffer,
+        };
+        const mockResponse2: CallCanisterResponse = {
+            contentMap: "contentMapResponse2",
+            certificate: "certificateResponse2",
+            reply: new TextEncoder().encode("replyResponse2").buffer,
+        };
+
+        // Use two rows to ensure parseReply is called (not the last row)
+        const requests: Icrc112Requests = [[mockRequest1], [mockRequest2]];
+
+        mockCall
+            .mockResolvedValueOnce(mockResponse1)
+            .mockResolvedValueOnce(mockResponse2);
+        mockedGetPrincipal.mockReturnValue("mockedPrincipal");
+
+        // Mock parseReply to return a specific block ID
+        mockParseReply.mockReturnValue(BigInt(456));
+
+        // Act
+        const response = await service.icrc112Execute(requests);
+
+        // Assert
+        expect(mockParseReply).toHaveBeenCalledWith("icrc1_transfer", mockResponse1.reply);
+        expect(response.responses[0][0]).toHaveProperty("result");
     });
 
     it("should execute icrc112 requests return success for all response", async () => {

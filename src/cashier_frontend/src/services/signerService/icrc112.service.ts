@@ -17,7 +17,7 @@ export type JsonICRC112Request = JsonRequest<
     }
 >;
 
-interface ICRC112Request extends JsonObject {
+export interface ICRC112Request extends JsonObject {
     canisterId: string;
     method: string;
     arg: string;
@@ -34,11 +34,11 @@ export type SequenceRequest = Array<ParallelRequests>;
 
 export type Icrc112Requests = SequenceRequest;
 
-interface SuccessResponse {
+export interface SuccessResponse {
     result: CallCanisterResponse;
 }
 
-interface ErrorResponse {
+export interface ErrorResponse {
     error: {
         code: number;
         message: string;
@@ -94,6 +94,7 @@ export class ICRC112Service {
                 requests: input,
                 validation: undefined as { canisterId: string; method: string } | undefined,
             },
+            validation: undefined as { canisterId: string; method: string } | undefined,
         };
 
         let rowIndex = 0;
@@ -278,7 +279,7 @@ export class ICRC112Service {
             typeof responseFromParse === "object" &&
             "Ok" in responseFromParse
         ) {
-            const okValue = responseFromParse.Ok;
+            const okValue = responseFromParse["Ok"];
             if (typeof okValue === "bigint") {
                 return BigInt(okValue);
             }
