@@ -94,6 +94,7 @@ export class ICRC112Service {
                 requests: input,
                 validation: undefined as { canisterId: string; method: string } | undefined,
             },
+            validation: undefined as { canisterId: string; method: string } | undefined,
         };
 
         let rowIndex = 0;
@@ -278,7 +279,7 @@ export class ICRC112Service {
             typeof responseFromParse === "object" &&
             "Ok" in responseFromParse
         ) {
-            const okValue = responseFromParse.Ok;
+            const okValue = responseFromParse["Ok"];
             if (typeof okValue === "bigint") {
                 return BigInt(okValue);
             }

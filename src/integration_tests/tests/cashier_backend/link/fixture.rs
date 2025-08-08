@@ -13,7 +13,7 @@ use cashier_types::{
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::utils::{principal::TestUser, PocketIcTestContext};
+use crate::utils::{PocketIcTestContext, principal::TestUser};
 
 pub struct LinkTestFixture {
     pub cashier_backend_client: Option<CashierBackendClient<PocketIcClient>>,

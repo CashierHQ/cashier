@@ -17,13 +17,13 @@ export enum LINK_STATE {
     INACTIVE_ENDED = "Link_state_inactive_ended",
 }
 
-export enum TRANSACTION_STATE {
-    CREATED = "Transaction_state_created",
-    PROCESSING = "Transaction_state_processing",
-    SUCCESS = "Transaction_state_success",
-    FAIL = "Transaction_state_fail",
-    TIMEOUT = "Transaction_state_timeout",
-}
+// export enum TRANSACTION_STATE {
+//     CREATED = "Transaction_state_created",
+//     PROCESSING = "Transaction_state_processing",
+//     SUCCESS = "Transaction_state_success",
+//     FAIL = "Transaction_state_fail",
+//     TIMEOUT = "Transaction_state_timeout",
+// }
 
 export enum INTENT_STATE {
     CREATED = "Intent_state_created",
@@ -182,16 +182,16 @@ export enum ACTION_TYPE {
     USE_LINK = "Use",
 }
 
-export enum IC_TRANSACTION_PROTOCAL {
-    ICRC1_TRANSFER = "ICRC1Transfer",
-    ICRC2_TRANSFER = "ICRC2Transfer",
-    ICRC2_APPROVE = "ICRC2Approve",
-}
+// export enum IC_TRANSACTION_PROTOCAL {
+//     ICRC1_TRANSFER = "ICRC1Transfer",
+//     ICRC2_TRANSFER = "ICRC2Transfer",
+//     ICRC2_APPROVE = "ICRC2Approve",
+// }
 
-export enum WALLET {
-    WALLET = "Wallet",
-    CANISTER = "Canister",
-}
+// export enum WALLET {
+//     WALLET = "Wallet",
+//     CANISTER = "Canister",
+// }
 
 export enum LINK_INTENT_ASSET_LABEL {
     INTENT_LABEL_LINK_CREATION_FEE = "LINK_CREATION_FEE", // fee transfer
