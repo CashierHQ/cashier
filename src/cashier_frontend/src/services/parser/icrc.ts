@@ -1,7 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-export const idlFactory = ({ IDL }: { IDL: any }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const idlFactory = ({ IDL }: any) => {
     const GetBlocksResult = IDL.Rec();
     const ICRC3Value = IDL.Rec();
     const Value = IDL.Rec();
