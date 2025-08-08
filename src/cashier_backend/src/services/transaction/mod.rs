@@ -153,8 +153,8 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                 };
 
                 let method = "trigger_transaction";
-                let arg =
-                    base64::engine::general_purpose::STANDARD.encode(Encode!(&input).unwrap());
+
+                let arg = base64::engine::general_purpose::STANDARD.encode(Encode!(&input)?);
 
                 Ok(Icrc112Request {
                     canister_id: canister_id.to_text(),
