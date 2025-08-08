@@ -65,7 +65,7 @@ thread_local! {
             StableCell::init(
                MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_METADATA_ID)),
                TokenRegistryMetadata::default()
-           ).expect("config cell initialization should succeed")
+           )
        );
 
     // Balance cache for users
@@ -101,7 +101,6 @@ pub fn load() {
         *store = StableCell::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_METADATA_ID)),
             TokenRegistryMetadata::default(),
-        )
-        .expect("Failed to initialize TOKEN_REGISTRY_METADATA_STORE");
+        );
     });
 }

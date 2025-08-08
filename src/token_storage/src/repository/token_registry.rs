@@ -70,7 +70,7 @@ impl TokenRegistryRepository {
     }
 
     pub fn list_tokens(&self) -> Vec<RegistryToken> {
-        TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|(_, token)| token).collect())
+        TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|entry| entry.value()).collect())
     }
 
     pub fn delete_all(&self) -> Result<(), String> {

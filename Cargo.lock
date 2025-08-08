@@ -267,7 +267,7 @@ dependencies = [
  "cashier-macros",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "serde",
  "serde_cbor",
@@ -290,7 +290,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-icrc-tx",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "icrc-ledger-types",
  "itertools 0.14.0",
  "rand 0.8.5",
@@ -970,6 +970,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-stable-structures"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e54aeb082293c69def5ab34c70593ba85ff000386f7d0eacdf73514daaeca031"
+dependencies = [
+ "ic_principal",
+]
+
+[[package]]
 name = "ic-transport-types"
 version = "0.40.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1054,7 +1063,7 @@ dependencies = [
  "candid",
  "crc32fast",
  "hex",
- "ic-stable-structures",
+ "ic-stable-structures 0.6.9",
  "icrc-cbor",
  "itertools 0.12.1",
  "minicbor",
@@ -2432,7 +2441,7 @@ dependencies = [
  "cashier-macros",
  "futures",
  "ic-cdk",
- "ic-stable-structures",
+ "ic-stable-structures 0.7.0",
  "ic_mple_pocket_ic",
  "serde",
  "serde_bytes",
