@@ -10,12 +10,9 @@ use std::{
 use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
-use ic_mple_client::{CanisterClientResult, PocketIcClient};
-use ic_mple_pocket_ic::{
-    get_pocket_ic_client,
-    pocket_ic::{common::rest::RawMessageId, nonblocking::PocketIc},
-};
-use serde::{Deserialize, de::DeserializeOwned};
+use ic_mple_client::PocketIcClient;
+use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
+use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
 
 use crate::{

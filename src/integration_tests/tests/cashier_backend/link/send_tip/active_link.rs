@@ -43,7 +43,7 @@ mod test_icp_tip_link {
         // create tip link with 1 ICP
         let tip_link_amount = 100_000_000u64;
         let link = fixture.create_tip_link(ctx, tip_link_amount).await;
-        let action = fixture.create_action(&link.id).await;
+        let action = fixture.create_action(&link.id, "CreateLink").await;
 
         let user_account = Account {
             owner: caller,

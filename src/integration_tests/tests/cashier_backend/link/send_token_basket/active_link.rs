@@ -48,7 +48,7 @@ mod test_token_basket_3_tokens {
             .await;
 
         let link = fixture.create_token_basket_link(ctx).await;
-        let action = fixture.create_action(&link.id).await;
+        let action = fixture.create_action(&link.id, "CreateLink").await;
 
         let user_account = Account {
             owner: caller,
