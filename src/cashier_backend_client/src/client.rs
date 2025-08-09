@@ -1,13 +1,16 @@
+use candid::CandidType;
 use cashier_common::build_data::BuildData;
 use cashier_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, LinkDto},
+        link::{CreateLinkInput, LinkDto, UpdateLinkInput},
         user::UserDto,
     },
     error::CanisterError,
 };
-use ic_mple_client::{CanisterClient, CanisterClientResult};
+use ic_mple_client::{CanisterClient, CanisterClientResult, PocketIcClient};
+use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
+use serde::de::DeserializeOwned;
 
 /// An CashierBackend canister client.
 #[derive(Debug, Clone)]
@@ -73,5 +76,37 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         input: UpdateActionInput,
     ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
         self.client.update("update_action", ((input),)).await
+    }
+
+    pub async fn update_link(
+        &self,
+        input: UpdateLinkInput,
+    ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
+        self.client.update("update_link", ((input),)).await
+    }
+}
+
+impl CashierBackendClient<PocketIcClient> {
+    /// Await a previously submitted call and decode into `R` (PocketIC only).
+    pub async fn await_call<R>(&self, msg_id: RawMessageId) -> CanisterClientResult<R>
+    where
+        R: DeserializeOwned + CandidType,
+    {
+        self.client.await_call(msg_id).await
+    }
+
+    pub async fn submit_create_action(
+        &self,
+        args: CreateActionInput,
+    ) -> CanisterClientResult<RawMessageId> {
+        // For single-argument candid calls, pass a one-element tuple `(args,)`
+        self.client.submit_call("create_action", (args,)).await
+    }
+
+    pub async fn submit_process_action(
+        &self,
+        args: ProcessActionInput,
+    ) -> CanisterClientResult<RawMessageId> {
+        self.client.submit_call("process_action", (args,)).await
     }
 }

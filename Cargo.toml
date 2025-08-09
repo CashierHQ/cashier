@@ -31,8 +31,8 @@ ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-icrc-tx = "0.1"
 ic-stable-structures = "0.7"
-ic_mple_client = "0.7"
-ic_mple_pocket_ic = "0.7"
+ic_mple_client = { git = "https://github.com/baolongt/ic_mple", branch = "add-methods" }
+ic_mple_pocket_ic = { git = "https://github.com/baolongt/ic_mple", branch = "add-methods" }
 ic-ledger-types = "0.15.0"
 icrc-ledger-types = "0.1.10"
 itertools = "0.14"
