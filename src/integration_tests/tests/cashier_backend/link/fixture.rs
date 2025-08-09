@@ -6,7 +6,7 @@ use cashier_types::{
     constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto},
+        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, UpdateLinkInput},
         user::UserDto,
     },
 };
@@ -123,13 +123,13 @@ impl LinkTestFixture {
     }
 
     // This function is used to create an action.
-    pub async fn create_action(&self, link_id: &str) -> ActionDto {
+    pub async fn create_action(&self, link_id: &str, action_type: &str) -> ActionDto {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
             .create_action(CreateActionInput {
                 link_id: link_id.to_string(),
-                action_type: "CreateLink".to_string(),
+                action_type: action_type.to_string(),
             })
             .await
             .unwrap()
@@ -162,6 +162,16 @@ impl LinkTestFixture {
                 link_id: link_id.to_string(),
                 external: true,
             })
+            .await
+            .unwrap()
+            .unwrap()
+    }
+
+    pub async fn update_link(&self, input: UpdateLinkInput) -> LinkDto {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .update_link(input)
             .await
             .unwrap()
             .unwrap()
