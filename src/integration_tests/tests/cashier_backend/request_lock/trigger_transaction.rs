@@ -99,6 +99,17 @@ async fn test_request_lock_for_trigger_action() {
         assert_eq!(success_count, 1);
         assert_eq!(failed_count, 2);
 
+        for failed_action in results.iter().filter(|r| r.is_err()) {
+            if let Err(error) = failed_action {
+                assert!(
+                    error
+                        .to_string()
+                        .contains("Request lock already exists for key:"),
+                    "Expected error to contain 'Request lock already exists for key:', got: {error}"
+                );
+            }
+        }
+
         Ok(())
     })
     .await

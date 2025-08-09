@@ -109,4 +109,11 @@ impl CashierBackendClient<PocketIcClient> {
     ) -> CanisterClientResult<RawMessageId> {
         self.client.submit_call("process_action", (args,)).await
     }
+
+    pub async fn submit_update_action(
+        &self,
+        args: UpdateActionInput,
+    ) -> CanisterClientResult<RawMessageId> {
+        self.client.submit_call("update_action", (args,)).await
+    }
 }
