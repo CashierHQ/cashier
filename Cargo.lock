@@ -1005,12 +1005,8 @@ checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 [[package]]
 name = "ic_mple_client"
 version = "0.7.1"
-<<<<<<< HEAD
-source = "git+https://github.com/baolongt/ic_mple?branch=add-sync-method#6f772d2f90429387c79ff7c4a1d187b7467c3d01"
-=======
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48e37a255e3dd2904751f2b444c4207610eba30470d18b80c4606db57d117abb"
->>>>>>> origin/dev
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1022,12 +1018,8 @@ dependencies = [
 [[package]]
 name = "ic_mple_pocket_ic"
 version = "0.7.1"
-<<<<<<< HEAD
-source = "git+https://github.com/baolongt/ic_mple?branch=add-sync-method#6f772d2f90429387c79ff7c4a1d187b7467c3d01"
-=======
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "137632d328d9da4b05be7299699917ffd4749900a529807acf4d5558340680b5"
->>>>>>> origin/dev
 dependencies = [
  "flate2",
  "log",
@@ -1973,9 +1965,9 @@ dependencies = [
 
 [[package]]
 name = "rustversion"
-version = "1.0.21"
+version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a0d197bd2c9dc6e53b84da9556a69ba4cdfab8619eb41a8bd1cc2027a0f6b1d"
+checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "ryu"
