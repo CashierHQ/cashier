@@ -309,9 +309,12 @@ dependencies = [
 name = "cashier_backend_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "cashier-common",
  "cashier-types",
  "ic_mple_client",
+ "ic_mple_pocket_ic",
+ "serde",
 ]
 
 [[package]]
@@ -1005,8 +1008,7 @@ checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 [[package]]
 name = "ic_mple_client"
 version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48e37a255e3dd2904751f2b444c4207610eba30470d18b80c4606db57d117abb"
+source = "git+https://github.com/baolongt/ic_mple?branch=add-methods#1adf69f68dc92536f1f959b56b34b92c44c8f9de"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1018,8 +1020,7 @@ dependencies = [
 [[package]]
 name = "ic_mple_pocket_ic"
 version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "137632d328d9da4b05be7299699917ffd4749900a529807acf4d5558340680b5"
+source = "git+https://github.com/baolongt/ic_mple?branch=add-methods#1adf69f68dc92536f1f959b56b34b92c44c8f9de"
 dependencies = [
  "flate2",
  "log",

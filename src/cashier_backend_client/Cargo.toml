@@ -8,3 +8,6 @@ version.workspace = true
 cashier-common = { workspace = true }
 ic_mple_client = { workspace = true }
 cashier-types = { workspace = true }
+ic_mple_pocket_ic = { workspace = true }
+candid = { workspace = true }
+serde = { workspace = true }
