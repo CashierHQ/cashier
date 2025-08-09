@@ -13,7 +13,7 @@ use crate::utils::{
 };
 
 #[tokio::test]
-async fn test_request_lock_for_token_basket_process_action() {
+async fn test_request_lock_for_process_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
