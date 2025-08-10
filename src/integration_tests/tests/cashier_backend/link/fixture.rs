@@ -6,7 +6,7 @@ use cashier_types::{
     constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto},
+        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, UpdateLinkInput},
         user::UserDto,
     },
 };
@@ -123,13 +123,13 @@ impl LinkTestFixture {
     }
 
     // This function is used to create an action.
-    pub async fn create_action(&self, link_id: &str) -> ActionDto {
+    pub async fn create_action(&self, link_id: &str, action_type: &str) -> ActionDto {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
             .create_action(CreateActionInput {
                 link_id: link_id.to_string(),
-                action_type: "CreateLink".to_string(),
+                action_type: action_type.to_string(),
             })
             .await
             .unwrap()
@@ -162,6 +162,36 @@ impl LinkTestFixture {
                 link_id: link_id.to_string(),
                 external: true,
             })
+            .await
+            .unwrap()
+            .unwrap()
+    }
+
+    // This function is used to get an action by link_id and action_id.
+    pub async fn get_action(&self, link_id: &str, _action_id: &str) -> ActionDto {
+        // Use get_link with action type to retrieve the action
+        let response = self
+            .cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_link(
+                link_id.to_string(),
+                Some(cashier_types::dto::link::GetLinkOptions {
+                    action_type: "CreateLink".to_string(),
+                }),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+
+        response.action.unwrap()
+    }
+
+    pub async fn update_link(&self, input: UpdateLinkInput) -> LinkDto {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .update_link(input)
             .await
             .unwrap()
             .unwrap()
