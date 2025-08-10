@@ -4,7 +4,7 @@ use cashier_common::build_data::BuildData;
 use cashier_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, LinkDto, UpdateLinkInput},
+        link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, UpdateLinkInput},
         user::UserDto,
     },
     error::CanisterError,
@@ -82,6 +82,15 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         input: UpdateLinkInput,
     ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
         self.client.update("update_link", ((input),)).await
+    }
+
+    /// Retrieves a specific link by its ID with optional action data.
+    pub async fn get_link(
+        &self,
+        id: String,
+        options: Option<GetLinkOptions>,
+    ) -> CanisterClientResult<Result<GetLinkResp, String>> {
+        self.client.query("get_link", (id, options)).await
     }
 }
 
