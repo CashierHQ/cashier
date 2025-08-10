@@ -1,3 +1,4 @@
+#[cfg(feature = "pocket_ic")]
 use candid::CandidType;
 use cashier_common::build_data::BuildData;
 use cashier_types::{
@@ -8,9 +9,7 @@ use cashier_types::{
     },
     error::CanisterError,
 };
-use ic_mple_client::{CanisterClient, CanisterClientResult, PocketIcClient};
-use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
-use serde::de::DeserializeOwned;
+use ic_mple_client::{CanisterClient, CanisterClientResult};
 
 /// An CashierBackend canister client.
 #[derive(Debug, Clone)]
@@ -86,6 +85,15 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     }
 }
 
+#[cfg(feature = "pocket_ic")]
+use ic_mple_client::PocketIcClient;
+#[cfg(feature = "pocket_ic")]
+use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
+#[cfg(feature = "pocket_ic")]
+use serde::de::DeserializeOwned;
+
+#[cfg(feature = "pocket_ic")]
+/// PocketIC-specific extensions for CashierBackendClient
 impl CashierBackendClient<PocketIcClient> {
     /// Await a previously submitted call and decode into `R` (PocketIC only).
     pub async fn await_call<R>(&self, msg_id: RawMessageId) -> CanisterClientResult<R>
@@ -95,6 +103,7 @@ impl CashierBackendClient<PocketIcClient> {
         self.client.await_call(msg_id).await
     }
 
+    /// Submit a create_action call and return the message ID (PocketIC only).
     pub async fn submit_create_action(
         &self,
         args: CreateActionInput,
@@ -103,6 +112,7 @@ impl CashierBackendClient<PocketIcClient> {
         self.client.submit_call("create_action", (args,)).await
     }
 
+    /// Submit a process_action call and return the message ID (PocketIC only).
     pub async fn submit_process_action(
         &self,
         args: ProcessActionInput,
@@ -110,6 +120,7 @@ impl CashierBackendClient<PocketIcClient> {
         self.client.submit_call("process_action", (args,)).await
     }
 
+    /// Submit an update_action call and return the message ID (PocketIC only).
     pub async fn submit_update_action(
         &self,
         args: UpdateActionInput,
