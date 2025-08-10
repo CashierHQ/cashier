@@ -1,1 +1,0 @@
-gzip -c target/wasm32-unknown-unknown/release/cashier_backend.wasm > artifacts/cashier_backend.wasm.gz
