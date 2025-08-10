@@ -167,6 +167,26 @@ impl LinkTestFixture {
             .unwrap()
     }
 
+    // This function is used to get an action by link_id and action_id.
+    pub async fn get_action(&self, link_id: &str, _action_id: &str) -> ActionDto {
+        // Use get_link with action type to retrieve the action
+        let response = self
+            .cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_link(
+                link_id.to_string(),
+                Some(cashier_types::dto::link::GetLinkOptions {
+                    action_type: "CreateLink".to_string(),
+                }),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+
+        response.action.unwrap()
+    }
+
     pub async fn update_link(&self, input: UpdateLinkInput) -> LinkDto {
         self.cashier_backend_client
             .as_ref()
