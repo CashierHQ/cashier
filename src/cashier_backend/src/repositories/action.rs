@@ -41,7 +41,7 @@ impl ActionRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cashier_types::repository::action::v1::{ActionType, ActionState};
+    use cashier_types::repository::action::v1::{ActionState, ActionType};
 
     #[test]
     fn create() {
@@ -56,8 +56,8 @@ mod tests {
         repo.create(action);
 
         let retrieved_action = repo.get("action1");
-        assert!(retrieved_action.is_some());
-        assert_eq!(retrieved_action.unwrap().id, "action1");
+        let retrieved_action = retrieved_action.expect("Action should be found");
+        assert_eq!(retrieved_action.id, "action1");
     }
 
     #[test]
@@ -83,7 +83,7 @@ mod tests {
 
         let retrieved_action = repo.get("action1");
         assert!(retrieved_action.is_some());
-        let action = retrieved_action.unwrap();
+        let action = retrieved_action.expect("Action should be found");
         assert_eq!(action.state, ActionState::Success);
         assert_eq!(action.creator, "creator2");
         assert_eq!(action.link_id, "link2");
@@ -110,7 +110,8 @@ mod tests {
 
         let retrieved_action = repo.get("action1");
         assert!(retrieved_action.is_some());
-        assert_eq!(retrieved_action.unwrap().id, "action1");
+        let retrieved_action = retrieved_action.expect("Action should be found");
+        assert_eq!(retrieved_action.id, "action1");
     }
 
     #[test]

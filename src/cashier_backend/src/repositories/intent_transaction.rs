@@ -106,7 +106,7 @@ mod tests {
             intent_id: "intent1".to_string(),
             transaction_id: "transaction1".to_string(),
         };
-        repo.batch_create(vec![intent_transaction.clone()]);
+        repo.batch_create(vec![intent_transaction]);
 
         let transactions = repo.get_by_intent_id("intent1");
         assert_eq!(transactions.len(), 1);
@@ -120,7 +120,7 @@ mod tests {
             intent_id: "intent1".to_string(),
             transaction_id: "transaction1".to_string(),
         };
-        repo.batch_create(vec![intent_transaction.clone()]);
+        repo.batch_create(vec![intent_transaction]);
 
         let transactions = repo.get_by_transaction_id("transaction1");
         assert_eq!(transactions.len(), 1);
@@ -128,10 +128,9 @@ mod tests {
     }
 
     #[test]
-    fn default(){
+    fn default() {
         let repo = IntentTransactionRepository::default();
         assert!(repo.get_by_intent_id("nonexistent").is_empty());
         assert!(repo.get_by_transaction_id("nonexistent").is_empty());
     }
-
 }

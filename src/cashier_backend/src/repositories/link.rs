@@ -95,7 +95,7 @@ mod tests {
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
-        repo.create(link.clone());
+        repo.create(link);
 
         let updated_link = Link {
             id: "link1".to_string(),

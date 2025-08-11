@@ -44,7 +44,11 @@ mod tests {
     fn create() {
         let repo = RequestLockRepository::new();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction { user_principal: "abc-xya".to_string(), link_id: "link1".to_string(), action_id: "action1".to_string() },
+            key: RequestLockKey::UserLinkAction {
+                user_principal: "abc-xya".to_string(),
+                link_id: "link1".to_string(),
+                action_id: "action1".to_string(),
+            },
             timestamp: 1622547800,
         };
         repo.create(request_lock.clone());
@@ -62,7 +66,11 @@ mod tests {
     fn delete() {
         let repo = RequestLockRepository::new();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction { user_principal: "abc-xya".to_string(), link_id: "link1".to_string(), action_id: "action1".to_string() },
+            key: RequestLockKey::UserLinkAction {
+                user_principal: "abc-xya".to_string(),
+                link_id: "link1".to_string(),
+                action_id: "action1".to_string(),
+            },
             timestamp: 1622547800,
         };
         repo.create(request_lock.clone());
@@ -76,7 +84,11 @@ mod tests {
     fn exists() {
         let repo = RequestLockRepository::new();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction { user_principal: "abc-xya".to_string(), link_id: "link1".to_string(), action_id: "action1".to_string() },
+            key: RequestLockKey::UserLinkAction {
+                user_principal: "abc-xya".to_string(),
+                link_id: "link1".to_string(),
+                action_id: "action1".to_string(),
+            },
             timestamp: 1622547800,
         };
         repo.create(request_lock.clone());

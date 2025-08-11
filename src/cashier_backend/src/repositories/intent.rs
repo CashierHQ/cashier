@@ -50,9 +50,12 @@ impl IntentRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::FromStr;
-    use cashier_types::repository::{common::{Asset, Chain, Wallet}, intent::{v2::{IntentState, IntentTask, IntentType, TransferData}}};
     use candid::types::number::Nat;
+    use cashier_types::repository::{
+        common::{Asset, Chain, Wallet},
+        intent::v2::{IntentState, IntentTask, IntentType, TransferData},
+    };
+    use std::str::FromStr;
 
     #[test]
     fn batch_create() {
@@ -64,7 +67,12 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferLinkToWallet,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("0").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("0").unwrap(),
+            }),
             label: "Test Intent".to_string(),
         };
         let intent2 = Intent {
@@ -74,7 +82,12 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferWalletToTreasury,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("100").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("100").unwrap(),
+            }),
             label: "Another Test Intent".to_string(),
         };
 
@@ -99,7 +112,12 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferLinkToWallet,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("0").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("0").unwrap(),
+            }),
             label: "Test Intent".to_string(),
         };
 
@@ -110,7 +128,12 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferWalletToTreasury,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("100").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("100").unwrap(),
+            }),
             label: "Updated Test Intent".to_string(),
         };
         repo.batch_create(vec![intent1, intent2]);
@@ -122,7 +145,12 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferLinkToWallet,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("100").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("100").unwrap(),
+            }),
             label: "Updated Intent".to_string(),
         };
         let update_intent2 = Intent {
@@ -132,7 +160,12 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferWalletToTreasury,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("200").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("200").unwrap(),
+            }),
             label: "Updated Another Test Intent".to_string(),
         };
         repo.batch_update(vec![updated_intent1, update_intent2]);
@@ -156,10 +189,15 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferLinkToWallet,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("0").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("0").unwrap(),
+            }),
             label: "Test Intent".to_string(),
         };
-        repo.batch_create(vec![intent.clone()]);
+        repo.batch_create(vec![intent]);
 
         let retrieved_intent = repo.get("intent1");
         assert!(retrieved_intent.is_some());
@@ -176,7 +214,12 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferLinkToWallet,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("0").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("0").unwrap(),
+            }),
             label: "Test Intent".to_string(),
         };
         let intent2 = Intent {
@@ -186,7 +229,12 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferWalletToTreasury,
-            r#type: IntentType::Transfer(TransferData { from: Wallet::default(), to: Wallet::default(), asset: Asset::default(), amount: Nat::from_str("100").unwrap() }),
+            r#type: IntentType::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("100").unwrap(),
+            }),
             label: "Another Test Intent".to_string(),
         };
         repo.batch_create(vec![intent1, intent2]);
@@ -206,5 +254,4 @@ mod tests {
         let intents = repo.batch_get(vec!["nonexistent".to_string()]);
         assert!(intents.is_empty());
     }
-
 }

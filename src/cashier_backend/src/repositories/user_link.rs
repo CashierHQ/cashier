@@ -93,7 +93,7 @@ mod tests {
             link_id: "link1".to_string(),
         };
 
-        repo.create(user_link.clone());
+        repo.create(user_link);
         let links = repo.get_links_by_user_id("user1", &PaginateInput::default());
         assert_eq!(links.data.len(), 1);
         assert_eq!(links.data[0].link_id, "link1");
@@ -127,8 +127,8 @@ mod tests {
             link_id: "link2".to_string(),
         };
 
-        repo.create(user_link1.clone());
-        repo.create(user_link2.clone());
+        repo.create(user_link1);
+        repo.create(user_link2);
 
         let links = repo.get_links_by_user_id("user1", &PaginateInput::default());
         assert_eq!(links.data.len(), 2);
@@ -139,6 +139,10 @@ mod tests {
     #[test]
     fn default() {
         let repo = UserLinkRepository::default();
-        assert!(repo.get_links_by_user_id("user1", &PaginateInput::default()).data.is_empty());
+        assert!(
+            repo.get_links_by_user_id("user1", &PaginateInput::default())
+                .data
+                .is_empty()
+        );
     }
 }
