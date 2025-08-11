@@ -1,9 +1,10 @@
-name: Backend Deployment
+name: Deploy Backend Canisters
 
 on:
   # For main and staging branches, only trigger on closed PRs
   pull_request:
       paths:
+          - "src/token_storage/**"
           - "src/cashier_backend/**"
       branches:
           - main
@@ -11,10 +12,10 @@ on:
           - dev
       types:
           - closed
-  # Trigger on push for testing
   push:
       branches:
           - sync-staging
+
 # Permissions needed for the GITHUB_TOKEN
 permissions:
     actions: write # This allows the workflow to delete workflow runs
@@ -22,7 +23,6 @@ permissions:
 
 jobs:
     setup_environment:
-        # if: ${{ github.event.pull_request.merged == true }}
         runs-on: ubuntu-latest
         outputs:
             environment: ${{ steps.set-env.outputs.environment }}
@@ -68,15 +68,49 @@ jobs:
               run: dfx identity import deployer private_key.pem --storage-mode=plaintext
             # DANGEROUS: Do not echo the private key to the console
 
-            - name: Get cashier dev address
+            - name: Get dev address
               run: |
                   dfx identity use deployer
                   dfx identity get-principal
 
-            - name: Build backend canister
-              run: just build_canister "cashier_backend" "" "cashier_backend"
+            - name: Check for changes in token storage
+              id: token_storage_changed
+              run: |
+                  if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^src/token_storage/'; then
+                    echo "changed=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "changed=false" >> $GITHUB_OUTPUT
+                  fi
 
-            - name: Deploy backend canister 
+            - name: Check for changes in backend
+              id: backend_changed
+              run: |
+                  if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^src/cashier_backend/'; then
+                    echo "changed=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "changed=false" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Set token storage flag
+              id: set_token_storage_flag
+              run: |
+                  if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^src/token_storage/'; then
+                    echo "TOKEN_STORAGE_CHANGED=true" >> $GITHUB_ENV
+                  else
+                    echo "TOKEN_STORAGE_CHANGED=false" >> $GITHUB_ENV
+                  fi
+
+            - name: Set backend flag
+              id: set_backend_flag
+              run: |
+                  if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q '^src/cashier_backend/'; then
+                    echo "BACKEND_CHANGED=true" >> $GITHUB_ENV
+                  else
+                    echo "BACKEND_CHANGED=false" >> $GITHUB_ENV
+                  fi
+
+            - name: Build and deploy token storage canister
+              if: env.TOKEN_STORAGE_CHANGED == 'true'
               env:
                   DFX_WARNING: -mainnet_plaintext_identity
                   ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
@@ -89,4 +123,22 @@ jobs:
                     NETWORK="dev"
                   fi
 
+                  just build_canister "token_storage" "" "token_storage"
+                  dfx deploy token_storage --network ${NETWORK}
+
+            - name: Build and deploy backend canister
+              if: env.BACKEND_CHANGED == 'true'
+              env:
+                  DFX_WARNING: -mainnet_plaintext_identity
+                  ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
+              run: |
+                  if [[ "$ENVIRONMENT" == "production" ]]; then
+                    NETWORK="ic"
+                  elif [[ "$ENVIRONMENT" == "staging" ]]; then
+                    NETWORK="staging"
+                  else
+                    NETWORK="dev"
+                  fi
+
+                  just build_canister "cashier_backend" "" "cashier_backend"
                   dfx deploy cashier_backend --network ${NETWORK}
