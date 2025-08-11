@@ -3,20 +3,14 @@ name: Token Storage Deployment
 on:
   # For main and staging branches, only trigger on closed PRs
   pull_request:
-    paths:
-        - "src/token_storage/**"
-    branches:
-        - main
-        - staging
-        - dev
-    types:
-        - closed
-  push:
-    paths:
-        - "src/token_storage/**"
-    branches-ignore:
-        - main
-        - staging
+      paths:
+          - "src/token_storage/**"
+      branches:
+          - main
+          - staging
+          - dev
+      types:
+          - closed
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -25,6 +19,7 @@ permissions:
 
 jobs:
     setup_environment:
+        if: ${{ github.event.pull_request.merged == true }}
         runs-on: ubuntu-latest
         outputs:
             environment: ${{ steps.set-env.outputs.environment }}
