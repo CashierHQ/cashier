@@ -73,6 +73,8 @@ impl LinkActionRepository {
 
 #[cfg(test)]
 mod tests {
+    use cashier_types::repository::link_action::v1::LinkUserState;
+
     use super::*;
 
     #[test]
@@ -89,6 +91,74 @@ mod tests {
 
         let actions = repo.get_by_prefix("link1", "type1", "user1");
         assert_eq!(actions.len(), 1);
+        assert!(actions[0].link_user_state.is_none());
+    }
+
+    #[test]
+    fn update() {
+        let repo = LinkActionRepository::new();
+        let link_action = LinkAction {
+            link_id: "link1".to_string(),
+            action_type: "type1".to_string(),
+            action_id: "action1".to_string(),
+            user_id: "user1".to_string(),
+            link_user_state: None,
+        };
+        repo.create(link_action.clone());
+
+
+        let updated_action = LinkAction {
+            link_id: "link1".to_string(),
+            action_type: "type1".to_string(),
+            action_id: "action1".to_string(),
+            user_id: "user1".to_string(),
+            link_user_state: Some(LinkUserState::ChooseWallet),
+        };
+        repo.update(updated_action.clone());
+
+        let actions = repo.get_by_prefix("link1", "type1", "user1");
+        assert_eq!(actions.len(), 1);
+        assert_eq!(actions[0].link_user_state, Some(LinkUserState::ChooseWallet));
+    }
+
+
+    #[test]
+    fn get_by_prefix() {
+        let repo = LinkActionRepository::new();
+        let link_action1 = LinkAction {
+            link_id: "link1".to_string(),
+            action_type: "type1".to_string(),
+            action_id: "action1".to_string(),
+            user_id: "user1".to_string(),
+            link_user_state: None,
+        };
+
+        let link_action2 = LinkAction {
+            link_id: "link2".to_string(),
+            action_type: "type2".to_string(),
+            action_id: "action2".to_string(),
+            user_id: "user2".to_string(),
+            link_user_state: Some(LinkUserState::CompletedLink),
+        };
+
+        repo.create(link_action1);
+        repo.create(link_action2);
+
+        let actions = repo.get_by_prefix("link1", "type1", "user1");
+        assert_eq!(actions.len(), 1);
+        assert_eq!(actions[0].link_id, "link1");
+        assert_eq!(actions[0].action_type, "type1");
+        assert_eq!(actions[0].action_id, "action1");
+        assert_eq!(actions[0].user_id, "user1");
+        assert!(actions[0].link_user_state.is_none());
+
+        let actions = repo.get_by_prefix("link2", "type2", "user2");
+        assert_eq!(actions.len(), 1);
+        assert_eq!(actions[0].link_id, "link2");
+        assert_eq!(actions[0].action_type, "type2");
+        assert_eq!(actions[0].action_id, "action2");
+        assert_eq!(actions[0].user_id, "user2");
+        assert_eq!(actions[0].link_user_state, Some(LinkUserState::CompletedLink));
     }
 
 }
