@@ -33,14 +33,14 @@ impl ActionDomainLogic {
             .iter()
             .any(|tx| tx.state == TransactionState::Fail)
         {
-            return IntentState::Fail;
+            IntentState::Fail
         } else if transactions
             .iter()
             .all(|tx| tx.state == TransactionState::Success)
         {
-            return IntentState::Success;
+            IntentState::Success
         } else {
-            return IntentState::Processing;
+            IntentState::Processing
         }
     }
 
@@ -55,14 +55,14 @@ impl ActionDomainLogic {
             .iter()
             .any(|intent| intent.state == IntentState::Fail)
         {
-            return ActionState::Fail;
+            ActionState::Fail
         } else if intents
             .iter()
             .all(|intent| intent.state == IntentState::Success)
         {
-            return ActionState::Success;
+            ActionState::Success
         } else {
-            return ActionState::Processing;
+            ActionState::Processing
         }
     }
 }

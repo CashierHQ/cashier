@@ -4,9 +4,9 @@
 // Create a new constant file to store the default tokens
 use candid::{Nat, Principal};
 
+use crate::types::RegistryToken;
 use crate::types::chain::Chain;
 use crate::types::token::ChainTokenDetails;
-use crate::types::RegistryToken;
 
 pub fn get_default_tokens() -> Vec<RegistryToken> {
     vec![

@@ -88,7 +88,7 @@ pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
 pub fn initialize_registry() -> Result<(), String> {
     ensure_is_admin().unwrap_or_else(|err| {
         eprintln!("Admin check failed: {err}"); // Log the error
-                                                // Return unit type `()` to satisfy `unwrap_or_else`
+        // Return unit type `()` to satisfy `unwrap_or_else`
     });
 
     // Admin check should be implemented here
@@ -168,12 +168,11 @@ pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String
 
                 for token_id in &list.enable_list {
                     if let Some(registry_token) = registry_tokens.iter().find(|t| &t.id == token_id)
+                        && seen_token_ids.insert(registry_token.id.clone())
                     {
-                        if seen_token_ids.insert(registry_token.id.clone()) {
-                            let mut token_dto = TokenDto::from(registry_token.clone());
-                            token_dto.enabled = true;
-                            filtered_tokens.push(token_dto);
-                        }
+                        let mut token_dto = TokenDto::from(registry_token.clone());
+                        token_dto.enabled = true;
+                        filtered_tokens.push(token_dto);
                     }
                 }
 

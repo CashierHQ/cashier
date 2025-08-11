@@ -3,7 +3,7 @@
 
 use crate::types::{RegistryToken, TokenId};
 
-use super::{token_registry_metadata::TokenRegistryMetadataRepository, TOKEN_REGISTRY_STORE};
+use super::{TOKEN_REGISTRY_STORE, token_registry_metadata::TokenRegistryMetadataRepository};
 
 pub struct TokenRegistryRepository {}
 
@@ -70,7 +70,7 @@ impl TokenRegistryRepository {
     }
 
     pub fn list_tokens(&self) -> Vec<RegistryToken> {
-        TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|(_, token)| token).collect())
+        TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|entry| entry.value()).collect())
     }
 
     pub fn delete_all(&self) -> Result<(), String> {

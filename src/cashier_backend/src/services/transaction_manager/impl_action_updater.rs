@@ -62,12 +62,11 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
         let mut errors = vec![];
 
         for (tx_id, new_state) in check_results {
-            if let Some(tx) = txs.iter_mut().find(|t| t.id == tx_id) {
-                if tx.state != new_state {
-                    if let Err(e) = self.update_tx_state(tx, &new_state) {
-                        errors.push(e);
-                    }
-                }
+            if let Some(tx) = txs.iter_mut().find(|t| t.id == tx_id)
+                && tx.state != new_state
+                && let Err(e) = self.update_tx_state(tx, &new_state)
+            {
+                errors.push(e);
             }
         }
 

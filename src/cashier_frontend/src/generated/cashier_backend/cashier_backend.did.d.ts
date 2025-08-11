@@ -45,6 +45,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'Unauthorized' : string } |
   { 'AlreadyExists' : string } |
   { 'DependencyError' : string } |
+  { 'CandidError' : string } |
   { 'AnonymousCall' : null } |
   {
     'CanisterCallError' : {

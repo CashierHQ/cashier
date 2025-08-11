@@ -54,8 +54,8 @@ impl UserLinkRepository {
             let prefix = user_link_key.to_str();
             let all_links: Vec<UserLink> = store
                 .range(prefix.to_string()..)
-                .take_while(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, user_link)| user_link)
+                .take_while(|entry| entry.key().starts_with(&prefix))
+                .map(|entry| entry.value())
                 .collect();
 
             let total = all_links.len();

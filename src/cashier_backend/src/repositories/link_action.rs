@@ -62,8 +62,8 @@ impl LinkActionRepository {
 
             let link_actions: Vec<_> = store
                 .range(prefix.clone()..)
-                .filter(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, value)| value)
+                .filter(|entry| entry.key().starts_with(&prefix))
+                .map(|entry| entry.value())
                 .collect();
 
             link_actions

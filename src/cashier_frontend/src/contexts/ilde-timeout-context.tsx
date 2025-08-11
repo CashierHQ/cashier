@@ -73,7 +73,7 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
             checkAndUpdate();
 
             // Check every 30 seconds
-            intervalRef.current = setInterval(checkAndUpdate, ACTIVITY_UPDATE_INTERVAL);
+            intervalRef.current = window.setInterval(checkAndUpdate, ACTIVITY_UPDATE_INTERVAL);
 
             return () => {
                 if (intervalRef.current) {

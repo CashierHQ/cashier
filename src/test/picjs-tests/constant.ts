@@ -8,3 +8,5 @@ export const FEE_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const CREATE_LINK_FEE = BigInt(10_000); // 0.0008 ICP
 
 export const TREASURY_WALLET = "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae";
+
+export const ARTIFACTS_DIR = "target/artifacts";
